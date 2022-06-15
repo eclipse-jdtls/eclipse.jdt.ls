@@ -253,6 +253,13 @@ public class SourceAssistProcessor {
 		return null;
 	}
 
+	public static String getFieldName(VariableDeclarationFragment fragment) {
+		if (fragment == null) {
+			return null;
+		}
+		return fragment.getName().getIdentifier();
+	}
+
 	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, String fieldName, boolean isInTypeDeclaration) throws JavaModelException {
 		AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
 		AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);

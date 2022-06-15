@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
@@ -84,7 +86,7 @@ public class GenerateConstructorsHandler {
 				return new CheckConstructorsResponse();
 			}
 
-			String fieldName = getFieldName(compilationUnit, astRoot, range);
+			List<String> fieldNames = getFieldNames(compilationUnit, astRoot, range);
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
 				return new CheckConstructorsResponse();
@@ -120,7 +122,7 @@ public class GenerateConstructorsHandler {
 			//@formatter:off
 			return new CheckConstructorsResponse(
 				Arrays.stream(superConstructors).map(binding -> new LspMethodBinding(binding)).toArray(LspMethodBinding[]::new),
-				fields.stream().map(binding -> binding.getName().equals(fieldName) ? new LspVariableBinding(binding, true) : new LspVariableBinding(binding)).toArray(LspVariableBinding[]::new)
+				fields.stream().map(binding -> fieldNames.contains(binding.getName()) ? new LspVariableBinding(binding, true) : new LspVariableBinding(binding)).toArray(LspVariableBinding[]::new)
 			);
 			//@formatter:on
 		} catch (JavaModelException e) {
@@ -219,20 +221,39 @@ public class GenerateConstructorsHandler {
 		return Arrays.equals(parameters, lspBinding.parameters);
 	}
 
-	private static String getFieldName(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
+	private static List<String> getFieldNames(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
 		if (range == null) {
-			return null;
+			return Collections.emptyList();
 		}
 		InnovationContext context = CodeActionHandler.getContext(unit, astRoot, range);
-		ASTNode node = context.getCoveredNode();
-		if (node == null) {
-			node = context.getCoveringNode();
+		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
+		List<String> names = new ArrayList<>();
+		// add covered names
+		coveredNodes.forEach(coveredNode -> {
+			if (coveredNode instanceof FieldDeclaration) {
+				String name =  SourceAssistProcessor.getFieldName((FieldDeclaration) coveredNode, coveredNode);
+				if (name != null) {
+					names.add(name);
+				}
+			} else if (coveredNode instanceof VariableDeclarationFragment) {
+				String name =  SourceAssistProcessor.getFieldName((VariableDeclarationFragment) coveredNode);
+				if (name != null) {
+					names.add(name);
+				}
+			}
+		});
+		// add covering name
+		ASTNode coveringNode = context.getCoveringNode();
+		if (coveringNode != null) {
+			FieldDeclaration fieldDeclaration = SourceAssistProcessor.getFieldDeclarationNode(coveringNode);
+			if (fieldDeclaration != null) {
+				String name = SourceAssistProcessor.getFieldName(fieldDeclaration, coveringNode);
+				if (name != null) {
+					names.add(name);
+				}
+			}
 		}
-		FieldDeclaration fieldDeclaration = SourceAssistProcessor.getFieldDeclarationNode(node);
-		if (fieldDeclaration != null) {
-			return SourceAssistProcessor.getFieldName(fieldDeclaration, node);
-		}
-		return null;
+		return names;
 	}
 
 	public static class CheckConstructorsResponse {
