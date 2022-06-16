@@ -25,7 +25,7 @@ public class ResolveSourceMappingHandlerTest extends AbstractProjectsManagerBase
 	public void setup() throws Exception {
 		importProjects("maven/quickstart2");
     }
-
+    
     @Test
     public void testResolveSourceUri() {
         String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at quickstart.AppTest.shouldAnswerWithTrue(AppTest.java:10)", Arrays.asList("quickstart2"));
@@ -37,15 +37,13 @@ public class ResolveSourceMappingHandlerTest extends AbstractProjectsManagerBase
     public void testResolveDependencyUri() {
         String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at org.junit.Assert.assertEquals(Assert.java:117)", Arrays.asList("quickstart2"));
         assertTrue(uri.startsWith("jdt://contents/junit-4.13.jar/org.junit/Assert.class"));
-		assertTrue(uri.contains(
-				"junit%5C/junit%5C/4.13%5C/junit-4.13.jar=/maven.pomderived=/true=/=/test=/true=/=/maven.groupId=/junit=/=/maven.artifactId=/junit=/=/maven.version=/4.13=/=/maven.scope=/test=/=/maven.pomderived=/true=/%3Corg.junit(Assert.class"));
+        assertTrue(uri.contains("junit%5C/junit%5C/4.13%5C/junit-4.13.jar=/maven.pomderived=/true=/=/maven.pomderived=/true=/=/test=/true=/=/maven.groupId=/junit=/=/maven.artifactId=/junit=/=/maven.version=/4.13=/=/maven.scope=/test=/%3Corg.junit(Assert.class"));
     }
 
     @Test
     public void testResolveDependencyUriWithoutGivingProjectNames() {
         String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at org.junit.Assert.assertEquals(Assert.java:117)", null);
         assertTrue(uri.startsWith("jdt://contents/junit-4.13.jar/org.junit/Assert.class"));
-		assertTrue(uri.contains(
-				"junit%5C/4.13%5C/junit-4.13.jar=/maven.pomderived=/true=/=/test=/true=/=/maven.groupId=/junit=/=/maven.artifactId=/junit=/=/maven.version=/4.13=/=/maven.scope=/test=/=/maven.pomderived=/true=/%3Corg.junit(Assert.class"));
+        assertTrue(uri.contains("junit%5C/junit%5C/4.13%5C/junit-4.13.jar=/maven.pomderived=/true=/=/maven.pomderived=/true=/=/test=/true=/=/maven.groupId=/junit=/=/maven.artifactId=/junit=/=/maven.version=/4.13=/=/maven.scope=/test=/%3Corg.junit(Assert.class"));
     }
 }
