@@ -89,6 +89,9 @@
 <setEntry value="org.eclipse.xtend.lib@default:default"/>
 <setEntry value="org.eclipse.xtext.logging@default:false"/>
 <setEntry value="org.eclipse.xtext.xbase.lib@default:default"/>
+<setEntry value="org.osgi.service.prefs@default:default"/>
+<setEntry value="org.osgi.util.function@default:default"/>
+<setEntry value="org.osgi.util.promise@default:default"/>
 </setAttribute>
 <setAttribute key="selected_workspace_bundles">
 <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
