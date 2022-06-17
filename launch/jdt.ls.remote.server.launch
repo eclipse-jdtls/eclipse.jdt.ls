@@ -109,6 +109,9 @@
 <setEntry value="org.eclipse.m2e.apt.core@default:default"/>
 <setEntry value="org.junit@default:default"/>
 <setEntry value="org.slf4j.api@default:default"/>
+<setEntry value="org.osgi.service.prefs@default:default"/>
+<setEntry value="org.osgi.util.function@default:default"/>
+<setEntry value="org.osgi.util.promise@default:default"/>
 </setAttribute>
 <setAttribute key="selected_workspace_bundles">
 <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
