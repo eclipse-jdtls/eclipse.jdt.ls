@@ -242,8 +242,8 @@ public class StandardProjectsManager extends ProjectsManager {
 								String cmd = "java.projectConfiguration.status";
 								TextDocumentIdentifier uri = new TextDocumentIdentifier(uriString);
 								ActionableNotification updateProjectConfigurationNotification = new ActionableNotification().withSeverity(MessageType.Info)
-										.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Never", cmd, asList(uri, FeatureStatus.disabled)),
-												new Command("Now", cmd, asList(uri, FeatureStatus.interactive)), new Command("Always", cmd, asList(uri, FeatureStatus.automatic))));
+										.withMessage("A build file was modified. Do you want to synchronize the Java classpath/configuration?").withCommands(asList(new Command("Yes", cmd, asList(uri, FeatureStatus.interactive)),
+												new Command("Always", cmd, asList(uri, FeatureStatus.automatic)), new Command("Never", cmd, asList(uri, FeatureStatus.disabled))));
 								client.sendActionableNotification(updateProjectConfigurationNotification);
 							}
 					}
