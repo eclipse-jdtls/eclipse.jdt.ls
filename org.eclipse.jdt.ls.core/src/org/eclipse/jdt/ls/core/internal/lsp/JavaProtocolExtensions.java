@@ -62,6 +62,8 @@ public interface JavaProtocolExtensions {
 
 	/**
 	 * Request a project configuration update
+	 *
+	 * @deprecated Please use {@link #projectConfigurationsUpdate(TextDocumentIdentifier)}.
 	 * @param documentUri the document from which the project configuration will be updated
 	 */
 	@JsonNotification
@@ -72,7 +74,7 @@ public interface JavaProtocolExtensions {
 	 * @param documentUris the documents from which the project configuration will be updated
 	 */
 	@JsonNotification
-	void projectConfigurationsUpdate(ProjectConfigurationsUpdateParam documentUris);
+	void projectConfigurationsUpdate(ProjectConfigurationsUpdateParam params);
 
 	@JsonRequest
 	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(Either<Boolean, boolean[]> forceReBuild);

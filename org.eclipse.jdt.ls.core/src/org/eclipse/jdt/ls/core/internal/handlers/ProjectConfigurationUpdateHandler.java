@@ -38,9 +38,15 @@ public class ProjectConfigurationUpdateHandler {
 		this.projectManager = projectManager;
 	}
 
-	public void updateConfigurations(List<TextDocumentIdentifier> param) {
+	/**
+	 * Update the projects' configurations (build files).
+	 *
+	 * @param identifiers the identifiers which may point to the projects' paths or
+	 * files that belong to some projects in the workspace.
+	 */
+	public void updateConfigurations(List<TextDocumentIdentifier> identifiers) {
 		Set<IProject> projects = new HashSet<>();
-		for (TextDocumentIdentifier identifier : param) {
+		for (TextDocumentIdentifier identifier : identifiers) {
 			IProject project = getProjectFromUri(identifier.getUri());
 			if (project != null) {
 				projects.add(project);
