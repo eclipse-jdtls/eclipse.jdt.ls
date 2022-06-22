@@ -42,6 +42,7 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -61,10 +62,19 @@ public interface JavaProtocolExtensions {
 
 	/**
 	 * Request a project configuration update
+	 *
+	 * @deprecated Please use {@link #projectConfigurationsUpdate(TextDocumentIdentifier)}.
 	 * @param documentUri the document from which the project configuration will be updated
 	 */
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
+
+	/**
+	 * Request multiple project configurations update
+	 * @param documentUris the documents from which the project configuration will be updated
+	 */
+	@JsonNotification
+	void projectConfigurationsUpdate(ProjectConfigurationsUpdateParam params);
 
 	@JsonRequest
 	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(Either<Boolean, boolean[]> forceReBuild);
