@@ -44,7 +44,7 @@ public class ResponseStore<T> {
 	}
 
 	public ResponseItem<T> createResponse() {
-		return new ResponseItem<T>(idSeed.getAndIncrement());
+		return new ResponseItem<>(idSeed.getAndIncrement());
 	}
 
 	public ResponseItem<T> get(Long id) {
@@ -67,28 +67,32 @@ public class ResponseStore<T> {
 		responseCache.clear();
 	}
 
+	public boolean isEmpty() {
+		return responseCache.isEmpty();
+	}
+
 	public static class ResponseItem<T> {
 		private Long id;
 		private List<T> proposals;
-	
+
 		public ResponseItem(Long id) {
 			this.id = id;
 		}
-	
+
 		/**
 		 * @return the id
 		 */
 		public Long getId() {
 			return id;
 		}
-	
+
 		/**
 		 * @return the proposals
 		 */
 		public List<T> getProposals() {
 			return proposals;
 		}
-	
+
 		/**
 		 * @param proposals the proposals to set
 		 */

@@ -33,6 +33,9 @@ public class CodeActionResolveHandler {
 		Map<String, String> data = JSONUtility.toModel(params.getData(), Map.class);
 		// clean resolve data
 		params.setData(null);
+		if (CodeActionHandler.codeActionStore.isEmpty()) {
+			return params;
+		}
 
 		int proposalId = Integer.parseInt(data.get(DATA_FIELD_PROPOSAL_ID));
 		long requestId = Long.parseLong(data.get(DATA_FIELD_REQUEST_ID));
