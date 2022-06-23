@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -43,6 +43,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
+import org.eclipse.lsp4j.extended.ProjectBuildParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -78,6 +79,9 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<BuildWorkspaceStatus> buildWorkspace(Either<Boolean, boolean[]> forceReBuild);
+
+	@JsonRequest
+	CompletableFuture<BuildWorkspaceStatus> buildProjects(ProjectBuildParams params);
 
 	@JsonRequest
 	CompletableFuture<OverridableMethodsResponse> listOverridableMethods(CodeActionParams params);
