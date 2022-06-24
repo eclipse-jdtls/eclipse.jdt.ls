@@ -126,6 +126,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrecti
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -208,6 +209,7 @@ public class QuickAssistProcessor {
 			getAddMethodDeclaration(context, coveringNode, resultingCollections);
 			getTryWithResourceProposals(locations, context, coveringNode, resultingCollections);
 			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
+			JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();

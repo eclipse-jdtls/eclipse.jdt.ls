@@ -198,7 +198,7 @@ public class CodeActionHandler {
 		}
 		try {
 			for (ChangeCorrectionProposal proposal : proposals) {
-				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext(), this.preferenceManager);
+				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
 				if (codeActionFromProposal.isPresent() && !codeActions.contains(codeActionFromProposal.get())) {
 					codeActions.add(codeActionFromProposal.get());
 				}
@@ -249,7 +249,7 @@ public class CodeActionHandler {
 		}
 	}
 
-	public static Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context, PreferenceManager preferenceManager) throws CoreException {
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 
 		Command command = null;
@@ -263,7 +263,7 @@ public class CodeActionHandler {
 			AssignToVariableAssistCommandProposal commandProposal = (AssignToVariableAssistCommandProposal) proposal;
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			if (!preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
+			if (!this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
 				WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 				if (!ChangeUtil.hasChanges(edit)) {
 					return Optional.empty();

@@ -446,7 +446,7 @@ public class JavadocTagsSubProcessor {
 			}
 			String string = CodeGeneration.getMethodComment(cu, binding.getName(), methodDecl, overridden,
 					String.valueOf('\n'));
-			String methodName = methodDecl.getName().toString();
+			String methodName = methodDecl.getName().getIdentifier();
 			if (string != null && methodName != null) {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_method_description, methodName);
 				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_METHOD, declaration.getStartPosition(), string));
