@@ -603,7 +603,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 
 		Assert.assertNotNull(codeActions);
-		CodeAction action = codeActions.get(1).getRight();
+		CodeAction action = codeActions.get(2).getRight();
 		Assert.assertEquals("Add missing method 'action' to class 'Foo'", action.getTitle());
 	}
 
@@ -638,6 +638,11 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	public static Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String kind) {
 		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand())).findFirst();
+		return any.isPresent() ? any.get() : null;
+	}
+
+	public static Either<Command, CodeAction> findAction(List<Either<Command, CodeAction>> codeActions, String kind, String title) {
+		Optional<Either<Command, CodeAction>> any = codeActions.stream().filter((action) -> Objects.equals(kind, action.getLeft() == null ? action.getRight().getKind() : action.getLeft().getCommand()) &&  Objects.equals(title, action.getLeft() == null ? action.getRight().getTitle() : action.getLeft().getTitle())).findFirst();
 		return any.isPresent() ? any.get() : null;
 	}
 
