@@ -61,7 +61,6 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -86,8 +85,8 @@ public class JavadocTagsSubProcessor {
 		private final int fInsertPosition;
 		private final String fComment;
 
-		private AddJavadocCommentProposal(String name, ICompilationUnit cu, int relevance, int insertPosition, String comment) {
-			super(name, JavaCodeActionKind.QUICK_ASSIST, cu, null, relevance);
+		private AddJavadocCommentProposal(String name, ICompilationUnit cu, int relevance, String kind, int insertPosition, String comment) {
+			super(name, kind, cu, null, relevance);
 			fInsertPosition= insertPosition;
 			fComment= comment;
 		}
@@ -417,7 +416,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static void getMissingJavadocCommentProposals(IInvocationContext context, ASTNode node,
-			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+			Collection<ChangeCorrectionProposal> proposals, String kind) throws CoreException {
 		if (node == null) {
 			return;
 		}
@@ -449,7 +448,7 @@ public class JavadocTagsSubProcessor {
 			String methodName = methodDecl.getName().getIdentifier();
 			if (string != null && methodName != null) {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_method_description, methodName);
-				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_METHOD, declaration.getStartPosition(), string));
+				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_METHOD, kind, declaration.getStartPosition(), string));
 			}
 		} else if (declaration instanceof AbstractTypeDeclaration) {
 			String typeQualifiedName= Bindings.getTypeQualifiedName(binding);
@@ -468,7 +467,7 @@ public class JavadocTagsSubProcessor {
 
 			if (string != null && typeQualifiedName != null) {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_type_description, typeQualifiedName);
-				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_TYPE, declaration.getStartPosition(), string));
+				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_TYPE, kind, declaration.getStartPosition(), string));
 			}
 		} else if (declaration instanceof FieldDeclaration) {
 			String comment= "/**\n *\n */\n"; //$NON-NLS-1$
@@ -482,7 +481,7 @@ public class JavadocTagsSubProcessor {
 			}
 			if (comment != null && fieldName != null) {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_field_description, fieldName);
-				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_FIELD, declaration.getStartPosition(), comment));
+				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_FIELD, kind, declaration.getStartPosition(), comment));
 			}
 		} else if (declaration instanceof EnumConstantDeclaration) {
 			EnumConstantDeclaration enumDecl= (EnumConstantDeclaration) declaration;
@@ -490,7 +489,7 @@ public class JavadocTagsSubProcessor {
 			String comment = CodeGeneration.getFieldComment(cu, binding.getName(), id, String.valueOf('\n'));
 			if (comment != null && id != null) {
 				String label=Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_enumconst_description, id);
-				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_ENUM, declaration.getStartPosition(), comment));
+				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_ENUM, kind, declaration.getStartPosition(), comment));
 			}
 		}
 	}
