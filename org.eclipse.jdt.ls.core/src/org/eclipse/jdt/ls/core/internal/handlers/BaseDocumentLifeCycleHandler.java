@@ -400,6 +400,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		try {
 			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
 				sharedASTProvider.disposeAST();
+				CodeActionHandler.codeActionStore.clear();
 			}
 			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
