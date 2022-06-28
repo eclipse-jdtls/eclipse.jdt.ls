@@ -91,7 +91,7 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Generate Constructors...");
 		Assert.assertNotNull(constructorAction);
 		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
 		Assert.assertNotNull(constructorCommand);

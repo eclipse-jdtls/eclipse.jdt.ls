@@ -281,7 +281,9 @@ public class CodeActionHandler {
 			} else {
 				codeAction.setCommand(command);
 			}
-			codeAction.setDiagnostics(context.getDiagnostics());
+			if (proposal.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
+				codeAction.setDiagnostics(context.getDiagnostics());
+			}
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));

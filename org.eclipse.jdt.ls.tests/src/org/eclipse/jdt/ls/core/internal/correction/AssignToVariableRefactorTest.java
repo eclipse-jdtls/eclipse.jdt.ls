@@ -80,7 +80,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	private void testAssignVariable(ICompilationUnit cu, Range range) throws JavaModelException {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(1, codeActions.size());
+		assertEquals(2, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, action.getKind());
@@ -115,7 +115,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	private void testAssignField(ICompilationUnit cu, Range range) throws JavaModelException {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(1, codeActions.size());
+		assertEquals(2, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, action.getKind());

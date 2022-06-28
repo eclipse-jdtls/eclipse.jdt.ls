@@ -46,6 +46,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionP
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.lsp4j.CodeActionKind;
 
 /**
  */
@@ -357,7 +358,7 @@ public class QuickFixProcessor {
 			// problem, 10));
 			// break;
 			case IProblem.JavadocMissing:
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals);
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem.getCoveringNode(context.getASTRoot()), proposals, CodeActionKind.QuickFix);
 				break;
 			case IProblem.JavadocMissingParamTag:
 			case IProblem.JavadocMissingReturnTag:

@@ -126,6 +126,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrecti
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -208,6 +209,10 @@ public class QuickAssistProcessor {
 			getAddMethodDeclaration(context, coveringNode, resultingCollections);
 			getTryWithResourceProposals(locations, context, coveringNode, resultingCollections);
 			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
+			List<Integer> javaDocCommentProblems = Arrays.asList(IProblem.JavadocMissing);
+			if (!problemExists(locations, javaDocCommentProblems)) {
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
+			}
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1468,14 +1473,21 @@ public class QuickAssistProcessor {
 
 	public static boolean getTryWithResourceProposals(IProblemLocationCore[] locations, IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {
 		final List<Integer> exceptionProblems = Arrays.asList(IProblem.UnclosedCloseable, IProblem.UnclosedCloseable, IProblem.PotentiallyUnclosedCloseable, IProblem.UnhandledException);
-		for (IProblemLocationCore location : locations) {
-			if (exceptionProblems.contains(location.getProblemId())) {
-				return false;
-			}
+		if (problemExists(locations, exceptionProblems)) {
+			return false;
 		}
 
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
 		return getTryWithResourceProposals(context, node, coveredNodes, resultingCollections);
+	}
+
+	public static boolean problemExists(IProblemLocationCore[] locations, List<Integer> problems) {
+		for (IProblemLocationCore location : locations) {
+			if (problems.contains(location.getProblemId())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {

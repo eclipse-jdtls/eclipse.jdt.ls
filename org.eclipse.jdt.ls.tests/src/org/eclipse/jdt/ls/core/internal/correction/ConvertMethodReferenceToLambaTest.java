@@ -70,8 +70,8 @@ public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range range = new Range(new Position(4, 34), new Position(4, 34));
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(1, codeActions.size());
-		Either<Command, CodeAction> codeAction = codeActions.get(0);
+		assertEquals(2, codeActions.size());
+		Either<Command, CodeAction> codeAction = codeActions.get(1);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
 		assertEquals("Convert to lambda expression", action.getTitle());
@@ -97,8 +97,8 @@ public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range range = new Range(new Position(4, 39), new Position(4, 39));
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(1, codeActions.size());
-		Either<Command, CodeAction> codeAction = codeActions.get(0);
+		assertEquals(2, codeActions.size());
+		Either<Command, CodeAction> codeAction = codeActions.get(1);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
 		assertEquals("Convert to method reference", action.getTitle());
