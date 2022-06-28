@@ -126,11 +126,11 @@ public class CodeGenerationUtils {
 			return null;
 		}
 
-		int startOffset = DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range);
-		if (startOffset < 0) {
+		int endOffset = DiagnosticsHelper.getEndOffset(type.getCompilationUnit(), range);
+		if (endOffset < 0) {
 			return null;
 		}
 
-		return findElementAfterPosition(type, startOffset);
+		return findElementAfterPosition(type, endOffset);
 	}
 }
