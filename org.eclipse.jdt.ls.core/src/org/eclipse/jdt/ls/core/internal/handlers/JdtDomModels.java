@@ -30,12 +30,22 @@ public class JdtDomModels {
 		public String name;
 		public String type;
 		public boolean isField;
+		public boolean isSelected;
 
 		public LspVariableBinding(IVariableBinding binding) {
 			this.bindingKey = binding.getKey();
 			this.name = binding.getName();
 			this.type = binding.getType().getName();
 			this.isField = binding.isField();
+			this.isSelected = false;
+		}
+
+		public LspVariableBinding(IVariableBinding binding, boolean isSelected) {
+			this.bindingKey = binding.getKey();
+			this.name = binding.getName();
+			this.type = binding.getType().getName();
+			this.isField = binding.isField();
+			this.isSelected = isSelected;
 		}
 	}
 

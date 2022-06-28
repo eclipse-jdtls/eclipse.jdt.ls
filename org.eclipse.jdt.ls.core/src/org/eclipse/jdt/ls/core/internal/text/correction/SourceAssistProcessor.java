@@ -233,7 +233,7 @@ public class SourceAssistProcessor {
 		return $;
 	}
 
-	private String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
+	public static String getFieldName(FieldDeclaration fieldDeclaration, ASTNode node) {
 		if (fieldDeclaration == null || node == null) {
 			return null;
 		}
@@ -251,6 +251,13 @@ public class SourceAssistProcessor {
 			return fragments.get(0).getName().getIdentifier();
 		}
 		return null;
+	}
+
+	public static String getFieldName(VariableDeclarationFragment fragment) {
+		if (fragment == null) {
+			return null;
+		}
+		return fragment.getName().getIdentifier();
 	}
 
 	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, String fieldName, boolean isInTypeDeclaration) throws JavaModelException {
@@ -502,7 +509,7 @@ public class SourceAssistProcessor {
 		}
 
 		if (preferenceManager.getClientPreferences().isGenerateConstructorsPromptSupported()) {
-			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type, monitor);
+			CheckConstructorsResponse status = GenerateConstructorsHandler.checkConstructorStatus(type, params.getRange(), monitor);
 			if (status.constructors.length == 0) {
 				return Optional.empty();
 			}
@@ -723,7 +730,7 @@ public class SourceAssistProcessor {
 		return node instanceof ImportDeclaration ? node : null;
 	}
 
-	private static FieldDeclaration getFieldDeclarationNode(ASTNode node) {
+	public static FieldDeclaration getFieldDeclarationNode(ASTNode node) {
 		if (node == null) {
 			return null;
 		}

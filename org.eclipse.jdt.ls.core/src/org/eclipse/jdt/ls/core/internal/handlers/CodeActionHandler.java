@@ -61,6 +61,7 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -129,10 +130,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 
-		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
-		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
-		InnovationContext context = new InnovationContext(unit, start, end - start);
-		context.setASTRoot(astRoot);
+		InnovationContext context = getContext(unit, astRoot, params.getRange());
 		List<Diagnostic> diagnostics = params.getContext().getDiagnostics().stream().filter((d) -> {
 			return JavaLanguageServerPlugin.SERVER_SOURCE_ID.equals(d.getSource());
 		}).collect(Collectors.toList());
@@ -333,6 +331,14 @@ public class CodeActionHandler {
 
 	public static CompilationUnit getASTRoot(ICompilationUnit unit, IProgressMonitor monitor) {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+	}
+
+	public static InnovationContext getContext(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
+		int start = DiagnosticsHelper.getStartOffset(unit, range);
+		int end = DiagnosticsHelper.getEndOffset(unit, range);
+		InnovationContext context = new InnovationContext(unit, start, end - start);
+		context.setASTRoot(astRoot);
+		return context;
 	}
 
 	private static class ChangeCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
