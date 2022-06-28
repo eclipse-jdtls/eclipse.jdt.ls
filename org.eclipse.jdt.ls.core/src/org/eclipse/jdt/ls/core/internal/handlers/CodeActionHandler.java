@@ -51,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionComparator;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -216,6 +217,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 
+		codeActions.sort(new CodeActionComparator());
 		populateDataFields(codeActions);
 		return codeActions;
 	}
@@ -372,7 +374,7 @@ public class CodeActionHandler {
 
 		public CodeActionData(Object proposal) {
 			this.proposal = proposal;
-			this.priority = 0;
+			this.priority = CodeActionComparator.LOWEST_PRIORITY;
 		}
 
 		public CodeActionData(Object proposal, int priority) {

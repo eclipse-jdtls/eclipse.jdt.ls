@@ -146,12 +146,12 @@ public class SourceAssistProcessor {
 			// Generate QuickAssist
 			if (isInImportDeclaration) {
 				Optional<Either<Command, CodeAction>> sourceOrganizeImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
-					JavaCodeActionKind.QUICK_ASSIST, organizeImportsProposal, QuickAssistComparator.ORGANIZE_IMPORTS_PRIORITY);
+					JavaCodeActionKind.QUICK_ASSIST, organizeImportsProposal, CodeActionComparator.ORGANIZE_IMPORTS_PRIORITY);
 				addSourceActionCommand($, params.getContext(), sourceOrganizeImports);
 			}
 			// Generate Source Action
 			Optional<Either<Command, CodeAction>> sourceOrganizeImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description,
-					CodeActionKind.SourceOrganizeImports, organizeImportsProposal, QuickAssistComparator.ORGANIZE_IMPORTS_PRIORITY);
+					CodeActionKind.SourceOrganizeImports, organizeImportsProposal, CodeActionComparator.ORGANIZE_IMPORTS_PRIORITY);
 			addSourceActionCommand($, params.getContext(), sourceOrganizeImports);
 		}
 
@@ -213,12 +213,12 @@ public class SourceAssistProcessor {
 				// Generate QuickAssist
 				if (isInTypeDeclaration) {
 					Optional<Either<Command, CodeAction>> generateToStringQuickAssist = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
-							JavaCodeActionKind.QUICK_ASSIST, generateToStringProposal, QuickAssistComparator.GENERATE_TOSTRING_PRIORITY);
+							JavaCodeActionKind.QUICK_ASSIST, generateToStringProposal, CodeActionComparator.GENERATE_TOSTRING_PRIORITY);
 					addSourceActionCommand($, params.getContext(), generateToStringQuickAssist);
 				}
 				// Generate Source Action
 				Optional<Either<Command, CodeAction>> generateToStringCommand = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
-						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, generateToStringProposal, QuickAssistComparator.GENERATE_TOSTRING_PRIORITY);
+						JavaCodeActionKind.SOURCE_GENERATE_TO_STRING, generateToStringProposal, CodeActionComparator.GENERATE_TOSTRING_PRIORITY);
 				addSourceActionCommand($, params.getContext(), generateToStringCommand);
 			}
 		}
@@ -231,7 +231,6 @@ public class SourceAssistProcessor {
 		Optional<Either<Command, CodeAction>> generateFinalModifiers = addFinalModifierWherePossibleAction(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiers);
 
-		$.sort(new QuickAssistComparator());
 		return $;
 	}
 
@@ -349,7 +348,7 @@ public class SourceAssistProcessor {
 		CodeAction codeAction = new CodeAction(CorrectionMessages.ReorgCorrectionsSubProcessor_organizeimports_description);
 		codeAction.setKind(kind);
 		codeAction.setCommand(command);
-		codeAction.setData(new CodeActionData(null, QuickAssistComparator.ORGANIZE_IMPORTS_PRIORITY));
+		codeAction.setData(new CodeActionData(null, CodeActionComparator.ORGANIZE_IMPORTS_PRIORITY));
 		codeAction.setDiagnostics(Collections.emptyList());
 		return Optional.of(Either.forRight(codeAction));
 
@@ -365,7 +364,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(ActionMessages.OverrideMethodsAction_label);
 			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_OVERRIDE_IMPLEMENT_PRIORITY));
+			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_OVERRIDE_IMPLEMENT_PRIORITY));
 			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
@@ -400,7 +399,7 @@ public class SourceAssistProcessor {
 					TextEdit edit = operation.createTextEdit(pm, accessors);
 					return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
 				};
-				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), actionMessage, kind, getAccessorsProposal, QuickAssistComparator.GENERATE_ACCESSORS_PRIORITY);
+				return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), actionMessage, kind, getAccessorsProposal, CodeActionComparator.GENERATE_ACCESSORS_PRIORITY);
 			} else {
 				String actionMessage;
 				switch (accessorKind) {
@@ -422,7 +421,7 @@ public class SourceAssistProcessor {
 					CodeAction codeAction = new CodeAction(actionMessage);
 					codeAction.setKind(kind);
 					codeAction.setCommand(command);
-					codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_ACCESSORS_PRIORITY));
+					codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_ACCESSORS_PRIORITY));
 					codeAction.setDiagnostics(Collections.emptyList());
 					return Optional.of(Either.forRight(codeAction));
 				} else {
@@ -462,7 +461,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateHashCodeEqualsAction_label);
 			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_HASHCODE_EQUALS_PRIORITY));
+			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_HASHCODE_EQUALS_PRIORITY));
 			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
@@ -491,7 +490,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateToStringAction_ellipsisLabel);
 			codeAction.setKind(kind);
 			codeAction.setCommand(command);
-			codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_TOSTRING_PRIORITY));
+			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_TOSTRING_PRIORITY));
 			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
@@ -518,7 +517,7 @@ public class SourceAssistProcessor {
 					TextEdit edit = GenerateConstructorsHandler.generateConstructors(type, status.constructors, status.fields, params.getRange(), pm);
 					return convertToWorkspaceEdit(type.getCompilationUnit(), edit);
 				};
-				return getCodeActionFromProposal(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, kind, generateConstructorsProposal, QuickAssistComparator.GENERATE_CONSTRUCTORS_PRIORITY);
+				return getCodeActionFromProposal(params.getContext(), type.getCompilationUnit(), ActionMessages.GenerateConstructorsAction_label, kind, generateConstructorsProposal, CodeActionComparator.GENERATE_CONSTRUCTORS_PRIORITY);
 			}
 
 			Command command = new Command(ActionMessages.GenerateConstructorsAction_ellipsisLabel, COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, Collections.singletonList(params));
@@ -526,7 +525,7 @@ public class SourceAssistProcessor {
 				CodeAction codeAction = new CodeAction(ActionMessages.GenerateConstructorsAction_ellipsisLabel);
 				codeAction.setKind(kind);
 				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_CONSTRUCTORS_PRIORITY));
+				codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_CONSTRUCTORS_PRIORITY));
 				codeAction.setDiagnostics(Collections.emptyList());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
@@ -551,7 +550,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateDelegateMethodsAction_label);
 			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
 			codeAction.setCommand(command);
-			codeAction.setData(new CodeActionData(null, QuickAssistComparator.GENERATE_DELEGATE_METHOD_PRIORITY));
+			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_DELEGATE_METHOD_PRIORITY));
 			codeAction.setDiagnostics(Collections.EMPTY_LIST);
 			return Optional.of(Either.forRight(codeAction));
 		} else {
@@ -570,7 +569,7 @@ public class SourceAssistProcessor {
 		if (this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
 			CodeAction codeAction = new CodeAction(ActionMessages.GenerateFinalModifiersAction_label);
 			codeAction.setKind(proposal.getKind());
-			codeAction.setData(new CodeActionData(proposal, QuickAssistComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
+			codeAction.setData(new CodeActionData(proposal, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
 			codeAction.setDiagnostics(Collections.EMPTY_LIST);
 			return Optional.of(Either.forRight(codeAction));
 		} else {
@@ -590,7 +589,7 @@ public class SourceAssistProcessor {
 				CodeAction codeAction = new CodeAction(ActionMessages.GenerateFinalModifiersAction_label);
 				codeAction.setKind(proposal.getKind());
 				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, QuickAssistComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
+				codeAction.setData(new CodeActionData(null, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
 				codeAction.setDiagnostics(Collections.EMPTY_LIST);
 				return Optional.of(Either.forRight(codeAction));
 			} else {
