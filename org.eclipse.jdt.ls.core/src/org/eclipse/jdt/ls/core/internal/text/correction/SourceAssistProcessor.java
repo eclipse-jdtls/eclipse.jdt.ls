@@ -17,6 +17,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -37,14 +38,13 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -538,33 +538,39 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContext context) {
-		// find fully covered nodes
+		ASTNode coveringNode = context.getCoveringNode();
+		List<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
+		List<ASTNode> possibleASTNodes = getPossibleASTNodesForFinalModifier(coveredNodes);
+		if (possibleASTNodes.size() == 0) {
+			possibleASTNodes = getPossibleASTNodesForFinalModifier(Arrays.asList(coveringNode));
+		}
+		Set<String> names = new HashSet<>();
+		for (ASTNode node : possibleASTNodes) {
+			names.addAll(CodeActionUtility.getVariableNamesFromASTNode(node));
+		}
 		String actionMessage = ActionMessages.GenerateFinalModifiersAction_selectionLabel;
-		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode()).toArray(new ASTNode[0]));
-		if (fix == null) {
-			// try to find covering node
-			ASTNode coveringNode = context.getCoveringNode();
-			ASTNode variableDeclaration = CodeActionUtility.inferASTNode(coveringNode, VariableDeclaration.class);
-			ASTNode fieldDeclaration = CodeActionUtility.inferASTNode(coveringNode, FieldDeclaration.class);
+		if (names.size() == 1) {
+			actionMessage = Messages.format(ActionMessages.GenerateFinalModifiersAction_templateLabel, names.iterator().next());
+		}
+		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), possibleASTNodes.toArray(new ASTNode[0]));
+		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
+	}
+
+	private List<ASTNode> getPossibleASTNodesForFinalModifier(List<ASTNode> targetNodes) {
+		List<ASTNode> results = new ArrayList<>();
+		for (ASTNode targetNode : targetNodes) {
+			ASTNode variableDeclaration = CodeActionUtility.inferASTNode(targetNode, VariableDeclaration.class);
+			ASTNode fieldDeclaration = CodeActionUtility.inferASTNode(targetNode, FieldDeclaration.class);
+			ASTNode variableDeclarationStatement = CodeActionUtility.inferASTNode(targetNode, VariableDeclarationStatement.class);
 			if (variableDeclaration != null) {
-				if (variableDeclaration instanceof VariableDeclarationFragment) {
-					// For VariableDeclarationFragment, the declarations should have their own initializer
-					Expression initializer = ((VariableDeclarationFragment) variableDeclaration).getInitializer();
-					if (initializer == null) {
-						return Optional.empty();
-					}
-				}
-				actionMessage = Messages.format(ActionMessages.GenerateFinalModifiersAction_templateLabel, ((VariableDeclaration) variableDeclaration).getName().getIdentifier());
-				fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), new ASTNode[]{ variableDeclaration });
+				results.add(variableDeclaration);
 			} else if (fieldDeclaration != null) {
-				List<String> fieldNames = CodeActionUtility.getFieldNamesFromASTNode(fieldDeclaration);
-				if (fieldNames.size() == 1) {
-					actionMessage = Messages.format(ActionMessages.GenerateFinalModifiersAction_templateLabel, fieldNames.get(0));
-				}
-				fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), new ASTNode[]{ fieldDeclaration });
+				results.addAll(((FieldDeclaration) fieldDeclaration).fragments());
+			} else if (variableDeclarationStatement != null) {
+				results.add(variableDeclarationStatement);
 			}
 		}
-		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
+		return results;
 	}
 
 	private Optional<Either<Command, CodeAction>> getFinalModifierWherePossibleAction(IInvocationContext context, IProposableFix fix, String actionMessage, String kind) {

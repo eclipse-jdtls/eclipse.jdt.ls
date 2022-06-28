@@ -53,6 +53,7 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 				"\r\n" +
 				"public class A {\r\n" +
 				"	private String name = \"a\";\r\n" +
+				"	private String test;\r\n" +
 				"}"
 				, true, null);
 		//@formatter:on
@@ -60,26 +61,14 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'name'"));
-		params = CodeActionUtil.constructCodeActionParams(unit, ";");
+		params = CodeActionUtil.constructCodeActionParams(unit, "a\";");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'name'"));
-	}
-
-	@Test
-	public void testDoNotInsertFinalModifierForFieldDeclarationQuickAssist() throws JavaModelException {
-		//@formatter:off
-		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
-				"\r\n" +
-				"public class A {\r\n" +
-				"	private String name;\r\n" +
-				"}"
-				, true, null);
-		//@formatter:on
-		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
-		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		params = CodeActionUtil.constructCodeActionParams(unit, "test;");
+		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'name'"));
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'test'"));
 	}
 
 	@Test
@@ -88,12 +77,12 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
 				"public class A {\r\n" +
-				"	private String name = \"a\";\r\n" +
+				"	private String name;\r\n" +
 				"	private String name1 = \"b\";\r\n" +
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String name = \"a\";\r\n	private String name1 = \"b\";");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String name;\r\n	private String name1 = \"b\";");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Change modifiers to final"));
@@ -120,7 +109,7 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 	}
 
 	@Test
-	public void testInsertFinalModifierForLocalVariableQuickAssist() throws JavaModelException {
+	public void testInsertFinalModifierForLocalVariableSelectionQuickAssist() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
@@ -136,9 +125,40 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'c'"));
+		params = CodeActionUtil.constructCodeActionParams(unit, "String c = a;\r\n		String d = b;");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Change modifiers to final"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "c = a;\r\n		String d = b;");
 		codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Change modifiers to final"));
+	}
+
+	@Test
+	public void testInsertFinalModifierForLocalVariableQuickAssist() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	public String getName() {\r\n" +
+				"		String c;\r\n" +
+				"		String d, e;\r\n" +
+				"	}\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "c;");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'c'"));
+		params = CodeActionUtil.constructCodeActionParams(unit, "String d, e;");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Change modifiers to final"));
+		params = CodeActionUtil.constructCodeActionParams(unit, "d");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertTrue(CodeActionHandlerTest.commandExists(codeActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Add final modifier for 'd'"));
 	}
 }
