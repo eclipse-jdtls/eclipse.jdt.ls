@@ -1,5 +1,24 @@
 # Change Log
 
+# [1.13.0 (June 30th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/103?closed=1)
+ * enhancement - Show `Add javadoc for ..` in quick assists. See [#2133](https://github.com/eclipse/eclipse.jdt.ls/pull/2133).
+ * enhancement - Show `Change modifiers to final` in quick assists. See [#2134](https://github.com/eclipse/eclipse.jdt.ls/pull/2134).
+ * enhancement - Allow to reload multiple projects at the same time. See [#2131](https://github.com/eclipse/eclipse.jdt.ls/pull/2131).
+ * enhancement - Auto-select field when generating constructors. See [#2125](https://github.com/eclipse/eclipse.jdt.ls/pull/2125).
+ * enhancement - Allow to build selected projects. See [#2138](https://github.com/eclipse/eclipse.jdt.ls/pull/2138).
+ * enhancement - Support multiple selections for generate accessors. See [#2136](https://github.com/eclipse/eclipse.jdt.ls/pull/2136).
+ * bug fix - Add logback tracing to JDT-LS. See [#2108](https://github.com/eclipse/eclipse.jdt.ls/issues/2108).
+ * bug fix - Fix NPE when triggering signature help in class file. See [#2102](https://github.com/eclipse/eclipse.jdt.ls/issues/2102).
+ * bug fix - Support for renaming record attributes. See [#2078](https://github.com/eclipse/eclipse.jdt.ls/pull/2078).
+ * bug fix - Change the order for the configuration updating options. See [#2135](https://github.com/eclipse/eclipse.jdt.ls/pull/2135).
+ * build - Move to Java 17. See [#2117](https://github.com/eclipse/eclipse.jdt.ls/issues/2117).
+ * build - Update target platform to 4.25-I-builds. See [#2127](https://github.com/eclipse/eclipse.jdt.ls/issues/2127).
+ * debt - JDT-LS doesn't require o.e.m2e.archetype.common anymore. See [#2119](https://github.com/eclipse/eclipse.jdt.ls/issues/2119).
+ * other - Adjust the order of code actions. See [#2109](https://github.com/eclipse/eclipse.jdt.ls/pull/2109).
+ * other - Update launch script, Java 17 is required now. See [#2141](https://github.com/eclipse/eclipse.jdt.ls/pull/2141).
+ * other - Fix random failures for the test CompletionHandlerTest/WorkspaceDiagnosticsHandlerTest. See [#2121](https://github.com/eclipse/eclipse.jdt.ls/issues/2121).
+ * other - Fix random failures for the test InlayHintHandlerTest.testVarargs2. See [#2104](https://github.com/eclipse/eclipse.jdt.ls/issues/2104).
+
 # [1.12.0 (June 1st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/102?closed=1)
  * enhancment - Support separate "Generate Getters" and "Generate Setters". See [#2086](https://github.com/eclipse/eclipse.jdt.ls/pull/2086).
  * enhancement - Show quick fixes for generating accessors in field declarations. See [#2092](https://github.com/eclipse/eclipse.jdt.ls/pull/2092).
