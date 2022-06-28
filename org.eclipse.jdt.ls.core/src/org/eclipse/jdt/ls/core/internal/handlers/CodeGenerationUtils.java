@@ -110,7 +110,7 @@ public class CodeGenerationUtils {
 			IJavaElement[] members = type.getChildren();
 			for (IJavaElement member : members) {
 				ISourceRange sourceRange = ((IMember) member).getSourceRange();
-				if (currentOffset < sourceRange.getOffset()) {
+				if (currentOffset <= sourceRange.getOffset()) {
 					return member;
 				}
 			}
