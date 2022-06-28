@@ -110,7 +110,7 @@ public class CodeGenerationUtils {
 			IJavaElement[] members = type.getChildren();
 			for (IJavaElement member : members) {
 				ISourceRange sourceRange = ((IMember) member).getSourceRange();
-				if (currentOffset < sourceRange.getOffset()) {
+				if (currentOffset <= sourceRange.getOffset()) {
 					return member;
 				}
 			}
@@ -126,11 +126,11 @@ public class CodeGenerationUtils {
 			return null;
 		}
 
-		int startOffset = DiagnosticsHelper.getStartOffset(type.getCompilationUnit(), range);
-		if (startOffset < 0) {
+		int endOffset = DiagnosticsHelper.getEndOffset(type.getCompilationUnit(), range);
+		if (endOffset < 0) {
 			return null;
 		}
 
-		return findElementAfterPosition(type, startOffset);
+		return findElementAfterPosition(type, endOffset);
 	}
 }

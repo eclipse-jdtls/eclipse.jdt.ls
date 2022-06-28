@@ -32,7 +32,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -51,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -227,33 +227,7 @@ public class GenerateConstructorsHandler {
 		}
 		InnovationContext context = CodeActionHandler.getContext(unit, astRoot, range);
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
-		List<String> names = new ArrayList<>();
-		// add covered names
-		coveredNodes.forEach(coveredNode -> {
-			if (coveredNode instanceof FieldDeclaration) {
-				String name =  SourceAssistProcessor.getFieldName((FieldDeclaration) coveredNode, coveredNode);
-				if (name != null) {
-					names.add(name);
-				}
-			} else if (coveredNode instanceof VariableDeclarationFragment) {
-				String name =  SourceAssistProcessor.getFieldName((VariableDeclarationFragment) coveredNode);
-				if (name != null) {
-					names.add(name);
-				}
-			}
-		});
-		// add covering name
-		ASTNode coveringNode = context.getCoveringNode();
-		if (coveringNode != null) {
-			FieldDeclaration fieldDeclaration = SourceAssistProcessor.getFieldDeclarationNode(coveringNode);
-			if (fieldDeclaration != null) {
-				String name = SourceAssistProcessor.getFieldName(fieldDeclaration, coveringNode);
-				if (name != null) {
-					names.add(name);
-				}
-			}
-		}
-		return names;
+		return CodeActionUtility.getFieldNames(coveredNodes, context.getCoveringNode());
 	}
 
 	public static class CheckConstructorsResponse {
