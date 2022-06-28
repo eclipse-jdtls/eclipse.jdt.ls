@@ -86,7 +86,6 @@ public class GenerateConstructorsHandler {
 				return new CheckConstructorsResponse();
 			}
 
-			List<String> fieldNames = getFieldNames(compilationUnit, astRoot, range);
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding == null) {
 				return new CheckConstructorsResponse();
@@ -119,6 +118,7 @@ public class GenerateConstructorsHandler {
 				}
 			}
 
+			List<String> fieldNames = getFieldNames(compilationUnit, astRoot, range);
 			//@formatter:off
 			return new CheckConstructorsResponse(
 				Arrays.stream(superConstructors).map(binding -> new LspMethodBinding(binding)).toArray(LspMethodBinding[]::new),
