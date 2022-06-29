@@ -17,6 +17,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -42,6 +43,8 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -225,6 +228,9 @@ public class SourceAssistProcessor {
 		// Add final modifiers where possible
 		Optional<Either<Command, CodeAction>> generateFinalModifiers = addFinalModifierWherePossibleAction(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiers);
+
+		Optional<Either<Command, CodeAction>> generateFinalModifiersQuickAssist = addFinalModifierWherePossibleQuickAssist(context);
+		addSourceActionCommand($, params.getContext(), generateFinalModifiersQuickAssist);
 
 		return $;
 	}
@@ -528,14 +534,52 @@ public class SourceAssistProcessor {
 
 	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleAction(IInvocationContext context) {
 		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
+		return getFinalModifierWherePossibleAction(context, fix, ActionMessages.GenerateFinalModifiersAction_label, JavaCodeActionKind.SOURCE_GENERATE_FINAL_MODIFIERS);
+	}
 
+	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContext context) {
+		ASTNode coveringNode = context.getCoveringNode();
+		List<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
+		List<ASTNode> possibleASTNodes = getPossibleASTNodesForFinalModifier(coveredNodes);
+		if (possibleASTNodes.size() == 0) {
+			possibleASTNodes = getPossibleASTNodesForFinalModifier(Arrays.asList(coveringNode));
+		}
+		Set<String> names = new HashSet<>();
+		for (ASTNode node : possibleASTNodes) {
+			names.addAll(CodeActionUtility.getVariableNamesFromASTNode(node));
+		}
+		String actionMessage = ActionMessages.GenerateFinalModifiersAction_selectionLabel;
+		if (names.size() == 1) {
+			actionMessage = Messages.format(ActionMessages.GenerateFinalModifiersAction_templateLabel, names.iterator().next());
+		}
+		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), possibleASTNodes.toArray(new ASTNode[0]));
+		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
+	}
+
+	private List<ASTNode> getPossibleASTNodesForFinalModifier(List<ASTNode> targetNodes) {
+		List<ASTNode> results = new ArrayList<>();
+		for (ASTNode targetNode : targetNodes) {
+			ASTNode variableDeclaration = CodeActionUtility.inferASTNode(targetNode, VariableDeclaration.class);
+			ASTNode fieldDeclaration = CodeActionUtility.inferASTNode(targetNode, FieldDeclaration.class);
+			ASTNode variableDeclarationStatement = CodeActionUtility.inferASTNode(targetNode, VariableDeclarationStatement.class);
+			if (variableDeclaration != null) {
+				results.add(variableDeclaration);
+			} else if (fieldDeclaration != null) {
+				results.addAll(((FieldDeclaration) fieldDeclaration).fragments());
+			} else if (variableDeclarationStatement != null) {
+				results.add(variableDeclarationStatement);
+			}
+		}
+		return results;
+	}
+
+	private Optional<Either<Command, CodeAction>> getFinalModifierWherePossibleAction(IInvocationContext context, IProposableFix fix, String actionMessage, String kind) {
 		if (fix == null) {
 			return Optional.empty();
 		}
-
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context, JavaCodeActionKind.SOURCE_GENERATE_FINAL_MODIFIERS);
+		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, null, IProposalRelevance.MAKE_VARIABLE_DECLARATION_FINAL, context, kind);
 		if (this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
-			CodeAction codeAction = new CodeAction(ActionMessages.GenerateFinalModifiersAction_label);
+			CodeAction codeAction = new CodeAction(actionMessage);
 			codeAction.setKind(proposal.getKind());
 			codeAction.setData(proposal);
 			codeAction.setDiagnostics(Collections.EMPTY_LIST);
@@ -552,9 +596,9 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-			Command command = new Command(ActionMessages.GenerateFinalModifiersAction_label, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
+			Command command = new Command(actionMessage, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
-				CodeAction codeAction = new CodeAction(ActionMessages.GenerateFinalModifiersAction_label);
+				CodeAction codeAction = new CodeAction(actionMessage);
 				codeAction.setKind(proposal.getKind());
 				codeAction.setCommand(command);
 				codeAction.setDiagnostics(Collections.EMPTY_LIST);

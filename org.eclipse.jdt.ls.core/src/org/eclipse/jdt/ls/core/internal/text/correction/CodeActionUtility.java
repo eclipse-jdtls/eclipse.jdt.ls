@@ -23,7 +23,9 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 public class CodeActionUtility {
 
@@ -93,6 +95,23 @@ public class CodeActionUtility {
 		} else if (node instanceof FieldDeclaration) {
 			List<String> names = new ArrayList<>();
 			List<VariableDeclarationFragment> fragments = ((FieldDeclaration) node).fragments();
+			for (VariableDeclarationFragment fragment : fragments) {
+				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
+			}
+			return names;
+		}
+		return Collections.emptyList();
+	}
+
+	public static List<String> getVariableNamesFromASTNode(ASTNode node) {
+		if (node instanceof VariableDeclaration) {
+			SimpleName name = ((VariableDeclaration) node).getName();
+			if (name != null) {
+				return Arrays.asList(name.getIdentifier());
+			}
+		} else if (node instanceof VariableDeclarationStatement) {
+			List<String> names = new ArrayList<>();
+			List<VariableDeclarationFragment> fragments = ((VariableDeclarationStatement) node).fragments();
 			for (VariableDeclarationFragment fragment : fragments) {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
 			}
