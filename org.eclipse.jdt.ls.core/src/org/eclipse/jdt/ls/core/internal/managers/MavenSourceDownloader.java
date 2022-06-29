@@ -82,20 +82,20 @@ public class MavenSourceDownloader implements ISourceDownloader {
 								// see https://github.com/eclipse-m2e/m2e-core/commit/b547ecc358c990e182a5eaf8d36f121e43f4a8c9#diff-3967743078be6a24ba1e3ec28bfc22bdf2c88a740695411f6d20e2444fef042fR943
 								long lastModified;
 								try {
-									File artifactFile = DependencyUtil.getArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), artifact.getClassifier());
+									File artifactFile = DependencyUtil.getArtifact(artifact.groupId(), artifact.artifactId(), artifact.version(), artifact.classifier());
 									lastModified = artifactFile.lastModified();
 								} catch (FileNotFoundException | CoreException e1) {
 									lastModified = -1;
 								}
 								if (lastModified > -1) {
 									try {
-										File sources = DependencyUtil.getSources(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+										File sources = DependencyUtil.getSources(artifact.groupId(), artifact.artifactId(), artifact.version());
 										sources.setLastModified(lastModified - 1);
 									} catch (FileNotFoundException | CoreException e) {
 										// ignore
 									}
 									try {
-										File javadoc = DependencyUtil.getJavadoc(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+										File javadoc = DependencyUtil.getJavadoc(artifact.groupId(), artifact.artifactId(), artifact.version());
 										javadoc.setLastModified(lastModified - 1);
 									} catch (FileNotFoundException | CoreException e) {
 										// ignore

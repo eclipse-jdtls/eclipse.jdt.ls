@@ -13,6 +13,7 @@
  * bug fix - Change the order for the configuration updating options. See [#2135](https://github.com/eclipse/eclipse.jdt.ls/pull/2135).
  * build - Move to Java 17. See [#2117](https://github.com/eclipse/eclipse.jdt.ls/issues/2117).
  * build - Update target platform to 4.25-I-builds. See [#2127](https://github.com/eclipse/eclipse.jdt.ls/issues/2127).
+ * build - React to API changes in M2E. See [#2144](https://github.com/eclipse/eclipse.jdt.ls/pull/2144).
  * debt - JDT-LS doesn't require o.e.m2e.archetype.common anymore. See [#2119](https://github.com/eclipse/eclipse.jdt.ls/issues/2119).
  * other - Adjust the order of code actions. See [#2109](https://github.com/eclipse/eclipse.jdt.ls/pull/2109).
  * other - Update launch script, Java 17 is required now. See [#2141](https://github.com/eclipse/eclipse.jdt.ls/pull/2141).
