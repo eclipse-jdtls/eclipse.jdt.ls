@@ -51,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionComparator;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -214,6 +215,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 
+		codeActions.sort(new CodeActionComparator());
 		populateDataFields(codeActions);
 		return codeActions;
 	}
@@ -224,15 +226,21 @@ public class CodeActionHandler {
 		codeActions.forEach(action -> {
 			if (action.isRight()) {
 				Either<ChangeCorrectionProposal, CodeActionProposal> proposal = null;
-				if (action.getRight().getData() instanceof ChangeCorrectionProposal) {
-					proposal = Either.forLeft((ChangeCorrectionProposal) action.getRight().getData());
-				} else if (action.getRight().getData() instanceof CodeActionProposal) {
-					proposal = Either.forRight((CodeActionProposal) action.getRight().getData());
+				Object originalData = action.getRight().getData();
+				if (originalData instanceof CodeActionData) {
+					Object originalProposal = ((CodeActionData) originalData).getProposal();
+					if (originalProposal instanceof ChangeCorrectionProposal) {
+						proposal = Either.forLeft((ChangeCorrectionProposal) originalProposal);
+					} else if (originalProposal instanceof CodeActionProposal) {
+						proposal = Either.forRight((CodeActionProposal) originalProposal);
+					} else {
+						action.getRight().setData(null);
+						return;
+					}
 				} else {
 					action.getRight().setData(null);
 					return;
 				}
-
 				Map<String, String> data = new HashMap<>();
 				data.put(CodeActionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 				data.put(CodeActionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(proposals.size()));
@@ -275,7 +283,7 @@ public class CodeActionHandler {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			if (command == null) { // lazy resolve the edit.
-				codeAction.setData(proposal);
+				codeAction.setData(new CodeActionData(proposal));
 			} else {
 				codeAction.setCommand(command);
 			}
@@ -364,6 +372,29 @@ public class CodeActionHandler {
 
 	private static boolean containsKind(List<String> codeActionKinds, String baseKind) {
 		return codeActionKinds.stream().anyMatch(kind -> kind.startsWith(baseKind));
+	}
+
+	public static class CodeActionData {
+		private final Object proposal;
+		private final int priority;
+
+		public CodeActionData(Object proposal) {
+			this.proposal = proposal;
+			this.priority = CodeActionComparator.LOWEST_PRIORITY;
+		}
+
+		public CodeActionData(Object proposal, int priority) {
+			this.proposal = proposal;
+			this.priority = priority;
+		}
+
+		public Object getProposal() {
+			return proposal;
+		}
+
+		public int getPriority() {
+			return priority;
+		}
 	}
 
 }

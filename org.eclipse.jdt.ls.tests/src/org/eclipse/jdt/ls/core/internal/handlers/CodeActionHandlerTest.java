@@ -603,8 +603,70 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 
 		Assert.assertNotNull(codeActions);
-		CodeAction action = codeActions.get(2).getRight();
+		CodeAction action = codeActions.get(1).getRight();
 		Assert.assertEquals("Add missing method 'action' to class 'Foo'", action.getTitle());
+	}
+
+	@Test
+	public void testQuickAssistForImportDeclarationOrder() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.util.List;\n"+
+				"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		String bar = \"astring\";"+
+				"	}\n"+
+				"}\n");
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "util");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Organize imports");
+	}
+
+	@Test
+	public void testQuickAssistForFieldDeclarationOrder() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	public String name = \"name\";\r\n" +
+				"	public String pet = \"pet\";\r\n" +
+				"}");
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getter and Setter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setter for 'name'");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(3)).getTitle(), "Generate Constructors...");
+	}
+
+	@Test
+	public void testQuickAssistForTypeDeclarationOrder() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	public String name = \"name\";\r\n" +
+				"	public String pet = \"pet\";\r\n" +
+				"}");
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getters and Setters...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getters...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setters...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(3)).getTitle(), "Generate Constructors...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(4)).getTitle(), "Generate hashCode() and equals()...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(5)).getTitle(), "Generate toString()...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(6)).getTitle(), "Override/Implement Methods...");
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
