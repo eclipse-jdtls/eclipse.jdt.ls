@@ -539,7 +539,7 @@ public class SourceAssistProcessor {
 
 	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContext context) {
 		ASTNode coveringNode = context.getCoveringNode();
-		List<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
+		List<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
 		List<ASTNode> possibleASTNodes = getPossibleASTNodesForFinalModifier(coveredNodes);
 		if (possibleASTNodes.size() == 0) {
 			possibleASTNodes = getPossibleASTNodesForFinalModifier(Arrays.asList(coveringNode));
