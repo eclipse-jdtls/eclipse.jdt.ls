@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,12 +19,15 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.extended.ProjectBuildParams;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -98,6 +101,17 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(6, projects.size());
 
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
+		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
+	}
+
+	@Test
+	public void testBuildProjects() throws Exception {
+		List<IProject> projects = importProjects("maven/multimodule");
+		List<TextDocumentIdentifier> identifiers = projects.stream().map(p -> {
+			return new TextDocumentIdentifier(p.getLocationURI().toString());
+		}).collect(Collectors.toList());
+		ProjectBuildParams params = new ProjectBuildParams(identifiers, true);
+		BuildWorkspaceStatus result = handler.buildProjects(params, monitor);
 		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
 	}
 }

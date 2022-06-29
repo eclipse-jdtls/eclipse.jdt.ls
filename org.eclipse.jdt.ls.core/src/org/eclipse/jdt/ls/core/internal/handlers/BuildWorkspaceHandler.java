@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -16,9 +16,14 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IBuildConfiguration;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -33,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.lsp4j.extended.ProjectBuildParams;
 
 /**
  * @author xuzho
@@ -83,6 +89,92 @@ public class BuildWorkspaceHandler {
 		} catch (OperationCanceledException e) {
 			return BuildWorkspaceStatus.CANCELLED;
 		}
+	}
+
+	/**
+	 * Build the belonging projects of the document identifiers in the <code>params</code>.
+	 * @param params the project build parameter.
+	 * @param monitor progress monitor.
+	 * @return {@link org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus}
+	 */
+	public BuildWorkspaceStatus buildProjects(ProjectBuildParams params, IProgressMonitor monitor) {
+		Collection<IProject> projects = ProjectUtils.getProjectsFromDocumentIdentifiers(params.getIdentifiers());
+
+		if (projects.size() == 0) {
+			logError("Build projects fail: Cannot find projects from given uris.");
+			return BuildWorkspaceStatus.CANCELLED;
+		}
+
+		IBuildConfiguration[] configs = getBuildConfigurationsToBuild(projects);
+		try {
+			if (params.isFullBuild()) {
+				ResourcesPlugin.getWorkspace().build(configs, IncrementalProjectBuilder.CLEAN_BUILD, true, monitor);
+				ResourcesPlugin.getWorkspace().build(configs, IncrementalProjectBuilder.FULL_BUILD, true, monitor);
+			} else {
+				ResourcesPlugin.getWorkspace().build(configs, IncrementalProjectBuilder.INCREMENTAL_BUILD, true, monitor);
+			}
+		} catch (CoreException e) {
+			logException("Failed to build projects.", e);
+			return BuildWorkspaceStatus.FAILED;
+		} catch (OperationCanceledException e) {
+			return BuildWorkspaceStatus.CANCELLED;
+		}
+
+		for (IProject project : projects) {
+			if (project.equals(ProjectsManager.getDefaultProject())) {
+				continue;
+			}
+
+			try {
+				List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+				if (markers != null && markers.size() > 0) {
+					return BuildWorkspaceStatus.WITH_ERROR;
+				}
+			} catch (CoreException e) {
+				logException("Failed to get error markers from project: " + project.getName(), e);
+				return BuildWorkspaceStatus.FAILED;
+			}
+		}
+
+		return BuildWorkspaceStatus.SUCCEED;
+	}
+
+	/**
+	 * return project build configs, which will be passed to the workspace for building.
+	 * The Workspace is responsible for resolving references.
+	 */
+	protected IBuildConfiguration[] getBuildConfigurationsToBuild(Collection<IProject> projects) {
+		Set<IBuildConfiguration> configs = new HashSet<>();
+		for (IProject project : projects) {
+			if (project != null && hasBuilder(project)) {
+				try {
+					configs.add(project.getActiveBuildConfig());
+				} catch(CoreException e) {
+					logException("Failed to get build config.", e);
+				}
+			}
+		}
+		return configs.toArray(new IBuildConfiguration[configs.size()]);
+	}
+
+	/**
+	 * Returns whether there are builders configured on the given project.
+	 *
+	 * @return <code>true</code> if it has builders,
+	 *   <code>false</code> if not, or if this couldn't be determined
+	 */
+	protected boolean hasBuilder(IProject project) {
+		if (!project.isAccessible())
+			return false;
+		try {
+			ICommand[] commands = project.getDescription().getBuildSpec();
+			if (commands.length > 0) {
+				return true;
+			}
+		} catch (CoreException e) {
+			logException("Failed to check project's builder.", e);
+		}
+		return false;
 	}
 
 	private static String convertMarker(IMarker marker) {

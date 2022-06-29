@@ -138,6 +138,7 @@ import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
 import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
+import org.eclipse.lsp4j.extended.ProjectBuildParams;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
@@ -868,6 +869,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		logInfo(">> java/buildWorkspace (" + (rebuild ? "full)" : "incremental)"));
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(pm);
 		return computeAsyncWithClientProgress((monitor) -> handler.buildWorkspace(rebuild, monitor));
+	}
+
+	@Override
+	public CompletableFuture<BuildWorkspaceStatus> buildProjects(ProjectBuildParams params) {
+		logInfo(">> java/buildProjects");
+		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(pm);
+		return computeAsyncWithClientProgress((monitor) -> handler.buildProjects(params, monitor));
 	}
 
 	/* (non-Javadoc)

@@ -13,16 +13,11 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 
@@ -45,22 +40,7 @@ public class ProjectConfigurationUpdateHandler {
 	 * files that belong to some projects in the workspace.
 	 */
 	public void updateConfigurations(List<TextDocumentIdentifier> identifiers) {
-		Set<IProject> projects = new HashSet<>();
-		for (TextDocumentIdentifier identifier : identifiers) {
-			IProject project = getProjectFromUri(identifier.getUri());
-			if (project != null) {
-				projects.add(project);
-				continue;
-			}
-			IFile file = JDTUtils.findFile(identifier.getUri());
-			if (file == null) {
-				continue;
-			}
-			project = file.getProject();
-			if (project != null) {
-				projects.add(project);
-			}
-		}
+		Collection<IProject> projects = ProjectUtils.getProjectsFromDocumentIdentifiers(identifiers);
 
 		for (IProject project : projects) {
 			// most likely the handler is invoked intentionally by the user, that's why
@@ -71,16 +51,5 @@ public class ProjectConfigurationUpdateHandler {
 
 	public void updateConfiguration(TextDocumentIdentifier param) {
 		updateConfigurations(Arrays.asList(param));
-	}
-
-	private IProject getProjectFromUri(String uri) {
-		IPath uriPath = ResourceUtils.canonicalFilePathFromURI(uri);
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		for (IProject project : projects) {
-			if (project.getLocation().equals(uriPath)) {
-				return project;
-			}
-		}
-		return null;
 	}
 }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -34,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.buildship.core.internal.configuration.GradleProjectNature;
 import org.eclipse.core.resources.ICommand;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -58,6 +60,7 @@ import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 
 /**
@@ -583,6 +586,42 @@ public final class ProjectUtils {
 				lastSegment.equals(GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR);
 		}
 		return false;
+	}
+
+	/**
+	 * Get a collection of projects based on the given document identifiers. The belonging projects of those
+	 * documents will be added to the returned collection.
+	 * @param identifiers a list of the {@link org.eclipse.lsp4j.TextDocumentIdentifier}
+	 */
+	public static Collection<IProject> getProjectsFromDocumentIdentifiers(List<TextDocumentIdentifier> identifiers) {
+		Set<IProject> projects = new HashSet<>();
+		for (TextDocumentIdentifier identifier : identifiers) {
+			IProject project = getProjectFromUri(identifier.getUri());
+			if (project != null) {
+				projects.add(project);
+				continue;
+			}
+			IFile file = JDTUtils.findFile(identifier.getUri());
+			if (file == null) {
+				continue;
+			}
+			project = file.getProject();
+			if (project != null) {
+				projects.add(project);
+			}
+		}
+		return projects;
+	}
+
+	private static IProject getProjectFromUri(String uri) {
+		IPath uriPath = ResourceUtils.canonicalFilePathFromURI(uri);
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		for (IProject project : projects) {
+			if (project.getLocation().equals(uriPath)) {
+				return project;
+			}
+		}
+		return null;
 	}
 
 }
