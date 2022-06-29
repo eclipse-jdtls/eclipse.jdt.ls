@@ -660,9 +660,9 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getters and Setters...");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getters...");
-		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setters...");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(0)).getTitle(), "Generate Getters and Setters");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(1)).getTitle(), "Generate Getters");
+		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(2)).getTitle(), "Generate Setters");
 		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(3)).getTitle(), "Generate Constructors...");
 		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(4)).getTitle(), "Generate hashCode() and equals()...");
 		Assert.assertEquals(CodeActionHandlerTest.getCommand(quickAssistActions.get(5)).getTitle(), "Generate toString()...");

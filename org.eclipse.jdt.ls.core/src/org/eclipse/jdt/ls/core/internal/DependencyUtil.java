@@ -48,7 +48,7 @@ public class DependencyUtil {
 		ArtifactKey key = new ArtifactKey(groupId, artifactId, version, classifier);
 		File archive = getLocalArtifactFile(key);
 		if (archive == null) {
-			Artifact artifact = MavenPlugin.getMaven().resolve(key.getGroupId(), key.getArtifactId(), key.getVersion(), "jar", key.getClassifier(), null, new NullProgressMonitor());
+			Artifact artifact = MavenPlugin.getMaven().resolve(key.groupId(), key.artifactId(), key.version(), "jar", key.classifier(), null, new NullProgressMonitor());
 			if (artifact == null) {
 				throw new FileNotFoundException("Unable to find " + key);
 			}
@@ -63,8 +63,8 @@ public class DependencyUtil {
 		IMaven maven = MavenPlugin.getMaven();
 		try {
 			ArtifactRepository localRepository = maven.getLocalRepository();
-			String relPath = maven.getArtifactPath(localRepository, a.getGroupId(), a.getArtifactId(), a.getVersion(), "jar", //$NON-NLS-1$
-					a.getClassifier());
+			String relPath = maven.getArtifactPath(localRepository, a.groupId(), a.artifactId(), a.version(), "jar", //$NON-NLS-1$
+					a.classifier());
 			File file = new File(localRepository.getBasedir(), relPath).getCanonicalFile();
 			if (file.canRead() && file.isFile()) {
 				return file;
