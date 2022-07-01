@@ -3465,6 +3465,22 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_QualifiedName() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"public class Test {",
+				"	public static void main(String[] args) {",
+				"		 java.util.List<String> list = new Array",
+				"	}",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "new Array");
+		assertFalse(list.getItems().isEmpty());
+		assertEquals("ArrayList<>()", list.getItems().get(0).getTextEdit().getLeft().getNewText());
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		int[] loc = findCompletionLocation(unit, completeBehind);
 		return server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
