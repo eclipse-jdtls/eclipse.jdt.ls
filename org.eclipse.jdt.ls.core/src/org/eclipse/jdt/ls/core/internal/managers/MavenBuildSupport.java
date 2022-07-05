@@ -82,8 +82,7 @@ public class MavenBuildSupport implements IBuildSupport {
 			if (shouldCollectProjects()) {
 				Set<IProject> projectSet = new LinkedHashSet<>();
 				collectProjects(projectSet, project, monitor);
-				IProject[] projects = projectSet.toArray(new IProject[0]);
-				MavenUpdateRequest request = new MavenUpdateRequest(projects, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
+				MavenUpdateRequest request = new MavenUpdateRequest(projectSet, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
 				((ProjectConfigurationManager) configurationManager).updateProjectConfiguration(request, true, true, monitor);
 			} else {
 				MavenUpdateRequest request = new MavenUpdateRequest(project, MavenPlugin.getMavenConfiguration().isOffline(), updateSnapshots);
