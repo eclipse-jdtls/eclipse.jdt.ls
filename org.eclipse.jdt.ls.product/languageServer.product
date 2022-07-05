@@ -60,7 +60,6 @@
       <plugin id="org.eclipse.m2e.apt.core"/>
       <plugin id="org.eclipse.m2e.core"/>
       <plugin id="org.eclipse.m2e.jdt"/>
-      <plugin id="org.eclipse.m2e.lifecyclemapping.defaults"/>
       <plugin id="org.eclipse.m2e.maven.runtime"/>
       <plugin id="org.eclipse.m2e.workspace.cli"/>
       <plugin id="org.eclipse.osgi"/>
