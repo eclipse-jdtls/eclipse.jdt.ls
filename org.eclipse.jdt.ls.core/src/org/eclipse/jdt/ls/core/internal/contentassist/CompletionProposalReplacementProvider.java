@@ -988,8 +988,7 @@ public class CompletionProposalReplacementProvider {
 		String prefix="";
 		try{
 			IDocument document = JsonRpcHelpers.toDocument(this.compilationUnit.getBuffer());
-			IRegion region= document.getLineInformationOfOffset(proposal.getReplaceEnd());
-			prefix =  document.get(region.getOffset(), proposal.getReplaceEnd() -region.getOffset()).trim();
+			prefix = document.get(proposal.getReplaceStart(), proposal.getReplaceEnd() - proposal.getReplaceStart());
 		}catch(BadLocationException | JavaModelException e){
 
 		}
