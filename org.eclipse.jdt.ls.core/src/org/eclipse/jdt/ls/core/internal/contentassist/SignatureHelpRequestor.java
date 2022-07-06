@@ -144,7 +144,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	@Override
 	public void acceptContext(CompletionContext context) {
 		super.acceptContext(context);
-		this.descriptionProvider = new CompletionProposalDescriptionProvider(context);
+		this.descriptionProvider = new CompletionProposalDescriptionProvider(unit, context);
 	}
 
 	public SignatureInformation toSignatureInformation(CompletionProposal methodProposal) {
