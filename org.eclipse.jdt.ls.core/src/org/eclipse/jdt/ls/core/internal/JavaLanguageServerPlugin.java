@@ -113,6 +113,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	public static final String PLUGIN_ID = IConstants.PLUGIN_ID;
 
 	public static final String DEFAULT_MEMBER_SORT_ORDER = "T,SF,SI,SM,F,I,C,M"; //$NON-NLS-1$
+	public static final String DEFAULT_VISIBILITY_SORT_ORDER = "B,R,D,V"; //$NON-NLS-1$
 
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;

@@ -30,6 +30,7 @@ public class CodeActionComparator implements Comparator<Either<Command, CodeActi
 	public static int GENERATE_TOSTRING_PRIORITY = 40;
 	public static int GENERATE_OVERRIDE_IMPLEMENT_PRIORITY = 50;
 	public static int GENERATE_DELEGATE_METHOD_PRIORITY = 60;
+	public static int SORT_MEMBERS_PRIORITY = 65;
 	public static int CHANGE_MODIFIER_TO_FINAL_PRIORITY = 70;
 	public static int LOWEST_PRIORITY = 100;
 

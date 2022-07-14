@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
+import org.eclipse.jdt.core.util.CompilationUnitSorter;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
@@ -58,7 +59,9 @@ import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.DefaultJavaElementComparator;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.PartialSortMembersOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -86,6 +89,9 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.ltk.core.refactoring.CategorizedTextEditGroup;
+import org.eclipse.ltk.core.refactoring.GroupCategory;
+import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.text.edits.TextEdit;
 
 import com.google.common.collect.Sets;
@@ -115,7 +121,8 @@ public class SourceAssistProcessor {
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
 		ASTNode coveringNode = context.getCoveringNode();
 		boolean isInFieldDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, FieldDeclaration.class) != null;
-		boolean isInTypeDeclaration =  CodeActionUtility.findASTNode(coveredNodes, coveringNode, TypeDeclaration.class) != null;
+		ASTNode typeDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, TypeDeclaration.class);
+		boolean isInTypeDeclaration =  typeDeclaration != null;
 		boolean isInImportDeclaration =  CodeActionUtility.findASTNode(coveredNodes, coveringNode, ImportDeclaration.class) != null;
 
 		// Generate Constructor QuickAssist
@@ -232,6 +239,19 @@ public class SourceAssistProcessor {
 
 		Optional<Either<Command, CodeAction>> generateFinalModifiersQuickAssist = addFinalModifierWherePossibleQuickAssist(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiersQuickAssist);
+
+		Optional<Either<Command, CodeAction>> sortMembersAction = getSortMembersAction(context, params);
+		addSourceActionCommand($, params.getContext(), sortMembersAction);
+
+		if (isInTypeDeclaration) {
+			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForType = getSortMembersQuickAssistForType(context, params, (TypeDeclaration) typeDeclaration);
+			addSourceActionCommand($, params.getContext(), sortMembersQuickAssistForType);
+		}
+
+		if (coveredNodes.size() > 0) {
+			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForSelection = getSortMembersForSelectionProposal(context, params, coveredNodes);
+			addSourceActionCommand($, params.getContext(), sortMembersQuickAssistForSelection);
+		}
 
 		return $;
 	}
@@ -616,6 +636,64 @@ public class SourceAssistProcessor {
 				return Optional.of(Either.forLeft(command));
 			}
 		}
+	}
+
+	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContext context, CodeActionParams params, String kind, String label) {
+		CategorizedTextEditGroup group = new CategorizedTextEditGroup(label, new GroupCategorySet(new GroupCategory(label, label, label)));
+		try {
+			TextEdit edit = CompilationUnitSorter.sort(context.getASTRoot(), new DefaultJavaElementComparator(false), 0, group, null);
+			if (edit == null) {
+				return Optional.empty();
+			}
+			CodeActionProposal sortMembersProposal = (pm) -> {
+				return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
+			};
+			return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), label, kind, sortMembersProposal, CodeActionComparator.SORT_MEMBERS_PRIORITY);
+		} catch (JavaModelException e) {
+			return Optional.empty();
+		}
+	}
+
+	private Optional<Either<Command, CodeAction>> getSortMembersForSelectionProposal(IInvocationContext context, CodeActionParams params, List<ASTNode> coveredNodes) {
+		String label = ActionMessages.SortMembers_selectionLabel;
+		CategorizedTextEditGroup group = new CategorizedTextEditGroup(label, new GroupCategorySet(new GroupCategory(label, label, label)));
+		PartialSortMembersOperation operation = new PartialSortMembersOperation(new IJavaElement[] { context.getASTRoot().getJavaElement() }, new DefaultJavaElementComparator(false));
+		try {
+			TextEdit edit = operation.calculateEdit(context.getASTRoot(), coveredNodes, group);
+			if (edit == null) {
+				return Optional.empty();
+			}
+			CodeActionProposal sortMembersProposal = (pm) -> {
+				return convertToWorkspaceEdit(context.getCompilationUnit(), edit);
+			};
+			return getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), label, JavaCodeActionKind.QUICK_ASSIST, sortMembersProposal, CodeActionComparator.SORT_MEMBERS_PRIORITY);
+		} catch (JavaModelException e) {
+			return Optional.empty();
+		}
+	}
+
+	private Optional<Either<Command, CodeAction>> getSortMembersAction(IInvocationContext context, CodeActionParams params) {
+		CompilationUnit unit = context.getASTRoot();
+		if (unit != null) {
+			List<AbstractTypeDeclaration> types = unit.types();
+			if (types.size() == 1) {
+				String typeName = CodeActionUtility.getTypeName(types.get(0));
+				if (typeName != null) {
+					return getSortMembersProposal(context, params, JavaCodeActionKind.SOURCE_SORT_MEMBERS, Messages.format(ActionMessages.SortMembers_templateLabel, typeName));
+				}
+			} else if (types.size() > 1) {
+				return getSortMembersProposal(context, params, JavaCodeActionKind.SOURCE_SORT_MEMBERS, ActionMessages.SortMembers_label);
+			}
+		}
+		return Optional.empty();
+	}
+
+	private Optional<Either<Command, CodeAction>> getSortMembersQuickAssistForType(IInvocationContext context, CodeActionParams params, TypeDeclaration typeDeclaration) {
+		String typeName = CodeActionUtility.getTypeName(typeDeclaration);
+		if (typeName != null) {
+			return getSortMembersProposal(context, params, JavaCodeActionKind.QUICK_ASSIST, Messages.format(ActionMessages.SortMembers_templateLabel, typeName));
+		}
+		return Optional.empty();
 	}
 
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CodeActionContext context, ICompilationUnit cu, String name, String kind, CodeActionProposal proposal, int priority) {
