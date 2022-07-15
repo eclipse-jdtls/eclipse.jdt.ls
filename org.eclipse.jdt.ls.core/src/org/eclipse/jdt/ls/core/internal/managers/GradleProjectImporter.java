@@ -117,7 +117,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			+ "If you trust it, please add \n"
 			+ "`{\"sha256\": \"@checksum@\","
 			+ "\n\"allowed\": true}`"
-			+ "\n to the `java.import.gradle.wrapper.checksums` preference."
+			+ "\n to the `java.imports.gradle.wrapper.checksums` preference."
 			+ ""
 			.replaceAll("\n", System.lineSeparator());
 	//@formatter:on
