@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
@@ -41,6 +42,7 @@ import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -55,8 +57,11 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -510,7 +515,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	private ICompilationUnit checkPackageDeclaration(String uri, ICompilationUnit unit) {
-		if (unit.getResource() != null && unit.getJavaProject() != null && unit.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+		if (unit.getResource() == null || unit.getJavaProject() == null) {
+			return unit;
+		}
+
+		IJavaProject javaProject = unit.getJavaProject();
+		IProject project = javaProject.getProject();
+		if (project.getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			try {
 				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 				IProblem[] problems = astRoot.getProblems();
@@ -549,6 +560,32 @@ public abstract class BaseDocumentLifeCycleHandler {
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
+		} else if (!ProjectUtils.isVisibleProject(project)) {
+			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+			List<String> sourcePaths = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
+
+			// user already set the source paths manually, we don't infer it anymore.
+			if (sourcePaths != null) {
+				return unit;
+			}
+
+			IPath projectRealFolder = ProjectUtils.getProjectRealFolder(project);
+			IPath unitPath = unit.getResource().getLocation();
+			
+			boolean needToInfer = false;
+			if (javaProject.isOnClasspath(unit)) {
+				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+				IProblem[] problems = astRoot.getProblems();
+				needToInfer = Arrays.stream(problems).anyMatch(p -> p.getID() == IProblem.PackageIsNotExpectedPackage);
+			} else if (projectRealFolder.isPrefixOf(unitPath)) {
+				needToInfer = true;
+			}
+
+			if (!needToInfer) {
+				return unit;
+			}
+
+			InvisibleProjectImporter.inferSourceRoot(javaProject, unitPath);
 		}
 		return unit;
 	}

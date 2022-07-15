@@ -22,10 +22,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -40,6 +43,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -163,6 +167,64 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		return true;
 	}
 
+	/**
+	 * Try to infer the source root of the given compilation unit path.
+	 * @param javaProject Java project.
+	 * @param unitPath the path of the compilation unit.
+	 */
+	public static void inferSourceRoot(IJavaProject javaProject, IPath unitPath) {
+		IProject project = javaProject.getProject();
+		IPath projectRealFolder = ProjectUtils.getProjectRealFolder(project);
+
+		IPath rootPath = ProjectUtils.findBelongedWorkspaceRoot(projectRealFolder);
+		if (rootPath == null) {
+			return;
+		}
+
+		String packageName = getPackageName(unitPath, rootPath);
+		IPath sourceDirectory = inferSourceDirectory(unitPath.toFile().toPath(), packageName);
+		if (sourceDirectory == null || !rootPath.isPrefixOf(sourceDirectory)
+				|| isPartOfMatureProject(sourceDirectory)) {
+			return;
+		}
+
+		IPath relativeSourcePath = sourceDirectory.makeRelativeTo(rootPath);
+		IFolder workspaceLinkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
+		IPath sourcePath = workspaceLinkFolder.getFolder(relativeSourcePath).getFullPath();
+		Set<IPath> sourcePaths = new HashSet<>();
+		sourcePaths.add(sourcePath);
+
+		try {
+			for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+					sourcePaths.add(entry.getPath());
+				}
+			}
+			List<IPath> excludingPaths = getExcludingPath(javaProject, rootPath, workspaceLinkFolder);
+			IPath outputPath = getOutputPath(javaProject, getPreferences().getInvisibleProjectOutputPath(), false /*isUpdate*/);
+			IClasspathEntry[] classpathEntries = resolveClassPathEntries(javaProject, new ArrayList<>(sourcePaths), excludingPaths, outputPath);
+
+			WorkspaceJob updateClasspathJob = new WorkspaceJob("Update invisible project classpath") {
+
+				@Override
+				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+					try {
+						javaProject.setRawClasspath(classpathEntries, outputPath, monitor);
+						ProjectUtils.refreshDiagnostics(monitor);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.log(e);
+					}
+					return Status.OK_STATUS;
+				}
+			};
+			updateClasspathJob.setPriority(Job.BUILD);
+			updateClasspathJob.setSystem(true);
+			updateClasspathJob.schedule();
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+			return;
+		}
+	}
 
 	public static IClasspathEntry[] resolveClassPathEntries(IJavaProject javaProject, List<IPath> sourcePaths, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
 		List<IClasspathEntry> newEntries = new LinkedList<>();
