@@ -21,11 +21,14 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionItem;
 
 /**
@@ -47,14 +50,16 @@ public class CompletionProposalDescriptionProvider {
 	 * The completion context.
 	 */
 	private CompletionContext fContext;
+	private ICompilationUnit fUnit;
 
 	/**
 	 * Creates a new label provider.
-	 * @param iCompilationUnit
+	 *
 	 */
-	public CompletionProposalDescriptionProvider(CompletionContext context) {
+	public CompletionProposalDescriptionProvider(ICompilationUnit unit, CompletionContext context) {
 		super();
 		fContext = context;
+		fUnit = unit;
 	}
 
 	/**
@@ -310,11 +315,13 @@ public class CompletionProposalDescriptionProvider {
 		StringBuilder typeInfo = new StringBuilder();
 		String declaringType= extractDeclaringTypeFQN(methodProposal);
 
+		String qualifier = null;
 		if (methodProposal.getRequiredProposals() != null) {
-			String qualifier= Signature.getQualifier(declaringType);
+			qualifier = Signature.getQualifier(declaringType);
 			if (qualifier.length() > 0) {
 				typeInfo.append(qualifier);
 				typeInfo.append('.');
+				qualifier = qualifier + ".";
 			}
 		}
 
@@ -331,7 +338,19 @@ public class CompletionProposalDescriptionProvider {
 		setSignature(item, String.valueOf(methodProposal.getSignature()));
 		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
 		setName(item, String.valueOf(methodProposal.getName()));
-
+		if (fUnit != null && methodProposal.isConstructor() && typeInfo.length() > 0 && item.getData() != null && methodProposal.getRequiredProposals() != null && methodProposal.getRequiredProposals().length > 0) {
+			CompletionProposal requiredProposal = methodProposal.getRequiredProposals()[0];
+			try {
+				IDocument document = JsonRpcHelpers.toDocument(fUnit.getBuffer());
+				String prefix = document.get(requiredProposal.getReplaceStart(), requiredProposal.getReplaceEnd() - requiredProposal.getReplaceStart());
+				if (prefix != null && prefix.indexOf(".") > -1) {
+					description.insert(0, qualifier);
+					item.setFilterText(description.toString());
+				}
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
 	}
 
 	/**

@@ -814,7 +814,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(supportCompletionSnippets);
-		Mockito.when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
+		Mockito.lenient().when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
 		return mockCapabilies;
 	}
 
@@ -2901,7 +2901,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
-		Mockito.when(mockCapabilies.isClassFileContentSupported()).thenReturn(true);
+		Mockito.lenient().when(mockCapabilies.isClassFileContentSupported()).thenReturn(true);
 
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -3465,6 +3465,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/2534
 	@Test
 	public void testCompletion_QualifiedName() throws Exception {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
@@ -3479,6 +3480,23 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "new Array");
 		assertFalse(list.getItems().isEmpty());
 		assertEquals("ArrayList<>()", list.getItems().get(0).getTextEdit().getLeft().getNewText());
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2147
+	@Test
+	public void testCompletion_QualifiedName2() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"public class Test {",
+				"	public static void main(String[] args) {",
+				"		  List<String> list = new java.util.ArrayL",
+				"	}",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "ArrayL");
+		assertFalse(list.getItems().isEmpty());
+		assertEquals("java.util.ArrayList()", list.getItems().get(0).getFilterText());
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
