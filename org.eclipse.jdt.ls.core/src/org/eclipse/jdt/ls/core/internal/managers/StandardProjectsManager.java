@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static java.util.Arrays.asList;
+import static java.util.Map.entry; 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
@@ -42,6 +43,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ISaveContext;
@@ -227,15 +229,16 @@ public class StandardProjectsManager extends ProjectsManager {
 					return;
 				}
 
-				boolean requireConfigurationUpdate = buildSupport.fileChanged(resource, changeType, new NullProgressMonitor());
+				boolean requireConfigurationUpdate = buildSupport.fileChanged(resource, changeType, new NullProgressMonitor()) &&
+						JavaLanguageServerPlugin.getDigestStore().updateDigest(resource.getLocation().toFile().toPath());
 				if (requireConfigurationUpdate) {
 					FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 					switch (status) {
 						case automatic:
-							// do not force the build, because it's not started by user and should be done only if build file has changed
-							updateProject(resource.getProject(), false);
+							updateProject(resource.getProject(), true);
 							break;
 						case disabled:
+							appendBuildFileMarker(resource);
 							break;
 						default:
 							if (client != null) {
@@ -246,12 +249,26 @@ public class StandardProjectsManager extends ProjectsManager {
 												new Command("Always", cmd, asList(uri, FeatureStatus.automatic)), new Command("Never", cmd, asList(uri, FeatureStatus.disabled))));
 								client.sendActionableNotification(updateProjectConfigurationNotification);
 							}
+							appendBuildFileMarker(resource);
+							break;
 					}
 				}
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
+	}
+
+	private void appendBuildFileMarker(IResource resource) throws CoreException {
+		IMarker[] markers = resource.findMarkers(BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		if (markers.length > 0) {
+			return;
+		}
+
+		resource.createMarker(BUILD_FILE_MARKER_TYPE, Map.ofEntries(
+			entry(IMarker.MESSAGE, "The build file has been changed and may need reload to make it effective."),
+			entry(IMarker.SEVERITY, IMarker.SEVERITY_INFO)
+		));
 	}
 
 	/**

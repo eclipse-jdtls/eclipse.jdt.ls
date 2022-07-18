@@ -85,6 +85,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	public static final String PROJECTS_IMPORTED = "__PROJECTS_IMPORTED__";
 	private static final String CORE_RESOURCES_MATCHER_ID = "org.eclipse.core.resources.regexFilterMatcher";
 	public static final String CREATED_BY_JAVA_LANGUAGE_SERVER = "__CREATED_BY_JAVA_LANGUAGE_SERVER__";
+	public static final String BUILD_FILE_MARKER_TYPE = "org.eclipse.jdt.ls.buildFileMarker";
 	private static final int JDTLS_FILTER_TYPE = IResourceFilterDescription.EXCLUDE_ALL | IResourceFilterDescription.INHERITABLE | IResourceFilterDescription.FILES | IResourceFilterDescription.FOLDERS;
 
 	private PreferenceManager preferenceManager;
@@ -421,6 +422,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 						registerWatchers(true);
 					}
 					updateEncoding(monitor);
+					project.deleteMarkers(BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ONE);
 					long elapsed = System.currentTimeMillis() - start;
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
 				} catch (Exception e) {
