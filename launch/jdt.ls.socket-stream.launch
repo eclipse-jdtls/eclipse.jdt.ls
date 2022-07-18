@@ -5,6 +5,7 @@
 <stringAttribute key="application" value="org.eclipse.jdt.ls.core.id1"/>
 <booleanAttribute key="askclear" value="true"/>
 <booleanAttribute key="automaticAdd" value="true"/>
+<booleanAttribute key="automaticIncludeRequirements" value="true"/>
 <booleanAttribute key="automaticValidate" value="false"/>
 <stringAttribute key="bootstrap" value=""/>
 <stringAttribute key="checked" value="[NONE]"/>
