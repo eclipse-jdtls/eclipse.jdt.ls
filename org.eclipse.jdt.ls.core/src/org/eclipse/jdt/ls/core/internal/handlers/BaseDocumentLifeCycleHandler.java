@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
@@ -42,7 +43,9 @@ import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -569,25 +572,64 @@ public abstract class BaseDocumentLifeCycleHandler {
 				return unit;
 			}
 
-			IPath projectRealFolder = ProjectUtils.getProjectRealFolder(project);
-			IPath unitPath = unit.getResource().getLocation();
-			
-			boolean needToInfer = false;
-			if (javaProject.isOnClasspath(unit)) {
-				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
-				IProblem[] problems = astRoot.getProblems();
-				needToInfer = Arrays.stream(problems).anyMatch(p -> p.getID() == IProblem.PackageIsNotExpectedPackage);
-			} else if (projectRealFolder.isPrefixOf(unitPath)) {
-				needToInfer = true;
-			}
-
+			boolean needToInfer = needInferSourceRoot(javaProject, unit);
 			if (!needToInfer) {
 				return unit;
 			}
 
+			IPath unitPath = unit.getResource().getLocation();
 			InvisibleProjectImporter.inferSourceRoot(javaProject, unitPath);
 		}
 		return unit;
+	}
+
+	/**
+	 * Checks if it's necessary to infer a source root based on the compilation unit.
+	 * Returns true when:
+	 * <ul>
+     *   <li>The compilation unit is not on the classpath, but belongs to the Java project.</li>
+     *   <li>The compilation unit is on the classpath, and all the compilation units of its belonging
+	 *       package fragment have {@value IProblem#PackageIsNotExpectedPackage} errors.</li>
+     * </ul>
+	 * @param javaProject Java project.
+	 * @param unit compilation unit.
+	 */
+	private boolean needInferSourceRoot(IJavaProject javaProject, ICompilationUnit unit) {
+		if (javaProject.isOnClasspath(unit)) {
+			IJavaElement parent = unit.getParent();
+			if (parent == null || !(parent instanceof IPackageFragment)) {
+				return false;
+			}
+			try {
+				ICompilationUnit[] children = ((IPackageFragment) parent).getCompilationUnits();
+				for (ICompilationUnit child : children) {
+					IResource resource = child.getResource();
+					if (resource == null) {
+						continue;
+					}
+
+					IMarker[] markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ZERO);
+					boolean hasPackageNotMatchError = Arrays.stream(markers).anyMatch(m -> {
+						return m.getAttribute("id", 0) == IProblem.PackageIsNotExpectedPackage;
+					});
+
+					// only infer source root when all the compilation units have the package not match error.
+					if (!hasPackageNotMatchError) {
+						return false;
+					}
+				}
+				return true;
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		} else {
+			IProject project = javaProject.getProject();
+			IPath projectRealFolder = ProjectUtils.getProjectRealFolder(project);
+			IPath unitPath = unit.getResource().getLocation();
+			return projectRealFolder.isPrefixOf(unitPath);
+		}
+
+		return false;
 	}
 
 	/**
