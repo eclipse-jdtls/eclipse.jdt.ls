@@ -62,6 +62,11 @@ public class CompletionProposalDescriptionProvider {
 		fUnit = unit;
 	}
 
+	public CompletionProposalDescriptionProvider(CompletionContext context) {
+		super();
+		fContext = context;
+	}
+
 	/**
 	 * Creates and returns the method signature suitable for display.
 	 *
