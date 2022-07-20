@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.14.0 (July 21st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/104?closed=1)
+ * enhancement - Refresh the unmanaged project's classpath on demand. See [#2160](https://github.com/eclipse/eclipse.jdt.ls/pull/2160).
+ * enhancement - Provide reload project diagnostics on demand. See [#2164](https://github.com/eclipse/eclipse.jdt.ls/pull/2164).
+ * bug fix - Missing completions for fully qualified constructor names. See [#2147](https://github.com/eclipse/eclipse.jdt.ls/issues/2147).
+ * bug fix - Completion replacement for a type proposal is incorrect in some cases. See [#2146](https://github.com/eclipse/eclipse.jdt.ls/pull/2146).
+ * bug fix - Correct typo in gradle checksum mismatch error message. See [#2161](https://github.com/eclipse/eclipse.jdt.ls/pull/2161).
+ * build - Compile error in `MavenBuildSupport.update(IProject, boolean, IProgressMonitor)`. See [#2150](https://github.com/eclipse/eclipse.jdt.ls/issues/2150).
+ * build - React to removal of o.e.m2e.lifecyclemapping.defaults in M2E. See [#2149](https://github.com/eclipse/eclipse.jdt.ls/pull/2149).
+ * build - Automatically include the required plug-ins in the launch files. See [#2162](https://github.com/eclipse/eclipse.jdt.ls/pull/2162).
+ * build - Update target platform to I20220713-1800. See [#2157](https://github.com/eclipse/eclipse.jdt.ls/issues/2157).
+
 # [1.13.0 (June 30th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/103?closed=1)
  * enhancement - Show `Add javadoc for ..` in quick assists. See [#2133](https://github.com/eclipse/eclipse.jdt.ls/pull/2133).
  * enhancement - Show `Change modifiers to final` in quick assists. See [#2134](https://github.com/eclipse/eclipse.jdt.ls/pull/2134).
