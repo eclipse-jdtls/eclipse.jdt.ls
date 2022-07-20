@@ -176,4 +176,9 @@
          <run class="org.eclipse.jdt.ls.core.internal.filesystem.JLSFileSystem"/>
       </filesystem>
    </extension>
+   <extension
+      id="org.eclipse.jdt.ls.buildFileMarker"
+      point="org.eclipse.core.resources.markers">
+      <super type="org.eclipse.core.resources.problemmarker"/>
+   </extension>
 </plugin>

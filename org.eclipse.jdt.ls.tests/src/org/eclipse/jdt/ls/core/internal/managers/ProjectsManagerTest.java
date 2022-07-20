@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,9 @@ import java.util.Set;
 
 import org.eclipse.core.internal.resources.Resource;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -55,6 +58,7 @@ import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.InitializeParams;
 import org.junit.After;
 import org.junit.Before;
@@ -281,5 +285,49 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		verify(server, times(2)).sendStatus(status.capture(), msg.capture());
 		assertEquals(ServiceStatus.ProjectStatus, status.getValue());
 		assertEquals("WARNING", msg.getValue());
+	}
+
+	@Test
+	public void testReloadMavenProjectMarker() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		IFile pom = project.getFile("pom.xml");
+		IMarker[] markers = pom.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(0, markers.length);
+
+		URI pomUri = pom.getRawLocationURI();
+		String originalPom = ResourceUtils.getContent(pomUri);
+		ResourceUtils.setContent(pomUri, originalPom + "\n");
+		projectsManager.fileChanged(pomUri.toString(), CHANGE_TYPE.CHANGED);
+		waitForBackgroundJobs();
+		markers = pom.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(1, markers.length);
+
+		projectsManager.updateProject(project, true);
+		waitForBackgroundJobs();
+		markers = pom.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(0, markers.length);
+	}
+
+	@Test
+	public void testReloadGradleProjectMarker() throws Exception {
+		importProjects("gradle/sample");
+		IProject project = WorkspaceHelper.getProject("sample");
+		IFile gradle = project.getFile("settings.gradle");
+		IMarker[] markers = gradle.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(0, markers.length);
+
+		URI gradleUri = gradle.getRawLocationURI();
+		String originalGradle = ResourceUtils.getContent(gradleUri);
+		ResourceUtils.setContent(gradleUri, originalGradle + "\n");
+		projectsManager.fileChanged(gradleUri.toString(), CHANGE_TYPE.CHANGED);
+		waitForBackgroundJobs();
+		markers = gradle.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(1, markers.length);
+
+		projectsManager.updateProject(project, true);
+		waitForBackgroundJobs();
+		markers = gradle.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
+		assertEquals(0, markers.length);
 	}
 }
