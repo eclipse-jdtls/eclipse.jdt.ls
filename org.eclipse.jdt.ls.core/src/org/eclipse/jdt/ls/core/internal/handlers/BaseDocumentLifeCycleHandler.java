@@ -570,7 +570,15 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private void inferInvisibleProjectSourceRoot(ICompilationUnit unit) {
 		IJavaProject javaProject = unit.getJavaProject();
+		if (javaProject == null) {
+			return;
+		}
+		
 		IProject project = javaProject.getProject();
+		if (project.getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			return;
+		}
+
 		if (!ProjectUtils.isVisibleProject(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
 			List<String> sourcePaths = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
