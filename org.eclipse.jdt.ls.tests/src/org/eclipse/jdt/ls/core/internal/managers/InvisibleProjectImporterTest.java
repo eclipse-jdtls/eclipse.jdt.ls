@@ -24,7 +24,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -35,6 +37,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -389,5 +392,75 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 				assertEquals("bin/", entry.getExclusionPatterns()[0].toString());
 			}
 		}
+	}
+
+	@Test
+	public void testInferSourceRoot() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "lesson1/Lesson1.java");
+		waitForBackgroundJobs();
+
+		IFolder projectFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+		IPath workspaceRoot = projectFolder.getLocation();
+		preferenceManager.getPreferences().setRootPaths(Arrays.asList(workspaceRoot));
+
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		long sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(1, sourceRootsCount);
+
+		IFile unDiscoveredFile = invisibleProject.getFile("_/lesson2/Lesson2.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(2, sourceRootsCount);
+
+		unDiscoveredFile = invisibleProject.getFile("_/lesson3/Lesson3.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(3, sourceRootsCount);
+
+		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
+		assertTrue(markers.isEmpty());
+	}
+
+	@Test
+	public void testInferSourceRoot2() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "lesson3/Lesson3.java");
+		waitForBackgroundJobs();
+
+		IFolder projectFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
+		IPath workspaceRoot = projectFolder.getLocation();
+		preferenceManager.getPreferences().setRootPaths(Arrays.asList(workspaceRoot));
+
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		long sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(1, sourceRootsCount);
+
+		IFile unDiscoveredFile = invisibleProject.getFile("_/lesson2/Lesson2.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(2, sourceRootsCount);
+
+		unDiscoveredFile = invisibleProject.getFile("_/lesson1/Lesson1.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(3, sourceRootsCount);
+
+		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
+		assertTrue(markers.isEmpty());
 	}
 }

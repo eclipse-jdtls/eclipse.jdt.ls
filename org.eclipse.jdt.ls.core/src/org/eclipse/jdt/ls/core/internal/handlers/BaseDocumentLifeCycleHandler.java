@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.IWorkspace;
@@ -41,6 +43,9 @@ import org.eclipse.core.runtime.jobs.MultiRule;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -55,8 +60,11 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -382,6 +390,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			triggerValidation(unit);
 			// see https://github.com/redhat-developer/vscode-java/issues/274
 			checkPackageDeclaration(uri, unit);
+			inferInvisibleProjectSourceRoot(unit);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error while opening document. URI: " + uri, e);
 		}
@@ -551,6 +560,99 @@ public abstract class BaseDocumentLifeCycleHandler {
 			}
 		}
 		return unit;
+	}
+
+	/**
+	 * Infer the source root when the input compilation unit belongs to an
+	 * invisible project. See {@link BaseDocumentLifeCycleHandler#needInferSourceRoot()}
+	 * for when the infer action will happen.
+	 * @param unit compilation unit
+	 */
+	private void inferInvisibleProjectSourceRoot(ICompilationUnit unit) {
+		IJavaProject javaProject = unit.getJavaProject();
+		if (javaProject == null) {
+			return;
+		}
+		
+		IProject project = javaProject.getProject();
+		if (project.getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			return;
+		}
+
+		if (!ProjectUtils.isVisibleProject(project)) {
+			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+			List<String> sourcePaths = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
+
+			// user already set the source paths manually, we don't infer it anymore.
+			if (sourcePaths != null) {
+				return;
+			}
+
+			boolean needToInfer = needInferSourceRoot(javaProject, unit);
+			if (!needToInfer) {
+				return;
+			}
+
+			IPath unitPath = unit.getResource().getLocation();
+			InvisibleProjectImporter.inferSourceRoot(javaProject, unitPath);
+		}
+	}
+
+	/**
+	 * Checks if it's necessary to infer a source root based on the compilation unit.
+	 * Returns true when:
+	 * <ul>
+     *   <li>The compilation unit is not on the classpath, but belongs to the Java project.</li>
+     *   <li>The compilation unit is on the classpath, and all the compilation units of its belonging
+	 *       package fragment have {@value IProblem#PackageIsNotExpectedPackage} errors.</li>
+     * </ul>
+	 * @param javaProject Java project.
+	 * @param unit compilation unit.
+	 */
+	private boolean needInferSourceRoot(IJavaProject javaProject, ICompilationUnit unit) {
+		if (javaProject.isOnClasspath(unit)) {
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+			IProblem[] problems = astRoot.getProblems();
+			boolean isPackageNotMatch = Arrays.stream(problems)
+					.anyMatch(p -> p.getID() == IProblem.PackageIsNotExpectedPackage);
+			if (!isPackageNotMatch) {
+				return false;
+			}
+
+			IJavaElement parent = unit.getParent();
+			if (parent == null || !(parent instanceof IPackageFragment)) {
+				return false;
+			}
+			try {
+				ICompilationUnit[] children = ((IPackageFragment) parent).getCompilationUnits();
+				for (ICompilationUnit child : children) {
+					IResource resource = child.getResource();
+					if (resource == null) {
+						continue;
+					}
+
+					IMarker[] markers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ZERO);
+					boolean hasPackageNotMatchError = Arrays.stream(markers).anyMatch(m -> {
+						return m.getAttribute("id", 0) == IProblem.PackageIsNotExpectedPackage;
+					});
+
+					// only infer source root when all the compilation units have the package not match error.
+					if (!hasPackageNotMatchError) {
+						return false;
+					}
+				}
+				return true;
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		} else {
+			IProject project = javaProject.getProject();
+			IPath projectRealFolder = ProjectUtils.getProjectRealFolder(project);
+			IPath unitPath = unit.getResource().getLocation();
+			return projectRealFolder.isPrefixOf(unitPath);
+		}
+
+		return false;
 	}
 
 	/**

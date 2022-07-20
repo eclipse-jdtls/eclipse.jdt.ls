@@ -49,10 +49,14 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
+import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
@@ -622,6 +626,42 @@ public final class ProjectUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Refresh the diagnostics for all the working copies.
+	 * @param monitor progress monitor
+	 * @throws JavaModelException
+	 */
+	public static void refreshDiagnostics(IProgressMonitor monitor) throws JavaModelException {
+		if (JavaLanguageServerPlugin.getInstance().getProtocol() != null && JavaLanguageServerPlugin.getInstance().getProtocol().getClientConnection() != null) {
+			for (ICompilationUnit unit : JavaCore.getWorkingCopies(null)) {
+				IPath path = unit.getPath();
+				IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(path);
+				if (file.exists()) {
+					String contents = null;
+					try {
+						if (unit.hasUnsavedChanges()) {
+							contents = unit.getSource();
+						}
+					} catch (Exception e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+					unit.discardWorkingCopy();
+					if (unit.equals(CoreASTProvider.getInstance().getActiveJavaElement())) {
+						CoreASTProvider.getInstance().disposeAST();
+					}
+					unit = JavaCore.createCompilationUnitFrom(file);
+					unit.becomeWorkingCopy(monitor);
+					if (contents != null) {
+						unit.getBuffer().setContents(contents);
+					}
+				}
+				DiagnosticsHandler diagnosticHandler = new DiagnosticsHandler(JavaLanguageServerPlugin.getInstance().getProtocol().getClientConnection(), unit);
+				diagnosticHandler.clearDiagnostics();
+				DiagnosticsCommand.refreshDiagnostics(JDTUtils.toURI(unit), "thisFile", JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit));
+			}
+		}
 	}
 
 }
