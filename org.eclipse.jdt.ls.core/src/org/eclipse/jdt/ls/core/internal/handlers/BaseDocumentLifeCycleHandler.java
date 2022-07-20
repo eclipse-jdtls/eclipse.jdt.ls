@@ -390,6 +390,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			triggerValidation(unit);
 			// see https://github.com/redhat-developer/vscode-java/issues/274
 			checkPackageDeclaration(uri, unit);
+			inferInvisibleProjectSourceRoot(unit);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error while opening document. URI: " + uri, e);
 		}
@@ -518,13 +519,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	private ICompilationUnit checkPackageDeclaration(String uri, ICompilationUnit unit) {
-		if (unit.getResource() == null || unit.getJavaProject() == null) {
-			return unit;
-		}
-
-		IJavaProject javaProject = unit.getJavaProject();
-		IProject project = javaProject.getProject();
-		if (project.getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+		if (unit.getResource() != null && unit.getJavaProject() != null && unit.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			try {
 				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 				IProblem[] problems = astRoot.getProblems();
@@ -563,24 +558,36 @@ public abstract class BaseDocumentLifeCycleHandler {
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
-		} else if (!ProjectUtils.isVisibleProject(project)) {
+		}
+		return unit;
+	}
+
+	/**
+	 * Infer the source root when the input compilation unit belongs to an
+	 * invisible project. See {@link BaseDocumentLifeCycleHandler#needInferSourceRoot()}
+	 * for when the infer action will happen.
+	 * @param unit compilation unit
+	 */
+	private void inferInvisibleProjectSourceRoot(ICompilationUnit unit) {
+		IJavaProject javaProject = unit.getJavaProject();
+		IProject project = javaProject.getProject();
+		if (!ProjectUtils.isVisibleProject(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
 			List<String> sourcePaths = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
 
 			// user already set the source paths manually, we don't infer it anymore.
 			if (sourcePaths != null) {
-				return unit;
+				return;
 			}
 
 			boolean needToInfer = needInferSourceRoot(javaProject, unit);
 			if (!needToInfer) {
-				return unit;
+				return;
 			}
 
 			IPath unitPath = unit.getResource().getLocation();
 			InvisibleProjectImporter.inferSourceRoot(javaProject, unitPath);
 		}
-		return unit;
 	}
 
 	/**
