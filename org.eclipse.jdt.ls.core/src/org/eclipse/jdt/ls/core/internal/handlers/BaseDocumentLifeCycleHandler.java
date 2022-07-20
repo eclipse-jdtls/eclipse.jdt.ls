@@ -596,6 +596,14 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private boolean needInferSourceRoot(IJavaProject javaProject, ICompilationUnit unit) {
 		if (javaProject.isOnClasspath(unit)) {
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+			IProblem[] problems = astRoot.getProblems();
+			boolean isPackageNotMatch = Arrays.stream(problems)
+					.anyMatch(p -> p.getID() == IProblem.PackageIsNotExpectedPackage);
+			if (!isPackageNotMatch) {
+				return false;
+			}
+
 			IJavaElement parent = unit.getParent();
 			if (parent == null || !(parent instanceof IPackageFragment)) {
 				return false;
