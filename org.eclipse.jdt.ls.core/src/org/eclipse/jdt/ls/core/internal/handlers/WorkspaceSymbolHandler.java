@@ -82,111 +82,21 @@ public class WorkspaceSymbolHandler {
 
 			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 
-			new SearchEngine().searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope, new TypeNameMatchRequestor() {
-
-				@Override
-				public void acceptTypeNameMatch(TypeNameMatch match) {
-					try {
-						if (maxResults > 0 && symbols.size() >= maxResults) {
-							return;
-						}
-						Location location = null;
-						try {
-							if (!sourceOnly && match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType().getClassFile());
-							} else if (!match.getType().isBinary()) {
-								location = JDTUtils.toLocation(match.getType());
-							}
-						} catch (Exception e) {
-							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
-							return;
-						}
-
-						if (location != null && match.getSimpleTypeName() != null && !match.getSimpleTypeName().isEmpty()) {
-							SymbolInformation symbolInformation = new SymbolInformation();
-							symbolInformation.setContainerName(match.getTypeContainerName());
-							symbolInformation.setName(match.getSimpleTypeName());
-							symbolInformation.setKind(mapKind(match));
-							if (Flags.isDeprecated(match.getType().getFlags())) {
-								if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
-									symbolInformation.setTags(List.of(SymbolTag.Deprecated));
-								}
-								else {
-									symbolInformation.setDeprecated(true);
-								}
-							}
-							symbolInformation.setLocation(location);
-							symbols.add(symbolInformation);
-							if (maxResults > 0 && symbols.size() >= maxResults) {
-								monitor.setCanceled(true);
-							}
-						}
-					} catch (Exception e) {
-						JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
-						return;
-					}
-				}
-
-				private SymbolKind mapKind(TypeNameMatch match) {
-					int flags = match.getModifiers();
-					if (Flags.isInterface(flags)) {
-						return SymbolKind.Interface;
-					}
-					if (Flags.isAnnotation(flags)) {
-						return SymbolKind.Property;
-					}
-					if (Flags.isEnum(flags)) {
-						return SymbolKind.Enum;
-					}
-					return SymbolKind.Class;
-				}
-			}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+			SearchEngine engine = new SearchEngine();
+			boolean isSymbolTagSupported = preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported();
+			WorkspaceSymbolTypeRequestor typeRequestor = new WorkspaceSymbolTypeRequestor(symbols, maxResults, sourceOnly, isSymbolTagSupported, monitor);
+			if (!typeName.isEmpty()) {
+				// search for qualifier = qualifierName, type = typeName
+				engine.searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope,typeRequestor , IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+			}
+			// search for qualifier = qualiferName.typeName, type = null
+			engine.searchAllTypeNames(tQuery.toCharArray(), qualifierMatchRule, null, typeMatchRule, IJavaSearchConstants.TYPE, searchScope, typeRequestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 
 			if (preferenceManager != null && preferenceManager.getPreferences().isIncludeSourceMethodDeclarations()) {
 				monitor.beginTask("Searching methods...", 100);
 				IJavaSearchScope nonSourceSearchScope = createSearchScope(projectName, true);
-				new SearchEngine().searchAllMethodNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, nonSourceSearchScope, new MethodNameMatchRequestor() {
-
-					@Override
-					public void acceptMethodNameMatch(MethodNameMatch match) {
-						try {
-							if (maxResults > 0 && symbols.size() >= maxResults) {
-								return;
-							}
-
-							Location location = null;
-							try {
-								location = JDTUtils.toLocation(match.getMethod());
-							} catch (Exception e) {
-								JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
-								return;
-							}
-
-							if (location != null && match.getMethod().getElementName() != null && !match.getMethod().getElementName().isEmpty()) {
-								SymbolInformation symbolInformation = new SymbolInformation();
-								symbolInformation.setContainerName(match.getMethod().getDeclaringType().getFullyQualifiedName());
-								symbolInformation.setName(match.getMethod().getElementName());
-								symbolInformation.setKind(SymbolKind.Method);
-								if (Flags.isDeprecated(match.getMethod().getFlags())) {
-									if (preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported()) {
-										symbolInformation.setTags(List.of(SymbolTag.Deprecated));
-									}
-									else {
-										symbolInformation.setDeprecated(true);
-									}
-								}
-								symbolInformation.setLocation(location);
-								symbols.add(symbolInformation);
-								if (maxResults > 0 && symbols.size() >= maxResults) {
-									monitor.setCanceled(true);
-								}
-							}
-						} catch (Exception e) {
-							JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
-							return;
-						}
-					}
-				}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+				WorkspaceSymbolMethodRequestor methodRequestor = new WorkspaceSymbolMethodRequestor(symbols, maxResults, isSymbolTagSupported, monitor);
+				engine.searchAllMethodNames(null, SearchPattern.R_PATTERN_MATCH, query.trim().toCharArray(), typeMatchRule, nonSourceSearchScope, methodRequestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 			}
 		} catch (Exception e) {
 			if (e instanceof OperationCanceledException) {
@@ -227,6 +137,133 @@ public class WorkspaceSymbolHandler {
 		public SearchSymbolParams(String query, String projectName) {
 			super(query);
 			this.projectName = projectName;
+		}
+	}
+
+	private static class WorkspaceSymbolTypeRequestor extends TypeNameMatchRequestor {
+		private ArrayList<SymbolInformation> symbols;
+		private int maxResults;
+		private boolean sourceOnly;
+		private boolean isSymbolTagSupported;
+		private IProgressMonitor monitor;
+
+		public WorkspaceSymbolTypeRequestor(ArrayList<SymbolInformation> symbols, int maxResults, boolean sourceOnly, boolean isSymbolTagSupported, IProgressMonitor monitor) {
+			this.symbols = symbols;
+			this.maxResults = maxResults;
+			this.sourceOnly = sourceOnly;
+			this.isSymbolTagSupported = isSymbolTagSupported;
+			this.monitor = monitor;
+		}
+
+		@Override
+		public void acceptTypeNameMatch(TypeNameMatch match) {
+			try {
+				if (maxResults > 0 && symbols.size() >= maxResults) {
+					monitor.setCanceled(true);
+					return;
+				}
+				Location location = null;
+				try {
+					if (!sourceOnly && match.getType().isBinary()) {
+						location = JDTUtils.toLocation(match.getType().getClassFile());
+					} else if (!match.getType().isBinary()) {
+						location = JDTUtils.toLocation(match.getType());
+					}
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
+					return;
+				}
+
+				if (location != null && match.getSimpleTypeName() != null && !match.getSimpleTypeName().isEmpty()) {
+					SymbolInformation symbolInformation = new SymbolInformation();
+					symbolInformation.setContainerName(match.getTypeContainerName());
+					symbolInformation.setName(match.getSimpleTypeName());
+					symbolInformation.setKind(mapKind(match));
+					if (Flags.isDeprecated(match.getType().getFlags())) {
+						if (isSymbolTagSupported) {
+							symbolInformation.setTags(List.of(SymbolTag.Deprecated));
+						} else {
+							symbolInformation.setDeprecated(true);
+						}
+					}
+					symbolInformation.setLocation(location);
+					symbols.add(symbolInformation);
+					if (maxResults > 0 && symbols.size() >= maxResults) {
+						monitor.setCanceled(true);
+					}
+				}
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getSimpleTypeName(), e);
+				return;
+			}
+		}
+
+		private SymbolKind mapKind(TypeNameMatch match) {
+			int flags = match.getModifiers();
+			if (Flags.isInterface(flags)) {
+				return SymbolKind.Interface;
+			}
+			if (Flags.isAnnotation(flags)) {
+				return SymbolKind.Property;
+			}
+			if (Flags.isEnum(flags)) {
+				return SymbolKind.Enum;
+			}
+			return SymbolKind.Class;
+		}
+	}
+
+	private static class WorkspaceSymbolMethodRequestor extends MethodNameMatchRequestor {
+		private ArrayList<SymbolInformation> symbols;
+		private int maxResults;
+		private boolean isSymbolTagSupported;
+		private IProgressMonitor monitor;
+
+		public WorkspaceSymbolMethodRequestor(ArrayList<SymbolInformation> symbols, int maxResults, boolean isSymbolTagSupported, IProgressMonitor monitor) {
+			this.symbols = symbols;
+			this.maxResults = maxResults;
+			this.isSymbolTagSupported = isSymbolTagSupported;
+			this.monitor = monitor;
+		}
+
+		@Override
+		public void acceptMethodNameMatch(MethodNameMatch match) {
+			try {
+				if (maxResults > 0 && symbols.size() >= maxResults) {
+					monitor.setCanceled(true);
+					return;
+				}
+
+				Location location = null;
+				try {
+					location = JDTUtils.toLocation(match.getMethod());
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
+					return;
+				}
+
+				if (location != null && match.getMethod().getElementName() != null && !match.getMethod().getElementName().isEmpty()) {
+					SymbolInformation symbolInformation = new SymbolInformation();
+					symbolInformation.setContainerName(match.getMethod().getDeclaringType().getFullyQualifiedName());
+					symbolInformation.setName(match.getMethod().getElementName());
+					symbolInformation.setKind(SymbolKind.Method);
+					if (Flags.isDeprecated(match.getMethod().getFlags())) {
+						if (isSymbolTagSupported) {
+							symbolInformation.setTags(List.of(SymbolTag.Deprecated));
+						} else {
+							symbolInformation.setDeprecated(true);
+						}
+					}
+					symbolInformation.setLocation(location);
+					symbols.add(symbolInformation);
+					if (maxResults > 0 && symbols.size() >= maxResults) {
+						monitor.setCanceled(true);
+					}
+				}
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException("Unable to determine location for " + match.getMethod().getElementName(), e);
+				return;
+			}
 		}
 	}
 }

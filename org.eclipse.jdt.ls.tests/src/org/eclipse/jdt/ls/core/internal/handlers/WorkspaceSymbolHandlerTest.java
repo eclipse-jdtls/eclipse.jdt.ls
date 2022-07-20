@@ -188,6 +188,17 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
+	public void testSearchAllTypesOfPackage() {
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("java.io", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> "File".equals(s.getName()) && "java.io".equals(s.getContainerName())));
+
+		results = WorkspaceSymbolHandler.search("java.lang", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> "Exception".equals(s.getName()) && "java.lang".equals(s.getContainerName())));
+	}
+
+	@Test
 	public void testSearchSourceMethodDeclarations() {
 		preferences.setIncludeSourceMethodDeclarations(true);
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("deleteSomething", "hello", true, monitor);
