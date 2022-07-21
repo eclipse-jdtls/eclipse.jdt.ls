@@ -143,6 +143,7 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.COMPILER_PB_REDUNDANT_SUPERINTERFACE, JavaCore.WARNING);
 		javaCoreOptions.put(JavaCore.CODEASSIST_SUBWORD_MATCH, JavaCore.DISABLED);
 		javaCoreOptions.put(JavaCore.COMPILER_PB_MISSING_SERIAL_VERSION, JavaCore.IGNORE);
+		// workaround for https://github.com/redhat-developer/vscode-java/issues/718
 		javaCoreOptions.put(JavaCore.CORE_CIRCULAR_CLASSPATH, JavaCore.WARNING);
 		JavaCore.setOptions(javaCoreOptions);
 	}
