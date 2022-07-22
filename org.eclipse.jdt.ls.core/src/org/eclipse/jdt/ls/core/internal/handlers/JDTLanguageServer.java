@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
+import org.eclipse.jdt.ls.core.internal.handlers.ExtendedDocumentSymbolHandler.ExtendedDocumentSymbol;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
@@ -154,8 +155,7 @@ import org.eclipse.lsp4j.services.WorkspaceService;
  * @author Gorkem Ercan
  *
  */
-public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService,
-		JavaProtocolExtensions, InlayHintProvider {
+public class JDTLanguageServer extends BaseJDTLanguageServer implements LanguageServer, TextDocumentService, WorkspaceService, JavaProtocolExtensions, InlayHintProvider {
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	public static final String JAVA_LSP_INITIALIZE_WORKSPACE = "java.lsp.initializeWorkspace";
@@ -384,8 +384,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 */
 	private void synchronizeBundles() {
 		try {
-			List<String> bundlesToRefresh = (ArrayList<String>) JavaLanguageServerPlugin.getInstance()
-				.getClientConnection().executeClientCommand("_java.reloadBundles.command");
+			List<String> bundlesToRefresh = (ArrayList<String>) JavaLanguageServerPlugin.getInstance().getClientConnection().executeClientCommand("_java.reloadBundles.command");
 			if (bundlesToRefresh.size() > 0) {
 				BundleUtils.loadBundles(bundlesToRefresh);
 			}
@@ -489,9 +488,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
-			boolean nullAnalysisConfigurationsChanged =!prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes())
-				|| !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes())
-				|| !prefs.getNullAnalysisMode().equals(preferenceManager.getPreferences().getNullAnalysisMode());
+			boolean nullAnalysisConfigurationsChanged = !prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes()) || !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes())
+					|| !prefs.getNullAnalysisMode().equals(preferenceManager.getPreferences().getNullAnalysisMode());
 			preferenceManager.update(prefs);
 			if (nullAnalysisConfigurationsChanged) {
 				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated
@@ -521,8 +519,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		logInfo(">> New configuration: " + settings);
 	}
-
-
 
 	private void toggleCapability(boolean enabled, String id, String capability, Object options) {
 		if (enabled) {
@@ -678,6 +674,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.documentSymbol(params, monitor);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbols(DocumentSymbolParams params) {
+		logInfo(">> document/extendedDocumentSymbols");
+		ExtendedDocumentSymbolHandler handler = new ExtendedDocumentSymbolHandler(preferenceManager);
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.handle(params, monitor);
 		});
 	}
 
@@ -1078,8 +1084,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<SemanticTokens> semanticTokensFull(SemanticTokensParams params) {
 		logInfo(">> textDocument/semanticTokens/full");
-		return computeAsync(monitor -> SemanticTokensHandler.full(monitor, params,
-			documentLifeCycleHandler.new DocumentMonitor(params.getTextDocument().getUri())));
+		return computeAsync(monitor -> SemanticTokensHandler.full(monitor, params, documentLifeCycleHandler.new DocumentMonitor(params.getTextDocument().getUri())));
 	}
 
 	@Override

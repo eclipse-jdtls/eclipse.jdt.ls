@@ -295,7 +295,7 @@ public class CallHierarchyHandler {
 		String uri = fullLocation.getUri();
 		CallHierarchyItem item = new CallHierarchyItem();
 		item.setName(JDTUtils.getName(member));
-		item.setKind(DocumentSymbolHandler.mapKind(member));
+		item.setKind(SymbolUtils.mapKind(member));
 		item.setRange(range);
 		item.setSelectionRange(getLocation(member, LocationType.NAME_RANGE).getRange());
 		item.setUri(uri);

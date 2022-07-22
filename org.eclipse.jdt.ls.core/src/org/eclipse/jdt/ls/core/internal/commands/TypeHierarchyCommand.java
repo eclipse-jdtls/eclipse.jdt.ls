@@ -28,10 +28,10 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.SymbolUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -158,7 +158,7 @@ public class TypeHierarchyCommand {
 				item.setDetail(packageFragment.getElementName());
 			}
 		}
-		item.setKind(DocumentSymbolHandler.mapKind(type));
+		item.setKind(SymbolUtils.mapKind(type));
 		item.setDeprecated(JDTUtils.isDeprecated(type));
 		item.setData(type.getHandleIdentifier());
 		return item;
