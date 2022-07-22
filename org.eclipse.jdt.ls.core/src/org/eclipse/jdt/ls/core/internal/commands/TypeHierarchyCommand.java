@@ -35,7 +35,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.SymbolUtils;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -184,7 +184,7 @@ public class TypeHierarchyCommand {
 				item.setDetail(packageFragment.getElementName());
 			}
 		}
-		item.setKind(excludeMember ? SymbolKind.Null : DocumentSymbolHandler.mapKind(type));
+		item.setKind(excludeMember ? SymbolKind.Null : SymbolUtils.mapKind(type));
 		item.setDeprecated(JDTUtils.isDeprecated(member));
 		Map<String, String> data = new HashMap<>();
 		data.put("element", member.getHandleIdentifier());

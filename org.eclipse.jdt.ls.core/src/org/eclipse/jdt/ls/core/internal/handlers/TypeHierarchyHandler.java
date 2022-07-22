@@ -252,7 +252,7 @@ public class TypeHierarchyHandler {
 				detail = packageFragment.getElementName();
 			}
 		}
-		SymbolKind kind = excludeMember ? SymbolKind.Null : DocumentSymbolHandler.mapKind(type);
+		SymbolKind kind = excludeMember ? SymbolKind.Null : SymbolUtils.mapKind(type);
 		List<SymbolTag> tags = new ArrayList<>();
 		if (JDTUtils.isDeprecated(member)) {
 			tags.add(SymbolTag.Deprecated);
