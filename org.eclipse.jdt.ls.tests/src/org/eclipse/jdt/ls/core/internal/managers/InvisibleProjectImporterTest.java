@@ -408,23 +408,15 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		long sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
 				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
 				.count();
-		assertEquals(1, sourceRootsCount);
-
-		IFile unDiscoveredFile = invisibleProject.getFile("_/lesson2/Lesson2.java");
-		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
-		waitForBackgroundJobs();
-		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
-				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
-				.count();
-		assertEquals(2, sourceRootsCount);
-
-		unDiscoveredFile = invisibleProject.getFile("_/lesson3/Lesson3.java");
-		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
-		waitForBackgroundJobs();
-		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
-				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
-				.count();
 		assertEquals(3, sourceRootsCount);
+
+		IFile unDiscoveredFile = invisibleProject.getFile("_/a/very/deep/path/Source.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(4, sourceRootsCount);
 
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
 		assertTrue(markers.isEmpty());
@@ -432,7 +424,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 	@Test
 	public void testInferSourceRoot2() throws Exception {
-		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "lesson3/Lesson3.java");
+		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "Main.java");
 		waitForBackgroundJobs();
 
 		IFolder projectFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
@@ -443,23 +435,15 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		long sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
 				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
 				.count();
-		assertEquals(1, sourceRootsCount);
-
-		IFile unDiscoveredFile = invisibleProject.getFile("_/lesson2/Lesson2.java");
-		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
-		waitForBackgroundJobs();
-		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
-				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
-				.count();
-		assertEquals(2, sourceRootsCount);
-
-		unDiscoveredFile = invisibleProject.getFile("_/lesson1/Lesson1.java");
-		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
-		waitForBackgroundJobs();
-		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
-				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
-				.count();
 		assertEquals(3, sourceRootsCount);
+
+		IFile unDiscoveredFile = invisibleProject.getFile("_/a/very/deep/path/Source.java");
+		InvisibleProjectImporter.inferSourceRoot(javaProject, unDiscoveredFile.getLocation());
+		waitForBackgroundJobs();
+		sourceRootsCount = Arrays.stream(javaProject.getRawClasspath())
+				.filter(cp -> cp.getEntryKind() == IClasspathEntry.CPE_SOURCE)
+				.count();
+		assertEquals(4, sourceRootsCount);
 
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
 		assertTrue(markers.isEmpty());

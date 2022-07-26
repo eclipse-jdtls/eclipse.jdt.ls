@@ -15,13 +15,18 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -150,20 +156,20 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		if (preferencesManager != null && preferencesManager.getPreferences() != null) {
 			sourcePathsFromPreferences = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
 		}
-		List<IPath> sourcePaths;
+		Set<IPath> sourcePaths = new HashSet<>();
 		if (sourcePathsFromPreferences != null) {
-			sourcePaths = getSourcePaths(sourcePathsFromPreferences, workspaceLinkFolder);
+			sourcePaths.addAll(getSourcePaths(sourcePathsFromPreferences, workspaceLinkFolder));
 		} else {
 			IPath relativeSourcePath = sourceDirectory.makeRelativeTo(rootPath);
-			IPath sourcePath = workspaceLinkFolder.getFolder(relativeSourcePath).getFullPath();
-			sourcePaths = Arrays.asList(sourcePath);
+			IFolder sourceFolder = workspaceLinkFolder.getFolder(relativeSourcePath);
+			sourcePaths.addAll(collectSourcePaths(javaFile, sourceFolder, workspaceLinkFolder));
 		}
 
 		List<IPath> excludingPaths = getExcludingPath(javaProject, rootPath, workspaceLinkFolder);
 
 		IPath outputPath = getOutputPath(javaProject, preferencesManager.getPreferences().getInvisibleProjectOutputPath(), false /*isUpdate*/);
 
-		IClasspathEntry[] classpathEntries = resolveClassPathEntries(javaProject, sourcePaths, excludingPaths, outputPath);
+		IClasspathEntry[] classpathEntries = resolveClassPathEntries(javaProject, new ArrayList<>(sourcePaths), excludingPaths, outputPath);
 		javaProject.setRawClasspath(classpathEntries, outputPath, monitor);
 
 		if (forceUpdateLibPath && preferencesManager != null && preferencesManager.getPreferences() != null) {
@@ -171,6 +177,146 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Based on the trigger file and its belonging source folder, search more places and collect
+	 * the valid source paths.
+	 * @param triggerFilePath the path of the import trigger file.
+	 * @param triggerFolder the folder which contains the trigger file. A search will be executed
+	 *                      based on the trigger folder.
+	 * @param linkedFolder the invisible project's linked folder.
+	 */
+	private static Collection<IPath> collectSourcePaths(IPath triggerFilePath, IFolder triggerFolder,
+			IFolder linkedFolder) {
+		IPath linkedFolderPath = linkedFolder.getLocation();
+		Collection<File> foldersToSearch = collectFoldersToSearch(triggerFilePath, triggerFolder, linkedFolderPath);
+		Collection<IPath> triggerFiles = collectTriggerFiles(foldersToSearch);
+		
+		Set<IPath> sourcePaths = new HashSet<>();
+		sourcePaths.add(triggerFolder.getFullPath());
+
+		for (IPath javaFilePath : triggerFiles) {
+			String packageName = getPackageName(javaFilePath, linkedFolderPath);
+			IPath directory = inferSourceDirectory(javaFilePath.toFile().toPath(), packageName);
+			if (directory == null || !linkedFolderPath.isPrefixOf(directory)
+					|| isPartOfMatureProject(directory)) {
+				continue;
+			}
+			IPath relativeSourcePath = directory.makeRelativeTo(linkedFolderPath);
+			IPath sourcePath = linkedFolder.getFolder(relativeSourcePath).getFullPath();
+			sourcePaths.add(sourcePath);
+		}
+		return sourcePaths;
+	}
+
+	/**
+	 * Collect folders that may contain Java source files.
+	 * @param triggerFilePath the path of the import trigger file.
+	 * @param triggerFolder the folder which contains the trigger file. A search will be executed
+	 *                      based on the trigger folder.
+	 * @param linkedFolderPath the path of invisible project's linked folder.
+	 */
+	private static Collection<File> collectFoldersToSearch(IPath triggerFilePath, IFolder triggerFolder,
+			IPath linkedFolderPath) {
+		Set<File> foldersToSearch = new HashSet<>();
+		if (Objects.equals(triggerFolder.getLocation(), linkedFolderPath)) {
+			foldersToSearch.addAll(getDirectChildFolders(triggerFilePath, triggerFolder));
+		} else {
+			foldersToSearch.addAll(getSiblingFolders(triggerFolder, linkedFolderPath));
+		}
+		return foldersToSearch;
+	}
+
+	/**
+	 * Get the direct child folders of the given parent folder.
+	 * @param triggerFilePath the path of the import trigger file.
+	 * @param parentFolder the parent folder.
+	 */
+	private static Collection<File> getDirectChildFolders(IPath triggerFilePath, IFolder parentFolder) {
+		File parent = parentFolder.getLocation().toFile();
+		if (parent.isFile()) {
+			return Collections.emptySet();
+		}
+
+		Set<File> children = new HashSet<>();
+		File[] childrenFiles = parent.listFiles();
+		for (File dir : childrenFiles) {
+			if (!dir.isDirectory()) {
+				continue;
+			}
+
+			Path eclipsePath = new Path(dir.getAbsolutePath());
+			// skip ancestor folder of the trigger file.
+			if (eclipsePath.isPrefixOf(triggerFilePath)) {
+				continue;
+			}
+
+			children.add(dir);
+		}
+		return children;
+	}
+
+	/**
+	 * Get the sibling folders of the trigger folder.
+	 * @param triggerFolder the trigger folder
+	 * @param linkedFolderPath the path of invisible project's linked folder.
+	 */
+	private static Collection<File> getSiblingFolders(IFolder triggerFolder, IPath linkedFolderPath) {
+		Set<File> siblings = new HashSet<>();
+		IResource parentFolder = triggerFolder.getParent();
+		if (parentFolder == null) {
+			return Collections.emptySet();
+		}
+
+		if (!linkedFolderPath.isPrefixOf(parentFolder.getLocation())) {
+			return Collections.emptySet();
+		}
+
+		File parent = parentFolder.getLocation().toFile();
+		if (parent.isFile()) {
+			return Collections.emptySet();
+		}
+
+		File[] peerFiles = parent.listFiles();
+		for (File peerFile : peerFiles) {
+			if (peerFile.isDirectory() && !peerFile.getName().equals(triggerFolder.getName())) {
+				siblings.add(peerFile);
+			}
+		}
+		return siblings;
+	}
+
+	/**
+	 * Collect the Java files contained in the search folders. Each folder will
+	 * only be collected one Java file (if they have) at max 3 depth level.
+	 * @param searchFolders the folders to search.
+	 */
+	private static Collection<IPath> collectTriggerFiles(Collection<File> searchFolders) {
+		Set<IPath> triggerFiles = new HashSet<>();
+		for (File file : searchFolders) {
+			try {
+				Files.walkFileTree(
+					file.toPath(),
+					EnumSet.noneOf(FileVisitOption.class),
+					3 /*maxDepth*/,
+					new SimpleFileVisitor<java.nio.file.Path>() {
+						@Override
+						public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs)
+								throws IOException {
+							File file = path.toFile();
+							if (file.isFile() && file.getName().endsWith(".java")) {
+								triggerFiles.add(new Path(file.getPath()));
+								return FileVisitResult.TERMINATE;
+							}
+							return FileVisitResult.CONTINUE;
+						}
+				});
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return triggerFiles;
 	}
 
 	/**
