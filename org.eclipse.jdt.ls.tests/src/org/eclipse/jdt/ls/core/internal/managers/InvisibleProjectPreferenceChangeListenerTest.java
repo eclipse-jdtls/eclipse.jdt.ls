@@ -154,6 +154,7 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 
 	@Test
 	public void testUpdateSourcePaths() throws Exception {
+		preferences.setInvisibleProjectSourcePaths(Arrays.asList("src"));
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		IJavaProject javaProject = JavaCore.create(project);
 		IFolder linkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
