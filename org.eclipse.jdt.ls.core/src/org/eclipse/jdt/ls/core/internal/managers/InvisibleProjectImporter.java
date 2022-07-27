@@ -15,9 +15,11 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -293,30 +295,20 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	 * @param searchFolders the folders to search.
 	 */
 	private static Collection<IPath> collectTriggerFiles(Collection<File> searchFolders) {
-		Set<IPath> triggerFiles = new HashSet<>();
+		JavaFileDetector javaFileDetector = new JavaFileDetector();
 		for (File file : searchFolders) {
 			try {
 				Files.walkFileTree(
 					file.toPath(),
 					EnumSet.noneOf(FileVisitOption.class),
 					3 /*maxDepth*/,
-					new SimpleFileVisitor<java.nio.file.Path>() {
-						@Override
-						public FileVisitResult visitFile(java.nio.file.Path path, BasicFileAttributes attrs)
-								throws IOException {
-							File file = path.toFile();
-							if (file.isFile() && file.getName().endsWith(".java")) {
-								triggerFiles.add(new Path(file.getPath()));
-								return FileVisitResult.TERMINATE;
-							}
-							return FileVisitResult.CONTINUE;
-						}
-				});
+					javaFileDetector
+				);
 			} catch (IOException e) {
 				JavaLanguageServerPlugin.logException(e);
 			}
 		}
-		return triggerFiles;
+		return javaFileDetector.getTriggerFiles();
 	}
 
 	/**
@@ -519,8 +511,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 		IPath srcPath = sourcePath.removeLastSegments(segments.size() -1 - index);
 		IPath container = srcPath.removeLastSegments(1);
-		return container.append("pom.xml").toFile().exists()
-			|| container.append("build.gradle").toFile().exists();
+		return container.append(MavenProjectImporter.POM_FILE).toFile().exists()
+			|| container.append(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR).toFile().exists()
+			|| container.append(GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR).toFile().exists()
+			|| container.append(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR).toFile().exists()
+			|| container.append(GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR).toFile().exists();
 	}
 
 	private static String getPackageName(IPath javaFile, IPath workspaceRoot) {
@@ -631,4 +626,92 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		project.setDescription(description, monitor);
 	}
 
+	/**
+	 * A File Visitor which is used to find Java source files.
+	 *
+	 * <p>Note: public only for testing purpose.</p>
+	 */
+	public static class JavaFileDetector extends SimpleFileVisitor<java.nio.file.Path> {
+
+		private Set<IPath> javaFiles;
+		private Set<String> exclusions;
+		private Set<String> buildFiles;
+
+		public JavaFileDetector() {
+			this.javaFiles = new HashSet<>();
+			this.exclusions = new HashSet<>();
+			List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
+			if (javaImportExclusions != null) {
+				exclusions.addAll(javaImportExclusions);
+			}
+			buildFiles = new HashSet<>(Arrays.asList(
+				MavenProjectImporter.POM_FILE,
+				GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
+				GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR,
+				GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR,
+				GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR,
+				IProjectDescription.DESCRIPTION_FILE_NAME,
+				IJavaProject.CLASSPATH_FILE_NAME
+			));
+		}
+
+		@Override
+		public FileVisitResult preVisitDirectory(java.nio.file.Path dirPath, BasicFileAttributes attrs) throws IOException {
+			if (isExcluded(dirPath)) {
+				return FileVisitResult.SKIP_SUBTREE;
+			}
+
+			File dir = dirPath.toFile();
+			File[] files = dir.listFiles();
+			if (files == null) {
+				return FileVisitResult.SKIP_SUBTREE;
+			}
+
+			File javaFile = null;
+			for (File f : files) {
+				if (!f.isFile()) {
+					continue;
+				}
+
+				// stop searching as long as any one of the sub folders contain build files.
+				if (buildFiles.contains(f.getName())) {
+					return FileVisitResult.TERMINATE;
+				}
+
+				if (javaFile == null && f.getName().endsWith(".java")) {
+					javaFile = f;
+				}
+			}
+
+			if (javaFile != null) {
+				javaFiles.add(new Path(javaFile.getPath()));
+				return FileVisitResult.TERMINATE;
+			}
+
+			return FileVisitResult.CONTINUE;
+		}
+
+		public Set<IPath> getTriggerFiles() {
+			return javaFiles;
+		}
+
+		private boolean isExcluded(java.nio.file.Path dir) {
+			if (dir.getFileName() == null) {
+				return true;
+			}
+			boolean excluded = false;
+			for (String pattern : exclusions) {
+				boolean includePattern = false;
+				if (pattern.startsWith("!")) {
+					includePattern = true;
+					pattern = pattern.substring(1);
+				}
+				PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+				if (matcher.matches(dir)) {
+					excluded = includePattern ? false : true;
+				}
+			}
+			return excluded;
+		}
+	}
 }

@@ -19,10 +19,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -39,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
+import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter.JavaFileDetector;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
@@ -397,6 +402,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 	@Test
 	public void testInferSourceRoot() throws Exception {
+		preferenceManager.getPreferences().setJavaImportExclusions(Arrays.asList("**/excluded"));
 		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "lesson1/Lesson1.java");
 		waitForBackgroundJobs();
 
@@ -419,11 +425,12 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertEquals(4, sourceRootsCount);
 
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
-		assertTrue(markers.isEmpty());
+		assertEquals(0, markers.size());
 	}
 
 	@Test
 	public void testInferSourceRoot2() throws Exception {
+		preferenceManager.getPreferences().setJavaImportExclusions(Arrays.asList("**/excluded"));
 		IProject invisibleProject = copyAndImportFolder("singlefile/inferSourceRoot", "Main.java");
 		waitForBackgroundJobs();
 
@@ -446,6 +453,26 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertEquals(4, sourceRootsCount);
 
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(invisibleProject);
-		assertTrue(markers.isEmpty());
+		assertEquals(0, markers.size());
+	}
+
+	@Test
+	public void javaFileDetectorTest() throws Exception {
+		preferenceManager.getPreferences().setJavaImportExclusions(Arrays.asList("**/excluded"));
+		File root = new File(getSourceProjectDirectory(), "singlefile/invisibleFileDetector");
+		List<File> foldersToSearch = new ArrayList<>();
+		for (File folder : root.listFiles()) {
+			if (folder.isDirectory()) {
+				foldersToSearch.add(folder);
+			}
+		}
+
+		JavaFileDetector detector = new JavaFileDetector();
+		for (File file : foldersToSearch) {
+			Files.walkFileTree(file.toPath(), EnumSet.noneOf(FileVisitOption.class), 3 /*maxDepth*/, detector);
+		}
+		Set<IPath> triggerFiles = detector.getTriggerFiles();
+
+		assertEquals(0, triggerFiles.size());
 	}
 }
