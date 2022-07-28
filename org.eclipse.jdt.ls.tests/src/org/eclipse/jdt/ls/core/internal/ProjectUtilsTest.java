@@ -67,4 +67,18 @@ public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(IMarker.SEVERITY_ERROR, ProjectUtils.getMaxProjectProblemSeverity());
 	}
 
+
+	@Test
+	public void testIsUnmanagedFolder1() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		assertEquals(false, ProjectUtils.isUnmanagedFolder(project));
+	}
+
+	@Test
+	public void testIsUnmanagedFolder2() throws Exception {
+		IProject unmanagedFolder = copyAndImportFolder("singlefile/lesson1", "src/org/samples/HelloWorld.java");
+		assertEquals(true, ProjectUtils.isUnmanagedFolder(unmanagedFolder));
+	}
+
 }

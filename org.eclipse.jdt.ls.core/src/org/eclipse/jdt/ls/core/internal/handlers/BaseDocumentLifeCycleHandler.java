@@ -575,11 +575,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 		
 		IProject project = javaProject.getProject();
-		if (project.getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
-			return;
-		}
-
-		if (!ProjectUtils.isVisibleProject(project)) {
+		if (ProjectUtils.isUnmanagedFolder(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
 			List<String> sourcePaths = preferencesManager.getPreferences().getInvisibleProjectSourcePaths();
 

@@ -306,6 +306,30 @@ public final class ProjectUtils {
 		return ResourceUtils.isContainedIn(project.getLocation(), rootPaths);
 	}
 
+	/**
+	 * Check if the input project is an unmanaged folder. (aka invisible project)
+	 * @param project
+	 */
+	public static boolean isUnmanagedFolder(IProject project) {
+		if (Objects.equals(project.getName(), ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			return false;
+		}
+		
+		if (isVisibleProject(project)) {
+			return false;
+		}
+
+		try {
+			String[] natureIds = project.getDescription().getNatureIds();
+			// TODO: we should consider assign a dedicate nature id for unmanaged folders.
+			// see: https://github.com/redhat-developer/vscode-java/issues/2552
+			return natureIds.length == 1 && Objects.equals(natureIds[0], JavaCore.NATURE_ID);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+		}
+		return false;
+	}
+
 	public static List<IProject> getVisibleProjects(IPath workspaceRoot) {
 		List<IProject> projects = new ArrayList<>();
 		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
