@@ -43,6 +43,7 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -193,7 +194,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			IFolder linkedFolder) {
 		IPath linkedFolderPath = linkedFolder.getLocation();
 		Collection<File> foldersToSearch = collectFoldersToSearch(triggerFilePath, triggerFolder, linkedFolderPath);
-		Collection<IPath> triggerFiles = collectTriggerFiles(foldersToSearch);
+		IProject currentProject = linkedFolder.getProject();
+		if (currentProject == null) {
+			return Collections.emptySet();
+		}
+		Collection<IPath> triggerFiles = collectTriggerFiles(currentProject, foldersToSearch);
 		
 		Set<IPath> sourcePaths = new HashSet<>();
 		sourcePaths.add(triggerFolder.getFullPath());
@@ -292,10 +297,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	/**
 	 * Collect the Java files contained in the search folders. Each folder will
 	 * only be collected one Java file (if they have) at max 3 depth level.
+	 * @param project the invisible project that is currently dealing with.
 	 * @param searchFolders the folders to search.
 	 */
-	private static Collection<IPath> collectTriggerFiles(Collection<File> searchFolders) {
-		JavaFileDetector javaFileDetector = new JavaFileDetector();
+	private static Collection<IPath> collectTriggerFiles(IProject project, Collection<File> searchFolders) {
+		JavaFileDetector javaFileDetector = new JavaFileDetector(project);
 		for (File file : searchFolders) {
 			try {
 				Files.walkFileTree(
@@ -633,11 +639,14 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	 */
 	public static class JavaFileDetector extends SimpleFileVisitor<java.nio.file.Path> {
 
+		private IProject currentProject;
 		private Set<IPath> javaFiles;
 		private Set<String> exclusions;
+		private Set<IPath> projectPaths;
 		private Set<String> buildFiles;
 
-		public JavaFileDetector() {
+		public JavaFileDetector(IProject currentProject) {
+			this.currentProject = currentProject;
 			this.javaFiles = new HashSet<>();
 			this.exclusions = new HashSet<>();
 			List<String> javaImportExclusions = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions();
@@ -653,6 +662,36 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				IProjectDescription.DESCRIPTION_FILE_NAME,
 				IJavaProject.CLASSPATH_FILE_NAME
 			));
+			// store paths from other projects that need to be excluded
+			projectPaths = new HashSet<>();
+			IProject[] allProjects = ProjectUtils.getAllProjects();
+			for (IProject project : allProjects) {
+				if (Objects.equals(project, this.currentProject)) {
+					continue;
+				}
+
+				if (ProjectUtils.isVisibleProject(project)) {
+					this.projectPaths.add(project.getLocation());
+					continue;
+				}
+
+				if (Objects.equals(project.getName(), ProjectsManager.DEFAULT_PROJECT_NAME)) {
+					continue;
+				}
+
+				// Add the path of linked resources for those invisible projects
+				try {
+					project.accept((IResourceVisitor) resource -> {
+						if (resource.isLinked()) {
+							projectPaths.add(resource.getLocation().removeLastSegments(1));
+							return false;
+						}
+						return true;
+					}, IResource.DEPTH_INFINITE, false /*includePhantoms*/);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.log(e);
+				}
+			}
 		}
 
 		@Override
@@ -699,6 +738,14 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			if (dir.getFileName() == null) {
 				return true;
 			}
+
+			IPath path = ResourceUtils.filePathFromURI(dir.toUri().toString());
+			for (IPath projectPath: projectPaths) {
+				if (projectPath.isPrefixOf(path)) {
+					return true;
+				}
+			}
+
 			boolean excluded = false;
 			for (String pattern : exclusions) {
 				boolean includePattern = false;

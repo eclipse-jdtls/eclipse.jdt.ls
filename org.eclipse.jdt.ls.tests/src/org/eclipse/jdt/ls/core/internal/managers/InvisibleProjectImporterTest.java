@@ -32,8 +32,13 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
@@ -458,6 +463,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 	@Test
 	public void javaFileDetectorTest() throws Exception {
+		createMockProject();
 		preferenceManager.getPreferences().setJavaImportExclusions(Arrays.asList("**/excluded"));
 		File root = new File(getSourceProjectDirectory(), "singlefile/invisibleFileDetector");
 		List<File> foldersToSearch = new ArrayList<>();
@@ -467,12 +473,31 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 			}
 		}
 
-		JavaFileDetector detector = new JavaFileDetector();
+		JavaFileDetector detector = new JavaFileDetector(null);
 		for (File file : foldersToSearch) {
 			Files.walkFileTree(file.toPath(), EnumSet.noneOf(FileVisitOption.class), 3 /*maxDepth*/, detector);
 		}
 		Set<IPath> triggerFiles = detector.getTriggerFiles();
 
 		assertEquals(0, triggerFiles.size());
+	}
+
+	private void createMockProject() throws CoreException {
+		IProgressMonitor monitor = new NullProgressMonitor();
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mock");
+		if (!project.exists()) {
+			IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription("mock");
+			project.create(description, monitor);
+			project.open(monitor);
+			description.setNatureIds(new String[] { JavaCore.NATURE_ID });
+			project.setDescription(description, monitor);
+			IFolder folder = project.getFolder("_");
+			if (!folder.exists()) {
+				folder.create(true, true, monitor);
+			}
+			IFile fakeFile = project.getFile("_/Other.java");
+			File file = new File(getSourceProjectDirectory(), "singlefile/invisibleFileDetector/other-project/Other.java");
+			fakeFile.createLink(file.toURI(), IResource.REPLACE, monitor);
+		}
 	}
 }
