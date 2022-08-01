@@ -387,11 +387,15 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
 		InlayHintParams params = new InlayHintParams();
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
-		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		params.setRange(new Range(new Position(0, 0), new Position(12, 0)));
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
-		assertEquals(2, inlayHints.size());
-		assertEquals("length:", inlayHints.get(0).getLabel().getLeft());
-		assertEquals("width:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals(6, inlayHints.size());
+		assertEquals("fromNodeId:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("toNodeId:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("fromPoint:", inlayHints.get(2).getLabel().getLeft());
+		assertEquals("toPoint:", inlayHints.get(3).getLabel().getLeft());
+		assertEquals("length:", inlayHints.get(4).getLabel().getLeft());
+		assertEquals("profile:", inlayHints.get(5).getLabel().getLeft());
 	}
 
 	@Test

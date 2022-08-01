@@ -206,11 +206,7 @@ class InlayHintVisitor extends ASTVisitor {
 				JavaLanguageServerPlugin.logException(e);
 			}
 		} else if (methodBinding.getDeclaringClass().isRecord()) {
-			// get the record constructor parameter names via its declared fields
-			IVariableBinding[] declaredFields = methodBinding.getDeclaringClass().getDeclaredFields();
-			parameterNames = Arrays.stream(declaredFields).map(field -> {
-				return field.getName();
-			}).toArray(String[]::new);
+			parameterNames = methodBinding.getParameterNames();
 		}
 		return parameterNames;
 	}
