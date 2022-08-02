@@ -1,6 +1,12 @@
 public class Bar {
-	record Rectangle(double length, double width) {}
+	record Edge(int fromNodeId,
+		int toNodeId,
+		Object fromPoint,
+		Object toPoint,
+		double length,
+		Object profile
+	) {}
 	void foo(String id) {
-		new Rectangle(1.0, 2.0);
+		new Edge(1, 2, 3, 4, 5, 6);
 	}
 }
