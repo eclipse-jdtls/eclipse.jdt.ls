@@ -209,7 +209,7 @@ public class DocumentSymbolHandler {
 			}
 			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor, includeInherited)).filter(Objects::nonNull).collect(Collectors.toList());
 		} catch (OperationCanceledException e) {
-			logInfo("User abort while collecting the document symbols.");
+			logInfo("User canceled while collecting the document symbols.");
 		} catch (JavaModelException e) {
 			if (!unit.exists()) {
 				JavaLanguageServerPlugin.logError("Problem getting outline for " + unit.getElementName() + ": File not found.");
@@ -229,7 +229,7 @@ public class DocumentSymbolHandler {
 			return null;
 		}
 		if (monitor.isCanceled()) {
-			throw new OperationCanceledException("User abort");
+			throw new OperationCanceledException("User canceled");
 		}
 		DocumentSymbol symbol = includeInherited ? new ExtendedDocumentSymbol() : new DocumentSymbol();
 		try {

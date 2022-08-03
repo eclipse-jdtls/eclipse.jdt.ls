@@ -21,9 +21,9 @@ import java.util.Set;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.MultiVariable;
 
 /**
- * Global state for templates. Selecting a proposal for the master template variable
- * will cause the value (and the proposals) for the slave variables to change.
- * 
+ * Global state for templates. Selecting a proposal for the main template variable
+ * will cause the value (and the proposals) for the dependent variables to change.
+ *
  * Copied from org.eclipse.jdt.internal.ui.text.template.contentassist.MultiVariableGuess
  * UI related code is removed.
  *
@@ -41,32 +41,32 @@ public class MultiVariableGuess {
 	/**
 	 * @param position
 	 */
-	public void addSlave(VariablePosition position) {
+	public void addDependent(VariablePosition position) {
 		fPositions.put(position.getVariable(), position);
 	}
 
 	/**
-	 * @param master
-	 * @param slave
+	 * @param main
+	 * @param dependent
 	 * @since 3.3
 	 */
-	public void addDependency(MultiVariable master, MultiVariable slave) {
-		// check for cycles and multi-slaves
-		if (fBackwardDeps.containsKey(slave))
-			throw new IllegalArgumentException("slave can only serve one master"); //$NON-NLS-1$
-		Object parent= master;
+	public void addDependency(MultiVariable main, MultiVariable dependent) {
+		// check for cycles and multi-dependents
+		if (fBackwardDeps.containsKey(dependent))
+			throw new IllegalArgumentException("dependent can only have a single main variable"); //$NON-NLS-1$
+		Object parent= main;
 		while (parent != null) {
 			parent= fBackwardDeps.get(parent);
-			if (parent == slave)
+			if (parent == dependent)
 				throw new IllegalArgumentException("cycle detected"); //$NON-NLS-1$
 		}
 
-		Set<MultiVariable> slaves= fDependencies.get(master);
-		if (slaves == null) {
-			slaves= new HashSet<>();
-			fDependencies.put(master, slaves);
+		Set<MultiVariable> dependents= fDependencies.get(main);
+		if (dependents == null) {
+			dependents= new HashSet<>();
+			fDependencies.put(main, dependents);
 		}
-		fBackwardDeps.put(slave, master);
-		slaves.add(slave);
+		fBackwardDeps.put(dependent, main);
+		dependents.add(dependent);
 	}
 }

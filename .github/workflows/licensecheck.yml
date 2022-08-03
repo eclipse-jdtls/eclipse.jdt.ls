@@ -5,10 +5,10 @@ name: License vetting status check
 on:
   push:
     branches: 
-      - 'master'
+      - 'main'
   pull_request:
     branches: 
-     - 'master'
+     - 'main'
   issue_comment:
     types: [created]
 

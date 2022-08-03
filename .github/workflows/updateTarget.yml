@@ -10,7 +10,7 @@ on:
     - cron:  '0 8 * * *'
   push:
     branches:
-      - master
+      - main
     paths:
       - '**.target'
 
