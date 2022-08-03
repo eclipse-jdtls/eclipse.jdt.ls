@@ -180,7 +180,7 @@ public class PartialSortMembersOperation {
 			@Override
 			public boolean visit(org.eclipse.jdt.core.dom.CompilationUnit compilationUnit) {
 				if (checkMalformedNodes(compilationUnit)) {
-					return true; // abort sorting of current element
+					return true; // avoid sorting of current element
 				}
 
 				sortElements(selectedNodes.stream().filter(node -> compilationUnit.types().contains(node)).collect(Collectors.toList()), rewriter.getListRewrite(compilationUnit, org.eclipse.jdt.core.dom.CompilationUnit.TYPES_PROPERTY));
@@ -190,7 +190,7 @@ public class PartialSortMembersOperation {
 			@Override
 			public boolean visit(AnnotationTypeDeclaration annotationTypeDeclaration) {
 				if (checkMalformedNodes(annotationTypeDeclaration)) {
-					return true; // abort sorting of current element
+					return true; // avoid sorting of current element
 				}
 
 				sortElements(selectedNodes.stream().filter(node -> annotationTypeDeclaration.bodyDeclarations().contains(node)).collect(Collectors.toList()), rewriter.getListRewrite(annotationTypeDeclaration, AnnotationTypeDeclaration.BODY_DECLARATIONS_PROPERTY));
@@ -200,7 +200,7 @@ public class PartialSortMembersOperation {
 			@Override
 			public boolean visit(AnonymousClassDeclaration anonymousClassDeclaration) {
 				if (checkMalformedNodes(anonymousClassDeclaration)) {
-					return true; // abort sorting of current element
+					return true; // avoid sorting of current element
 				}
 
 				sortElements(selectedNodes.stream().filter(node -> anonymousClassDeclaration.bodyDeclarations().contains(node)).collect(Collectors.toList()), rewriter.getListRewrite(anonymousClassDeclaration, AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY));
@@ -210,7 +210,7 @@ public class PartialSortMembersOperation {
 			@Override
 			public boolean visit(TypeDeclaration typeDeclaration) {
 				if (checkMalformedNodes(typeDeclaration)) {
-					return true; // abort sorting of current element
+					return true; // avoid sorting of current element
 				}
 
 				sortElements(selectedNodes.stream().filter(node -> typeDeclaration.bodyDeclarations().contains(node)).collect(Collectors.toList()), rewriter.getListRewrite(typeDeclaration, TypeDeclaration.BODY_DECLARATIONS_PROPERTY));
@@ -220,7 +220,7 @@ public class PartialSortMembersOperation {
 			@Override
 			public boolean visit(EnumDeclaration enumDeclaration) {
 				if (checkMalformedNodes(enumDeclaration)) {
-					return true; // abort sorting of current element
+					return true; // avoid sorting of current element
 				}
 
 				sortElements(selectedNodes.stream().filter(node -> enumDeclaration.bodyDeclarations().contains(node)).collect(Collectors.toList()), rewriter.getListRewrite(enumDeclaration, EnumDeclaration.BODY_DECLARATIONS_PROPERTY));

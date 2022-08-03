@@ -30,7 +30,7 @@ import org.eclipse.jface.text.templates.TemplateContextType;
  * UI related code is removed.
  */
 public class JavaContext extends JavaContextCore {
-	/** A global state for proposals that change if a master proposal changes. */
+	/** A global state for proposals that change if a main proposal changes. */
 	protected MultiVariableGuess fMultiVariableGuess;
 
 	/**
@@ -62,18 +62,18 @@ public class JavaContext extends JavaContextCore {
 	/**
 	 * Adds a multi-variable guess dependency.
 	 *
-	 * @param master the master variable - <code>slave</code> needs to be updated when
-	 *        <code>master</code> changes
-	 * @param slave the dependent variable
+	 * @param main the main variable - <code>dependent</code> needs to be updated when
+	 *        <code>main</code> changes
+	 * @param dependent the dependent variable
 	 * @since 3.3
 	 */
 	@Override
-	public void addDependency(MultiVariable master, MultiVariable slave) {
+	public void addDependency(MultiVariable main, MultiVariable dependent) {
 		if (this.fMultiVariableGuess == null) {
 			this.fMultiVariableGuess = new MultiVariableGuess();
 		}
 
-		this.fMultiVariableGuess.addDependency(master, slave);
+		this.fMultiVariableGuess.addDependency(main, dependent);
 	}
 
 	public MultiVariableGuess getMultiVariableGuess() {
