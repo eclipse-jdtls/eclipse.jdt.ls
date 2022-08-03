@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.util.Map.entry;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -29,9 +30,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -332,6 +335,37 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(2, diagnostics.size());
 		diagnosticsParams.clear();
 		closeDocument(cu1);
+	}
+
+	@Test
+	public void testNonJdtError() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = WorkspaceHelper.getProject("hello");
+		URI uri = project.getFile("/src/org/sample/Foo.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		IResource resource = cu.getCorrespondingResource();
+		// @formatter:off
+		resource.createMarker("testNonJdtError", Map.ofEntries(
+				entry(IMarker.MESSAGE, "Non-JDT errors."),
+				entry(IMarker.SEVERITY, IMarker.SEVERITY_ERROR)));
+		// @formatter:off
+		String source = FileUtils.readFileToString(FileUtils.toFile(uri.toURL()));
+		openDocument(cu, source, 1);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		assertEquals(project, cu.getJavaProject().getProject());
+		assertEquals(source, cu.getSource());
+		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+		assertEquals(1, diagnosticReports.size());
+		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
+		assertEquals(1, diagParam.getDiagnostics().size());
+		closeDocument(cu);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		diagnosticReports = getClientRequests("publishDiagnostics");
+		assertEquals(1, diagnosticReports.size());
+		diagParam = diagnosticReports.get(0);
+		assertEquals(1, diagParam.getDiagnostics().size());
+		Diagnostic diagnostic = diagParam.getDiagnostics().get(0);
+		assertEquals("Non-JDT errors.", diagnostic.getMessage());
 	}
 
 	@Test

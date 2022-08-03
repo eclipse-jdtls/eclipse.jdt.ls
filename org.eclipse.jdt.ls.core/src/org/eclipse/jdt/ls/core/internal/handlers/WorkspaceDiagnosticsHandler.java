@@ -13,7 +13,6 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -53,9 +52,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
-import org.eclipse.lsp4j.DiagnosticRelatedInformation;
 import org.eclipse.lsp4j.DiagnosticSeverity;
-import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -176,10 +173,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				return false;
 			}
 			if (!cu.isWorkingCopy()) {
-				IMarker[] javaMarkers = resource.findMarkers(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER, false, IResource.DEPTH_ONE);
-				IMarker[] taskMarkers = resource.findMarkers(IJavaModelMarker.TASK_MARKER, false, IResource.DEPTH_ONE);
-				markers = Arrays.copyOf(javaMarkers, javaMarkers.length + taskMarkers.length);
-				System.arraycopy(taskMarkers, 0, markers, javaMarkers.length, taskMarkers.length);
+				markers = resource.findMarkers(null, false, IResource.DEPTH_ONE);
 				document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			} else if (handler != null) {
 				handler.triggerValidation(cu);
@@ -266,6 +260,10 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 					continue;
 				}
 				IResource resource = marker.getResource();
+				if (resource instanceof IFile && JavaCore.isJavaLikeFileName(resource.getName())) {
+					markers.add(marker);
+					continue;
+				}
 				if (project.equals(resource) || projectsManager.isBuildFile(resource)) {
 					markers.add(marker);
 				}
