@@ -181,4 +181,17 @@
       point="org.eclipse.core.resources.markers">
       <super type="org.eclipse.core.resources.problemmarker"/>
    </extension>
+   <extension
+      id="org.eclipse.jdt.ls.unmanagedFolderNature"
+      name="Unmanaged Folder"
+      point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+            class="org.eclipse.jdt.ls.core.internal.managers.UnmanagedFolderNature">
+         </run>
+      </runtime>
+      <requires-nature
+         id="org.eclipse.jdt.core.javanature">
+      </requires-nature>
+   </extension>
 </plugin>

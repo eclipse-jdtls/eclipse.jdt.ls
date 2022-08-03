@@ -63,6 +63,7 @@ import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.UnmanagedFolderNature;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -307,28 +308,20 @@ public final class ProjectUtils {
 	}
 
 	/**
-	 * Check if the input project is an unmanaged folder. (aka invisible project)
+	 * Check if the project is an unmanaged folder. (aka invisible project)
 	 * @param project
 	 */
 	public static boolean isUnmanagedFolder(IProject project) {
 		if (Objects.equals(project.getName(), ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			return false;
 		}
-		
 		if (isVisibleProject(project)) {
 			return false;
 		}
 
-		try {
-			String[] natureIds = project.getDescription().getNatureIds();
-			// TODO: we should consider assign a dedicate nature id for unmanaged folders.
-			// see: https://github.com/redhat-developer/vscode-java/issues/2552
-			return natureIds.length == 1 && Objects.equals(natureIds[0], JavaCore.NATURE_ID);
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.log(e);
-		}
-		return false;
+		return hasNature(project, UnmanagedFolderNature.NATURE_ID);
 	}
+
 
 	public static List<IProject> getVisibleProjects(IPath workspaceRoot) {
 		List<IProject> projects = new ArrayList<>();
@@ -342,7 +335,7 @@ public final class ProjectUtils {
 	}
 
 	public static IPath getProjectRealFolder(IProject project) {
-		if (project.isAccessible() && !isVisibleProject(project) && !project.equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject())) {
+		if (project.isAccessible() && isUnmanagedFolder(project)) {
 			return project.getFolder(WORKSPACE_LINK).getLocation();
 		}
 		return project.getLocation();

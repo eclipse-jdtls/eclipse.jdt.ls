@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -134,6 +135,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				JavaLanguageServerPlugin.logException("Failed to create the invisible project.", e);
 				return false;
 			}
+		}
+
+		// Add unmanaged folder nature if it's missing.
+		if (!invisibleProject.hasNature(UnmanagedFolderNature.NATURE_ID)) {
+			addMissingNature(invisibleProject, monitor);
 		}
 
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
@@ -461,6 +467,22 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	public static IPath tryResolveSourceDirectory(IPath javaFile, IPath rootPath, String[][] potentialSrcPrefixes) {
 		String packageName = getPackageName(javaFile, rootPath, potentialSrcPrefixes);
 		return inferSourceDirectory(javaFile.toFile().toPath(), packageName);
+	}
+
+	/**
+	 * Add unmanaged folder nature id.
+	 * @param project
+	 * @param monitor
+	 * @throws CoreException
+	 */
+	private static void addMissingNature(IProject project, IProgressMonitor monitor) throws CoreException {
+		IProjectDescription description = project.getDescription();
+		String[] natureIds = description.getNatureIds();
+		String[] newNatureIds = new String[natureIds.length + 1];
+		System.arraycopy(natureIds, 0, newNatureIds, 0, natureIds.length);
+		newNatureIds[newNatureIds.length - 1] = UnmanagedFolderNature.NATURE_ID;
+		description.setNatureIds(newNatureIds);
+		project.setDescription(description, monitor);
 	}
 
 }

@@ -56,6 +56,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 	public void importCompleteFolder() throws Exception {
 		IProject invisibleProject = copyAndImportFolder("singlefile/lesson1", "src/org/samples/HelloWorld.java");
 		assertTrue(invisibleProject.exists());
+		assertTrue(invisibleProject.hasNature(UnmanagedFolderNature.NATURE_ID));
 		IPath sourcePath = invisibleProject.getFolder(new Path(ProjectUtils.WORKSPACE_LINK).append("src")).getFullPath();
 		assertTrue(ProjectUtils.isOnSourcePath(sourcePath, JavaCore.create(invisibleProject)));
 	}
