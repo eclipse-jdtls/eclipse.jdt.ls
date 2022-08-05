@@ -41,7 +41,6 @@ public final class ActionMessages extends NLS {
 	public static String GenerateFinalModifiersAction_label;
 	public static String GenerateFinalModifiersAction_templateLabel;
 	public static String GenerateFinalModifiersAction_selectionLabel;
-	public static String SortMembers_label;
 	public static String SortMembers_templateLabel;
 	public static String SortMembers_selectionLabel;
 	public static String MoveRefactoringAction_label;

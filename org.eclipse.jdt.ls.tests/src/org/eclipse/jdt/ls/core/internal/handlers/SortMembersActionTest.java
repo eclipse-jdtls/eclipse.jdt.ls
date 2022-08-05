@@ -66,7 +66,7 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A'");
+		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
 		Assert.assertNotNull(sortMemberAction);
 		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberAction);
 		Assert.assertNotNull(sortMemberCommand);
@@ -87,7 +87,7 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
-		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Members for 'A'");
+		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Members for 'A.java'");
 		Assert.assertNotNull(sortMemberQuickAssist);
 		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberQuickAssist);
 		Assert.assertNotNull(sortMemberCommand);

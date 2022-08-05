@@ -33,8 +33,38 @@ public class SortMembersQuickAssistTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	public void testSortMemberForType() throws Exception {
+	public void testSortMembersForType() throws Exception {
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("	private String privateStr = \"private\";\n");
+		buf.append("	private String getPrivateStr() { return \"private\"; }\n");
+		buf.append("	public String publicStr = \"public\";\n");
+		buf.append("	public String getPublicStr() { return \"public\"; }\n");
+		buf.append("	private String privateStr1 = \"private1\";\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack.createCompilationUnit("A.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("public class A {\n");
+		buf.append("	private String privateStr = \"private\";\n");
+		buf.append("	public String publicStr = \"public\";\n");
+		buf.append("	private String privateStr1 = \"private1\";\n");
+		buf.append("	public String getPublicStr() { return \"public\"; }\n");
+		buf.append("	private String getPrivateStr() { return \"private\"; }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Sort Members for 'A.java'", buf.toString());
+
+		Range selection = CodeActionUtil.getRange(cu, "A");
+		assertCodeActions(cu, selection, e1);
+	}
+
+	@Test
+	public void testSortMembersForTypeWithFields() throws Exception {
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
+		this.preferenceManager.getPreferences().setDoNotSortFields(false);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("public class A {\n");
@@ -55,14 +85,14 @@ public class SortMembersQuickAssistTest extends AbstractQuickFixTest {
 		buf.append("	public String getPublicStr() { return \"public\"; }\n");
 		buf.append("	private String getPrivateStr() { return \"private\"; }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Sort Members for 'A'", buf.toString());
+		Expected e1 = new Expected("Sort Members for 'A.java'", buf.toString());
 
 		Range selection = CodeActionUtil.getRange(cu, "A");
 		assertCodeActions(cu, selection, e1);
 	}
 
 	@Test
-	public void testSortMemberForSelection() throws Exception {
+	public void testSortMembersForSelection() throws Exception {
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test;\n");
