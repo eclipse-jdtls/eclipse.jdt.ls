@@ -186,8 +186,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	 * Based on the trigger file and its belonging source folder, search more places and collect
 	 * the valid source paths.
 	 * @param triggerFilePath the path of the import trigger file.
-	 * @param triggerFolder the folder which contains the trigger file. A search will be executed
-	 *                      based on the trigger folder.
+	 * @param triggerFolder the folder which is the source root of the trigger file.
 	 * @param linkedFolder the invisible project's linked folder.
 	 */
 	private static Collection<IPath> collectSourcePaths(IPath triggerFilePath, IFolder triggerFolder,
@@ -220,8 +219,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	/**
 	 * Collect folders that may contain Java source files.
 	 * @param triggerFilePath the path of the import trigger file.
-	 * @param triggerFolder the folder which contains the trigger file. A search will be executed
-	 *                      based on the trigger folder.
+	 * @param triggerFolder the folder which is the source root of the trigger file.
 	 * @param linkedFolderPath the path of invisible project's linked folder.
 	 */
 	private static Collection<File> collectFoldersToSearch(IPath triggerFilePath, IFolder triggerFolder,
@@ -253,9 +251,9 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				continue;
 			}
 
-			Path eclipsePath = new Path(dir.getAbsolutePath());
+			Path dirPath = new Path(dir.getAbsolutePath());
 			// skip ancestor folder of the trigger file.
-			if (eclipsePath.isPrefixOf(triggerFilePath)) {
+			if (dirPath.isPrefixOf(triggerFilePath)) {
 				continue;
 			}
 
@@ -266,7 +264,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 	/**
 	 * Get the sibling folders of the trigger folder.
-	 * @param triggerFolder the trigger folder
+	 * @param triggerFolder the folder which is the source root of the trigger file.
 	 * @param linkedFolderPath the path of invisible project's linked folder.
 	 */
 	private static Collection<File> getSiblingFolders(IFolder triggerFolder, IPath linkedFolderPath) {
