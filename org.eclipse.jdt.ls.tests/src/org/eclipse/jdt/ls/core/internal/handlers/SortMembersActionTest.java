@@ -59,6 +59,7 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 				"\r\n" +
 				"public class A {\r\n" +
 				"	private String name;\r\n" +
+				"	private String getPrivateStr() { return \"private\"; }\r\n" +
 				"	public String publicName;\r\n" +
 				"}"
 				, true, null);
@@ -74,12 +75,31 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSortMemberActionNotExists() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	private String name;\r\n" +
+				"	public String publicName;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
+		Assert.assertNull(sortMemberAction);
+	}
+
+	@Test
 	public void testSortMemberQuickAssistExistsForTypeDeclaration() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
 				"public class A {\r\n" +
 				"	private String name;\r\n" +
+				"	private String getPrivateStr() { return \"private\"; }\r\n" +
 				"	public String publicName;\r\n" +
 				"}"
 				, true, null);
@@ -101,11 +121,12 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 				"\r\n" +
 				"public class A {\r\n" +
 				"	private String name;\r\n" +
+				"	private String getPrivateStr() { return \"private\"; }\r\n" +
 				"	public String publicName;\r\n" +
 				"}"
 				, true, null);
 		//@formatter:on
-		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String name;\r\n\tpublic String publicName;");
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String getPrivateStr() { return \"private\"; }\r\n\tpublic String publicName;");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Selected Members");
