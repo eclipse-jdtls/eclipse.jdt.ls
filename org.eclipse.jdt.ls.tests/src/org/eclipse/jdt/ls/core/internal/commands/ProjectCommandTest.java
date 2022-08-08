@@ -97,9 +97,11 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         List<String> settingKeys = Arrays.asList(ProjectCommand.SOURCE_PATHS);
         Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
         String[] actualSourcePaths = (String[]) options.get(ProjectCommand.SOURCE_PATHS);
-        String expectedSourcePath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("src").getLocation().toOSString();
-        assertTrue(actualSourcePaths.length == 1);
-        assertEquals(expectedSourcePath, actualSourcePaths[0]);
+        assertTrue(actualSourcePaths.length == 2);
+        assertTrue(Arrays.stream(actualSourcePaths).anyMatch(sourcePath -> {
+            return sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("src").getLocation().toOSString())
+                    || sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("test").getLocation().toOSString());
+        }));
     }
 
     @Test
