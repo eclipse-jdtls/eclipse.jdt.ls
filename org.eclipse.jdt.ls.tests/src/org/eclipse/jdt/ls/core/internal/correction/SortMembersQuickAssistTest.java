@@ -64,7 +64,7 @@ public class SortMembersQuickAssistTest extends AbstractQuickFixTest {
 	@Test
 	public void testSortMembersForTypeWithFields() throws Exception {
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
-		this.preferenceManager.getPreferences().setDoNotSortFields(false);
+		this.preferenceManager.getPreferences().setAvoidVolatileChanges(false);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("public class A {\n");

@@ -434,7 +434,7 @@ public class Preferences {
 	 */
 	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS = "java.inlayHints.parameterNames.exclusions";
 
-	public static final String JAVA_CODEACTION_SORTMEMBER_DONOTSORTFIELDS = "java.codeAction.sortMembers.doNotSortFields";
+	public static final String JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES = "java.codeAction.sortMembers.avoidVolatileChanges";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -564,7 +564,7 @@ public class Preferences {
 	private InlayHintsParameterMode inlayHintsParameterMode;
 	private List<String> inlayHintsExclusionList;
 	private ProjectEncodingMode projectEncoding;
-	private boolean doNotSortFields;
+	private boolean avoidVolatileChanges;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -780,7 +780,7 @@ public class Preferences {
 		mavenNotCoveredPluginExecutionSeverity = "ignore";
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 		projectEncoding = ProjectEncodingMode.IGNORE;
-		doNotSortFields = true;
+		avoidVolatileChanges = true;
 	}
 
 	/**
@@ -1068,8 +1068,8 @@ public class Preferences {
 		prefs.setInlayHintsExclusionList(inlayHintsExclusionList);
 		String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
 		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
-		boolean doNotSortFields = getBoolean(configuration, JAVA_CODEACTION_SORTMEMBER_DONOTSORTFIELDS, true);
-		prefs.setDoNotSortFields(doNotSortFields);
+		boolean avoidVolatileChanges = getBoolean(configuration, JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES, true);
+		prefs.setAvoidVolatileChanges(avoidVolatileChanges);
 		return prefs;
 	}
 
@@ -1882,11 +1882,11 @@ public class Preferences {
 		return this.projectEncoding;
 	}
 
-	public void setDoNotSortFields(boolean doNotSortFields) {
-		this.doNotSortFields = doNotSortFields;
+	public void setAvoidVolatileChanges(boolean avoidVolatileChanges) {
+		this.avoidVolatileChanges = avoidVolatileChanges;
 	}
 
-	public boolean getDoNotSortFields() {
-		return this.doNotSortFields;
+	public boolean getAvoidVolatileChanges() {
+		return this.avoidVolatileChanges;
 	}
 }

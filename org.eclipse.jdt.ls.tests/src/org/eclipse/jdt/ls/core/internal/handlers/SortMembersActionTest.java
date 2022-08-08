@@ -93,6 +93,28 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSortMemberActionExistsWithVolatileChanges() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	private String name;\r\n" +
+				"	public String publicName;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		this.preferenceManager.getPreferences().setAvoidVolatileChanges(false);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
+		Assert.assertNotNull(sortMemberAction);
+		Command sortMemberCommand = CodeActionHandlerTest.getCommand(sortMemberAction);
+		Assert.assertNotNull(sortMemberCommand);
+		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, sortMemberCommand.getCommand());
+	}
+
+	@Test
 	public void testSortMemberQuickAssistExistsForTypeDeclaration() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +

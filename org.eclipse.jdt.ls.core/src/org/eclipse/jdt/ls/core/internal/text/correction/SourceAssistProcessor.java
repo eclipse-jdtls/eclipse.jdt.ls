@@ -241,16 +241,16 @@ public class SourceAssistProcessor {
 		Optional<Either<Command, CodeAction>> generateFinalModifiersQuickAssist = addFinalModifierWherePossibleQuickAssist(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiersQuickAssist);
 
-		Optional<Either<Command, CodeAction>> sortMembersAction = getSortMembersAction(context, params, JavaCodeActionKind.SOURCE_SORT_MEMBERS, preferenceManager.getPreferences().getDoNotSortFields());
+		Optional<Either<Command, CodeAction>> sortMembersAction = getSortMembersAction(context, params, JavaCodeActionKind.SOURCE_SORT_MEMBERS, preferenceManager.getPreferences().getAvoidVolatileChanges());
 		addSourceActionCommand($, params.getContext(), sortMembersAction);
 
 		if (isInTypeDeclaration && ((TypeDeclaration) typeDeclaration).isPackageMemberTypeDeclaration()) {
-			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForType = getSortMembersAction(context, params, JavaCodeActionKind.QUICK_ASSIST, preferenceManager.getPreferences().getDoNotSortFields());
+			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForType = getSortMembersAction(context, params, JavaCodeActionKind.QUICK_ASSIST, preferenceManager.getPreferences().getAvoidVolatileChanges());
 			addSourceActionCommand($, params.getContext(), sortMembersQuickAssistForType);
 		}
 
 		if (coveredNodes.size() > 0) {
-			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForSelection = getSortMembersForSelectionProposal(context, params, coveredNodes, preferenceManager.getPreferences().getDoNotSortFields());
+			Optional<Either<Command, CodeAction>> sortMembersQuickAssistForSelection = getSortMembersForSelectionProposal(context, params, coveredNodes, preferenceManager.getPreferences().getAvoidVolatileChanges());
 			addSourceActionCommand($, params.getContext(), sortMembersQuickAssistForSelection);
 		}
 
@@ -639,10 +639,10 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContext context, CodeActionParams params, String kind, String label, boolean doNotSortFields) {
+	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContext context, CodeActionParams params, String kind, String label, boolean avoidVolatileChanges) {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(label, new GroupCategorySet(new GroupCategory(label, label, label)));
 		try {
-			TextEdit edit = CompilationUnitSorter.sort(context.getASTRoot(), new DefaultJavaElementComparator(doNotSortFields), 0, group, null);
+			TextEdit edit = CompilationUnitSorter.sort(context.getASTRoot(), new DefaultJavaElementComparator(avoidVolatileChanges), 0, group, null);
 			if (edit == null) {
 				return Optional.empty();
 			}
@@ -655,9 +655,9 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersForSelectionProposal(IInvocationContext context, CodeActionParams params, List<ASTNode> coveredNodes, boolean doNotSortFields) {
+	private Optional<Either<Command, CodeAction>> getSortMembersForSelectionProposal(IInvocationContext context, CodeActionParams params, List<ASTNode> coveredNodes, boolean avoidVolatileChanges) {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(ActionMessages.SortMembers_selectionLabel, new GroupCategorySet(new GroupCategory(ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel)));
-		PartialSortMembersOperation operation = new PartialSortMembersOperation(new IJavaElement[] { context.getASTRoot().getJavaElement() }, new DefaultJavaElementComparator(doNotSortFields));
+		PartialSortMembersOperation operation = new PartialSortMembersOperation(new IJavaElement[] { context.getASTRoot().getJavaElement() }, new DefaultJavaElementComparator(avoidVolatileChanges));
 		try {
 			TextEdit edit = operation.calculateEdit(context.getASTRoot(), coveredNodes, group);
 			if (edit == null) {
@@ -672,12 +672,12 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersAction(IInvocationContext context, CodeActionParams params, String kind, boolean doNotSortFields) {
+	private Optional<Either<Command, CodeAction>> getSortMembersAction(IInvocationContext context, CodeActionParams params, String kind, boolean avoidVolatileChanges) {
 		CompilationUnit unit = context.getASTRoot();
 		if (unit != null) {
 			ITypeRoot typeRoot = unit.getTypeRoot();
 			if (typeRoot != null) {
-				return getSortMembersProposal(context, params, kind, Messages.format(ActionMessages.SortMembers_templateLabel, typeRoot.getElementName()), doNotSortFields);
+				return getSortMembersProposal(context, params, kind, Messages.format(ActionMessages.SortMembers_templateLabel, typeRoot.getElementName()), avoidVolatileChanges);
 			}
 		}
 		return Optional.empty();
