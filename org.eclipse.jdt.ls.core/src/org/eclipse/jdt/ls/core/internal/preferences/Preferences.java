@@ -165,6 +165,10 @@ public class Preferences {
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
 	/**
+	 * Preference key to enable/disable maven offline mode.
+	 */
+	public static final String IMPORT_MAVEN_OFFLINE = "java.import.maven.offline.enabled";
+	/**
 	 * Preference key to enable/disable downloading Maven source artifacts.
 	 */
 	public static final String MAVEN_DOWNLOAD_SOURCES = "java.maven.downloadSources";
@@ -494,6 +498,7 @@ public class Preferences {
 	private String gradleJavaHome;
 	private String gradleUserHome;
 	private boolean importMavenEnabled;
+	private boolean mavenOffline;
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
 	private boolean mavenUpdateSnapshots;
@@ -726,6 +731,7 @@ public class Preferences {
 		gradleJavaHome = null;
 		gradleUserHome = null;
 		importMavenEnabled = true;
+		mavenOffline = false;
 		mavenDownloadSources = false;
 		eclipseDownloadSources = false;
 		mavenUpdateSnapshots = false;
@@ -821,6 +827,8 @@ public class Preferences {
 		prefs.setGradleUserHome(gradleUserHome);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
+		boolean mavenOffline = getBoolean(configuration, IMPORT_MAVEN_OFFLINE, false);
+		prefs.setMavenOffline(mavenOffline);
 		boolean mavenDownloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
 		prefs.setMavenDownloadSources(mavenDownloadSources);
 		boolean eclipseDownloadSources = getBoolean(configuration, ECLIPSE_DOWNLOAD_SOURCES, false);
@@ -1184,6 +1192,12 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenOffline(boolean enabled) {
+		this.mavenOffline = enabled;
+		return this;
+	}
+
+
 	public Preferences setMavenDownloadSources(boolean enabled) {
 		this.mavenDownloadSources = enabled;
 		return this;
@@ -1472,6 +1486,10 @@ public class Preferences {
 
 	public boolean isImportMavenEnabled() {
 		return importMavenEnabled;
+	}
+
+	public boolean isMavenOffline() {
+		return mavenOffline;
 	}
 
 	public boolean isMavenDownloadSources() {
