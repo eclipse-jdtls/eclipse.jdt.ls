@@ -100,6 +100,9 @@ public class StandardPreferenceManager extends PreferenceManager {
 			}
 		}
 		updateParallelBuild(preferences.getMaxConcurrentBuilds());
+		boolean mavenOffline = preferences.isMavenOffline();
+		IEclipsePreferences store = DefaultScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
+		store.putBoolean(MavenPreferenceConstants.P_OFFLINE, mavenOffline);
 	}
 
 	private void updateParallelBuild(int maxConcurrentBuilds) {
