@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -118,5 +119,13 @@ public class CodeActionUtility {
 			return names;
 		}
 		return Collections.emptyList();
+	}
+
+	public static String getTypeName(AbstractTypeDeclaration node) {
+		SimpleName name = node.getName();
+		if (name != null) {
+			return name.getIdentifier();
+		}
+		return null;
 	}
 }

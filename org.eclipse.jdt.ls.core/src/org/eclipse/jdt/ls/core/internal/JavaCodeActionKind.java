@@ -64,6 +64,11 @@ public interface JavaCodeActionKind {
 	public static final String SOURCE_OVERRIDE_METHODS = CodeActionKind.Source + ".overrideMethods";
 
 	/**
+	 * Sort members kind
+	 */
+	public static final String SOURCE_SORT_MEMBERS = CodeActionKind.Source + ".sortMembers";
+
+	/**
 	 * Extract to method kind
 	 */
 	public static final String REFACTOR_EXTRACT_METHOD = CodeActionKind.RefactorExtract + ".function";// using `.function` instead of `.method` to match existing keybindings
