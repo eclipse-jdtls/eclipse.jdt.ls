@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2018 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -44,13 +44,14 @@ import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
 public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 
-	private static WorkspaceExecuteCommandHandler instance = null;
+	private WorkspaceExecuteCommandHandler() {}
+
+	private static class CommandHandlerHolder {
+		private static final WorkspaceExecuteCommandHandler instance = new WorkspaceExecuteCommandHandler();
+	}
 
 	public static WorkspaceExecuteCommandHandler getInstance() {
-		if (instance == null) {
-			instance = new WorkspaceExecuteCommandHandler();
-		}
-		return instance;
+		return CommandHandlerHolder.instance;
 	}
 
 	/**
@@ -134,10 +135,16 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 	private Map<String, DelegateCommandHandlerDescriptor> fgContributedCommandHandlers;
 
 	private synchronized Collection<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors() {
-		if (fgContributedCommandHandlers == null) {
+		return getDelegateCommandHandlerDescriptors(false);
+	}
+
+	private synchronized Collection<DelegateCommandHandlerDescriptor> getDelegateCommandHandlerDescriptors(boolean force) {
+		if (fgContributedCommandHandlers == null || force) {
+
 			IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSION_POINT_ID);
 			fgContributedCommandHandlers = Stream.of(elements).collect(Collectors.toMap(DelegateCommandHandlerDescriptor::createId, DelegateCommandHandlerDescriptor::new, (value1, value2) -> value2));
 
+			Platform.getExtensionRegistry().removeListener(this);
 			Platform.getExtensionRegistry().addListener(this);
 		}
 
@@ -191,21 +198,29 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 
 		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getAllCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
 
+		if (candidates.isEmpty()) {
+			// re-fetch from the extension registry again in case that the local cache is out-of-sync.
+			handlers = getDelegateCommandHandlerDescriptors(true);
+			candidates = handlers.stream().filter(desc -> desc.getAllCommands().contains(params.getCommand())).collect(Collectors.toSet());
+		}
+
+		if (monitor.isCanceled()) {
+			return "";
+		}
 		if (candidates.size() > 1) {
 			Exception ex = new IllegalStateException(String.format("Found multiple delegateCommandHandlers (%s) matching command %s", candidates, params.getCommand()));
 			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InternalError, ex.getMessage(), ex));
 		}
-		if (monitor.isCanceled()) {
-			return "";
-		}
 		if (candidates.isEmpty()) {
 			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.MethodNotFound, String.format("No delegateCommandHandler for %s", params.getCommand()), null));
 		}
+
+		final DelegateCommandHandlerDescriptor descriptor = candidates.iterator().next();
 		final Object[] resultValues = new Object[1];
 		SafeRunner.run(new ISafeRunnable() {
 			@Override
 			public void run() throws Exception {
-				final IDelegateCommandHandler delegateCommandHandler = candidates.iterator().next().getDelegateCommandHandler();
+				final IDelegateCommandHandler delegateCommandHandler = descriptor.getDelegateCommandHandler();
 				if (delegateCommandHandler != null) {
 					//Convert args to java objects before sending to extensions
 					List<Object> args = Collections.emptyList();
