@@ -1,0 +1,21 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.19'
+
+    }
+}
+
+apply plugin: 'java'
+apply plugin: "com.google.protobuf"
+apply plugin: 'eclipse'
+
+group 'com.jdtls.protobuf.test'
+version '1.0-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}

@@ -1,0 +1,188 @@
+import org.gradle.plugins.ide.eclipse.model.Classpath
+import org.gradle.plugins.ide.eclipse.model.ClasspathEntry
+import org.gradle.plugins.ide.eclipse.model.EclipseModel
+import org.gradle.plugins.ide.eclipse.model.SourceFolder
+
+import java.lang.reflect.InvocationTargetException
+
+class ProtobufPatchPlugin implements Plugin<Project> {
+
+    /**
+     * The protobuf task names that will compile proto file to java source code.
+     */
+    private static final List<String> TASK_NAMES = Arrays.asList("generateProto", "generateTestProto")
+
+    /**
+     * The Gradle Eclipse plugin id.
+     */
+    private static final String ECLIPSE_PLUGIN = "eclipse"
+
+    /**
+     * The Gradle Protobuf plugin id.
+     */
+    private static final String PROTOBUF_PLUGIN = "com.google.protobuf"
+
+    /**
+     * Constant for the name of the ignore optional compile problems attribute.
+     */
+    private static final String IGNORE_OPTIONAL_PROBLEMS = "ignore_optional_problems"
+
+    /**
+     * Constant for the name of the module attribute.
+     */
+    private static final String OPTIONAL = "optional"
+
+    /**
+     * Constant for the name of the test attribute.
+     */
+    private static final String TEST = "test"
+
+    private static final String GRADLE_SCOPE = "gradle_scope"
+
+    private static final String GRADLE_USED_BY_SCOPE = "gradle_used_by_scope"
+
+    @Override
+    void apply(Project project) {
+        project.afterEvaluate {
+            project.plugins.withId(ECLIPSE_PLUGIN) {
+                project.plugins.withId(PROTOBUF_PLUGIN) {
+                    EclipseModel model = project.getExtensions().findByType(EclipseModel)
+                    model.classpath.file.whenMerged { Classpath cp ->
+                        File projectDir = project.getProjectDir()
+                        for (final String taskName : TASK_NAMES) {
+                            Task task = getTaskByName(project, taskName)
+                            if (task == null) {
+                                continue
+                            }
+
+                            Object sourceSetObj = getSourceSet(task);
+                            if (!(sourceSetObj instanceof SourceSet)) {
+                                continue
+                            }
+                            String sourceSetName = ((SourceSet) sourceSetObj).name
+
+                            Object outputSourceDirectorySet = getOutputSourceDirectorySet(task)
+                            if (!(outputSourceDirectorySet instanceof SourceDirectorySet)) {
+                                continue;
+                            }
+                            SourceDirectorySet sourceDirectorySet = (SourceDirectorySet) outputSourceDirectorySet
+                            Set<File> srcDirs = sourceDirectorySet.getSrcDirs()
+                            for (File srcDir : srcDirs) {
+                                // buildship requires the folder exists on disk, otherwise
+                                // it will be ignored when updating classpath file, see:
+                                // https://github.com/eclipse/buildship/issues/1196
+                                srcDir.mkdirs();
+
+                                String relativePath = projectDir.toURI().relativize(srcDir.toURI()).getPath()
+                                // remove trailing slash
+                                if (relativePath.endsWith("/")) {
+                                    relativePath = relativePath.substring(0, relativePath.length() - 1)
+                                }
+
+                                SourceFolder entry = new SourceFolder(relativePath, getOutputPath(cp, sourceSetName))
+                                entry.entryAttributes.put(OPTIONAL, "true")
+                                entry.entryAttributes.put(IGNORE_OPTIONAL_PROBLEMS, "true")
+
+                                boolean isTest = isTest(task)
+                                entry.entryAttributes.put(GRADLE_SCOPE, isTest ? "test" : "main")
+                                entry.entryAttributes.put(GRADLE_USED_BY_SCOPE, isTest ? "test" : "main,test")
+                                // check if output is not null here because test source folder
+                                // must have a separate output folder in Eclipse
+                                if (entry.output != null && isTest) {
+                                    entry.entryAttributes.put(TEST, "true")
+                                }
+                                cp.entries.add(entry)
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    Task getTaskByName(Project project, String name) {
+        try {
+            return project.getTasks().getByName(name)
+        } catch (UnknownTaskException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the output source directory set of the proto generation task. The source directories
+     * will be added to the Eclipse classpath entries.
+     */
+    Object getOutputSourceDirectorySet(Task task) {
+        try {
+            return task.getClass().getMethod("getOutputSourceDirectorySet").invoke(task)
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            return null
+        }
+    }
+
+    /**
+     * Get the source set of the proto generation task. The source set name will be used
+     * to determine the output path.
+     */
+    Object getSourceSet(Task task) {
+        try {
+            return task.getClass().getMethod("getSourceSet").invoke(task)
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            return null
+        }
+    }
+
+    /**
+     * Get if it's generate test proto task or not.
+     */
+    boolean isTest(Task task) {
+        try {
+            return (boolean) task.getClass().getMethod("getIsTest").invoke(task)
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            return false
+        }
+    }
+
+    /**
+     * Get the output path according to the source set name, if no valid path can be
+     * found, <code>null</code> will return.
+     */
+    String getOutputPath(Classpath classpath, String sourceSetName) {
+        String path = "bin/" + sourceSetName
+        if (isValidOutput(classpath, path)) {
+            return path
+        }
+        // fallback to default output
+        return null
+    }
+
+    /**
+     * Check if the output path is valid or not.
+     * See: org.eclipse.jdt.internal.core.ClasspathEntry#validateClasspath()
+     */
+    boolean isValidOutput(Classpath classpath, String path) {
+        Set<String> outputs = new HashSet<>()
+        for (ClasspathEntry cpe : classpath.getEntries()) {
+            if (cpe instanceof SourceFolder) {
+                outputs.add(((SourceFolder) cpe).getOutput())
+            }
+        }
+        for (String output : outputs) {
+            if (Objects.equals(output, path)) {
+                continue
+            }
+            // Eclipse does not allow nested output path
+            if (output.startsWith(path) || path.startsWith(output)) {
+                return false
+            }
+        }
+        return true
+    }
+}
+
+allprojects {
+    afterEvaluate {
+        it.getPlugins().apply(ProtobufPatchPlugin)
+    }
+}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +45,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -60,9 +60,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -529,6 +527,50 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertFalse(importer.applies(configurationPaths, null));
 		} finally {
 			this.preferences.setImportGradleEnabled(true);
+		}
+	}
+
+	@Test
+	public void testProtoBufSupport() throws Exception {
+		try {
+			this.preferences.setProtobufSupportEnabled(true);
+			IProject project = importGradleProject("protobuf");
+			IJavaProject javaProject = JavaCore.create(project);
+			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/protobuf/build/generated/source/proto/main/java".equals(cpe.getPath().toString());
+			}));
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/protobuf/build/generated/source/proto/test/java".equals(cpe.getPath().toString());
+			}));
+		} finally {
+			this.preferences.setProtobufSupportEnabled(false);
+		}
+	}
+
+	@Test
+	public void testProtoBufSupportChanged() throws Exception {
+		try {
+			this.preferences.setProtobufSupportEnabled(true);
+			IProject project = importGradleProject("protobuf");
+			IJavaProject javaProject = JavaCore.create(project);
+			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+			assertEquals(5, classpathEntries.length);
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/protobuf/build/generated/source/proto/main/java".equals(cpe.getPath().toString());
+			}));
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/protobuf/build/generated/source/proto/test/java".equals(cpe.getPath().toString());
+			}));
+
+			this.preferences.setProtobufSupportEnabled(false);
+			projectsManager.updateProject(project, true);
+
+			waitForBackgroundJobs();
+
+			assertEquals(3, javaProject.getRawClasspath().length);
+		} finally {
+			this.preferences.setProtobufSupportEnabled(false);
 		}
 	}
 
