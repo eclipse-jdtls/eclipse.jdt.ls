@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,15 +19,22 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.security.CodeSource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -49,6 +56,7 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -433,7 +441,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		Preferences preferences = getPreferences();
 		File javaHome = getJavaHome(preferences);
 		File gradleUserHome = getGradleUserHomeFile();
-		List<String> gradleArguments = preferences.getGradleArguments();
+		List<String> gradleArguments = new ArrayList<>();
+		gradleArguments.addAll(getProtobufInitScriptArgs());
+		gradleArguments.addAll(preferences.getGradleArguments());
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();
 		boolean offlineMode = preferences.isImportGradleOfflineEnabled();
 		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution) || offlineMode || (gradleArguments != null && !gradleArguments.isEmpty()) || (gradleJvmArguments != null && !gradleJvmArguments.isEmpty())
@@ -544,6 +554,69 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			// Do nothing
 		}
 		return true;
+	}
+
+	/**
+	 * Get Gradle init script arguments for protobuf support.
+	 */
+	private static List<String> getProtobufInitScriptArgs() {
+		List<String> args = new LinkedList<>();
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferencesManager == null) {
+			return args;
+		}
+
+		if (!preferencesManager.getPreferences().isProtobufSupportEnabled()) {
+			return args;
+		}
+
+		File initScript = getProtobufInitScript();
+		if (initScript != null && initScript.exists() && initScript.length() > 0) {
+			args.add("--init-script");
+			args.add(initScript.getAbsolutePath());
+		}
+		return args;
+	}
+
+	/**
+	 * Get the protobuf init script file. If any exception happens, a temp file
+	 * will be created and be used instead.
+	 */
+	private static File getProtobufInitScript() {
+		try {
+			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource("/gradle/protobuf/init.gradle"));
+			File initScript = new File(fileURL.toURI());
+			if (!initScript.exists()) {
+				initScript.createNewFile();
+			}
+			if (initScript.length() > 0) {
+				return initScript;
+			}
+
+			try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream("/gradle/protobuf/init.gradle")) {
+				Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			}
+			return initScript;
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+
+		return getProtobufInitScriptTempFile();
+	}
+
+	/**
+	 * Create a temp file as the protobuf init script.
+	 */
+	private static File getProtobufInitScriptTempFile() {
+		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream("/gradle/protobuf/init.gradle")) {
+			File initScript = File.createTempFile("init", ".gradle");
+			initScript.deleteOnExit();
+			Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			return initScript;
+		} catch (IOException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		return null;
 	}
 
 	@Override

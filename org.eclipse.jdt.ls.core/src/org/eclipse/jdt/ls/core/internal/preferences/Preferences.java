@@ -440,6 +440,8 @@ public class Preferences {
 
 	public static final String JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES = "java.codeAction.sortMembers.avoidVolatileChanges";
 
+	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -570,6 +572,7 @@ public class Preferences {
 	private List<String> inlayHintsExclusionList;
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
+	private boolean protobufSupportEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -1078,6 +1081,8 @@ public class Preferences {
 		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
 		boolean avoidVolatileChanges = getBoolean(configuration, JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES, true);
 		prefs.setAvoidVolatileChanges(avoidVolatileChanges);
+		boolean protobufSupported = getBoolean(configuration, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED, false);
+		prefs.setProtobufSupportEnabled(protobufSupported);
 		return prefs;
 	}
 
@@ -1907,4 +1912,12 @@ public class Preferences {
 	public boolean getAvoidVolatileChanges() {
 		return this.avoidVolatileChanges;
 	}
+	public boolean isProtobufSupportEnabled() {
+		return protobufSupportEnabled;
+	}
+
+	public void setProtobufSupportEnabled(boolean protobufSupportEnabled) {
+		this.protobufSupportEnabled = protobufSupportEnabled;
+	}
+
 }
