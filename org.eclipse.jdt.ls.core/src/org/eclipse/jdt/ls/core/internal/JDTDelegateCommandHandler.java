@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017,2020 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
+import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
@@ -127,6 +128,10 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.resolveWorkspaceSymbol":
 					SymbolInformation si = JSONUtility.toModel(arguments.get(0), SymbolInformation.class);
 					return ProjectCommand.resolveWorkspaceSymbol(si);
+				case "java.protobuf.generateSources":
+					ArrayList<String> projectUris = (ArrayList<String>) arguments.get(0);
+					ProtobufSupport.generateProtobufSources(projectUris, monitor);
+					return null;
 				default:
 					break;
 			}

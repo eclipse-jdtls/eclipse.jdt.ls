@@ -41,6 +41,8 @@ class ProtobufPatchPlugin implements Plugin<Project> {
 
     private static final String GRADLE_USED_BY_SCOPE = "gradle_used_by_scope"
 
+    private static final String PROTOBUF_GENERATED_SOURCE = "protobuf_generated_source"
+
     @Override
     void apply(Project project) {
         project.afterEvaluate {
@@ -80,6 +82,7 @@ class ProtobufPatchPlugin implements Plugin<Project> {
                                 }
 
                                 SourceFolder entry = new SourceFolder(relativePath, getOutputPath(cp, sourceSetName))
+                                entry.entryAttributes.put(PROTOBUF_GENERATED_SOURCE, "true")
                                 entry.entryAttributes.put(OPTIONAL, "true")
                                 entry.entryAttributes.put(IGNORE_OPTIONAL_PROBLEMS, "true")
 

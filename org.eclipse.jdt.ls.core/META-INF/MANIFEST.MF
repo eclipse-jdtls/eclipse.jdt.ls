@@ -50,6 +50,7 @@ Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.
  org.eclipse.jdt.ls.core.internal.javadoc;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.lsp;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.managers;x-friends:="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver",
+ org.eclipse.jdt.ls.core.internal.framework.protobuf;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.preferences;x-friends:="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver",
  org.eclipse.jdt.ls.core.internal.semantictokens;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.syntaxserver;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver",
