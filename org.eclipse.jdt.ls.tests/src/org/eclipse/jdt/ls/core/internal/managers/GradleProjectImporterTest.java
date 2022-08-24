@@ -594,6 +594,42 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertIsGradleProject(subProject);
 	}
 
+	@Test
+	public void testAndroidProjectSupport() throws Exception {
+		try {
+			this.preferences.setAndroidSupportEnabled(true);
+			List<IProject> projects = importProjects("gradle/android");
+			assertEquals(3, projects.size());
+			IProject androidAppProject = WorkspaceHelper.getProject("app");
+			assertNotNull(androidAppProject);
+			IJavaProject javaProject = JavaCore.create(androidAppProject);
+			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+			assertEquals(6, classpathEntries.length);
+			// main sourceSet are added to classpath correctly
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/app/src/main/java".equals(cpe.getPath().toString());
+			}));
+			// test sourceSet are added to classpath correctly
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/app/src/test/java".equals(cpe.getPath().toString());
+			}));
+			// androidTest sourceSet are added to classpath correctly
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/app/src/androidTest/java".equals(cpe.getPath().toString());
+			}));
+			// buildConfig files are added to classpath correctly
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/app/build/generated/source/buildConfig/standard/debug".equals(cpe.getPath().toString());
+			}));
+			// dataBinding files are added to classpath correctly
+			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
+				return "/app/build/generated/data_binding_base_class_source_out/standardDebug/out".equals(cpe.getPath().toString());
+			}));
+		} finally {
+			this.preferences.setAndroidSupportEnabled(false);
+		}
+	}
+
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
 		org.eclipse.buildship.core.internal.configuration.BuildConfiguration buildConfig = CorePlugin.configurationManager().loadBuildConfiguration(project.getLocation().toFile());
 		return CorePlugin.configurationManager().createProjectConfiguration(buildConfig, project.getLocation().toFile());

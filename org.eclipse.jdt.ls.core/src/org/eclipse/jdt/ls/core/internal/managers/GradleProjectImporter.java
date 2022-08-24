@@ -571,6 +571,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			addInitScriptToArgs(protobufInitScript, args);
 		}
 
+		// Add init script of android support
+		if (preferencesManager != null && preferencesManager.getPreferences().isAndroidSupportEnabled()) {
+			File androidInitScript = getGradleInitScript("/gradle/android/init.gradle");
+			addInitScriptToArgs(androidInitScript, args);
+		}
+
 		return args;
 	}
 
