@@ -383,14 +383,17 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			Path rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile().toPath();
 			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootPath);
-			assertTrue(build.getArguments().isEmpty());
+			assertFalse(build.getArguments().isEmpty());
+			assertEquals(2, build.getArguments().size());
+			assertTrue(build.getArguments().contains("--init-script"));
 
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
 					.setGradleArguments(ImmutableList.of("-Pproperty=value", "--stacktrace"));
 			build = GradleProjectImporter.getBuildConfiguration(rootPath);
-			assertEquals(2, build.getArguments().size());
+			assertEquals(4, build.getArguments().size());
 			assertTrue(build.getArguments().contains("-Pproperty=value"));
 			assertTrue(build.getArguments().contains("--stacktrace"));
+			assertTrue(build.getArguments().contains("--init-script"));
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
 		}
@@ -473,6 +476,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			ProjectConfiguration configuration = getProjectConfiguration(root);
 			// check the children .settings/org.eclipse.buildship.core.prefs
 			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(3, configuration.getBuildConfiguration().getArguments().size());
 			configuration = getProjectConfiguration(project1);
 			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
 			configuration = getProjectConfiguration(project2);
@@ -480,19 +484,25 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(ImmutableList.of("--stacktrace"));
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project1);
 			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(3, configuration.getBuildConfiguration().getArguments().size());
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project2);
 			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(3, configuration.getBuildConfiguration().getArguments().size());
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
 			projectsManager.updateProject(root, true);
 			JobHelpers.waitForJobsToComplete();
 			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(root);
-			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			// the configuration contains two arguments about jdt.ls init script
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(2, configuration.getBuildConfiguration().getArguments().size());
 			// check that the children are updated
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project1);
-			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(2, configuration.getBuildConfiguration().getArguments().size());
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project2);
-			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
+			assertEquals(2, configuration.getBuildConfiguration().getArguments().size());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(arguments);
 		}
@@ -572,6 +582,16 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		} finally {
 			this.preferences.setProtobufSupportEnabled(false);
 		}
+	}
+
+	@Test
+	public void testNameConflictProject() throws Exception {
+		List<IProject> projects = importProjects("gradle/nameConflict");
+		assertEquals(3, projects.size());
+		IProject root = WorkspaceHelper.getProject("nameConflict");
+		assertIsGradleProject(root);
+		IProject subProject = WorkspaceHelper.getProject("nameConflict-nameconflict");
+		assertIsGradleProject(subProject);
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
