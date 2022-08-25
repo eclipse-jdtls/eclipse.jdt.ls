@@ -22,12 +22,10 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     private static final String ECLIPSE_PROPERTY = "eclipse"
 
     private static final String DEFAULT_OUTPUT_MAIN = "bin/main"
-    private static final String DEFAULT_OUTPUT_TEST = "bin/test"
-    private static final String DEFAULT_OUTPUT_ANDROID_TEST = "bin/androidTest"
 
     private static final List<String> ANDROID_PLUGIN_IDS = Arrays.asList("com.android.application", "com.android.library")
     private static final String ANDROID_KOTLIN_PLUGIN_ID = "kotlin-android"
-    private static final List<String> SUPPORTED_SOURCE_SET_NAMES = Arrays.asList("main", "test", "androidTest")
+    private static final List<String> DEFAULT_SOURCE_SET_NAMES = Arrays.asList("main", "test", "androidTest")
     private static final List<String> SUPPORTED_CONFIGURATION_KEYS = Arrays.asList("implementationConfigurationName", "apiConfigurationName", "compileConfigurationName", "compileOnlyConfigurationName", "runtimeOnlyConfigurationName")
 
     private static final String OPTIONAL_ATTRIBUTE = "optional"
@@ -45,12 +43,13 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             return
         }
         project.afterEvaluate {
+            List<Object> variants = getAndroidDebuggableVariants(project)
             EclipseModel eclipseModel = (EclipseModel) project.property(ECLIPSE_PROPERTY)
             // eclipseModel.synchronizationTasks() is available since Gradle 5.4
             // see: https://www.eclipse.org/community/eclipse_newsletter/2019/june/buildship.php
             if (GradleVersion.version(project.getGradle().getGradleVersion()) >= GradleVersion.version("5.4")) {
                 List<Object> synchronizationTasks = new ArrayList<>()
-                for (Object variant : getAndroidDebuggableVariants(project)) {
+                for (Object variant : variants) {
                     try {
                         synchronizationTasks.add(variant.properties.get("variantData").properties.get("taskContainer").properties.get("compileTask"))
                     } catch (NullPointerException ignored) {
@@ -59,20 +58,27 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
                 }
                 eclipseModel.synchronizationTasks(synchronizationTasks)
             }
+            List<Object> androidSourceSets = getAndroidSourceSets(project)
             // Get project configurations from supported sourceSets names and configuration keys,
             // and add them to eclipseModel.classpath.plusConfigurations
-            addPlusConfiguration(project, eclipseModel)
+            addPlusConfiguration(project, eclipseModel, androidSourceSets)
             eclipseModel.classpath.setDownloadSources(true)
             // Remove JDK container since android project should use embedded JDK types included in android.jar
-            eclipseModel.classpath.containers.removeIf(container -> container.contains("JavaSE"))
+            List<String> containers = new ArrayList<>()
+            for (String containerName : eclipseModel.classpath.containers) {
+                if (containerName.contains("JavaSE")) {
+                    containers.add(containerName)
+                }
+            }
+            eclipseModel.classpath.containers.removeAll(containers)
             // Add supported source sets to source folders of eclipse model
-            eclipseModel.classpath.file.whenMerged(new AddSourceFoldersAction(project))
+            eclipseModel.classpath.file.whenMerged(new AddSourceFoldersAction(project, androidSourceSets))
             // Add data binding files to source folders of eclipse model
-            eclipseModel.classpath.file.whenMerged(new AddDataBindingFilesAction(project))
+            eclipseModel.classpath.file.whenMerged(new AddDataBindingFilesAction(project, variants))
             // Add R files to source folders of eclipse model
-            eclipseModel.classpath.file.whenMerged(new AddRFilesAction(project))
+            eclipseModel.classpath.file.whenMerged(new AddRFilesAction(project, variants))
             // Add buildconfig files to source folders of eclipse model
-            eclipseModel.classpath.file.whenMerged(new AddBuildConfigFilesAction(project))
+            eclipseModel.classpath.file.whenMerged(new AddBuildConfigFilesAction(project, variants))
             // Add android.jar to project classpath of eclipse model
             eclipseModel.classpath.file.whenMerged(new AddAndroidSDKAction(androidSDKFile))
             // Add project dependencies to project classpath of eclipse model
@@ -82,6 +88,7 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     }
 
     private static boolean isSupportedAndroidProject(Project project) {
+        // Pure Kotlin or Kotlin/Java polyglot projects are not supported yet by jdt.ls
         if (project.plugins.hasPlugin(ANDROID_KOTLIN_PLUGIN_ID)) {
             return false
         }
@@ -113,16 +120,12 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
         return null
     }
 
-    private static void addPlusConfiguration(Project project, EclipseModel eclipseModel) {
+    private static void addPlusConfiguration(Project project, EclipseModel eclipseModel, List<Object> androidSourceSets) {
         List<String> plusConfigurationNames = new ArrayList<>()
-        for (String name : SUPPORTED_SOURCE_SET_NAMES) {
-            Object sourceSet = getAndroidSourceSetByName(project, name)
-            if (sourceSet == null) {
-                continue
-            }
+        for (Object androidSourceSet : androidSourceSets) {
             for (String key : SUPPORTED_CONFIGURATION_KEYS) {
-                if (sourceSet.properties.containsKey(key)) {
-                    plusConfigurationNames.add(sourceSet.properties.get(key).toString())
+                if (androidSourceSet.properties.containsKey(key)) {
+                    plusConfigurationNames.add(androidSourceSet.properties.get(key).toString())
                 }
             }
         }
@@ -144,20 +147,6 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
         }
     }
 
-    private static Object getAndroidSourceSetByName(Project project, String name) {
-        Object android = project.property(ANDROID_PROPERTY)
-        if (android.properties.containsKey("sourceSets")) {
-            Object sourceSets = android.properties.get("sourceSets")
-            if (sourceSets instanceof DefaultNamedDomainObjectCollection) {
-                DefaultNamedDomainObjectCollection sourceCollection = ((DefaultNamedDomainObjectCollection) sourceSets)
-                if (sourceCollection.names.contains(name)) {
-                    return sourceCollection.getByName(name)
-                }
-            }
-        }
-        return null
-    }
-
     private static List<Object> getAndroidDebuggableVariants(Project project) {
         Object android = project.property(ANDROID_PROPERTY)
         Object variants = null
@@ -173,16 +162,55 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             }
         }
         if (variants instanceof DefaultDomainObjectCollection) {
-            return ((DefaultDomainObjectCollection) variants).stream().filter(variant -> {
+            List<Object> androidDebuggableVariants = new ArrayList<>()
+            for (Object variant : variants) {
                 try {
                     Object debuggable = variant.properties.get("buildType").properties.get("debuggable")
-                    return debuggable instanceof Boolean && ((Boolean) debuggable)
+                    if (debuggable instanceof Boolean && ((Boolean) debuggable)) {
+                        androidDebuggableVariants.add(variant)
+                    }
                 } catch (NullPointerException ignored) {
-                    return false
+                    // NPE occurs when the variant doesn't have related properties, we just skip these unsupported scenarios
                 }
-            }).collect(Collectors.toList())
+            }
+            return androidDebuggableVariants
         }
         return Collections.emptyList()
+    }
+
+    private static List<Object> getAndroidSourceSets(Project project) {
+        List<Object> androidSourceSets = new ArrayList<>()
+        Object android = project.property(ANDROID_PROPERTY)
+        if (android.properties.containsKey("sourceSets")) {
+            Object sourceSets = android.properties.get("sourceSets")
+            if (sourceSets instanceof DefaultNamedDomainObjectCollection) {
+                for (Object sourceSet : sourceSets) {
+                    try {
+                        Object javaDirectories = sourceSet.properties.get("javaDirectories")
+                        if (javaDirectories instanceof Collection) {
+                            for (Object javaDirectory : javaDirectories) {
+                                if (javaDirectory instanceof File && ((File) javaDirectory).exists()) {
+                                    androidSourceSets.add(sourceSet)
+                                }
+                            }
+                        }
+                    } catch (NullPointerException ignored) {
+                        // NPE occurs when the variant doesn't have related properties, we just skip these unsupported scenarios
+                    }
+                }
+                // fallback to default sourceSets
+                if (androidSourceSets.size() == 0) {
+                    for (String defaultName : DEFAULT_SOURCE_SET_NAMES) {
+                        try {
+                            androidSourceSets.add(((DefaultNamedDomainObjectCollection) sourceSets).getByName(defaultName))
+                        } catch (UnknownDomainObjectException ignored) {
+                            // Do nothing
+                        }
+                    }
+                }
+            }
+        }
+        return androidSourceSets
     }
 
     private static void addFolderToSourceFolder(Classpath classpath, Project project, File folder, String outputPath) {
@@ -195,44 +223,42 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             return
         }
         SourceFolder sourceFolder = new SourceFolder(project.getProjectDir().toURI().relativize(folder.toURI()).toString(), outputPath)
-        sourceFolder.entryAttributes.put(OPTIONAL_ATTRIBUTE, "true")
-        if (outputPath == DEFAULT_OUTPUT_TEST || outputPath == DEFAULT_OUTPUT_ANDROID_TEST) {
+        // For Gradle version < 5.4, we add this attribute so that the folders can be recognized once the files are generated
+        // For Gradle version >= 5.4, we add the compile task to synchronization tasks so that this attribute is not necessary
+        if (GradleVersion.version(project.getGradle().getGradleVersion()) < GradleVersion.version("5.4")) {
+            sourceFolder.entryAttributes.put(OPTIONAL_ATTRIBUTE, "true")
+        }
+        // See: https://github.com/gradle/gradle/blob/dd350d3d50f7b7ea43f2a726739acb2c4645f30b/subprojects/ide/src/main/java/org/gradle/plugins/ide/eclipse/model/EclipseClasspath.java#L402-L406
+        if (outputPath.toLowerCase().contains("test")) {
             sourceFolder.getEntryAttributes().put(TEST_ATTRIBUTE, "true")
         }
         classpath.entries.add(sourceFolder)
     }
 
     private static class AddSourceFoldersAction implements Action<Classpath> {
-        // <sourceSetName, outputPath>
-        private static final Map<String, String> SUPPORTED_SOURCE_SETS = new HashMap<>()
         private final Project project
+        private final List<Object> androidSourceSets
 
-        static {
-            SUPPORTED_SOURCE_SETS.put("main", DEFAULT_OUTPUT_MAIN)
-            SUPPORTED_SOURCE_SETS.put("test", DEFAULT_OUTPUT_TEST)
-            SUPPORTED_SOURCE_SETS.put("androidTest", DEFAULT_OUTPUT_ANDROID_TEST)
-        }
-
-        AddSourceFoldersAction(Project project) {
+        AddSourceFoldersAction(Project project, List<Object> androidSourceSets) {
             this.project = project
+            this.androidSourceSets = androidSourceSets
         }
 
         @Override
         void execute(Classpath classpath) {
-            for (String key : SUPPORTED_SOURCE_SETS.keySet()) {
-                Object sourceSet = getAndroidSourceSetByName(project, key)
-                if (sourceSet == null) {
-                    continue
-                }
-                if (sourceSet.properties.containsKey("javaDirectories")) {
-                    Object javaDirectories = sourceSet.properties.get("javaDirectories")
-                    if (javaDirectories instanceof Collection) {
+            for (Object androidSourceSet : androidSourceSets) {
+                try {
+                    Object javaDirectories = androidSourceSet.properties.get("javaDirectories")
+                    String sourceSetName = androidSourceSet.properties.get("name")
+                    if (javaDirectories instanceof Collection && sourceSetName instanceof String) {
                         for (Object javaDirectory : (Collection) javaDirectories) {
                             if (javaDirectory instanceof File) {
-                                addFolderToSourceFolder(classpath, project, (File) javaDirectory, SUPPORTED_SOURCE_SETS.get(key))
+                                addFolderToSourceFolder(classpath, project, (File) javaDirectory, "bin/" + sourceSetName)
                             }
                         }
                     }
+                } catch (NullPointerException ignored) {
+                    // NPE occurs when the variant doesn't have related properties, we just skip these unsupported scenarios
                 }
             }
         }
@@ -241,15 +267,17 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     private static class AddDataBindingFilesAction implements Action<Classpath> {
         private final Project project
         private final FileReferenceFactory fileReferenceFactory
+        private final List<Object> variants
 
-        AddDataBindingFilesAction(Project project) {
+        AddDataBindingFilesAction(Project project, List<Object> variants) {
             this.project = project
             this.fileReferenceFactory = new FileReferenceFactory()
+            this.variants = variants
         }
 
         @Override
         void execute(Classpath classpath) {
-            for (Object variant : getAndroidDebuggableVariants(project)) {
+            for (Object variant : this.variants) {
                 try {
                     // TODO: get dataBinding task from variants?
                     String variantName = variant.properties.get("name")
@@ -269,15 +297,17 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     private static class AddRFilesAction implements Action<Classpath> {
         private final Project project
         private final FileReferenceFactory fileReferenceFactory
+        private final List<Object> variants
 
-        AddRFilesAction(Project project) {
+        AddRFilesAction(Project project, List<Object> variants) {
             this.project = project
             this.fileReferenceFactory = new FileReferenceFactory()
+            this.variants = variants
         }
 
         @Override
         void execute(Classpath classpath) {
-            for (Object variant : getAndroidDebuggableVariants(project)) {
+            for (Object variant : this.variants) {
                 try {
                     Object outputs = variant.properties.get("outputs")
                     if (outputs instanceof DefaultNamedDomainObjectCollection) {
@@ -309,7 +339,7 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             if (RFile.name.endsWith(".jar")) {
                 Library library = new Library(this.fileReferenceFactory.fromPath(project.getProjectDir().toPath().relativize(RFile.toPath()).toString()))
                 library.entryAttributes.put(OPTIONAL_ATTRIBUTE, "true")
-                classpath.getEntries().add(library)
+                classpath.entries.add(library)
             } else {
                 addFolderToSourceFolder(classpath, this.project, RFile, DEFAULT_OUTPUT_MAIN)
             }
@@ -318,14 +348,16 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
 
     private static class AddBuildConfigFilesAction implements Action<Classpath> {
         private final Project project
+        private final List<Object> variants
 
-        AddBuildConfigFilesAction(Project project) {
+        AddBuildConfigFilesAction(Project project, List<Object> variants) {
             this.project = project
+            this.variants = variants
         }
 
         @Override
         void execute(Classpath classpath) {
-            for (Object variant : getAndroidDebuggableVariants(project)) {
+            for (Object variant : this.variants) {
                 try {
                     // for old AGP, the file instance can be directly got via variant.generateBuildConfig.sourceOutputDir
                     Object outputDir = variant.properties.get("generateBuildConfig").properties.get("sourceOutputDir")
@@ -356,7 +388,7 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
 
         @Override
         void execute(Classpath classpath) {
-            classpath.getEntries().add(new Library(fileReferenceFactory.fromFile(androidSDKFile)))
+            classpath.entries.add(new Library(fileReferenceFactory.fromFile(androidSDKFile)))
         }
     }
 
@@ -401,7 +433,9 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             Path libraryPath = libraryFolderPath.resolve(Paths.get(libraryName + ".jar"))
             File libraryFile = libraryPath.toFile()
             if (!libraryFile.exists()) {
-                try (ZipFile zipFile = new ZipFile(new File(aarLibrary.getPath()))) {
+                ZipFile zipFile = null
+                try {
+                    zipFile = new ZipFile(new File(aarLibrary.getPath()))
                     for (ZipEntry entry : zipFile.entries()) {
                         if (entry.name == DEPENDENCY_ENTRY_NAME) {
                             InputStream ins = zipFile.getInputStream(entry)
@@ -411,6 +445,10 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
                     }
                 } catch (IOException | NullPointerException ignored) {
                     return null
+                } finally {
+                    if (zipFile != null) {
+                        zipFile.close()
+                    }
                 }
             }
             if (libraryFile.exists()) {
