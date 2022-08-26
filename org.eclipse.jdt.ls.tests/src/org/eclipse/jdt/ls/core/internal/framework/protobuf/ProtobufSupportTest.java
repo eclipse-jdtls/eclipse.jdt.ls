@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.framework.protobuf;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,10 +62,6 @@ public class ProtobufSupportTest extends AbstractGradleBasedTest {
 
 		waitForBackgroundJobs();
 
-		// generating protobuf source files need java compiler, in the test env,
-		// the task execution will fail, so we test if the failure notification
-		// is sent to client.
-		List<Object> notifications = this.clientRequests.get("sendActionableNotification");
-		assertEquals(1, notifications.size());
+		assertTrue(project.getFile("build/extracted-protos").getLocation().toFile().exists());
 	}
 }

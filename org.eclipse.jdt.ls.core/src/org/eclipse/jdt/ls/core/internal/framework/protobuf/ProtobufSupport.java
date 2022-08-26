@@ -160,19 +160,11 @@ public class ProtobufSupport implements IFrameworkSupport {
 		progressReport.setStatus("Generating Java sources from proto files...");
 		client.sendProgressReport(progressReport);
 		try {
-			boolean succeeded = false;
 			for (String projectUri : projectUris) {
 				if (!StringUtils.isEmpty(projectUri)) {
-					succeeded = runGenerateProtobufTasks(projectUri, monitor);
+					 runGenerateProtobufTasks(projectUri, monitor);
 				}
 				progressReport.setWorkDone(progressReport.getWorkDone() + 1);
-			}
-
-			if (!succeeded) {
-				ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Error)
-						.withMessage("Exception happens when generating source files, please open logs for details.")
-						.withCommands(Arrays.asList(new Command("Open", "java.open.serverLog")));
-				client.sendActionableNotification(notification);
 			}
 		} finally {
 			progressReport.setComplete(true);
@@ -185,7 +177,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 	 * @param projectUri uri of the project.
 	 * @param monitor progress monitor.
 	 */
-	private static boolean runGenerateProtobufTasks(String projectUri, IProgressMonitor monitor) {
+	private static void runGenerateProtobufTasks(String projectUri, IProgressMonitor monitor) {
 		Path dir = Path.of(URI.create(projectUri));
 		BuildConfiguration configuration = GradleProjectImporter.getBuildConfiguration(dir);
 		GradleBuild build = GradleCore.getWorkspace().createBuild(configuration);
@@ -197,8 +189,6 @@ public class ProtobufSupport implements IFrameworkSupport {
 			}, monitor);
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e);
-			return false;
 		}
-		return true;
 	}
 }
