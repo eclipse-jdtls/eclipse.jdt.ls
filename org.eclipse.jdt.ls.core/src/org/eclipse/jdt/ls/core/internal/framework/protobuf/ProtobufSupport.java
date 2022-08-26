@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -108,8 +109,8 @@ public class ProtobufSupport implements IFrameworkSupport {
 					continue;
 				}
 				for (IClasspathAttribute attribute : entry.getExtraAttributes()) {
-					if (attribute.getName().equals(PROTOBUF_GENERATED_SOURCE)
-							&& attribute.getValue().equals("true")) {
+					if (Objects.equals(attribute.getName(), PROTOBUF_GENERATED_SOURCE)
+							&& Objects.equals(attribute.getValue(), "true")) {
 						protobufOutputDirs.add(new File(project.getLocation().toFile(),
 								entry.getPath().removeFirstSegments(1).toString()));
 					}
