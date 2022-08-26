@@ -37,10 +37,6 @@ class ProtobufPatchPlugin implements Plugin<Project> {
      */
     private static final String TEST = "test"
 
-    private static final String GRADLE_SCOPE = "gradle_scope"
-
-    private static final String GRADLE_USED_BY_SCOPE = "gradle_used_by_scope"
-
     private static final String PROTOBUF_GENERATED_SOURCE = "protobuf_generated_source"
 
     @Override
@@ -86,12 +82,9 @@ class ProtobufPatchPlugin implements Plugin<Project> {
                                 entry.entryAttributes.put(OPTIONAL, "true")
                                 entry.entryAttributes.put(IGNORE_OPTIONAL_PROBLEMS, "true")
 
-                                boolean isTest = isTest(task)
-                                entry.entryAttributes.put(GRADLE_SCOPE, isTest ? "test" : "main")
-                                entry.entryAttributes.put(GRADLE_USED_BY_SCOPE, isTest ? "test" : "main,test")
                                 // check if output is not null here because test source folder
                                 // must have a separate output folder in Eclipse
-                                if (entry.output != null && isTest) {
+                                if (entry.output != null && isTest(task)) {
                                     entry.entryAttributes.put(TEST, "true")
                                 }
                                 cp.entries.add(entry)

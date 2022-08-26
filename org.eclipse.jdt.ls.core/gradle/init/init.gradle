@@ -1,0 +1,8 @@
+allprojects {
+    project.plugins.withId("eclipse", {
+        // Add prefix when project name has conflicts with root project name
+        if (project != rootProject && rootProject.name.toLowerCase() == project.name.toLowerCase()) {
+            eclipse.project.name = (rootProject.name + project.path).replaceAll(':', '-')
+        }
+    })
+}

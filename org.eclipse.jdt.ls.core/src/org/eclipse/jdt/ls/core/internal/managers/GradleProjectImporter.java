@@ -23,13 +23,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -442,7 +440,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		File javaHome = getJavaHome(preferences);
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = new ArrayList<>();
-		gradleArguments.addAll(getProtobufInitScriptArgs());
+		gradleArguments.addAll(getGradleInitScriptArgs());
 		gradleArguments.addAll(preferences.getGradleArguments());
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();
 		boolean offlineMode = preferences.isImportGradleOfflineEnabled();
@@ -557,34 +555,39 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	/**
-	 * Get Gradle init script arguments for protobuf support.
+	 * Get Gradle init script arguments
 	 */
-	private static List<String> getProtobufInitScriptArgs() {
+	private static List<String> getGradleInitScriptArgs() {
 		List<String> args = new LinkedList<>();
+
+		// Add init script of jdt.ls
+		File initScript = getGradleInitScript("/gradle/init/init.gradle");
+		addInitScriptToArgs(initScript, args);
+
+		// Add init script of protobuf support
 		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (preferencesManager == null) {
-			return args;
+		if (preferencesManager != null && preferencesManager.getPreferences().isProtobufSupportEnabled()) {
+			File protobufInitScript = getGradleInitScript("/gradle/protobuf/init.gradle");
+			addInitScriptToArgs(protobufInitScript, args);
 		}
 
-		if (!preferencesManager.getPreferences().isProtobufSupportEnabled()) {
-			return args;
-		}
+		return args;
+	}
 
-		File initScript = getProtobufInitScript();
+	private static void addInitScriptToArgs(File initScript, List<String> args) {
 		if (initScript != null && initScript.exists() && initScript.length() > 0) {
 			args.add("--init-script");
 			args.add(initScript.getAbsolutePath());
 		}
-		return args;
 	}
 
 	/**
-	 * Get the protobuf init script file. If any exception happens, a temp file
+	 * Get the Gradle init script file. If any exception happens, a temp file
 	 * will be created and be used instead.
 	 */
-	private static File getProtobufInitScript() {
+	private static File getGradleInitScript(String scriptPath) {
 		try {
-			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource("/gradle/protobuf/init.gradle"));
+			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource(scriptPath));
 			File initScript = new File(fileURL.toURI());
 			if (!initScript.exists()) {
 				initScript.createNewFile();
@@ -593,7 +596,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				return initScript;
 			}
 
-			try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream("/gradle/protobuf/init.gradle")) {
+			try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
 				Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			}
 			return initScript;
@@ -601,14 +604,14 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			JavaLanguageServerPlugin.logException(e);
 		}
 
-		return getProtobufInitScriptTempFile();
+		return getGradleInitScriptTempFile(scriptPath);
 	}
 
 	/**
-	 * Create a temp file as the protobuf init script.
+	 * Create a temp file as the Gradle init script.
 	 */
-	private static File getProtobufInitScriptTempFile() {
-		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream("/gradle/protobuf/init.gradle")) {
+	private static File getGradleInitScriptTempFile(String scriptPath) {
+		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
 			File initScript = File.createTempFile("init", ".gradle");
 			initScript.deleteOnExit();
 			Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
