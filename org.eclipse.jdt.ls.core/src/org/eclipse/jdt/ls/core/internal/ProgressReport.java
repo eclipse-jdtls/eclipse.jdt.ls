@@ -14,6 +14,12 @@ package org.eclipse.jdt.ls.core.internal;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.WorkDoneProgressBegin;
+import org.eclipse.lsp4j.WorkDoneProgressEnd;
+import org.eclipse.lsp4j.WorkDoneProgressNotification;
+import org.eclipse.lsp4j.WorkDoneProgressReport;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /**
  * Progress Report sent to clients.
@@ -151,4 +157,32 @@ public class ProgressReport {
 		this.subTask = subTask;
 	}
 
+	public ProgressParams toProgressParams() {
+		WorkDoneProgressNotification notification;
+		if (complete) {
+			var endNotification = new WorkDoneProgressEnd();
+			endNotification.setMessage(task);
+
+			notification = endNotification;
+		}
+		else if(workDone > 0 && workDone < totalWork) {
+			var reportNotification = new WorkDoneProgressReport();
+			reportNotification.setMessage(task);
+			reportNotification.setPercentage((int)(((double) workDone) / totalWork * 100.0));
+
+			notification = reportNotification;
+		}
+		else {
+			var beginNotification = new WorkDoneProgressBegin();
+			beginNotification.setMessage(task);
+			beginNotification.setTitle(subTask != null ? subTask : task);
+
+			notification = beginNotification;
+		}
+
+		return new ProgressParams(
+			Either.forLeft(id),
+			Either.forLeft(notification)
+		);
+	}
 }

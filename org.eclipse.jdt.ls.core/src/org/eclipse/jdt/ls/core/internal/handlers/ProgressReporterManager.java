@@ -230,7 +230,7 @@ public class ProgressReporterManager extends ProgressProvider {
 		}
 
 		protected void sendStatus() {
-			if (client == null || preferenceManager == null || preferenceManager.getClientPreferences() == null || !preferenceManager.getClientPreferences().isProgressReportSupported()) {
+			if (client == null || preferenceManager == null || preferenceManager.getClientPreferences() == null) {
 				return;
 			}
 			ProgressReport progressReport = new ProgressReport(progressId);
@@ -245,7 +245,12 @@ public class ProgressReporterManager extends ProgressProvider {
 			} else {
 				progressReport.setStatus(formatMessage(task));
 			}
-			client.sendProgressReport(progressReport);
+
+			if (preferenceManager.getClientPreferences().isProgressReportSupported()) {
+				client.sendProgressReport(progressReport);
+			} else {
+				client.notifyProgress(progressReport.toProgressParams());
+			}
 		}
 
 

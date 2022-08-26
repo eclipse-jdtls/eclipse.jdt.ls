@@ -29,6 +29,7 @@ import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusReport;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.ProgressParams;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,6 +105,23 @@ public class ProgressReporterManagerTest {
 		assertEquals("", report.getStatus());
 		assertEquals(job.getName(), report.getTask());
 		assertTrue(report.isComplete());
+	}
+
+	@Test
+	public void testJobReporting_WithNotifyProgress() throws InterruptedException {
+		when(clientPreferences.isProgressReportSupported()).thenReturn(false);
+		manager.setReportThrottle(275);
+		Job job = new Job("Test Job") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				return null;
+			}
+		};
+		IProgressMonitor monitor = manager.createMonitor(job);
+		monitor.done();
+
+		ArgumentCaptor<ProgressParams> captor = ArgumentCaptor.forClass(ProgressParams.class);
+		verify(client, times(1)).notifyProgress(captor.capture());
 	}
 
 	@Test

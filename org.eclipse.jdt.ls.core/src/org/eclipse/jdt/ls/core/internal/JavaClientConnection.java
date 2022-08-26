@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
@@ -162,7 +163,12 @@ public class JavaClientConnection {
 	 *            The progress report to send back to the client
 	 */
 	public void sendProgressReport(ProgressReport progressReport) {
-		client.sendProgressReport(progressReport);
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager.getClientPreferences().isProgressReportSupported()) {
+			client.sendProgressReport(progressReport);
+		} else {
+			client.notifyProgress(progressReport.toProgressParams());
+		}
 	}
 
 	/**
