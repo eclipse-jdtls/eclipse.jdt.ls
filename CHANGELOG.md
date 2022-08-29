@@ -1,5 +1,22 @@
 # Change Log
 
+# [1.15.0 (August 31st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/105?closed=1)
+ * enhancement - Search more folders to infer source roots for invisible projects. See [#2176](https://github.com/eclipse/eclipse.jdt.ls/pull/2176).
+ * enhancement - Support for Android projects. See [#923](https://github.com/eclipse/eclipse.jdt.ls/issues/923).
+ * enhancement - Automatically add Protobuf output source directories to classpath & generate tasks, if necessary. See [#2189](https://github.com/eclipse/eclipse.jdt.ls/pull/2189) & [#2195](https://github.com/eclipse/eclipse.jdt.ls/pull/2195).
+ * enhancement - Support "Sort Members" code action. See [#2169](https://github.com/eclipse/eclipse.jdt.ls/pull/2169).
+ * enhancement - Add support for Maven offline mode (`java.import.maven.offline.enabled`). See [#2187](https://github.com/eclipse/eclipse.jdt.ls/pull/2187).
+ * enhancement - Support the `$/progress` notification method. See [#2030](https://github.com/eclipse/eclipse.jdt.ls/pull/2030).
+ * enhancement - Always interpret the full workspace symbol query as a package name. See [#2174](https://github.com/eclipse/eclipse.jdt.ls/pull/2174).
+ * enhancement - Add unmanaged folder nature ID. See [#2182](https://github.com/eclipse/eclipse.jdt.ls/pull/2182).
+ * bug fix - Set default severity of "Circular classpath" to `warning`. See [#2170](https://github.com/eclipse/eclipse.jdt.ls/pull/2170).
+ * bug fix - Fix inlay hints for `record` classes. See [#2181](https://github.com/eclipse/eclipse.jdt.ls/pull/2181).
+ * bug fix - Infer the source root only when necessary. See [#2178](https://github.com/eclipse/eclipse.jdt.ls/pull/2178).
+ * bug fix - Permit non-JDT errors to be reported in Java files. See [#2154](https://github.com/eclipse/eclipse.jdt.ls/issues/2154).
+ * bug fix - Avoid naming conflicts between Gradle project modules. See [#2190](https://github.com/eclipse/eclipse.jdt.ls/pull/2190).
+ * bug fix - Re-fetch the extension registry when delegate command lookup fails. See [#2184](https://github.com/eclipse/eclipse.jdt.ls/pull/2184).
+ * debt - Remove deprecated Gradle attributes. See [#2198](https://github.com/eclipse/eclipse.jdt.ls/pull/2198).
+
 # [1.14.0 (July 21st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/104?closed=1)
  * enhancement - Refresh the unmanaged project's classpath on demand. See [#2160](https://github.com/eclipse/eclipse.jdt.ls/pull/2160).
  * enhancement - Provide reload project diagnostics on demand. See [#2164](https://github.com/eclipse/eclipse.jdt.ls/pull/2164).
