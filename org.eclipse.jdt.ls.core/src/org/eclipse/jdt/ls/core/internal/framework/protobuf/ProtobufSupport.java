@@ -91,7 +91,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 		if (!projectUris.isEmpty()) {
 			ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Info)
 					.withMessage("Would you like to generate Java source files out of your proto files?")
-					.withCommands(Arrays.asList(new Command("Yes", "java.protobuf.generateSources", Arrays.asList(projectUris))));
+					.withCommands(Arrays.asList(new Command("Generate", "java.protobuf.generateSources", Arrays.asList(projectUris))));
 			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendActionableNotification(notification);
 		}
 	}
