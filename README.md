@@ -15,7 +15,7 @@ Features
 --------------
 * Supports compiling projects from Java 1.5 through 16
 * Maven pom.xml project support
-* Limited Gradle support (Android projects are not supported)
+* Gradle project support (with experimental Android project import support)
 * Standalone Java files support
 * As-you-type reporting of syntax and compilation errors
 * Code completion

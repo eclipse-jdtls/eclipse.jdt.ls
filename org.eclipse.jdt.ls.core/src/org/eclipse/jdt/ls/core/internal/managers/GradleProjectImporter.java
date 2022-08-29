@@ -564,11 +564,21 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		File initScript = getGradleInitScript("/gradle/init/init.gradle");
 		addInitScriptToArgs(initScript, args);
 
-		// Add init script of protobuf support
 		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (preferencesManager != null && preferencesManager.getPreferences().isProtobufSupportEnabled()) {
+		if (preferencesManager == null) {
+			return args;
+		}
+
+		// Add init script of protobuf support
+		if (preferencesManager.getPreferences().isProtobufSupportEnabled()) {
 			File protobufInitScript = getGradleInitScript("/gradle/protobuf/init.gradle");
 			addInitScriptToArgs(protobufInitScript, args);
+		}
+
+		// Add init script of android support
+		if (preferencesManager.getPreferences().isAndroidSupportEnabled()) {
+			File androidInitScript = getGradleInitScript("/gradle/android/init.gradle");
+			addInitScriptToArgs(androidInitScript, args);
 		}
 
 		return args;
