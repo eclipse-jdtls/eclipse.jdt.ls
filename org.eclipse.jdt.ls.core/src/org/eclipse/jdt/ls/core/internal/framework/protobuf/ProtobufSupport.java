@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal.framework.protobuf;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,15 +22,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathEntry;
@@ -44,7 +44,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.framework.IFrameworkSupport;
-import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
@@ -72,7 +71,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 			return;
 		}
 
-		List<Object> projectUris = new ArrayList<>();
+		List<Object> projectNames = new ArrayList<>();
 		for (IProject project : projects) {
 			if (!ProjectUtils.isJavaProject(project)) {
 				continue;
@@ -85,13 +84,13 @@ public class ProtobufSupport implements IFrameworkSupport {
 
 			boolean hasGenerated = containsJavaFiles(protobufOutputDirs);
 			if (!hasGenerated) {
-				projectUris.add(project.getLocationURI().toString());
+				projectNames.add(project.getName());
 			}
 		}
-		if (!projectUris.isEmpty()) {
+		if (!projectNames.isEmpty()) {
 			ActionableNotification notification = new ActionableNotification().withSeverity(MessageType.Info)
 					.withMessage("Would you like to generate Java source files out of your proto files?")
-					.withCommands(Arrays.asList(new Command("Yes", "java.protobuf.generateSources", Arrays.asList(projectUris))));
+					.withCommands(Arrays.asList(new Command("Yes", "java.protobuf.generateSources", Arrays.asList(projectNames))));
 			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendActionableNotification(notification);
 		}
 	}
@@ -149,21 +148,21 @@ public class ProtobufSupport implements IFrameworkSupport {
 
 	/**
 	 * Run generate proto tasks.
-	 * @param projectUris the project uris where the tasks will be executed.
+	 * @param projectNames the project uris where the tasks will be executed.
 	 * @param monitor progress monitor.
 	 */
-	public static void generateProtobufSources(List<String> projectUris, IProgressMonitor monitor) {
+	public static void generateProtobufSources(List<String> projectNames, IProgressMonitor monitor) {
 		JavaLanguageClient client = JavaLanguageServerPlugin.getProjectsManager().getConnection();
 		ProgressReport progressReport = new ProgressReport(UUID.randomUUID().toString());
 		progressReport.setTask("Running Gradle tasks");
 		progressReport.setComplete(false);
-		progressReport.setTotalWork(projectUris.size());
+		progressReport.setTotalWork(projectNames.size());
 		progressReport.setStatus("Generating Java sources from proto files...");
 		client.sendProgressReport(progressReport);
 		try {
-			for (String projectUri : projectUris) {
-				if (!StringUtils.isEmpty(projectUri)) {
-					 runGenerateProtobufTasks(projectUri, monitor);
+			for (String projectName : projectNames) {
+				if (!StringUtils.isEmpty(projectName)) {
+					 runGenerateProtobufTasks(projectName, monitor);
 				}
 				progressReport.setWorkDone(progressReport.getWorkDone() + 1);
 			}
@@ -174,17 +173,23 @@ public class ProtobufSupport implements IFrameworkSupport {
 	}
 
 	/**
-	 * Run the Gradle task 'generateProto' & 'generateTestProto' under the uri.
-	 * @param projectUri uri of the project.
+	 * Run the Gradle task 'generateProto' & 'generateTestProto' for projects with the input name.
+	 * @param projectName name of the project.
 	 * @param monitor progress monitor.
 	 */
-	private static void runGenerateProtobufTasks(String projectUri, IProgressMonitor monitor) {
-		Path dir = Path.of(URI.create(projectUri));
-		BuildConfiguration configuration = GradleProjectImporter.getBuildConfiguration(dir);
-		GradleBuild build = GradleCore.getWorkspace().createBuild(configuration);
+	private static void runGenerateProtobufTasks(String projectName, IProgressMonitor monitor) {
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		if (project == null || !project.exists()) {
+			return;
+		}
+
+		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
+		if (build.isEmpty()) {
+			return;
+		}
 
 		try {
-			build.withConnection(connection -> {
+			build.get().withConnection(connection -> {
 				connection.newBuild().forTasks("generateProto", "generateTestProto").run();
 				return null; 
 			}, monitor);

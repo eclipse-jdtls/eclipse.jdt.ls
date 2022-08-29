@@ -57,8 +57,7 @@ public class ProtobufSupportTest extends AbstractGradleBasedTest {
 	public void testGenerateProtobufSources() throws Exception {
 		IProject project = importGradleProject("protobuf");
 
-		String uriString = project.getLocationURI().toString();
-		ProtobufSupport.generateProtobufSources(Arrays.asList(uriString), new NullProgressMonitor());
+		ProtobufSupport.generateProtobufSources(Arrays.asList(project.getName()), new NullProgressMonitor());
 
 		waitForBackgroundJobs();
 
