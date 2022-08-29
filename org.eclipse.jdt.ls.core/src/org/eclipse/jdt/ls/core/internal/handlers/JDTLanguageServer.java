@@ -286,6 +286,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
 					status = ServiceStatus.ServiceReady;
+					pm.projectsImported(monitor);
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
 					return Status.CANCEL_STATUS;

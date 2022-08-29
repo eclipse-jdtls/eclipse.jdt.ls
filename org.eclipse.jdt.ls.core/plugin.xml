@@ -106,6 +106,9 @@
             <command
             	  id="java.project.resolveWorkspaceSymbol">
     	    </command>
+            <command
+                  id="java.protobuf.generateSources">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

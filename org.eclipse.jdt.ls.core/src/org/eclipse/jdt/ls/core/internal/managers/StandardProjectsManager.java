@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -78,6 +78,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.framework.IFrameworkSupport;
+import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -628,5 +630,12 @@ public class StandardProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		});
+	}
+
+	@Override
+	public void projectsImported(IProgressMonitor monitor) {
+		// TODO: consider to register as a extension point once we have multiple frameworks to support.
+		IFrameworkSupport protobufSupport = new ProtobufSupport();
+		protobufSupport.onDidProjectsImported(monitor);
 	}
 }
