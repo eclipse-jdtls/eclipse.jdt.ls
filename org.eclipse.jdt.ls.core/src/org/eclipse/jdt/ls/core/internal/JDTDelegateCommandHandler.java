@@ -129,8 +129,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					SymbolInformation si = JSONUtility.toModel(arguments.get(0), SymbolInformation.class);
 					return ProjectCommand.resolveWorkspaceSymbol(si);
 				case "java.protobuf.generateSources":
-					ArrayList<String> projectUris = (ArrayList<String>) arguments.get(0);
-					ProtobufSupport.generateProtobufSources(projectUris, monitor);
+					ProtobufSupport.generateProtobufSources((ArrayList<String>) arguments.get(0), monitor);
 					return null;
 				default:
 					break;
