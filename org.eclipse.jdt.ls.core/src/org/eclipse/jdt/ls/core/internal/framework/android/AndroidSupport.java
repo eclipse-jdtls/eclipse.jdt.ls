@@ -59,7 +59,7 @@ public class AndroidSupport implements IFrameworkSupport {
 		ProgressReport progressReport = new ProgressReport(UUID.randomUUID().toString());
 		progressReport.setTask("Running Gradle tasks");
 		progressReport.setComplete(false);
-		progressReport.setTotalWork(projects.size());
+		progressReport.setTotalWork(1);
 		progressReport.setStatus("Generating Android project sources files...");
 		client.sendProgressReport(progressReport);
 
@@ -74,10 +74,9 @@ public class AndroidSupport implements IFrameworkSupport {
 				continue;
 			}
 			GradleBuild build = gradleBuild.get();
-			if (processedGradleBuilds.contains(build)) {
+			if (!processedGradleBuilds.add(build)) {
 				continue;
 			}
-			processedGradleBuilds.add(build);
 			try {
 				BuildEnvironment buildEnvironment = build.withConnection(connection -> connection.getModel(BuildEnvironment.class), monitor);
 				if (buildEnvironment == null) {
@@ -106,6 +105,7 @@ public class AndroidSupport implements IFrameworkSupport {
 				JavaLanguageServerPlugin.logException(e);
 			}
 		}
+		progressReport.setWorkDone(1);
 		progressReport.setComplete(true);
 		client.sendProgressReport(progressReport);
 
@@ -113,7 +113,7 @@ public class AndroidSupport implements IFrameworkSupport {
 
 	private boolean hasAndroidTasks(GradleProject project) {
 		for (GradleTask task : project.getTasks()) {
-			if ("Android".equals(task.getGroup())) {
+			if ("Android".equalsIgnoreCase(task.getGroup())) {
 				return true;
 			}
 		}
