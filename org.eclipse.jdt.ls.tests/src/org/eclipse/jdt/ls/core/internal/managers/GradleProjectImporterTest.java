@@ -637,6 +637,36 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		}
 	}
 
+	@Test
+	public void testAndroidProjectSupportChanged() throws Exception {
+		try {
+			this.preferences.setAndroidSupportEnabled(true);
+			List<IProject> projects = importProjects("gradle/android");
+			assertEquals(3, projects.size());
+			IProject androidAppProject = WorkspaceHelper.getProject("app");
+			assertNotNull(androidAppProject);
+			IJavaProject javaProject = JavaCore.create(androidAppProject);
+			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+			String androidHome = System.getenv("ANDROID_HOME");
+			if (androidHome == null) {
+				// android SDK is not detected, plugin will do nothing
+				assertEquals(2, classpathEntries.length);
+			} else {
+				// android SDK is detected, android project should be imported successfully
+				assertEquals(6, classpathEntries.length);
+			}
+			this.preferences.setAndroidSupportEnabled(false);
+			for (IProject project : projects) {
+				projectsManager.updateProject(project, true);
+			}
+			waitForBackgroundJobs();
+			// regardless of ANDROID_HOME, the number of cpe is 2 since android support is disabled
+			assertEquals(2, javaProject.getRawClasspath().length);
+		} finally {
+			this.preferences.setAndroidSupportEnabled(false);
+		}
+	}
+
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
 		org.eclipse.buildship.core.internal.configuration.BuildConfiguration buildConfig = CorePlugin.configurationManager().loadBuildConfiguration(project.getLocation().toFile());
 		return CorePlugin.configurationManager().createProjectConfiguration(buildConfig, project.getLocation().toFile());
