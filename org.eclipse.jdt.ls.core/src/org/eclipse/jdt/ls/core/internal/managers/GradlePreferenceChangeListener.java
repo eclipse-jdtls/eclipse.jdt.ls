@@ -54,6 +54,13 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 					projectsManager.updateProject(project, true);
 				}
 			}
+
+			boolean androidSupportChanged = !Objects.equals(oldPreferences.isAndroidSupportEnabled(), newPreferences.isAndroidSupportEnabled());
+			if (androidSupportChanged) {
+				for (IProject project : ProjectUtils.getGradleProjects()) {
+					projectsManager.updateProject(project, true);
+				}
+			}
 		}
 	}
 
