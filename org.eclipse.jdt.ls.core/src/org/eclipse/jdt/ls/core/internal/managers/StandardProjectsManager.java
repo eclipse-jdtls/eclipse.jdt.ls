@@ -14,7 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static java.util.Arrays.asList;
-import static java.util.Map.entry; 
+import static java.util.Map.entry;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.isContainedIn;
 
@@ -79,6 +79,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.framework.IFrameworkSupport;
+import org.eclipse.jdt.ls.core.internal.framework.android.AndroidSupport;
 import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
@@ -637,5 +638,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		// TODO: consider to register as a extension point once we have multiple frameworks to support.
 		IFrameworkSupport protobufSupport = new ProtobufSupport();
 		protobufSupport.onDidProjectsImported(monitor);
+		IFrameworkSupport androidSupport = new AndroidSupport();
+		androidSupport.onDidProjectsImported(monitor);
 	}
 }
