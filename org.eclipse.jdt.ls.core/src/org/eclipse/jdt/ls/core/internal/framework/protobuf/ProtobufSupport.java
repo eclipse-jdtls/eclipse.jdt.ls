@@ -152,6 +152,9 @@ public class ProtobufSupport implements IFrameworkSupport {
 	 * @param monitor progress monitor.
 	 */
 	public static void generateProtobufSources(List<String> projectNames, IProgressMonitor monitor) {
+		if (projectNames == null || projectNames.isEmpty()) {
+			return;
+		}
 		JavaLanguageClient client = JavaLanguageServerPlugin.getProjectsManager().getConnection();
 		ProgressReport progressReport = new ProgressReport(UUID.randomUUID().toString());
 		progressReport.setTask("Running Gradle tasks");
