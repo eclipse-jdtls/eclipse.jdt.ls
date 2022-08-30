@@ -92,7 +92,7 @@ public class AndroidSupport implements IFrameworkSupport {
 					continue;
 				}
 				// for Gradle versions support eclipseModel.synchronizationTasks() API, there is nothing to do after importing
-				if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version(SYNCHRONIZATION_TASKS_API_GRADLE)) > 0) {
+				if (GradleVersion.version(gradleVersion).compareTo(GradleVersion.version(SYNCHRONIZATION_TASKS_API_GRADLE)) >= 0) {
 					continue;
 				}
 				GradleProject rootProject = build.withConnection(connection -> connection.getModel(GradleProject.class), monitor);
