@@ -441,6 +441,7 @@ public class Preferences {
 	public static final String JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES = "java.codeAction.sortMembers.avoidVolatileChanges";
 
 	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
+	public static final String JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED = "java.jdt.ls.androidSupport.enabled";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -573,6 +574,7 @@ public class Preferences {
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
+	private boolean androidSupportEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -1083,6 +1085,8 @@ public class Preferences {
 		prefs.setAvoidVolatileChanges(avoidVolatileChanges);
 		boolean protobufSupported = getBoolean(configuration, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED, false);
 		prefs.setProtobufSupportEnabled(protobufSupported);
+		boolean androidSupported = getBoolean(configuration, JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED, false);
+		prefs.setAndroidSupportEnabled(androidSupported);
 		return prefs;
 	}
 
@@ -1912,12 +1916,21 @@ public class Preferences {
 	public boolean getAvoidVolatileChanges() {
 		return this.avoidVolatileChanges;
 	}
+
 	public boolean isProtobufSupportEnabled() {
 		return protobufSupportEnabled;
 	}
 
 	public void setProtobufSupportEnabled(boolean protobufSupportEnabled) {
 		this.protobufSupportEnabled = protobufSupportEnabled;
+	}
+
+	public boolean isAndroidSupportEnabled() {
+		return this.androidSupportEnabled;
+	}
+
+	public void setAndroidSupportEnabled(boolean androidSupportEnabled) {
+		this.androidSupportEnabled = androidSupportEnabled;
 	}
 
 }
