@@ -231,10 +231,6 @@ public class SignatureHelpUtils {
 			return;
 		}
 
-		if (typeBinding.isRecord()) {
-			// todo: support record
-			return;
-		}
 		IType type = (IType) typeBinding.getJavaElement();
 		if (type == null) {
 			return;

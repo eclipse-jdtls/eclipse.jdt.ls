@@ -156,7 +156,6 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		}
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
-		// todo: cannot get parameter names for record class
 		char[][] parameterNames = methodProposal.findParameterNames(null);
 		char[][] parameterTypes = Signature.getParameterTypes(signature);
 
