@@ -22,7 +22,9 @@ import static org.mockito.Mockito.when;
 
 import java.net.URI;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -645,6 +647,18 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		help = getSignatureHelp(cu, 3, 10);
 		assertEquals(1, help.getActiveParameter().intValue());
+	}
+
+	@Test
+	public void testSignatureHelp_record() throws Exception {
+		importProjects("eclipse/java16");
+		IProject proj = WorkspaceHelper.getProject("java16");
+		IJavaProject javaProject = JavaCore.create(proj);
+		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Bar.java"));
+		SignatureHelp help = getSignatureHelp(unit, 9, 10);
+		assertNotNull(help);
+		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
+		assertTrue(signature.getLabel().equals("Edge(int fromNodeId, int toNodeId, Object fromPoint, Object toPoint, double length, Object profile)"));
 	}
 
 	@Test
