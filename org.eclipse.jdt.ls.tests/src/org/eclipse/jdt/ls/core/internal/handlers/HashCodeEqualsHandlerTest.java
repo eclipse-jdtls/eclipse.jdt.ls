@@ -122,13 +122,13 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
 				"		int result = 1;\r\n" +
-				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
-				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-				"		result = prime * result + id;\r\n" +
 				"		result = prime * result + ((name == null) ? 0 : name.hashCode());\r\n" +
+				"		result = prime * result + id;\r\n" +
 				"		long temp;\r\n" +
 				"		temp = Double.doubleToLongBits(rate);\r\n" +
 				"		result = prime * result + (int) (temp ^ (temp >>> 32));\r\n" +
+				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
 				"	@Override\r\n" +
@@ -140,21 +140,21 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		if (getClass() != obj.getClass())\r\n" +
 				"			return false;\r\n" +
 				"		B other = (B) obj;\r\n" +
-				"		if (aList == null) {\r\n" +
-				"			if (other.aList != null)\r\n" +
-				"				return false;\r\n" +
-				"		} else if (!aList.equals(other.aList))\r\n" +
-				"			return false;\r\n" +
-				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
-				"			return false;\r\n" +
-				"		if (id != other.id)\r\n" +
-				"			return false;\r\n" +
 				"		if (name == null) {\r\n" +
 				"			if (other.name != null)\r\n" +
 				"				return false;\r\n" +
 				"		} else if (!name.equals(other.name))\r\n" +
 				"			return false;\r\n" +
+				"		if (id != other.id)\r\n" +
+				"			return false;\r\n" +
 				"		if (Double.doubleToLongBits(rate) != Double.doubleToLongBits(other.rate))\r\n" +
+				"			return false;\r\n" +
+				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
+				"			return false;\r\n" +
+				"		if (aList == null) {\r\n" +
+				"			if (other.aList != null)\r\n" +
+				"				return false;\r\n" +
+				"		} else if (!aList.equals(other.aList))\r\n" +
 				"			return false;\r\n" +
 				"		return true;\r\n" +
 				"	}\r\n" +
@@ -202,7 +202,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		final int prime = 31;\r\n" +
 				"		int result = 1;\r\n" +
 				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-				"		result = prime * result + Objects.hash(aList, id, name, rate);\r\n" +
+				"		result = prime * result + Objects.hash(name, id, rate, aList);\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
 				"	@Override\r\n" +
@@ -214,8 +214,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		if (getClass() != obj.getClass())\r\n" +
 				"			return false;\r\n" +
 				"		B other = (B) obj;\r\n" +
-				"		return Objects.equals(aList, other.aList) && Arrays.deepEquals(anArray, other.anArray) && id == other.id "
-				+ "&& Objects.equals(name, other.name) && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate);\r\n" +
+				"		return Objects.equals(name, other.name) && id == other.id && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate) && Arrays.deepEquals(anArray, other.anArray) && Objects.equals(aList, other.aList);\r\n" +
 				"	}\r\n" +
 				"}";
 		/* @formatter:on */
@@ -259,13 +258,13 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
 				"		int result = 1;\r\n" +
-				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
-				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-				"		result = prime * result + id;\r\n" +
 				"		result = prime * result + ((name == null) ? 0 : name.hashCode());\r\n" +
+				"		result = prime * result + id;\r\n" +
 				"		long temp;\r\n" +
 				"		temp = Double.doubleToLongBits(rate);\r\n" +
 				"		result = prime * result + (int) (temp ^ (temp >>> 32));\r\n" +
+				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
 				"	@Override\r\n" +
@@ -275,21 +274,21 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		if (!(obj instanceof B))\r\n" +
 				"			return false;\r\n" +
 				"		B other = (B) obj;\r\n" +
-				"		if (aList == null) {\r\n" +
-				"			if (other.aList != null)\r\n" +
-				"				return false;\r\n" +
-				"		} else if (!aList.equals(other.aList))\r\n" +
-				"			return false;\r\n" +
-				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
-				"			return false;\r\n" +
-				"		if (id != other.id)\r\n" +
-				"			return false;\r\n" +
 				"		if (name == null) {\r\n" +
 				"			if (other.name != null)\r\n" +
 				"				return false;\r\n" +
 				"		} else if (!name.equals(other.name))\r\n" +
 				"			return false;\r\n" +
+				"		if (id != other.id)\r\n" +
+				"			return false;\r\n" +
 				"		if (Double.doubleToLongBits(rate) != Double.doubleToLongBits(other.rate))\r\n" +
+				"			return false;\r\n" +
+				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
+				"			return false;\r\n" +
+				"		if (aList == null) {\r\n" +
+				"			if (other.aList != null)\r\n" +
+				"				return false;\r\n" +
+				"		} else if (!aList.equals(other.aList))\r\n" +
 				"			return false;\r\n" +
 				"		return true;\r\n" +
 				"	}\r\n" +
@@ -335,13 +334,13 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
 				"		int result = 1;\r\n" +
-				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
-				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-				"		result = prime * result + id;\r\n" +
 				"		result = prime * result + ((name == null) ? 0 : name.hashCode());\r\n" +
+				"		result = prime * result + id;\r\n" +
 				"		long temp;\r\n" +
 				"		temp = Double.doubleToLongBits(rate);\r\n" +
 				"		result = prime * result + (int) (temp ^ (temp >>> 32));\r\n" +
+				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
 				"	@Override\r\n" +
@@ -356,19 +355,6 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"			return false;\r\n" +
 				"		}\r\n" +
 				"		B other = (B) obj;\r\n" +
-				"		if (aList == null) {\r\n" +
-				"			if (other.aList != null) {\r\n" +
-				"				return false;\r\n" +
-				"			}\r\n" +
-				"		} else if (!aList.equals(other.aList)) {\r\n" +
-				"			return false;\r\n" +
-				"		}\r\n" +
-				"		if (!Arrays.deepEquals(anArray, other.anArray)) {\r\n" +
-				"			return false;\r\n" +
-				"		}\r\n" +
-				"		if (id != other.id) {\r\n" +
-				"			return false;\r\n" +
-				"		}\r\n" +
 				"		if (name == null) {\r\n" +
 				"			if (other.name != null) {\r\n" +
 				"				return false;\r\n" +
@@ -376,7 +362,20 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		} else if (!name.equals(other.name)) {\r\n" +
 				"			return false;\r\n" +
 				"		}\r\n" +
+				"		if (id != other.id) {\r\n" +
+				"			return false;\r\n" +
+				"		}\r\n" +
 				"		if (Double.doubleToLongBits(rate) != Double.doubleToLongBits(other.rate)) {\r\n" +
+				"			return false;\r\n" +
+				"		}\r\n" +
+				"		if (!Arrays.deepEquals(anArray, other.anArray)) {\r\n" +
+				"			return false;\r\n" +
+				"		}\r\n" +
+				"		if (aList == null) {\r\n" +
+				"			if (other.aList != null) {\r\n" +
+				"				return false;\r\n" +
+				"			}\r\n" +
+				"		} else if (!aList.equals(other.aList)) {\r\n" +
 				"			return false;\r\n" +
 				"		}\r\n" +
 				"		return true;\r\n" +
@@ -427,13 +426,13 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
 				"		int result = 1;\r\n" +
-				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
-				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-				"		result = prime * result + id;\r\n" +
 				"		result = prime * result + ((name == null) ? 0 : name.hashCode());\r\n" +
+				"		result = prime * result + id;\r\n" +
 				"		long temp;\r\n" +
 				"		temp = Double.doubleToLongBits(rate);\r\n" +
 				"		result = prime * result + (int) (temp ^ (temp >>> 32));\r\n" +
+				"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
+				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
 				"	/* (non-Javadoc)\r\n" +
@@ -449,21 +448,21 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		if (getClass() != obj.getClass())\r\n" +
 				"			return false;\r\n" +
 				"		B other = (B) obj;\r\n" +
-				"		if (aList == null) {\r\n" +
-				"			if (other.aList != null)\r\n" +
-				"				return false;\r\n" +
-				"		} else if (!aList.equals(other.aList))\r\n" +
-				"			return false;\r\n" +
-				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
-				"			return false;\r\n" +
-				"		if (id != other.id)\r\n" +
-				"			return false;\r\n" +
 				"		if (name == null) {\r\n" +
 				"			if (other.name != null)\r\n" +
 				"				return false;\r\n" +
 				"		} else if (!name.equals(other.name))\r\n" +
 				"			return false;\r\n" +
+				"		if (id != other.id)\r\n" +
+				"			return false;\r\n" +
 				"		if (Double.doubleToLongBits(rate) != Double.doubleToLongBits(other.rate))\r\n" +
+				"			return false;\r\n" +
+				"		if (!Arrays.deepEquals(anArray, other.anArray))\r\n" +
+				"			return false;\r\n" +
+				"		if (aList == null) {\r\n" +
+				"			if (other.aList != null)\r\n" +
+				"				return false;\r\n" +
+				"		} else if (!aList.equals(other.aList))\r\n" +
 				"			return false;\r\n" +
 				"		return true;\r\n" +
 				"	}\r\n" +
@@ -565,7 +564,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 					"		final int prime = 31;\r\n" +
 					"		int result = 1;\r\n" +
 					"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-					"		result = prime * result + Objects.hash(aList, id, name, rate);\r\n" +
+					"		result = prime * result + Objects.hash(name, id, rate, aList);\r\n" +
 					"		return result;\r\n" +
 					"	}\r\n" +
 					"	@Override\r\n" +
@@ -577,8 +576,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 					"		if (getClass() != obj.getClass())\r\n" +
 					"			return false;\r\n" +
 					"		B other = (B) obj;\r\n" +
-					"		return Objects.equals(aList, other.aList) && Arrays.deepEquals(anArray, other.anArray) && id == other.id "
-					+ "&& Objects.equals(name, other.name) && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate);\r\n" +
+					"		return Objects.equals(name, other.name) && id == other.id && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate) && Arrays.deepEquals(anArray, other.anArray) && Objects.equals(aList, other.aList);\r\n" +
 					"	}\r\n" +
 					"	int id;\r\n" +
 					"	double rate;\r\n" +
@@ -629,7 +627,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 					"		final int prime = 31;\r\n" +
 					"		int result = 1;\r\n" +
 					"		result = prime * result + Arrays.deepHashCode(anArray);\r\n" +
-					"		result = prime * result + Objects.hash(aList, id, name, rate);\r\n" +
+					"		result = prime * result + Objects.hash(name, id, rate, aList);\r\n" +
 					"		return result;\r\n" +
 					"	}\r\n" +
 					"	@Override\r\n" +
@@ -641,8 +639,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 					"		if (getClass() != obj.getClass())\r\n" +
 					"			return false;\r\n" +
 					"		B other = (B) obj;\r\n" +
-					"		return Objects.equals(aList, other.aList) && Arrays.deepEquals(anArray, other.anArray) && id == other.id "
-					+ "&& Objects.equals(name, other.name) && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate);\r\n" +
+					"		return Objects.equals(name, other.name) && id == other.id && Double.doubleToLongBits(rate) == Double.doubleToLongBits(other.rate) && Arrays.deepEquals(anArray, other.anArray) && Objects.equals(aList, other.aList);\r\n" +
 					"	}\r\n" +
 					"	String name;\r\n" +
 					"	int id;\r\n" +
