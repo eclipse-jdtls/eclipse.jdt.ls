@@ -78,6 +78,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
@@ -180,10 +181,11 @@ public class SourceAssistProcessor {
 			JavaLanguageServerPlugin.logException("Failed to generate Getter and Setter source action", e);
 		}
 
+		boolean hashCodeAndEqualsExists = CodeActionUtility.hasMethod(type, HashCodeEqualsHandler.METHODNAME_HASH_CODE) && CodeActionUtility.hasMethod(type, HashCodeEqualsHandler.METHODNAME_EQUALS, Object.class);
 		// Generate hashCode() and equals()
 		if (supportsHashCodeEquals(context, type, monitor)) {
 			// Generate QuickAssist
-			if (isInTypeDeclaration) {
+			if (isInTypeDeclaration && !hashCodeAndEqualsExists) {
 				Optional<Either<Command, CodeAction>> quickAssistHashCodeEquals = getHashCodeEqualsAction(params, JavaCodeActionKind.QUICK_ASSIST);
 				addSourceActionCommand($, params.getContext(), quickAssistHashCodeEquals);
 			}
@@ -194,6 +196,7 @@ public class SourceAssistProcessor {
 
 		}
 
+		boolean toStringExists = CodeActionUtility.hasMethod(type, GenerateToStringHandler.METHODNAME_TOSTRING);
 		// Generate toString()
 		if (supportsGenerateToString(type)) {
 			boolean nonStaticFields = true;
@@ -204,7 +207,7 @@ public class SourceAssistProcessor {
 			}
 			if (nonStaticFields) {
 				// Generate QuickAssist
-				if (isInTypeDeclaration) {
+				if (isInTypeDeclaration && !toStringExists) {
 					Optional<Either<Command, CodeAction>> generateToStringQuickAssist = getGenerateToStringAction(params, JavaCodeActionKind.QUICK_ASSIST);
 					addSourceActionCommand($, params.getContext(), generateToStringQuickAssist);
 				}
@@ -218,7 +221,7 @@ public class SourceAssistProcessor {
 					return convertToWorkspaceEdit(cu, edit);
 				};
 				// Generate QuickAssist
-				if (isInTypeDeclaration) {
+				if (isInTypeDeclaration && !toStringExists) {
 					Optional<Either<Command, CodeAction>> generateToStringQuickAssist = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), ActionMessages.GenerateToStringAction_label,
 							JavaCodeActionKind.QUICK_ASSIST, generateToStringProposal, CodeActionComparator.GENERATE_TOSTRING_PRIORITY);
 					addSourceActionCommand($, params.getContext(), generateToStringQuickAssist);
