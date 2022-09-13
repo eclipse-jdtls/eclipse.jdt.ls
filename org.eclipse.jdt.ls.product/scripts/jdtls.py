@@ -86,7 +86,6 @@ def main(args):
 		"-Dosgi.sharedConfiguration.area=" + str(shared_config_path),
 		"-Dosgi.sharedConfiguration.area.readOnly=true",
 		"-Dosgi.configuration.cascaded=true",
-		"-noverify",
 		"-Xms1G",
 		"--add-modules=ALL-SYSTEM",
 		"--add-opens", "java.base/java.util=ALL-UNNAMED",
