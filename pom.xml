@@ -28,6 +28,7 @@
 		<!-- To handle OSX-specific settings -->
 		<os.testArgs></os.testArgs>
 		<lombokArgs></lombokArgs>
+		<tycho.testArgLine></tycho.testArgLine>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
