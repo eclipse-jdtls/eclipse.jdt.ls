@@ -66,14 +66,14 @@ public class JdtDomModels {
 
 	public static IVariableBinding[] convertToVariableBindings(ITypeBinding typeBinding, LspVariableBinding[] fields) {
 		Set<String> bindingKeys = Stream.of(fields).map((field) -> field.bindingKey).collect(Collectors.toSet());
-		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new IVariableBindingComparator()).filter(f -> bindingKeys.contains(f.getKey())).toArray(IVariableBinding[]::new);
+		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new VariableBindingComparator()).filter(f -> bindingKeys.contains(f.getKey())).toArray(IVariableBinding[]::new);
 	}
 
 	public static LspVariableBinding[] getDeclaredFields(ITypeBinding typeBinding, boolean includeStatic) {
-		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new IVariableBindingComparator()).filter(f -> includeStatic || !Modifier.isStatic(f.getModifiers())).map(f -> new LspVariableBinding(f)).toArray(LspVariableBinding[]::new);
+		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new VariableBindingComparator()).filter(f -> includeStatic || !Modifier.isStatic(f.getModifiers())).map(f -> new LspVariableBinding(f)).toArray(LspVariableBinding[]::new);
 	}
 
-	public static class IVariableBindingComparator implements Comparator<IVariableBinding> {
+	public static class VariableBindingComparator implements Comparator<IVariableBinding> {
 		@Override
 		public int compare(IVariableBinding a, IVariableBinding b) {
 			try {
