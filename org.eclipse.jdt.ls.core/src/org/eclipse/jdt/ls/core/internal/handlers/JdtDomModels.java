@@ -14,14 +14,17 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 
 public class JdtDomModels {
 
@@ -63,10 +66,21 @@ public class JdtDomModels {
 
 	public static IVariableBinding[] convertToVariableBindings(ITypeBinding typeBinding, LspVariableBinding[] fields) {
 		Set<String> bindingKeys = Stream.of(fields).map((field) -> field.bindingKey).collect(Collectors.toSet());
-		return Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> bindingKeys.contains(f.getKey())).toArray(IVariableBinding[]::new);
+		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new VariableBindingComparator()).filter(f -> bindingKeys.contains(f.getKey())).toArray(IVariableBinding[]::new);
 	}
 
 	public static LspVariableBinding[] getDeclaredFields(ITypeBinding typeBinding, boolean includeStatic) {
-		return Arrays.stream(typeBinding.getDeclaredFields()).filter(f -> includeStatic || !Modifier.isStatic(f.getModifiers())).map(f -> new LspVariableBinding(f)).toArray(LspVariableBinding[]::new);
+		return Arrays.stream(typeBinding.getDeclaredFields()).sorted(new VariableBindingComparator()).filter(f -> includeStatic || !Modifier.isStatic(f.getModifiers())).map(f -> new LspVariableBinding(f)).toArray(LspVariableBinding[]::new);
+	}
+
+	public static class VariableBindingComparator implements Comparator<IVariableBinding> {
+		@Override
+		public int compare(IVariableBinding a, IVariableBinding b) {
+			try {
+				return JDTUtils.getNameRange(a.getJavaElement()).getOffset() - JDTUtils.getNameRange(b.getJavaElement()).getOffset();
+			} catch (JavaModelException e) {
+				return 0;
+			}
+		}
 	}
 }

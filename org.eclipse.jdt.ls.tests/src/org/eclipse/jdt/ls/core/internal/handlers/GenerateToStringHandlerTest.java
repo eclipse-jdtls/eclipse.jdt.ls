@@ -125,7 +125,60 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 				"	String[] arrays;\r\n" +
 				"	@Override\r\n" +
 				"	public String toString() {\r\n" +
-				"		return \"B [aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", id=\" + id + \", name=\" + name + \"]\";\r\n" +
+				"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
+				"	}\r\n" +
+				"}";
+		/* @formatter:on */
+
+		compareSource(expected, unit.getSource());
+	}
+
+	@Test
+	public void testGenerateToStringOrder() throws ValidateEditException, CoreException, IOException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	public String stringField;\r\n" +
+				"	public int intField;\r\n" +
+				"	public static int staticIntField;\r\n" +
+				"	public boolean booleanField;\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String stringField");
+		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(params);
+		assertEquals("B", response.type);
+		assertNotNull(response.fields);
+		assertEquals(3, response.fields.length);
+		assertFalse(response.exists);
+		assertEquals("stringField", response.fields[0].name);
+		assertEquals("intField", response.fields[1].name);
+		assertEquals("booleanField", response.fields[2].name);
+
+		ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
+		settings.overrideAnnotation = true;
+		settings.createComments = false;
+		settings.useBlocks = false;
+		settings.stringFormatTemplate = GenerateToStringHandler.DEFAULT_TEMPLATE;
+		settings.toStringStyle = GenerateToStringOperation.STRING_CONCATENATION;
+		settings.skipNulls = false;
+		settings.customArrayToString = true;
+		settings.limitElements = false;
+		settings.customBuilderSettings = new CustomBuilderSettings();
+		generateToString(unit.findPrimaryType(), settings);
+
+		/* @formatter:off */
+		String expected = "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"	public String stringField;\r\n" +
+				"	public int intField;\r\n" +
+				"	public static int staticIntField;\r\n" +
+				"	public boolean booleanField;\r\n" +
+				"	@Override\r\n" +
+				"	public String toString() {\r\n" +
+				"		return \"B [stringField=\" + stringField + \", intField=\" + intField + \", booleanField=\" + booleanField + \"]\";\r\n" +
 				"	}\r\n" +
 				"}";
 		/* @formatter:on */
@@ -184,15 +237,15 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 				"		final int maxLen = 10;\r\n" +
 				"		StringBuilder builder = new StringBuilder();\r\n" +
 				"		builder.append(\"B [\");\r\n" +
+				"		if (name != null) {\r\n" +
+				"			builder.append(\"name=\").append(name).append(\", \");\r\n" +
+				"		}\r\n" +
+				"		builder.append(\"id=\").append(id).append(\", \");\r\n" +
 				"		if (aList != null) {\r\n" +
 				"			builder.append(\"aList=\").append(aList.subList(0, Math.min(aList.size(), maxLen))).append(\", \");\r\n" +
 				"		}\r\n" +
 				"		if (arrays != null) {\r\n" +
-				"			builder.append(\"arrays=\").append(arrays).append(\", \");\r\n" +
-				"		}\r\n" +
-				"		builder.append(\"id=\").append(id).append(\", \");\r\n" +
-				"		if (name != null) {\r\n" +
-				"			builder.append(\"name=\").append(name);\r\n" +
+				"			builder.append(\"arrays=\").append(arrays);\r\n" +
 				"		}\r\n" +
 				"		builder.append(\"]\");\r\n" +
 				"		return builder.toString();\r\n" +
@@ -248,7 +301,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 					"	List<String> aList;/*|*/\r\n" +
 					"	@Override\r\n" +
 					"	public String toString() {\r\n" +
-					"		return \"B [aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", id=\" + id + \", name=\" + name + \"]\";\r\n" +
+					"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
 					"	}\r\n" +
 					"	String[] arrays;\r\n" +
 					"}";
@@ -304,7 +357,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 					"	int id;\r\n" +
 					"	@Override\r\n" +
 					"	public String toString() {\r\n" +
-					"		return \"B [aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", id=\" + id + \", name=\" + name + \"]\";\r\n" +
+					"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
 					"	}\r\n" +
 					"	List<String> aList;/*|*/\r\n" +
 					"	String[] arrays;\r\n" +
