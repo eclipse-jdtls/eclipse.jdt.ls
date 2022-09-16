@@ -77,6 +77,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.ExecuteCommandParams;
@@ -444,8 +445,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		gradleArguments.addAll(preferences.getGradleArguments());
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();
 		boolean offlineMode = preferences.isImportGradleOfflineEnabled();
+		boolean autoSync = preferences.getUpdateBuildConfigurationStatus().equals(FeatureStatus.automatic);
 		boolean overrideWorkspaceConfiguration = !(distribution instanceof WrapperGradleDistribution) || offlineMode || (gradleArguments != null && !gradleArguments.isEmpty()) || (gradleJvmArguments != null && !gradleJvmArguments.isEmpty())
-				|| gradleUserHome != null || javaHome != null;
+				|| gradleUserHome != null || javaHome != null || autoSync;
 		// @formatter:off
 		BuildConfiguration build = BuildConfiguration.forRootProjectDirectory(rootFolder.toFile())
 				.overrideWorkspaceConfiguration(overrideWorkspaceConfiguration)
@@ -455,6 +457,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				.gradleUserHome(gradleUserHome)
 				.jvmArguments(gradleJvmArguments)
 				.offlineMode(offlineMode)
+				.autoSync(autoSync)
 				.build();
 		// @formatter:on
 		return build;

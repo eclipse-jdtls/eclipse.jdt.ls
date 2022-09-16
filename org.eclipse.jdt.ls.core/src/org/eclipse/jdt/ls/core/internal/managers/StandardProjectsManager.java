@@ -224,7 +224,8 @@ public class StandardProjectsManager extends ProjectsManager {
 			return;
 		}
 		try {
-			Optional<IBuildSupport> bs = getBuildSupport(resource.getProject());
+			IProject project = resource.getProject();
+			Optional<IBuildSupport> bs = getBuildSupport(project);
 			if (bs.isPresent()) {
 				IBuildSupport buildSupport = bs.get();
 
@@ -238,7 +239,11 @@ public class StandardProjectsManager extends ProjectsManager {
 					FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 					switch (status) {
 						case automatic:
-							updateProject(resource.getProject(), true);
+							if (ProjectUtils.isGradleProject(project)) {
+								// See https://github.com/redhat-developer/vscode-java/issues/2673
+								return;
+							}
+							updateProject(project, true);
 							break;
 						case disabled:
 							appendBuildFileMarker(resource);

@@ -61,6 +61,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -411,6 +412,21 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(build.isOfflineMode());
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleOfflineEnabled(offlineMode);
+		}
+	}
+
+	@Test
+	public void testGradleAutoSync() {
+		FeatureStatus status = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getUpdateBuildConfigurationStatus();
+		try {
+			Path rootPath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toFile().toPath();
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertFalse(build.isAutoSync());
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
+			build = GradleProjectImporter.getBuildConfiguration(rootPath);
+			assertTrue(build.isAutoSync());
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setUpdateBuildConfigurationStatus(status);
 		}
 	}
 
