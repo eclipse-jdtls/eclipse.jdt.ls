@@ -13,8 +13,6 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import java.util.stream.Stream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -38,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
@@ -45,7 +44,7 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 public class GenerateToStringHandler {
-	private static final String METHODNAME_TOSTRING = "toString";
+	public static final String METHODNAME_TOSTRING = "toString";
 	public static final String DEFAULT_TEMPLATE = "${object.className} [${member.name()}=${member.value}, ${otherMembers}]";
 
 	// For test purpose
@@ -79,7 +78,7 @@ public class GenerateToStringHandler {
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
 				response.fields = JdtDomModels.getDeclaredFields(typeBinding, false);
-				response.exists = Stream.of(typeBinding.getDeclaredMethods()).anyMatch(method -> method.getName().equals(METHODNAME_TOSTRING) && method.getParameterTypes().length == 0);
+				response.exists = CodeActionUtility.hasMethod(type, METHODNAME_TOSTRING);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to check toString status", e);

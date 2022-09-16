@@ -43,8 +43,8 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 public class HashCodeEqualsHandler {
-	private static final String METHODNAME_HASH_CODE = "hashCode";
-	private static final String METHODNAME_EQUALS = "equals";
+	public static final String METHODNAME_HASH_CODE = "hashCode";
+	public static final String METHODNAME_EQUALS = "equals";
 
 	// For test purpose
 	public static CheckHashCodeEqualsResponse checkHashCodeEqualsStatus(CodeActionParams params) {

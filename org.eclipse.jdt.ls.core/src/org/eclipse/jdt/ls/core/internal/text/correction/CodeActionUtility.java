@@ -17,7 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
@@ -127,5 +130,33 @@ public class CodeActionUtility {
 			return name.getIdentifier();
 		}
 		return null;
+	}
+
+	public static boolean hasMethod(IType type, String methodName, Class... parameterTypes) {
+		if (type == null) {
+			return false;
+		}
+		try {
+			return Stream.of(type.getMethods()).anyMatch(method -> {
+				if (!method.getElementName().equals(methodName)) {
+					return false;
+				}
+				if (method.getParameterTypes().length != parameterTypes.length) {
+					return false;
+				}
+				String[] parameterTypeNames = method.getParameterTypes();
+				if (parameterTypes.length != parameterTypeNames.length) {
+					return false;
+				}
+				for (int i = 0; i < parameterTypeNames.length; i++) {
+					if (parameterTypes[i].getName().equals(parameterTypeNames[i])) {
+						return false;
+					}
+				}
+				return true;
+			});
+		} catch (JavaModelException e) {
+			return false;
+		}
 	}
 }

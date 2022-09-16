@@ -177,4 +177,23 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
 		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, ActionMessages.GenerateToStringAction_label));
 	}
+
+	@Test
+	public void testNoGenerateToStringQuickAssist() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	String name;\r\n" +
+				"   public String toString() {\r\n" +
+				"		return this.name;\r\n" +
+				"	}\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertNull(CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Generate toString()..."));
+	}
 }

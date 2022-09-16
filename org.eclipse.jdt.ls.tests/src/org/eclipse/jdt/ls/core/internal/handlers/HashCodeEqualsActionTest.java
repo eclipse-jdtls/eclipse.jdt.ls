@@ -147,4 +147,25 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 		Assert.assertFalse(quickAssistActions.isEmpty());
 		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_HASHCODEEQUALSPROMPT));
 	}
+
+	@Test
+	public void testNoHashCodeEqualsQuickAssist() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	String name;\r\n" +
+				"   public int hashCode() {\r\n" +
+				"	}\r\n" +
+				"	public boolean equals(Object a) {\r\n" +
+				"		return true;\r\n" +
+				"	}\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Assert.assertNull(CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Generate hashCode() and equals()..."));
+	}
 }
