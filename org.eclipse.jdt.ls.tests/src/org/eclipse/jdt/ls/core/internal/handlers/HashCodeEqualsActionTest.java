@@ -149,7 +149,7 @@ public class HashCodeEqualsActionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testHashCodeEqualsQuickAssistExists() throws JavaModelException {
+	public void testNoHashCodeEqualsQuickAssist() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +

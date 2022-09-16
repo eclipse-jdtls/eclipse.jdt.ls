@@ -179,7 +179,7 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 	}
 
 	@Test
-	public void testGenerateToStringQuickAssistExists() throws JavaModelException {
+	public void testNoGenerateToStringQuickAssist() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
