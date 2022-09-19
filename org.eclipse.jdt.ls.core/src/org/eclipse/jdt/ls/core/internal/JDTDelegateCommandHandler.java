@@ -26,6 +26,7 @@ import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions
 import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
+import org.eclipse.jdt.ls.core.internal.handlers.CreateModuleInfoHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
@@ -131,6 +132,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.protobuf.generateSources":
 					ProtobufSupport.generateProtobufSources((ArrayList<String>) arguments.get(0), monitor);
 					return null;
+				case "java.project.createModuleInfo":
+					return CreateModuleInfoHandler.createModuleInfo((String) arguments.get(0), monitor);
 				default:
 					break;
 			}
