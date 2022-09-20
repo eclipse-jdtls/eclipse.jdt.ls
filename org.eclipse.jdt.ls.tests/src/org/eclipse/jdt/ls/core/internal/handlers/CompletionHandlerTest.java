@@ -3501,7 +3501,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_withConflictingTypeNames() throws Exception{
-		getWorkingCopy("src/java/List.java", 
+		getWorkingCopy("src/java/List.java",
 			"package util;\n" +
 			"public class List {\n" +
 			"}\n");
@@ -3514,19 +3514,26 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						"		List \n"+
 						"	}\n"+
 				"}\n");
-		CompletionList list = requestCompletions(unit, "List");
+		CoreASTProvider.getInstance().setActiveJavaElement(unit);
+		CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+
+		CompletionList list = requestCompletions(unit, "List", unit.getSource().indexOf("List()") + 6);
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 
 		List<CompletionItem> items = list.getItems().stream().filter(p -> "java.util.List".equals(p.getDetail()))
 			.collect(Collectors.toList());
 		assertFalse("java.util.List not found",items.isEmpty());
-		assertEquals("java.util.List", items.get(0).getInsertText());
+		assertEquals("java.util.List", items.get(0).getTextEdit().getLeft().getNewText());
 	}
 
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
-		int[] loc = findCompletionLocation(unit, completeBehind);
+		return requestCompletions(unit, completeBehind, 0);
+	}
+
+	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind, int fromIndex) throws JavaModelException {
+		int[] loc = findCompletionLocation(unit, completeBehind, fromIndex);
 		return server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 	}
 
