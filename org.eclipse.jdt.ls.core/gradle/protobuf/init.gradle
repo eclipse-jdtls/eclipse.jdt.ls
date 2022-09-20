@@ -71,7 +71,7 @@ class ProtobufPatchPlugin implements Plugin<Project> {
                                 // https://github.com/eclipse/buildship/issues/1196
                                 srcDir.mkdirs();
 
-                                String relativePath = projectDir.toURI().relativize(srcDir.toURI()).getPath()
+                                String relativePath = projectDir.toPath().relativize(srcDir.toPath()).toString()
                                 // remove trailing slash
                                 if (relativePath.endsWith("/")) {
                                     relativePath = relativePath.substring(0, relativePath.length() - 1)
