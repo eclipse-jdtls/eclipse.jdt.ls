@@ -601,7 +601,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	private static File getGradleInitScript(String scriptPath) {
 		try {
 			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource(scriptPath));
-			File initScript = new File(fileURL.toURI());
+			File initScript = new File(fileURL.getFile());
 			if (!initScript.exists()) {
 				initScript.createNewFile();
 			}

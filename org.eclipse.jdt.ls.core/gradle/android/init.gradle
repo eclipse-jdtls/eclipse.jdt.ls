@@ -230,7 +230,7 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
         if (!folder.isDirectory()) {
             return
         }
-        SourceFolder sourceFolder = new SourceFolder(project.getProjectDir().toURI().relativize(folder.toURI()).toString(), outputPath)
+        SourceFolder sourceFolder = new SourceFolder(project.getProjectDir().toPath().relativize(folder.toPath()).toString(), outputPath)
         // For Gradle version < 5.4, we add this attribute so that the folders can be recognized once the files are generated
         // For Gradle version >= 5.4, we add the compile task to synchronization tasks so that this attribute is not necessary
         if (GradleVersion.version(project.getGradle().getGradleVersion()) < GradleVersion.version("5.4")) {
