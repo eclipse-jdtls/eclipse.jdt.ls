@@ -11,6 +11,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -40,4 +41,10 @@ public class CreateModuleInfoHandlerTest extends AbstractProjectsManagerBasedTes
 		assertTrue(content.contains("exports com.example;"));
 		assertTrue(content.contains("requires xml.apis;"));
 	}
+
+	@Test
+	public void testConvertToModuleName() {
+		assertEquals("a.b", CreateModuleInfoHandler.convertToModuleName("..a-b.."));
+	}
+
 }

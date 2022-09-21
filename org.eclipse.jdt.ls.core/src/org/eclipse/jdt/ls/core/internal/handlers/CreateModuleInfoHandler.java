@@ -16,7 +16,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
+import org.apache.maven.shared.utils.StringUtils;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -34,8 +36,10 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
+import org.eclipse.jdt.internal.core.JavaModelStatus;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
+import org.eclipse.jdt.internal.corext.util.JavaConventionsUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -143,7 +147,7 @@ public class CreateModuleInfoHandler {
 		}
 
 		String[] requiredModules= JavaCore.getReferencedModules(javaProject);
-		String moduleName = javaProject.getElementName();
+		String moduleName = getModuleName(javaProject);
 		String lineDelimiter = StubUtility.getLineDelimiterUsed(javaProject);
 		StringBuilder fileContentBuilder = new StringBuilder();
 		fileContentBuilder.append("module ");
@@ -175,6 +179,34 @@ public class CreateModuleInfoHandler {
 		String formattedContent = CodeFormatterUtil.format(CodeFormatter.K_MODULE_INFO, fileContent, 0, lineDelimiter, options);
 
 		return formattedContent;
+	}
+
+	private static String getModuleName(IJavaProject javaProject) {
+		String moduleName = convertToModuleName(javaProject.getElementName());
+		IStatus status = JavaConventionsUtil.validateModuleName(moduleName, javaProject);
+		if (status == JavaModelStatus.VERIFIED_OK) {
+			return moduleName;
+		}
+		return "module.name";
+	}
+
+	/**
+	 * public only for testing purpose
+	 */
+	public static String convertToModuleName(String name) {
+		// replace all invalid chars to '.'
+		Pattern invalidChars = Pattern.compile("[^A-Za-z0-9]");
+		name = invalidChars.matcher(name).replaceAll(".");
+
+		// replace all continuous dots to single dot
+		Pattern continuousDots = Pattern.compile("\\.{2,}");
+		name = continuousDots.matcher(name).replaceAll(".");
+
+		// remove leading and tailing '.'
+		name = StringUtils.stripStart(name, ".");
+		name = StringUtils.stripEnd(name, ".");
+
+		return name;
 	}
 
 	private static void convertClasspathToModulePath(IJavaProject javaProject, IProgressMonitor monitor) throws JavaModelException {
