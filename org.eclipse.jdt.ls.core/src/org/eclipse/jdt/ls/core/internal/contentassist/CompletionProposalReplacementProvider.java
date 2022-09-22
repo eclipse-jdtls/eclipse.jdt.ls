@@ -37,10 +37,13 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTRequestor;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -1021,7 +1024,12 @@ public class CompletionProposalReplacementProvider {
 
 		/* Add imports if the preference is on. */
 		if (importRewrite != null) {
-			return importRewrite.addImport(qualifiedTypeName, null);
+			CompilationUnit cu = SharedASTProviderCore.getAST(compilationUnit, SharedASTProviderCore.WAIT_NO, new NullProgressMonitor());
+			ContextSensitiveImportRewriteContext rewriteContext = null;
+			if (cu != null) {
+				rewriteContext = new ContextSensitiveImportRewriteContext(cu, this.offset, this.importRewrite);
+			}
+			return importRewrite.addImport(qualifiedTypeName, rewriteContext);
 		}
 
 		// fall back for the case we don't have an import rewrite (see

@@ -69,8 +69,17 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 	}
 
 	protected int[] findCompletionLocation(ICompilationUnit unit, String completeBehind) throws JavaModelException {
+		return findCompletionLocation(unit, completeBehind, 0);
+	}
+
+	protected int[] findCompletionLocation(ICompilationUnit unit, String completeBehind, int fromIndex) throws JavaModelException {
 		String str= unit.getSource();
-		int cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
+		int cursorLocation;
+		if (fromIndex > 0) {
+			cursorLocation = str.indexOf(completeBehind, fromIndex) + completeBehind.length();
+		} else {
+			cursorLocation = str.lastIndexOf(completeBehind) + completeBehind.length();
+		}
 		return JsonRpcHelpers.toLine(unit.getBuffer(), cursorLocation);
 	}
 
