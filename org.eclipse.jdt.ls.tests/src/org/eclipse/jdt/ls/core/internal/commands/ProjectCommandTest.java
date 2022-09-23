@@ -210,10 +210,14 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         IProject project = WorkspaceHelper.getProject("simple-gradle");
         String uriString = project.getFile("src/main/java/Library.java").getLocationURI().toString();
         ClasspathOptions options = new ClasspathOptions();
-        // Gradle project will always return classpath containing test dependencies.
-        // So we only test `scope = "test"` scenario.
-        options.scope = "test";
+        options.scope = "runtime";
         ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
+        assertEquals(3, result.classpaths.length);
+        assertEquals(0, result.modulepaths.length);
+        assertTrue(result.classpaths[0].indexOf("junit") == -1);
+
+        options.scope = "test";
+        result = ProjectCommand.getClasspaths(uriString, options);
         assertEquals(5, result.classpaths.length);
         assertEquals(0, result.modulepaths.length);
         boolean containsJunit = Arrays.stream(result.classpaths).anyMatch(element -> {
