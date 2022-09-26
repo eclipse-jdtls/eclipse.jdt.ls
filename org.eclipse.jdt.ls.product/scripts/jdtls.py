@@ -11,11 +11,13 @@
 # Marc Schreiber - initial API and implementation
 ###############################################################################
 import argparse
+from hashlib import sha1
 import os
 import platform
 import re
 import subprocess
 from pathlib import Path
+import tempfile
 
 def get_java_executable(validate_java_version):
 	java_executable = 'java'
@@ -64,12 +66,16 @@ def get_shared_config_path(jdtls_base_path):
 	return jdtls_base_path / config_dir
 
 def main(args):
+	cwd_name = os.path.basename(os.getcwd())
+	jdtls_data_path = os.path.join(tempfile.gettempdir(), "jdtls-" + sha1(cwd_name.encode()).hexdigest())
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--validate-java-version", default=True, action=argparse.BooleanOptionalAction)
 	parser.add_argument("--jvm-arg",
 			default=[],
 			action="append",
 			help="An additional JVM option (can be used multiple times. Note, use with equal sign. For example: --jvm-arg=-Dlog.level=ALL")
+	parser.add_argument("-data", default=jdtls_data_path)
 
 	known_args, args = parser.parse_known_args(args)
 	java_executable = get_java_executable(known_args.validate_java_version)
@@ -91,4 +97,6 @@ def main(args):
 		"--add-opens", "java.base/java.util=ALL-UNNAMED",
 		"--add-opens", "java.base/java.lang=ALL-UNNAMED"]
 		+ known_args.jvm_arg
-		+ ["-jar", jar_path] + args)
+		+ ["-jar", jar_path,
+		"-data", known_args.data]
+		+ args)
