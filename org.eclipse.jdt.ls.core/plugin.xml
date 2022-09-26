@@ -104,10 +104,13 @@
                   id="java.project.upgradeGradle">
             </command>
             <command
-            	  id="java.project.resolveWorkspaceSymbol">
-    	    </command>
+                  id="java.project.resolveWorkspaceSymbol">
+            </command>
             <command
                   id="java.protobuf.generateSources">
+            </command>
+            <command
+                  id="java.project.createModuleInfo">
             </command>
       </delegateCommandHandler>
    </extension>

@@ -634,7 +634,11 @@ public final class ProjectUtils {
 		return projects;
 	}
 
-	private static IProject getProjectFromUri(String uri) {
+	/**
+	 * Get <code>IProject</code> from a uri string. Or <code>null</code> if cannot find any project from the given uri.
+	 * @param uri uri string
+	 */
+	public static IProject getProjectFromUri(String uri) {
 		IPath uriPath = ResourceUtils.canonicalFilePathFromURI(uri);
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		for (IProject project : projects) {
