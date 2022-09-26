@@ -216,9 +216,18 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
-		completionBuffer.append(LPAREN);
-		appendGuessingCompletion(completionBuffer, proposal);
-		completionBuffer.append(RPAREN);
+		StringBuilder paramBuffer = new StringBuilder();
+		appendGuessingCompletion(paramBuffer, proposal);
+		boolean needParens = paramBuffer.indexOf(",") > -1 || paramBuffer.length() == 0;
+
+		if (needParens) {
+			completionBuffer.append(LPAREN);
+		}
+		completionBuffer.append(paramBuffer);
+		if (needParens) {
+			completionBuffer.append(RPAREN);
+		}
+
 		completionBuffer.append(" -> ");
 		if(client.isCompletionSnippetsSupported()){
 			completionBuffer.append(CURSOR_POSITION);

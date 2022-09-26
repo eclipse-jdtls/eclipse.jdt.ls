@@ -3364,7 +3364,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				.filter(item -> (item.getLabel().matches("\\(Object \\w+\\) -> : void") && item.getKind() == CompletionItemKind.Method))
 				.findFirst().orElse(null);
 		assertNotNull(lambda);
-		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\) -> \\$\\{0\\}"));
+		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\$\\{1:\\w+\\} -> \\$\\{0\\}"));
 	}
 
 	@Test
@@ -3527,6 +3527,45 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("java.util.List", items.get(0).getTextEdit().getLeft().getNewText());
 	}
 
+	@Test
+	public void testCompletion_lambdaWithNoParam() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						" 		Runnable r = \n" +
+						"	}\n"+
+				"}\n");
+
+		CompletionList list = requestCompletions(unit, "= ");
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+
+		List<CompletionItem> items = list.getItems().stream().filter(p -> p.getLabel() != null && p.getLabel().contains("->"))
+			.collect(Collectors.toList());
+		assertFalse("Lambda not found",items.isEmpty());
+		assertTrue(items.get(0).getTextEdit().getLeft().getNewText().matches("\\(\\) -> \\$\\{0\\}"));
+	}
+
+	@Test
+	public void testCompletion_lambdaWithMultipleParams() throws Exception{
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						" 		java.util.function.BiConsumer<Integer, Long> bc = \n" +
+						"	}\n"+
+				"}\n");
+
+		CompletionList list = requestCompletions(unit, "= ");
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+
+		List<CompletionItem> items = list.getItems().stream().filter(p -> p.getLabel() != null && p.getLabel().contains("->"))
+			.collect(Collectors.toList());
+		assertFalse("Lambda not found",items.isEmpty());
+		assertTrue(items.get(0).getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\, \\$\\{2:\\w+\\}\\) -> \\$\\{0\\}"));
+	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
