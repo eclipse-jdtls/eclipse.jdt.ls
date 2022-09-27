@@ -57,7 +57,7 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
 					IProject project = ProjectUtils.getProjectFromUri(uri);
 					IJavaProject javaProject = ProjectUtils.getJavaProject(project);
-					WorkspaceJob job = new WorkspaceJob("Initialize Workspace") {
+					WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
 						@Override
 						public IStatus runInWorkspace(IProgressMonitor monitor) {
 							if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject)) {

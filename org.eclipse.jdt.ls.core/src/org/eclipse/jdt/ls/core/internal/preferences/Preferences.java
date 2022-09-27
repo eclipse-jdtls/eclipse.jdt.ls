@@ -21,6 +21,7 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -624,12 +625,17 @@ public class Preferences {
 
 		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
 
-		builtinNonnullTypes.put("javax.annotation.Nonnull", "jsr305");
-		builtinNonnullTypes.put("org.eclipse.jdt.annotation.NonNull", "org.eclipse.jdt.annotation");
-		builtinNonnullTypes.put("org.springframework.lang.NonNull", "spring-core");
-		builtinNullableTypes.put("javax.annotation.Nullable", "jsr305");
-		builtinNullableTypes.put("org.eclipse.jdt.annotation.Nullable", "org.eclipse.jdt.annotation");
-		builtinNullableTypes.put("org.springframework.lang.Nullable", "spring-core");
+		// constructor classpath jar names with groupid + system slash + artifactid
+		builtinNonnullTypes.put("javax.annotation.Nonnull", Paths.get("com.google.code.findbugs", "jsr305").toString());
+		builtinNonnullTypes.put("org.eclipse.jdt.annotation.NonNull", Paths.get("org.eclipse.jdt", "org.eclipse.jdt.annotation").toString());
+		builtinNonnullTypes.put("org.springframework.lang.NonNull", Paths.get("org.springframework", "spring-core").toString());
+		builtinNonnullTypes.put("io.micrometer.core.lang.NonNull", Paths.get("io.micrometer", "micrometer-core").toString());
+		builtinNonnullTypes.put("org.jetbrains.annotations.NotNull", Paths.get("org.jetbrains", "annotations").toString());
+		builtinNullableTypes.put("javax.annotation.Nullable", Paths.get("com.google.code.findbugs", "jsr305").toString());
+		builtinNullableTypes.put("org.eclipse.jdt.annotation.Nullable", Paths.get("org.eclipse.jdt", "org.eclipse.jdt.annotation").toString());
+		builtinNullableTypes.put("org.springframework.lang.Nullable", Paths.get("org.springframework", "spring-core").toString());
+		builtinNullableTypes.put("io.micrometer.core.lang.Nullable", Paths.get("io.micrometer", "micrometer-core").toString());
+		builtinNullableTypes.put("org.jetbrains.annotations.Nullable", Paths.get("org.jetbrains", "annotations").toString());
 	}
 
 	public static enum Severity {
@@ -2015,32 +2021,32 @@ public class Preferences {
 	}
 
 	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, String> builtinAnnotationTypes) {
-		for (String annotationType : annotationTypes) {
-			if (builtinAnnotationTypes.keySet().contains(annotationType)) {
-				// for known types, check the classpath to achieve a better performance
-				try {
+		try {
+			ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
+			for (String annotationType : annotationTypes) {
+				if (builtinAnnotationTypes.keySet().contains(annotationType)) {
+					// for known types, check the classpath to achieve a better performance
 					if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 						continue;
 					}
-					ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
 					for (String classpath : result.classpaths) {
 						if (classpath.contains(builtinAnnotationTypes.get(annotationType))) {
 							return annotationType;
 						}
 					}
-				} catch (CoreException | URISyntaxException e) {
-					continue;
-				}
-			} else {
-				// for unknown types, try to find type in the project
-				try {
-					if (javaProject.findType(annotationType) != null) {
-						return annotationType;
+				} else {
+					// for unknown types, try to find type in the project
+					try {
+						if (javaProject.findType(annotationType) != null) {
+							return annotationType;
+						}
+					} catch (JavaModelException e) {
+						continue;
 					}
-				} catch (JavaModelException e) {
-					continue;
 				}
 			}
+		} catch (CoreException | URISyntaxException e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
 		return null;
 	}
