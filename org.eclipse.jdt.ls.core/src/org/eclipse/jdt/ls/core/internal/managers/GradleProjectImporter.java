@@ -601,7 +601,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	private static File getGradleInitScript(String scriptPath) {
 		try {
 			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource(scriptPath));
-			File initScript = new File(fileURL.getFile());
+			String fileString = fileURL.getFile();
+			// workaround for https://github.com/eclipse/buildship/issues/1207, buildship doesn't support spaces in passed Gradle arguments
+			if (fileString.contains(" ")) {
+				return getGradleInitScriptTempFile(scriptPath);
+			}
+			File initScript = new File(fileString);
 			if (!initScript.exists()) {
 				initScript.createNewFile();
 			}
