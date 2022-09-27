@@ -165,6 +165,9 @@ class ProtobufPatchPlugin implements Plugin<Project> {
             }
         }
         for (String output : outputs) {
+            if (output == null || output.isEmpty()) {
+                continue
+            }
             if (Objects.equals(output, path)) {
                 continue
             }
