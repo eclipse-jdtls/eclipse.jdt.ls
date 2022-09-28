@@ -503,8 +503,8 @@ public class Preferences {
 	private static final int DEFAULT_TAB_SIZE = 4;
 
 	// <typeName, subString of classpath>
-	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<String, List<String>>();
-	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<String, List<String>>();
+	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<>();
+	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<>();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -625,7 +625,7 @@ public class Preferences {
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("org.graalvm.*");
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("sun.*");
 
-		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
+		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", "\\.git");
 		initializeNullAnalysisClasspathStorage();
 	}
 
@@ -1039,7 +1039,7 @@ public class Preferences {
 		String settingsUrl = getString(configuration, JAVA_SETTINGS_URL);
 		prefs.setSettingsUrl(settingsUrl);
 
-		List<String> resourceFilters = getList(configuration, JAVA_RESOURCE_FILTERS);
+		List<String> resourceFilters = getList(configuration, JAVA_RESOURCE_FILTERS, JAVA_RESOURCE_FILTERS_DEFAULT);
 		prefs.setResourceFilters(resourceFilters);
 
 		String formatterProfileName = getString(configuration, JAVA_FORMATTER_PROFILE_NAME);
