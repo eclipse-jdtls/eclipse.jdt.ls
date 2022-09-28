@@ -31,6 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -128,6 +129,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			+ ""
 			.replaceAll("\n", System.lineSeparator());
 	//@formatter:on
+
+	/**
+	 * when the init scripts are generated in the temp folder, we cache them here,
+	 * to make sure that only one piece of the scripts will be generated for each session.
+	 */
+	private static Map<String, File> initScriptFileCache = new HashMap<>();
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.managers.IProjectImporter#applies(org.eclipse.core.runtime.IProgressMonitor)
@@ -629,10 +636,16 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	 * Create a temp file as the Gradle init script.
 	 */
 	private static File getGradleInitScriptTempFile(String scriptPath) {
+		File cachedFile = initScriptFileCache.get(scriptPath);
+		if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
+			return cachedFile;
+		}
 		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
 			File initScript = File.createTempFile("init", ".gradle");
-			initScript.deleteOnExit();
+			// TODO: need to think about how to safely remove the temp files.
+			// initScript.deleteOnExit();
 			Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			initScriptFileCache.put(scriptPath, initScript);
 			return initScript;
 		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException(e);
