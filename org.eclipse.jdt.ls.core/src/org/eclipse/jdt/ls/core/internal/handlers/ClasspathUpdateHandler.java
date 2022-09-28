@@ -54,14 +54,14 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 		if (connection != null && uris != null && !uris.isEmpty()) {
 			for (String uri : uris) {
 				PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled() && preferenceManager.getPreferences().isAutobuildEnabled()) {
+				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
 					IProject project = ProjectUtils.getProjectFromUri(uri);
 					IJavaProject javaProject = ProjectUtils.getJavaProject(project);
 					WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
 						@Override
 						public IStatus runInWorkspace(IProgressMonitor monitor) {
-							if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject)) {
-								// When the project's compiler options didn't change, rebuilding is not required.
+							if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject) || !preferenceManager.getPreferences().isAutobuildEnabled()) {
+								// When the project's compiler options didn't change or auto build is disabled, rebuilding is not required.
 								return Status.OK_STATUS;
 							}
 							BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());

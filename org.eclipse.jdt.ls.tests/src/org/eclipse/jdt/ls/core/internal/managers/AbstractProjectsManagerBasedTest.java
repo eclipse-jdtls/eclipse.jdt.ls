@@ -327,7 +327,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		try {
 			List<IMarker> markers = ResourceUtils.getWarningMarkers(project);
 			for (IMarker marker : markers) {
-				if (message.equals(marker.getAttribute(IMarker.MESSAGE))) {
+				if (Objects.equals(message, marker.getAttribute(IMarker.MESSAGE))) {
 					return marker;
 				}
 			}
