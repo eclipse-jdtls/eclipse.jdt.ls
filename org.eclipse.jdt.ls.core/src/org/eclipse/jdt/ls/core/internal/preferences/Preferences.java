@@ -42,7 +42,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
@@ -500,9 +502,9 @@ public class Preferences {
 	private static final String GRADLE_OFFLINE_MODE = "gradle.offline.mode";
 	private static final int DEFAULT_TAB_SIZE = 4;
 
-	// <typeName, artifactId>
-	private static Map<String, String> builtinNonnullTypes = new HashMap<String, String>();
-	private static Map<String, String> builtinNullableTypes = new HashMap<String, String>();
+	// <typeName, subString of classpath>
+	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<String, List<String>>();
+	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<String, List<String>>();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -624,18 +626,7 @@ public class Preferences {
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("sun.*");
 
 		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
-
-		// constructor classpath jar names with groupid + system slash + artifactid
-		builtinNonnullTypes.put("javax.annotation.Nonnull", Paths.get("com.google.code.findbugs", "jsr305").toString());
-		builtinNonnullTypes.put("org.eclipse.jdt.annotation.NonNull", Paths.get("org.eclipse.jdt", "org.eclipse.jdt.annotation").toString());
-		builtinNonnullTypes.put("org.springframework.lang.NonNull", Paths.get("org.springframework", "spring-core").toString());
-		builtinNonnullTypes.put("io.micrometer.core.lang.NonNull", Paths.get("io.micrometer", "micrometer-core").toString());
-		builtinNonnullTypes.put("org.jetbrains.annotations.NotNull", Paths.get("org.jetbrains", "annotations").toString());
-		builtinNullableTypes.put("javax.annotation.Nullable", Paths.get("com.google.code.findbugs", "jsr305").toString());
-		builtinNullableTypes.put("org.eclipse.jdt.annotation.Nullable", Paths.get("org.eclipse.jdt", "org.eclipse.jdt.annotation").toString());
-		builtinNullableTypes.put("org.springframework.lang.Nullable", Paths.get("org.springframework", "spring-core").toString());
-		builtinNullableTypes.put("io.micrometer.core.lang.Nullable", Paths.get("io.micrometer", "micrometer-core").toString());
-		builtinNullableTypes.put("org.jetbrains.annotations.Nullable", Paths.get("org.jetbrains", "annotations").toString());
+		initializeNullAnalysisClasspathStorage();
 	}
 
 	public static enum Severity {
@@ -823,6 +814,42 @@ public class Preferences {
 		avoidVolatileChanges = true;
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
+	}
+
+	private static void initializeNullAnalysisClasspathStorage() {
+		// constructor classpath jar names with groupid + system slash + artifactid
+		// should support Maven style and Gradle style classpath
+		nonnullClasspathStorage.put("javax.annotation.Nonnull", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
+		nullableClasspathStorage.put("javax.annotation.Nullable", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
+
+		nonnullClasspathStorage.put("org.eclipse.jdt.annotation.NonNull", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
+		nullableClasspathStorage.put("org.eclipse.jdt.annotation.Nullable", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
+
+		nonnullClasspathStorage.put("org.springframework.lang.NonNull", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
+		nullableClasspathStorage.put("org.springframework.lang.Nullable", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
+
+		nonnullClasspathStorage.put("io.micrometer.core.lang.NonNull", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
+		nullableClasspathStorage.put("io.micrometer.core.lang.Nullable", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
+
+		nonnullClasspathStorage.put("org.jetbrains.annotations.NotNull", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
+		nullableClasspathStorage.put("org.jetbrains.annotations.Nullable", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
+	}
+
+	private static List<String> getClasspathSubStringFromArtifact(String artifact) {
+		// groupID:artifactID
+		String[] splitIds = artifact.split(":");
+		if (splitIds.length != 2) {
+			return Collections.emptyList();
+		}
+		String groupId = splitIds[0];
+		String artifactId = splitIds[1];
+		String gradleStyleClasspath = Paths.get(groupId, artifactId).toString();
+		String[] groupIdSplitByDot = groupId.split("\\.");
+		if (groupIdSplitByDot.length < 1) {
+			return Collections.emptyList();
+		}
+		String mavenStyleClasspath = Paths.get(groupIdSplitByDot[0], Arrays.copyOfRange(groupIdSplitByDot, 1, groupIdSplitByDot.length)).resolve(artifactId).toString();
+		return Arrays.asList(gradleStyleClasspath, mavenStyleClasspath);
 	}
 
 	/**
@@ -2004,12 +2031,15 @@ public class Preferences {
 	 * @return whether the options of the given project are changed or not
 	 */
 	public boolean updateAnnotationNullAnalysisOptions(IJavaProject javaProject) {
+		if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			return false;
+		}
 		Map<String, String> projectOptions = javaProject.getOptions(true);
 		if (projectOptions == null) {
 			return false;
 		}
-		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, builtinNonnullTypes);
-		String nullableType = getAnnotationType(javaProject, this.nullableTypes, builtinNullableTypes);
+		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
+		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
 		if (nullableType == null && nonnullType == null) {
 			disableAnnotationNullAnalysis(projectOptions);
 		} else {
@@ -2020,24 +2050,33 @@ public class Preferences {
 		return isChanged;
 	}
 
-	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, String> builtinAnnotationTypes) {
+	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
 		try {
 			ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
 			for (String annotationType : annotationTypes) {
-				if (builtinAnnotationTypes.keySet().contains(annotationType)) {
+				if (classpathStorage.keySet().contains(annotationType)) {
 					// for known types, check the classpath to achieve a better performance
-					if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
-						continue;
-					}
 					for (String classpath : result.classpaths) {
-						if (classpath.contains(builtinAnnotationTypes.get(annotationType))) {
-							return annotationType;
+						for (String classpathSubString : classpathStorage.get(annotationType)) {
+							if (classpath.contains(classpathSubString)) {
+								return annotationType;
+							}
 						}
 					}
 				} else {
 					// for unknown types, try to find type in the project
 					try {
-						if (javaProject.findType(annotationType) != null) {
+						IType type = javaProject.findType(annotationType);
+						if (type != null) {
+							IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+							if (fragmentRoot != null) {
+								String classpath = fragmentRoot.getPath().toOSString();
+								if (classpathStorage.containsKey(annotationType)) {
+									classpathStorage.get(annotationType).add(classpath);
+								} else {
+									classpathStorage.put(annotationType, Arrays.asList(classpath));
+								}
+							}
 							return annotationType;
 						}
 					} catch (JavaModelException e) {

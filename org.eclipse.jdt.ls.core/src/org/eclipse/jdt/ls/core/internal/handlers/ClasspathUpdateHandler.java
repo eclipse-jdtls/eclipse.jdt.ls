@@ -54,7 +54,7 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 		if (connection != null && uris != null && !uris.isEmpty()) {
 			for (String uri : uris) {
 				PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
+				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled() && preferenceManager.getPreferences().isAutobuildEnabled()) {
 					IProject project = ProjectUtils.getProjectFromUri(uri);
 					IJavaProject javaProject = ProjectUtils.getJavaProject(project);
 					WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
