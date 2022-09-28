@@ -848,7 +848,7 @@ public class Preferences {
 		if (groupIdSplitByDot.length < 1) {
 			return Collections.emptyList();
 		}
-		String mavenStyleClasspath = Paths.get(groupIdSplitByDot[0], Arrays.copyOfRange(groupIdSplitByDot, 1, groupIdSplitByDot.length)).resolve(artifactId).toString();
+		String mavenStyleClasspath = Paths.get("", groupIdSplitByDot).resolve(artifactId).toString();
 		return Arrays.asList(gradleStyleClasspath, mavenStyleClasspath);
 	}
 
