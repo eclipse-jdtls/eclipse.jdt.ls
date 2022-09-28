@@ -542,6 +542,29 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return changed;
 	}
 
+	public static Runnable interruptAutoBuild() throws CoreException {
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		if (workspace instanceof Workspace) {
+			((Workspace) workspace).getBuildManager().interrupt();
+			return () -> {
+			};
+		} else {
+			boolean changed = setAutoBuilding(false);
+			if (changed) {
+				return () -> {
+					try {
+						setAutoBuilding(true);
+					} catch (CoreException e) {
+						// ignore
+					}
+				};
+			} else {
+				return () -> {
+				};
+			}
+		}
+	}
+
 	public void configureFilters(IProgressMonitor monitor) throws CoreException {
 		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
 		if (resourceFilters != null && !resourceFilters.isEmpty()) {
