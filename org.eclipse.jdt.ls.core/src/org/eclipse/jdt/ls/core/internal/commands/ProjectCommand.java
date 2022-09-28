@@ -150,7 +150,10 @@ public class ProjectCommand {
 	 * @throws URISyntaxException
 	 */
 	public static ClasspathResult getClasspaths(String uri, ClasspathOptions options) throws CoreException, URISyntaxException {
-		IJavaProject javaProject = getJavaProjectFromUri(uri);
+		return getClasspathsFromJavaProject(getJavaProjectFromUri(uri), options);
+	}
+
+	public static ClasspathResult getClasspathsFromJavaProject(IJavaProject javaProject, ClasspathOptions options) throws CoreException, URISyntaxException {
 		Optional<IBuildSupport> bs = JavaLanguageServerPlugin.getProjectsManager().getBuildSupport(javaProject.getProject());
 		if (!bs.isPresent()) {
 			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "No BuildSupport for the project: " + javaProject.getElementName()));

@@ -645,5 +645,8 @@ public class StandardProjectsManager extends ProjectsManager {
 		protobufSupport.onDidProjectsImported(monitor);
 		IFrameworkSupport androidSupport = new AndroidSupport();
 		androidSupport.onDidProjectsImported(monitor);
+		if (this.preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		}
 	}
 }

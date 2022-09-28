@@ -468,12 +468,18 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public void didChangeConfiguration(DidChangeConfigurationParams params) {
 		logInfo(">> workspace/didChangeConfiguration");
 		Object settings = JSONUtility.toModel(params.getSettings(), Map.class);
+		boolean nullAnalysisOptionsUpdated = false;
 		if (settings instanceof Map) {
 			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
+			boolean nullAnalysisConfigurationsChanged = !prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes()) || !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes());
 			preferenceManager.update(prefs);
+			if (nullAnalysisConfigurationsChanged) {
+				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated
+				nullAnalysisOptionsUpdated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+			}
 		}
 		if (status == ServiceStatus.ServiceReady) {
 			// If we toggle on the capabilities too early before the tasks in initialized handler finished,
@@ -488,7 +494,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		try {
 			boolean autoBuildChanged = ProjectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
-			if (jvmChanged) {
+			if (jvmChanged || nullAnalysisOptionsUpdated) {
 				buildWorkspace(Either.forLeft(true));
 			} else if (autoBuildChanged) {
 				buildWorkspace(Either.forLeft(false));

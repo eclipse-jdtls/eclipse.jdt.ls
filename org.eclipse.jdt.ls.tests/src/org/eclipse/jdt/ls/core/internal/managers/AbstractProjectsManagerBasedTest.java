@@ -320,6 +320,23 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	protected IMarker getWarningMarker(IProject project, String message) {
+		if (message == null) {
+			return null;
+		}
+		try {
+			List<IMarker> markers = ResourceUtils.getWarningMarkers(project);
+			for (IMarker marker : markers) {
+				if (Objects.equals(message, marker.getAttribute(IMarker.MESSAGE))) {
+					return marker;
+				}
+			}
+		} catch (Exception e) {
+			// Do nothing and return null
+		}
+		return null;
+	}
+
 	protected void assertNoErrors(IResource resource) {
 		try {
 			List<IMarker> markers = ResourceUtils.getErrorMarkers(resource);

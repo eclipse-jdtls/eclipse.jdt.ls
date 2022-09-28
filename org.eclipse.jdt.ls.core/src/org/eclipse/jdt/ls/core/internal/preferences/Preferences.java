@@ -21,6 +21,7 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,21 +37,30 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
 import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -443,6 +453,9 @@ public class Preferences {
 	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
 	public static final String JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED = "java.jdt.ls.androidSupport.enabled";
 
+	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
+	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -488,6 +501,10 @@ public class Preferences {
 	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 	private static final String GRADLE_OFFLINE_MODE = "gradle.offline.mode";
 	private static final int DEFAULT_TAB_SIZE = 4;
+
+	// <typeName, subString of classpath>
+	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<String, List<String>>();
+	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<String, List<String>>();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -575,6 +592,8 @@ public class Preferences {
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
 	private boolean androidSupportEnabled;
+	private List<String> nonnullTypes;
+	private List<String> nullableTypes;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -607,6 +626,7 @@ public class Preferences {
 		JAVA_COMPLETION_FILTERED_TYPES_DEFAULT.add("sun.*");
 
 		JAVA_RESOURCE_FILTERS_DEFAULT = Arrays.asList("node_modules", ".git");
+		initializeNullAnalysisClasspathStorage();
 	}
 
 	public static enum Severity {
@@ -792,6 +812,44 @@ public class Preferences {
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
+		nonnullTypes = new ArrayList<>();
+		nullableTypes = new ArrayList<>();
+	}
+
+	private static void initializeNullAnalysisClasspathStorage() {
+		// constructor classpath jar names with groupid + system slash + artifactid
+		// should support Maven style and Gradle style classpath
+		nonnullClasspathStorage.put("javax.annotation.Nonnull", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
+		nullableClasspathStorage.put("javax.annotation.Nullable", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
+
+		nonnullClasspathStorage.put("org.eclipse.jdt.annotation.NonNull", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
+		nullableClasspathStorage.put("org.eclipse.jdt.annotation.Nullable", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
+
+		nonnullClasspathStorage.put("org.springframework.lang.NonNull", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
+		nullableClasspathStorage.put("org.springframework.lang.Nullable", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
+
+		nonnullClasspathStorage.put("io.micrometer.core.lang.NonNull", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
+		nullableClasspathStorage.put("io.micrometer.core.lang.Nullable", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
+
+		nonnullClasspathStorage.put("org.jetbrains.annotations.NotNull", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
+		nullableClasspathStorage.put("org.jetbrains.annotations.Nullable", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
+	}
+
+	private static List<String> getClasspathSubStringFromArtifact(String artifact) {
+		// groupID:artifactID
+		String[] splitIds = artifact.split(":");
+		if (splitIds.length != 2) {
+			return Collections.emptyList();
+		}
+		String groupId = splitIds[0];
+		String artifactId = splitIds[1];
+		String gradleStyleClasspath = Paths.get(groupId, artifactId).toString();
+		String[] groupIdSplitByDot = groupId.split("\\.");
+		if (groupIdSplitByDot.length < 1) {
+			return Collections.emptyList();
+		}
+		String mavenStyleClasspath = Paths.get("", groupIdSplitByDot).resolve(artifactId).toString();
+		return Arrays.asList(gradleStyleClasspath, mavenStyleClasspath);
 	}
 
 	/**
@@ -1087,6 +1145,10 @@ public class Preferences {
 		prefs.setProtobufSupportEnabled(protobufSupported);
 		boolean androidSupported = getBoolean(configuration, JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED, false);
 		prefs.setAndroidSupportEnabled(androidSupported);
+		List<String> nonnullTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NONNULL, Collections.emptyList());
+		prefs.setNonnullTypes(nonnullTypes);
+		List<String> nullableTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NULLABLE, Collections.emptyList());
+		prefs.setNullableTypes(nullableTypes);
 		return prefs;
 	}
 
@@ -1933,4 +1995,120 @@ public class Preferences {
 		this.androidSupportEnabled = androidSupportEnabled;
 	}
 
+	public List<String> getNonnullTypes() {
+		return this.nonnullTypes;
+	}
+
+	public void setNonnullTypes(List<String> nonnullTypes) {
+		this.nonnullTypes = nonnullTypes;
+	}
+
+	public List<String> getNullableTypes() {
+		return this.nullableTypes;
+	}
+
+	public void setNullableTypes(List<String> nullableTypes) {
+		this.nullableTypes = nullableTypes;
+	}
+
+	public boolean isAnnotationNullAnalysisEnabled() {
+		return !this.nonnullTypes.isEmpty() || !this.nullableTypes.isEmpty();
+	}
+
+	/**
+	 * @return whether the options are changed or not
+	 */
+	public boolean updateAnnotationNullAnalysisOptions() {
+		boolean isChanged = false;
+		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+			isChanged |= updateAnnotationNullAnalysisOptions(javaProject);
+		}
+		return isChanged;
+	}
+
+	/**
+	 * @param javaProject the java project to update the annotation-based null analysis options
+	 * @return whether the options of the given project are changed or not
+	 */
+	public boolean updateAnnotationNullAnalysisOptions(IJavaProject javaProject) {
+		if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+			return false;
+		}
+		Map<String, String> projectOptions = javaProject.getOptions(true);
+		if (projectOptions == null) {
+			return false;
+		}
+		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
+		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
+		if (nullableType == null && nonnullType == null) {
+			disableAnnotationNullAnalysis(projectOptions);
+		} else {
+			enableAnnotationNullAnalysis(projectOptions, nonnullType, nullableType);
+		}
+		boolean isChanged = !(javaProject.getOptions(true).equals(projectOptions));
+		javaProject.setOptions(projectOptions);
+		return isChanged;
+	}
+
+	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
+		try {
+			ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
+			for (String annotationType : annotationTypes) {
+				if (classpathStorage.keySet().contains(annotationType)) {
+					// for known types, check the classpath to achieve a better performance
+					for (String classpath : result.classpaths) {
+						for (String classpathSubString : classpathStorage.get(annotationType)) {
+							if (classpath.contains(classpathSubString)) {
+								return annotationType;
+							}
+						}
+					}
+				} else {
+					// for unknown types, try to find type in the project
+					try {
+						IType type = javaProject.findType(annotationType);
+						if (type != null) {
+							IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+							if (fragmentRoot != null) {
+								String classpath = fragmentRoot.getPath().toOSString();
+								if (classpathStorage.containsKey(annotationType)) {
+									classpathStorage.get(annotationType).add(classpath);
+								} else {
+									classpathStorage.put(annotationType, Arrays.asList(classpath));
+								}
+							}
+							return annotationType;
+						}
+					} catch (JavaModelException e) {
+						continue;
+					}
+				}
+			}
+		} catch (CoreException | URISyntaxException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		return null;
+	}
+
+	private void disableAnnotationNullAnalysis(Map<String, String> options) {
+		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "disabled");
+		// set default values
+		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
+		options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME));
+		options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME));
+		options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_NULL_REFERENCE));
+		options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE));
+		options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION));
+		options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, defaultOptions.get(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT));
+	}
+
+	private void enableAnnotationNullAnalysis(Map<String, String> options, String nonnullType, String nullableType) {
+		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "enabled");
+		options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, nonnullType != null ? nonnullType : "");
+		options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, nullableType != null ? nullableType : "");
+		options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, "warning");
+		options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, "warning");
+		options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, "warning");
+		options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
+	}
 }
