@@ -34,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -76,7 +77,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 
 		ReferenceParams param = new ReferenceParams();
 		param.setPosition(new Position(5,16));
-		param.setContext(new ReferenceContext(true));
+		param.setContext(new ReferenceContext(false));
 		param.setTextDocument( new TextDocumentIdentifier(fileURI));
 		List<Location> references =  handler.findReferences(param, monitor);
 		assertNotNull("findReferences should not return null",references);
@@ -94,7 +95,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 			String fileURI = ResourceUtils.fixURI(uri);
 			ReferenceParams param = new ReferenceParams();
 			param.setPosition(new Position(3, 18));
-			param.setContext(new ReferenceContext(true));
+			param.setContext(new ReferenceContext(false));
 			param.setTextDocument(new TextDocumentIdentifier(fileURI));
 			preferenceManager.getPreferences().setIncludeAccessors(false);
 			List<Location> references = handler.findReferences(param, monitor);
@@ -127,7 +128,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		String fileURI = ResourceUtils.fixURI(uri);
 		ReferenceParams param = new ReferenceParams();
 		param.setPosition(new Position(7, 6));
-		param.setContext(new ReferenceContext(true));
+		param.setContext(new ReferenceContext(false));
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<Location> references = handler.findReferences(param, monitor);
 		assertNotNull("findReferences should not return null", references);
@@ -149,10 +150,29 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		String fileURI = ResourceUtils.fixURI(uri);
 		ReferenceParams param = new ReferenceParams();
 		param.setPosition(new Position(1, 15));
-		param.setContext(new ReferenceContext(true));
+		param.setContext(new ReferenceContext(false));
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<Location> references = handler.findReferences(param, monitor);
 		assertEquals(0, references.size());
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2148
+	@Test
+	public void testDeclarationInReferences() throws Exception {
+		importProjects("eclipse/reference");
+		IProject referenceProject = WorkspaceHelper.getProject("reference");
+		URI uri = referenceProject.getFile("src/org/reference/Main.java").getRawLocationURI();
+		String fileURI = ResourceUtils.fixURI(uri);
+		ReferenceParams param = new ReferenceParams();
+		param.setPosition(new Position(12, 22));
+		param.setContext(new ReferenceContext(true));
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+		List<Location> references = handler.findReferences(param, monitor);
+		assertEquals(2, references.size());
+		Location l = references.get(0);
+		assertEquals(new Range(new Position(12, 20), new Position(12, 32)), l.getRange());
+		l = references.get(1);
+		assertEquals(new Range(new Position(14, 15), new Position(14, 25)), l.getRange());
 	}
 
 }
