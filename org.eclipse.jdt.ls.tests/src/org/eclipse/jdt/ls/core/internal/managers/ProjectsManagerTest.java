@@ -169,7 +169,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 			assertFalse(git.isFiltered());
 			Resource src = (Resource) project.getFolder("/src");
 			assertFalse(src.isFiltered());
-			preferenceManager.getPreferences().setResourceFilters(Arrays.asList("node_modules", ".git"));
+			preferenceManager.getPreferences().setResourceFilters(Arrays.asList("node_modules", "\\.git"));
 			projectsManager.configureFilters(new NullProgressMonitor());
 			waitForJobsToComplete();
 			nodeModules = (Resource) project.getFolder("/node_modules");
@@ -190,6 +190,19 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		} finally {
 			preferenceManager.getPreferences().setResourceFilters(resourceFilters);
 		}
+	}
+
+	@Test
+	public void dontFilterGitLikePackages() throws Exception {
+		//See https://github.com/eclipse/eclipse.jdt.ls/issues/2244
+		String name = "gitfilter";
+		importProjects("eclipse/" + name);
+		projectsManager.configureFilters(monitor);
+		Thread.sleep(300);//FIXME waitForJobsToComplete is ineffective on its own O_o
+		waitForJobsToComplete(monitor);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertNoErrors(project);
 	}
 
 	@Test
