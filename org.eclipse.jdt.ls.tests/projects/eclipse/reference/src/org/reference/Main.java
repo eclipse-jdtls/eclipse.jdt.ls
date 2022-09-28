@@ -9,4 +9,11 @@ public class Main {
 		System.out.println(foo);
 	}
 
+	public void test() {
+		String message1 = getMessage();
+	}
+	public String getMessage () {
+		return "some message";
+	}
+
 }

@@ -79,7 +79,7 @@ public final class ReferencesHandler {
 			if (elementToSearch == null) {
 				return locations;
 			}
-			search(elementToSearch, locations, monitor);
+			search(elementToSearch, locations, monitor, param.getContext().isIncludeDeclaration());
 			if (monitor.isCanceled()) {
 				return Collections.emptyList();
 			}
@@ -87,14 +87,14 @@ public final class ReferencesHandler {
 				IField field = (IField) elementToSearch;
 				IMethod getter = GetterSetterUtil.getGetter(field);
 				if (getter != null) {
-					search(getter, locations, monitor);
+					search(getter, locations, monitor, false);
 				}
 				if (monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
 				IMethod setter = GetterSetterUtil.getSetter(field);
 				if (setter != null) {
-					search(setter, locations, monitor);
+					search(setter, locations, monitor, false);
 				}
 				if (monitor.isCanceled()) {
 					return Collections.emptyList();
@@ -109,7 +109,7 @@ public final class ReferencesHandler {
 					for (IMethod method : builder.getMethods()) {
 						String[] parameters = method.getParameterTypes();
 						if (parameters.length == 1 && field.getElementName().equals(method.getElementName()) && fieldSignature.equals(parameters[0])) {
-							search(method, locations, monitor);
+							search(method, locations, monitor, false);
 						}
 					}
 				}
@@ -149,11 +149,15 @@ public final class ReferencesHandler {
 		return declaringType.getFullyQualifiedName() + "." + declaringType.getElementName() + "Builder";
 	}
 
-	private void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor) throws CoreException, JavaModelException {
+	private void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor, boolean isIncludeDeclaration) throws CoreException, JavaModelException {
 		boolean includeClassFiles = preferenceManager.isClientSupportsClassFileContent();
 		boolean includeDecompiledSources = preferenceManager.getPreferences().isIncludeDecompiledSources();
 		SearchEngine engine = new SearchEngine();
 		SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
+		if (isIncludeDeclaration) {
+			SearchPattern patternDecl = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.DECLARATIONS);
+			pattern = SearchPattern.createOrPattern(pattern, patternDecl);
+		}
 		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
 
 			@Override
