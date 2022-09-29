@@ -28,10 +28,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -119,6 +120,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	private static final int GRADLE_RELATED = 0x00080000;
 	private static final int INVALID_TYPE_CODE_ID = GRADLE_RELATED + 1;
 
+	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
+
 	//@formatter:off
 	public static final String GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE =
 			"Security Warning! The gradle wrapper '@wrapper@' could be malicious. "
@@ -129,12 +132,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			+ ""
 			.replaceAll("\n", System.lineSeparator());
 	//@formatter:on
-
-	/**
-	 * when the init scripts are generated in the temp folder, we cache them here,
-	 * to make sure that only one piece of the scripts will be generated for each session.
-	 */
-	private static Map<String, File> initScriptFileCache = new HashMap<>();
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.managers.IProjectImporter#applies(org.eclipse.core.runtime.IProgressMonitor)
@@ -613,16 +610,19 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			if (fileString.contains(" ")) {
 				return getGradleInitScriptTempFile(scriptPath);
 			}
-			File initScript = new File(fileString);
-			if (!initScript.exists()) {
-				initScript.createNewFile();
-			}
-			if (initScript.length() > 0) {
-				return initScript;
-			}
 
+			File initScript = new File(fileString);
 			try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
-				Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				if (!initScript.exists()) {
+					initScript.createNewFile();
+					Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
+					return initScript;
+				}
+				byte[] fileBytes = input.readAllBytes();
+				byte[] contentDigest = getContentDigest(fileBytes);
+				if (needReplaceContent(initScript, contentDigest)) {
+					Files.write(initScript.toPath(), fileBytes);
+				}
 			}
 			return initScript;
 		} catch (Exception e) {
@@ -636,21 +636,68 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	 * Create a temp file as the Gradle init script.
 	 */
 	private static File getGradleInitScriptTempFile(String scriptPath) {
-		File cachedFile = initScriptFileCache.get(scriptPath);
-		if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
-			return cachedFile;
-		}
 		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
-			File initScript = File.createTempFile("init", ".gradle");
-			// TODO: need to think about how to safely remove the temp files.
-			// initScript.deleteOnExit();
-			Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			initScriptFileCache.put(scriptPath, initScript);
+			byte[] fileBytes = input.readAllBytes();
+			byte[] contentDigest = getContentDigest(fileBytes);
+			String fileName = bytesToHex(contentDigest) + ".gradle";
+			File initScript = new File(System.getProperty("java.io.tmpdir"), fileName);
+			if (needReplaceContent(initScript, contentDigest)) {
+				Files.write(initScript.toPath(), fileBytes);
+			}
 			return initScript;
-		} catch (IOException e) {
+		} catch (IOException | NoSuchAlgorithmException e) {
 			JavaLanguageServerPlugin.logException(e);
 		}
 		return null;
+	}
+
+	/**
+	 * Note: The method is public only for testing purpose!
+	 * <p>
+	 * Check if the content of the input init script file needs to be replaced.
+	 * </p>
+	 * <p>
+	 * The method will return true when:
+	 * </p>
+	 * <ul>
+	 *  <li>The file does not exist.</li>
+	 *  <li>The file is empty.</li>
+	 *  <li>The checksum of the file content does not match the expected checksum.</li>
+	 * <ul>
+	 * @param initScript the init script file.
+	 * @param checksum the expected checksum of the file.
+	 * 
+	 * @throws IOException
+	 * @throws NoSuchAlgorithmException
+	 */
+	public static boolean needReplaceContent(File initScript, byte[] checksum) throws IOException, NoSuchAlgorithmException {
+		if (!initScript.exists() || initScript.length() == 0) {
+			return true;
+		}
+
+		byte[] digest = getContentDigest(Files.readAllBytes(initScript.toPath()));
+		if (Arrays.equals(digest, checksum)) {
+			return false;
+		}
+		return true;
+	}
+
+	private static byte[] getContentDigest(byte[] contentBytes) throws NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM);
+		md.update(contentBytes);
+		return md.digest();
+	}
+
+	/**
+	 * Convert byte array to hex string.
+	 * @param in byte array.
+	 */
+	private static String bytesToHex(byte[] in) {
+		final StringBuilder builder = new StringBuilder();
+		for(byte b : in) {
+			builder.append(String.format("%02x", b));
+		}
+		return builder.toString();
 	}
 
 	@Override

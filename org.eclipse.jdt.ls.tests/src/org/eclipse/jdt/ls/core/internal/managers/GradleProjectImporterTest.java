@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -680,6 +681,27 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(2, javaProject.getRawClasspath().length);
 		} finally {
 			this.preferences.setAndroidSupportEnabled(false);
+		}
+	}
+
+	@Test
+	public void testNeedReplaceContent() throws Exception {
+		File f = null;
+		try {
+			f = File.createTempFile("test", ".txt");
+			MessageDigest md = MessageDigest.getInstance("sha-256");
+			md.update(java.nio.file.Files.readAllBytes(f.toPath()));
+			byte[] digest = md.digest();
+			assertTrue(GradleProjectImporter.needReplaceContent(f, digest));
+
+			java.nio.file.Files.write(f.toPath(), "modification".getBytes());
+			assertTrue(GradleProjectImporter.needReplaceContent(f, digest));
+		} finally {
+			if (f != null && f.exists()) {
+				if (!f.delete()) {
+					f.deleteOnExit();
+				}
+			}
 		}
 	}
 
