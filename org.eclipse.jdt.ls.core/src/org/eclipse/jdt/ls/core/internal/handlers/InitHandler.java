@@ -241,6 +241,9 @@ final public class InitHandler extends BaseInitHandler {
 				}
 				try {
 					ProjectsManager.setAutoBuilding(false);
+					start = System.currentTimeMillis();
+					JobHelpers.waitForRepositoryRegistryUpdateJob();
+					JavaLanguageServerPlugin.logInfo("RepositoryRegistryUpdateJob finished " + (System.currentTimeMillis() - start) + "ms");
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.configureFilters(monitor);
 					ProjectsManager.setAutoBuilding(preferences.isAutobuildEnabled());

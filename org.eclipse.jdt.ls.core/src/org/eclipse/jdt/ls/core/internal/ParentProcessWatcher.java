@@ -69,6 +69,7 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		try {
 			return ProcessHandle.of(pid).isPresent();
 		} catch (UnsupportedOperationException | SecurityException e) {
+			JavaLanguageServerPlugin.logException("Unable to determine process state, fallback behaviour", e);
 			// Unable to determine process state, fallback behaviour
 		}
 
