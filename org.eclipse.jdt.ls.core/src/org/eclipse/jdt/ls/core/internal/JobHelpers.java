@@ -234,6 +234,10 @@ public final class JobHelpers {
 		waitForJobs(ProjectRegistryRefreshJobMatcher.INSTANCE, MAX_TIME_MILLIS);
 	}
 
+	public static void waitForRepositoryRegistryUpdateJob() {
+		waitForJobs(RepositoryRegistryUpdateJobMatcher.INSTANCE, MAX_TIME_MILLIS);
+	}
+
 	// copied from ./org.eclipse.jdt.core.tests.performance/src/org/eclipse/jdt/core/tests/performance/FullSourceWorkspaceTests.java
 	public static void waitUntilIndexesReady() {
 		// dummy query for waiting until the indexes are ready
@@ -271,7 +275,7 @@ public final class JobHelpers {
 
 	static class BuildJobOffMatcher implements IJobMatcher {
 
-		public static final IJobMatcher INSTANCE = new BuildJobMatcher();
+		public static final IJobMatcher INSTANCE = new BuildJobOffMatcher();
 
 		@Override
 		public boolean matches(Job job) {
@@ -282,11 +286,22 @@ public final class JobHelpers {
 
 	static class ProjectRegistryRefreshJobMatcher implements IJobMatcher {
 
-		public static final IJobMatcher INSTANCE = new BuildJobMatcher();
+		public static final IJobMatcher INSTANCE = new ProjectRegistryRefreshJobMatcher();
 
 		@Override
 		public boolean matches(Job job) {
 			return job.getClass().getName().matches("org.eclipse.m2e.core.internal.project.registry.ProjectRegistryRefreshJob");
+		}
+
+	}
+
+	static class RepositoryRegistryUpdateJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new RepositoryRegistryUpdateJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.getClass().getName().matches("org.eclipse.m2e.core.internal.repository.RepositoryRegistryUpdateJob");
 		}
 
 	}
