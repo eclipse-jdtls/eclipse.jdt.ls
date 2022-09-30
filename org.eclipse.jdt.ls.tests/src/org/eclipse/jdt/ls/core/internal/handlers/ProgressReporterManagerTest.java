@@ -121,7 +121,7 @@ public class ProgressReporterManagerTest {
 		monitor.done();
 
 		ArgumentCaptor<ProgressParams> captor = ArgumentCaptor.forClass(ProgressParams.class);
-		verify(client, times(1)).notifyProgress(captor.capture());
+		verify(client, times(2)).notifyProgress(captor.capture());
 	}
 
 	@Test
