@@ -181,6 +181,7 @@ public class ProgressReporterManager extends ProgressProvider {
 
 		public ProgressReporter(CancelChecker checker) {
 			super(checker);
+			progressId = UUID.randomUUID().toString();
 		}
 
 		@Override
