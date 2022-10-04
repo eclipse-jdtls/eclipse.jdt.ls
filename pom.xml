@@ -113,7 +113,7 @@
 				<plugin>
 					<groupId>org.eclipse.cbi.maven.plugins</groupId>
 					<artifactId>eclipse-jarsigner-plugin</artifactId>
-					<version>1.3.2</version>
+					<version>1.3.3</version>
 					<executions>
 						<execution>
 							<id>sign</id>
