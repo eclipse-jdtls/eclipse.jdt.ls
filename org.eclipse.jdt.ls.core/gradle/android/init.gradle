@@ -32,7 +32,6 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     private static final String DEFAULT_OUTPUT_MAIN = "bin/main"
 
     private static final List<String> ANDROID_PLUGIN_IDS = Arrays.asList("com.android.application", "com.android.library")
-    private static final String ANDROID_KOTLIN_PLUGIN_ID = "kotlin-android"
     private static final List<String> DEFAULT_SOURCE_SET_NAMES = Arrays.asList("main", "test", "androidTest")
     private static final List<String> SUPPORTED_CONFIGURATION_KEYS = Arrays.asList("implementationConfigurationName", "apiConfigurationName", "compileConfigurationName", "compileOnlyConfigurationName", "runtimeOnlyConfigurationName")
 
@@ -96,10 +95,6 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
     }
 
     private static boolean isSupportedAndroidProject(Project project) {
-        // Pure Kotlin or Kotlin/Java polyglot projects are not supported yet by jdt.ls
-        if (project.plugins.hasPlugin(ANDROID_KOTLIN_PLUGIN_ID)) {
-            return false
-        }
         for (String pluginId : ANDROID_PLUGIN_IDS) {
             if (project.plugins.hasPlugin(pluginId)) {
                 return true
