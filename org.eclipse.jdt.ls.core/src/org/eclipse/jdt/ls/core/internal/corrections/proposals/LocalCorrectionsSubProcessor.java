@@ -29,6 +29,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -89,6 +90,7 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
@@ -1060,6 +1062,44 @@ public class LocalCorrectionsSubProcessor {
 				QuickAssistProcessor.getTryWithResourceProposals(context, coveringNode, coveredNodes, proposals);
 			} catch (IllegalArgumentException | CoreException e) {
 				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+	}
+
+	public static void addTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		SealedClassFixCore fix = SealedClassFixCore.addTypeAsPermittedSubTypeProposal(context.getASTRoot(), problem);
+		if (fix != null) {
+			String label = fix.getDisplayString();
+			CompilationUnitChange change;
+			try {
+				change = fix.createChange(null);
+
+				ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+				IType sealedType = SealedClassFixCore.getSealedType(selectedNode);
+				ICompilationUnit unit = SealedClassFixCore.getCompilationUnitForSealedType(sealedType);
+				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
+				proposals.add(proposal);
+			} catch (CoreException e) {
+				// do nothing
+			}
+		}
+	}
+
+	public static void addSealedAsDirectSuperTypeProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		SealedClassFixCore fix = SealedClassFixCore.addSealedAsDirectSuperTypeProposal(context.getASTRoot(), problem);
+		if (fix != null) {
+			String label = fix.getDisplayString();
+			CompilationUnitChange change;
+			try {
+				change = fix.createChange(null);
+
+				ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+				IType permittedType = SealedClassFixCore.getPermittedType(selectedNode);
+				ICompilationUnit unit = permittedType.getCompilationUnit();
+				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
+				proposals.add(proposal);
+			} catch (CoreException e) {
+				// do nothing
 			}
 		}
 	}
