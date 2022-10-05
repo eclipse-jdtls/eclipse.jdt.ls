@@ -1255,4 +1255,68 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		Expected e3 = new Expected("Change 'Square' to 'sealed'", buf.toString());
 		assertCodeActions(cu, e3);
 	}
+
+	@Test
+	public void testAddSealedAsDirectSuperClass() throws Exception {
+		Map<String, String> options19 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options19, JavaCore.VERSION_19);
+		options19.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options19.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options19);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		assertNoErrors(fJProject.getResource());
+
+		StringBuilder buf = new StringBuilder();
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("final class Square {}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("Shape.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		buf.append("final class Square extends Shape {}\n");
+		Expected e1 = new Expected("Declare 'Shape' as direct super class of 'Square'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddPermitsToDirectSuperClass() throws Exception {
+		Map<String, String> options19 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options19, JavaCore.VERSION_19);
+		options19.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options19.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options19);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		assertNoErrors(fJProject.getResource());
+
+		StringBuilder buf = new StringBuilder();
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape {}\n");
+		buf.append("\n");
+		pack1.createCompilationUnit("Shape.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("final class Square extends Shape {}\n");
+		buf.append("\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("Square.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n");
+		buf.append("\n");
+		buf.append("public sealed class Shape permits Square {}\n");
+		buf.append("\n");
+		Expected e1 = new Expected("Declare 'Square' as permitted subtype of 'Shape'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
 }

@@ -226,12 +226,16 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				"public class B {\r\n" +
 				"}";
 		//@formatter:on
-		TextDocumentEdit textEdit = changes.get(0).getLeft();
+		TextDocumentEdit textEdit = changes.stream().filter(
+				chg -> chg.isLeft() && chg.getLeft().getTextDocument().getUri().endsWith("B.java"))
+				.findFirst().get().getLeft();
 		assertNotNull(textEdit);
 		List<TextEdit> edits = new ArrayList<>(textEdit.getEdits());
 		assertEquals(expected, TextEditUtil.apply(unitB.getSource(), edits));
 
-		RenameFile renameFileB = (RenameFile) changes.get(1).getRight();
+		RenameFile renameFileB = (RenameFile) changes.stream().filter(
+				chg -> chg.isRight() && ((RenameFile) chg.getRight()).getOldUri().endsWith("B.java"))
+				.findFirst().get().getRight();
 		assertNotNull(renameFileB);
 		assertEquals(JDTUtils.toURI(unitB), renameFileB.getOldUri());
 		assertEquals(ResourceUtils.fixURI(unitB.getResource().getRawLocationURI()).replace("test1", "test2"), renameFileB.getNewUri());
@@ -243,12 +247,16 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				"	private B b = new B();\r\n" +
 				"}";
 		//@formatter:on
-		textEdit = changes.get(2).getLeft();
+		textEdit = changes.stream().filter(
+				chg -> chg.isLeft() && chg.getLeft().getTextDocument().getUri().endsWith("A.java"))
+				.findFirst().get().getLeft();
 		assertNotNull(textEdit);
 		edits = new ArrayList<>(textEdit.getEdits());
 		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), edits));
 
-		RenameFile renameFileA = (RenameFile) changes.get(3).getRight();
+		RenameFile renameFileA = (RenameFile) changes.stream().filter(
+				chg -> chg.isRight() && ((RenameFile) chg.getRight()).getOldUri().endsWith("A.java"))
+				.findFirst().get().getRight();
 		assertNotNull(renameFileA);
 		assertEquals(JDTUtils.toURI(unitA), renameFileA.getOldUri());
 		assertEquals(ResourceUtils.fixURI(unitA.getResource().getRawLocationURI()).replace("test1", "test2"), renameFileA.getNewUri());
