@@ -39,9 +39,11 @@ import java.util.UUID;
 import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -839,17 +841,17 @@ public class Preferences {
 		// groupID:artifactID
 		String[] splitIds = artifact.split(":");
 		if (splitIds.length != 2) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		String groupId = splitIds[0];
 		String artifactId = splitIds[1];
 		String gradleStyleClasspath = Paths.get(groupId, artifactId).toString();
 		String[] groupIdSplitByDot = groupId.split("\\.");
 		if (groupIdSplitByDot.length < 1) {
-			return Collections.emptyList();
+			return new ArrayList<>();
 		}
 		String mavenStyleClasspath = Paths.get("", groupIdSplitByDot).resolve(artifactId).toString();
-		return Arrays.asList(gradleStyleClasspath, mavenStyleClasspath);
+		return new ArrayList<>(Arrays.asList(gradleStyleClasspath, mavenStyleClasspath));
 	}
 
 	/**
@@ -2051,41 +2053,48 @@ public class Preferences {
 	}
 
 	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
-		try {
-			ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
-			for (String annotationType : annotationTypes) {
-				if (classpathStorage.keySet().contains(annotationType)) {
-					// for known types, check the classpath to achieve a better performance
-					for (String classpath : result.classpaths) {
-						for (String classpathSubString : classpathStorage.get(annotationType)) {
-							if (classpath.contains(classpathSubString)) {
-								return annotationType;
+		if (!annotationTypes.isEmpty()) {
+			try {
+				ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
+				for (String annotationType : annotationTypes) {
+					if (classpathStorage.keySet().contains(annotationType)) {
+						// for known types, check the classpath to achieve a better performance
+						for (String classpath : result.classpaths) {
+							IClasspathEntry classpathEntry = javaProject.getClasspathEntryFor(new Path(classpath));
+							if (classpathEntry != null && classpathEntry.isTest()) {
+								continue;
 							}
-						}
-					}
-				} else {
-					// for unknown types, try to find type in the project
-					try {
-						IType type = javaProject.findType(annotationType);
-						if (type != null) {
-							IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
-							if (fragmentRoot != null) {
-								String classpath = fragmentRoot.getPath().toOSString();
-								if (classpathStorage.containsKey(annotationType)) {
-									classpathStorage.get(annotationType).add(classpath);
-								} else {
-									classpathStorage.put(annotationType, Arrays.asList(classpath));
+							for (String classpathSubString : classpathStorage.get(annotationType)) {
+								if (classpath.contains(classpathSubString)) {
+									return annotationType;
 								}
 							}
-							return annotationType;
 						}
-					} catch (JavaModelException e) {
-						continue;
+					} else {
+						// for unknown types, try to find type in the project
+						try {
+							IType type = javaProject.findType(annotationType);
+							if (type != null) {
+								IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+								IClasspathEntry classpathEntry = javaProject.getClasspathEntryFor(fragmentRoot.getPath());
+								if (classpathEntry == null || !classpathEntry.isTest()) {
+									String classpath = fragmentRoot.getPath().toOSString();
+									if (classpathStorage.containsKey(annotationType)) {
+										classpathStorage.get(annotationType).add(classpath);
+									} else {
+										classpathStorage.put(annotationType, new ArrayList<>(Arrays.asList(classpath)));
+									}
+									return annotationType;
+								}
+							}
+						} catch (JavaModelException e) {
+							continue;
+						}
 					}
 				}
+			} catch (CoreException | URISyntaxException e) {
+				JavaLanguageServerPlugin.logException(e);
 			}
-		} catch (CoreException | URISyntaxException e) {
-			JavaLanguageServerPlugin.logException(e);
 		}
 		return null;
 	}
