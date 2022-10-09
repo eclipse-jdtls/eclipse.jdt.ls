@@ -21,8 +21,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -45,7 +43,6 @@ import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SignatureInformation;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
-import org.junit.After;
 import org.junit.Test;
 
 public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
@@ -71,8 +68,6 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	private SignatureHelpHandler handler;
 
 	private IPackageFragmentRoot sourceFolder;
-
-	private ExecutorService executorService;
 
 	@Override
 	@Before
