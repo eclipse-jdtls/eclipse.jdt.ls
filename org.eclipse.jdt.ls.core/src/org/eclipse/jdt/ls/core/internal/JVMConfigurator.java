@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 Red Hat Inc. and others.
+ * Copyright (c) 2019-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -302,8 +302,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 				configureJVMSettings(javaProject, current);
 			}
 			ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
-			if (projectsManager != null) {
-				//TODO Only trigger update if the project uses the default JVM
+			if (projectsManager != null && projectsManager.useDefaultVM(project, current)) {
 				JavaLanguageServerPlugin.logInfo("defaultVMInstallChanged -> force update of " + project.getName());
 				projectsManager.updateProject(project, true);
 			}

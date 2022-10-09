@@ -467,6 +467,17 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return build;
 	}
 
+	static boolean useDefaultVM() {
+		File javaHome = getGradleJavaHomeFile();
+		if (javaHome == null) {
+			IVMInstall javaDefaultRuntime = JavaRuntime.getDefaultVMInstall();
+			return javaDefaultRuntime != null
+				&& javaDefaultRuntime.getVMRunner(ILaunchManager.RUN_MODE) != null;
+		}
+
+		return false;
+	}
+
 	private static File getJavaHome(Preferences preferences) {
 		File javaHome = getGradleJavaHomeFile();
 		if (javaHome == null) {
