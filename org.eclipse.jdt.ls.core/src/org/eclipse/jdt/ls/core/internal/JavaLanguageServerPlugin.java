@@ -140,6 +140,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private DiagnosticsState nonProjectDiagnosticsState;
 
+	private ExecutorService executorService;
+
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
@@ -350,7 +352,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private void startConnection() throws IOException {
 		Launcher<JavaLanguageClient> launcher;
-		ExecutorService executorService = Executors.newCachedThreadPool();
+		ExecutorService executorService = getExecutorService();
 		if (JDTEnvironmentUtils.isSyntaxServer()) {
 			protocol = new SyntaxLanguageServer(contentProviderManager, projectsManager, preferenceManager);
 		} else {
@@ -625,5 +627,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 			pluginInstance.sourceDownloader = new MavenSourceDownloader();
 		}
 		return pluginInstance.sourceDownloader;
+	}
+
+	public static ExecutorService getExecutorService() {
+		if (pluginInstance.executorService == null || pluginInstance.executorService.isShutdown()) {
+			pluginInstance.executorService = Executors.newCachedThreadPool();
+		}
+		return pluginInstance.executorService;
 	}
 }
