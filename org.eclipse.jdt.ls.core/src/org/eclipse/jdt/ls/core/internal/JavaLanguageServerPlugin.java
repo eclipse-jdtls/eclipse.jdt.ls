@@ -629,7 +629,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		return pluginInstance.sourceDownloader;
 	}
 
-	public static ExecutorService getExecutorService() {
+	public synchronized static ExecutorService getExecutorService() {
 		if (pluginInstance.executorService == null || pluginInstance.executorService.isShutdown()) {
 			pluginInstance.executorService = Executors.newCachedThreadPool();
 		}
