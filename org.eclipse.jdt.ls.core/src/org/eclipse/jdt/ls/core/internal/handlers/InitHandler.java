@@ -196,10 +196,7 @@ final public class InitHandler extends BaseInitHandler {
 		SemanticTokensWithRegistrationOptions semanticTokensOptions = new SemanticTokensWithRegistrationOptions();
 		semanticTokensOptions.setFull(new SemanticTokensServerFull(false));
 		semanticTokensOptions.setRange(false);
-		semanticTokensOptions.setDocumentSelector(List.of(
-			new DocumentFilter("java", "file", null),
-			new DocumentFilter("java", "jdt", null)
-		));
+		semanticTokensOptions.setDocumentSelector(List.of(new DocumentFilter("java", "file", null), new DocumentFilter("java", "jdt", null)));
 		semanticTokensOptions.setLegend(SemanticTokensHandler.legend());
 		capabilities.setSemanticTokensProvider(semanticTokensOptions);
 
@@ -239,14 +236,15 @@ final public class InitHandler extends BaseInitHandler {
 				if (preferences.isImportGradleEnabled()) {
 					WrapperValidator.putSha256(preferences.getGradleWrapperList());
 				}
+				Runnable resetBuildState = () -> {
+				};
 				try {
-					ProjectsManager.setAutoBuilding(false);
 					start = System.currentTimeMillis();
 					JobHelpers.waitForRepositoryRegistryUpdateJob();
 					JavaLanguageServerPlugin.logInfo("RepositoryRegistryUpdateJob finished " + (System.currentTimeMillis() - start) + "ms");
+					resetBuildState = ProjectsManager.interruptAutoBuild();
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.configureFilters(monitor);
-					ProjectsManager.setAutoBuilding(preferences.isAutobuildEnabled());
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
 				} catch (OperationCanceledException e) {
@@ -256,6 +254,7 @@ final public class InitHandler extends BaseInitHandler {
 					JavaLanguageServerPlugin.logException("Initialization failed ", e);
 					connection.sendStatus(ServiceStatus.Error, e.getMessage());
 				} finally {
+					resetBuildState.run();
 					projectsManager.registerListeners();
 					preferenceManager.addPreferencesChangeListener(new InlayHintsPreferenceChangeListener());
 				}

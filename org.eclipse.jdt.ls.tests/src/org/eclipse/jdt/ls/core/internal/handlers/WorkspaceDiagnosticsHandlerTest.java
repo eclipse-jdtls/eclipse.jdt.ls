@@ -50,6 +50,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -216,7 +217,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IMarker m1 = createMavenMarker(IMarker.SEVERITY_ERROR, msg1, 2, 95, 100);
 
 		IDocument d = mock(IDocument.class);
-		when(d.getLineOffset(1)).thenReturn(90);
 
 		List<Diagnostic> diags = WorkspaceDiagnosticsHandler.toDiagnosticsArray(d, new IMarker[] { m1, null }, true);
 		assertEquals(1, diags.size());
@@ -386,6 +386,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void testMissingNatures() throws Exception {
 		//import project
 		importProjects("eclipse/wtpproject");
+		JobHelpers.waitForInitializeJobs(5000);
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
