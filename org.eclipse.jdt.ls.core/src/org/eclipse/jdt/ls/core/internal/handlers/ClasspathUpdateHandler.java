@@ -56,33 +56,37 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 				PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
 					IProject project = ProjectUtils.getProjectFromUri(uri);
-					IJavaProject javaProject = ProjectUtils.getJavaProject(project);
-					WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
-						@Override
-						public IStatus runInWorkspace(IProgressMonitor monitor) {
-							if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject) || !preferenceManager.getPreferences().isAutobuildEnabled()) {
-								// When the project's compiler options didn't change or auto build is disabled, rebuilding is not required.
-								return Status.OK_STATUS;
-							}
-							BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
-							ProjectBuildParams params = new ProjectBuildParams(Arrays.asList(new TextDocumentIdentifier(uri)), true);
-							BuildWorkspaceStatus status = buildWorkspaceHandler.buildProjects(params, monitor);
-							switch (status) {
-								case FAILED:
-								case WITH_ERROR:
-									return Status.error("error occurs during building project");
-								case SUCCEED:
-									return Status.OK_STATUS;
-								case CANCELLED:
-									return Status.CANCEL_STATUS;
-								default:
-									return Status.OK_STATUS;
-							}
+					if (project != null) {
+						IJavaProject javaProject = ProjectUtils.getJavaProject(project);
+						if (javaProject != null) {
+							WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
+								@Override
+								public IStatus runInWorkspace(IProgressMonitor monitor) {
+									if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject) || !preferenceManager.getPreferences().isAutobuildEnabled()) {
+										// When the project's compiler options didn't change or auto build is disabled, rebuilding is not required.
+										return Status.OK_STATUS;
+									}
+									BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
+									ProjectBuildParams params = new ProjectBuildParams(Arrays.asList(new TextDocumentIdentifier(uri)), true);
+									BuildWorkspaceStatus status = buildWorkspaceHandler.buildProjects(params, monitor);
+									switch (status) {
+										case FAILED:
+										case WITH_ERROR:
+											return Status.error("error occurs during building project");
+										case SUCCEED:
+											return Status.OK_STATUS;
+										case CANCELLED:
+											return Status.CANCEL_STATUS;
+										default:
+											return Status.OK_STATUS;
+									}
+								}
+							};
+							job.setPriority(Job.SHORT);
+							job.setRule(project);
+							job.schedule();
 						}
-					};
-					job.setPriority(Job.SHORT);
-					job.setRule(project);
-					job.schedule();
+					}
 				}
 				EventNotification notification = new EventNotification().withType(EventType.ClasspathUpdated).withData(uri);
 				this.connection.sendEventNotification(notification);
