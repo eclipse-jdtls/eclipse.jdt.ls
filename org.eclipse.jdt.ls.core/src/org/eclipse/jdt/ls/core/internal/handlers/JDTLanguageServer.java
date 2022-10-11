@@ -284,6 +284,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					// still call to enable defaults in case client does not support configuration changes
 					syncCapabilitiesToSettings();
 
+					// before send the service ready notification, make sure all bundles are synchronized
+					synchronizeBundles();
+
 					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
 					status = ServiceStatus.ServiceReady;
 					pm.projectsImported(monitor);
@@ -376,6 +379,21 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		if (preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
 			toggleCapability(preferenceManager.getPreferences().isSelectionRangeEnabled(), Preferences.SELECTION_RANGE_ID, Preferences.SELECTION_RANGE, null);
+		}
+	}
+
+	/**
+	 * Ask client to check if any bundles need to be synchronized.
+	 */
+	private void synchronizeBundles() {
+		try {
+			List<String> bundlesToRefresh = (ArrayList<String>) JavaLanguageServerPlugin.getInstance()
+				.getClientConnection().executeClientCommand("_java.reloadBundles.command");
+			if (bundlesToRefresh.size() > 0) {
+				BundleUtils.loadBundles(bundlesToRefresh);
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
 	}
 

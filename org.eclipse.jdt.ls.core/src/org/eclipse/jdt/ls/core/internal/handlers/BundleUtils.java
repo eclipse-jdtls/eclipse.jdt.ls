@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 Microsoft Corporation and others.
+ * Copyright (c) 2017-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -132,7 +132,7 @@ public final class BundleUtils {
 						}
 
 						// Uninstall the singleton bundle if the location or version is not equal
-						uninstallBundle(context, bundlesToStart, toRefresh, bundles[0]);
+						uninstallBundle(bundlesToStart, toRefresh, bundles[0]);
 					} else {
 						boolean shouldSkip = false;
 						for (Bundle bundle : bundles) {
@@ -141,7 +141,7 @@ public final class BundleUtils {
 									shouldSkip = true;
 								} else {
 									// Uninstall non-singleton bundle if it's the same version but different location
-									uninstallBundle(context, bundlesToStart, toRefresh, bundle);
+									uninstallBundle(bundlesToStart, toRefresh, bundle);
 								}
 								break;
 							}
@@ -191,8 +191,6 @@ public final class BundleUtils {
 	 * Uninstall the specified bundle and update the set for bundle refreshing and
 	 * starting.
 	 *
-	 * @param context
-	 *            Bundle context
 	 * @param bundlesToStart
 	 *            The set containing bundles which need to start
 	 * @param toRefresh
@@ -203,7 +201,7 @@ public final class BundleUtils {
 	 *
 	 * @throws BundleException
 	 */
-	private static void uninstallBundle(BundleContext context, Set<Bundle> bundlesToStart, Set<Bundle> toRefresh, Bundle bundle) throws BundleException {
+	private static void uninstallBundle(Set<Bundle> bundlesToStart, Set<Bundle> toRefresh, Bundle bundle) throws BundleException {
 		bundle.uninstall();
 		JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
 		toRefresh.add(bundle);
