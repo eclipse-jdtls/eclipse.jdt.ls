@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -42,6 +42,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -161,6 +162,11 @@ public class GradleBuildSupport implements IBuildSupport {
 			return false;
 		}
 		return IBuildSupport.super.fileChanged(resource, changeType, monitor) || isBuildFile(resource);
+	}
+
+	@Override
+	public boolean useDefaultVM(IProject project, IVMInstall defaultVM) {
+		return GradleProjectImporter.useDefaultVM();
 	}
 
 	/**

@@ -443,6 +443,22 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}
 
+	/**
+	 * Check if the build support for the specified project depends on the default VM.
+	 */
+	public boolean useDefaultVM(IProject project, IVMInstall defaultVM) {
+		if (project == null) {
+			return false;
+		}
+
+		IBuildSupport buildSupport = getBuildSupport(project).orElse(null);
+		if (buildSupport != null) {
+			return buildSupport.useDefaultVM(project, defaultVM);
+		}
+
+		return false;
+	}
+
 	private Stream<IBuildSupport> buildSupports() {
 		return Stream.of(new EclipseBuildSupport());
 	}
