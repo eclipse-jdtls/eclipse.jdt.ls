@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
@@ -26,6 +27,7 @@ import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions
 import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
+import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CreateModuleInfoHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
@@ -134,6 +136,14 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return null;
 				case "java.project.createModuleInfo":
 					return CreateModuleInfoHandler.createModuleInfo((String) arguments.get(0), monitor);
+				case "java.reloadBundles":
+					try {
+						BundleUtils.loadBundles((ArrayList<String>) arguments.get(0));
+						return true;
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.log(e);
+						return false;
+					}
 				default:
 					break;
 			}

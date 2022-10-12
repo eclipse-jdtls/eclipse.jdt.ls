@@ -112,6 +112,9 @@
             <command
                   id="java.project.createModuleInfo">
             </command>
+            <command
+                  id="java.reloadBundles">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
