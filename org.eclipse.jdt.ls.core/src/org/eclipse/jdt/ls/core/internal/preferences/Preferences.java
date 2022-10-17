@@ -2042,14 +2042,12 @@ public class Preferences {
 		}
 		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-		if (nullableType == null && nonnullType == null) {
-			disableAnnotationNullAnalysis(projectOptions);
-		} else {
-			enableAnnotationNullAnalysis(projectOptions, nonnullType, nullableType);
+		Map<String, String> projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
+		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectOptions.get(e.getKey())));
+		if (shouldUpdate) {
+			javaProject.setOptions(projectNullAnalysisOptions);
 		}
-		boolean isChanged = !(javaProject.getOptions(true).equals(projectOptions));
-		javaProject.setOptions(projectOptions);
-		return isChanged;
+		return shouldUpdate;
 	}
 
 	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
@@ -2099,25 +2097,27 @@ public class Preferences {
 		return null;
 	}
 
-	private void disableAnnotationNullAnalysis(Map<String, String> options) {
-		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "disabled");
-		// set default values
-		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
-		options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME));
-		options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME));
-		options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_NULL_REFERENCE));
-		options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE));
-		options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION));
-		options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, defaultOptions.get(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT));
-	}
-
-	private void enableAnnotationNullAnalysis(Map<String, String> options, String nonnullType, String nullableType) {
-		options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "enabled");
-		options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, nonnullType != null ? nonnullType : "");
-		options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, nullableType != null ? nullableType : "");
-		options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, "warning");
-		options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, "warning");
-		options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, "warning");
-		options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
+	private Map<String, String> generateProjectNullAnalysisOptions(String nonnullType, String nullableType) {
+		Map<String, String> options = new HashMap<>();
+		if (nonnullType == null && nullableType == null) {
+			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "disabled");
+			// set default values
+			Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
+			options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME));
+			options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME));
+			options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_NULL_REFERENCE));
+			options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE));
+			options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION));
+			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, defaultOptions.get(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT));
+		} else {
+			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "enabled");
+			options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, nonnullType != null ? nonnullType : "");
+			options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, nullableType != null ? nullableType : "");
+			options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, "warning");
+			options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, "warning");
+			options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, "warning");
+			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
+		}
+		return options;
 	}
 }
