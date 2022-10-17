@@ -2043,11 +2043,11 @@ public class Preferences {
 		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
 		Map<String, String> projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
-		boolean isChanged = isProjectNullAnalysisOptionsChanged(projectOptions, projectNullAnalysisOptions);
-		if (isChanged) {
+		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectOptions.get(e.getKey())));
+		if (shouldUpdate) {
 			javaProject.setOptions(projectNullAnalysisOptions);
 		}
-		return isChanged;
+		return shouldUpdate;
 	}
 
 	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
@@ -2119,11 +2119,5 @@ public class Preferences {
 			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
 		}
 		return options;
-	}
-
-	private boolean isProjectNullAnalysisOptionsChanged(Map<String, String> current, Map<String, String> replacement) {
-		return !(Objects.equals(current.get(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS), replacement.get(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS))
-				&& Objects.equals(current.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME), replacement.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME))
-				&& Objects.equals(current.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME), replacement.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME)));
 	}
 }
