@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IFolder;
@@ -943,10 +944,12 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
 		assertEquals(expectedReports.length, diags.size());
 
-		for (int i = 0; i < expectedReports.length; i++) {
-			PublishDiagnosticsParams diag = diags.get(i);
-			ExpectedProblemReport expected = expectedReports[i];
-			assertEquals(JDTUtils.toURI(expected.cu), diag.getUri());
+		for (ExpectedProblemReport expected : expectedReports) {
+			String uri = JDTUtils.toURI(expected.cu);
+			List<PublishDiagnosticsParams> filteredList =
+					diags.stream().filter(d -> d.getUri().equals(uri)).collect(Collectors.toList());
+			assertTrue(filteredList.size() == 1);
+			PublishDiagnosticsParams diag = filteredList.get(0);
 			if (expected.problemCount != diag.getDiagnostics().size()) {
 				String message = "";
 				for (Diagnostic d : diag.getDiagnostics()) {
@@ -954,7 +957,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				}
 				assertEquals(message, expected.problemCount, diag.getDiagnostics().size());
 			}
-
 		}
 		diags.clear();
 	}
