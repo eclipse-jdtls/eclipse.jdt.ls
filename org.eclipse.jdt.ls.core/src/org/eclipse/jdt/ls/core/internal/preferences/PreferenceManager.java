@@ -146,6 +146,7 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.COMPILER_PB_MISSING_SERIAL_VERSION, JavaCore.IGNORE);
 		// workaround for https://github.com/redhat-developer/vscode-java/issues/718
 		javaCoreOptions.put(JavaCore.CORE_CIRCULAR_CLASSPATH, JavaCore.WARNING);
+		javaCoreOptions.put(JavaCore.COMPILER_IGNORE_UNNAMED_MODULE_FOR_SPLIT_PACKAGE, JavaCore.ENABLED);
 		JavaCore.setOptions(javaCoreOptions);
 	}
 

@@ -27,7 +27,7 @@
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.25/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.26-I-builds/I20221013-1800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
