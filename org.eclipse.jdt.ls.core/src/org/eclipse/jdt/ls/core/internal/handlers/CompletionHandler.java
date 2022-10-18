@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -41,8 +41,11 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequesto
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposalComputer;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -168,6 +171,13 @@ public class CompletionHandler{
 					proposals.addAll(collector.getCompletionItems());
 					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
+						// add post fix completion
+						PostfixCompletionProposalComputer computer = new PostfixCompletionProposalComputer();
+						IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+						PostfixTemplateEngine engine = computer.computeCompletionEngine(collector.getContext(), document, offset);
+						if (engine != null) {
+							proposals.addAll(engine.complete(document, offset, unit));
+						}
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 				} catch (OperationCanceledException e) {

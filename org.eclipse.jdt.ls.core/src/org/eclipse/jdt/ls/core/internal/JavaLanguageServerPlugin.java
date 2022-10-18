@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2019 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -57,10 +57,9 @@ import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
-import org.eclipse.jdt.internal.corext.template.java.VarResolver;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
-import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegistry;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -73,7 +72,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxProjectsManager;
-import org.eclipse.jface.text.templates.TemplateVariableResolver;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
 import org.eclipse.text.templates.ContextTypeRegistry;
@@ -571,21 +569,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	public synchronized ContextTypeRegistry getTemplateContextRegistry() {
 		if (fContextTypeRegistry == null) {
-			ContextTypeRegistry registry = new ContextTypeRegistry();
-
-			JavaContextType statementContextType = new JavaContextType();
-			statementContextType.setId(JavaContextType.ID_STATEMENTS);
-			statementContextType.setName(JavaContextType.ID_STATEMENTS);
-			statementContextType.initializeContextTypeResolvers();
-			// Todo: Some of the resolvers is defined in the XML of the jdt.ui, now we have to add them manually.
-			// See: https://github.com/eclipse/eclipse.jdt.ui/blob/cf6c42522ee5a5ea21a34fcfdecf3504d4750a04/org.eclipse.jdt.ui/plugin.xml#L5619-L5625
-			TemplateVariableResolver resolver = new VarResolver();
-			resolver.setType("var");
-			statementContextType.addResolver(resolver);
-
-			registry.addContextType(statementContextType);
-
-			fContextTypeRegistry = registry;
+			fContextTypeRegistry = new JavaContextTypeRegistry();
 		}
 		return fContextTypeRegistry;
 	}
