@@ -25,7 +25,7 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
-import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContext;
+import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.Template;
@@ -96,6 +96,7 @@ public class PostfixTemplateEngine {
 			// If the replace changes the text it most likely makes sense to specify a filter text to be used.
 			String filterText = textInRange.substring(0, textInRange.lastIndexOf('.') + 1) + template.getName();
 			item.setFilterText(filterText);
+			item.setSortText(SortTextHelper.convertRelevance(SortTextHelper.MAX_RELEVANCE_VALUE));
 			res.add(item);
 		}
 

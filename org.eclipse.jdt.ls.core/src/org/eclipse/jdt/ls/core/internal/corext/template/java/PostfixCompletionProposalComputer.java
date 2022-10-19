@@ -51,18 +51,11 @@ public class PostfixCompletionProposalComputer {
 
 	public PostfixTemplateEngine computeCompletionEngine(CompletionContext jdtContext, IDocument document, int offset) {
 		if (jdtContext != null && jdtContext.isExtended()) {
-			int tokenLocation= jdtContext.getTokenLocation();
-			int tokenStart= jdtContext.getTokenStart();
-			int tokenKind= jdtContext.getTokenKind();
-			if ((tokenLocation == 0 && tokenStart > -1)
-					|| ((tokenLocation & CompletionContext.TL_MEMBER_START) != 0 && tokenKind == CompletionContext.TOKEN_KIND_NAME && tokenStart > -1)
-					|| (tokenLocation == 0 && isAfterTrigger(document, offset))) {
-				if (postfixCompletionTemplateEngine == null) {
-					postfixCompletionTemplateEngine = new PostfixTemplateEngine();
-				}
-				updateTemplateEngine(jdtContext);
-				return postfixCompletionTemplateEngine;
+			if (postfixCompletionTemplateEngine == null) {
+				postfixCompletionTemplateEngine = new PostfixTemplateEngine();
 			}
+			updateTemplateEngine(jdtContext);
+			return postfixCompletionTemplateEngine;
 		}
 		return null;
 	}
