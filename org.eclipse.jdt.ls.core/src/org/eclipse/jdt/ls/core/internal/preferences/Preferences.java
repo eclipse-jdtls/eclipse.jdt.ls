@@ -466,6 +466,11 @@ public class Preferences {
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
 
+	/**
+	 * Preference key for list of cleanups to run on save
+	 */
+	public static final String JAVA_CLEANUPS_ACTIONS_ON_SAVE = "java.cleanup.actionsOnSave";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -606,6 +611,7 @@ public class Preferences {
 	private List<String> nonnullTypes;
 	private List<String> nullableTypes;
 	private FeatureStatus nullAnalysisMode;
+	private List<String> cleanUpActionsOnSave;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -828,6 +834,7 @@ public class Preferences {
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
 		nullAnalysisMode = FeatureStatus.disabled;
+		cleanUpActionsOnSave = new ArrayList<>();
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1169,7 +1176,19 @@ public class Preferences {
 		prefs.setNullableTypes(nullableTypes);
 		String nullAnalysisMode = getString(configuration, JAVA_COMPILE_NULLANALYSIS_MODE, null);
 		prefs.setNullAnalysisMode(FeatureStatus.fromString(nullAnalysisMode, FeatureStatus.disabled));
+		List<String> cleanupActionsOnSave = getList(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE, Collections.emptyList());
+		prefs.setCleanUpActionsOnSave(cleanupActionsOnSave);
 		return prefs;
+	}
+
+	/**
+	 * Sets the new value of the enabled clean ups.
+	 *
+	 * @param enabledCleanUps
+	 *            the new list of enabled clean ups
+	 */
+	private void setCleanUpActionsOnSave(List<String> enabledCleanUps) {
+		this.cleanUpActionsOnSave = enabledCleanUps;
 	}
 
 	public Preferences setJavaHome(String javaHome) {
@@ -2049,6 +2068,15 @@ public class Preferences {
 
 	/**
 	 * update the null analysis options of all projects based on the null analysis mode
+	 * Returns the list of enabled clean ups.
+	 *
+	 * @return the list of enabled clean ups
+	 */
+	public List<String> getCleanUpActionsOnSave() {
+		return this.cleanUpActionsOnSave;
+	}
+
+	/**
 	 * @return whether the options are changed or not
 	 */
 	public boolean updateAnnotationNullAnalysisOptions() {
@@ -2206,4 +2234,5 @@ public class Preferences {
 		}
 		return options;
 	}
+
 }
