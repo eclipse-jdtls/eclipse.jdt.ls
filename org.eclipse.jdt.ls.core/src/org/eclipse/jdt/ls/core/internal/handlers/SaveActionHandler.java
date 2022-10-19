@@ -19,8 +19,10 @@ import java.util.List;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.cleanup.CleanUpRegistry;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -29,10 +31,12 @@ public class SaveActionHandler {
 
 	private PreferenceManager preferenceManager;
 	private OrganizeImportsCommand organizeImportsCommand;
+	private CleanUpRegistry cleanUpRegistry;
 
 	public SaveActionHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
 		this.organizeImportsCommand = new OrganizeImportsCommand();
+		this.cleanUpRegistry = new CleanUpRegistry();
 	}
 
 	public List<TextEdit> willSaveWaitUntil(WillSaveTextDocumentParams params, IProgressMonitor monitor) {
@@ -47,6 +51,10 @@ public class SaveActionHandler {
 		if (preferenceManager.getPreferences().isJavaSaveActionsOrganizeImportsEnabled()) {
 			edit.addAll(handleSaveActionOrganizeImports(documentUri, monitor));
 		}
+
+		Preferences preferences = preferenceManager.getPreferences();
+		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), preferences.getCleanUpActionsOnSave(), monitor);
+		edit.addAll(cleanUpEdits);
 
 		return edit;
 	}
