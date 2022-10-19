@@ -22,7 +22,7 @@ public enum PostfixTemplate {
 	ELSE(PostfixPreferences.ELSE_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.ELSE_CONTENT, PostfixPreferences.ELSE_DESCRIPTION),
 	FOR(PostfixPreferences.FOR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FOR_CONTENT, PostfixPreferences.FOR_DESCRIPTION),
 	FORI(PostfixPreferences.FORI_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORI_CONTENT, PostfixPreferences.FORI_DESCRIPTION),
-	FORR(PostfixPreferences.FORR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORR_CONTENT, PostfixPreferences.FORI_DESCRIPTION),
+	FORR(PostfixPreferences.FORR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORR_CONTENT, PostfixPreferences.FORR_DESCRIPTION),
 	NNULL(PostfixPreferences.NNULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NNULL_CONTENT, PostfixPreferences.NNULL_DESCRIPTION),
 	NULL(PostfixPreferences.NULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NULL_CONTENT, PostfixPreferences.NULL_DESCRIPTION),
 	SYSOUT(PostfixPreferences.SYSOUT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUT_CONTENT, PostfixPreferences.SYSOUT_DESCRIPTION),
