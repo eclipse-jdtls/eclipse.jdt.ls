@@ -119,6 +119,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//		sharedASTProvider.clearASTCreationCount();
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
+		preferences.setPostfixCompletionEnabled(false);
 	}
 
 	@After

@@ -783,6 +783,7 @@ public class Preferences {
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
 		completionEnabled = true;
+		postfixCompletionEnabled = true;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
@@ -946,7 +947,7 @@ public class Preferences {
 		boolean completionEnable = getBoolean(configuration, COMPLETION_ENABLED_KEY, true);
 		prefs.setCompletionEnabled(completionEnable);
 
-		boolean postfixEnabled = getBoolean(configuration, POSTFIX_COMPLETION_KEY, false);
+		boolean postfixEnabled = getBoolean(configuration, POSTFIX_COMPLETION_KEY, true);
 		prefs.setPostfixCompletionEnabled(postfixEnabled);
 
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
