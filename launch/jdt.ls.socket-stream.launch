@@ -1,131 +1,144 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
-<setAttribute key="additional_plugins"/>
-<booleanAttribute key="append.args" value="true"/>
-<stringAttribute key="application" value="org.eclipse.jdt.ls.core.id1"/>
-<booleanAttribute key="askclear" value="true"/>
-<booleanAttribute key="automaticAdd" value="true"/>
-<booleanAttribute key="automaticIncludeRequirements" value="true"/>
-<booleanAttribute key="automaticValidate" value="false"/>
-<stringAttribute key="bootstrap" value=""/>
-<stringAttribute key="checked" value="[NONE]"/>
-<booleanAttribute key="clearConfig" value="false"/>
-<booleanAttribute key="clearws" value="true"/>
-<booleanAttribute key="clearwslog" value="false"/>
-<stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream"/>
-<booleanAttribute key="default" value="false"/>
-<setAttribute key="deselected_workspace_bundles">
-<setEntry value="org.eclipse.jdt.ls.tests"/>
-<setEntry value="org.eclipse.jdt.ls.tests.syntaxserver"/>
-</setAttribute>
-<stringAttribute key="featureDefaultLocation" value="workspace"/>
-<stringAttribute key="featurePluginResolution" value="workspace"/>
-<booleanAttribute key="includeOptional" value="false"/>
-<stringAttribute key="location" value="${workspace_loc}/../runtime-JDT-LS"/>
-<mapAttribute key="org.eclipse.debug.core.environmentVariables">
-<mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
-<mapEntry key="CLIENT_PORT" value="5036"/>
-<mapEntry key="socket.stream.debug" value="true"/>
-</mapAttribute>
-<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
-<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
-</listAttribute>
-<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
-<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
-<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.import.generatesMetadataFilesAtProjectRoot=false"/>
-<stringAttribute key="pde.version" value="3.3"/>
-<stringAttribute key="product" value="org.eclipse.sdk.ide"/>
-<setAttribute key="selected_features"/>
-<setAttribute key="selected_target_bundles">
-<setEntry value="com.google.gson@default:default"/>
-<setEntry value="com.google.guava@default:default"/>
-<setEntry value="javax.inject@default:default"/>
-<setEntry value="org.apache.ant@default:default"/>
-<setEntry value="org.apache.commons.io@default:default"/>
-<setEntry value="org.apache.commons.lang3@default:default"/>
-<setEntry value="org.apache.felix.scr@1:true"/>
-<setEntry value="org.eclipse.ant.core@default:default"/>
-<setEntry value="org.eclipse.buildship.core@default:default"/>
-<setEntry value="org.eclipse.buildship.compat@default:default"/>
-<setEntry value="org.eclipse.compare.core@default:default"/>
-<setEntry value="org.eclipse.core.commands@default:default"/>
-<setEntry value="org.eclipse.core.contenttype@default:default"/>
-<setEntry value="org.eclipse.core.expressions@default:default"/>
-<setEntry value="org.eclipse.core.filebuffers@default:default"/>
-<setEntry value="org.eclipse.core.filesystem@default:default"/>
-<setEntry value="org.eclipse.core.jobs@default:default"/>
-<setEntry value="org.eclipse.core.net@default:default"/>
-<setEntry value="org.eclipse.core.resources@default:default"/>
-<setEntry value="org.eclipse.core.runtime@default:true"/>
-<setEntry value="org.eclipse.core.variables@default:default"/>
-<setEntry value="org.eclipse.debug.core@default:default"/>
-<setEntry value="org.eclipse.equinox.app@default:default"/>
-<setEntry value="org.eclipse.equinox.common@2:true"/>
-<setEntry value="org.eclipse.equinox.frameworkadmin.equinox@default:default"/>
-<setEntry value="org.eclipse.equinox.frameworkadmin@default:default"/>
-<setEntry value="org.eclipse.equinox.preferences@default:default"/>
-<setEntry value="org.eclipse.equinox.region@default:false"/>
-<setEntry value="org.eclipse.equinox.registry@default:default"/>
-<setEntry value="org.eclipse.equinox.security@default:default"/>
-<setEntry value="org.eclipse.equinox.simpleconfigurator.manipulator@default:default"/>
-<setEntry value="org.eclipse.equinox.simpleconfigurator@1:true"/>
-<setEntry value="org.eclipse.equinox.transforms.hook@default:false"/>
-<setEntry value="org.eclipse.equinox.weaving.hook@default:false"/>
-<setEntry value="org.eclipse.jdt.apt.core@default:default"/>
-<setEntry value="org.eclipse.jdt.apt.pluggable.core@default:default"/>
-<setEntry value="org.eclipse.jdt.compiler.apt@default:false"/>
-<setEntry value="org.eclipse.jdt.compiler.tool@default:false"/>
-<setEntry value="org.eclipse.jdt.core.manipulation@default:default"/>
-<setEntry value="org.eclipse.jdt.core@default:default"/>
-<setEntry value="org.eclipse.jdt.debug@default:default"/>
-<setEntry value="org.eclipse.jdt.junit.core@default:default"/>
-<setEntry value="org.eclipse.jdt.junit.runtime@default:default"/>
-<setEntry value="org.eclipse.jdt.launching@default:default"/>
-<setEntry value="org.eclipse.jface.text@default:default"/>
-<setEntry value="org.eclipse.jface@default:default"/>
-<setEntry value="org.eclipse.lsp4j.jsonrpc@default:default"/>
-<setEntry value="org.eclipse.lsp4j@default:default"/>
-<setEntry value="org.eclipse.ltk.core.refactoring@default:default"/>
-<setEntry value="org.eclipse.m2e.core@default:default"/>
-<setEntry value="org.eclipse.m2e.jdt@default:default"/>
-<setEntry value="org.apache.commons.codec@default:default"/>
-<setEntry value="ch.qos.logback.classic@default:default"/>
-<setEntry value="ch.qos.logback.core@default:default"/>
-<setEntry value="ch.qos.logback.slf4j@default:default"/>
-<setEntry value="org.eclipse.m2e.maven.indexer@default:default"/>
-<setEntry value="org.eclipse.m2e.maven.runtime.slf4j.simple@default:default"/>
-<setEntry value="org.eclipse.m2e.maven.runtime@default:default"/>
-<setEntry value="org.eclipse.m2e.workspace.cli@default:default"/>
-<setEntry value="org.eclipse.osgi.compatibility.state@default:false"/>
-<setEntry value="org.eclipse.osgi.services@default:default"/>
-<setEntry value="org.eclipse.osgi.util@default:default"/>
-<setEntry value="org.eclipse.osgi@-1:true"/>
-<setEntry value="org.eclipse.swt@default:default"/>
-<setEntry value="org.eclipse.text@default:default"/>
-<setEntry value="org.eclipse.xtend.lib.macro@default:default"/>
-<setEntry value="org.eclipse.xtend.lib@default:default"/>
-<setEntry value="org.eclipse.xtext.logging@default:false"/>
-<setEntry value="org.eclipse.xtext.xbase.lib@default:default"/>
-<setEntry value="org.gradle.toolingapi@default:default"/>
-<setEntry value="org.hamcrest.core@default:default"/>
-<setEntry value="org.eclipse.m2e.apt.core@default:default"/>
-<setEntry value="org.junit@default:default"/>
-<setEntry value="org.slf4j.api@default:default"/>
-<setEntry value="org.osgi.service.prefs@default:default"/>
-<setEntry value="org.osgi.util.function@default:default"/>
-<setEntry value="org.osgi.util.promise@default:default"/>
-</setAttribute>
-<setAttribute key="selected_workspace_bundles">
-<setEntry value="org.eclipse.jdt.ls.core@default:default"/>
-<setEntry value="org.eclipse.jdt.ls.logback.appender@default:false"/>
-</setAttribute>
-<booleanAttribute key="show_selected_only" value="false"/>
-<stringAttribute key="templateConfig" value="${target_home}/configuration/config.ini"/>
-<booleanAttribute key="tracing" value="false"/>
-<booleanAttribute key="useCustomFeatures" value="false"/>
-<booleanAttribute key="useDefaultConfig" value="true"/>
-<booleanAttribute key="useDefaultConfigArea" value="true"/>
-<booleanAttribute key="useProduct" value="false"/>
+    <setAttribute key="additional_plugins"/>
+    <booleanAttribute key="append.args" value="true"/>
+    <stringAttribute key="application" value="org.eclipse.jdt.ls.core.id1"/>
+    <booleanAttribute key="askclear" value="true"/>
+    <booleanAttribute key="automaticAdd" value="true"/>
+    <booleanAttribute key="automaticIncludeRequirements" value="true"/>
+    <booleanAttribute key="automaticValidate" value="false"/>
+    <stringAttribute key="bootstrap" value=""/>
+    <stringAttribute key="checked" value="[NONE]"/>
+    <booleanAttribute key="clearConfig" value="false"/>
+    <booleanAttribute key="clearws" value="true"/>
+    <booleanAttribute key="clearwslog" value="false"/>
+    <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream"/>
+    <booleanAttribute key="default" value="false"/>
+    <setAttribute key="deselected_workspace_bundles">
+        <setEntry value="org.eclipse.jdt.ls.tests"/>
+        <setEntry value="org.eclipse.jdt.ls.tests.syntaxserver"/>
+    </setAttribute>
+    <stringAttribute key="featureDefaultLocation" value="workspace"/>
+    <stringAttribute key="featurePluginResolution" value="workspace"/>
+    <booleanAttribute key="includeOptional" value="false"/>
+    <stringAttribute key="location" value="${workspace_loc}/../runtime-JDT-LS"/>
+    <mapAttribute key="org.eclipse.debug.core.environmentVariables">
+        <mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
+        <mapEntry key="CLIENT_PORT" value="5036"/>
+        <mapEntry key="socket.stream.debug" value="true"/>
+    </mapAttribute>
+    <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+        <listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+    </listAttribute>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
+    <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
+    <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.import.generatesMetadataFilesAtProjectRoot=false"/>
+    <stringAttribute key="pde.version" value="3.3"/>
+    <stringAttribute key="product" value="org.eclipse.sdk.ide"/>
+    <setAttribute key="selected_features"/>
+    <setAttribute key="selected_target_bundles">
+        <setEntry value="ch.qos.logback.classic@default:default"/>
+        <setEntry value="ch.qos.logback.core@default:default"/>
+        <setEntry value="ch.qos.logback.slf4j@default:false"/>
+        <setEntry value="com.google.gson@default:default"/>
+        <setEntry value="com.google.guava@default:default"/>
+        <setEntry value="com.ibm.icu@default:default"/>
+        <setEntry value="javax.inject@default:default"/>
+        <setEntry value="org.apache.ant@default:default"/>
+        <setEntry value="org.apache.commons.codec@default:default"/>
+        <setEntry value="org.apache.commons.io@default:default"/>
+        <setEntry value="org.apache.commons.lang3@default:default"/>
+        <setEntry value="org.apache.felix.scr@1:true"/>
+        <setEntry value="org.eclipse.ant.core@default:default"/>
+        <setEntry value="org.eclipse.buildship.compat@default:default"/>
+        <setEntry value="org.eclipse.buildship.core@default:default"/>
+        <setEntry value="org.eclipse.compare.core@default:default"/>
+        <setEntry value="org.eclipse.core.commands@default:default"/>
+        <setEntry value="org.eclipse.core.contenttype@default:default"/>
+        <setEntry value="org.eclipse.core.expressions@default:default"/>
+        <setEntry value="org.eclipse.core.filebuffers@default:default"/>
+        <setEntry value="org.eclipse.core.filesystem@default:default"/>
+        <setEntry value="org.eclipse.core.jobs@default:default"/>
+        <setEntry value="org.eclipse.core.net@default:default"/>
+        <setEntry value="org.eclipse.core.resources@default:default"/>
+        <setEntry value="org.eclipse.core.runtime@default:true"/>
+        <setEntry value="org.eclipse.core.variables@default:default"/>
+        <setEntry value="org.eclipse.debug.core@default:default"/>
+        <setEntry value="org.eclipse.equinox.app@default:default"/>
+        <setEntry value="org.eclipse.equinox.common@2:true"/>
+        <setEntry value="org.eclipse.equinox.frameworkadmin.equinox@default:default"/>
+        <setEntry value="org.eclipse.equinox.frameworkadmin@default:default"/>
+        <setEntry value="org.eclipse.equinox.preferences@default:default"/>
+        <setEntry value="org.eclipse.equinox.region@default:false"/>
+        <setEntry value="org.eclipse.equinox.registry@default:default"/>
+        <setEntry value="org.eclipse.equinox.security@default:default"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator.manipulator@default:default"/>
+        <setEntry value="org.eclipse.equinox.simpleconfigurator@1:true"/>
+        <setEntry value="org.eclipse.equinox.transforms.hook@default:false"/>
+        <setEntry value="org.eclipse.equinox.weaving.hook@default:false"/>
+        <setEntry value="org.eclipse.jdt.apt.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.apt.pluggable.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.compiler.apt@default:false"/>
+        <setEntry value="org.eclipse.jdt.compiler.tool@default:false"/>
+        <setEntry value="org.eclipse.jdt.core.manipulation@default:default"/>
+        <setEntry value="org.eclipse.jdt.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.debug@default:default"/>
+        <setEntry value="org.eclipse.jdt.junit.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.junit.runtime@default:default"/>
+        <setEntry value="org.eclipse.jdt.launching@default:default"/>
+        <setEntry value="org.eclipse.jface.text@default:default"/>
+        <setEntry value="org.eclipse.jface@default:default"/>
+        <setEntry value="org.eclipse.lsp4j.jsonrpc@default:default"/>
+        <setEntry value="org.eclipse.lsp4j@default:default"/>
+        <setEntry value="org.eclipse.ltk.core.refactoring@default:default"/>
+        <setEntry value="org.eclipse.m2e.apt.core@default:default"/>
+        <setEntry value="org.eclipse.m2e.core@default:default"/>
+        <setEntry value="org.eclipse.m2e.jdt@default:default"/>
+        <setEntry value="org.eclipse.m2e.maven.runtime.slf4j.simple@default:default"/>
+        <setEntry value="org.eclipse.m2e.maven.runtime@default:default"/>
+        <setEntry value="org.eclipse.m2e.workspace.cli@default:default"/>
+        <setEntry value="org.eclipse.osgi.compatibility.state@default:false"/>
+        <setEntry value="org.eclipse.osgi.services@default:default"/>
+        <setEntry value="org.eclipse.osgi.util@default:default"/>
+        <setEntry value="org.eclipse.osgi@-1:true"/>
+        <setEntry value="org.eclipse.swt@default:default"/>
+        <setEntry value="org.eclipse.text@default:default"/>
+        <setEntry value="org.eclipse.xtend.lib.macro@default:default"/>
+        <setEntry value="org.eclipse.xtend.lib@default:default"/>
+        <setEntry value="org.eclipse.xtext.xbase.lib@default:default"/>
+        <setEntry value="org.gradle.toolingapi@default:default"/>
+        <setEntry value="org.hamcrest.core@default:default"/>
+        <setEntry value="org.junit@default:default"/>
+        <setEntry value="org.osgi.service.cm@default:default"/>
+        <setEntry value="org.osgi.service.component@default:default"/>
+        <setEntry value="org.osgi.service.device@default:default"/>
+        <setEntry value="org.osgi.service.event@default:default"/>
+        <setEntry value="org.osgi.service.metatype@default:default"/>
+        <setEntry value="org.osgi.service.prefs@default:default"/>
+        <setEntry value="org.osgi.service.provisioning@default:default"/>
+        <setEntry value="org.osgi.service.upnp@default:default"/>
+        <setEntry value="org.osgi.service.useradmin@default:default"/>
+        <setEntry value="org.osgi.service.wireadmin@default:default"/>
+        <setEntry value="org.osgi.util.function@default:default"/>
+        <setEntry value="org.osgi.util.measurement@default:default"/>
+        <setEntry value="org.osgi.util.position@default:default"/>
+        <setEntry value="org.osgi.util.promise@default:default"/>
+        <setEntry value="org.osgi.util.xml@default:default"/>
+        <setEntry value="org.slf4j.api@default:default"/>
+    </setAttribute>
+    <setAttribute key="selected_workspace_bundles">
+        <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.ls.logback.appender@default:false"/>
+    </setAttribute>
+    <booleanAttribute key="show_selected_only" value="false"/>
+    <stringAttribute key="templateConfig" value="${target_home}/configuration/config.ini"/>
+    <booleanAttribute key="tracing" value="false"/>
+    <booleanAttribute key="useCustomFeatures" value="false"/>
+    <booleanAttribute key="useDefaultConfig" value="true"/>
+    <booleanAttribute key="useDefaultConfigArea" value="true"/>
+    <booleanAttribute key="useProduct" value="false"/>
 </launchConfiguration>
