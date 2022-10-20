@@ -314,6 +314,8 @@ public final class CorrectionMessages extends NLS {
 	public static String NewCUCompletionUsingWizardProposal_tooltip_enclosingtype;
 	public static String NewCUCompletionUsingWizardProposal_tooltip_package;
 
+	public static String NotAccessibleType_upgrade_Gradle_label;
+
 	public static String JavaCorrectionProcessor_addquote_description;
 	public static String JavaCorrectionProcessor_error_quickfix_message;
 	public static String JavaCorrectionProcessor_error_status;

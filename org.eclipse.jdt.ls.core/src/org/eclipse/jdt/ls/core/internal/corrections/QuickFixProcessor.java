@@ -43,6 +43,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectio
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.GradleCompatibilityProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LocalCorrectionsSubProcessor;
@@ -53,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElements
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionParams;
 
 /**
  */
@@ -73,7 +75,7 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public List<ChangeCorrectionProposal> getCorrections(IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ChangeCorrectionProposal> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
@@ -82,7 +84,7 @@ public class QuickFixProcessor {
 		for (int i = 0; i < locations.length; i++) {
 			IProblemLocationCore curr = locations[i];
 			if (handledProblems(curr, locations, handledProblems)) {
-				process(context, curr, resultingCollections);
+				process(params, context, curr, resultingCollections);
 			}
 		}
 		return resultingCollections;
@@ -105,7 +107,7 @@ public class QuickFixProcessor {
 		return handledProblems.add(problemId);
 	}
 
-	private void process(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private void process(CodeActionParams params, IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
@@ -550,6 +552,9 @@ public class QuickFixProcessor {
 			case IProblem.UnclosedCloseable:
 			case IProblem.PotentiallyUnclosedCloseable:
 				LocalCorrectionsSubProcessor.getTryWithResourceProposals(context, problem, proposals);
+				break;
+			case IProblem.NotAccessibleType:
+				GradleCompatibilityProcessor.getGradleCompatibilityProposals(context, problem, proposals);
 				break;
 			// case IProblem.MissingSynchronizedModifierInInheritedMethod:
 			// ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context,
