@@ -3191,8 +3191,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "IConstantDefault.");
 		assertNotNull(list);
-		assertEquals(5, list.getItems().size());
-		CompletionItem ci = list.getItems().get(2);
+		assertEquals(3, list.getItems().size());
+		CompletionItem ci = list.getItems().get(0);
 		assertEquals(CompletionItemKind.Constant, ci.getKind());
 		assertEquals("ONE : int", ci.getLabel());
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
@@ -3200,7 +3200,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		String documentation = resolvedItem.getDocumentation().getLeft();
 		assertEquals("Value: 1", documentation);
 
-		ci = list.getItems().get(3);
+		ci = list.getItems().get(1);
 		assertEquals(CompletionItemKind.Constant, ci.getKind());
 		assertEquals("TEST : double", ci.getLabel());
 

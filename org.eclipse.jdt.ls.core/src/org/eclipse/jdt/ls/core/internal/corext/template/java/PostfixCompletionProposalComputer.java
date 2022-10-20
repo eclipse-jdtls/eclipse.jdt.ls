@@ -38,7 +38,6 @@ import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 
 /**
@@ -214,24 +213,6 @@ public class PostfixCompletionProposalComputer {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Returns true if the given offset is directly after an assist trigger character.
-	 *
-	 * @param document the actual document of type {@link IDocument}
-	 * @param offset the current location in the document
-	 * @return <code>true</code> if the given offset is directly after an assist trigger character,
-	 *         <code>false</code> otherwise. If the given offset is out of the given document
-	 *         <code>false</code> is returned.
-	 */
-	private boolean isAfterTrigger(IDocument document, int offset) {
-		String triggers= ".";
-		try {
-			return triggers.contains(document.get(offset - 1, 1));
-		} catch (BadLocationException e) {
-			return false;
-		}
 	}
 
 	private static ASTParser createPartialParser(ICompilationUnit cu, int position) {

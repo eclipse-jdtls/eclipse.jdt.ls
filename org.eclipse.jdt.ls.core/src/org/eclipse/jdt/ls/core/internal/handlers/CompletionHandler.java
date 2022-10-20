@@ -173,7 +173,9 @@ public class CompletionHandler{
 					proposals.addAll(collector.getCompletionItems());
 					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
-						proposals.addAll(getPostfixCompletions(params.getContext(), collector.getContext(), unit, offset));
+						if (isPostfixSupported()) {
+							proposals.addAll(getPostfixCompletions(params.getContext(), collector.getContext(), unit, offset));
+						}
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 				} catch (OperationCanceledException e) {
@@ -242,8 +244,12 @@ public class CompletionHandler{
 	}
 
 	private boolean isSnippetStringSupported() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
+		return this.manager != null &&  this.manager.getClientPreferences() != null
+				&& this.manager.getClientPreferences().isCompletionSnippetsSupported();
+	}
+
+	private boolean isPostfixSupported() {
+		return this.manager != null && this.manager.getPreferences().isPostfixCompletionEnabled();
 	}
 
 	/**

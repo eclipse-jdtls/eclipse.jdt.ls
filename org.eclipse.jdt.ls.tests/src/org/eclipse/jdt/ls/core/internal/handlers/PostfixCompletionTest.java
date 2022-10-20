@@ -60,11 +60,13 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
 		javaClient = new JavaClientConnection(client);
+		preferences.setPostfixCompletionEnabled(true);
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		javaClient.disconnect();
+		preferences.setPostfixCompletionEnabled(false);
 	}
 
 	@Test
