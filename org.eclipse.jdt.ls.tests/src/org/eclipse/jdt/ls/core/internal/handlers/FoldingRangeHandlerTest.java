@@ -44,7 +44,9 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testFoldingRanges() throws Exception {
-		testClass("org.apache.commons.lang3.text.WordUtils");
+		List<FoldingRange> foldingRanges = getFoldingRanges("org.apache.commons.lang3.text.WordUtils");
+		assertHasFoldingRange(18, 23, FoldingRangeKind.Imports, foldingRanges);
+		testClassForValidRange("org.apache.commons.lang3.text.WordUtils", foldingRanges);
 	}
 
 	@Test
@@ -133,8 +135,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertHasFoldingRange(17, 17, null, foldingRanges);
 	}
 
-	private void testClass(String className) throws CoreException {
-		List<FoldingRange> foldingRanges = getFoldingRanges(className);
+	private void testClassForValidRange(String className, List<FoldingRange> foldingRanges) throws CoreException {
 		for (FoldingRange range : foldingRanges) {
 			assertTrue("Class: " + className + ", FoldingRange:" + range.getKind() + " - invalid location.", isValid(range));
 		}
