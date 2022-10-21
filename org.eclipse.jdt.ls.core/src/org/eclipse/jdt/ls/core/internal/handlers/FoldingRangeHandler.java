@@ -93,6 +93,8 @@ public class FoldingRangeHandler {
 
 			int start = shift;
 			int token = 0;
+			int classFileImportStart = -1;
+			int classFileImportEnd = -1;
 			Stack<Integer> regionStarts = new Stack<>();
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				start = scanner.getCurrentTokenStartPosition();
@@ -116,10 +118,19 @@ public class FoldingRangeHandler {
 							}
 						}
 						break;
+					case ITerminalSymbols.TokenNameimport:
+						// Only used for computing import range in .class files
+						classFileImportStart = classFileImportStart == -1 ? start : classFileImportStart;
+						classFileImportEnd = scanner.getCurrentTokenEndPosition();
 					default:
 						break;
 				}
 				token = getNextToken(scanner);
+			}
+			if (unit.getElementType() == IJavaElement.CLASS_FILE && classFileImportStart != -1) {
+				FoldingRange importFoldingRange = new FoldingRange(scanner.getLineNumber(classFileImportStart) - 1, scanner.getLineNumber(classFileImportEnd) - 1);
+				importFoldingRange.setKind(FoldingRangeKind.Imports);
+				foldingRanges.add(importFoldingRange);
 			}
 			computeTypeRootRanges(foldingRanges, unit, scanner);
 		} catch (CoreException e) {
