@@ -41,13 +41,8 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequesto
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
-import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposalComputer;
-import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.lsp4j.CompletionContext;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -173,9 +168,6 @@ public class CompletionHandler{
 					proposals.addAll(collector.getCompletionItems());
 					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector.getContext(), subMonitor));
-						if (isPostfixSupported()) {
-							proposals.addAll(getPostfixCompletions(params.getContext(), collector.getContext(), unit, offset));
-						}
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 				} catch (OperationCanceledException e) {
@@ -189,52 +181,6 @@ public class CompletionHandler{
 		return list;
 	}
 
-	/**
-	 * Return the list of postfix completion items. The postfix completion calculation
-	 * will only happen when:
-	 * <ul>
-	 * <li>The completion is triggered by the trigger character '.'</li>
-	 * <li>The completion is triggered manually</li>
-	 * </ul>
-	 * @param lspCtx Completion context from LSP
-	 * @param jdtCtx Completion context from JDT
-	 * @param cu Compilation unit
-	 * @param offset offset of the completion
-	 */
-	private List<CompletionItem> getPostfixCompletions(CompletionContext lspCtx, org.eclipse.jdt.core.CompletionContext jdtCtx,
-			ICompilationUnit cu, int offset) {
-		if (lspCtx != null) {
-			String triggerCharacter = lspCtx.getTriggerCharacter();
-			if (triggerCharacter != null && !triggerCharacter.equals(".")) {
-				return Collections.emptyList();
-			}
-		}
-
-		char[] token = jdtCtx.getToken();
-		if (token == null) {
-			return Collections.emptyList();
-		}
-		int tokenStart = jdtCtx.getOffset() - token.length - 1;
-		if (tokenStart < 0) {
-			return Collections.emptyList();
-		}
-		try {
-			IDocument document = JsonRpcHelpers.toDocument(cu.getBuffer());
-			String tokenSequence = document.get(tokenStart, jdtCtx.getOffset() - tokenStart);
-			if (!tokenSequence.contains(".")) {
-				return Collections.emptyList();
-			}
-			PostfixCompletionProposalComputer computer = new PostfixCompletionProposalComputer();
-			PostfixTemplateEngine engine = computer.computeCompletionEngine(jdtCtx, document, offset);
-			if (engine != null) {
-				return engine.complete(document, offset, cu);
-			}
-		} catch (BadLocationException | JavaModelException e) {
-			return Collections.emptyList();
-		}
-		return Collections.emptyList();
-	}
-
 	private String[] getFavoriteStaticMembers() {
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		if (preferenceManager != null) {
@@ -246,10 +192,6 @@ public class CompletionHandler{
 	private boolean isSnippetStringSupported() {
 		return this.manager != null &&  this.manager.getClientPreferences() != null
 				&& this.manager.getClientPreferences().isCompletionSnippetsSupported();
-	}
-
-	private boolean isPostfixSupported() {
-		return this.manager != null && this.manager.getPreferences().isPostfixCompletionEnabled();
 	}
 
 	/**
