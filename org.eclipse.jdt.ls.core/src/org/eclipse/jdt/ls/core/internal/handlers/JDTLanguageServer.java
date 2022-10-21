@@ -492,7 +492,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
-			boolean nullAnalysisConfigurationsChanged = !prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes()) || !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes());
+			boolean nullAnalysisConfigurationsChanged =!prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes())
+				|| !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes())
+				|| !prefs.getNullAnalysisMode().equals(preferenceManager.getPreferences().getNullAnalysisMode());
 			preferenceManager.update(prefs);
 			if (nullAnalysisConfigurationsChanged) {
 				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated

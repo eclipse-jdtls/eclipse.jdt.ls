@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.junit.After;
 import org.junit.Test;
@@ -372,6 +373,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	public void testNullAnalysisDisabled() throws Exception {
 		this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
 		this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 		try {
 			IProject project = importMavenProject("null-analysis");
 			assertIsJavaProject(project);
@@ -385,6 +387,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 		}
 	}
