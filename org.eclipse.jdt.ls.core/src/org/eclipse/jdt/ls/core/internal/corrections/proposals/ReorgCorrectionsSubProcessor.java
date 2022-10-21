@@ -15,8 +15,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -27,28 +30,34 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaConventions;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
+import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore;
+import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
+import org.eclipse.jdt.internal.corext.fix.CompilationUnitRewriteOperationsFixCore.CompilationUnitRewriteOperation;
+import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore.RemoveImportOperation;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.eclipse.text.edits.TextEdit;
 
 
 public class ReorgCorrectionsSubProcessor {
@@ -145,7 +154,7 @@ public class ReorgCorrectionsSubProcessor {
 	}
 
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) {
+			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		IProposableFix fix = UnusedCodeFixCore.createRemoveUnusedImportFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			try {
@@ -156,6 +165,25 @@ public class ReorgCorrectionsSubProcessor {
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
+		}
+		List<CompilationUnitRewriteOperation> operations = new ArrayList<>();
+		for (IProblem compilationUnitProblem : context.getASTRoot().getProblems()) {
+			if (compilationUnitProblem.getID() == IProblem.UnusedImport) {
+				ImportDeclaration node = UnusedCodeFixCore.getImportDeclaration(new ProblemLocationCore(compilationUnitProblem), context.getASTRoot());
+				if (node != null) {
+					operations.add(new RemoveImportOperation(node));
+				}
+			}
+		}
+		// See org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore.createRemoveUnusedImportFix()
+		if (operations.size() > 1) {
+			Map<String, String> options = new Hashtable<>();
+			options.put(CleanUpConstants.REMOVE_UNUSED_CODE_IMPORTS, CleanUpOptionsCore.TRUE);
+			CompilationUnitRewriteOperationsFixCore fixCore = new CompilationUnitRewriteOperationsFixCore(FixMessages.UnusedCodeFix_RemoveImport_description, context.getASTRoot(), operations.toArray(new CompilationUnitRewriteOperation[0]));
+			CompilationUnitChange change = fixCore.createChange(null);
+			CUCorrectionProposal proposal = new CUCorrectionProposal(CorrectionMessages.ReorgCorrectionsSubProcessor_remove_all_unused_imports, CodeActionKind.QuickFix, change.getCompilationUnit(),
+				change, IProposalRelevance.REMOVE_UNUSED_IMPORT);
+			proposals.add(proposal);
 		}
 	}
 }
