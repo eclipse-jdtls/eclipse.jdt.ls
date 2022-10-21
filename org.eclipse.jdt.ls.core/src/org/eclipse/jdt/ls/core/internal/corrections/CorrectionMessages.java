@@ -398,6 +398,7 @@ public final class CorrectionMessages extends NLS {
 	public static String ReorgCorrectionsSubProcessor_accessrules_description;
 	public static String ReorgCorrectionsSubProcessor_project_seup_fix_description;
 	public static String ReorgCorrectionsSubProcessor_project_seup_fix_info;
+	public static String ReorgCorrectionsSubProcessor_remove_all_unused_imports;
 	public static String UnresolvedElementsSubProcessor_change_full_type_description;
 	public static String UnresolvedElementsSubProcessor_copy_annotation_jar_description;
 	public static String UnresolvedElementsSubProcessor_copy_annotation_jar_info;
