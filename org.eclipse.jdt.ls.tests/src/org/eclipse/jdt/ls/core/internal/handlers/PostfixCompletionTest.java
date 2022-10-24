@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -343,6 +344,35 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		TextEdit edit = item.getTextEdit().getLeft();
 		assertEquals("String ${1:a2} = a;${0}", edit.getNewText());
 		assertEquals("a.var", item.getFilterText());
+	}
+
+	@Test
+	public void test_var2() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import java.util.Collections;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(String a) {\n" +
+			"		Collections.emptyList().var" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, ".emptyList().var");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("var", item.getLabel());
+		TextEdit edit = item.getTextEdit().getLeft();
+		assertEquals("List<Object> ${1:emptyList} = Collections.emptyList();${0}", edit.getNewText());
+		assertEquals("Collections.emptyList().var", item.getFilterText());
+		List<TextEdit> additionalTextEdits = item.getAdditionalTextEdits();
+		assertEquals(2, additionalTextEdits.size());
+		assertTrue(additionalTextEdits.stream().anyMatch(e -> e.getNewText().contains("import java.util.List;")));
 	}
 
 	@Test

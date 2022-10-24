@@ -24,6 +24,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.eclipse.text.edits.MalformedTreeException;
@@ -40,6 +42,7 @@ import org.eclipse.jface.text.templates.TemplateVariable;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.NamingConventions;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
@@ -52,6 +55,7 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -74,12 +78,16 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.WildcardType;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
+import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 /**
  * Copied from org.eclipse.jdt.internal.corext.template.java.JavaPostfixContext
@@ -110,6 +118,11 @@ public class JavaPostfixContext extends JavaContext {
 
 	private CompletionContext completionCtx;
 
+	// Map to store the additional text edits of the templates.
+	private Map<String, List<TextEdit>> additionalTextEdits;
+
+	private String activeTemplateName;
+
 	public JavaPostfixContext(JavaPostfixContextType type, IDocument document, int offset, int length, ICompilationUnit compilationUnit, ASTNode currentNode, ASTNode parentNode, CompletionContext context) {
 		super(type, document, offset, length, compilationUnit);
 
@@ -119,6 +132,7 @@ public class JavaPostfixContext extends JavaContext {
 		nodeRegions.put(currentNode, calculateNodeRegion(currentNode));
 		nodeRegions.put(parentNode, calculateNodeRegion(parentNode));
 		selectedNode= findBestASTNodeSelection(currentNode);
+		additionalTextEdits= new HashMap<>();
 	}
 
 	/**
@@ -253,10 +267,6 @@ public class JavaPostfixContext extends JavaContext {
 		 * 4. replace the unique identifiers with the mapped values
 		 */
 		Collections.sort(classNames, (arg0, arg1) -> arg1.length() - arg0.length());
-		// Note: We only disable readonly mode when it's adding import, and re-enable it immediately.
-		// Because we do not want to execute extra apply text edit before a completion item is committed.
-		// This is specific to JDT.LS only. See: JavaContextCore#rewriteImports()
-		this.setReadOnly(false);
 		for (int i= 0; i < classNames.size(); i++) {
 			className= className.replace(classNames.get(i), ID_SEPARATOR + i + ID_SEPARATOR);
 			classNameMapping.put(classNames.get(i), addImport(classNames.get(i)));
@@ -264,7 +274,6 @@ public class JavaPostfixContext extends JavaContext {
 		for (int i= 0; i < classNames.size(); i++) {
 			className= className.replace(ID_SEPARATOR + i + ID_SEPARATOR, classNameMapping.get(classNames.get(i)));
 		}
-		this.setReadOnly(true);
 		return className;
 	}
 
@@ -771,5 +780,66 @@ public class JavaPostfixContext extends JavaContext {
 		}
 		res.addAll(Arrays.asList(super.suggestVariableNames(type)));
 		return res.toArray(new String [0]);
+	}
+
+	public List<TextEdit> getAdditionalTextEdits(String name) {
+		return additionalTextEdits.get(name);
+	}
+
+	public void setActiveTemplateName(String activeTemplateName) {
+		this.activeTemplateName = activeTemplateName;
+	}
+
+	@Override
+	public String addImport(String type) {
+		/**
+		 * Resolve the add import calculation and cache it. The cached edit will be used
+		 * as the additional text edit of the completion items.
+		 */
+		ICompilationUnit cu = getCompilationUnit();
+		if (cu == null)
+			return type;
+
+		try {
+			boolean qualified = type.indexOf('.') != -1;
+			if (!qualified) {
+				// the search engine is not used to make sure the completion perf is not impacted.
+				return type;
+			}
+
+			CompilationUnit root = getASTRoot(cu);
+			ImportRewrite importRewrite;
+			if (root == null) {
+				importRewrite = StubUtility.createImportRewrite(cu, true);
+			} else {
+				importRewrite = StubUtility.createImportRewrite(root, true);
+			}
+
+			ImportRewriteContext context;
+			if (root == null) {
+				context = null;
+			} else {
+				context = new ContextSensitiveImportRewriteContext(root, getCompletionOffset(), importRewrite);
+			}
+
+			String typeName = importRewrite.addImport(type, context);
+			if (StringUtils.isNotBlank(this.activeTemplateName)) {
+				List<TextEdit> edits = this.additionalTextEdits.getOrDefault(this.activeTemplateName, new ArrayList<>());
+				try {
+					edits.add(importRewrite.rewriteImports(new NullProgressMonitor()));
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.log(e);
+				}
+				this.additionalTextEdits.put(this.activeTemplateName, edits);
+			}
+			return typeName;
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+			return type;
+		}
+	}
+
+	private CompilationUnit getASTRoot(ICompilationUnit compilationUnit) {
+		return SharedASTProviderCore.getAST(compilationUnit, SharedASTProviderCore.WAIT_NO, new NullProgressMonitor());
 	}
 }
