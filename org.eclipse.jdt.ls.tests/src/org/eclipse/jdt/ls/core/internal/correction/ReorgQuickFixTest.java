@@ -80,7 +80,6 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		Expected e2 = new Expected("Organize imports", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
-		assertCodeActionNotExists(cu, "Remove all unused imports");
 	}
 
 	@Test
