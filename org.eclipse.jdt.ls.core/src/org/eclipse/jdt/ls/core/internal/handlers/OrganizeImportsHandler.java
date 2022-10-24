@@ -52,7 +52,6 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.corrections.SimilarElementsRequestor;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
-import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.DeleteEdit;
@@ -67,10 +66,10 @@ public final class OrganizeImportsHandler {
 
 	// For test purpose
 	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports) {
-		return organizeImports(unit, chooseImports, new NullProgressMonitor());
+		return organizeImports(unit, chooseImports, false, new NullProgressMonitor());
 	}
 
-	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports, IProgressMonitor monitor) {
+	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports, boolean restoreExistingImports, IProgressMonitor monitor) {
 		if (unit == null) {
 			return null;
 		}
@@ -104,7 +103,7 @@ public final class OrganizeImportsHandler {
 				typeMaps.put(x.getFullyQualifiedName() + "@" + x.hashCode(), x);
 			});
 			return Stream.of(chosens).filter(chosen -> chosen != null && typeMaps.containsKey(chosen.id)).map(chosen -> typeMaps.get(chosen.id)).toArray(TypeNameMatch[]::new);
-		});
+		}, restoreExistingImports);
 		try {
 			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 			TextEdit edit = op.createTextEdit(null);
@@ -206,19 +205,22 @@ public final class OrganizeImportsHandler {
 		}
 	}
 
-	public static WorkspaceEdit organizeImports(JavaClientConnection connection, CodeActionParams params, IProgressMonitor monitor) {
-		String uri = params.getTextDocument().getUri();
-		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+	public static WorkspaceEdit organizeImports(JavaClientConnection connection, String documentUri, boolean restoreExistingImports, IProgressMonitor monitor) {
+		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(documentUri);
 		if (unit == null) {
 			return null;
 		}
 
 		TextEdit edit = organizeImports(unit, (selections) -> {
-			Object commandResult = connection.executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, uri, selections);
+			Object commandResult = connection.executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, documentUri, selections, restoreExistingImports);
 			String json = commandResult == null ? null : new Gson().toJson(commandResult);
 			return JSONUtility.toModel(json, ImportCandidate[].class);
-		}, monitor);
+		}, restoreExistingImports, monitor);
 		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
+	}
+
+	public static class AddAllMissingImportsParams {
+		String documentUri;
 	}
 
 	public static class ImportCandidate {

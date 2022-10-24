@@ -283,9 +283,11 @@ public class CodeActionHandler {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			if (command == null) { // lazy resolve the edit.
-				codeAction.setData(new CodeActionData(proposal));
+				// The relevance is in descending order while CodeActionComparator sorts in ascending order
+				codeAction.setData(new CodeActionData(proposal, -proposal.getRelevance()));
 			} else {
 				codeAction.setCommand(command);
+				codeAction.setData(new CodeActionData(null, -proposal.getRelevance()));
 			}
 			if (proposal.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
 				codeAction.setDiagnostics(context.getDiagnostics());

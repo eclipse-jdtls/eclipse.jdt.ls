@@ -234,6 +234,7 @@ public final class CorrectionMessages extends NLS {
 	public static String UnresolvedElementsSubProcessor_arraychangetomethod_description;
 	public static String UnresolvedElementsSubProcessor_arraychangetolength_description;
 	public static String UnresolvedElementsSubProcessor_addnewkeyword_description;
+	public static String UnresolvedElementsSubProcessor_add_allMissing_imports_description;
 	public static String JavadocTagsSubProcessor_addjavadoc_method_description;
 	public static String JavadocTagsSubProcessor_addjavadoc_type_description;
 	public static String JavadocTagsSubProcessor_addjavadoc_field_description;

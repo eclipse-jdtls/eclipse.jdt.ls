@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
@@ -65,6 +66,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSele
 import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.AddAllMissingImportsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
@@ -701,9 +703,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CodeAction> resolveCodeAction(CodeAction params) {
 		logInfo(">> codeAction/resolve");
+		Object data = params.getData();
 		// if no data property is specified, no further resolution the server can provide, so return the original result back.
-		if (params.getData() == null) {
+		if (data == null) {
 			return CompletableFuture.completedFuture(params);
+		}
+		if (data instanceof CodeActionData) {
+			// if the data is CodeActionData and no proposal in the data, return the original result back.
+			if (((CodeActionData) data).getProposal() == null) {
+				return CompletableFuture.completedFuture(params);
+			}
 		}
 		if (CodeActionHandler.codeActionStore.isEmpty()) {
 			return CompletableFuture.completedFuture(params);
@@ -982,7 +991,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
 		logInfo(">> java/organizeImports");
-		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params, monitor));
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params.getTextDocument().getUri(), false, monitor));
+	}
+
+	@Override
+	public CompletableFuture<WorkspaceEdit> addAllMissingImports(AddAllMissingImportsParams params) {
+		logInfo(">> java/addAllMissingImports");
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params.documentUri, true, monitor));
 	}
 
 	@Override

@@ -24,6 +24,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 public class CodeActionComparator implements Comparator<Either<Command, CodeAction>> {
 
 	public static int ORGANIZE_IMPORTS_PRIORITY = 0;
+	public static int ADD_ALL_MISSING_IMPORTS_PRIORITY = 5;
 	public static int GENERATE_ACCESSORS_PRIORITY = 10;
 	public static int GENERATE_CONSTRUCTORS_PRIORITY = 20;
 	public static int GENERATE_HASHCODE_EQUALS_PRIORITY = 30;

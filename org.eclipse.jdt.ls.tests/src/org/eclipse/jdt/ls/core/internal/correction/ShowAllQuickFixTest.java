@@ -205,7 +205,7 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 			context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
 			codeActionParams.setContext(context);
 			List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(5, codeActions.size());
+			assertEquals(6, codeActions.size());
 			CodeAction action = codeActions.get(0).getRight();
 			assertNotNull(action);
 			assertEquals("Import 'List' (java.util)", action.getTitle());
