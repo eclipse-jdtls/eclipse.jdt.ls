@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jface.text.BadLocationException;
@@ -80,6 +81,7 @@ public class PostfixTemplateEngine {
 		Template[] availableTemplates = Arrays.stream(templates).filter(t -> context.canEvaluate(t)).toArray(Template[]::new);
 		for (Template template : availableTemplates) {
 			final CompletionItem item = new CompletionItem();
+			context.setActiveTemplateName(template.getName());
 			String content = evaluateGenericTemplate(context, template);
 			if (StringUtils.isBlank(content)) {
 				continue;
@@ -97,6 +99,15 @@ public class PostfixTemplateEngine {
 			String filterText = textInRange.substring(0, textInRange.lastIndexOf('.') + 1) + template.getName();
 			item.setFilterText(filterText);
 			item.setSortText(SortTextHelper.convertRelevance(SortTextHelper.MAX_RELEVANCE_VALUE));
+			List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
+			if (jdtTextEdits != null && jdtTextEdits.size() > 0) {
+				List<TextEdit> lspEdits = new ArrayList<>();
+				for (org.eclipse.text.edits.TextEdit edit : jdtTextEdits) {
+					TextEditConverter converter = new TextEditConverter(compilationUnit, edit);
+					lspEdits.addAll(converter.convert());
+				}
+				item.setAdditionalTextEdits(lspEdits);
+			}
 			res.add(item);
 		}
 
