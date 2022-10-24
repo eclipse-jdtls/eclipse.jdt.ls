@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -190,8 +190,8 @@ public class CompletionHandler{
 	}
 
 	private boolean isSnippetStringSupported() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
+		return this.manager != null &&  this.manager.getClientPreferences() != null
+				&& this.manager.getClientPreferences().isCompletionSnippetsSupported();
 	}
 
 	/**

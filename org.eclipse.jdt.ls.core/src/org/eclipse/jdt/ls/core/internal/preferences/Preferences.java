@@ -298,6 +298,11 @@ public class Preferences {
 	public static final String COMPLETION_ENABLED_KEY = "java.completion.enabled";
 
 	/**
+	 * Preference key to enable/disable postfix completion.
+	 */
+	public static final String POSTFIX_COMPLETION_KEY = "java.completion.postfix.enabled";
+
+	/**
 	 * Preference key to enable/disable the 'foldingRange'.
 	 */
 	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
@@ -537,6 +542,7 @@ public class Preferences {
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
 	private boolean completionEnabled;
+	private boolean postfixCompletionEnabled;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
@@ -777,6 +783,7 @@ public class Preferences {
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
 		completionEnabled = true;
+		postfixCompletionEnabled = true;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
@@ -939,6 +946,10 @@ public class Preferences {
 
 		boolean completionEnable = getBoolean(configuration, COMPLETION_ENABLED_KEY, true);
 		prefs.setCompletionEnabled(completionEnable);
+
+		boolean postfixEnabled = getBoolean(configuration, POSTFIX_COMPLETION_KEY, true);
+		prefs.setPostfixCompletionEnabled(postfixEnabled);
+
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
 
@@ -1319,6 +1330,14 @@ public class Preferences {
 	public Preferences setCompletionEnabled(boolean enabled) {
 		this.completionEnabled = enabled;
 		return this;
+	}
+
+	public boolean isPostfixCompletionEnabled() {
+		return postfixCompletionEnabled;
+	}
+
+	public void setPostfixCompletionEnabled(boolean postfixCompletionEnabled) {
+		this.postfixCompletionEnabled = postfixCompletionEnabled;
 	}
 
 	public Preferences setCompletionOverwrite(boolean completionOverwrite) {

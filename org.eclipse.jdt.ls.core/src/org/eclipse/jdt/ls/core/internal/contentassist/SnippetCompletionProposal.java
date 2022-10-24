@@ -53,9 +53,13 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContextType;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposalComputer;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.preferences.CodeGenerationTemplate;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -204,8 +208,66 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		SnippetCompletionContext scc = new SnippetCompletionContext(cu, completionContext);
 		res.addAll(getGenericSnippets(scc));
 		res.addAll(getTypeDefinitionSnippets(scc, monitor));
+		res.addAll(getPostfixSnippets(scc));
 
 		return res;
+	}
+
+	/**
+	 * Return the list of postfix completion items.
+	 * @param scc Snippet completion context.
+	 */
+	private static List<CompletionItem> getPostfixSnippets(SnippetCompletionContext scc) {
+		if (!isPostfixSupported()) {
+			return Collections.emptyList();
+		}
+
+		CompletionContext jdtCtx = scc.getCompletionContext();
+		try {
+			IDocument document = JsonRpcHelpers.toDocument(scc.getCompilationUnit().getBuffer());
+			if (canResolvePostfix(jdtCtx, document)) {
+				PostfixCompletionProposalComputer computer = new PostfixCompletionProposalComputer();
+				PostfixTemplateEngine engine = computer.computeCompletionEngine(jdtCtx, document, jdtCtx.getOffset());
+				if (engine != null) {
+					return engine.complete(document, jdtCtx.getOffset(), scc.getCompilationUnit());
+				}
+			}
+		} catch (BadLocationException | JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return Collections.emptyList();
+	}
+
+	private static boolean isPostfixSupported() {
+		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isPostfixCompletionEnabled();
+	}
+
+	/**
+	 * Check if it's able to resolve the postfix completion. The postfix completion
+	 * will only happen when:
+	 * <ul>
+	 * <li>The completion is triggered by the trigger character '.'</li>
+	 * <li>The postfix template start with the completion token </li>
+	 * </ul>
+	 */
+	private static boolean canResolvePostfix(CompletionContext jdtCtx, IDocument document) throws BadLocationException {
+		char[] token = jdtCtx.getToken();
+		if (token == null) {
+			return false;
+		}
+
+		int tokenStart = jdtCtx.getOffset() - token.length - 1;
+		if (tokenStart < 0) {
+			return false;
+		}
+
+		String tokenSequence = document.get(tokenStart, jdtCtx.getOffset() - tokenStart);
+		if (!tokenSequence.startsWith(".")) {
+			return false;
+		}
+
+		Template[] templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaPostfixContextType.ID_ALL);
+		return Arrays.stream(templates).anyMatch(t -> t.getName().toLowerCase().startsWith((new String(token)).toLowerCase()));
 	}
 
 	private static List<CompletionItem> getGenericSnippets(SnippetCompletionContext scc) throws JavaModelException {
