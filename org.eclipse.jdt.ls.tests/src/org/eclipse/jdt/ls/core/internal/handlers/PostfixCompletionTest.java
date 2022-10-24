@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +27,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.After;
@@ -368,6 +370,27 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		TextEdit edit = item.getTextEdit().getLeft();
 		assertEquals("while (a) {\n\t${0}\n}", edit.getNewText());
 		assertEquals("a.while", item.getFilterText());
+	}
+
+	@Test
+	public void test_canEvaluate() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		System." +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "System.");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.stream().anyMatch(i -> i.getKind().equals(CompletionItemKind.Snippet)));
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {

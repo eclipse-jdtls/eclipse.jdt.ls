@@ -313,6 +313,16 @@ public class JavaPostfixContext extends JavaContext {
 			return false;
 		}
 
+		if (selectedNode instanceof SimpleName) {
+			IBinding binding = ((SimpleName) selectedNode).resolveBinding();
+			// return false when the binding of the simple name is not a variable,
+			// and it's not a recovered AST. This is to make sure postfix will be
+			// skipped for cases like 'System.|'
+			if (!(binding instanceof IVariableBinding) && !binding.isRecovered()) {
+				return false;
+			}
+		}
+
 		// We check if the template makes "sense" by checking the requirements/conditions for the template
 		// For this purpose we have to resolve the inner_expression variable of the template
 		// This approach is much faster then delegating this to the existing TemplateTranslator class
