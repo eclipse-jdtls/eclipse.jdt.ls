@@ -29,6 +29,7 @@ import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.runtime.IPath;
@@ -37,6 +38,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
@@ -102,6 +104,18 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
 		assertTrue(preferencesPath.toFile().exists());
 		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+	}
+
+	@Test
+	public void testMetadataFileLocation2() throws Exception {
+		String name = "metadata";
+		importProjects("gradle/" + name);
+		IProject project = WorkspaceHelper.getProject(name);
+		projectsManager.updateProject(project, true);
+		waitForBackgroundJobs();
+
+		List<IMarker> markers = ResourceUtils.findMarkers(project, IMarker.SEVERITY_ERROR);
+		assertTrue(markers.isEmpty());
 	}
 
 	@Test
