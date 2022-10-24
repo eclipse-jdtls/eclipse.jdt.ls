@@ -423,6 +423,27 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.stream().anyMatch(i -> i.getKind().equals(CompletionItemKind.Snippet)));
 	}
 
+	@Test
+	public void test_canEvaluate2() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"import java.util.ArrayList;\n" +
+			"import java.util.List;\n" +
+			"public class Test {\n" +
+			"	public void testMethod() {\n" +
+			"		List<String> lines = new ArrayList<>();\n" +
+			"		lines.\n" +
+			"		if (lines.isEmpty()){return;}\n" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "		lines.");
+		assertTrue(list.getItems().size() > 0);
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}
