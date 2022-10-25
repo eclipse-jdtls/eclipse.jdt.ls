@@ -1,5 +1,26 @@
 # Change Log
 
+# [1.17.0 (October 27th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/107?closed=1)
+ * performance - Improve project initialization. See [#2252](https://github.com/eclipse/eclipse.jdt.ls/pull/2252).
+ * performance - Re-use ExecutorService to avoid creating extra threads and resource leak. See [#2041](https://github.com/eclipse/eclipse.jdt.ls/pull/2041).
+ * enhancement - Add support for postfix completion. See [#863](https://github.com/eclipse/eclipse.jdt.ls/issues/863).
+ * enhancement - Add quick fix for "remove all unused imports". See [#2280](https://github.com/eclipse/eclipse.jdt.ls/pull/2280).
+ * enhancement - Add quick fixes for problems relating to sealed classes. See [#2265](https://github.com/eclipse/eclipse.jdt.ls/pull/2265).
+ * bug fix - Signature help not working correctly for parameterized types. See [#2293](https://github.com/eclipse/eclipse.jdt.ls/pull/2293).
+ * bug fix - Avoid NPE for null analysis when updating classpath. See [#2268](https://github.com/eclipse/eclipse.jdt.ls/issues/2268).
+ * bug fix - Check the digest of the initializiation scripts for security and to prevent duplicates. See [#2254](https://github.com/eclipse/eclipse.jdt.ls/pull/2254).
+ * bug fix - Support `includeDeclaration` in `textDocument/references`. See [#2148](https://github.com/eclipse/eclipse.jdt.ls/issues/2148).
+ * bug fix - Provide folding for import regions in `.class` files. See [#2281](https://github.com/eclipse/eclipse.jdt.ls/pull/2281).
+ * bug fix - Deadlock when using JDK 17 with Maven Java project. See [#2256](https://github.com/eclipse/eclipse.jdt.ls/pull/2256).
+ * bug fix - Ignore unnamed module for split packages. See [#2273](https://github.com/eclipse/eclipse.jdt.ls/pull/2273).
+ * bug fix - The project preference should only persist non default values. See [#2272](https://github.com/eclipse/eclipse.jdt.ls/issues/2272).
+ * bug fix - Synchronize contributed bundles on demand. See [#2267](https://github.com/eclipse/eclipse.jdt.ls/pull/2267).
+ * bug fix - Avoid unnecessary project updates when the default VM changes. See [#2266](https://github.com/eclipse/eclipse.jdt.ls/pull/2266).
+ * bug fix - Exclude non-compile scope dependencies from consideration for enabling null analysis. See [#2264](https://github.com/eclipse/eclipse.jdt.ls/pull/2264).
+ * bug fix - Add opportunistic support for Java/Kotlin polyglot Android projects. See [#2261](https://github.com/eclipse/eclipse.jdt.ls/pull/2261).
+ * debt - Bump eclipse-jarsigner-plugin from 1.3.2 to 1.3.4. See [#2262](https://github.com/eclipse/eclipse.jdt.ls/pull/2262), [#2263](https://github.com/eclipse/eclipse.jdt.ls/pull/2263).
+ * debt - `jdt.ls.socket-stream.launch` & `jdt.ls.remote.server.launch` are not running cleanly. See [#2277](https://github.com/eclipse/eclipse.jdt.ls/issues/2277).
+
 # [1.16.0 (September 29th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/106?closed=1)
  * enhancement - Provide Java 19 preview support. See [#2209](https://github.com/eclipse/eclipse.jdt.ls/pull/2209).
  * enhancement - Enable annotation-based `null` analysis. See [#2228](https://github.com/eclipse/eclipse.jdt.ls/pull/2228).
