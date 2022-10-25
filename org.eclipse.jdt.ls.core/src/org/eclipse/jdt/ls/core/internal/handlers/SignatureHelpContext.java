@@ -304,7 +304,7 @@ public class SignatureHelpContext {
 		} else if (node instanceof ClassInstanceCreation) {
 			ITypeBinding binding = ((ClassInstanceCreation) node).getType().resolveBinding();
 			if (binding != null) {
-				this.methodName = binding.getName();
+				this.methodName = binding.getErasure().getName();
 			}
 		} else if (node instanceof SuperMethodInvocation) {
 			this.methodName = ((SuperMethodInvocation) node).getName().getIdentifier();
@@ -355,11 +355,11 @@ public class SignatureHelpContext {
 			ITypeBinding declaringType = methodBinding.getDeclaringClass();
 			List<String> typeNames = new ArrayList<>();
 			for (ITypeBinding mInterface : declaringType.getInterfaces()) {
-				String unqualifiedName = mInterface.getName().replaceAll("<.*>", "").replace(";", "");
+				String unqualifiedName = mInterface.getErasure().getName().replace(";", "");
 				typeNames.add(unqualifiedName);
 			}
 			while (declaringType != null) {
-				String unqualifiedName = declaringType.getName().replaceAll("<.*>", "").replace(";", "");
+				String unqualifiedName = declaringType.getErasure().getName().replace(";", "");
 				typeNames.add(unqualifiedName);
 				declaringType = declaringType.getSuperclass();
 			}
@@ -430,8 +430,8 @@ public class SignatureHelpContext {
 			}
 
 			this.parameterTypesFromBinding = Arrays.stream(methodBinding.getParameterTypes()).map(type -> {
-				String unqualifiedName = type.getName();
-				return unqualifiedName.replaceAll("<.*>", "").replace(";", "");
+				String unqualifiedName = type.getErasure().getName();
+				return unqualifiedName.replace(";", "");
 			}).toArray(String[]::new);
 		}
 
