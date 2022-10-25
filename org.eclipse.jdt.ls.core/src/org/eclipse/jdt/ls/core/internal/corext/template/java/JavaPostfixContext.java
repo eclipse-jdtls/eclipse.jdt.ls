@@ -327,7 +327,7 @@ public class JavaPostfixContext extends JavaContext {
 			// return false when the binding of the simple name is not a variable,
 			// and it's not a recovered AST. This is to make sure postfix will be
 			// skipped for cases like 'System.|'
-			if (!(binding instanceof IVariableBinding) && !binding.isRecovered()) {
+			if (!(binding instanceof IVariableBinding) && binding != null && !binding.isRecovered()) {
 				return false;
 			}
 		}
