@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
@@ -208,7 +209,12 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 
 	public String computeJavaDoc(CompletionProposal proposal) {
 		try {
-			IType type = unit.getJavaProject().findType(SignatureUtil.stripSignatureToFQN(String.valueOf(proposal.getDeclarationSignature())));
+			String fullyQualifiedName = SignatureUtil.stripSignatureToFQN(String.valueOf(proposal.getDeclarationSignature()));
+			IType type = unit.getJavaProject().findType(fullyQualifiedName);
+			if (type == null) {
+				// find secondary types if primary type search is missed.
+				type = unit.getJavaProject().findType(fullyQualifiedName, new NullProgressMonitor());
+			}
 			if (type != null) {
 				if (proposal instanceof InternalCompletionProposal) {
 					Binding binding = ((InternalCompletionProposal) proposal).getBinding();

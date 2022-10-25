@@ -1129,6 +1129,30 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSignatureHelp_erasureType() throws Exception {
+		when(preferenceManager.getPreferences().isSignatureHelpDescriptionEnabled()).thenReturn(true);
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	public void foo() {\n");
+		buf.append("		new V<String>();\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		buf.append("class V<T> {\n");
+		buf.append("	/** hi */\n");
+		buf.append("	public V() {}\n");
+		buf.append("	private V(String a) {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 3, 16);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		Either<String, MarkupContent> documentation = help.getSignatures().get(help.getActiveSignature()).getDocumentation();
+		assertEquals("hi", documentation.getLeft().trim());
+	}
+
+	@Test
 	public void testSignatureHelpInClassFile() throws Exception {
 		String uri = "jdt://contents/java.base/java.lang/String.class";
 		String payload = HOVER_TEMPLATE.replace("${file}", uri).replace("${line}", "10").replace("${char}", "10");
