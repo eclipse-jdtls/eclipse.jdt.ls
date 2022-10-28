@@ -23,7 +23,10 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
@@ -119,5 +122,29 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		List<IMarker> warningMarkers = ResourceUtils.getWarningMarkers(project);
 		assertEquals(3, warningMarkers.size());
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testKeepExistingProjectOptions() throws Exception {
+		try {
+			this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			IProject project = importGradleProject("null-analysis");
+			assertIsJavaProject(project);
+			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
+				BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
+				buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+			}
+			IJavaProject javaProject = ProjectUtils.getJavaProject(project);
+			// sourceCompatibility = '11' defined in project null-analysis build.gradle
+			assertEquals("11", javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, false));
+			assertEquals("11", javaProject.getOption(JavaCore.COMPILER_CODEGEN_TARGET_PLATFORM, false));
+			assertEquals("11", javaProject.getOption(JavaCore.COMPILER_SOURCE, false));
+
+		} finally {
+			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		}
 	}
 }
