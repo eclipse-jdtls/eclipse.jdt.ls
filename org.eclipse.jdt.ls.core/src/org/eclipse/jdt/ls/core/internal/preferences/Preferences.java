@@ -2055,16 +2055,23 @@ public class Preferences {
 		if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			return false;
 		}
-		Map<String, String> projectOptions = javaProject.getOptions(true);
-		if (projectOptions == null) {
+		Map<String, String> projectInheritOptions = javaProject.getOptions(true);
+		if (projectInheritOptions == null) {
 			return false;
 		}
 		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
 		Map<String, String> projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
-		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectOptions.get(e.getKey())));
+		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectInheritOptions.get(e.getKey())));
 		if (shouldUpdate) {
-			javaProject.setOptions(projectNullAnalysisOptions);
+			// get existing project options
+			Map<String, String> projectOptions = javaProject.getOptions(false);
+			if (projectOptions != null) {
+				projectOptions.putAll(projectNullAnalysisOptions);
+				javaProject.setOptions(projectOptions);
+			} else {
+				return false;
+			}
 		}
 		return shouldUpdate;
 	}
