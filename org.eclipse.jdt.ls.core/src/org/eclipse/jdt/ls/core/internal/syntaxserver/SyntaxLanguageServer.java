@@ -161,6 +161,9 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public void exit() {
 		logInfo(">> exit");
+		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+			System.exit(FORCED_EXIT_CODE);
+		}, 1, TimeUnit.MINUTES);
 		if (!shutdownReceived) {
 			shutdownJob.schedule();
 		}
@@ -170,9 +173,6 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		JavaLanguageServerPlugin.getLanguageServer().exit();
-		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
-			System.exit(1);
-		}, 1, TimeUnit.MINUTES);
 	}
 
 	@Override

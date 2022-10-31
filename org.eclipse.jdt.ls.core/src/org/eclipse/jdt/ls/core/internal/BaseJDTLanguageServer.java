@@ -29,6 +29,10 @@ import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 
 public class BaseJDTLanguageServer {
+	/**
+	 * Exit code returned when JDTLanguageServer is forced to exit.
+	 */
+	public static final int FORCED_EXIT_CODE = 1;
 	protected JavaClientConnection client;
 	protected boolean shutdownReceived = false;
 	private Set<String> registeredCapabilities = new HashSet<>(3);
