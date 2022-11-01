@@ -36,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.extended.ProjectBuildParams;
 
@@ -54,7 +55,7 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 		if (connection != null && uris != null && !uris.isEmpty()) {
 			for (String uri : uris) {
 				PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-				if (preferenceManager.getPreferences().isAnnotationNullAnalysisEnabled()) {
+				if (preferenceManager.getPreferences().getNullAnalysisMode().equals(FeatureStatus.automatic)) {
 					IProject project = ProjectUtils.getProjectFromUri(uri);
 					if (project != null) {
 						IJavaProject javaProject = ProjectUtils.getJavaProject(project);
@@ -62,7 +63,7 @@ public class ClasspathUpdateHandler implements IElementChangedListener {
 							WorkspaceJob job = new WorkspaceJob("Classpath Update Job") {
 								@Override
 								public IStatus runInWorkspace(IProgressMonitor monitor) {
-									if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject) || !preferenceManager.getPreferences().isAutobuildEnabled()) {
+									if (!preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions(javaProject, true) || !preferenceManager.getPreferences().isAutobuildEnabled()) {
 										// When the project's compiler options didn't change or auto build is disabled, rebuilding is not required.
 										return Status.OK_STATUS;
 									}

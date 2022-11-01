@@ -52,6 +52,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -63,6 +64,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
 import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
 
 /**
@@ -462,6 +464,7 @@ public class Preferences {
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
+	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
 
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
@@ -602,6 +605,7 @@ public class Preferences {
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
 	private List<String> nullableTypes;
+	private FeatureStatus nullAnalysisMode;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -823,6 +827,7 @@ public class Preferences {
 		avoidVolatileChanges = true;
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
+		nullAnalysisMode = FeatureStatus.disabled;
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1162,6 +1167,8 @@ public class Preferences {
 		prefs.setNonnullTypes(nonnullTypes);
 		List<String> nullableTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NULLABLE, Collections.emptyList());
 		prefs.setNullableTypes(nullableTypes);
+		String nullAnalysisMode = getString(configuration, JAVA_COMPILE_NULLANALYSIS_MODE, null);
+		prefs.setNullAnalysisMode(FeatureStatus.fromString(nullAnalysisMode, FeatureStatus.disabled));
 		return prefs;
 	}
 
@@ -2032,26 +2039,51 @@ public class Preferences {
 		this.nullableTypes = nullableTypes;
 	}
 
-	public boolean isAnnotationNullAnalysisEnabled() {
-		return !this.nonnullTypes.isEmpty() || !this.nullableTypes.isEmpty();
+	public void setNullAnalysisMode(FeatureStatus nullAnalysisMode) {
+		this.nullAnalysisMode = nullAnalysisMode;
+	}
+
+	public FeatureStatus getNullAnalysisMode() {
+		return this.nullAnalysisMode;
 	}
 
 	/**
+	 * update the null analysis options of all projects based on the null analysis mode
 	 * @return whether the options are changed or not
 	 */
 	public boolean updateAnnotationNullAnalysisOptions() {
+		switch (this.getNullAnalysisMode()) {
+			case automatic:
+				return this.updateAnnotationNullAnalysisOptions(true);
+			case interactive:
+				if (this.hasAnnotationNullAnalysisTypes()) {
+					String cmd = "java.compile.nullAnalysis.setMode";
+					ActionableNotification updateNullAnalysisStatusNotification = new ActionableNotification().withSeverity(MessageType.Info)
+							.withMessage("Null annotation types have been detected in the project. Do you wish to enable null analysis for this project?")
+							.withCommands(Arrays.asList(new Command("Enable", cmd, Arrays.asList(FeatureStatus.automatic)), new Command("Disable", cmd, Arrays.asList(FeatureStatus.disabled))));
+					JavaLanguageServerPlugin.getProjectsManager().getConnection().sendActionableNotification(updateNullAnalysisStatusNotification);
+				}
+				return false;
+			default:
+				return this.updateAnnotationNullAnalysisOptions(false);
+		}
+	}
+
+	private boolean updateAnnotationNullAnalysisOptions(boolean enabled) {
 		boolean isChanged = false;
 		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
-			isChanged |= updateAnnotationNullAnalysisOptions(javaProject);
+			isChanged |= updateAnnotationNullAnalysisOptions(javaProject, enabled);
 		}
 		return isChanged;
 	}
 
 	/**
+	 * update the null analysis options of given project
 	 * @param javaProject the java project to update the annotation-based null analysis options
+	 * @param enabled specific whether the null analysis is enabled
 	 * @return whether the options of the given project are changed or not
 	 */
-	public boolean updateAnnotationNullAnalysisOptions(IJavaProject javaProject) {
+	public boolean updateAnnotationNullAnalysisOptions(IJavaProject javaProject, boolean enabled) {
 		if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			return false;
 		}
@@ -2059,9 +2091,14 @@ public class Preferences {
 		if (projectInheritOptions == null) {
 			return false;
 		}
-		String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
-		String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-		Map<String, String> projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
+		Map<String, String> projectNullAnalysisOptions;
+		if (enabled) {
+			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
+			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
+			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
+		} else {
+			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(null, null);
+		}
 		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectInheritOptions.get(e.getKey())));
 		if (shouldUpdate) {
 			// get existing project options
@@ -2074,6 +2111,23 @@ public class Preferences {
 			}
 		}
 		return shouldUpdate;
+	}
+
+	private boolean hasAnnotationNullAnalysisTypes() {
+		if (this.nonnullTypes.isEmpty() && this.nullableTypes.isEmpty()) {
+			return false;
+		}
+		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+			if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
+				continue;
+			}
+			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
+			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
+			if (nonnullType != null || nullableType != null) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
@@ -2123,6 +2177,12 @@ public class Preferences {
 		return null;
 	}
 
+	/**
+	 * generates the null analysis options of the given nonnull type and nullable type
+	 * @param nonnullType the given nonnull type
+	 * @param nullableType the given nullable type
+	 * @return the map contains the null analysis options, if both given types are null, will return default null analysis options
+	 */
 	private Map<String, String> generateProjectNullAnalysisOptions(String nonnullType, String nullableType) {
 		Map<String, String> options = new HashMap<>();
 		if (nonnullType == null && nullableType == null) {
