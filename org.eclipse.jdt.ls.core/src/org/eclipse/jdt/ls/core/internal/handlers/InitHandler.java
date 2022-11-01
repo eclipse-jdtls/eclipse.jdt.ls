@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.core.internal.resources.Workspace;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
@@ -39,7 +41,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -205,17 +206,6 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
-		if (ProjectUtils.getAllProjects().length == 0) {
-			try {
-				// a workaround for https://github.com/redhat-developer/vscode-java/issues/2020
-				JavaLanguageServerPlugin.logInfo("Wait for AutoBuildOffJob start");
-				long start = System.currentTimeMillis();
-				JobHelpers.waitForBuildOffJobs(2 * 60 * 1000); // 2 minutes
-				JavaLanguageServerPlugin.logInfo("Wait for AutoBuildOffJob end " + (System.currentTimeMillis() - start) + "ms");
-			} catch (OperationCanceledException e) {
-				logException(e.getMessage(), e);
-			}
-		}
 		// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
 		startBundle(IMavenConstants.PLUGIN_ID);
 		long start = System.currentTimeMillis();
@@ -226,6 +216,15 @@ final public class InitHandler extends BaseInitHandler {
 		start = System.currentTimeMillis();
 		JobHelpers.waitForLoadingGradleVersionJob();
 		JavaLanguageServerPlugin.logInfo("LoadingGradleVersionJob finished " + (System.currentTimeMillis() - start) + "ms");
+		// https://github.com/redhat-developer/vscode-java/issues/2763
+		// When starting, Java LS turn off autobuild. See JavaLanguageServerPlugin.start(BundleContext).
+		// In this case Eclipse schedules the AutoBuildJobOff job. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=573595#c11
+		// This job causes Java LS sometimes to hang at https://github.com/eclipse-jdt/eclipse.jdt.core/blob/master/org.eclipse.jdt.apt.core/src/org/eclipse/jdt/apt/core/internal/generatedfile/GeneratedSourceFolderManager.java#L508
+		Job.getJobManager().wakeUp(ResourcesPlugin.FAMILY_AUTO_BUILD);
+		IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		if (workspace instanceof Workspace) {
+			((Workspace) workspace).getBuildManager().waitForAutoBuildOff();
+		}
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
