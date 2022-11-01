@@ -2059,7 +2059,7 @@ public class Preferences {
 				if (this.hasAnnotationNullAnalysisTypes()) {
 					String cmd = "java.compile.nullAnalysis.setMode";
 					ActionableNotification updateNullAnalysisStatusNotification = new ActionableNotification().withSeverity(MessageType.Info)
-							.withMessage("Null annotation types are detected in your project. Do you want to enable the null analysis for this project?")
+							.withMessage("Null annotation types have been detected in the project. Do you wish to enable null analysis for this project?")
 							.withCommands(Arrays.asList(new Command("Enable", cmd, Arrays.asList(FeatureStatus.automatic)), new Command("Disable", cmd, Arrays.asList(FeatureStatus.disabled))));
 					JavaLanguageServerPlugin.getProjectsManager().getConnection().sendActionableNotification(updateNullAnalysisStatusNotification);
 				}
