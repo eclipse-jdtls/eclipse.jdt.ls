@@ -137,8 +137,8 @@ import org.eclipse.lsp4j.TypeDefinitionParams;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.WorkspaceSymbolParams;
-import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.extended.ProjectBuildParams;
+import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonDelegate;
@@ -158,10 +158,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	public static final String JAVA_LSP_INITIALIZE_WORKSPACE = "java.lsp.initializeWorkspace";
-	/**
-	 * Exit code returned when JDTLanguageServer is forced to exit.
-	 */
-	private static final int FORCED_EXIT_CODE = 1;
 	private ProjectsManager pm;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
@@ -432,6 +428,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public void exit() {
 		logInfo(">> exit");
+		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+			logInfo("Forcing exit after 1 min.");
+			System.exit(FORCED_EXIT_CODE);
+		}, 1, TimeUnit.MINUTES);
 		if (!shutdownReceived) {
 			shutdownJob.schedule();
 		}
@@ -441,10 +441,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		JavaLanguageServerPlugin.getLanguageServer().exit();
-		Executors.newSingleThreadScheduledExecutor().schedule(() -> {
-			logInfo("Forcing exit after 1 min.");
-			System.exit(FORCED_EXIT_CODE);
-		}, 1, TimeUnit.MINUTES);
 	}
 
 	/* (non-Javadoc)
