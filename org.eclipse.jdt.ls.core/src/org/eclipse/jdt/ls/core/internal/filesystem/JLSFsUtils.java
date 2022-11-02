@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Microsoft Corporation and others.
+ * Copyright (c) 2021-2022 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -77,6 +77,9 @@ public class JLSFsUtils {
         // do not redirect if the file already exists on disk
         if (location.toFile().exists()) {
             return false;
+        } else if (location.lastSegment().endsWith(EclipsePreferences.PREFS_FILE_EXTENSION)) {
+            location = location.removeLastSegments(1);
+            return !location.toFile().exists();
         }
 
         return true;
