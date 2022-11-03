@@ -140,7 +140,7 @@ public class SourceAssistProcessor {
 
 		// Organize Imports
 		CodeActionProposal organizeImportsProposal = (pm) -> {
-			TextEdit edit = getOrganizeImportsProposal(context, false, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
+			TextEdit edit = getOrganizeImportsTextEdit(context, false, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
 			return convertToWorkspaceEdit(cu, edit);
 		};
 		// Generate QuickAssist
@@ -164,7 +164,7 @@ public class SourceAssistProcessor {
 		}
 		if (hasUndefinedTypeError) {
 			CodeActionProposal allAllMissingImportsProposal = (pm) -> {
-				TextEdit edit = getOrganizeImportsProposal(context, true, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
+				TextEdit edit = getOrganizeImportsTextEdit(context, true, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
 				return convertToWorkspaceEdit(cu, edit);
 			};
 			Optional<Either<Command, CodeAction>> sourceAddAllMissingImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description,
@@ -340,7 +340,7 @@ public class SourceAssistProcessor {
 		result.add(targetAction);
 	}
 
-	private TextEdit getOrganizeImportsProposal(IInvocationContext context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
+	private TextEdit getOrganizeImportsTextEdit(IInvocationContext context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;

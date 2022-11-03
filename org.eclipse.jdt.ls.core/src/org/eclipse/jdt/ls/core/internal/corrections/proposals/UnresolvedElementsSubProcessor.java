@@ -16,13 +16,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -711,15 +709,9 @@ public class UnresolvedElementsSubProcessor {
 			}
 		}
 		if (proposals.size() > 0) {
-			IResource resource = cu.getResource();
-			if (resource != null) {
-				URI uri = resource.getLocationURI();
-				if (uri != null) {
-					CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, relevance, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
-					if (proposal != null) {
-						proposals.add(proposal);
-					}
-				}
+			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, relevance, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
+			if (proposal != null) {
+				proposals.add(proposal);
 			}
 		}
 	}
