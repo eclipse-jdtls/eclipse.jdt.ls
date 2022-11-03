@@ -66,7 +66,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSele
 import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
-import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.AddAllMissingImportsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
@@ -991,13 +990,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params) {
 		logInfo(">> java/organizeImports");
-		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params.getTextDocument().getUri(), false, monitor));
-	}
-
-	@Override
-	public CompletableFuture<WorkspaceEdit> addAllMissingImports(AddAllMissingImportsParams params) {
-		logInfo(">> java/addAllMissingImports");
-		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params.documentUri, true, monitor));
+		return computeAsync((monitor) -> OrganizeImportsHandler.organizeImports(client, params, monitor));
 	}
 
 	@Override

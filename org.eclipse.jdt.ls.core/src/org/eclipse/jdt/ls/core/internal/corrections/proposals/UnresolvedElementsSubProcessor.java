@@ -19,7 +19,6 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -84,7 +83,6 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
-import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.manipulation.TypeKinds;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
@@ -114,15 +112,10 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.eclipse.text.edits.TextEdit;
 
 
 public class UnresolvedElementsSubProcessor {
-
-	public static final String COMMAND_ID_ACTION_ADDALLMISSINGIMPORTS = "java.action.addAllMissingImports";
 
 	public static void getVariableProposals(IInvocationContext context, IProblemLocationCore problem,
 			IVariableBinding resolvedField, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
@@ -722,21 +715,8 @@ public class UnresolvedElementsSubProcessor {
 			if (resource != null) {
 				URI uri = resource.getLocationURI();
 				if (uri != null) {
-					if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAddMissingImportsCommandSupport() && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported()) {
-						proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, relevance + 10, COMMAND_ID_ACTION_ADDALLMISSINGIMPORTS, Collections.singletonList(uri.toString())));
-					} else {
-						CUCorrectionProposal proposal = new CUCorrectionProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, null, relevance + 10) {
-							@Override
-							protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
-								CompilationUnit astRoot = context.getASTRoot();
-								OrganizeImportsOperation op = new OrganizeImportsOperation(cu, astRoot, true, false, true, null, true);
-								TextEdit edit = op.createTextEdit(null);
-								TextEdit staticEdit = OrganizeImportsHandler.wrapStaticImports(edit, astRoot, cu);
-								if (staticEdit.getChildrenSize() > 0) {
-									editRoot.addChild(staticEdit);
-								}
-							}
-						};
+					CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, relevance, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
+					if (proposal != null) {
 						proposals.add(proposal);
 					}
 				}

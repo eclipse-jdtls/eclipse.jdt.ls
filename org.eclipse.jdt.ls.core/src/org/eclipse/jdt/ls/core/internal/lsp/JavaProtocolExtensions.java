@@ -34,7 +34,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHash
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
-import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.AddAllMissingImportsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
@@ -98,9 +97,6 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params);
-
-	@JsonRequest
-	CompletableFuture<WorkspaceEdit> addAllMissingImports(AddAllMissingImportsParams params);
 
 	@JsonRequest
 	CompletableFuture<CheckToStringResponse> checkToStringStatus(CodeActionParams params);
