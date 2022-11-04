@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
@@ -699,9 +700,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CodeAction> resolveCodeAction(CodeAction params) {
 		logInfo(">> codeAction/resolve");
+		Object data = params.getData();
 		// if no data property is specified, no further resolution the server can provide, so return the original result back.
-		if (params.getData() == null) {
+		if (data == null) {
 			return CompletableFuture.completedFuture(params);
+		}
+		if (data instanceof CodeActionData) {
+			// if the data is CodeActionData and no proposal in the data, return the original result back.
+			if (((CodeActionData) data).getProposal() == null) {
+				return CompletableFuture.completedFuture(params);
+			}
 		}
 		if (CodeActionHandler.codeActionStore.isEmpty()) {
 			return CompletableFuture.completedFuture(params);

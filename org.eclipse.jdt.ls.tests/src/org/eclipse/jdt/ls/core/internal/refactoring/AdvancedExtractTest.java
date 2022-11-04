@@ -78,7 +78,7 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
 		List<Either<Command, CodeAction>> extractCodeActions = codeActions.stream().filter(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.RefactorExtract)).collect(Collectors.toList());
 		Assert.assertEquals(5, extractCodeActions.size());
-		Command extractConstantCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(0));
+		Command extractConstantCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(3));
 		Assert.assertNotNull(extractConstantCommand);
 		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractConstantCommand.getCommand());
 		Assert.assertNotNull(extractConstantCommand.getArguments());
@@ -92,21 +92,21 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Assert.assertEquals(3, extractFieldCommand.getArguments().size());
 		Assert.assertEquals(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, extractFieldCommand.getArguments().get(0));
 
-		Command extractMethodCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(2));
+		Command extractMethodCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(4));
 		Assert.assertNotNull(extractMethodCommand);
 		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
 		Assert.assertNotNull(extractMethodCommand.getArguments());
 		Assert.assertEquals(2, extractMethodCommand.getArguments().size());
 		Assert.assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
 
-		Command extractVariableAllCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(3));
+		Command extractVariableAllCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(0));
 		Assert.assertNotNull(extractVariableAllCommand);
 		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableAllCommand.getCommand());
 		Assert.assertNotNull(extractVariableAllCommand.getArguments());
 		Assert.assertEquals(2, extractVariableAllCommand.getArguments().size());
 		Assert.assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, extractVariableAllCommand.getArguments().get(0));
 
-		Command extractVariableCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(4));
+		Command extractVariableCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(2));
 		Assert.assertNotNull(extractVariableCommand);
 		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableCommand.getCommand());
 		Assert.assertNotNull(extractVariableCommand.getArguments());

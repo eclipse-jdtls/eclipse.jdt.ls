@@ -1516,4 +1516,37 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testAddAllMissingImports() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    Vector vec;\n");
+		buf.append("    List<String> b;\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		// assert quick fix exists
+		assertCodeActionExists(cu, "Add all missing imports");
+
+		// use source action to test the return TextEdit
+		setIgnoredKind(CodeActionKind.QuickFix);
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("import java.util.List;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    Vector vec;\n");
+		buf.append("    List<String> b;\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Add all missing imports", buf.toString());
+		assertCodeActions(cu, e1);
+
+		// restore the ignored kind
+		setIgnoredKind(CodeActionKind.Source + ".*");
+	}
+
 }

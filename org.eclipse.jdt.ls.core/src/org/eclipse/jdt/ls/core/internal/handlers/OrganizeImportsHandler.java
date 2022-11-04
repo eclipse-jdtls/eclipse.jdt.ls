@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -50,8 +52,10 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.corrections.SimilarElementsRequestor;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -67,10 +71,10 @@ public final class OrganizeImportsHandler {
 
 	// For test purpose
 	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports) {
-		return organizeImports(unit, chooseImports, new NullProgressMonitor());
+		return organizeImports(unit, chooseImports, false, new NullProgressMonitor());
 	}
 
-	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports, IProgressMonitor monitor) {
+	public static TextEdit organizeImports(ICompilationUnit unit, Function<ImportSelection[], ImportCandidate[]> chooseImports, boolean restoreExistingImports, IProgressMonitor monitor) {
 		if (unit == null) {
 			return null;
 		}
@@ -80,7 +84,7 @@ public final class OrganizeImportsHandler {
 			return null;
 		}
 
-		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, (TypeNameMatch[][] openChoices, ISourceRange[] ranges) -> {
+		OrganizeImportsOperation op = new OrganizeImportsOperation(unit, astRoot, true, false, true, chooseImports != null ? (TypeNameMatch[][] openChoices, ISourceRange[] ranges) -> {
 			List<ImportSelection> selections = new ArrayList<>();
 			for (int i = 0; i < openChoices.length; i++) {
 				ImportCandidate[] candidates = Stream.of(openChoices[i]).map((choice) -> new ImportCandidate(choice)).toArray(ImportCandidate[]::new);
@@ -104,7 +108,7 @@ public final class OrganizeImportsHandler {
 				typeMaps.put(x.getFullyQualifiedName() + "@" + x.hashCode(), x);
 			});
 			return Stream.of(chosens).filter(chosen -> chosen != null && typeMaps.containsKey(chosen.id)).map(chosen -> typeMaps.get(chosen.id)).toArray(TypeNameMatch[]::new);
-		});
+		} : null, restoreExistingImports);
 		try {
 			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 			TextEdit edit = op.createTextEdit(null);
@@ -213,12 +217,36 @@ public final class OrganizeImportsHandler {
 			return null;
 		}
 
-		TextEdit edit = organizeImports(unit, (selections) -> {
-			Object commandResult = connection.executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, uri, selections);
+		TextEdit edit = organizeImports(unit, getChooseImportsFunction(uri, false), false, monitor);
+		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
+	}
+
+	public static Function<ImportSelection[], ImportCandidate[]> getChooseImportsFunction(String documentUri, boolean restoreExistingImports) {
+		return (selections) -> {
+			Object commandResult = JavaLanguageServerPlugin.getInstance().getClientConnection().executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, documentUri, selections, restoreExistingImports);
 			String json = commandResult == null ? null : new Gson().toJson(commandResult);
 			return JSONUtility.toModel(json, ImportCandidate[].class);
-		}, monitor);
-		return SourceAssistProcessor.convertToWorkspaceEdit(unit, edit);
+		};
+	}
+
+	public static CUCorrectionProposal getOrganizeImportsProposal(String label, String kind, ICompilationUnit cu, int relevance, CompilationUnit astRoot, boolean supportsChooseImports, boolean restoreExistingImports) {
+		IResource resource = cu.getResource();
+		if (resource == null) {
+			return null;
+		}
+		URI uri = resource.getLocationURI();
+		if (uri == null) {
+			return null;
+		}
+		return new CUCorrectionProposal(label, kind, cu, null, relevance + 10) {
+			@Override
+			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
+				TextEdit edit = OrganizeImportsHandler.organizeImports(cu, supportsChooseImports ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, new NullProgressMonitor());
+				if (edit != null) {
+					editRoot.addChild(edit);
+				}
+			}
+		};
 	}
 
 	public static class ImportCandidate {

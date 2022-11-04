@@ -94,6 +94,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -106,6 +107,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.SwapDescription;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -241,7 +243,7 @@ public class UnresolvedElementsSubProcessor {
 			}
 
 			int relevance= Character.isUpperCase(ASTNodes.getSimpleNameIdentifier(node).charAt(0)) ? IProposalRelevance.VARIABLE_TYPE_PROPOSAL_1 : IProposalRelevance.VARIABLE_TYPE_PROPOSAL_2;
-			addSimilarTypeProposals(typeKind, cu, node, relevance + 1, proposals);
+			addSimilarTypeProposals(context, typeKind, cu, node, relevance + 1, proposals);
 
 			typeKind &= ~TypeKinds.ANNOTATIONS;
 			addNewTypeProposals(cu, node, typeKind, relevance, proposals);
@@ -610,7 +612,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		// change to similar type proposals
-		addSimilarTypeProposals(kind, cu, node, IProposalRelevance.SIMILAR_TYPE, proposals);
+		addSimilarTypeProposals(context, kind, cu, node, IProposalRelevance.SIMILAR_TYPE, proposals);
 
 		while (node.getParent() instanceof QualifiedName) {
 			node= (Name) node.getParent();
@@ -658,7 +660,7 @@ public class UnresolvedElementsSubProcessor {
 		return cuChange;
 	}
 
-	private static void addSimilarTypeProposals(int kind, ICompilationUnit cu, Name node, int relevance,
+	private static void addSimilarTypeProposals(IInvocationContext context, int kind, ICompilationUnit cu, Name node, int relevance,
 			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		SimilarElement[] elements = SimilarElementsRequestor.findSimilarElement(cu, node, kind);
 
@@ -704,6 +706,12 @@ public class UnresolvedElementsSubProcessor {
 				if (!fullName.equals(resolvedTypeName)) {
 					proposals.add(createTypeRefChangeProposal(cu, fullName, node, relevance, elements.length));
 				}
+			}
+		}
+		if (proposals.size() > 0) {
+			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, cu, relevance, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
+			if (proposal != null) {
+				proposals.add(proposal);
 			}
 		}
 	}
