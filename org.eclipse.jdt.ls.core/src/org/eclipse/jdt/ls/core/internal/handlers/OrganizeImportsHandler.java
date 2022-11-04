@@ -242,9 +242,8 @@ public final class OrganizeImportsHandler {
 			@Override
 			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
 				TextEdit edit = OrganizeImportsHandler.organizeImports(cu, supportsChooseImports ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, new NullProgressMonitor());
-				TextEdit staticEdit = OrganizeImportsHandler.wrapStaticImports(edit, astRoot, cu);
-				if (staticEdit.getChildrenSize() > 0) {
-					editRoot.addChild(staticEdit);
+				if (edit != null) {
+					editRoot.addChild(edit);
 				}
 			}
 		};
