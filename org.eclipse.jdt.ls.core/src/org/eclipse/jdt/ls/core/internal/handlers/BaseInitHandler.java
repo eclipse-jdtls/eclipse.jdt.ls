@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.LanguageServerApplication;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -151,8 +152,9 @@ public abstract class BaseInitHandler {
 		}
 
 		Integer processId = param.getProcessId();
-		if (processId != null) {
-			JavaLanguageServerPlugin.getLanguageServer().setParentProcessId(processId.longValue());
+		LanguageServerApplication application = JavaLanguageServerPlugin.getLanguageServer();
+		if (processId != null && application != null) {
+			application.setParentProcessId(processId.longValue());
 		}
 
 		return initializationOptions;

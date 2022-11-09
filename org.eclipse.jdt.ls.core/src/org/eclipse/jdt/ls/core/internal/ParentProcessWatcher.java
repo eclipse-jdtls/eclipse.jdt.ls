@@ -36,11 +36,11 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 	private static final boolean isJava1x = System.getProperty("java.version").startsWith("1.");
 	private static final int POLL_DELAY_SECS = 10;
 	private volatile long lastActivityTime;
-	private final LanguageServer server;
+	private final LanguageServerApplication server;
 	private ScheduledFuture<?> task;
 	private ScheduledExecutorService service;
 
-	public ParentProcessWatcher(LanguageServer server ) {
+	public ParentProcessWatcher(LanguageServerApplication server) {
 		this.server = server;
 		if (ProcessHandle.current().parent().isPresent()) {
 			this.server.setParentProcessId(ProcessHandle.current().parent().get().pid());
