@@ -59,6 +59,9 @@
                   id="java.edit.stringFormatting">
             </command>
             <command
+                  id="java.edit.handlePasteEvent">
+            </command>
+            <command
                   id="java.project.updateSourceAttachment">
             </command>
             <command
