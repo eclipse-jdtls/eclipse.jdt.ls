@@ -122,7 +122,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private ISourceDownloader sourceDownloader;
 
-	private LanguageServer languageServer;
+	private LanguageServerApplication languageServer;
 	private ProjectsManager projectsManager;
 	private DigestStore digestStore;
 	private ContentProviderManager contentProviderManager;
@@ -140,7 +140,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private ExecutorService executorService;
 
-	public static LanguageServer getLanguageServer() {
+	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
 
@@ -457,7 +457,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 	}
 
-	static void startLanguageServer(LanguageServer newLanguageServer) throws IOException {
+	static void startLanguageServer(LanguageServerApplication newLanguageServer) throws IOException {
 		if (pluginInstance != null) {
 			pluginInstance.languageServer = newLanguageServer;
 			pluginInstance.startConnection();
