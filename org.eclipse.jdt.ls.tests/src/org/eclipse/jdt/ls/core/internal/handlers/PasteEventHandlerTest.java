@@ -12,6 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.util.List;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -23,6 +28,8 @@ import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -207,6 +214,115 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 		location.setUri(uri);
 		location.setRange(range);
 		return location;
+	}
+
+	@Test
+	public void testGetAddImportsWorkspaceEdit() throws CoreException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"}"
+				, true, null);
+		String content = "	public List<String> b;\r\n" +
+						"	public Set<String> c;\r\n";
+		//@formatter:on
+		String uri = JDTUtils.toURI(unit);
+		Range range = new Range(new Position(3, 0), new Position(3, 0));
+		PasteEventParams params = new PasteEventParams(new Location(uri, range), content, null, new FormattingOptions(4, false));
+		DocumentPasteEdit documentPasteEdit = PasteEventHandler.getMissingImportsWorkspaceEdit(params, unit, monitor);
+		assertNotNull(documentPasteEdit);
+		WorkspaceEdit edit = documentPasteEdit.getAdditionalEdit();
+		List<TextEdit> changes = edit.getChanges().get(uri);
+		assertNotNull(changes);
+		assertEquals(1, changes.size());
+		//@formatter:off
+		String expect = "\r\n" +
+						"\r\n" +
+						"import java.util.List;\r\n" +
+						"import java.util.Set;\r\n" +
+						"\r\n";
+		//@formatter:on
+		assertEquals(expect, changes.get(0).getNewText());
+		assertEquals(new Range(new Position(0, 10), new Position(2, 0)), changes.get(0).getRange());
+	}
+
+	@Test
+	public void testGetAddImportsAmbigousWorkspaceEdit() throws CoreException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"}"
+				, true, null);
+		ICompilationUnit unit1 = fPackageTest.createCompilationUnit("List.java", "package test;\r\n" +
+				"\r\n" +
+				"public class List {\r\n" +
+				"}"
+				, true, null);
+		String content = "	public List<String> b;\r\n" +
+						"	public Set<String> c;\r\n";
+		//@formatter:on
+		String uri = JDTUtils.toURI(unit);
+		Range range = new Range(new Position(3, 0), new Position(3, 0));
+		PasteEventParams params = new PasteEventParams(new Location(uri, range), content, null, new FormattingOptions(4, false));
+		DocumentPasteEdit documentPasteEdit = PasteEventHandler.getMissingImportsWorkspaceEdit(params, unit, monitor);
+		assertNotNull(documentPasteEdit);
+		WorkspaceEdit edit = documentPasteEdit.getAdditionalEdit();
+		List<TextEdit> changes = edit.getChanges().get(uri);
+		assertNotNull(changes);
+		assertEquals(1, changes.size());
+		//@formatter:off
+		String expect = "\r\n" +
+						"\r\n" +
+						"import java.util.Set;\r\n" +
+						"\r\n";
+		//@formatter:on
+		assertEquals(expect, changes.get(0).getNewText());
+		assertEquals(new Range(new Position(0, 10), new Position(2, 0)), changes.get(0).getRange());
+	}
+
+	@Test
+	public void testGetAddImportsResolveAmbigousWorkspaceEdit() throws CoreException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", "package p;\r\n" +
+				"\r\n" +
+				"public class B {\r\n" +
+				"}"
+				, true, null);
+		ICompilationUnit unit1 = fPackageTest.createCompilationUnit("List.java", "package test;\r\n" +
+				"\r\n" +
+				"public class List {\r\n" +
+				"}"
+				, true, null);
+		ICompilationUnit unit2 = fPackageP.createCompilationUnit("C.java", "package p;\r\n" +
+				"\r\n" +
+				"import java.util.List;\r\n" +
+				"import java.util.Set;\r\n" +
+				"public class C {\r\n" +
+				"	public List<String> b;\r\n" +
+				"	public Set<String> c;\r\n" +
+				"}"
+				, true, null);
+		String content = "	public List<String> b;\r\n" +
+						"	public Set<String> c;\r\n";
+		//@formatter:on
+		String uri = JDTUtils.toURI(unit);
+		Range range = new Range(new Position(3, 0), new Position(3, 0));
+		PasteEventParams params = new PasteEventParams(new Location(uri, range), content, JDTUtils.toURI(unit2), new FormattingOptions(4, false));
+		DocumentPasteEdit documentPasteEdit = PasteEventHandler.getMissingImportsWorkspaceEdit(params, unit, monitor);
+		assertNotNull(documentPasteEdit);
+		WorkspaceEdit edit = documentPasteEdit.getAdditionalEdit();
+		List<TextEdit> changes = edit.getChanges().get(uri);
+		assertNotNull(changes);
+		assertEquals(1, changes.size());
+		String expect = "\r\n" +
+						"\r\n" +
+						"import java.util.List;\r\n" +
+						"import java.util.Set;\r\n" +
+						"\r\n";
+		assertEquals(expect, changes.get(0).getNewText());
+		assertEquals(new Range(new Position(0, 10), new Position(2, 0)), changes.get(0).getRange());
 	}
 
 }

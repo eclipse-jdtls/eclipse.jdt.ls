@@ -266,6 +266,7 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 		dummyCU.append("\n}\n }"); //$NON-NLS-1$
 
 		ICompilationUnit newCU= null;
+		String contents = cu.getBuffer().getContents();
 		try {
 			newCU= cu.getWorkingCopy(null);
 			newCU.getBuffer().setContents(dummyCU.toString());
@@ -297,10 +298,13 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 			requestor.setFavoriteReferences(favorites);
 
 			newCU.codeComplete(offset, requestor);
-
+			// if cu is working copy, we should restore the contents saved previously.
+			if (cu.isWorkingCopy()) {
+				cu.getBuffer().setContents(contents);
+			}
 			return result.toArray(new String[result.size()]);
 		} finally {
-			if (newCU != null) {
+			if (newCU != null && !cu.isWorkingCopy()) {
 				newCU.discardWorkingCopy();
 			}
 		}
