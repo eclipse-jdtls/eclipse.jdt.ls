@@ -27,17 +27,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.GradleEnvironment;
 
@@ -274,5 +277,17 @@ public class GradleUtils {
 
 	private static boolean containsWhitespace(String seq) {
 		return seq != null && !seq.isBlank() && seq.chars().anyMatch(Character::isWhitespace);
+	}
+
+	public static void synchronizeAnnotationProcessingConfiguration(IProgressMonitor monitor) {
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
+			if (build.isPresent()) {
+				GradleBuildSupport.syncAnnotationProcessingConfiguration(build.get(), monitor);
+				// Break the loop because any sub project will update the AP configuration
+				// for all the projects. It's the Gradle custom model api's limitation.
+				break;
+			}
+		}
 	}
 }

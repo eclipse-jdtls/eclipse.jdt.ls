@@ -284,7 +284,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			break;
 		}
 
-		synchronizeAnnotationProcessingConfiguration(subMonitor);
+		GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
 
 		subMonitor.done();
 	}
@@ -612,19 +612,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static boolean isFailedStatus(IStatus status) {
 		return status != null && !status.isOK() && status.getException() != null;
 	}
-
-	private void synchronizeAnnotationProcessingConfiguration(IProgressMonitor monitor) {
-		for (IProject project : ProjectUtils.getGradleProjects()) {
-			Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
-			if (build.isPresent()) {
-				GradleBuildSupport.syncAnnotationProcessingConfiguration(build.get(), monitor);
-				// Break the loop because any sub project will update the AP configuration
-				// for all the projects. It's the Gradle custom model api's limitation.
-				break;
-			}
-		}
-	}
-
 
 	public class GradleCompatibilityStatus extends Status {
 
