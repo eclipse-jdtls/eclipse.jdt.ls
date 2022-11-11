@@ -175,6 +175,10 @@ public class Preferences {
 	 */
 	public static final String GRADLE_USER_HOME = "java.import.gradle.user.home";
 	/**
+	 * Preference key to enable/disable Gradle Annotation Processing.
+	 */
+	public static final String GRADLE_ANNOTATION_PROCESSING_ENABLED = "java.import.gradle.annotationProcessing.enabled";
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -529,6 +533,7 @@ public class Preferences {
 	private String gradleHome;
 	private String gradleJavaHome;
 	private String gradleUserHome;
+	private boolean gradleAnnotationProcessingEnabled;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
 	private boolean mavenDownloadSources;
@@ -770,6 +775,7 @@ public class Preferences {
 		gradleHome = null;
 		gradleJavaHome = null;
 		gradleUserHome = null;
+		gradleAnnotationProcessingEnabled = true;
 		importMavenEnabled = true;
 		mavenOffline = false;
 		mavenDownloadSources = false;
@@ -906,6 +912,8 @@ public class Preferences {
 		prefs.setGradleJavaHome(gradleJavaHome);
 		String gradleUserHome = getString(configuration, GRADLE_USER_HOME);
 		prefs.setGradleUserHome(gradleUserHome);
+		boolean gradleAnnotationProcessingEnabled = getBoolean(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED, true);
+		prefs.setGradleAnnotationProcessingEnabled(gradleAnnotationProcessingEnabled);
 		boolean importMavenEnabled = getBoolean(configuration, IMPORT_MAVEN_ENABLED, true);
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean mavenOffline = getBoolean(configuration, IMPORT_MAVEN_OFFLINE, false);
@@ -1499,6 +1507,14 @@ public class Preferences {
 
 	public String getGradleUserHome() {
 		return gradleUserHome;
+	}
+
+	public boolean isGradleAnnotationProcessingEnabled() {
+		return gradleAnnotationProcessingEnabled;
+	}
+
+	public void setGradleAnnotationProcessingEnabled(boolean gradleAnnotationProcessingEnabled) {
+		this.gradleAnnotationProcessingEnabled = gradleAnnotationProcessingEnabled;
 	}
 
 	public String getFormatterUrl() {

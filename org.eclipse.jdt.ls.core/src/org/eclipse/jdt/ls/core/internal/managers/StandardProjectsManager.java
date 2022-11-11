@@ -240,7 +240,10 @@ public class StandardProjectsManager extends ProjectsManager {
 					switch (status) {
 						case automatic:
 							if (ProjectUtils.isGradleProject(project)) {
+								// The sync task is handled by Buildship when sync.auto is turned on,
+								// except for the annotation processing configuration updating.
 								// See https://github.com/redhat-developer/vscode-java/issues/2673
+								GradleBuildSupport.syncAnnotationProcessingConfiguration(project, new NullProgressMonitor());
 								return;
 							}
 							updateProject(project, true);
