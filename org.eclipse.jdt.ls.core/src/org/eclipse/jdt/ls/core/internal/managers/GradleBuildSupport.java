@@ -157,18 +157,23 @@ public class GradleBuildSupport implements IBuildSupport {
 		// Even reloading a sub project will get the annotation processors for all
 		// the projects, due to the Gradle custom model api's limitation.
 		for (IProject project : ProjectUtils.getGradleProjects()) {
+			IJavaProject javaProject = JavaCore.create(project);
+			if (javaProject == null) {
+				continue;
+			}
+
 			Map<String, Object> apConfigurations = model.get(project.getLocation().toFile());
 			if (apConfigurations == null) {
+				continue;
+			}
+			
+			if (apConfigurations.isEmpty()) {
+				disableApt(javaProject);
 				continue;
 			}
 
 			Set<File> processors = getProcessors(apConfigurations);
 			if (processors.isEmpty()) {
-				continue;
-			}
-
-			IJavaProject javaProject = JavaCore.create(project);
-			if (javaProject == null) {
 				continue;
 			}
 
@@ -200,24 +205,6 @@ public class GradleBuildSupport implements IBuildSupport {
 				AptConfig.setProcessorOptions(newOptions, javaProject);
 			}
 		}
-	}
-
-	@SuppressWarnings("unchecked")
-	private static List<String> getCompilerArgs(Map<String, Object> apConfigurations) {
-		Object object = apConfigurations.get("compilerArgs");
-		if (!(object instanceof List)) {
-			return Collections.emptyList();
-		}
-		return (List<String>) object;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static Set<File> getProcessors(Map<String, Object> apConfigurations) {
-		Object object = apConfigurations.get("processors");
-		if (!(object instanceof Set)) {
-			return Collections.emptySet();
-		}
-		return (Set<File>) object;
 	}
 
 	private boolean isRoot(IProject project, GradleBuild gradleBuild, IProgressMonitor monitor) {
@@ -412,4 +399,27 @@ public class GradleBuildSupport implements IBuildSupport {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
+	private static List<String> getCompilerArgs(Map<String, Object> apConfigurations) {
+		Object object = apConfigurations.get("compilerArgs");
+		if (!(object instanceof List)) {
+			return Collections.emptyList();
+		}
+		return (List<String>) object;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Set<File> getProcessors(Map<String, Object> apConfigurations) {
+		Object object = apConfigurations.get("processors");
+		if (!(object instanceof Set)) {
+			return Collections.emptySet();
+		}
+		return (Set<File>) object;
+	}
+
+	private static void disableApt(IJavaProject javaProject) {
+		if (AptConfig.isEnabled(javaProject)) {
+			AptConfig.setEnabled(javaProject, false);
+		}
+	}
 }

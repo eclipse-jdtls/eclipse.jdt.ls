@@ -57,8 +57,8 @@ class GradleAnnotationProcessorPatchPlugin implements Plugin<Project> {
 				if (!hasPlugin(plugins, "java")) {
 					continue
 				}
-				// skip if already configured apt support plugin
-				if (hasPlugin(plugins, "com.diffplug.eclipse.apt")) {
+				// skip if already configured apt tasks from 'com.diffplug.eclipse.apt' plugin
+				if (project.getTasksByName('eclipseJdtApt', false).size() > 0) {
 					continue
 				}
 
@@ -68,12 +68,12 @@ class GradleAnnotationProcessorPatchPlugin implements Plugin<Project> {
 				// Due to JDT does not differentiate the args between main and test.
 				collectApConfiguration(project, "compileJava", processors, compilerArgs)
 
+				Map<String, Object> apInfo = new HashMap<>()
 				if (processors.size() > 0) {
-					Map<String, Object> apInfo = new HashMap<>()
 					apInfo.put("processors", processors)
 					apInfo.put("compilerArgs", compilerArgs)
-					annotationProcessorInfo.put(project.getProjectDir(), apInfo)
 				}
+				annotationProcessorInfo.put(project.getProjectDir(), apInfo)
 			}
 			return annotationProcessorInfo
 		}
