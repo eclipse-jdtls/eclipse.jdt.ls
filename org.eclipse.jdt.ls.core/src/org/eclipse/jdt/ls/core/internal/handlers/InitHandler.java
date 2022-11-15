@@ -213,9 +213,6 @@ final public class InitHandler extends BaseInitHandler {
 		JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
 		// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
 		startBundle(CorePlugin.PLUGIN_ID);
-		start = System.currentTimeMillis();
-		JobHelpers.waitForLoadingGradleVersionJob();
-		JavaLanguageServerPlugin.logInfo("LoadingGradleVersionJob finished " + (System.currentTimeMillis() - start) + "ms");
 		// https://github.com/redhat-developer/vscode-java/issues/2763
 		// When starting, Java LS turn off autobuild. See JavaLanguageServerPlugin.start(BundleContext).
 		// In this case Eclipse schedules the AutoBuildJobOff job. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=573595#c11
