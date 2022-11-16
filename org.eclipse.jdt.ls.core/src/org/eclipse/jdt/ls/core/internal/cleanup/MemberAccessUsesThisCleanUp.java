@@ -27,9 +27,6 @@ import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
  */
 public class MemberAccessUsesThisCleanUp implements ISimpleCleanUp {
 
-	public MemberAccessUsesThisCleanUp() {
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
 	 */

@@ -40,6 +40,7 @@ public class CleanUpRegistry {
 		cleanUpsList.add(new StaticAccessUsesClassNameCleanUp());
 		cleanUpsList.add(new AddOverrideAnnotationCleanUp());
 		cleanUpsList.add(new AddDeprecatedAnnotationCleanUp());
+		cleanUpsList.add(new StringConcatToTextBlockCleanUp());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
@@ -69,7 +70,7 @@ public class CleanUpRegistry {
 				.distinct() //
 				.map(cleanUpId -> {
 					return cleanUps.get(cleanUpId);
-				}) //
+				}).filter(cleanUpId -> cleanUpId != null) //
 				.toList();
 		if (cleanUpsToRun.isEmpty()) {
 			return Collections.emptyList();

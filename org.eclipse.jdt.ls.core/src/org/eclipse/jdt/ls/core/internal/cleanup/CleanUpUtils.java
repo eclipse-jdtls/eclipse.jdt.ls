@@ -36,9 +36,6 @@ import org.eclipse.lsp4j.TextEdit;
  */
 public class CleanUpUtils {
 
-	private CleanUpUtils() {
-	}
-
 	/**
 	 * Returns the clean up context for the given text document.
 	 *
@@ -70,7 +67,7 @@ public class CleanUpUtils {
 	public static List<TextEdit> getTextEditFromCleanUp(ISimpleCleanUp cleanUp, CleanUpContextCore context, IProgressMonitor monitor) {
 
 		try {
-			ICleanUpFixCore fix = cleanUp.createFix(context);
+			ICleanUpFixCore fix = cleanUp != null ? cleanUp.createFix(context) : null;
 			if (fix == null) {
 				return Collections.emptyList();
 			}
