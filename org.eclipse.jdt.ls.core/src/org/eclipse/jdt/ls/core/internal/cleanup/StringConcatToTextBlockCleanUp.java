@@ -19,20 +19,19 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
-import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
+import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
 
 /**
- * Represents a clean up that prefixes all static member accesses with the
- * classes name.
+ * Represents a clean up that converts string concatenaton to Text Blocks
  */
-public class StaticAccessUsesClassNameCleanUp implements ISimpleCleanUp {
+public class StringConcatToTextBlockCleanUp implements ISimpleCleanUp {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
 	 */
 	@Override
 	public String getIdentifier() {
-		return "qualifyStaticMembers";
+		return "stringConcatToTextBlock";
 	}
 
 	/* (non-Javadoc)
@@ -44,15 +43,7 @@ public class StaticAccessUsesClassNameCleanUp implements ISimpleCleanUp {
 		if (unit == null) {
 			return null;
 		}
-		return CodeStyleFixCore.createCleanUp(unit, //
-				false, //
-				false, //
-				true, //
-				false, //
-				false, //
-				true, //
-				false, //
-				false);
+		return StringConcatToTextBlockFixCore.createCleanUp(unit);
 	}
 
 	/* (non-Javadoc)
