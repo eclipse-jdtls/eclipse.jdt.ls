@@ -43,7 +43,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
@@ -137,7 +136,11 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.updateWorkspaceFolders(Collections.emptySet(), rootPaths);
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY, new NullProgressMonitor());
-		assertTrue("the init job hasn't been cancelled, status is: " + initWorkspaceJob.getResult().getSeverity(), initWorkspaceJob.getResult().matches(IStatus.CANCEL));
+		// https://github.com/eclipse/eclipse.jdt.ls/issues/2326
+		// Job.getResult() returns null if the job has never finished running.
+		// we can verify that the job is gone
+		// assertTrue("the init job hasn't been cancelled, status is: " + initWorkspaceJob.getResult().getSeverity(), initWorkspaceJob.getResult().matches(IStatus.CANCEL));
+		assertEquals("the init job hasn't been stopped, status is: " + initWorkspaceJob.getState(), 0, Job.getJobManager().find(rootPaths).length);
 	}
 
 	@Test
@@ -152,7 +155,8 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.updateWorkspaceFolders(Collections.emptySet(), addedRootPaths);
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY, new NullProgressMonitor());
-		assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
+		// assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
+		assertEquals("the init job hasn't been stopped, status is: " + updateWorkspaceJob.getState(), 0, Job.getJobManager().find(addedRootPaths).length);
 	}
 
 	@Test
