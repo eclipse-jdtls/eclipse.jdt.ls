@@ -90,6 +90,7 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.MissingAnnotationAttributesFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
@@ -1097,6 +1098,21 @@ public class LocalCorrectionsSubProcessor {
 				IType permittedType = SealedClassFixCore.getPermittedType(selectedNode);
 				ICompilationUnit unit = permittedType.getCompilationUnit();
 				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
+				proposals.add(proposal);
+			} catch (CoreException e) {
+				// do nothing
+			}
+		}
+	}
+
+	public static void addValueForAnnotationProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+		MissingAnnotationAttributesFixCore fix = MissingAnnotationAttributesFixCore.addMissingAnnotationAttributesProposal(context.getASTRoot(), problem);
+		if (fix != null) {
+			String label = fix.getDisplayString();
+			CompilationUnitChange change;
+			try {
+				change = fix.createChange(null);
+				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), change, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
 				proposals.add(proposal);
 			} catch (CoreException e) {
 				// do nothing
