@@ -300,10 +300,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.MissingValueForAnnotationMember:
-			// LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MissingValueForAnnotationMember:
+				LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context, problem, proposals);
+				break;
 			// case IProblem.BodyForNativeMethod:
 			// ModifierCorrectionSubProcessor.addNativeMethodProposals(context,
 			// problem, proposals);
