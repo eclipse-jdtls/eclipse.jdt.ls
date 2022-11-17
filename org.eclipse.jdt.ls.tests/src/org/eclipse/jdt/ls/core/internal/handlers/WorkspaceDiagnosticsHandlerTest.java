@@ -50,7 +50,6 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
-import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -386,15 +385,20 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void testMissingNatures() throws Exception {
 		//import project
 		importProjects("eclipse/wtpproject");
-		JobHelpers.waitForInitializeJobs(5000);
+		waitForBackgroundJobs();
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams> projectDiags = allCalls.stream().filter(p -> (p.getUri().endsWith("eclipse/wtpproject")) || p.getUri().endsWith("eclipse/wtpproject/")).findFirst();
-		assertTrue(projectDiags.isPresent());
-		assertEquals("Unexpected diagnostics:\n" + projectDiags.get().getDiagnostics(), 1, projectDiags.get().getDiagnostics().size());
+		// https://github.com/eclipse/eclipse.jdt.ls/issues/2331
+		boolean hasMissingNature = false;
+		for (PublishDiagnosticsParams projectDiags : allCalls) {
+			if (hasMissingNature = projectDiags.getDiagnostics().stream().filter(p -> (p.getMessage().startsWith("Unknown referenced nature"))).findFirst().isPresent()) {
+				break;
+			}
+		}
+		assertTrue(hasMissingNature);
 	}
 
 	@Test
