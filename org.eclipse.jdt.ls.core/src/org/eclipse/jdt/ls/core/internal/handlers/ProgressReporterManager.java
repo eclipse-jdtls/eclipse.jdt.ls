@@ -28,7 +28,13 @@ import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.StatusReport;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.ProgressParams;
+import org.eclipse.lsp4j.WorkDoneProgressBegin;
+import org.eclipse.lsp4j.WorkDoneProgressEnd;
+import org.eclipse.lsp4j.WorkDoneProgressNotification;
+import org.eclipse.lsp4j.WorkDoneProgressReport;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /**
  * Manager for creating {@link IProgressMonitor}s reporting progress to clients
@@ -161,6 +167,7 @@ public class ProgressReporterManager extends ProgressProvider {
 		protected int progress;
 		protected long lastReport = 0;
 		protected String progressId;
+		private boolean sentBegin = false;
 
 		public ProgressReporter() {
 			super(null);
@@ -174,6 +181,7 @@ public class ProgressReporterManager extends ProgressProvider {
 
 		public ProgressReporter(CancelChecker checker) {
 			super(checker);
+			progressId = UUID.randomUUID().toString();
 		}
 
 		@Override
@@ -233,23 +241,43 @@ public class ProgressReporterManager extends ProgressProvider {
 			if (client == null || preferenceManager == null || preferenceManager.getClientPreferences() == null) {
 				return;
 			}
-			ProgressReport progressReport = new ProgressReport(progressId);
 			String task = StringUtils.defaultIfBlank(taskName, (job == null || StringUtils.isBlank(job.getName())) ? "Background task" : job.getName());
-			progressReport.setTask(task);
-			progressReport.setSubTask(subTaskName);
-			progressReport.setTotalWork(totalWork);
-			progressReport.setWorkDone(progress);
-			progressReport.setComplete(isDone());
-			if (task != null && subTaskName != null && !subTaskName.isEmpty() && task.equals(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS)) {
-				progressReport.setStatus(task + SEPARATOR + subTaskName);
-			} else {
-				progressReport.setStatus(formatMessage(task));
-			}
-
 			if (preferenceManager.getClientPreferences().isProgressReportSupported()) {
+				ProgressReport progressReport = new ProgressReport(progressId);
+				progressReport.setTask(task);
+				progressReport.setSubTask(subTaskName);
+				progressReport.setTotalWork(totalWork);
+				progressReport.setWorkDone(progress);
+				progressReport.setComplete(isDone());
+				if (task != null && subTaskName != null && !subTaskName.isEmpty() && task.equals(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS)) {
+					progressReport.setStatus(task + SEPARATOR + subTaskName);
+				} else {
+					progressReport.setStatus(formatMessage(task));
+				}
+
 				client.sendProgressReport(progressReport);
 			} else {
-				client.notifyProgress(progressReport.toProgressParams());
+				Either<String, Integer> id = Either.forLeft(progressId);
+				if (!sentBegin) {
+					var workDoneProgressBegin = new WorkDoneProgressBegin();
+					workDoneProgressBegin.setMessage(task);
+					workDoneProgressBegin.setTitle(subTaskName == null ? task : subTaskName);
+					client.notifyProgress(new ProgressParams(id, Either.forLeft(workDoneProgressBegin)));
+					sentBegin = true;
+				}
+				WorkDoneProgressNotification notification;
+				if (isDone()) {
+					var endNotification = new WorkDoneProgressEnd();
+					endNotification.setMessage(task);
+					notification = endNotification;
+					sentBegin = false;
+				} else {
+					var reportNotification = new WorkDoneProgressReport();
+					reportNotification.setMessage(task);
+					reportNotification.setPercentage((int)(((double) progress) / totalWork * 100.0));
+					notification = reportNotification;
+				}
+				client.notifyProgress(new ProgressParams(id, Either.forLeft(notification)));
 			}
 		}
 

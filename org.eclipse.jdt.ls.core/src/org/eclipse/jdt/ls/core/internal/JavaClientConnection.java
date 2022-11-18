@@ -157,21 +157,6 @@ public class JavaClientConnection {
 	}
 
 	/**
-	 * Sends a progress report to the client to be presented to users
-	 *
-	 * @param progressReport
-	 *            The progress report to send back to the client
-	 */
-	public void sendProgressReport(ProgressReport progressReport) {
-		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (preferenceManager.getClientPreferences().isProgressReportSupported()) {
-			client.sendProgressReport(progressReport);
-		} else {
-			client.notifyProgress(progressReport.toProgressParams());
-		}
-	}
-
-	/**
 	 * Sends a message to the client to be presented to users, with possible
 	 * commands to execute
 	 */
