@@ -16,6 +16,10 @@ import java.util.Map;
 
 /**
  * The ranking result of each completion proposal.
+ * <p>
+ * Note: Following APIs are in experimental stage which means they might be changed
+ * in the future.
+ * </p>
  */
 public class CompletionRanking {
 
@@ -28,6 +32,11 @@ public class CompletionRanking {
 	 * The allowed min score.
 	 */
 	public static final int MIN_SCORE = 0;
+
+	/**
+	 * The key in the completion data which is used to store the completion time.
+	 */
+	public static final String COMPLETION_EXECUTION_TIME = "COMPLETION_EXECUTION_TIME";
 	/**
 	 * The score of the completion proposal. Score will be added to the proposal's relevance field.
 	 */

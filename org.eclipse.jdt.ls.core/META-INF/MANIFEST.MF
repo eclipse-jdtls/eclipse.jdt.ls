@@ -56,6 +56,7 @@ Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.
  org.eclipse.jdt.ls.core.internal.semantictokens;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.syntaxserver;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver",
  org.eclipse.jdt.ls.core.internal.text.correction;x-friends:="org.eclipse.jdt.ls.tests",
+ org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.internal.gradle.checksums;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.filesystem;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.lsp4j.proposed;x-friends:="org.eclipse.jdt.ls.tests",

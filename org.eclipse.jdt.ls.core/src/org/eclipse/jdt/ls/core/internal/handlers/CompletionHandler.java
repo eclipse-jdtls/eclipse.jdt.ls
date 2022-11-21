@@ -133,7 +133,7 @@ public class CompletionHandler{
 		int pId = Integer.parseInt(proposalId);
 		long rId = Long.parseLong(requestId);
 		CompletionResponse completionResponse = CompletionResponses.get(rId);
-		if (completionResponse == null || completionResponse.getProposals().size() <= pId) {
+		if (completionResponse == null || completionResponse.getItems().size() <= pId) {
 			throw ExceptionFactory.newException("Cannot get completion responses.");
 		}
 

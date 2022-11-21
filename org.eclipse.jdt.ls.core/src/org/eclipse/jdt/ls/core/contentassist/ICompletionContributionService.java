@@ -12,7 +12,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.contentassist;
 
-public interface ICompletionRankingService {
+/**
+ * Service that is used to manage completion contributions.
+ * <p>
+ * Note: Following APIs are in experimental stage which means they might be changed
+ * in the future.
+ * </p>
+ */
+public interface ICompletionContributionService {
 	/**
 	 * Register a completion ranking provider.
 	 */

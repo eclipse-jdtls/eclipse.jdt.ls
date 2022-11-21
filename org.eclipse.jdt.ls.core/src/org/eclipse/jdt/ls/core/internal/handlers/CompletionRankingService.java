@@ -16,9 +16,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
-import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingService;
+import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 
-public class CompletionRankingService implements ICompletionRankingService {
+public class CompletionRankingService implements ICompletionContributionService {
 
 	private List<ICompletionRankingProvider> providers;
 
@@ -33,6 +33,9 @@ public class CompletionRankingService implements ICompletionRankingService {
 
 	@Override
 	public void registerRankingProvider(ICompletionRankingProvider provider) {
+		if (provider == null) {
+			return;
+		}
 		for (ICompletionRankingProvider p : this.providers) {
 			if (p.equals(provider)) {
 				return;
@@ -43,6 +46,9 @@ public class CompletionRankingService implements ICompletionRankingService {
 
 	@Override
 	public void unregisterRankingProvider(ICompletionRankingProvider provider) {
+		if (provider == null) {
+			return;
+		}
 		this.providers.removeIf(p -> p.equals(provider));
 	}
 }

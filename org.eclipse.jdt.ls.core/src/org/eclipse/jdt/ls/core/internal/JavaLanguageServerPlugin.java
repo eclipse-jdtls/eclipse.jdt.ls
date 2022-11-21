@@ -57,7 +57,7 @@ import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
-import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingService;
+import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegistry;
@@ -623,7 +623,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		return pluginInstance.executorService;
 	}
 
-	public synchronized static ICompletionRankingService getCompletionRankingService() {
+	public synchronized static ICompletionContributionService getCompletionRankingService() {
 		if (pluginInstance.completionRankingService == null) {
 			pluginInstance.completionRankingService = new CompletionRankingService();
 		}
