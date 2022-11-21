@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -55,6 +56,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -265,7 +267,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test(expected = ResponseErrorException.class)
 	public void testRenameTypeWithErrors() throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
@@ -586,8 +588,42 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		String expected = source.replace("Test", "Test1");
 		WorkspaceEdit edit = getRenameEdit(cu, pos, "Test1");
 		assertNotNull(edit);
-		assertEquals(edit.getChanges().size(), 1);
+		assertEquals(2, edit.getChanges().size());
 		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
+	}
+
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar)
+	// https://github.com/redhat-developer/vscode-java/issues/2805
+	@Test
+	public void testRenameMethodLombok() throws Exception {
+		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
+		if (lombokDisabled) {
+			return;
+		}
+		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
+		importProjects("maven/mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+		if (!markers.isEmpty()) {
+			// there isn't the lombok agent
+			return;
+		}
+		IFile main = project.getFile("src/main/java/org/sample/Main.java");
+		assertTrue(main.exists());
+		ICompilationUnit mainCu = JavaCore.createCompilationUnitFrom(main);
+		String mainSource = mainCu.getSource();
+		String mainExpected = mainSource.replace("getName", "getName1");
+		IFile file = project.getFile("src/main/java/org/sample/Test.java");
+		assertTrue(file.exists());
+		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
+		Position pos = new Position(6, 23);
+		String source = cu.getSource();
+		String expected = source.replace("name", "name1");
+		WorkspaceEdit edit = getRenameEdit(cu, pos, "name1");
+		assertNotNull(edit);
+		assertEquals(2, edit.getChanges().size());
+		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
+		assertEquals(mainExpected, TextEditUtil.apply(mainSource, edit.getChanges().get(JDTUtils.toURI(mainCu))));
 	}
 
 	@Test
@@ -865,7 +901,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
 		Preferences p = mock(Preferences.class);
-		when(p.getProjectConfigurations()).thenReturn(null);
+		Mockito.lenient().when(p.getProjectConfigurations()).thenReturn(null);
 		when(preferenceManager.getPreferences()).thenReturn(p);
 		when(p.isRenameEnabled()).thenReturn(true);
 		handler = new RenameHandler(preferenceManager);

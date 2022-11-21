@@ -111,6 +111,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.internal.core.util.Util;
+import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
@@ -700,6 +701,28 @@ public final class JDTUtils {
 			ISourceRange nameRange = type.getRange(element);
 			if (SourceRange.isAvailable(nameRange)) {
 				if (cf == null) {
+					// https://github.com/redhat-developer/vscode-java/issues/2805
+					// 1. Jump to the field of the lombok-annotated class corresponding to the getter and setter method
+					if (element instanceof IMethod) {
+						IMethod method = (IMethod) element;
+						if (isGenerated(method)) {
+							IType iType = method.getDeclaringType();
+							if (iType != null) {
+								for (IField field : iType.getFields()) {
+									IMethod getter = GetterSetterUtil.getGetter(field);
+									if (getter != null && JavaModelUtil.isSameMethodSignature(getter.getElementName(), getter.getParameterTypes(), false, method)) {
+										nameRange = field.getNameRange();
+										break;
+									}
+									IMethod setter = GetterSetterUtil.getSetter(field);
+									if (setter != null && JavaModelUtil.isSameMethodSignature(setter.getElementName(), setter.getParameterTypes(), false, method)) {
+										nameRange = field.getNameRange();
+										break;
+									}
+								}
+							}
+						}
+					}
 					return toLocation(unit, nameRange.getOffset(), nameRange.getLength());
 				} else {
 					return toLocation(cf, nameRange.getOffset(), nameRange.getLength());
@@ -1776,4 +1799,20 @@ public final class JDTUtils {
 		FileSystem fileSystems = path.getFileSystem();
 		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
 	}
+
+	/**
+	 *
+	 * copied from
+	 * https://github.com/projectlombok/lombok/blob/731bb185077918af8bc1e6a9e6bb538b2d3fbbd8/src/eclipseAgent/lombok/launch/PatchFixesHider.java#L418-L426
+	 */
+	public static boolean isGenerated(IMember member) {
+		boolean result = false;
+		try {
+			result = member.getNameRange().getLength() <= 0 || member.getNameRange().equals(member.getSourceRange());
+		} catch (JavaModelException e) {
+			// better to assume it isn't generated
+		}
+		return result;
+	}
+
 }

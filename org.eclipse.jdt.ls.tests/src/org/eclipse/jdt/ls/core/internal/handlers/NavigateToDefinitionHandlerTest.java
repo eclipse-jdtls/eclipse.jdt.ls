@@ -19,9 +19,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.Location;
@@ -136,6 +139,34 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		handler.definition(new TextDocumentPositionParams(identifier, new Position(1, 31)), monitor);
 		testClass("org.apache.commons.lang3.stringutils", 6579, 20);
+	}
+
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar)
+	// https://github.com/redhat-developer/vscode-java/issues/2805
+	@Test
+	public void testLombok() throws Exception {
+		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
+		if (lombokDisabled) {
+			return;
+		}
+		importProjects("maven/mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
+		if (!markers.isEmpty()) {
+			// there isn't the lombok agent
+			return;
+		}
+		String uri = ClassFileUtil.getURI(project, "org.sample.Main");
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+		List<? extends Location> locations = handler.definition(new TextDocumentPositionParams(identifier, new Position(5, 20)), monitor);
+		assertNotNull(locations);
+		assertEquals(1, locations.size());
+		assertEquals(6, locations.get(0).getRange().getStart().getLine());
+		assertEquals(6, locations.get(0).getRange().getEnd().getLine());
+		assertEquals(19, locations.get(0).getRange().getStart().getCharacter());
+		assertEquals(23, locations.get(0).getRange().getEnd().getCharacter());
+		assertNotNull(locations.get(0).getUri());
+		assertTrue(locations.get(0).getUri().endsWith("org/sample/Test.java"));
 	}
 
 	@Test

@@ -58,7 +58,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		Preferences p = mock(Preferences.class);
 		when(preferenceManager.getPreferences()).thenReturn(p);
 		when(p.isRenameEnabled()).thenReturn(true);
-		handler = new PrepareRenameHandler();
+		handler = new PrepareRenameHandler(preferenceManager);
 	}
 
 
