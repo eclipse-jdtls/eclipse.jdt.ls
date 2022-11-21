@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2022 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -30,6 +30,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -221,6 +222,13 @@ final public class InitHandler extends BaseInitHandler {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		if (workspace instanceof Workspace) {
 			((Workspace) workspace).getBuildManager().waitForAutoBuildOff();
+		}
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor("org.eclipse.jdt.ls.core.startup");
+		if (elements != null) {
+			for (IConfigurationElement b : elements) {
+				String bundleId = b.getAttribute("id");
+				startBundle(bundleId);
+			}
 		}
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
