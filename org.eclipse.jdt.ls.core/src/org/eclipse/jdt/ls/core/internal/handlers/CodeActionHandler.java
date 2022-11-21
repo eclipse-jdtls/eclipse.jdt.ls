@@ -50,8 +50,8 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
-import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionComparator;
+import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -295,7 +295,7 @@ public class CodeActionHandler {
 			}
 			return Optional.of(Either.forRight(codeAction));
 		} else {
-			return Optional.of(Either.forLeft(command));
+			return Optional.ofNullable(command != null ? Either.forLeft(command) : null);
 		}
 	}
 
