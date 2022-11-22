@@ -221,6 +221,25 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		assertEquals(0, textEdits.size());
 	}
 
+	@Test
+	public void testInvertEqualsCleanUp() throws Exception {
+		String contents = "" + //
+				"package test1;\n" + //
+				"public class A {\n" + //
+				"    String message;\n" + //
+				"    boolean result1 = message.equals(\"text\");\n" + //
+				"    boolean result2 = message.equalsIgnoreCase(\"text\")" + //
+				"}\n";
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("invertEquals"), monitor);
+		assertEquals(1, textEdits.size());
+		assertEquals(te("\"text\".equals(message);\n" + //
+				"    boolean result2 = \"text\".equalsIgnoreCase(message", r(3, 22, 4, 53)), //
+				textEdits.get(0));
+	}
+
 	private static TextEdit te(String contents, Range range) {
 		TextEdit textEdit = new TextEdit();
 		textEdit.setNewText(contents);
