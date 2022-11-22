@@ -41,6 +41,7 @@ public class CleanUpRegistry {
 		cleanUpsList.add(new AddOverrideAnnotationCleanUp());
 		cleanUpsList.add(new AddDeprecatedAnnotationCleanUp());
 		cleanUpsList.add(new StringConcatToTextBlockCleanUp());
+		cleanUpsList.add(new InvertEqualsCleanUp());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
