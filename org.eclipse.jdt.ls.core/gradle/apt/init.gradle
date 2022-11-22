@@ -57,10 +57,6 @@ class GradleAnnotationProcessorPatchPlugin implements Plugin<Project> {
 				if (!hasPlugin(plugins, "java")) {
 					continue
 				}
-				// skip if already configured apt tasks from 'com.diffplug.eclipse.apt' plugin
-				if (project.getTasksByName('eclipseJdtApt', false).size() > 0) {
-					continue
-				}
 
 				Set<File> processors = new HashSet<>()
 				List<String> compilerArgs = new LinkedList<>()
