@@ -36,7 +36,7 @@ public interface ICompletionRankingProvider {
 	 * <p>
 	 * The method will be invoked before parsing completion proposals to completion items.
 	 * <p>
-	 * To register the provider to JDT.LS, call {@code JavaLanguageServerPlugin.getCompletionRankingService().registerRankingProvider(...)}
+	 * To register the provider to JDT.LS, call {@code JavaLanguageServerPlugin.getCompletionContributionService().registerRankingProvider(...)}
 	 *
 	 * @param proposals The completion proposals accepted by {@link CompletionProposalRequestor}.
 	 * @param context The completion context accepted by {@link CompletionProposalRequestor}.

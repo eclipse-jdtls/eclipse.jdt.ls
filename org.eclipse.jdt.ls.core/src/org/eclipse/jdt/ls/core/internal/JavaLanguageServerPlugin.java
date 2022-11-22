@@ -62,7 +62,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegistry;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionRankingService;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
@@ -141,7 +141,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private DiagnosticsState nonProjectDiagnosticsState;
 
 	private ExecutorService executorService;
-	private CompletionRankingService completionRankingService;
+	private CompletionContributionService completionContributionService;
 
 	public static LanguageServer getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -623,10 +623,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 		return pluginInstance.executorService;
 	}
 
-	public synchronized static ICompletionContributionService getCompletionRankingService() {
-		if (pluginInstance.completionRankingService == null) {
-			pluginInstance.completionRankingService = new CompletionRankingService();
+	public synchronized static ICompletionContributionService getCompletionContributionService() {
+		if (pluginInstance.completionContributionService == null) {
+			pluginInstance.completionContributionService = new CompletionContributionService();
 		}
-		return pluginInstance.completionRankingService;
+		return pluginInstance.completionContributionService;
 	}
 }

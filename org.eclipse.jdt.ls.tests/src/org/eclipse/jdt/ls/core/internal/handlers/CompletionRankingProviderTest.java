@@ -59,12 +59,12 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 	@Before
 	public void setUp() {
 		provider = new TestRankingProvider();
-		JavaLanguageServerPlugin.getCompletionRankingService().registerRankingProvider(provider);
+		JavaLanguageServerPlugin.getCompletionContributionService().registerRankingProvider(provider);
 	}
 
 	@After
 	public void tearDown() {
-		JavaLanguageServerPlugin.getCompletionRankingService().unregisterRankingProvider(provider);
+		JavaLanguageServerPlugin.getCompletionContributionService().unregisterRankingProvider(provider);
 		provider = null;
 	}
 

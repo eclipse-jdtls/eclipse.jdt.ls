@@ -39,7 +39,7 @@ import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionRankingService;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionRankingAggregation;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
@@ -250,7 +250,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private CompletionRankingAggregation[] getAggregatedRankingResult(IProgressMonitor monitor) {
 		List<ICompletionRankingProvider> providers =
-				((CompletionRankingService) JavaLanguageServerPlugin.getCompletionRankingService()).getRankingProviders();
+				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
 		CompletionRankingAggregation[] resultCombination = new CompletionRankingAggregation[this.proposals.size()];
 		if (providers != null && !providers.isEmpty()) {
 			for (ICompletionRankingProvider provider : providers) {

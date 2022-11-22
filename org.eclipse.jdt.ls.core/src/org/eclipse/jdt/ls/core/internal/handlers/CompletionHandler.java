@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
 import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
@@ -117,7 +118,7 @@ public class CompletionHandler{
 			if (data != null) {
 				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
 				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
-				data.put("COMPLETION_EXECUTION_TIME", String.valueOf(executionTime));
+				data.put(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
 			}
 			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
 					requestId,
@@ -143,7 +144,7 @@ public class CompletionHandler{
 		}
 
 		List<ICompletionRankingProvider> providers =
-				((CompletionRankingService) JavaLanguageServerPlugin.getCompletionRankingService()).getRankingProviders();
+				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
 		for (ICompletionRankingProvider provider : providers) {
 			provider.onDidCompletionItemSelect(item);
 		}

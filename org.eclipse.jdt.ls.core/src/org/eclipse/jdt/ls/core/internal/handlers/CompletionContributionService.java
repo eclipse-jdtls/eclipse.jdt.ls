@@ -18,12 +18,12 @@ import java.util.List;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 
-public class CompletionRankingService implements ICompletionContributionService {
+public class CompletionContributionService implements ICompletionContributionService {
 
 	private List<ICompletionRankingProvider> providers;
 
 
-	public CompletionRankingService() {
+	public CompletionContributionService() {
 		this.providers = new LinkedList<>();
 	}
 
