@@ -160,6 +160,7 @@ public class CodeActionHandler {
 			try {
 				codeActions.addAll(nonProjectFixProcessor.getCorrections(params, context, locations));
 				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(context, locations);
+				this.quickFixProcessor.addAddAllMissingImportsProposal(context, quickfixProposals);
 				Set<ChangeCorrectionProposal> quickSet = new TreeSet<>(comparator);
 				quickSet.addAll(quickfixProposals);
 				proposals.addAll(quickSet);

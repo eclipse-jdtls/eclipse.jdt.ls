@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
@@ -36,6 +38,9 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
@@ -45,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSu
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -671,5 +677,19 @@ public class QuickFixProcessor {
 		// }
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
+	}
+
+	public void addAddAllMissingImportsProposal(IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+		if (proposals.size() == 0) {
+			return;
+		}
+		Optional<Integer> minRelevance = proposals.stream().filter((proposal) -> (proposal instanceof AddImportCorrectionProposal)).map((proposal) -> proposal.getRelevance()).min(Comparator.naturalOrder());
+		if (minRelevance.isPresent()) {
+			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, context.getCompilationUnit(),
+					minRelevance.get() - 1, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
+			if (proposal != null) {
+				proposals.add(proposal);
+			}
+		}
 	}
 }

@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IClasspathAttribute;
@@ -34,10 +36,13 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.ResourceOperationKind;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -1547,6 +1552,28 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 		// restore the ignored kind
 		setIgnoredKind(CodeActionKind.Source + ".*");
+	}
+
+	@Test
+	public void testMultipleAddAllMissingImports() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    @Retention(RetentionPolicy.RUNTIME)\n");
+		buf.append("    private void test() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		// assert quick fix exists
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, new Range(new Position(3, 4), new Position(3, 4)));
+		List<CodeAction> addAllMissingImportsActions = codeActions.stream()
+			.filter((action) -> action.isRight())
+			.map((action) -> action.getRight())
+			.filter((action) -> action.getKind().equals((CodeActionKind.QuickFix)) && action.getTitle().equals(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description))
+			.collect(Collectors.toList());
+		assertEquals(1, addAllMissingImportsActions.size());
 	}
 
 }

@@ -238,7 +238,7 @@ public final class OrganizeImportsHandler {
 		if (uri == null) {
 			return null;
 		}
-		return new CUCorrectionProposal(label, kind, cu, null, relevance + 10) {
+		return new CUCorrectionProposal(label, kind, cu, null, relevance) {
 			@Override
 			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
 				TextEdit edit = OrganizeImportsHandler.organizeImports(cu, supportsChooseImports ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, new NullProgressMonitor());
