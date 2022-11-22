@@ -792,6 +792,10 @@ public class JavaPostfixContext extends JavaContext {
 		return res.toArray(new String [0]);
 	}
 
+	/**
+	 * Get additional text edits for a template. Usually this is used to add import statements.
+	 * @param name name of the template.
+	 */
 	public List<TextEdit> getAdditionalTextEdits(String name) {
 		return additionalTextEdits.get(name);
 	}
