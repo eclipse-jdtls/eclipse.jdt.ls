@@ -29,11 +29,10 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
-import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.After;
@@ -57,9 +56,12 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		importProjects("maven/quickstart");
 		project = WorkspaceHelper.getProject("quickstart");
 		javaProject = JavaCore.create(project);
+
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		JavaCore.setComplianceOptions(JavaCore.VERSION_19, options);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_NUMBER_OF_EMPTY_LINES_TO_PRESERVE, String.valueOf(99));
 		javaProject.setOptions(options);
+
 		fSourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src/main/java"));
 		File src = fSourceFolder.getResource().getLocation().toFile();
 		src.mkdirs();
@@ -108,9 +110,19 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "package test1;\n" //
+				+ "public class A implements Runnable {\n" //
+				+ "    @Override\n" //
+				+ "    public void run() {} \n" //
+				+ "    /**\n" //
+				+ "     * @deprecated\n" //
+				+ "     */\n" //
+				+ "    public void destroy() {} \n" //
+				+ "}\n" //
+				+ "";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("addOverride"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("@Override\n    ", r(2, 4, 2, 4)), textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -128,9 +140,19 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "package test1;\n" //
+				+ "public class A implements Runnable {\n" //
+				+ "    public void run() {} \n" //
+				+ "    /**\n" //
+				+ "     * @deprecated\n" //
+				+ "     */\n" //
+				+ "    @Deprecated\n" //
+				+ "    public void destroy() {} \n" //
+				+ "}\n" //
+				+ "";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("addDeprecated"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("@Deprecated\n    ", r(6, 4, 6, 4)), textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -146,9 +168,17 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "package test1;\n" //
+				+ "public class A {\n" //
+				+ "    private int value;\n" //
+				+ "    public int getValue() {\n" //
+				+ "        return this.value;\n" //
+				+ "    }\n" //
+				+ "}\n" //
+				+ "";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyMembers"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("this.value", r(4, 15, 4, 20)), textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -164,9 +194,17 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "package test1;\n" //
+				+ "public class A {\n" //
+				+ "    private static final int VALUE = 10;\n" //
+				+ "    public int getValue() {\n" //
+				+ "        return A.VALUE;\n" //
+				+ "    }\n" //
+				+ "}\n" //
+				+ "";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyStaticMembers"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("A.VALUE", r(4, 15, 4, 20)), textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -184,9 +222,19 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "" + //
+				"package test1;\n" + //
+				"import static java.lang.System.out;\n" + //
+				"public class A {\n" + //
+				"    private static final int VALUE = 10;\n" + //
+				"    public int getValue() {\n" + //
+				"        System.out.println(\"moo\");\n" + //
+				"        return A.VALUE;\n" + //
+				"    }\n" + //
+				"}\n";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyStaticMembers"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("System.out", r(5, 8, 5, 11)), textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
 	@Test
@@ -233,25 +281,244 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
+		String expected = "package test1;\n" //
+				+ "public class A {\n" //
+				+ "    String message;\n" //
+				+ "    boolean result1 = \"text\".equals(message);\n" //
+				+ "    boolean result2 = \"text\".equalsIgnoreCase(message)}\n" //
+				+ "";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("invertEquals"), monitor);
-		assertEquals(1, textEdits.size());
-		assertEquals(te("\"text\".equals(message);\n" + //
-				"    boolean result2 = \"text\".equalsIgnoreCase(message", r(3, 22, 4, 53)), //
-				textEdits.get(0));
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
 	}
 
-	private static TextEdit te(String contents, Range range) {
-		TextEdit textEdit = new TextEdit();
-		textEdit.setNewText(contents);
-		textEdit.setRange(range);
-		return textEdit;
+	@Test
+	public void testAddFinalModifiersWherePossible() throws Exception {
+		String contents = "package test1;\n" //
+				+ "\n" //
+				+ "public class AddModifier {\n" //
+				+ "\n" //
+				+ "private String label1;\n" //
+				+ "protected String label2;\n" //
+				+ "public String label3;\n" //
+				+ "private String label4 = \"\";\n" //
+				+ "protected String label5 = \"\";\n" //
+				+ "public String label6 = \"\";\n" //
+				+ "private final String label7 = \"\";\n" //
+				+ "\n" //
+				+ "public void test(String foo) {\n" //
+				+ "    String label8, label9 = \"\";\n" //
+				+ "    String label10;\n" //
+				+ "    String label11 = \"\";\n" //
+				+ "    final String label12 = \"\";\n" //
+				+ "	}\n" //
+				+ "}";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("AddModifier.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("addFinalModifier"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		String expected = "package test1;\n" //
+				+ "\n" //
+				+ "public class AddModifier {\n" //
+				+ "\n" //
+				+ "private String label1;\n" //
+				+ "protected String label2;\n" //
+				+ "public String label3;\n" //
+				+ "private final String label4 = \"\";\n" //
+				+ "protected String label5 = \"\";\n" //
+				+ "public String label6 = \"\";\n" //
+				+ "private final String label7 = \"\";\n" //
+				+ "\n" //
+				+ "public void test(final String foo) {\n" //
+				+ "    final String label8, label9 = \"\";\n" //
+				+ "    final String label10;\n" //
+				+ "    final String label11 = \"\";\n" //
+				+ "    final String label12 = \"\";\n" //
+				+ "	}\n" //
+				+ "}";
+
+		assertEquals(expected, actual);
 	}
 
-	private static Range r(int beginLine, int beginChar, int endLine, int endChar) {
-		Position start = new Position(beginLine, beginChar);
-		Position end = new Position(endLine, endChar);
-		Range range = new Range(start, end);
-		return range;
+	@Test
+	public void testConvertToSwitchExpression() throws Exception {
+		String contents = "package test1;\n" //
+				+ "\n" //
+				+ "public class SwitchExpression {\n" //
+				+ "    public void test() {\n" //
+				+ "        Day day2 = Day.THURSDAY;\n" //
+				+ "        String message2;\n" //
+				+ "        switch (day2) {\n" //
+				+ "            case SATURDAY:\n" //
+				+ "            case SUNDAY:\n" //
+				+ "                message2 = \"Weekend!\";\n" //
+				+ "                break;\n" //
+				+ "            case MONDAY:\n" //
+				+ "            case TUESDAY:\n" //
+				+ "            case WEDNESDAY:\n" //
+				+ "            case THURSDAY:\n" //
+				+ "            case FRIDAY:\n" //
+				+ "                message2 = \"Weekday\";\n" //
+				+ "                break;\n" //
+				+ "            default:\n" //
+				+ "                message2 = \"???\";\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public enum Day {\n" //
+				+ "        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY\n" //
+				+ "    };\n" //
+				+ "}";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("SwitchExpression.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("switchExpression"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		String expected = "package test1;\n" //
+				+ "\n" //
+				+ "public class SwitchExpression {\n" //
+				+ "    public void test() {\n" //
+				+ "        Day day2 = Day.THURSDAY;\n" //
+				+ "        String message2 = switch (day2) {\n" //
+				+ "        case SATURDAY, SUNDAY -> \"Weekend!\";\n" //
+				+ "        case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> \"Weekday\";\n" //
+				+ "        default -> \"???\";\n" //
+				+ "        };\n" //
+				+ "    }\n" //
+				+ "\n" //
+				+ "    public enum Day {\n" //
+				+ "        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY\n" //
+				+ "    };\n" //
+				+ "}";
+
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testPatternMatchInstanceof() throws Exception {
+		String contents = "package test1;\n" //
+				+ "\n" //
+				+ "public class InstanceofPatternMatch {\n" //
+				+ "	public void test() {\n" //
+				+ "		Object str = new String(\"test\");\n" //
+				+ "		if (str instanceof String) {\n" //
+				+ "			String real = (String) str;\n" //
+				+ "			System.out.println(real.substring(0));\n" //
+				+ "		}\n" //
+				+ "	}\n" //
+				+ "}";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("InstanceofPatternMatch.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("instanceofPatternMatch"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		String expected = "package test1;\n" //
+				+ "\n" //
+				+ "public class InstanceofPatternMatch {\n" //
+				+ "	public void test() {\n" //
+				+ "		Object str = new String(\"test\");\n" //
+				+ "		if (str instanceof String real) {\n" //
+				+ "			System.out.println(real.substring(0));\n" //
+				+ "		}\n" //
+				+ "	}\n" //
+				+ "}";
+
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testLambdaExpression() throws Exception {
+		String contents = "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.function.IntConsumer;\n" //
+				+ "\n" //
+				+ "public class LambdaExpression {\n" //
+				+ "    public void test() {\n" //
+				+ "        IntConsumer c = new IntConsumer() {\n" //
+				+ "            @Override\n" //
+				+ "            public void accept(int value) {\n" //
+				+ "                System.out.println(value);\n" //
+				+ "	           }\n" //
+				+ "        };\n" //
+				+ "    }\n" //
+				+ "}";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("LambdaExpression.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpression"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		String expected = "package test1;\n" //
+				+ "\n" //
+				+ "import java.util.function.IntConsumer;\n" //
+				+ "\n" //
+				+ "public class LambdaExpression {\n" //
+				+ "    public void test() {\n" //
+				+ "        IntConsumer c = value -> System.out.println(value);\n" //
+				+ "    }\n" //
+				+ "}";
+
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testMultiCleanup() throws Exception {
+		String contents = "package test1;\n"
+				+ "\n"
+				+ "import java.io.File;\n"
+				+ "import java.io.FileFilter;\n"
+				+ "import java.util.Arrays;\n"
+				+ "\n"
+				+ "public class MutliCleanup {\n"
+				+ "    public void test() {\n"
+				+ "        String PATH = \"/this/is/some/path\";\n"
+				+ "        String MESSAGE = \"This is a message.\" +\n"
+				+ "                \"This message has multiple lines.\" +\n"
+				+ "                \"We can convert it to a text block\";\n"
+				+ "\n"
+				+ "        Object[] obj = Arrays.asList(PATH).toArray();\n"
+				+ "        if (obj[0] instanceof String) {\n"
+				+ "            String tmp = (String) obj[0];\n"
+				+ "            File f = new File(tmp);\n"
+				+ "            File[] filtered = f.listFiles(new FileFilter() {\n"
+				+ "                @Override\n"
+				+ "                public boolean accept(File path) {\n"
+				+ "                    return true;\n"
+				+ "                }\n"
+				+ "            });\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("MultiCleanup.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpression", "instanceofPatternMatch", "stringConcatToTextBlock", "addFinalModifier"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		String expected = "package test1;\n"
+				+ "\n"
+				+ "import java.io.File;\n"
+				+ "import java.io.FileFilter;\n"
+				+ "import java.util.Arrays;\n"
+				+ "\n"
+				+ "public class MutliCleanup {\n"
+				+ "    public void test() {\n"
+				+ "        final String PATH = \"/this/is/some/path\";\n"
+				+ "        final String MESSAGE = \"\"\"\n"
+				+ "        	This is a message.\\\n"
+				+ "        	This message has multiple lines.\\\n"
+				+ "        	We can convert it to a text block\"\"\";\n"
+				+ "\n"
+				+ "        final Object[] obj = Arrays.asList(PATH).toArray();\n"
+				+ "        if (obj[0] instanceof final String tmp) {\n"
+				+ "            final File f = new File(tmp);\n"
+				+ "            final File[] filtered = f.listFiles((FileFilter) path -> true);\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "";
+
+		assertEquals(expected, actual);
 	}
 
 }

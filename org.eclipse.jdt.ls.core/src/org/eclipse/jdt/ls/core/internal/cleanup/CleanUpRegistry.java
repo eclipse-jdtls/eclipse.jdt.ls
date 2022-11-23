@@ -19,8 +19,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -42,6 +45,10 @@ public class CleanUpRegistry {
 		cleanUpsList.add(new AddDeprecatedAnnotationCleanUp());
 		cleanUpsList.add(new StringConcatToTextBlockCleanUp());
 		cleanUpsList.add(new InvertEqualsCleanUp());
+		cleanUpsList.add(new VariableDeclarationFixCleanup());
+		cleanUpsList.add(new SwitchExpressionCleanup());
+		cleanUpsList.add(new InstanceofPatternMatch());
+		cleanUpsList.add(new LambdaExpressionCleanup());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
@@ -94,10 +101,31 @@ public class CleanUpRegistry {
 
 		// build the context after setting the compiler options so that the built AST has all the required markers
 		CleanUpContextCore context = CleanUpUtils.getCleanUpContext(textDocumentId, opts, monitor);
-
 		List<TextEdit> textEdits = new ArrayList<>();
-		for (ISimpleCleanUp cleanUp : cleanUpsToRun) {
-			textEdits.addAll(CleanUpUtils.getTextEditFromCleanUp(cleanUp, context, monitor));
+		ICompilationUnit cu = context.getCompilationUnit();
+
+		try {
+			ICompilationUnit wc = cu.getWorkingCopy(monitor);
+			for (ISimpleCleanUp cleanUp : cleanUpsToRun) {
+				org.eclipse.text.edits.TextEdit jdtEdit = CleanUpUtils.getTextEditFromCleanUp(cleanUp, context, monitor);
+				if (jdtEdit != null) {
+					wc.applyTextEdit(jdtEdit, monitor);
+					context = CleanUpUtils.getCleanUpContext(wc, opts, monitor);
+				}
+			}
+			// https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#textEditArray
+			// Cleanups may have overlapping text edits but LSP does not support this
+			// Generate text edit as the entire document
+			IBuffer wcBuff = wc.getBuffer();
+			IBuffer cuBuff = cu.getBuffer();
+			String newText = wcBuff.getContents();
+			if (!newText.equals(cuBuff.getContents())) {
+				TextEdit te = new TextEdit(JDTUtils.toRange(cu, 0, cuBuff.getLength()), newText);
+				textEdits.add(te);
+			}
+
+		} catch (JavaModelException e) {
+			// continue
 		}
 
 		return textEdits;
