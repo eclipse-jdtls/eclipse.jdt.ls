@@ -284,11 +284,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					// before send the service ready notification, make sure all bundles are synchronized
 					synchronizeBundles();
 
-					IndexUtils.copyIndexesToSharedLocation();
-
 					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
 					status = ServiceStatus.ServiceReady;
 					pm.projectsImported(monitor);
+
+					IndexUtils.copyIndexesToSharedLocation();
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
 					return Status.CANCEL_STATUS;

@@ -29,22 +29,27 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.ClasspathEntry;
+import org.eclipse.jdt.internal.core.JavaModelManager;
+import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.internal.core.index.FileIndexLocation;
+import org.eclipse.jdt.internal.core.index.Index;
 import org.eclipse.jdt.internal.core.index.IndexLocation;
+import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
+import org.eclipse.jdt.internal.core.search.indexing.ReadWriteMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 public class IndexUtils {
     public static void copyIndexesToSharedLocation() {
+        IndexManager indexManager = JavaModelManager.getIndexManager();
         // common index location for all workspaces
         final String SHARED_INDEX_LOCATION = System.getProperty("jdt.core.sharedIndexLocation");
-        if (StringUtils.isBlank(SHARED_INDEX_LOCATION)) {
+        if (indexManager == null || StringUtils.isBlank(SHARED_INDEX_LOCATION)) {
             return;
         }
 
-        Set<IndexLocation> reusedIndexLocations = new HashSet<>();
+        Set<IndexLocation> resolvedIndexLocations = new HashSet<>();
         IPath javaCoreStateLocation = JavaCore.getPlugin().getStateLocation();
         for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
             try {
@@ -56,14 +61,12 @@ public class IndexUtils {
                             continue;
                         }
 
-                        IPath containerPath = entry.getPath();
-                        IndexLocation localIndexLocation = getLocalIndexLocation(javaCoreStateLocation, containerPath);
                         IndexLocation sharedIndexLocation = IndexLocation.createIndexLocation(indexURL);
-                        if (sharedIndexLocation.equals(localIndexLocation) || reusedIndexLocations.contains(localIndexLocation)) {
+                        IndexLocation localIndexLocation = getLocalIndexLocation(javaCoreStateLocation, entry.getPath());
+                        if (sharedIndexLocation.equals(localIndexLocation) || !resolvedIndexLocations.add(localIndexLocation)) {
                             continue;
                         }
 
-                        reusedIndexLocations.add(localIndexLocation);
                         boolean needDeleteLocalIndex = false;
                         File localIndexFile = localIndexLocation.getIndexFile();
                         if (localIndexLocation.exists()) {
@@ -72,20 +75,37 @@ public class IndexUtils {
                                 continue;
                             }
 
-                            File tmpFile = new File(sharedIndexFile.getParent(), sharedIndexFile.getName() + "." + System.currentTimeMillis());
-                            try {
-                                mkdirsFor(tmpFile);
-                                Files.copy(localIndexFile.toPath(), tmpFile.toPath(), LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
-                                Files.deleteIfExists(sharedIndexFile.toPath());
-                                needDeleteLocalIndex = tmpFile.renameTo(sharedIndexFile);
-                            } catch (IOException e) {
-                                JavaLanguageServerPlugin.logError(String.format("Failed to copy the local index %s to the shared index %s: %s",
-                                    localIndexFile.getName(), sharedIndexFile.getName(), e.getMessage()));
-                            } finally {
+                            if (indexManager.getIndex(sharedIndexLocation) != null) {
+                                // current classpath entry is using the shared index, delete local index directly.
+                                needDeleteLocalIndex = true;
+                            } else {
+                                Index localIndex = indexManager.getIndex(localIndexLocation);
+                                if (localIndex == null) {
+                                    continue;
+                                }
+
+                                ReadWriteMonitor monitor = localIndex.monitor;
+                                if (monitor == null) { // index got deleted since acquired
+                                    continue;
+                                }
+    
+                                File tmpFile = new File(sharedIndexFile.getParent(), sharedIndexFile.getName() + "." + System.currentTimeMillis());
                                 try {
-                                    Files.deleteIfExists(tmpFile.toPath());
+                                    monitor.enterRead();
+                                    mkdirsFor(tmpFile);
+                                    Files.copy(localIndexFile.toPath(), tmpFile.toPath(), LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
+                                    Files.deleteIfExists(sharedIndexFile.toPath());
+                                    needDeleteLocalIndex = tmpFile.renameTo(sharedIndexFile);
                                 } catch (IOException e) {
-                                    // do nothing
+                                    JavaLanguageServerPlugin.logError(String.format("Failed to copy the local index %s to the shared index %s: %s",
+                                        localIndexFile.getName(), sharedIndexFile.getName(), e.getMessage()));
+                                } finally {
+                                    monitor.exitRead();
+                                    try {
+                                        Files.deleteIfExists(tmpFile.toPath());
+                                    } catch (IOException e) {
+                                        // do nothing
+                                    }
                                 }
                             }
                         }
@@ -117,9 +137,7 @@ public class IndexUtils {
     }
 
     private static void mkdirsFor(File destination) {
-        //does destination directory exist ?
         if ( destination.getParentFile() != null && !destination.getParentFile().exists()) {
-            //noinspection ResultOfMethodCallIgnored
             destination.getParentFile().mkdirs();
         }
     }
