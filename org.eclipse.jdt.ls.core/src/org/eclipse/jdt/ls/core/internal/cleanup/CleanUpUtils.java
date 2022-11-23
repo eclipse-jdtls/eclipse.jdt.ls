@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -27,9 +25,8 @@ import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.text.edits.TextEdit;
 
 /**
  * Functions for working with JDT ICleanUpCore and ISimpleCleanUp.
@@ -49,6 +46,10 @@ public class CleanUpUtils {
 	 */
 	public static CleanUpContextCore getCleanUpContext(TextDocumentIdentifier textDocumentId, Map<String, String> compilerOpts, IProgressMonitor monitor) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(textDocumentId.getUri());
+		return getCleanUpContext(unit, compilerOpts, monitor);
+	}
+
+	public static CleanUpContextCore getCleanUpContext(ICompilationUnit unit, Map<String, String> compilerOpts, IProgressMonitor monitor) {
 		CompilationUnit ast = createASTWithOpts(unit, compilerOpts, monitor);
 		return new CleanUpContextCore(unit, ast);
 	}
@@ -64,25 +65,20 @@ public class CleanUpUtils {
 	 *            the progress monitor
 	 * @return a non-null list of text edits for the given clean up
 	 */
-	public static List<TextEdit> getTextEditFromCleanUp(ISimpleCleanUp cleanUp, CleanUpContextCore context, IProgressMonitor monitor) {
+	public static TextEdit getTextEditFromCleanUp(ISimpleCleanUp cleanUp, CleanUpContextCore context, IProgressMonitor monitor) {
 
 		try {
 			ICleanUpFixCore fix = cleanUp != null ? cleanUp.createFix(context) : null;
 			if (fix == null) {
-				return Collections.emptyList();
+				return null;
 			}
 			CompilationUnitChange cleanUpChange = fix.createChange(monitor);
-			org.eclipse.text.edits.TextEdit jdtEdit = cleanUpChange.getEdit();
-			if (jdtEdit == null) {
-				return Collections.emptyList();
-			}
-			TextEditConverter converter = new TextEditConverter(context.getCompilationUnit(), jdtEdit);
-			List<TextEdit> lspEdit = converter.convert();
-			return lspEdit != null ? lspEdit : Collections.emptyList();
+			TextEdit jdtEdit = cleanUpChange.getEdit();
+			return jdtEdit;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logError(String.format("Failed to create text edit for clean up %s", cleanUp.getIdentifier()));
 		}
-		return Collections.emptyList();
+		return null;
 	}
 
 	private static CompilationUnit createASTWithOpts(ICompilationUnit cu, Map<String, String> opts, IProgressMonitor monitor) {
