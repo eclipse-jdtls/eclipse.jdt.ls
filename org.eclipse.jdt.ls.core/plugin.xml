@@ -183,11 +183,6 @@
             class="org.eclipse.jdt.ls.core.internal.javafx.FXLibraryLocationResolver">
       </resolver>
    </extension>
-   <extension id="org.eclipse.jdt.ls.filesystem" name="JDT LS File System" point="org.eclipse.core.filesystem.filesystems">
-      <filesystem scheme="file">
-         <run class="org.eclipse.jdt.ls.core.internal.filesystem.JLSFileSystem"/>
-      </filesystem>
-   </extension>
    <extension
       id="org.eclipse.jdt.ls.buildFileMarker"
       point="org.eclipse.core.resources.markers">

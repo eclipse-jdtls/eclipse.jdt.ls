@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension id="org.eclipse.jdt.ls.filesystem" name="JDT LS File System" point="org.eclipse.core.filesystem.filesystems">
+      <filesystem scheme="file">
+         <run class="org.eclipse.jdt.ls.core.internal.filesystem.JLSFileSystem"/>
+      </filesystem>
+   </extension>
+
+</plugin>

@@ -132,6 +132,7 @@
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.ls.filesystem@default:default"/>
         <setEntry value="org.eclipse.jdt.ls.logback.appender@default:false"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
