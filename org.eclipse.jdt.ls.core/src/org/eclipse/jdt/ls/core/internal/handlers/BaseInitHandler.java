@@ -51,6 +51,7 @@ public abstract class BaseInitHandler {
 	private PreferenceManager preferenceManager;
 
 	protected ProjectsManager projectsManager;
+	protected long parentProcessId;
 
 	public BaseInitHandler(ProjectsManager projectsManager, PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -154,6 +155,7 @@ public abstract class BaseInitHandler {
 		Integer processId = param.getProcessId();
 		LanguageServerApplication application = JavaLanguageServerPlugin.getLanguageServer();
 		if (processId != null && application != null) {
+			parentProcessId = processId.longValue();
 			application.setParentProcessId(processId.longValue());
 		}
 

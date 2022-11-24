@@ -177,7 +177,7 @@ final public class InitHandler extends BaseInitHandler {
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);
 		textDocumentSyncOptions.setSave(new SaveOptions(Boolean.TRUE));
-		textDocumentSyncOptions.setChange(TextDocumentSyncKind.Incremental);
+		textDocumentSyncOptions.setChange(isRunningInAnotherEclispeApp() ? TextDocumentSyncKind.None : TextDocumentSyncKind.Incremental);
 		if (preferenceManager.getClientPreferences().isWillSaveRegistered()) {
 			textDocumentSyncOptions.setWillSave(Boolean.TRUE);
 		}
@@ -202,6 +202,14 @@ final public class InitHandler extends BaseInitHandler {
 		capabilities.setSemanticTokensProvider(semanticTokensOptions);
 
 		initializeResult.setCapabilities(capabilities);
+	}
+
+	/**
+	 * @return
+	 */
+	private boolean isRunningInAnotherEclispeApp() {
+		return parentProcessId > 0 && ProcessHandle.current().pid() == parentProcessId // in same process
+				&& JavaLanguageServerPlugin.getLanguageServer() == null; // JDT-LS not started as application
 	}
 
 	@Override
