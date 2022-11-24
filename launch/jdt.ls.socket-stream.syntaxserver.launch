@@ -111,6 +111,7 @@
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
+        <setEntry value="org.eclipse.jdt.ls.filesystem@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
     <stringAttribute key="templateConfig" value="${target_home}/configuration/config.ini"/>

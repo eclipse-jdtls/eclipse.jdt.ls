@@ -35,6 +35,7 @@
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
 		<module>org.eclipse.jdt.ls.core</module>
+		<module>org.eclipse.jdt.ls.filesystem</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.logback.appender</module>
 		<module>org.eclipse.jdt.ls.tests.syntaxserver</module>

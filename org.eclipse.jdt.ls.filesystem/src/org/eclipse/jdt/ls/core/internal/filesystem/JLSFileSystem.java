@@ -14,11 +14,12 @@
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import java.net.URI;
+import java.nio.file.Paths;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.filesystem.local.LocalFileSystem;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.core.runtime.Path;
 
 /**
  * JDT.LS's own implementation of file system to handle the 'file' scheme uri.
@@ -45,10 +46,15 @@ public class JLSFileSystem extends LocalFileSystem {
 
     @Override
     public IFileStore getStore(URI uri) {
-        IPath path = ResourceUtils.filePathFromURI(uri.toString());
-        if (path == null) {
-            return super.getStore(uri);
-        }
-        return getStore(path);
+        IPath path = filePathFromURI(uri.toString());
+        return path == null ? super.getStore(uri) : getStore(path);
     }
+
+	public static IPath filePathFromURI(String uriStr) {
+		URI uri = URI.create(uriStr);
+		return "file".equals(uri.getScheme()) ?
+			Path.fromOSString(Paths.get(uri).toString()) :
+			null;
+	}
+
 }
