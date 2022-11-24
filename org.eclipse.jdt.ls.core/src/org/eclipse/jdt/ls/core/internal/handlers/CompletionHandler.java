@@ -17,9 +17,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.ProgressMonitorWrapper;
@@ -34,6 +36,9 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
+import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
+import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
+import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -43,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -80,6 +86,7 @@ public class CompletionHandler{
 
 	public Either<List<CompletionItem>, CompletionList> completion(CompletionParams params,
 			IProgressMonitor monitor) {
+		long startTime = System.currentTimeMillis();
 		CompletionList $ = null;
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
@@ -103,7 +110,54 @@ public class CompletionHandler{
 		} else {
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
 		}
+		long executionTime = System.currentTimeMillis() - startTime;
+		for (CompletionItem item : $.getItems()) {
+			String requestId = "";
+			String proposalId = "";
+			Map<String, String> data = (Map<String, String>) item.getData();
+			if (data != null) {
+				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
+				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
+				data.put(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
+			}
+			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
+					requestId,
+					proposalId
+			)));
+		}
 		return Either.forRight($);
+	}
+
+	public void onDidCompletionItemSelect(String requestId, String proposalId) throws CoreException {
+		triggerSignatureHelp();
+
+		int pId = Integer.parseInt(proposalId);
+		long rId = Long.parseLong(requestId);
+		CompletionResponse completionResponse = CompletionResponses.get(rId);
+		if (completionResponse == null || completionResponse.getItems().size() <= pId) {
+			throw ExceptionFactory.newException("Cannot get completion responses.");
+		}
+
+		CompletionItem item = completionResponse.getItems().get(pId);
+		if (item == null) {
+			throw ExceptionFactory.newException("Cannot get the completion item.");
+		}
+
+		List<ICompletionRankingProvider> providers =
+				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
+		for (ICompletionRankingProvider provider : providers) {
+			provider.onDidCompletionItemSelect(item);
+		}
+	}
+
+	private void triggerSignatureHelp() {
+		if (manager.getPreferences().isSignatureHelpEnabled()) {
+			String onSelectedCommand = manager.getClientPreferences().getCompletionItemCommand();
+			if (!onSelectedCommand.isEmpty()) {
+				JavaLanguageServerPlugin.getInstance().getClientConnection()
+						.executeClientCommand(onSelectedCommand);
+			}
+		}
 	}
 
 	private CompletionList computeContentAssist(ICompilationUnit unit, CompletionParams params, IProgressMonitor monitor) throws JavaModelException {

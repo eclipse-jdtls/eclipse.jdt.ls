@@ -115,6 +115,9 @@
             <command
                   id="java.reloadBundles">
             </command>
+            <command
+                  id="java.completion.onDidSelect">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

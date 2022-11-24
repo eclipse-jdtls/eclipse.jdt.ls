@@ -57,10 +57,12 @@ import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
+import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegistry;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
@@ -139,6 +141,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private DiagnosticsState nonProjectDiagnosticsState;
 
 	private ExecutorService executorService;
+	private CompletionContributionService completionContributionService;
 
 	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -618,5 +621,12 @@ public class JavaLanguageServerPlugin extends Plugin {
 			pluginInstance.executorService = Executors.newCachedThreadPool();
 		}
 		return pluginInstance.executorService;
+	}
+
+	public synchronized static ICompletionContributionService getCompletionContributionService() {
+		if (pluginInstance.completionContributionService == null) {
+			pluginInstance.completionContributionService = new CompletionContributionService();
+		}
+		return pluginInstance.completionContributionService;
 	}
 }
