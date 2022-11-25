@@ -292,11 +292,6 @@ public class ClientPreferences {
 		//@formatter:on
 	}
 
-	@Deprecated
-	public boolean isWorkspaceEditResourceChangesSupported() {
-		return capabilities.getWorkspace() != null && capabilities.getWorkspace().getWorkspaceEdit() != null && isTrue(capabilities.getWorkspace().getWorkspaceEdit().getResourceChanges());
-	}
-
 	public boolean isResourceOperationSupported() {
 		//@formatter:off
 		return capabilities.getWorkspace() != null
