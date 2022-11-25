@@ -42,10 +42,12 @@ import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.apt.core.util.AptConfig;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -692,10 +694,10 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			MessageDigest md = MessageDigest.getInstance("sha-256");
 			md.update(java.nio.file.Files.readAllBytes(f.toPath()));
 			byte[] digest = md.digest();
-			assertTrue(GradleProjectImporter.needReplaceContent(f, digest));
+			assertTrue( GradleUtils.needReplaceContent(f, digest));
 
 			java.nio.file.Files.write(f.toPath(), "modification".getBytes());
-			assertTrue(GradleProjectImporter.needReplaceContent(f, digest));
+			assertTrue(GradleUtils.needReplaceContent(f, digest));
 		} finally {
 			if (f != null && f.exists()) {
 				if (!f.delete()) {
@@ -703,6 +705,16 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				}
 			}
 		}
+	}
+
+	@Test
+	public void testAnnotationProcessing() throws Exception {
+		IProject project = importGradleProject("apt");
+		IJavaProject javaProject = JavaCore.create(project);
+
+		assertNotNull(javaProject);
+		assertTrue(AptConfig.isEnabled(javaProject));
+		assertEquals("true", AptConfig.getRawProcessorOptions(javaProject).get("mapstruct.suppressGeneratorTimestamp"));
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {

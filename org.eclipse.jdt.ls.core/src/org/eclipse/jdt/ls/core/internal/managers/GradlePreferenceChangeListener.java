@@ -23,6 +23,10 @@ import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.apt.core.util.AptConfig;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
@@ -59,6 +63,20 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 			if (androidSupportChanged) {
 				for (IProject project : ProjectUtils.getGradleProjects()) {
 					projectsManager.updateProject(project, true);
+				}
+			}
+
+			boolean annotationProcessingChanged = !Objects.equals(oldPreferences.isGradleAnnotationProcessingEnabled(), newPreferences.isGradleAnnotationProcessingEnabled());
+			if (annotationProcessingChanged) {
+				if (newPreferences.isGradleAnnotationProcessingEnabled()) {
+					GradleUtils.synchronizeAnnotationProcessingConfiguration(new NullProgressMonitor());
+				} else {
+					for (IProject project : ProjectUtils.getGradleProjects()) {
+						IJavaProject javaProject = JavaCore.create(project);
+						if (javaProject != null) {
+							AptConfig.setEnabled(javaProject, false);
+						}
+					}
 				}
 			}
 		}

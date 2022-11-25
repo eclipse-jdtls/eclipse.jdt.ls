@@ -19,17 +19,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +52,6 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -119,8 +114,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private static final int GRADLE_RELATED = 0x00080000;
 	private static final int INVALID_TYPE_CODE_ID = GRADLE_RELATED + 1;
-
-	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
 
 	//@formatter:off
 	public static final String GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE =
@@ -290,6 +283,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 			break;
 		}
+
+		GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
+
 		subMonitor.done();
 	}
 
@@ -579,7 +575,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		List<String> args = new LinkedList<>();
 
 		// Add init script of jdt.ls
-		File initScript = getGradleInitScript("/gradle/init/init.gradle");
+		File initScript = GradleUtils.getGradleInitScript("/gradle/init/init.gradle");
 		addInitScriptToArgs(initScript, args);
 
 		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
@@ -589,13 +585,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 		// Add init script of protobuf support
 		if (preferencesManager.getPreferences().isProtobufSupportEnabled()) {
-			File protobufInitScript = getGradleInitScript("/gradle/protobuf/init.gradle");
+			File protobufInitScript =  GradleUtils.getGradleInitScript("/gradle/protobuf/init.gradle");
 			addInitScriptToArgs(protobufInitScript, args);
 		}
 
 		// Add init script of android support
 		if (preferencesManager.getPreferences().isAndroidSupportEnabled()) {
-			File androidInitScript = getGradleInitScript("/gradle/android/init.gradle");
+			File androidInitScript =  GradleUtils.getGradleInitScript("/gradle/android/init.gradle");
 			addInitScriptToArgs(androidInitScript, args);
 		}
 
@@ -607,108 +603,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			args.add("--init-script");
 			args.add(initScript.getAbsolutePath());
 		}
-	}
-
-	/**
-	 * Get the Gradle init script file. If any exception happens, a temp file
-	 * will be created and be used instead.
-	 */
-	private static File getGradleInitScript(String scriptPath) {
-		try {
-			URL fileURL = FileLocator.toFileURL(JavaLanguageServerPlugin.class.getResource(scriptPath));
-			String fileString = fileURL.getFile();
-			// workaround for https://github.com/eclipse/buildship/issues/1207, buildship doesn't support spaces in passed Gradle arguments
-			if (fileString.contains(" ")) {
-				return getGradleInitScriptTempFile(scriptPath);
-			}
-
-			File initScript = new File(fileString);
-			try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
-				if (!initScript.exists()) {
-					initScript.createNewFile();
-					Files.copy(input, initScript.toPath(), StandardCopyOption.REPLACE_EXISTING);
-					return initScript;
-				}
-				byte[] fileBytes = input.readAllBytes();
-				byte[] contentDigest = getContentDigest(fileBytes);
-				if (needReplaceContent(initScript, contentDigest)) {
-					Files.write(initScript.toPath(), fileBytes);
-				}
-			}
-			return initScript;
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException(e);
-		}
-
-		return getGradleInitScriptTempFile(scriptPath);
-	}
-
-	/**
-	 * Create a temp file as the Gradle init script.
-	 */
-	private static File getGradleInitScriptTempFile(String scriptPath) {
-		try (InputStream input = JavaLanguageServerPlugin.class.getResourceAsStream(scriptPath)) {
-			byte[] fileBytes = input.readAllBytes();
-			byte[] contentDigest = getContentDigest(fileBytes);
-			String fileName = bytesToHex(contentDigest) + ".gradle";
-			File initScript = new File(System.getProperty("java.io.tmpdir"), fileName);
-			if (needReplaceContent(initScript, contentDigest)) {
-				Files.write(initScript.toPath(), fileBytes);
-			}
-			return initScript;
-		} catch (IOException | NoSuchAlgorithmException e) {
-			JavaLanguageServerPlugin.logException(e);
-		}
-		return null;
-	}
-
-	/**
-	 * Note: The method is public only for testing purpose!
-	 * <p>
-	 * Check if the content of the input init script file needs to be replaced.
-	 * </p>
-	 * <p>
-	 * The method will return true when:
-	 * </p>
-	 * <ul>
-	 *  <li>The file does not exist.</li>
-	 *  <li>The file is empty.</li>
-	 *  <li>The checksum of the file content does not match the expected checksum.</li>
-	 * <ul>
-	 * @param initScript the init script file.
-	 * @param checksum the expected checksum of the file.
-	 * 
-	 * @throws IOException
-	 * @throws NoSuchAlgorithmException
-	 */
-	public static boolean needReplaceContent(File initScript, byte[] checksum) throws IOException, NoSuchAlgorithmException {
-		if (!initScript.exists() || initScript.length() == 0) {
-			return true;
-		}
-
-		byte[] digest = getContentDigest(Files.readAllBytes(initScript.toPath()));
-		if (Arrays.equals(digest, checksum)) {
-			return false;
-		}
-		return true;
-	}
-
-	private static byte[] getContentDigest(byte[] contentBytes) throws NoSuchAlgorithmException {
-		MessageDigest md = MessageDigest.getInstance(MESSAGE_DIGEST_ALGORITHM);
-		md.update(contentBytes);
-		return md.digest();
-	}
-
-	/**
-	 * Convert byte array to hex string.
-	 * @param in byte array.
-	 */
-	private static String bytesToHex(byte[] in) {
-		final StringBuilder builder = new StringBuilder();
-		for(byte b : in) {
-			builder.append(String.format("%02x", b));
-		}
-		return builder.toString();
 	}
 
 	@Override
