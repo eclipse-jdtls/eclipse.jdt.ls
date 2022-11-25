@@ -783,7 +783,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<Either<Range, PrepareRenameResult>> prepareRename(PrepareRenameParams params) {
 		logInfo(">> document/prepareRename");
-		PrepareRenameHandler handler = new PrepareRenameHandler();
+		PrepareRenameHandler handler = new PrepareRenameHandler(preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.prepareRename(params, monitor);

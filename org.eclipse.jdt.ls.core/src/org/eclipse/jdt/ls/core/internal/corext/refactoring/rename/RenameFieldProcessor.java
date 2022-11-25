@@ -650,6 +650,10 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		}
 		IJavaSearchScope scope= SearchEngine.createHierarchyScope(fField.getDeclaringType());
 		SearchResultGroup[] groupDeclarations= RefactoringSearchEngine.search(pattern, scope, pm, result);
+		if (groupDeclarations.length == 0) {
+			// https://github.com/redhat-developer/vscode-java/issues/2805
+			return result;
+		}
 		Assert.isTrue(groupDeclarations.length > 0);
 		if (groupDeclarations.length != 1){
 			String message= Messages.format(RefactoringCoreMessages.RenameFieldRefactoring_overridden,

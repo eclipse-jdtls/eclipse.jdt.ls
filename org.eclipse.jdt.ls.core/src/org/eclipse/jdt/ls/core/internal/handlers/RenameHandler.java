@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.stream.Stream;
 
+import org.eclipse.core.runtime.AssertionFailedException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -80,7 +81,7 @@ public class RenameHandler {
 				curr = elements[0];
 			}
 
-			RenameSupport renameSupport = RenameSupport.create(curr, params.getNewName(), RenameSupport.UPDATE_REFERENCES);
+			RenameSupport renameSupport = RenameSupport.create(curr, params.getNewName(), RenameSupport.UPDATE_REFERENCES | RenameSupport.UPDATE_GETTER_METHOD | RenameSupport.UPDATE_SETTER_METHOD);
 			if (renameSupport == null) {
 				return edit;
 			}
@@ -95,7 +96,7 @@ public class RenameHandler {
 
 			Change change = create.getChange();
 			return ChangeUtil.convertToWorkspaceEdit(change);
-		} catch (CoreException ex) {
+		} catch (CoreException | AssertionFailedException ex) {
 			JavaLanguageServerPlugin.logException("Problem with rename for " + params.getTextDocument().getUri(), ex);
 		}
 
