@@ -89,19 +89,19 @@ public class ExtendedDocumentSymbolHandler {
 				throw new OperationCanceledException();
 			}
 			ITypeHierarchy supertypeHierarchy = type.newSupertypeHierarchy(monitor);
-			IType[] subclasses = supertypeHierarchy.getAllSuperclasses(type);
-			for (IType subType : subclasses) {
-				if (monitor.isCanceled()) {
-					throw new OperationCanceledException();
-				}
-				children.addAll(Arrays.asList(filter(subType.getChildren())));
+			if (monitor.isCanceled()) {
+				throw new OperationCanceledException();
+			}
+			IType[] superClasses = supertypeHierarchy.getAllSuperclasses(type);
+			for (IType superType : superClasses) {
+				children.addAll(Arrays.asList(filter(superType.getChildren())));
 			}
 		}
 		return children.toArray(IJavaElement[]::new);
 	}
 
-	private ExtendedDocumentSymbol toDocumentSymbol(IJavaElement unit, IProgressMonitor monitor) {
-		int type = unit.getElementType();
+	private ExtendedDocumentSymbol toDocumentSymbol(IJavaElement element, IProgressMonitor monitor) {
+		int type = element.getElementType();
 		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT) {
 			return null;
 		}
@@ -110,23 +110,23 @@ public class ExtendedDocumentSymbolHandler {
 		}
 		ExtendedDocumentSymbol symbol = new ExtendedDocumentSymbol();
 		try {
-			String name = getName(unit);
+			String name = getName(element);
 			symbol.setName(name);
-			symbol.setRange(SymbolUtils.getRange(unit));
-			symbol.setSelectionRange(SymbolUtils.getSelectionRange(unit));
-			symbol.setKind(SymbolUtils.mapKind(unit));
-			if (JDTUtils.isDeprecated(unit)) {
+			symbol.setRange(SymbolUtils.getRange(element));
+			symbol.setSelectionRange(SymbolUtils.getSelectionRange(element));
+			symbol.setKind(SymbolUtils.mapKind(element));
+			if (JDTUtils.isDeprecated(element)) {
 				if (preferenceManager.getClientPreferences().isSymbolTagSupported()) {
 					symbol.setTags(List.of(SymbolTag.Deprecated));
 				} else {
 					symbol.setDeprecated(true);
 				}
 			}
-			symbol.setDetail(SymbolUtils.getDetail(unit, name, M_POST_QUALIFIED | F_POST_QUALIFIED));
-			symbol.setUri(JDTUtils.toLocation(unit).getUri());
-			if (unit instanceof IType) {
+			symbol.setDetail(SymbolUtils.getDetail(element, name, M_POST_QUALIFIED | F_POST_QUALIFIED));
+			symbol.setUri(JDTUtils.toLocation(element).getUri());
+			if (element instanceof IType) {
 				//@formatter:off
-				IJavaElement[] children = filter(((IParent) unit).getChildren());
+				IJavaElement[] children = filter(((IParent) element).getChildren());
 				symbol.setChildren(Stream.of(children)
 						.map(child -> toDocumentSymbol(child, monitor))
 						.filter(Objects::nonNull)

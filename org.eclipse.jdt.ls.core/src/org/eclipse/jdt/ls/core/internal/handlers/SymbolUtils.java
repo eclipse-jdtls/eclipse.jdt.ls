@@ -154,7 +154,7 @@ public final class SymbolUtils {
 	private static String constructDetail(IJavaElement element, String name, long flags) {
 		String nameWithDetails = JavaElementLabels.getElementLabel(element, flags);
 		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
-			return nameWithDetails.substring(name.length());
+			return nameWithDetails.substring(name.length()).trim();
 		}
 		return "";
 	}
