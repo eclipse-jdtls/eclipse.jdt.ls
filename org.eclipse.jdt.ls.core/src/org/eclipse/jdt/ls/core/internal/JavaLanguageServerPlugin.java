@@ -28,6 +28,7 @@ import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -110,6 +111,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	@Deprecated
 	public static final String PLUGIN_ID = IConstants.PLUGIN_ID;
 
+
 	public static final String DEFAULT_MEMBER_SORT_ORDER = "T,SF,SI,SM,F,I,C,M"; //$NON-NLS-1$
 	public static final String DEFAULT_VISIBILITY_SORT_ORDER = "B,R,D,V"; //$NON-NLS-1$
 
@@ -141,6 +143,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private ExecutorService executorService;
 	private CompletionContributionService completionContributionService;
 
+	private boolean runInEclipseWorkbench;
+
 	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
@@ -156,6 +160,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 	@Override
 	public void start(BundleContext bundleContext) throws Exception {
 		super.start(bundleContext);
+		runInEclipseWorkbench = Arrays.stream(bundleContext.getBundles()) //
+				.filter(bundle -> "org.eclipse.ui.workbench".equals(bundle.getSymbolicName())) //
+				.anyMatch(bundle -> bundle.getState() == Bundle.ACTIVE);
 		try {
 			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
 			IWorkspace workspace = ResourcesPlugin.getWorkspace();
@@ -619,5 +626,15 @@ public class JavaLanguageServerPlugin extends Plugin {
 			pluginInstance.completionContributionService = new CompletionContributionService();
 		}
 		return pluginInstance.completionContributionService;
+	}
+
+	/**
+	 * Internal flag to detect that the language server is being started from inside
+	 * and Eclipse workbench. So things like edits, diagnostics, logs... are already
+	 * part of the workbench/workspace model and don't need to be forwarded/repeated
+	 * by the LS to the underlying model.
+	 */
+	public boolean isRunningInEclipseWorkbench() {
+		return runInEclipseWorkbench;
 	}
 }

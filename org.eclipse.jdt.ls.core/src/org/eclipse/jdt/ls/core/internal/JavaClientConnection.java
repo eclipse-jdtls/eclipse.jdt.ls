@@ -81,7 +81,7 @@ public class JavaClientConnection {
 
 	public JavaClientConnection(JavaLanguageClient client) {
 		this.client = client;
-		logHandler = new LogHandler();
+		logHandler = JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench() ? new LogHandler(status -> false) : new LogHandler();
 		logHandler.install(this);
 	}
 

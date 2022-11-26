@@ -924,9 +924,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 */
 	@Override
 	public void didChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams params) {
-		logInfo(">> java/didChangeWorkspaceFolders");
-		WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm, preferenceManager);
-		handler.update(params);
+		if (!JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+			logInfo(">> java/didChangeWorkspaceFolders");
+			WorkspaceFolderChangeHandler handler = new WorkspaceFolderChangeHandler(pm, preferenceManager);
+			handler.update(params);
+		}
 	}
 
 	@Override

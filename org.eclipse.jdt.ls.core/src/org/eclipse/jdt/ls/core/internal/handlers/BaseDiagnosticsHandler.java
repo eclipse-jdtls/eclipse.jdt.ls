@@ -142,6 +142,9 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 	 * @param isDiagnosticTagSupported
 	 */
 	private void collectNonJavaProblems(List<Diagnostic> diagnostics, boolean isDiagnosticTagSupported) {
+		if (JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+			return;
+		}
 		if (cu != null) {
 			IResource resource;
 			IMarker[] markers;

@@ -179,7 +179,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private long getPublishDiagnosticsDelay() {
 		return Math.min(
-			Math.max(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE, Math.round(1.5 * movingAverageForDiagnostics.value)), 
+			Math.max(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE, Math.round(1.5 * movingAverageForDiagnostics.value)),
 			PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE
 		);
 	}
@@ -339,12 +339,11 @@ public abstract class BaseDocumentLifeCycleHandler {
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleChanged(params);
-				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			if (JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+				handleChanged(params);
+			} else {
+				ResourcesPlugin.getWorkspace().run(monitor -> handleChanged(params), rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document change ", e);
 		}
@@ -422,34 +421,35 @@ public abstract class BaseDocumentLifeCycleHandler {
 				sharedASTProvider.disposeAST();
 				CodeActionHandler.codeActionStore.clear();
 			}
-			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
+			if (!JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
+				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
-				Range range = changeEvent.getRange();
-				int length;
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
-				final int startOffset;
-				if (range != null) {
-					Position start = range.getStart();
-					startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
-					length = DiagnosticsHelper.getLength(unit, range);
-				} else {
-					// range is optional and if not given, the whole file content is replaced
-					length = unit.getSource().length();
-					startOffset = 0;
+					Range range = changeEvent.getRange();
+					int length;
+					IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+					final int startOffset;
+					if (range != null) {
+						Position start = range.getStart();
+						startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
+						length = DiagnosticsHelper.getLength(unit, range);
+					} else {
+						// range is optional and if not given, the whole file content is replaced
+						length = unit.getSource().length();
+						startOffset = 0;
+					}
+
+					TextEdit edit = null;
+					String text = changeEvent.getText();
+					if (length == 0) {
+						edit = new InsertEdit(startOffset, text);
+					} else if (text.isEmpty()) {
+						edit = new DeleteEdit(startOffset, length);
+					} else {
+						edit = new ReplaceEdit(startOffset, length, text);
+					}
+					edit.apply(document, TextEdit.NONE);
 				}
-
-				TextEdit edit = null;
-				String text = changeEvent.getText();
-				if (length == 0) {
-					edit = new InsertEdit(startOffset, text);
-				} else if (text.isEmpty()) {
-					edit = new DeleteEdit(startOffset, length);
-				} else {
-					edit = new ReplaceEdit(startOffset, length, text);
-				}
-				edit.apply(document, TextEdit.NONE);
-
 			}
 			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {

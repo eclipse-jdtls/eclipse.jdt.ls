@@ -118,6 +118,10 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 */
 	@Override
 	public boolean visit(IResourceDelta delta) throws CoreException {
+		if (JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+			// diagnostics are handled lower level and made visible in the workspace already
+			return false;
+		}
 		IResource resource = delta.getResource();
 		if (resource == null) {
 			return false;
@@ -192,6 +196,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	private void publishMarkers(IProject project, IMarker[] markers) throws CoreException {
+		if (JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+			return;
+		}
 		Range range = new Range(new Position(0, 0), new Position(0, 0));
 
 		List<IMarker> projectMarkers = new ArrayList<>(markers.length);
@@ -289,6 +296,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	}
 
 	private void publishDiagnostics(List<IMarker> markers) {
+		if (JavaLanguageServerPlugin.getInstance().isRunningInEclipseWorkbench()) {
+			return;
+		}
 		Map<IResource, List<IMarker>> map = markers.stream().collect(Collectors.groupingBy(IMarker::getResource));
 		for (Map.Entry<IResource, List<IMarker>> entry : map.entrySet()) {
 			IResource resource = entry.getKey();
