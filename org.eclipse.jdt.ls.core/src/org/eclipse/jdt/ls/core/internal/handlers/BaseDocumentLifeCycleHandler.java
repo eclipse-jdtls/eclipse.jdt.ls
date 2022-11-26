@@ -91,6 +91,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 * The max & init value of adaptive debounce time for document lifecycle job.
 	 */
 	private static final long DOCUMENT_LIFECYCLE_MAX_DEBOUNCE = 400; /*ms*/
+	public static String SKIP_APPLY_EDIT = BaseDocumentLifeCycleHandler.class.getName() + ".skipApplyEdit";
 
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
@@ -327,12 +328,11 @@ public abstract class BaseDocumentLifeCycleHandler {
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleChanged(params);
-				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			if (Boolean.getBoolean(SKIP_APPLY_EDIT)) {
+				handleChanged(params);
+			} else {
+				ResourcesPlugin.getWorkspace().run(monitor -> handleChanged(params), rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document change ", e);
 		}
@@ -411,34 +411,35 @@ public abstract class BaseDocumentLifeCycleHandler {
 				sharedASTProvider.disposeAST();
 				CodeActionHandler.codeActionStore.clear();
 			}
-			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
+			if (!Boolean.getBoolean(SKIP_APPLY_EDIT)) {
+				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
+				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
-				Range range = changeEvent.getRange();
-				int length;
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
-				final int startOffset;
-				if (range != null) {
-					Position start = range.getStart();
-					startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
-					length = DiagnosticsHelper.getLength(unit, range);
-				} else {
-					// range is optional and if not given, the whole file content is replaced
-					length = unit.getSource().length();
-					startOffset = 0;
+					Range range = changeEvent.getRange();
+					int length;
+					IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+					final int startOffset;
+					if (range != null) {
+						Position start = range.getStart();
+						startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
+						length = DiagnosticsHelper.getLength(unit, range);
+					} else {
+						// range is optional and if not given, the whole file content is replaced
+						length = unit.getSource().length();
+						startOffset = 0;
+					}
+
+					TextEdit edit = null;
+					String text = changeEvent.getText();
+					if (length == 0) {
+						edit = new InsertEdit(startOffset, text);
+					} else if (text.isEmpty()) {
+						edit = new DeleteEdit(startOffset, length);
+					} else {
+						edit = new ReplaceEdit(startOffset, length, text);
+					}
+					edit.apply(document, TextEdit.NONE);
 				}
-
-				TextEdit edit = null;
-				String text = changeEvent.getText();
-				if (length == 0) {
-					edit = new InsertEdit(startOffset, text);
-				} else if (text.isEmpty()) {
-					edit = new DeleteEdit(startOffset, length);
-				} else {
-					edit = new ReplaceEdit(startOffset, length, text);
-				}
-				edit.apply(document, TextEdit.NONE);
-
 			}
 			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
@@ -573,7 +574,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (javaProject == null) {
 			return;
 		}
-		
+
 		IProject project = javaProject.getProject();
 		if (ProjectUtils.isUnmanagedFolder(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
