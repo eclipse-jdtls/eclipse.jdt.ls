@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -120,20 +120,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					return DOCUMENT_LIFE_CYCLE_JOBS.equals(family);
 				}
 			};
-			this.publishDiagnosticsJob = new WorkspaceJob("Publish Diagnostics") {
-				@Override
-				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-					return publishDiagnostics(monitor);
-				}
-
-				/* (non-Javadoc)
-				 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
-				 */
-				@Override
-				public boolean belongsTo(Object family) {
-					return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
-				}
-			};
+			this.publishDiagnosticsJob = new PublishDiagnosticJob(ResourcesPlugin.getWorkspace().getRoot());
 		}
 	}
 
@@ -160,7 +147,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			ISchedulingRule rule = getRule(toReconcile);
 			if (publishDiagnosticsJob != null) {
 				publishDiagnosticsJob.cancel();
-				publishDiagnosticsJob.setRule(rule);
+				publishDiagnosticsJob = new PublishDiagnosticJob(rule);
 			}
 			validationTimer.setRule(rule);
 			validationTimer.schedule(delay);
@@ -271,14 +258,11 @@ public abstract class BaseDocumentLifeCycleHandler {
 			 */
 			@Override
 			public IBuffer createBuffer(ICompilationUnit workingCopy) {
-				if (!monitor.isCanceled()) {
-					ICompilationUnit original = workingCopy.getPrimary();
-					IResource resource = original.getResource();
-					if (resource instanceof IFile) {
-						return new DocumentAdapter(workingCopy, (IFile) resource);
-					}
+				try {
+					return unit.getBuffer();
+				} catch (JavaModelException e) {
+					return DocumentAdapter.Null;
 				}
-				return DocumentAdapter.Null;
 			}
 
 			/* (non-Javadoc)
@@ -650,6 +634,33 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 
 		return false;
+	}
+
+	/**
+	 * @author mistria
+	 *
+	 */
+	private final class PublishDiagnosticJob extends WorkspaceJob {
+		/**
+		 * @param rule
+		 */
+		private PublishDiagnosticJob(ISchedulingRule rule) {
+			super("Publish Diagnostics");
+			setRule(rule);
+		}
+
+		@Override
+		public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+			return publishDiagnostics(monitor);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+		 */
+		@Override
+		public boolean belongsTo(Object family) {
+			return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
+		}
 	}
 
 	/**
