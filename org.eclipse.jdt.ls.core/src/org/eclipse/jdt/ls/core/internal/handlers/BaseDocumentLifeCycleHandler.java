@@ -119,20 +119,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					return DOCUMENT_LIFE_CYCLE_JOBS.equals(family);
 				}
 			};
-			this.publishDiagnosticsJob = new WorkspaceJob("Publish Diagnostics") {
-				@Override
-				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-					return publishDiagnostics(monitor);
-				}
-
-				/* (non-Javadoc)
-				 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
-				 */
-				@Override
-				public boolean belongsTo(Object family) {
-					return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
-				}
-			};
+			this.publishDiagnosticsJob = new PublishDiagnosticJob(ResourcesPlugin.getWorkspace().getRoot());
 		}
 	}
 
@@ -159,7 +146,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			ISchedulingRule rule = getRule(toReconcile);
 			if (publishDiagnosticsJob != null) {
 				publishDiagnosticsJob.cancel();
-				publishDiagnosticsJob.setRule(rule);
+				publishDiagnosticsJob = new PublishDiagnosticJob(rule);
 			}
 			validationTimer.setRule(rule);
 			validationTimer.schedule(delay);
@@ -573,7 +560,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (javaProject == null) {
 			return;
 		}
-		
+
 		IProject project = javaProject.getProject();
 		if (ProjectUtils.isUnmanagedFolder(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
@@ -649,6 +636,33 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 
 		return false;
+	}
+
+	/**
+	 * @author mistria
+	 *
+	 */
+	private final class PublishDiagnosticJob extends WorkspaceJob {
+		/**
+		 * @param rule
+		 */
+		private PublishDiagnosticJob(ISchedulingRule rule) {
+			super("Publish Diagnostics");
+			setRule(rule);
+		}
+
+		@Override
+		public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+			return publishDiagnostics(monitor);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+		 */
+		@Override
+		public boolean belongsTo(Object family) {
+			return PUBLISH_DIAGNOSTICS_JOBS.equals(family);
+		}
 	}
 
 	/**
