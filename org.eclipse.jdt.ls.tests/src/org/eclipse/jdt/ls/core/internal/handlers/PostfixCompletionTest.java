@@ -30,6 +30,9 @@ import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.junit.After;
 import org.junit.Before;
@@ -92,9 +95,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("cast", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("((${1})a)${0}", edit.getNewText());
-		assertEquals("a.cast", item.getFilterText());
+		assertEquals(item.getInsertText(), "((${1})a)${0}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
@@ -117,9 +121,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("if", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("if (a) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.if", item.getFilterText());
+		assertEquals(item.getInsertText(), "if (a) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 6)), range);
 	}
 
 	@Test
@@ -142,9 +147,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("else", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("if (!a) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.else", item.getFilterText());
+		assertEquals(item.getInsertText(), "if (!a) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
@@ -167,9 +173,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("for", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("for (String ${1:a2} : a) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.for", item.getFilterText());
+		assertEquals(item.getInsertText(), "for (String ${1:a2} : a) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 7)), range);
 	}
 
 	@Test
@@ -192,9 +199,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("fori", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("for (int ${1:a2} = 0; ${1:a2} < a.length; ${1:a2}++) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.fori", item.getFilterText());
+		assertEquals(item.getInsertText(), "for (int ${1:a2} = 0; ${1:a2} < a.length; ${1:a2}++) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
@@ -217,9 +225,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("forr", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("for (int ${1:a2} = a.length - 1; ${1:a2} >= 0; ${1:a2}--) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.forr", item.getFilterText());
+		assertEquals(item.getInsertText(), "for (int ${1:a2} = a.length - 1; ${1:a2} >= 0; ${1:a2}--) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
@@ -242,9 +251,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("nnull", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("if (a != null) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.nnull", item.getFilterText());
+		assertEquals(item.getInsertText(), "if (a != null) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 9)), range);
 	}
 
 	@Test
@@ -267,9 +277,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("null", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("if (a == null) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.null", item.getFilterText());
+		assertEquals(item.getInsertText(), "if (a == null) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
@@ -292,9 +303,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("sysout", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("System.out.println(a);${0}", edit.getNewText());
-		assertEquals("a.sysout", item.getFilterText());
+		assertEquals(item.getInsertText(), "System.out.println(a);${0}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 10)), range);
 	}
 
 	@Test
@@ -318,9 +330,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("throw", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("throw e;", edit.getNewText());
-		assertEquals("e.throw", item.getFilterText());
+		assertEquals(item.getInsertText(), "throw e;");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(4, 2), new Position(4, 9)), range);
 	}
 
 	@Test
@@ -343,9 +356,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("var", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("String ${1:a2} = a;${0}", edit.getNewText());
-		assertEquals("a.var", item.getFilterText());
+		assertEquals(item.getInsertText(), "String ${1:a2} = a;${0}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 7)), range);
 	}
 
 	@Test
@@ -369,11 +383,11 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("var", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("List<Object> ${1:emptyList} = Collections.emptyList();${0}", edit.getNewText());
-		assertEquals("Collections.emptyList().var", item.getFilterText());
+		assertEquals(item.getInsertText(), "List<Object> ${1:emptyList} = Collections.emptyList();${0}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
 		List<TextEdit> additionalTextEdits = item.getAdditionalTextEdits();
-		assertEquals(2, additionalTextEdits.size());
+		Range range =additionalTextEdits.get(0).getRange();
+		assertEquals(new Range(new Position(4, 2), new Position(4, 29)), range);
 		assertTrue(additionalTextEdits.stream().anyMatch(e -> e.getNewText().contains("import java.util.List;")));
 	}
 
@@ -397,9 +411,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("while", item.getLabel());
-		TextEdit edit = item.getTextEdit().getLeft();
-		assertEquals("while (a) {\n\t${0}\n}", edit.getNewText());
-		assertEquals("a.while", item.getFilterText());
+		assertEquals(item.getInsertText(), "while (a) {\n\t${0}\n}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 9)), range);
 	}
 
 	@Test

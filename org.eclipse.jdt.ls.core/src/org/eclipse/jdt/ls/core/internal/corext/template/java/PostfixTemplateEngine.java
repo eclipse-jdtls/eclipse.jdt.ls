@@ -68,11 +68,9 @@ public class PostfixTemplateEngine {
 		JavaPostfixContext context = type.createContext(document, offset, 0, compilationUnit, currentNode, parentNode, completionCtx);
 		int length = context.getEnd() - context.getStart();
 		Range range = null;
-		String textInRange = null;
 		try {
 			range = JDTUtils.toRange(compilationUnit, context.getStart(), length);
-			textInRange = document.get(context.getStart(), length);
-		} catch (BadLocationException  | JavaModelException e) {
+		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return res;
 		}
@@ -86,28 +84,25 @@ public class PostfixTemplateEngine {
 			if (StringUtils.isBlank(content)) {
 				continue;
 			}
-			TextEdit textEdit = new TextEdit(range, content);
-			item.setTextEdit(Either.forLeft(textEdit));
+			item.setInsertText(content);
+			List<TextEdit> additionalEdits = new ArrayList<>();
+			// use additional test edit to remove the code that needs to be replaced
+			additionalEdits.add(new TextEdit(range, ""));
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 			item.setDetail(template.getDescription());
 			item.setDocumentation(SnippetUtils.beautifyDocument(content));
-			// The filter text must be set when it comes to a replace edit, in LSP spec, it says:
-			// If the text edit is a replace edit then the range denotes the word used for filtering.
-			// If the replace changes the text it most likely makes sense to specify a filter text to be used.
-			String filterText = textInRange.substring(0, textInRange.lastIndexOf('.') + 1) + template.getName();
-			item.setFilterText(filterText);
-			item.setSortText(SortTextHelper.convertRelevance(SortTextHelper.MAX_RELEVANCE_VALUE));
+			// we hope postfix shows at the bottom of the completion list.
+			item.setSortText(SortTextHelper.convertRelevance(0));
 			List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
 			if (jdtTextEdits != null && jdtTextEdits.size() > 0) {
-				List<TextEdit> lspEdits = new ArrayList<>();
 				for (org.eclipse.text.edits.TextEdit edit : jdtTextEdits) {
 					TextEditConverter converter = new TextEditConverter(compilationUnit, edit);
-					lspEdits.addAll(converter.convert());
+					additionalEdits.addAll(converter.convert());
 				}
-				item.setAdditionalTextEdits(lspEdits);
 			}
+			item.setAdditionalTextEdits(additionalEdits);
 			res.add(item);
 		}
 
