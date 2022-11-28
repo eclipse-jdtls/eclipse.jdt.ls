@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.function.Predicate;
+
 import org.eclipse.core.runtime.IStatus;
 
 /**
@@ -24,12 +26,12 @@ import org.eclipse.core.runtime.IStatus;
  * @author Fred Bricon
  *
  */
-public class DefaultLogFilter implements ILogFilter {
+public class DefaultLogFilter implements Predicate<IStatus> {
 
 	private static final String MISSING_RESOURCE_FILTER_TYPE = "Missing resource filter type";
 
 	@Override
-	public boolean accepts(IStatus status) {
+	public boolean test(IStatus status) {
 		return accepts(getMessage(status));
 	}
 

@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
@@ -34,13 +35,13 @@ public class LogHandler {
 	private DateFormat dateFormat;
 	private int logLevelMask;
 	private JavaClientConnection connection;
-	private ILogFilter filter;
+	private Predicate<IStatus> filter;
 
 	public LogHandler() {
 		this(new DefaultLogFilter());
 	}
 
-	public LogHandler(ILogFilter filter) {
+	public LogHandler(Predicate<IStatus> filter) {
 		this.filter = filter;
 	}
 
@@ -78,7 +79,7 @@ public class LogHandler {
 	}
 
 	private void processLogMessage(IStatus status) {
-		if ((filter != null && !filter.accepts(status)) || !status.matches(this.logLevelMask)) {
+		if ((filter != null && !filter.test(status)) || !status.matches(this.logLevelMask)) {
 			//no op;
 			return;
 		}
