@@ -50,6 +50,8 @@ public class IndexUtils {
             return;
         }
 
+        JobHelpers.waitUntilIndexesReady(); // wait for index ready
+
         Set<IndexLocation> resolvedIndexLocations = new HashSet<>();
         IPath javaCoreStateLocation = JavaCore.getPlugin().getStateLocation();
         for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
@@ -75,7 +77,6 @@ public class IndexUtils {
                                 continue;
                             }
 
-                            JobHelpers.waitUntilIndexesReady(); // wait for index ready
                             if (indexManager.getIndex(sharedIndexLocation) != null) {
                                 try {
                                     // current classpath entry is using the shared index, delete the unused local index directly.
