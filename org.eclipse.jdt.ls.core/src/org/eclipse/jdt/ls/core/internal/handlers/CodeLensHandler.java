@@ -102,11 +102,11 @@ public class CodeLensHandler {
 						JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
 				} else if (IMPLEMENTATION_TYPE.equals(type)) {
-					if (element instanceof IType) {
+					if (element instanceof IType typeElement) {
 						try {
 							IDocument document = JsonRpcHelpers.toDocument(typeRoot.getBuffer());
 							int offset = document.getLineOffset(position.getLine()) + position.getCharacter();
-							locations = findImplementations(typeRoot, (IType) element, offset, monitor);
+							locations = findImplementations(typeRoot, typeElement, offset, monitor);
 						} catch (CoreException | BadLocationException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}
@@ -152,8 +152,7 @@ public class CodeLensHandler {
 					return;
 				}
 				Object o = match.getElement();
-				if (o instanceof IJavaElement) {
-					IJavaElement element = (IJavaElement) o;
+				if (o instanceof IJavaElement element) {
 					ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 					if (compilationUnit == null) {
 						return;
@@ -226,8 +225,7 @@ public class CodeLensHandler {
 					lenses.add(lens);
 				}
 			}
-			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType) {
-				IType type = (IType) element;
+			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType type) {
 				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
 					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
 					if (lens != null) {

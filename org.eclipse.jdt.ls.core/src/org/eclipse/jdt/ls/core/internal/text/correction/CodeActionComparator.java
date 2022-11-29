@@ -35,6 +35,7 @@ public class CodeActionComparator implements Comparator<Either<Command, CodeActi
 	public static int CHANGE_MODIFIER_TO_FINAL_PRIORITY = 70;
 	public static int LOWEST_PRIORITY = 100;
 
+	@Override
 	public int compare(Either<Command, CodeAction> e1, Either<Command, CodeAction> e2) {
 		if (e1.isRight() && e2.isRight()) {
 			CodeAction action1 = e1.getRight();
@@ -45,9 +46,9 @@ public class CodeActionComparator implements Comparator<Either<Command, CodeActi
 			}
 			Object data1 = action1.getData();
 			Object data2 = action2.getData();
-			if (data1 instanceof CodeActionData && data2 instanceof CodeActionData) {
-				int priority1 = ((CodeActionData) data1).getPriority();
-				int priority2 = ((CodeActionData) data2).getPriority();
+			if (data1 instanceof CodeActionData codeActionData1 && data2 instanceof CodeActionData codeActionData2) {
+				int priority1 = codeActionData1.getPriority();
+				int priority2 = codeActionData2.getPriority();
 				return priority1 - priority2;
 			} else if (data1 instanceof CodeActionData) {
 				return 10;

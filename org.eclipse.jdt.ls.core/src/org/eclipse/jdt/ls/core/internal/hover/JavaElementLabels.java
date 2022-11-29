@@ -345,8 +345,8 @@ public final class JavaElementLabels {
 	 * @return the label or the empty string if the object type is not supported
 	 */
 	public static String getTextLabel(Object obj, long flags) {
-		if (obj instanceof IJavaElement) {
-			return getElementLabel((IJavaElement) obj, flags);
+		if (obj instanceof IJavaElement element) {
+			return getElementLabel(element, flags);
 
 		}
 		return ""; //$NON-NLS-1$

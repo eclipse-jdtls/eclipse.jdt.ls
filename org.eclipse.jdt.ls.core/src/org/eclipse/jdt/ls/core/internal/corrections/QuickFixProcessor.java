@@ -683,7 +683,7 @@ public class QuickFixProcessor {
 		if (proposals.size() == 0) {
 			return;
 		}
-		Optional<Integer> minRelevance = proposals.stream().filter((proposal) -> (proposal instanceof AddImportCorrectionProposal)).map((proposal) -> proposal.getRelevance()).min(Comparator.naturalOrder());
+		Optional<Integer> minRelevance = proposals.stream().filter(AddImportCorrectionProposal.class::isInstance).map((proposal) -> proposal.getRelevance()).min(Comparator.naturalOrder());
 		if (minRelevance.isPresent()) {
 			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, context.getCompilationUnit(),
 					minRelevance.get() - 1, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);

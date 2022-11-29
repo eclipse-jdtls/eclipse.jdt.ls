@@ -69,8 +69,7 @@ public class PrepareRenameHandler {
 									IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, params.getPosition().getLine(), params.getPosition().getCharacter(), this.preferenceManager, monitor);
 									if (elements.length == 1) {
 										IJavaElement element = elements[0];
-										if (element instanceof IMethod) {
-											IMethod method = (IMethod) element;
+										if (element instanceof IMethod method) {
 											if (JDTUtils.isGenerated(method)) {
 												throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
 											}
@@ -97,8 +96,8 @@ public class PrepareRenameHandler {
 	}
 
 	private boolean isBinaryOrPackage(ASTNode node) {
-		if (node instanceof Name) {
-			IBinding resolvedBinding = ((Name) node).resolveBinding();
+		if (node instanceof Name name) {
+			IBinding resolvedBinding = name.resolveBinding();
 			IJavaElement element = resolvedBinding != null ? resolvedBinding.getJavaElement() : null;
 			try {
 				if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT || !RefactoringAvailabilityTester.isRenameElementAvailable(element)) {

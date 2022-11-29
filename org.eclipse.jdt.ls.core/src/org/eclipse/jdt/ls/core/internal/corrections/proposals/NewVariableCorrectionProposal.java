@@ -123,9 +123,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 		SimpleName node= fOriginalNode;
 
 		BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(node);
-		if (decl instanceof MethodDeclaration) {
-			MethodDeclaration methodDeclaration= (MethodDeclaration) decl;
-
+		if (decl instanceof MethodDeclaration methodDeclaration) {
 			ASTRewrite rewrite= ASTRewrite.create(ast);
 
 			ImportRewrite imports= createImportRewrite((CompilationUnit) decl.getRoot());
@@ -164,10 +162,8 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 	}
 
 	private boolean isAssigned(Statement statement, SimpleName name) {
-		if (statement instanceof ExpressionStatement) {
-			ExpressionStatement exstat= (ExpressionStatement) statement;
-			if (exstat.getExpression() instanceof Assignment) {
-				Assignment assignment= (Assignment) exstat.getExpression();
+		if (statement instanceof ExpressionStatement exstat) {
+			if (exstat.getExpression() instanceof Assignment assignment) {
 				return assignment.getLeftHandSide() == name;
 			}
 		}
@@ -175,11 +171,9 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 	}
 
 	private boolean isForStatementInit(Statement statement, SimpleName name) {
-		if (statement instanceof ForStatement) {
-			ForStatement forStatement= (ForStatement) statement;
+		if (statement instanceof ForStatement forStatement) {
 			List<Expression> list = forStatement.initializers();
-			if (list.size() == 1 && list.get(0) instanceof Assignment) {
-				Assignment assignment= (Assignment) list.get(0);
+			if (list.size() == 1 && list.get(0) instanceof Assignment assignment) {
 				return assignment.getLeftHandSide() == name;
 			}
 		}
@@ -188,8 +182,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 
 
 	private boolean isEnhancedForStatementVariable(Statement statement, SimpleName name) {
-		if (statement instanceof EnhancedForStatement) {
-			EnhancedForStatement forStatement= (EnhancedForStatement) statement;
+		if (statement instanceof EnhancedForStatement forStatement) {
 			SingleVariableDeclaration param= forStatement.getParameter();
 			return param.getType() == name.getParent(); // strange recovery, see https://bugs.eclipse.org/180456
 		}
@@ -203,11 +196,11 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 		Block body;
 		BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(fOriginalNode);
 		IBinding targetContext= null;
-		if (decl instanceof MethodDeclaration) {
-			body= (((MethodDeclaration) decl).getBody());
-			targetContext= ((MethodDeclaration) decl).resolveBinding();
-		} else if (decl instanceof Initializer) {
-			body= (((Initializer) decl).getBody());
+		if (decl instanceof MethodDeclaration methodDecl) {
+			body = methodDecl.getBody();
+			targetContext = methodDecl.resolveBinding();
+		} else if (decl instanceof Initializer initializer) {
+			body = initializer.getBody();
 			targetContext= Bindings.getBindingOfParentType(decl);
 		} else {
 			return null;
@@ -308,8 +301,8 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 
 		Statement statement= dominantStatement;
 		List<? extends ASTNode> list= ASTNodes.getContainingList(statement);
-		while (list == null && statement.getParent() instanceof Statement) { // parent must be if, for or while
-			statement= (Statement) statement.getParent();
+		while (list == null && statement.getParent() instanceof Statement parentStatement) { // parent must be if, for or while
+			statement = parentStatement;
 			list= ASTNodes.getContainingList(statement);
 		}
 		if (list != null) {
@@ -432,8 +425,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 	}
 
 	private Type evaluateVariableType(AST ast, ImportRewrite imports, ImportRewriteContext importRewriteContext, IBinding targetContext, TypeLocation location) {
-		if (fOriginalNode.getParent() instanceof MethodInvocation) {
-			MethodInvocation parent= (MethodInvocation) fOriginalNode.getParent();
+		if (fOriginalNode.getParent() instanceof MethodInvocation parent) {
 			if (parent.getExpression() == fOriginalNode) {
 				// _x_.foo() -> guess qualifier type by looking for a type with method 'foo'
 				ITypeBinding[] bindings= ASTResolving.getQualifierGuess(fOriginalNode.getRoot(), parent.getName().getIdentifier(), parent.arguments(), targetContext);
@@ -468,7 +460,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 
 	private boolean isVariableAssigned() {
 		ASTNode parent= fOriginalNode.getParent();
-		return (parent instanceof Assignment) && (fOriginalNode == ((Assignment) parent).getLeftHandSide());
+		return parent instanceof Assignment assignment && fOriginalNode == assignment.getLeftHandSide();
 	}
 
 
@@ -490,8 +482,8 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 			modifiers |= Modifier.FINAL | Modifier.STATIC;
 		} else {
 			ASTNode parent= fOriginalNode.getParent();
-			if (parent instanceof QualifiedName) {
-				IBinding qualifierBinding= ((QualifiedName)parent).getQualifier().resolveBinding();
+			if (parent instanceof QualifiedName qualifiedName) {
+				IBinding qualifierBinding = qualifiedName.getQualifier().resolveBinding();
 				if (qualifierBinding instanceof ITypeBinding) {
 					modifiers |= Modifier.STATIC;
 				}

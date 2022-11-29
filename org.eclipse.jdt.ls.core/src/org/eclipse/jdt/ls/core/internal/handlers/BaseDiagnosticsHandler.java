@@ -289,8 +289,7 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 
 	private static Range convertRange(IOpenable openable, IProblem problem) {
 		try {
-			if (problem.getID() == IProblem.UndefinedType && openable instanceof ICompilationUnit) {
-				ICompilationUnit cu = (ICompilationUnit) openable;
+			if (problem.getID() == IProblem.UndefinedType && openable instanceof ICompilationUnit cu) {
 				int start = getSourceStart(cu, problem);
 				if (start > -1) {
 					return JDTUtils.toRange(openable, start, problem.getSourceEnd() - start + 1);
@@ -304,8 +303,7 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 
 			start.setLine(problem.getSourceLineNumber() - 1);// The protocol is 0-based.
 			end.setLine(problem.getSourceLineNumber() - 1);
-			if (problem instanceof DefaultProblem) {
-				DefaultProblem dProblem = (DefaultProblem) problem;
+			if (problem instanceof DefaultProblem dProblem) {
 				start.setCharacter(dProblem.getSourceColumnNumber() - 1);
 				int offset = 0;
 				if (dProblem.getSourceStart() != -1 && dProblem.getSourceEnd() != -1) {

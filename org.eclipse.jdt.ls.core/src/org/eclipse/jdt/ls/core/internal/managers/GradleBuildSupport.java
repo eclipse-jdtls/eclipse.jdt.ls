@@ -17,7 +17,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,7 +103,7 @@ public class GradleBuildSupport implements IBuildSupport {
 			File buildKtsFile = project.getFile(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
 			File settingsKtsFile = project.getFile(GradleProjectImporter.SETTINGS_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
 			boolean shouldUpdate = (buildFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath()))
-					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath())) 
+					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath()))
 					|| (buildKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildKtsFile.toPath()))
 					|| (settingsKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsKtsFile.toPath()));
 			if (isRoot || shouldUpdate) {
@@ -166,7 +165,7 @@ public class GradleBuildSupport implements IBuildSupport {
 			if (apConfigurations == null) {
 				continue;
 			}
-			
+
 			if (apConfigurations.isEmpty()) {
 				disableApt(javaProject);
 				continue;
@@ -208,9 +207,9 @@ public class GradleBuildSupport implements IBuildSupport {
 	}
 
 	private boolean isRoot(IProject project, GradleBuild gradleBuild, IProgressMonitor monitor) {
-		if (gradleBuild instanceof InternalGradleBuild) {
+		if (gradleBuild instanceof InternalGradleBuild internalGradleBuild) {
 			CancellationTokenSource tokenSource = GradleConnector.newCancellationTokenSource();
-			Map<String, EclipseProject> eclipseProjects = ((InternalGradleBuild) gradleBuild).getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
+			Map<String, EclipseProject> eclipseProjects = internalGradleBuild.getModelProvider().fetchModels(EclipseProject.class, FetchStrategy.LOAD_IF_NOT_CACHED, tokenSource, monitor);
 			File projectDirectory = project.getLocation().toFile();
 			for (EclipseProject eclipseProject : eclipseProjects.values()) {
 				File eclipseProjectDirectory = eclipseProject.getProjectDirectory();
@@ -401,20 +400,12 @@ public class GradleBuildSupport implements IBuildSupport {
 
 	@SuppressWarnings("unchecked")
 	private static List<String> getCompilerArgs(Map<String, Object> apConfigurations) {
-		Object object = apConfigurations.get("compilerArgs");
-		if (!(object instanceof List)) {
-			return Collections.emptyList();
-		}
-		return (List<String>) object;
+		return apConfigurations.get("compilerArgs") instanceof List<?> l ? (List<String>) l : List.of();
 	}
 
 	@SuppressWarnings("unchecked")
 	private static Set<File> getProcessors(Map<String, Object> apConfigurations) {
-		Object object = apConfigurations.get("processors");
-		if (!(object instanceof Set)) {
-			return Collections.emptySet();
-		}
-		return (Set<File>) object;
+		return apConfigurations.get("processors") instanceof Set<?> set ? (Set<File>) set : Set.of();
 	}
 
 	private static void disableApt(IJavaProject javaProject) {

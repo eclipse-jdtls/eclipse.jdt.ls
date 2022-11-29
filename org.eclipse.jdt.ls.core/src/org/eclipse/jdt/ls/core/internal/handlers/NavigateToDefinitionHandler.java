@@ -105,18 +105,18 @@ public class NavigateToDefinitionHandler {
 			ASTNode selectedNode = NodeFinder.perform(unit, offset, 0);
 			ASTNode node = null;
 			SimpleName label = null;
-			if (selectedNode instanceof BreakStatement) {
+			if (selectedNode instanceof BreakStatement breakStatement) {
 				node = selectedNode;
-				label = ((BreakStatement) node).getLabel();
-			} else if (selectedNode instanceof ContinueStatement) {
+				label = breakStatement.getLabel();
+			} else if (selectedNode instanceof ContinueStatement continueStatement) {
 				node = selectedNode;
-				label = ((ContinueStatement) node).getLabel();
-			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof BreakStatement) {
+				label = continueStatement.getLabel();
+			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof BreakStatement breakStatement) {
 				node = selectedNode.getParent();
-				label = ((BreakStatement) node).getLabel();
-			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof ContinueStatement) {
+				label = breakStatement.getLabel();
+			} else if (selectedNode instanceof SimpleName && selectedNode.getParent() instanceof ContinueStatement continueStatement) {
 				node = selectedNode.getParent();
-				label = ((ContinueStatement) node).getLabel();
+				label = continueStatement.getLabel();
 			}
 			if (node != null) {
 				ASTNode parent = node.getParent();
@@ -182,12 +182,12 @@ public class NavigateToDefinitionHandler {
 			return fixLocation(element, JDTUtils.toLocation(element), javaProject);
 		}
 
-		if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+		if (element instanceof IMember member && member.getClassFile() != null) {
 			List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 			if (!locations.isEmpty()) {
 				return fixLocation(element, locations.get(0), javaProject);
 			}
-			return fixLocation(element, JDTUtils.toLocation(((IMember) element).getClassFile()), javaProject);
+			return fixLocation(element, JDTUtils.toLocation(member.getClassFile()), javaProject);
 		}
 
 		return null;

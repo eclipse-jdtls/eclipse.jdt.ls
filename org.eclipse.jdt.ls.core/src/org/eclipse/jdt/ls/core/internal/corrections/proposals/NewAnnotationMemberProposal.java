@@ -63,9 +63,7 @@ public class NewAnnotationMemberProposal extends ASTRewriteCorrectionProposal {
 		}
 		createImportRewrite(astRoot);
 
-		if (newTypeDecl instanceof AnnotationTypeDeclaration) {
-			AnnotationTypeDeclaration newAnnotationTypeDecl= (AnnotationTypeDeclaration) newTypeDecl;
-
+		if (newTypeDecl instanceof AnnotationTypeDeclaration newAnnotationTypeDecl) {
 			ASTRewrite rewrite= ASTRewrite.create(astRoot.getAST());
 
 			AnnotationTypeMemberDeclaration newStub= getStub(rewrite, newAnnotationTypeDecl);
@@ -104,8 +102,8 @@ public class NewAnnotationMemberProposal extends ASTRewriteCorrectionProposal {
 		if (fInvocationNode.getLocationInParent() == MemberValuePair.NAME_PROPERTY) {
 			Expression value= ((MemberValuePair) fInvocationNode.getParent()).getValue();
 			binding= value.resolveTypeBinding();
-		} else if (fInvocationNode instanceof Expression) {
-			binding= ((Expression) fInvocationNode).resolveTypeBinding();
+		} else if (fInvocationNode instanceof Expression expression) {
+			binding = expression.resolveTypeBinding();
 		}
 		if (binding != null) {
 			ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(fInvocationNode, getImportRewrite());
@@ -121,8 +119,8 @@ public class NewAnnotationMemberProposal extends ASTRewriteCorrectionProposal {
 		List<BodyDeclaration> methodDecls= targetTypeDecl.bodyDeclarations();
 		for (int i= 0; i < methodDecls.size(); i++) {
 			Object curr= methodDecls.get(i);
-			if (curr instanceof AnnotationTypeMemberDeclaration) {
-				return ((AnnotationTypeMemberDeclaration) curr).getModifiers();
+			if (curr instanceof AnnotationTypeMemberDeclaration annotation) {
+				return annotation.getModifiers();
 			}
 		}
 		return 0;

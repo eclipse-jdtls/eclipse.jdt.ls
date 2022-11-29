@@ -112,8 +112,8 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 		if (fNode != null) {
 			containerName = ASTNodes.getQualifier(fNode);
 		} else {
-			if (fTypeContainer instanceof IPackageFragment) {
-				containerName = ((IPackageFragment) fTypeContainer).getElementName();
+			if (fTypeContainer instanceof IPackageFragment pack) {
+				containerName = pack.getElementName();
 			} else {
 				containerName = ""; //$NON-NLS-1$
 			}
@@ -238,13 +238,13 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 
 	private TypeDeclaration findEnclosingTypeDeclaration(ASTNode node, String typeName) {
 		Iterator<ASTNode> iter;
-		if (node instanceof CompilationUnit) {
-			iter = ((CompilationUnit) node).types().iterator();
-		} else if (node instanceof TypeDeclaration) {
-			if (Objects.equals(typeName, ((TypeDeclaration) node).getName().toString())) {
-				return (TypeDeclaration) node;
+		if (node instanceof CompilationUnit unit) {
+			iter = unit.types().iterator();
+		} else if (node instanceof TypeDeclaration typeDecl) {
+			if (Objects.equals(typeName, typeDecl.getName().toString())) {
+				return typeDecl;
 			}
-			iter = ((TypeDeclaration) node).bodyDeclarations().iterator();
+			iter = typeDecl.bodyDeclarations().iterator();
 		} else {
 			return null;
 		}
@@ -261,17 +261,16 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 	@Override
 	protected Change createChange() throws CoreException {
 		IType targetType;
-		if (fTypeContainer instanceof IType) {
-			IType enclosingType = (IType) fTypeContainer;
+		if (fTypeContainer instanceof IType enclosingType) {
 			ICompilationUnit parentCU = enclosingType.getCompilationUnit();
 
 			CompilationUnitChange cuChange = new CompilationUnitChange(fName, parentCU);
 			TextEdit edit = constructEnclosingTypeEdit(parentCU);
 			cuChange.setEdit(edit);
 			return cuChange;
-		} else if (fTypeContainer instanceof IPackageFragment && ((IPackageFragment) fTypeContainer).getKind() == IPackageFragmentRoot.K_SOURCE) {
+		} else if (fTypeContainer instanceof IPackageFragment pack && pack.getKind() == IPackageFragmentRoot.K_SOURCE) {
 			String name = ASTNodes.getSimpleNameIdentifier(fNode);
-			ICompilationUnit parentCU = ((IPackageFragment) fTypeContainer).getCompilationUnit(getCompilationUnitName(name));
+			ICompilationUnit parentCU = pack.getCompilationUnit(getCompilationUnitName(name));
 			targetType = parentCU.getType(name);
 			CompositeChange change = new CompositeChange(fName);
 			change.add(new CreateFileChange(targetType.getResource().getRawLocation(), "", ""));

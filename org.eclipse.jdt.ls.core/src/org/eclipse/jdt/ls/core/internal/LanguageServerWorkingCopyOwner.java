@@ -40,8 +40,8 @@ public final class LanguageServerWorkingCopyOwner extends WorkingCopyOwner {
 	public IBuffer createBuffer(ICompilationUnit workingCopy) {
 		ICompilationUnit original= workingCopy.getPrimary();
 		IResource resource= original.getResource();
-		if (resource instanceof IFile) {
-			return new DocumentAdapter(workingCopy, (IFile)resource);
+		if (resource instanceof IFile file) {
+			return new DocumentAdapter(workingCopy, file);
 		}
 		return DocumentAdapter.Null;
 	}

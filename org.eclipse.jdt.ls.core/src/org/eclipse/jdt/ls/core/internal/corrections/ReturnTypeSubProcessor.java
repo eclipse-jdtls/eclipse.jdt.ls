@@ -127,7 +127,7 @@ public class ReturnTypeSubProcessor {
 		}
 
 		BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
-		if (decl instanceof MethodDeclaration && selectedNode.getNodeType() == ASTNode.RETURN_STATEMENT) {
+		if (decl instanceof MethodDeclaration methodDeclaration && selectedNode.getNodeType() == ASTNode.RETURN_STATEMENT) {
 			ReturnStatement returnStatement= (ReturnStatement) selectedNode;
 			Expression expr= returnStatement.getExpression();
 			if (expr != null) {
@@ -140,8 +140,6 @@ public class ReturnTypeSubProcessor {
 				if (binding.isWildcardType()) {
 					binding= ASTResolving.normalizeWildcardType(binding, true, ast);
 				}
-
-				MethodDeclaration methodDeclaration= (MethodDeclaration) decl;
 
 				ASTRewrite rewrite= ASTRewrite.create(ast);
 
@@ -197,9 +195,7 @@ public class ReturnTypeSubProcessor {
 			return;
 		}
 		BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
-		if (decl instanceof MethodDeclaration) {
-			MethodDeclaration methodDeclaration= (MethodDeclaration) decl;
-
+		if (decl instanceof MethodDeclaration methodDeclaration) {
 			ReturnStatementCollector eval= new ReturnStatementCollector();
 			decl.accept(eval);
 
@@ -250,10 +246,10 @@ public class ReturnTypeSubProcessor {
 
 			// change to constructor
 			ASTNode parentType= ASTResolving.findParentType(decl);
-			if (parentType instanceof AbstractTypeDeclaration) {
-				boolean isInterface= parentType instanceof TypeDeclaration && ((TypeDeclaration) parentType).isInterface();
+			if (parentType instanceof AbstractTypeDeclaration parentTypeDecl) {
+				boolean isInterface = parentType instanceof TypeDeclaration concreteParentTypeDecl && concreteParentTypeDecl.isInterface();
 				if (!isInterface) {
-					String constructorName= ((AbstractTypeDeclaration) parentType).getName().getIdentifier();
+					String constructorName = parentTypeDecl.getName().getIdentifier();
 					ASTNode nameNode= methodDeclaration.getName();
 					label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_wrongconstructorname_description, BasicElementLabels.getJavaElementName(constructorName));
 					proposals.add(new ReplaceCorrectionProposal(label, cu, nameNode.getStartPosition(), nameNode.getLength(), constructorName, IProposalRelevance.CHANGE_TO_CONSTRUCTOR));
@@ -269,16 +265,15 @@ public class ReturnTypeSubProcessor {
 		if (selectedNode == null) {
 			return;
 		}
-		ReturnStatement existingStatement= (selectedNode instanceof ReturnStatement) ? (ReturnStatement) selectedNode : null;
+		ReturnStatement existingStatement = selectedNode instanceof ReturnStatement returnStatement ? returnStatement : null;
 		// Lambda Expression can be in a MethodDeclaration or a Field Declaration
-		if (selectedNode instanceof LambdaExpression) {
-			MissingReturnTypeInLambdaCorrectionProposal proposal= new MissingReturnTypeInLambdaCorrectionProposal(cu, (LambdaExpression) selectedNode, existingStatement,
+		if (selectedNode instanceof LambdaExpression lambda) {
+			MissingReturnTypeInLambdaCorrectionProposal proposal = new MissingReturnTypeInLambdaCorrectionProposal(cu, lambda, existingStatement,
 					IProposalRelevance.MISSING_RETURN_TYPE);
 			proposals.add(proposal);
 		} else {
 			BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
-			if (decl instanceof MethodDeclaration) {
-				MethodDeclaration methodDecl= (MethodDeclaration) decl;
+			if (decl instanceof MethodDeclaration methodDecl) {
 				Block block= methodDecl.getBody();
 				if (block == null) {
 					return;
@@ -318,8 +313,7 @@ public class ReturnTypeSubProcessor {
 			return;
 		}
 		BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
-		if (decl instanceof MethodDeclaration) {
-			MethodDeclaration methDecl= (MethodDeclaration) decl;
+		if (decl instanceof MethodDeclaration methDecl) {
 			Type retType= methDecl.getReturnType2();
 			if (retType == null || retType.resolveBinding() == null) {
 				return;

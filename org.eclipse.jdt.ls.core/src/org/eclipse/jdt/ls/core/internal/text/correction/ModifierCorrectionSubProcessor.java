@@ -145,14 +145,13 @@ public class ModifierCorrectionSubProcessor {
 		String name;
 		IBinding bindingDecl;
 		boolean isLocalVar = false;
-		if (binding instanceof IVariableBinding && problem.getProblemId() == IProblem.NotVisibleType) {
-			binding = ((IVariableBinding) binding).getType();
+		if (binding instanceof IVariableBinding variableBinding && problem.getProblemId() == IProblem.NotVisibleType) {
+			binding = variableBinding.getType();
 		}
-		if (binding instanceof IMethodBinding && problem.getProblemId() == IProblem.NotVisibleType) {
-			binding = ((IMethodBinding) binding).getReturnType();
+		if (binding instanceof IMethodBinding methodBinding && problem.getProblemId() == IProblem.NotVisibleType) {
+			binding = methodBinding.getReturnType();
 		}
-		if (binding instanceof IMethodBinding) {
-			IMethodBinding methodDecl = (IMethodBinding) binding;
+		if (binding instanceof IMethodBinding methodDecl) {
 			if (methodDecl.isDefaultConstructor()) {
 				UnresolvedElementsSubProcessor.getConstructorProposals(context, problem, proposals);
 				return;
@@ -160,14 +159,13 @@ public class ModifierCorrectionSubProcessor {
 			bindingDecl = methodDecl.getMethodDeclaration();
 			typeBinding = methodDecl.getDeclaringClass();
 			name = BasicElementLabels.getJavaElementName(methodDecl.getName() + "()"); //$NON-NLS-1$
-		} else if (binding instanceof IVariableBinding) {
-			IVariableBinding varDecl = (IVariableBinding) binding;
+		} else if (binding instanceof IVariableBinding varDecl) {
 			typeBinding = varDecl.getDeclaringClass();
 			name = BasicElementLabels.getJavaElementName(binding.getName());
 			isLocalVar = !varDecl.isField();
 			bindingDecl = varDecl.getVariableDeclaration();
-		} else if (binding instanceof ITypeBinding) {
-			typeBinding = (ITypeBinding) binding;
+		} else if (binding instanceof ITypeBinding localTypeBinding) {
+			typeBinding = localTypeBinding;
 			bindingDecl = typeBinding.getTypeDeclaration();
 			name = BasicElementLabels.getJavaElementName(binding.getName());
 		} else {
@@ -344,8 +342,8 @@ public class ModifierCorrectionSubProcessor {
 		ICompilationUnit cu = context.getCompilationUnit();
 
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
-		if (selectedNode instanceof MethodDeclaration) {
-			selectedNode = ((MethodDeclaration) selectedNode).getName();
+		if (selectedNode instanceof MethodDeclaration methodDeclaration) {
+			selectedNode = methodDeclaration.getName();
 		}
 
 		if (!(selectedNode instanceof SimpleName)) {
@@ -445,8 +443,8 @@ public class ModifierCorrectionSubProcessor {
 				proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_removefinal_description, cu, binding, selectedNode, 0, Modifier.FINAL, relevance + 1));
 			}
 
-			if (problemId == IProblem.UnexpectedStaticModifierForField && binding instanceof IVariableBinding) {
-				ITypeBinding declClass = ((IVariableBinding) binding).getDeclaringClass();
+			if (problemId == IProblem.UnexpectedStaticModifierForField && binding instanceof IVariableBinding variableBinding) {
+				ITypeBinding declClass = variableBinding.getDeclaringClass();
 				if (declClass.isMember()) {
 					proposals.add(new ModifierChangeCorrectionProposal(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostaticfinal_description, cu, binding, selectedNode, Modifier.FINAL, Modifier.VOLATILE, relevance + 1));
 					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
@@ -455,8 +453,8 @@ public class ModifierCorrectionSubProcessor {
 					}
 				}
 			}
-			if (problemId == IProblem.UnexpectedStaticModifierForMethod && binding instanceof IMethodBinding) {
-				ITypeBinding declClass = ((IMethodBinding) binding).getDeclaringClass();
+			if (problemId == IProblem.UnexpectedStaticModifierForMethod && binding instanceof IMethodBinding methodBinding) {
+				ITypeBinding declClass = methodBinding.getDeclaringClass();
 				if (declClass.isMember()) {
 					ASTNode parentType = context.getASTRoot().findDeclaringNode(declClass);
 					if (parentType != null) {
@@ -513,8 +511,8 @@ public class ModifierCorrectionSubProcessor {
 		MethodDeclaration decl;
 		if (selectedNode instanceof SimpleName) {
 			decl = (MethodDeclaration) selectedNode.getParent();
-		} else if (selectedNode instanceof MethodDeclaration) {
-			decl = (MethodDeclaration) selectedNode;
+		} else if (selectedNode instanceof MethodDeclaration methodDeclaration) {
+			decl = methodDeclaration;
 		} else {
 			return;
 		}
@@ -523,8 +521,8 @@ public class ModifierCorrectionSubProcessor {
 		TypeDeclaration parentTypeDecl = null;
 		boolean parentIsAbstractClass = false;
 		boolean parentIsInterface = false;
-		if (parentType instanceof TypeDeclaration) {
-			parentTypeDecl = (TypeDeclaration) parentType;
+		if (parentType instanceof TypeDeclaration typeDecl) {
+			parentTypeDecl = typeDecl;
 			parentIsAbstractClass = !parentTypeDecl.isInterface() && Modifier.isAbstract(parentTypeDecl.getModifiers());
 			parentIsInterface = parentTypeDecl.isInterface();
 		}
@@ -633,8 +631,8 @@ public class ModifierCorrectionSubProcessor {
 			if (parent != null) {
 				parentTypeDecl = (TypeDeclaration) parent;
 			}
-		} else if (selectedNode instanceof TypeDeclaration) {
-			parentTypeDecl = (TypeDeclaration) selectedNode;
+		} else if (selectedNode instanceof TypeDeclaration typeDecl) {
+			parentTypeDecl = typeDecl;
 		}
 
 		if (parentTypeDecl == null) {
@@ -951,8 +949,7 @@ public class ModifierCorrectionSubProcessor {
 	private static Modifier findVisibilityModifier(List<IExtendedModifier> modifiers) {
 		for (int i = 0; i < modifiers.size(); i++) {
 			IExtendedModifier curr = modifiers.get(i);
-			if (curr instanceof Modifier) {
-				Modifier modifier = (Modifier) curr;
+			if (curr instanceof Modifier modifier) {
 				ModifierKeyword keyword = modifier.getKeyword();
 				if (keyword == ModifierKeyword.PUBLIC_KEYWORD || keyword == ModifierKeyword.PROTECTED_KEYWORD || keyword == ModifierKeyword.PRIVATE_KEYWORD) {
 					return modifier;

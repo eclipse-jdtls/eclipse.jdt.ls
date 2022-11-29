@@ -170,8 +170,8 @@ public class CompletionProposalReplacementProvider {
 				appendMethodOverrideReplacement(completionBuffer, proposal);
 				break;
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-				if (proposal instanceof GetterSetterCompletionProposal) {
-					appendMethodPotentialReplacement(completionBuffer, (GetterSetterCompletionProposal) proposal);
+				if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
+					appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
 				} else {
 					appendReplacementString(completionBuffer, proposal);
 				}

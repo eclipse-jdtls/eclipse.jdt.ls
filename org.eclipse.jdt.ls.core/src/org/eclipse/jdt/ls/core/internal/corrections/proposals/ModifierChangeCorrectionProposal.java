@@ -79,14 +79,12 @@ public class ModifierChangeCorrectionProposal extends LinkedCorrectionProposal {
 			if (declNode.getNodeType() == ASTNode.VARIABLE_DECLARATION_FRAGMENT) {
 				VariableDeclarationFragment fragment = (VariableDeclarationFragment) declNode;
 				ASTNode parent = declNode.getParent();
-				if (parent instanceof FieldDeclaration) {
-					FieldDeclaration fieldDecl = (FieldDeclaration) parent;
+				if (parent instanceof FieldDeclaration fieldDecl) {
 					if (fieldDecl.fragments().size() > 1 && (fieldDecl.getParent() instanceof AbstractTypeDeclaration)) { // split
 						VariableDeclarationRewrite.rewriteModifiers(fieldDecl, new VariableDeclarationFragment[] { fragment }, fIncludedModifiers, fExcludedModifiers, rewrite, null);
 						return rewrite;
 					}
-				} else if (parent instanceof VariableDeclarationStatement) {
-					VariableDeclarationStatement varDecl = (VariableDeclarationStatement) parent;
+				} else if (parent instanceof VariableDeclarationStatement varDecl) {
 					if (varDecl.fragments().size() > 1 && (varDecl.getParent() instanceof Block)) { // split
 						VariableDeclarationRewrite.rewriteModifiers(varDecl, new VariableDeclarationFragment[] { fragment }, fIncludedModifiers, fExcludedModifiers, rewrite, null);
 						return rewrite;

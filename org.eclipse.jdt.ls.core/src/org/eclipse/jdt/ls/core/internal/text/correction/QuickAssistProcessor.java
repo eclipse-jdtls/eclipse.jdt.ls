@@ -284,8 +284,7 @@ public class QuickAssistProcessor {
 				IVariableBinding curr = declaredFields[i];
 				if (isStaticContext == Modifier.isStatic(curr.getModifiers()) && typeBinding.isAssignmentCompatible(curr.getType())) {
 					ASTNode fieldDeclFrag = root.findDeclaringNode(curr);
-					if (fieldDeclFrag instanceof VariableDeclarationFragment) {
-						VariableDeclarationFragment fragment = (VariableDeclarationFragment) fieldDeclFrag;
+					if (fieldDeclFrag instanceof VariableDeclarationFragment fragment) {
 						if (fragment.getInitializer() == null) {
 							resultingCollections.add(new AssignToVariableAssistProposal(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD));
 						}
@@ -439,8 +438,7 @@ public class QuickAssistProcessor {
 		ITypeBinding returnTypeBinding = functionalMethod.getReturnType();
 		IMethodBinding referredMethodBinding = methodReference.resolveMethodBinding(); // too often null, see bug 440000, bug 440344, bug 333665
 
-		if (methodReference instanceof CreationReference) {
-			CreationReference creationRef = (CreationReference) methodReference;
+		if (methodReference instanceof CreationReference creationRef) {
 			Type type = creationRef.getType();
 			if (type instanceof ArrayType) {
 				ArrayCreation arrayCreation = ast.newArrayCreation();
@@ -496,11 +494,10 @@ public class QuickAssistProcessor {
 			Expression expr = null;
 			boolean hasConflict = hasConflict(methodReference.getStartPosition(), referredMethodBinding, ScopeAnalyzer.METHODS | ScopeAnalyzer.CHECK_VISIBILITY, astRoot);
 			if (hasConflict || !Bindings.isSuperType(referredMethodBinding.getDeclaringClass(), ASTNodes.getEnclosingType(methodReference)) || methodReference.typeArguments().size() != 0) {
-				if (methodReference instanceof ExpressionMethodReference) {
-					ExpressionMethodReference expressionMethodReference = (ExpressionMethodReference) methodReference;
+				if (methodReference instanceof ExpressionMethodReference expressionMethodReference) {
 					expr = (Expression) rewrite.createCopyTarget(expressionMethodReference.getExpression());
-				} else if (methodReference instanceof TypeMethodReference) {
-					Type type = ((TypeMethodReference) methodReference).getType();
+				} else if (methodReference instanceof TypeMethodReference typedMethodReference) {
+					Type type = typedMethodReference.getType();
 					ITypeBinding typeBinding = type.resolveBinding();
 					if (typeBinding != null) {
 						ImportRewrite importRewrite = CodeStyleConfiguration.createImportRewrite(astRoot, true);
@@ -629,10 +626,10 @@ public class QuickAssistProcessor {
 		if (methodReference instanceof TypeMethodReference) {
 			return true;
 		}
-		if (methodReference instanceof ExpressionMethodReference) {
-			Expression expression = ((ExpressionMethodReference) methodReference).getExpression();
-			if (expression instanceof Name) {
-				IBinding nameBinding = ((Name) expression).resolveBinding();
+		if (methodReference instanceof ExpressionMethodReference expressionMethodReference) {
+			Expression expression = expressionMethodReference.getExpression();
+			if (expression instanceof Name name) {
+				IBinding nameBinding = name.resolveBinding();
 				if (nameBinding != null && nameBinding instanceof ITypeBinding) {
 					return true;
 				}
@@ -659,12 +656,12 @@ public class QuickAssistProcessor {
 
 	private static SimpleName getMethodInvocationName(MethodReference methodReference) {
 		SimpleName name = null;
-		if (methodReference instanceof ExpressionMethodReference) {
-			name = ((ExpressionMethodReference) methodReference).getName();
-		} else if (methodReference instanceof TypeMethodReference) {
-			name = ((TypeMethodReference) methodReference).getName();
-		} else if (methodReference instanceof SuperMethodReference) {
-			name = ((SuperMethodReference) methodReference).getName();
+		if (methodReference instanceof ExpressionMethodReference expressionMethodReference) {
+			name = expressionMethodReference.getName();
+		} else if (methodReference instanceof TypeMethodReference typeMethodReference) {
+			name = typeMethodReference.getName();
+		} else if (methodReference instanceof SuperMethodReference superMethodReference) {
+			name = superMethodReference.getName();
 		}
 		return name;
 	}
@@ -718,19 +715,17 @@ public class QuickAssistProcessor {
 		AST ast = bodyDeclaration.getAST();
 
 		Type selectedMultiCatchType = null;
-		if (type.isUnionType() && node instanceof Name) {
-			Name topMostName = ASTNodes.getTopMostName((Name) node);
+		if (type.isUnionType() && node instanceof Name name) {
+			Name topMostName = ASTNodes.getTopMostName(name);
 			ASTNode parent = topMostName.getParent();
-			if (parent instanceof SimpleType) {
-				selectedMultiCatchType = (SimpleType) parent;
-			} else if (parent instanceof NameQualifiedType) {
-				selectedMultiCatchType = (NameQualifiedType) parent;
+			if (parent instanceof SimpleType simpleType) {
+				selectedMultiCatchType = simpleType;
+			} else if (parent instanceof NameQualifiedType nameQualifiedType) {
+				selectedMultiCatchType = nameQualifiedType;
 			}
 		}
 
-		if (bodyDeclaration instanceof MethodDeclaration) {
-			MethodDeclaration methodDeclaration = (MethodDeclaration) bodyDeclaration;
-
+		if (bodyDeclaration instanceof MethodDeclaration methodDeclaration) {
 			ASTRewrite rewrite = ASTRewrite.create(ast);
 			if (selectedMultiCatchType != null) {
 				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
@@ -838,10 +833,10 @@ public class QuickAssistProcessor {
 
 	private static boolean getConvertMethodReferenceToLambdaProposal(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) throws JavaModelException {
 		MethodReference methodReference;
-		if (covering instanceof MethodReference) {
-			methodReference = (MethodReference) covering;
-		} else if (covering.getParent() instanceof MethodReference) {
-			methodReference = (MethodReference) covering.getParent();
+		if (covering instanceof MethodReference ref) {
+			methodReference = ref;
+		} else if (covering.getParent() instanceof MethodReference parentMethodRef) {
+			methodReference = parentMethodRef;
 		} else {
 			return false;
 		}
@@ -871,8 +866,8 @@ public class QuickAssistProcessor {
 
 	private static boolean getConvertLambdaToMethodReferenceProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> resultingCollections) {
 		LambdaExpression lambda;
-		if (coveringNode instanceof LambdaExpression) {
-			lambda = (LambdaExpression) coveringNode;
+		if (coveringNode instanceof LambdaExpression lambdaExpr) {
+			lambda = lambdaExpr;
 		} else if (coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			lambda = (LambdaExpression) coveringNode.getParent();
 		} else {
@@ -884,8 +879,8 @@ public class QuickAssistProcessor {
 
 		ASTNode lambdaBody = lambda.getBody();
 		Expression exprBody;
-		if (lambdaBody instanceof Block) {
-			exprBody = getSingleExpressionFromLambdaBody((Block) lambdaBody);
+		if (lambdaBody instanceof Block block) {
+			exprBody = getSingleExpressionFromLambdaBody(block);
 		} else {
 			exprBody = (Expression) lambdaBody;
 		}
@@ -902,24 +897,22 @@ public class QuickAssistProcessor {
 		for (VariableDeclaration param : (List<VariableDeclaration>) lambda.parameters()) {
 			lambdaParameters.add(param.getName());
 		}
-		if (exprBody instanceof ClassInstanceCreation) {
-			ClassInstanceCreation cic = (ClassInstanceCreation) exprBody;
+		if (exprBody instanceof ClassInstanceCreation cic) {
 			if (cic.getExpression() != null || cic.getAnonymousClassDeclaration() != null) {
 				return false;
 			}
 			if (!matches(lambdaParameters, cic.arguments())) {
 				return false;
 			}
-		} else if (exprBody instanceof ArrayCreation) {
-			List<Expression> dimensions = ((ArrayCreation) exprBody).dimensions();
+		} else if (exprBody instanceof ArrayCreation arrayCreation) {
+			List<Expression> dimensions = arrayCreation.dimensions();
 			if (dimensions.size() != 1) {
 				return false;
 			}
 			if (!matches(lambdaParameters, dimensions)) {
 				return false;
 			}
-		} else if (exprBody instanceof SuperMethodInvocation) {
-			SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) exprBody;
+		} else if (exprBody instanceof SuperMethodInvocation superMethodInvocation) {
 			IMethodBinding methodBinding = superMethodInvocation.resolveMethodBinding();
 			if (methodBinding == null) {
 				return false;
@@ -980,26 +973,24 @@ public class QuickAssistProcessor {
 		ImportRewrite importRewrite = null;
 		MethodReference replacement;
 
-		if (exprBody instanceof ClassInstanceCreation) {
+		if (exprBody instanceof ClassInstanceCreation cic) {
 			CreationReference creationReference = ast.newCreationReference();
 			replacement = creationReference;
 
-			ClassInstanceCreation cic = (ClassInstanceCreation) exprBody;
 			Type type = cic.getType();
 			if (type.isParameterizedType() && ((ParameterizedType) type).typeArguments().size() == 0) {
 				type = ((ParameterizedType) type).getType();
 			}
 			creationReference.setType((Type) rewrite.createCopyTarget(type));
 			creationReference.typeArguments().addAll(getCopiedTypeArguments(rewrite, cic.typeArguments()));
-		} else if (exprBody instanceof ArrayCreation) {
+		} else if (exprBody instanceof ArrayCreation arrayCreation) {
 			CreationReference creationReference = ast.newCreationReference();
 			replacement = creationReference;
 
-			ArrayType arrayType = ((ArrayCreation) exprBody).getType();
+			ArrayType arrayType = arrayCreation.getType();
 			Type copiedElementType = (Type) rewrite.createCopyTarget(arrayType.getElementType());
 			creationReference.setType(ast.newArrayType(copiedElementType, arrayType.getDimensions()));
-		} else if (exprBody instanceof SuperMethodInvocation) {
-			SuperMethodInvocation superMethodInvocation = (SuperMethodInvocation) exprBody;
+		} else if (exprBody instanceof SuperMethodInvocation superMethodInvocation) {
 			IMethodBinding methodBinding = superMethodInvocation.resolveMethodBinding();
 			Name superQualifier = superMethodInvocation.getQualifier();
 
@@ -1106,10 +1097,10 @@ public class QuickAssistProcessor {
 			return null;
 		}
 		Statement singleStatement = (Statement) lambdaBody.statements().get(0);
-		if (singleStatement instanceof ReturnStatement) {
-			return ((ReturnStatement) singleStatement).getExpression();
-		} else if (singleStatement instanceof ExpressionStatement) {
-			Expression expression = ((ExpressionStatement) singleStatement).getExpression();
+		if (singleStatement instanceof ReturnStatement returnStatement) {
+			return returnStatement.getExpression();
+		} else if (singleStatement instanceof ExpressionStatement expressionStatement) {
+			Expression expression = expressionStatement.getExpression();
 			if (isValidLambdaExpressionBody(expression)) {
 				return expression;
 			}
@@ -1121,8 +1112,8 @@ public class QuickAssistProcessor {
 		if (expression instanceof Assignment || expression instanceof ClassInstanceCreation || expression instanceof MethodInvocation || expression instanceof PostfixExpression || expression instanceof SuperMethodInvocation) {
 			return true;
 		}
-		if (expression instanceof PrefixExpression) {
-			Operator operator = ((PrefixExpression) expression).getOperator();
+		if (expression instanceof PrefixExpression prefixExpression) {
+			Operator operator = prefixExpression.getOperator();
 			if (operator == Operator.INCREMENT || operator == Operator.DECREMENT) {
 				return true;
 			}
@@ -1252,8 +1243,8 @@ public class QuickAssistProcessor {
 
 	private static ReturnType getReturnType(AST ast, ImportRewrite importRewrite, Type variableType) {
 		ReturnType returnType = new ReturnType();
-		if (variableType instanceof ParameterizedType) {
-			variableType = (Type) ((ParameterizedType) variableType).typeArguments().get(0);
+		if (variableType instanceof ParameterizedType parameterizedType) {
+			variableType = (Type) parameterizedType.typeArguments().get(0);
 			ITypeBinding returnTypeBinding = variableType.resolveBinding();
 			if (returnTypeBinding != null) {
 				if (returnTypeBinding.isCapture()) {
@@ -1292,7 +1283,7 @@ public class QuickAssistProcessor {
 
 	public static boolean getAddMethodDeclaration(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
 		CompilationUnit astRoot = context.getASTRoot();
-		ExpressionMethodReference methodReferenceNode = covering instanceof ExpressionMethodReference ? (ExpressionMethodReference) covering : ASTNodes.getParent(covering, ExpressionMethodReference.class);
+		ExpressionMethodReference methodReferenceNode = covering instanceof ExpressionMethodReference expressionMethodReference ? expressionMethodReference : ASTNodes.getParent(covering, ExpressionMethodReference.class);
 		if (methodReferenceNode == null) {
 			return false;
 		}
@@ -1578,8 +1569,7 @@ public class QuickAssistProcessor {
 			if (findAncestor == null) {
 				findAncestor = ASTResolving.findAncestor(coveredNode, ASTNode.ASSIGNMENT);
 			}
-			if (findAncestor instanceof VariableDeclarationStatement) {
-				VariableDeclarationStatement vds = (VariableDeclarationStatement) findAncestor;
+			if (findAncestor instanceof VariableDeclarationStatement vds) {
 				String commentToken = null;
 				int extendedStatementStart = cu.getExtendedStartPosition(vds);
 				if (vds.getStartPosition() > extendedStatementStart) {
@@ -1730,8 +1720,8 @@ public class QuickAssistProcessor {
 	}
 
 	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
-		if (covering instanceof Block) {
-			List<Statement> statements = ((Block) covering).statements();
+		if (covering instanceof Block block) {
+			List<Statement> statements = block.statements();
 			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
 			if (startIndex == -1 || startIndex >= statements.size()) {
 				return false;
@@ -1744,8 +1734,8 @@ public class QuickAssistProcessor {
 		}
 
 		SwitchStatement switchStatement;
-		if (covering instanceof SwitchStatement) {
-			switchStatement = (SwitchStatement) covering;
+		if (covering instanceof SwitchStatement statement) {
+			switchStatement = statement;
 		} else {
 			return false;
 		}

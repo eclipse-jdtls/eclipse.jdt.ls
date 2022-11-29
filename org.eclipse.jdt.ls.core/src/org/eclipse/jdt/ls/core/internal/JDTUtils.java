@@ -235,8 +235,8 @@ public final class JDTUtils {
 				return null;
 			}
 			IJavaElement element = JavaCore.create(resource);
-			if (element instanceof IPackageFragment) {
-				return (IPackageFragment) element;
+			if (element instanceof IPackageFragment pkg) {
+				return pkg;
 			}
 		}
 		return null;
@@ -357,10 +357,10 @@ public final class JDTUtils {
 	 */
 	public static boolean isDeprecated(IJavaElement element) throws JavaModelException {
 		Assert.isNotNull(element, "element");
-		if (element instanceof ITypeRoot) {
-			return Flags.isDeprecated(((ITypeRoot) element).findPrimaryType().getFlags());
-		} else if (element instanceof IMember) {
-			return Flags.isDeprecated(((IMember) element).getFlags());
+		if (element instanceof ITypeRoot typeRoot) {
+			return Flags.isDeprecated(typeRoot.findPrimaryType().getFlags());
+		} else if (element instanceof IMember member) {
+			return Flags.isDeprecated(member.getFlags());
 		}
 		return false;
 	}
@@ -498,14 +498,13 @@ public final class JDTUtils {
 		@Override
 		public boolean visit(MethodInvocation node) {
 			if (element.getElementName().equals(node.getName().getIdentifier())) {
-				if (element instanceof IMethod) {
-					IMethod method = (IMethod) element;
+				if (element instanceof IMethod method) {
 					String[] parameters = method.getParameterTypes();
-					List astParameters = node.typeArguments();
+					List<?> astParameters = node.typeArguments();
 					if (parameters.length == astParameters.size()) {
 						int size = astParameters.size();
 						String[] astParameterTypes = new String[size];
-						Iterator iterator = astParameters.iterator();
+						Iterator<?> iterator = astParameters.iterator();
 						for (int i = 0; i < size; i++) {
 							Type parameter = (Type) iterator.next();
 							astParameterTypes[i] = getSignature(parameter);
@@ -527,8 +526,7 @@ public final class JDTUtils {
 		@Override
 		public boolean visit(MethodDeclaration node) {
 			if (element.getElementName().equals(node.getName().getIdentifier())) {
-				if (element instanceof IMethod) {
-					IMethod method = (IMethod) element;
+				if (element instanceof IMethod method) {
 					String[] parameters = method.getParameterTypes();
 					IMethodBinding binding = node.resolveBinding();
 					if (binding != null) {
@@ -703,8 +701,7 @@ public final class JDTUtils {
 				if (cf == null) {
 					// https://github.com/redhat-developer/vscode-java/issues/2805
 					// 1. Jump to the field of the lombok-annotated class corresponding to the getter and setter method
-					if (element instanceof IMethod) {
-						IMethod method = (IMethod) element;
+					if (element instanceof IMethod method) {
 						if (isGenerated(method)) {
 							IType iType = method.getDeclaringType();
 							if (iType != null) {
@@ -736,16 +733,15 @@ public final class JDTUtils {
 
 	public static ISourceRange getNameRange(IJavaElement element) throws JavaModelException {
 		ISourceRange nameRange = null;
-		if (element instanceof IMember) {
-			IMember member = (IMember) element;
+		if (element instanceof IMember member) {
 			nameRange = member.getNameRange();
 			if ((!SourceRange.isAvailable(nameRange))) {
 				nameRange = member.getSourceRange();
 			}
 		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
 			nameRange = ((ISourceReference) element).getNameRange();
-		} else if (element instanceof ISourceReference) {
-			nameRange = ((ISourceReference) element).getSourceRange();
+		} else if (element instanceof ISourceReference sourceRef) {
+			nameRange = sourceRef.getSourceRange();
 		}
 		if (!SourceRange.isAvailable(nameRange) && element.getParent() != null) {
 			nameRange = getNameRange(element.getParent());
@@ -755,13 +751,12 @@ public final class JDTUtils {
 
 	private static ISourceRange getSourceRange(IJavaElement element) throws JavaModelException {
 		ISourceRange sourceRange = null;
-		if (element instanceof IMember) {
-			IMember member = (IMember) element;
+		if (element instanceof IMember member) {
 			sourceRange = member.getSourceRange();
 		} else if (element instanceof ITypeParameter || element instanceof ILocalVariable) {
 			sourceRange = ((ISourceReference) element).getSourceRange();
-		} else if (element instanceof ISourceReference) {
-			sourceRange = ((ISourceReference) element).getSourceRange();
+		} else if (element instanceof ISourceReference sourceRef) {
+			sourceRange = sourceRef.getSourceRange();
 		}
 		if (!SourceRange.isAvailable(sourceRange) && element.getParent() != null) {
 			sourceRange = getSourceRange(element.getParent());
@@ -854,11 +849,11 @@ public final class JDTUtils {
 	}
 
 	public static String toUri(ITypeRoot typeRoot) {
-		if (typeRoot instanceof ICompilationUnit) {
-			return toURI((ICompilationUnit) typeRoot);
+		if (typeRoot instanceof ICompilationUnit unit) {
+			return toURI(unit);
 		}
-		if (typeRoot instanceof IClassFile) {
-			return toUri((IClassFile) typeRoot);
+		if (typeRoot instanceof IClassFile classFile) {
+			return toUri(classFile);
 		}
 		return null;
 	}
@@ -1126,9 +1121,9 @@ public final class JDTUtils {
 
 	public static boolean isHiddenGeneratedElement(IJavaElement element) {
 		// generated elements are annotated with @Generated and they need to be filtered out
-		if (element instanceof IAnnotatable) {
+		if (element instanceof IAnnotatable annotable) {
 			try {
-				IAnnotation[] annotations = ((IAnnotatable) element).getAnnotations();
+				IAnnotation[] annotations = annotable.getAnnotations();
 				if (annotations.length != 0) {
 					for (IAnnotation annotation : annotations) {
 						if (isSilencedGeneratedAnnotation(annotation)) {
@@ -1151,8 +1146,8 @@ public final class JDTUtils {
 						&& IMemberValuePair.K_STRING == m.getValueKind()) {
 					if (m.getValue() instanceof String) {
 						return SILENCED_CODEGENS.contains(m.getValue());
-					} else if (m.getValue() instanceof Object[]) {
-						for (Object val : (Object[])m.getValue()) {
+					} else if (m.getValue() instanceof Object[] values) {
+						for (Object val : values) {
 							if(SILENCED_CODEGENS.contains(val)) {
 								return true;
 							}
@@ -1252,8 +1247,8 @@ public final class JDTUtils {
 			return null;
 		}
 
-		if (constantValue instanceof String) {
-			return ASTNodes.getEscapedStringLiteral((String) constantValue);
+		if (constantValue instanceof String s) {
+			return ASTNodes.getEscapedStringLiteral(s);
 		} else if (constantValue instanceof Character) {
 			return '\'' + constantValue.toString() + '\'';
 		} else {
@@ -1354,8 +1349,8 @@ public final class JDTUtils {
 		} catch (OperationCanceledException e) {
 			return null;
 		}
-		if (createBindings[0] instanceof IVariableBinding) {
-			return ((IVariableBinding) createBindings[0]).getConstantValue();
+		if (createBindings[0] instanceof IVariableBinding variableBinding) {
+			return variableBinding.getConstantValue();
 		}
 
 		return null;
@@ -1382,13 +1377,13 @@ public final class JDTUtils {
 		}
 
 		Object defaultValue = memberValuePair.getValue();
-		boolean isEmptyArray = defaultValue instanceof Object[] && ((Object[]) defaultValue).length == 0;
+		boolean isEmptyArray = defaultValue instanceof Object[] values && values.length == 0;
 		int valueKind = memberValuePair.getValueKind();
 
 		if (valueKind == IMemberValuePair.K_UNKNOWN && !isEmptyArray) {
 			IBinding binding = getHoveredNodeBinding(method, typeRoot, hoverRegion);
-			if (binding instanceof IMethodBinding) {
-				Object value = ((IMethodBinding) binding).getDefaultValue();
+			if (binding instanceof IMethodBinding methodBinding) {
+				Object value = methodBinding.getDefaultValue();
 				StringBuilder buf = new StringBuilder();
 				try {
 					addValue(buf, value, false);
@@ -1410,8 +1405,7 @@ public final class JDTUtils {
 
 	private static void addValue(StringBuilder buf, Object value, boolean addLinks) throws URISyntaxException {
 		// Note: To be bug-compatible with Javadoc from Java 5/6/7, we currently don't escape HTML tags in String-valued annotations.
-		if (value instanceof ITypeBinding) {
-			ITypeBinding typeBinding = (ITypeBinding) value;
+		if (value instanceof ITypeBinding typeBinding) {
 			IJavaElement type = typeBinding.getJavaElement();
 			if (type == null || !addLinks) {
 				buf.append(typeBinding.getName());
@@ -1422,8 +1416,7 @@ public final class JDTUtils {
 			}
 			buf.append(".class"); //$NON-NLS-1$
 
-		} else if (value instanceof IVariableBinding) { // only enum constants
-			IVariableBinding variableBinding = (IVariableBinding) value;
+		} else if (value instanceof IVariableBinding variableBinding) { // only enum constants
 			IJavaElement variable = variableBinding.getJavaElement();
 			if (variable == null || !addLinks) {
 				buf.append(variableBinding.getName());
@@ -1433,18 +1426,16 @@ public final class JDTUtils {
 				addLink(buf, uri, name);
 			}
 
-		} else if (value instanceof IAnnotationBinding) {
-			IAnnotationBinding annotationBinding = (IAnnotationBinding) value;
+		} else if (value instanceof IAnnotationBinding annotationBinding) {
 			addAnnotation(buf, annotationBinding, addLinks);
 
-		} else if (value instanceof String) {
-			buf.append(ASTNodes.getEscapedStringLiteral((String) value));
+		} else if (value instanceof String s) {
+			buf.append(ASTNodes.getEscapedStringLiteral(s));
 
-		} else if (value instanceof Character) {
-			buf.append(ASTNodes.getEscapedCharacterLiteral(((Character) value).charValue()));
+		} else if (value instanceof Character c) {
+			buf.append(ASTNodes.getEscapedCharacterLiteral(c.charValue()));
 
-		} else if (value instanceof Object[]) {
-			Object[] values = (Object[]) value;
+		} else if (value instanceof Object[] values) {
 			buf.append('{');
 			for (int i = 0; i < values.length; i++) {
 				if (i > 0) {
@@ -1516,8 +1507,7 @@ public final class JDTUtils {
 	}
 
 	private static IBinding resolveBinding(ASTNode node) {
-		if (node instanceof SimpleName) {
-			SimpleName simpleName = (SimpleName) node;
+		if (node instanceof SimpleName simpleName) {
 			// workaround for https://bugs.eclipse.org/62605 (constructor name resolves to type, not method)
 			ASTNode normalized = ASTNodes.getNormalizedNode(simpleName);
 			if (normalized.getLocationInParent() == ClassInstanceCreation.TYPE_PROPERTY) {
@@ -1535,12 +1525,12 @@ public final class JDTUtils {
 			}
 			return simpleName.resolveBinding();
 
-		} else if (node instanceof SuperConstructorInvocation) {
-			return ((SuperConstructorInvocation) node).resolveConstructorBinding();
-		} else if (node instanceof ConstructorInvocation) {
-			return ((ConstructorInvocation) node).resolveConstructorBinding();
-		} else if (node instanceof LambdaExpression) {
-			return ((LambdaExpression) node).resolveMethodBinding();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			return superConstructorInvocation.resolveConstructorBinding();
+		} else if (node instanceof ConstructorInvocation constructorInvocation) {
+			return constructorInvocation.resolveConstructorBinding();
+		} else if (node instanceof LambdaExpression lambda) {
+			return lambda.resolveMethodBinding();
 		} else {
 			return null;
 		}
@@ -1643,10 +1633,9 @@ public final class JDTUtils {
 				}
 			}
 			char[] signature = proposal.getSignature();
-			if (proposal instanceof InternalCompletionProposal) {
-				Binding binding = ((InternalCompletionProposal) proposal).getBinding();
-				if (binding instanceof MethodBinding) {
-					MethodBinding methodBinding = (MethodBinding) binding;
+			if (proposal instanceof InternalCompletionProposal internalProposal) {
+				Binding binding = internalProposal.getBinding();
+				if (binding instanceof MethodBinding methodBinding) {
 					MethodBinding original = methodBinding.original();
 					if (original != binding) {
 						signature = Engine.getSignature(original);
@@ -1722,13 +1711,13 @@ public final class JDTUtils {
 						return locations;
 					}
 					OccurrencesFinder finder = new OccurrencesFinder();
-					if (node instanceof MethodDeclaration) {
-						SimpleName name = ((MethodDeclaration) node).getName();
+					if (node instanceof MethodDeclaration methodDecl) {
+						SimpleName name = methodDecl.getName();
 						finder.initialize(unit, name);
 					} else if (node instanceof Name) {
 						finder.initialize(unit, node);
-					} else if (node instanceof MethodInvocation) {
-						SimpleName name = ((MethodInvocation) node).getName();
+					} else if (node instanceof MethodInvocation methodInvocation) {
+						SimpleName name = methodInvocation.getName();
 					} else {
 						return locations;
 					}

@@ -705,9 +705,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		if (data == null) {
 			return CompletableFuture.completedFuture(params);
 		}
-		if (data instanceof CodeActionData) {
+		if (data instanceof CodeActionData codeActionData) {
 			// if the data is CodeActionData and no proposal in the data, return the original result back.
-			if (((CodeActionData) data).getProposal() == null) {
+			if (codeActionData.getProposal() == null) {
 				return CompletableFuture.completedFuture(params);
 			}
 		}

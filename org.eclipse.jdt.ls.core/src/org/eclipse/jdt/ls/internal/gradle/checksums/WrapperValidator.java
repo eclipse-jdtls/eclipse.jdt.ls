@@ -187,8 +187,7 @@ public class WrapperValidator {
 		if (url != null) {
 			try (InputStream inputStream = url.openStream(); InputStreamReader inputStreamReader = new InputStreamReader(inputStream); Reader reader = new BufferedReader(inputStreamReader)) {
 				JsonElement jsonElement = new JsonParser().parse(reader);
-				if (jsonElement instanceof JsonArray) {
-					JsonArray array = (JsonArray) jsonElement;
+				if (jsonElement instanceof JsonArray array) {
 					for (JsonElement json : array) {
 						String sha256 = json.getAsJsonObject().get("sha256").getAsString();
 						String wrapperChecksumUrl = json.getAsJsonObject().get("wrapperChecksumUrl").getAsString();
@@ -317,21 +316,20 @@ public class WrapperValidator {
 		List<String> sha256Allowed = new ArrayList<>();
 		List<String> sha256Disallowed = new ArrayList<>();
 		for (Object object : gradleWrapperList) {
-			if (object instanceof Map) {
-				Map<?, ?> map = (Map<?, ?>) object;
+			if (object instanceof Map<?, ?> map) {
 				final ChecksumWrapper sha256 = new ChecksumWrapper();
 				sha256.allowed = true;
 				map.forEach((k, v) -> {
-					if (k instanceof String) {
-						switch ((String) k) {
+					if (k instanceof String key) {
+						switch (key) {
 							case "sha256":
-								if (v instanceof String) {
-									sha256.checksum = (String) v;
+								if (v instanceof String value) {
+									sha256.checksum = value;
 								}
 								break;
 							case "allowed":
-								if (v instanceof Boolean) {
-									sha256.allowed = (Boolean) v;
+								if (v instanceof Boolean bool) {
+									sha256.allowed = bool;
 								}
 								break;
 							default:

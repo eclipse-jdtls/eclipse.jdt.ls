@@ -132,10 +132,10 @@ public class ImplementationsHandler {
 	}
 
 	private boolean isUnimplementedMember(IJavaElement element) throws JavaModelException {
-		if (element instanceof IMethod) {
-			return isUnimplementedMethod((IMethod) element);
-		} else if (element instanceof IType) {
-			return isUnimplementedType((IType) element);
+		if (element instanceof IMethod method) {
+			return isUnimplementedMethod(method);
+		} else if (element instanceof IType type) {
+			return isUnimplementedType(type);
 		}
 
 		return false;

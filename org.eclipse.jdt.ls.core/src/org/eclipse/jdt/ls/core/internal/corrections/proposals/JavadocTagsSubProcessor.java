@@ -175,8 +175,8 @@ public class JavadocTagsSubProcessor {
 				text.setText(name);
 				newTag.fragments().add(text);
 				List<TypeParameter> params;
-				if (bodyDecl instanceof TypeDeclaration) {
-					params= ((TypeDeclaration) bodyDecl).typeParameters();
+				if (bodyDecl instanceof TypeDeclaration typeDecl) {
+					params = typeDecl.typeParameters();
 				} else {
 					params= ((MethodDeclaration) bodyDecl).typeParameters();
 				}
@@ -221,8 +221,8 @@ public class JavadocTagsSubProcessor {
 		@Override
 		protected ASTRewrite getRewrite() throws CoreException {
 			ASTRewrite rewrite= ASTRewrite.create(fBodyDecl.getAST());
-			if (fBodyDecl instanceof MethodDeclaration) {
-				insertAllMissingMethodTags(rewrite, (MethodDeclaration) fBodyDecl);
+			if (fBodyDecl instanceof MethodDeclaration methodDecl) {
+				insertAllMissingMethodTags(rewrite, methodDecl);
 			} else {
 				insertAllMissingTypeTags(rewrite, (TypeDeclaration) fBodyDecl);
 			}
@@ -236,8 +236,8 @@ public class JavadocTagsSubProcessor {
 
 			List<TypeParameter> typeParams= methodDecl.typeParameters();
 			ASTNode root= methodDecl.getRoot();
-			if (root instanceof CompilationUnit) {
-				ITypeRoot typeRoot= ((CompilationUnit) root).getTypeRoot();
+			if (root instanceof CompilationUnit unit) {
+				ITypeRoot typeRoot = unit.getTypeRoot();
 				if (typeRoot != null && !StubUtility.shouldGenerateMethodTypeParameterTags(typeRoot.getJavaProject())) {
 					typeParams= Collections.emptyList();
 				}
@@ -430,8 +430,7 @@ public class JavadocTagsSubProcessor {
 			return;
 		}
 
-		if (declaration instanceof MethodDeclaration) {
-			MethodDeclaration methodDecl= (MethodDeclaration) declaration;
+		if (declaration instanceof MethodDeclaration methodDecl) {
 			IMethodBinding methodBinding= methodDecl.resolveBinding();
 			IMethodBinding overridden= null;
 			if (methodBinding != null) {
@@ -453,8 +452,8 @@ public class JavadocTagsSubProcessor {
 		} else if (declaration instanceof AbstractTypeDeclaration) {
 			String typeQualifiedName= Bindings.getTypeQualifiedName(binding);
 			String[] typeParamNames;
-			if (declaration instanceof TypeDeclaration) {
-				List<TypeParameter> typeParams= ((TypeDeclaration) declaration).typeParameters();
+			if (declaration instanceof TypeDeclaration typeDecl) {
+				List<TypeParameter> typeParams = typeDecl.typeParameters();
 				typeParamNames= new String[typeParams.size()];
 				for (int i= 0; i < typeParamNames.length; i++) {
 					typeParamNames[i]= (typeParams.get(i)).getName().getIdentifier();
@@ -469,10 +468,10 @@ public class JavadocTagsSubProcessor {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_type_description, typeQualifiedName);
 				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_TYPE, kind, declaration.getStartPosition(), string));
 			}
-		} else if (declaration instanceof FieldDeclaration) {
+		} else if (declaration instanceof FieldDeclaration fieldDecl) {
 			String comment= "/**\n *\n */\n"; //$NON-NLS-1$
 			String fieldName= null;
-			List<VariableDeclarationFragment> fragments= ((FieldDeclaration)declaration).fragments();
+			List<VariableDeclarationFragment> fragments = fieldDecl.fragments();
 			if (fragments != null && fragments.size() > 0) {
 				VariableDeclaration decl= fragments.get(0);
 				fieldName= decl.getName().getIdentifier();
@@ -483,8 +482,7 @@ public class JavadocTagsSubProcessor {
 				String label= Messages.format(CorrectionMessages.JavadocTagsSubProcessor_addjavadoc_field_description, fieldName);
 				proposals.add(new AddJavadocCommentProposal(label, cu, IProposalRelevance.ADD_JAVADOC_FIELD, kind, declaration.getStartPosition(), comment));
 			}
-		} else if (declaration instanceof EnumConstantDeclaration) {
-			EnumConstantDeclaration enumDecl= (EnumConstantDeclaration) declaration;
+		} else if (declaration instanceof EnumConstantDeclaration enumDecl) {
 			String id= enumDecl.getName().getIdentifier();
 			String comment = CodeGeneration.getFieldComment(cu, binding.getName(), id, String.valueOf('\n'));
 			if (comment != null && id != null) {
@@ -650,15 +648,15 @@ public class JavadocTagsSubProcessor {
 		List<? extends ASTNode> fragments= curr.fragments();
 		if (!fragments.isEmpty()) {
 			Object first= fragments.get(0);
-			if (first instanceof Name) {
-				return ASTNodes.getSimpleNameIdentifier((Name) first);
-			} else if (first instanceof TextElement && TagElement.TAG_PARAM.equals(curr.getTagName())) {
-				String text= ((TextElement) first).getText();
+			if (first instanceof Name name) {
+				return ASTNodes.getSimpleNameIdentifier(name);
+			} else if (first instanceof TextElement firstTextElement && TagElement.TAG_PARAM.equals(curr.getTagName())) {
+				String text = firstTextElement.getText();
 				if ("<".equals(text) && fragments.size() >= 3) { //$NON-NLS-1$
 					Object second= fragments.get(1);
 					Object third= fragments.get(2);
-					if (second instanceof Name && third instanceof TextElement && ">".equals(((TextElement) third).getText())) { //$NON-NLS-1$
-						return '<' + ASTNodes.getSimpleNameIdentifier((Name) second) + '>';
+					if (second instanceof Name secondName && third instanceof TextElement thirdTextElement && ">".equals(thirdTextElement.getText())) { //$NON-NLS-1$
+						return '<' + ASTNodes.getSimpleNameIdentifier(secondName) + '>';
 					}
 				} else if (text.startsWith(String.valueOf('<')) && text.endsWith(String.valueOf('>')) && text.length() > 2) {
 					return text.substring(1, text.length() - 1);

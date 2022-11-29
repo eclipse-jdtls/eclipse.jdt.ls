@@ -88,8 +88,8 @@ public class ChangeUtil {
 	 */
 	public static WorkspaceEdit convertToWorkspaceEdit(Change change) throws CoreException {
 		WorkspaceEdit edit = new WorkspaceEdit();
-		if (change instanceof CompositeChange) {
-			convertCompositeChange((CompositeChange) change, edit);
+		if (change instanceof CompositeChange compositeChange) {
+			convertCompositeChange(compositeChange, edit);
 		} else {
 			convertSingleChange(change, edit);
 		}
@@ -101,18 +101,18 @@ public class ChangeUtil {
 			return;
 		}
 
-		if (change instanceof TextChange) {
-			convertTextChange((TextChange) change, edit);
-		} else if (change instanceof ResourceChange) {
-			convertResourceChange((ResourceChange) change, edit);
+		if (change instanceof TextChange textChange) {
+			convertTextChange(textChange, edit);
+		} else if (change instanceof ResourceChange resourceChange) {
+			convertResourceChange(resourceChange, edit);
 		}
 	}
 
 	private static void convertCompositeChange(CompositeChange change, WorkspaceEdit edit) throws CoreException {
 		Change[] changes = change.getChildren();
 		for (Change ch : changes) {
-			if (ch instanceof CompositeChange) {
-				convertCompositeChange((CompositeChange) ch, edit);
+			if (ch instanceof CompositeChange compositeChange) {
+				convertCompositeChange(compositeChange, edit);
 			} else {
 				convertSingleChange(ch, edit);
 			}
@@ -141,16 +141,16 @@ public class ChangeUtil {
 		}
 
 		// Resource change is needed and supported by client
-		if (resourceChange instanceof RenameCompilationUnitChange) {
-			convertCUResourceChange(edit, (RenameCompilationUnitChange) resourceChange);
-		} else if (resourceChange instanceof RenamePackageChange) {
-			convertRenamePackcageChange(edit, (RenamePackageChange) resourceChange);
-		} else if (resourceChange instanceof MoveCompilationUnitChange) {
-			convertMoveCompilationUnitChange(edit, (MoveCompilationUnitChange) resourceChange);
-		} else if (resourceChange instanceof CreateFileChange) {
-			convertCreateFileChange(edit, (CreateFileChange) resourceChange);
-		} else if (resourceChange instanceof CreateCompilationUnitChange) {
-			convertCreateCompilationUnitChange(edit, (CreateCompilationUnitChange) resourceChange);
+		if (resourceChange instanceof RenameCompilationUnitChange renameCUChange) {
+			convertCUResourceChange(edit, renameCUChange);
+		} else if (resourceChange instanceof RenamePackageChange renamePackageChange) {
+			convertRenamePackcageChange(edit, renamePackageChange);
+		} else if (resourceChange instanceof MoveCompilationUnitChange moveCUChange) {
+			convertMoveCompilationUnitChange(edit, moveCUChange);
+		} else if (resourceChange instanceof CreateFileChange createFileChange) {
+			convertCreateFileChange(edit, createFileChange);
+		} else if (resourceChange instanceof CreateCompilationUnitChange createCUChange) {
+			convertCreateCompilationUnitChange(edit, createCUChange);
 		}
 	}
 

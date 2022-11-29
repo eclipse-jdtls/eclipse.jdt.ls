@@ -41,8 +41,8 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
-import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
@@ -130,8 +130,8 @@ public class OverrideMethodsOperation {
 		ASTNode typeNode = astRoot.findDeclaringNode(typeBinding);
 		if (typeNode instanceof AnonymousClassDeclaration) {
 			listRewrite = astRewrite.getListRewrite(typeNode, AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY);
-		} else if (typeNode instanceof AbstractTypeDeclaration) {
-			listRewrite = astRewrite.getListRewrite(typeNode, ((AbstractTypeDeclaration) typeNode).getBodyDeclarationsProperty());
+		} else if (typeNode instanceof AbstractTypeDeclaration typeDeclaration) {
+			listRewrite = astRewrite.getListRewrite(typeNode, typeDeclaration.getBodyDeclarationsProperty());
 		} else {
 			return null;
 		}

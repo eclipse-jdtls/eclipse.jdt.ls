@@ -68,11 +68,7 @@ public class SimilarElement {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof SimilarElement) {
-			SimilarElement elem= (SimilarElement) obj;
-			return fName.equals(elem.fName) && fKind == elem.fKind && Arrays.equals(fTypesParameters, elem.fTypesParameters);
-		}
-		return false;
+		return obj instanceof SimilarElement elem && fName.equals(elem.fName) && fKind == elem.fKind && Arrays.equals(fTypesParameters, elem.fTypesParameters);
 	}
 
 	@Override

@@ -101,7 +101,7 @@ public class GenerateConstructorsHandler {
 				if (Modifier.isFinal(field.getModifiers())) {
 					ASTNode declaringNode = astRoot.findDeclaringNode(field);
 					// Do not add final fields which have been set in the <clinit>
-					if (declaringNode instanceof VariableDeclarationFragment && ((VariableDeclarationFragment) declaringNode).getInitializer() != null) {
+					if (declaringNode instanceof VariableDeclarationFragment variableDecl && variableDecl.getInitializer() != null) {
 						continue;
 					}
 				}

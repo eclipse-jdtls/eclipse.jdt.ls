@@ -100,10 +100,10 @@ public class TypeMismatchSubProcessor {
 				nodeToCast= assign.getRightHandSide();
 			}
 			castTypeBinding= assign.getLeftHandSide().resolveTypeBinding();
-			if (leftHandSide instanceof Name) {
-				receiverNode= (Name) leftHandSide;
-			} else if (leftHandSide instanceof FieldAccess) {
-				receiverNode= ((FieldAccess) leftHandSide).getName();
+			if (leftHandSide instanceof Name name) {
+				receiverNode = name;
+			} else if (leftHandSide instanceof FieldAccess fieldAccess) {
+				receiverNode = fieldAccess.getName();
 			}
 		} else if (parentNodeType == ASTNode.VARIABLE_DECLARATION_FRAGMENT) {
 			VariableDeclarationFragment frag= (VariableDeclarationFragment) selectedNode.getParent();
@@ -127,8 +127,8 @@ public class TypeMismatchSubProcessor {
 		}
 
 		ITypeBinding currBinding= nodeToCast.resolveTypeBinding();
-		if (currBinding == null && nodeToCast instanceof MethodInvocation) {
-			IMethodBinding methodBinding= ((MethodInvocation) nodeToCast).resolveMethodBinding();
+		if (currBinding == null && nodeToCast instanceof MethodInvocation methodInvocation) {
+			IMethodBinding methodBinding = methodInvocation.resolveMethodBinding();
 			if (methodBinding != null) {
 				currBinding= methodBinding.getReturnType();
 			}
@@ -154,10 +154,7 @@ public class TypeMismatchSubProcessor {
 		// change method return statement to actual type
 		if (!nullOrVoid && parentNodeType == ASTNode.RETURN_STATEMENT) {
 			BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
-			if (decl instanceof MethodDeclaration) {
-				MethodDeclaration methodDeclaration= (MethodDeclaration) decl;
-
-
+			if (decl instanceof MethodDeclaration methodDeclaration) {
 				currBinding= Bindings.normalizeTypeBinding(currBinding);
 				if (currBinding == null) {
 					currBinding= ast.resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
@@ -238,9 +235,7 @@ public class TypeMismatchSubProcessor {
 		ICompilationUnit targetCu= null;
 		ITypeBinding declaringType= null;
 		IBinding callerBindingDecl= callerBinding;
-		if (callerBinding instanceof IVariableBinding) {
-			IVariableBinding variableBinding= (IVariableBinding) callerBinding;
-
+		if (callerBinding instanceof IVariableBinding variableBinding) {
 			if (variableBinding.isEnumConstant()) {
 				return;
 			}
@@ -254,14 +249,13 @@ public class TypeMismatchSubProcessor {
 				}
 				declaringType= declaringClass.getTypeDeclaration();
 			}
-		} else if (callerBinding instanceof IMethodBinding) {
-			IMethodBinding methodBinding= (IMethodBinding) callerBinding;
+		} else if (callerBinding instanceof IMethodBinding methodBinding) {
 			if (!methodBinding.isConstructor()) {
 				declaringType= methodBinding.getDeclaringClass().getTypeDeclaration();
 				callerBindingDecl= methodBinding.getMethodDeclaration();
 			}
-		} else if (callerBinding instanceof ITypeBinding && nodeToCast.getLocationInParent() == SingleMemberAnnotation.TYPE_NAME_PROPERTY) {
-			declaringType= (ITypeBinding) callerBinding;
+		} else if (callerBinding instanceof ITypeBinding typeBinding && nodeToCast.getLocationInParent() == SingleMemberAnnotation.TYPE_NAME_PROPERTY) {
+			declaringType = typeBinding;
 			callerBindingDecl= Bindings.findMethodInType(declaringType, "value", (String[]) null); //$NON-NLS-1$
 			if (callerBindingDecl == null) {
 				return;
@@ -457,13 +451,12 @@ public class TypeMismatchSubProcessor {
 		ICompilationUnit cu= context.getCompilationUnit();
 		if (parameter.getName().getLength() == 0) {
 			SimpleName simpleName= null;
-			if (parameter.getType() instanceof SimpleType) {
-				SimpleType type= (SimpleType) parameter.getType();
-				if (type.getName() instanceof SimpleName) {
-					simpleName= (SimpleName) type.getName();
+			if (parameter.getType() instanceof SimpleType type) {
+				if (type.getName() instanceof SimpleName name) {
+					simpleName = name;
 				}
-			} else if (parameter.getType() instanceof NameQualifiedType) {
-				simpleName= ((NameQualifiedType) parameter.getType()).getName();
+			} else if (parameter.getType() instanceof NameQualifiedType type) {
+				simpleName = type.getName();
 			}
 			if (simpleName != null) {
 				String name= simpleName.getIdentifier();

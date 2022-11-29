@@ -137,18 +137,15 @@ public class JavaDocSnippetStringEvaluator {
 			List<Object> fragments = snippetTag.fragments();
 			for( Object fragment : fragments) {
 				String str= ""; //$NON-NLS-1$
-				if (fragment instanceof TextElement) {
-					TextElement textElement= (TextElement) fragment;
+				if (fragment instanceof TextElement textElement) {
 					List<TagElement> tagElements= getTagElementsForTextElement(snippetTag, textElement);
 					str = getModifiedString(textElement, tagElements);
-				} else if (fragment instanceof JavaDocRegion) {
-					JavaDocRegion region = (JavaDocRegion) fragment;
+				} else if (fragment instanceof JavaDocRegion region) {
 					if (region.isDummyRegion()) {
 						List<TagElement> tagElements= getTagElementsForDummyJavaDocRegion(snippetTag, region);
 						str = getModifiedString(region, tagElements);
 					}
-				} else if (fragment instanceof TagElement) {
-					TagElement tagElement= (TagElement) fragment;
+				} else if (fragment instanceof TagElement tagElement) {
 					List<TagElement> tagElements= getTagElementsForTagElement(snippetTag, tagElement);
 					str = getModifiedString(tagElement, tagElements);
 					if (TagElement.TAG_LINK.equals(tagElement.getTagName())) {
@@ -296,18 +293,17 @@ public class JavaDocSnippetStringEvaluator {
 		}
 		for (JavaDocRegion region : regions) {
 			for (Object tagObj : region.tags()) {
-				if (tagObj instanceof TagElement) {
-					TagElement tagElem= (TagElement) tagObj;
+				if (tagObj instanceof TagElement tagElem) {
 					Object prop= tagElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-					if (prop instanceof Integer) {
-						int val = ((Integer)prop).intValue();
+					if (prop instanceof Integer intProp) {
+						int val = intProp.intValue();
 						ListIterator<TagElement> listIterator= tagElements.listIterator();
 						TagElement addBefore= null;
 						while (listIterator.hasNext()) {
 				           TagElement tElem=  listIterator.next();
 				           Object prop2= tElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-				           if (prop2 instanceof Integer) {
-				        	   int val2 = ((Integer)prop2).intValue();
+							if (prop2 instanceof Integer intProp2) {
+								int val2 = intProp2.intValue();
 				        	   if (val2 > val) {
 				        		   addBefore= tElem;
 				        		   break;
@@ -340,18 +336,17 @@ public class JavaDocSnippetStringEvaluator {
 		regions.add(javaDocRegion);
 		for (JavaDocRegion region : regions) {
 			for (Object tagObj : region.tags()) {
-				if (tagObj instanceof TagElement) {
-					TagElement tagElem= (TagElement) tagObj;
+				if (tagObj instanceof TagElement tagElem) {
 					Object prop= tagElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-					if (prop instanceof Integer) {
-						int val = ((Integer)prop).intValue();
+					if (prop instanceof Integer intProp) {
+						int val = intProp.intValue();
 						ListIterator<TagElement> listIterator= tagElements.listIterator();
 						TagElement addBefore= null;
 						while (listIterator.hasNext()) {
 				           TagElement tElem=  listIterator.next();
 				           Object prop2= tElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-				           if (prop2 instanceof Integer) {
-				        	   int val2 = ((Integer)prop2).intValue();
+							if (prop2 instanceof Integer intProp2) {
+								int val2 = intProp2.intValue();
 				        	   if (val2 > val) {
 				        		   addBefore= tElem;
 				        		   break;
@@ -384,18 +379,17 @@ public class JavaDocSnippetStringEvaluator {
 		}
 		for (JavaDocRegion region : regions) {
 			for (Object tagObj : region.tags()) {
-				if (tagObj instanceof TagElement) {
-					TagElement tagElem= (TagElement) tagObj;
+				if (tagObj instanceof TagElement tagElem) {
 					Object prop= tagElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-					if (prop instanceof Integer) {
-						int val = ((Integer)prop).intValue();
+					if (prop instanceof Integer intProp) {
+						int val = intProp.intValue();
 						ListIterator<TagElement> listIterator= tagElements.listIterator();
 						TagElement addBefore= null;
 						while (listIterator.hasNext()) {
 				           TagElement tElem=  listIterator.next();
 				           Object prop2= tElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-				           if (prop2 instanceof Integer) {
-				        	   int val2 = ((Integer)prop).intValue();
+							if (prop2 instanceof Integer intProp2) {
+								int val2 = intProp2.intValue();
 				        	   if (val2 > val) {
 				        		   addBefore= tElem;
 				        		   break;
@@ -412,15 +406,15 @@ public class JavaDocSnippetStringEvaluator {
 			}
 		}
 		Object prop3= tag.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-		if (prop3 instanceof Integer) {
-			int val = ((Integer)prop3).intValue();
+		if (prop3 instanceof Integer intProp3) {
+			int val = intProp3.intValue();
 			ListIterator<TagElement> listIterator= tagElements.listIterator();
 			TagElement addBefore= null;
 			while (listIterator.hasNext()) {
 		          TagElement tElem=  listIterator.next();
 		          Object prop2= tElem.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_INLINE_TAG_COUNT);
-		          if (prop2 instanceof Integer) {
-		       	   int val2 = ((Integer)prop2).intValue();
+					if (prop2 instanceof Integer intProp2) {
+						int val2 = intProp2.intValue();
 		       	   if (val2 > val) {
 		       		   addBefore= tElem;
 		       		   break;
@@ -561,18 +555,15 @@ public class JavaDocSnippetStringEvaluator {
 		String[] refMethodParamTypes= null;
 		String[] refMethodParamNames= null;
 		int startPosition = -1;
-		if (node instanceof Name) {
-			Name name = (Name) node;
+		if (node instanceof Name name) {
 			refTypeName= name.getFullyQualifiedName();
 			startPosition = name.getStartPosition();
-		} else if (node instanceof MemberRef) {
-			MemberRef memberRef= (MemberRef) node;
+		} else if (node instanceof MemberRef memberRef) {
 			Name qualifier= memberRef.getQualifier();
 			refTypeName= qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName= memberRef.getName().getIdentifier();
 			startPosition = memberRef.getStartPosition();
-		} else if (node instanceof MethodRef) {
-			MethodRef methodRef= (MethodRef) node;
+		} else if (node instanceof MethodRef methodRef) {
 			Name qualifier= methodRef.getQualifier();
 			refTypeName= qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName= methodRef.getName().getIdentifier();
@@ -611,8 +602,7 @@ public class JavaDocSnippetStringEvaluator {
 		String defaultTag = ""; //$NON-NLS-1$
 		if (tagProperties != null) {
 			for (ASTNode node : tagProperties) {
-				if (node instanceof TagProperty) {
-					TagProperty tagProp = (TagProperty) node;
+				if (node instanceof TagProperty tagProp) {
 					if ("type".equals(tagProp.getName())) { //$NON-NLS-1$
 						String tagValue = tagProp.getStringValue();
 						switch (tagValue) {
@@ -634,8 +624,7 @@ public class JavaDocSnippetStringEvaluator {
 		String defaultTag= null;
 		if (tagProperties != null && property!= null) {
 			for (ASTNode node : tagProperties) {
-				if (node instanceof TagProperty) {
-					TagProperty tagProp = (TagProperty) node;
+				if (node instanceof TagProperty tagProp) {
 					if (property.equals(tagProp.getName())) {
 						defaultTag= tagProp.getStringValue();
 						break;
@@ -649,8 +638,7 @@ public class JavaDocSnippetStringEvaluator {
 		ASTNode defaultTag= null;
 		if (tagProperties != null && property!= null) {
 			for (ASTNode node : tagProperties) {
-				if (node instanceof TagProperty) {
-					TagProperty tagProp = (TagProperty) node;
+				if (node instanceof TagProperty tagProp) {
 					if (property.equals(tagProp.getName())) {
 						defaultTag= tagProp.getNodeValue();
 						break;
@@ -665,8 +653,7 @@ public class JavaDocSnippetStringEvaluator {
 		String defaultTag = "**"; //$NON-NLS-1$
 		if (tagProperties != null) {
 			for (ASTNode node : tagProperties) {
-				if (node instanceof TagProperty) {
-					TagProperty tagProp = (TagProperty) node;
+				if (node instanceof TagProperty tagProp) {
 					if ("type".equals(tagProp.getName())) { //$NON-NLS-1$
 						String tagValue = tagProp.getStringValue();
 						switch (tagValue) {

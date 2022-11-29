@@ -50,9 +50,7 @@ public class SelectionRangeHandler {
 		// extra logic to check within the line comments and block comments, which are not parts of the AST
 		@SuppressWarnings("unchecked")
 		List<Comment> comments = new ArrayList<Comment>(ast.getCommentList());
-		comments.removeIf(comment -> {
-			return (comment instanceof Javadoc); // Javadoc nodes are already in the AST
-		});
+		comments.removeIf(Javadoc.class::isInstance); // Javadoc nodes are already in the AST
 
 		List<SelectionRange> $ = new ArrayList<>();
 		for (Position pos : params.getPositions()) {

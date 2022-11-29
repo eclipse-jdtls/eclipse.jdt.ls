@@ -121,8 +121,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 				if (completionContext.isInJavadoc()) {
 					return false;
 				}
-				if (completionContext instanceof InternalCompletionContext) {
-					InternalCompletionContext internalCompletionContext = (InternalCompletionContext) completionContext;
+				if (completionContext instanceof InternalCompletionContext internalCompletionContext) {
 					ASTNode node = internalCompletionContext.getCompletionNode();
 					if (node instanceof CompletionOnKeyword2 || node instanceof CompletionOnFieldType || node instanceof CompletionOnSingleNameReference) {
 						if (completionContext.getEnclosingElement() instanceof IMethod) {
@@ -404,8 +403,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			if (completionContext.isInJavadoc()) {
 				return false;
 			}
-			if (completionContext instanceof InternalCompletionContext) {
-				InternalCompletionContext internalCompletionContext = (InternalCompletionContext) completionContext;
+			if (completionContext instanceof InternalCompletionContext internalCompletionContext) {
 				ASTNode node = internalCompletionContext.getCompletionNode();
 				if (node instanceof CompletionOnKeyword2) {
 					return true;

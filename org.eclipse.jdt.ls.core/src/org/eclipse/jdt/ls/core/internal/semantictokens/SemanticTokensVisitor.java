@@ -46,6 +46,7 @@ import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.lsp4j.SemanticTokens;
+import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
@@ -512,11 +513,9 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		if (name == null) {
 			return;
 		}
-		if (name instanceof SimpleName) {
-			visitor.visit((SimpleName) name);
-		}
-		else {
-			QualifiedName qualifiedName = (QualifiedName) name;
+		if (name instanceof SimpleName simpleName) {
+			visitor.visit(simpleName);
+		} else if (name instanceof QualifiedName qualifiedName) {
 			visitSimpleNamesOfName(qualifiedName.getQualifier(), visitor);
 			visitor.visit(qualifiedName.getName());
 		}
@@ -544,34 +543,28 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		if (type == null) {
 			return;
 		}
-		else if (type instanceof SimpleType) {
-			SimpleType simpleType = (SimpleType) type;
+		else if (type instanceof SimpleType simpleType) {
 			acceptNodeList(simpleType.annotations());
 
 			Name simpleTypeName = simpleType.getName();
-			if (simpleTypeName instanceof SimpleName) {
-				visitor.visit((SimpleName) simpleTypeName);
-			}
-			else {
-				QualifiedName qualifiedName = (QualifiedName) simpleTypeName;
+			if (simpleTypeName instanceof SimpleName simpleName) {
+				visitor.visit(simpleName);
+			} else if (simpleTypeName instanceof QualifiedName qualifiedName) {
 				qualifiedName.getQualifier().accept(this);
 				visitor.visit(qualifiedName.getName());
 			}
 		}
-		else if (type instanceof QualifiedType) {
-			QualifiedType qualifiedType = (QualifiedType) type;
+		else if (type instanceof QualifiedType qualifiedType) {
 			qualifiedType.getQualifier().accept(this);
 			acceptNodeList(qualifiedType.annotations());
 			visitor.visit(qualifiedType.getName());
 		}
-		else if (type instanceof NameQualifiedType) {
-			NameQualifiedType nameQualifiedType = (NameQualifiedType) type;
+		else if (type instanceof NameQualifiedType nameQualifiedType) {
 			nameQualifiedType.getQualifier().accept(this);
 			acceptNodeList(nameQualifiedType.annotations());
 			visitor.visit(nameQualifiedType.getName());
 		}
-		else if (type instanceof ParameterizedType) {
-			ParameterizedType parameterizedType = (ParameterizedType) type;
+		else if (type instanceof ParameterizedType parameterizedType) {
 			visitSimpleNameOfType(parameterizedType.getType(), visitor);
 			visitNodeList(parameterizedType.typeArguments(), this::typeArgumentVisitor);
 		}

@@ -55,8 +55,7 @@ public class MavenSourceDownloader implements ISourceDownloader {
 		IJavaElement element = classFile;
 		while (element.getParent() != null) {
 			element = element.getParent();
-			if (element instanceof IPackageFragmentRoot) {
-				final IPackageFragmentRoot fragment = (IPackageFragmentRoot) element;
+			if (element instanceof IPackageFragmentRoot fragment) {
 				IPath attachmentPath = fragment.getSourceAttachmentPath();
 				if (attachmentPath != null && !attachmentPath.isEmpty() && attachmentPath.toFile().exists()) {
 					break;

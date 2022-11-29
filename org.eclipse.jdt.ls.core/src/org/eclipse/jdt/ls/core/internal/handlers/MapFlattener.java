@@ -48,11 +48,7 @@ public final class MapFlattener {
 	}
 
 	public static String getString(Map<String, Object> configuration, String key, String def) {
-		Object val = getValue(configuration, key);
-		if (val instanceof String) {
-			return (String) val;
-		}
-		return def;
+		return getValue(configuration, key) instanceof String val ? val : def;
 	}
 
 	public static List<String> getList(Map<String, Object> configuration, String key) {
@@ -61,8 +57,7 @@ public final class MapFlattener {
 
 	public static List<String> getList(Map<String, Object> configuration, String key, List<String> def) {
 		Object val = getValue(configuration, key);
-		if (val instanceof String) {
-			String str = ((String) val);
+		if (val instanceof String str) {
 			if (!str.trim().startsWith("[")) {
 				if (str.contains(",")) {
 					str = '[' + (String) val + ']';
@@ -100,11 +95,11 @@ public final class MapFlattener {
 
 	public static boolean getBoolean(Map<String, Object> configuration, String key, boolean def) {
 		Object val = getValue(configuration, key);
-		if (val instanceof Boolean) {
-			return ((Boolean) val).booleanValue();
+		if (val instanceof Boolean b) {
+			return b.booleanValue();
 		}
-		if (val instanceof String) {
-			return Boolean.parseBoolean((String) val);
+		if (val instanceof String s) {
+			return Boolean.parseBoolean(s);
 		}
 		return def;
 	}
@@ -115,11 +110,11 @@ public final class MapFlattener {
 
 	public static int getInt(Map<String, Object> configuration, String key, int def) {
 		Object val = getValue(configuration, key);
-		if (val instanceof Number) {
-			return ((Number) val).intValue();
-		} else if (val instanceof String) {
+		if (val instanceof Number n) {
+			return n.intValue();
+		} else if (val instanceof String s) {
 			try {
-				return Integer.parseInt((String) val);
+				return Integer.parseInt(s);
 			} catch (NumberFormatException nfe) {
 				JavaLanguageServerPlugin.logError(key + " value (" + val + ") is not an int, falling back on " + def);
 			}

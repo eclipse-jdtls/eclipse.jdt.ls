@@ -35,7 +35,7 @@ public class JdtSourceLookUpProvider {
     /**
      * Resolve the uri of the source file or class file by the class fully qualified name, the source path
      * and the interested projects.
-     * 
+     *
      * @param fullyQualifiedName
      *              the fully qualified name of the class.
      * @param sourcePath
@@ -43,7 +43,7 @@ public class JdtSourceLookUpProvider {
      * @param projectNames
      *              A list of the project names that needs to search in. If the given list is empty,
      *              All the projects in the workspace will be searched.
-     * 
+     *
      * @return the uri of the associated source file or class file.
      */
     public String getSourceFileURI(String fullyQualifiedName, String sourcePath, List<String> projectNames) {
@@ -52,10 +52,10 @@ public class JdtSourceLookUpProvider {
         }
 
         Object sourceElement = findSourceElement(sourcePath, getSourceContainers(projectNames));
-        if (sourceElement instanceof IResource) {
-            return JDTUtils.getFileURI((IResource) sourceElement);
-        } else if (sourceElement instanceof IClassFile) {
-            return JDTUtils.toUri((IClassFile) sourceElement);
+		if (sourceElement instanceof IResource resource) {
+			return JDTUtils.getFileURI(resource);
+		} else if (sourceElement instanceof IClassFile clazz) {
+			return JDTUtils.toUri(clazz);
         }
         return null;
     }

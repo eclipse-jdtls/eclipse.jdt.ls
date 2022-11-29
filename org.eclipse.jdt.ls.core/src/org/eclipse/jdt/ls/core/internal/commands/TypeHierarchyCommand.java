@@ -28,8 +28,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.lsp4j.Location;
@@ -88,10 +88,10 @@ public class TypeHierarchyCommand {
 			} else {
 				String handleIdentifier = JSONUtility.toModel(itemInput.getData(), String.class);
 				IJavaElement element = JavaCore.create(handleIdentifier);
-				if (element instanceof IType) {
-					type = ((IType)element);
-				} else if (element instanceof IOrdinaryClassFile) {
-					type = ((IOrdinaryClassFile)element).getType();
+				if (element instanceof IType theType) {
+					type = theType;
+				} else if (element instanceof IOrdinaryClassFile classFile) {
+					type = classFile.getType();
 				} else {
 					return null;
 				}
@@ -109,10 +109,10 @@ public class TypeHierarchyCommand {
 
 	private IType getType(String uri, Position position, IProgressMonitor monitor) throws JavaModelException {
 		IJavaElement typeElement = findTypeElement(JDTUtils.resolveTypeRoot(uri), position, monitor);
-		if (typeElement instanceof IType) {
-			return (IType)typeElement;
-		} else if (typeElement instanceof IMethod) {
-			return ((IMethod)typeElement).getDeclaringType();
+		if (typeElement instanceof IType type) {
+			return type;
+		} else if (typeElement instanceof IMethod method) {
+			return method.getDeclaringType();
 		} else {
 			return null;
 		}
@@ -124,8 +124,8 @@ public class TypeHierarchyCommand {
 		}
 		IJavaElement element = JDTUtils.findElementAtSelection(unit, position.getLine(), position.getCharacter(), JavaLanguageServerPlugin.getPreferencesManager(), monitor);
 		if (element == null) {
-			if (unit instanceof IOrdinaryClassFile) {
-				element = ((IOrdinaryClassFile) unit).getType();
+			if (unit instanceof IOrdinaryClassFile classFile) {
+				element = classFile.getType();
 			} else if (unit instanceof ICompilationUnit) {
 				element = unit.findPrimaryType();
 			}
@@ -178,7 +178,7 @@ public class TypeHierarchyCommand {
 		}
 		ITypeHierarchy typeHierarchy = (direction == TypeHierarchyDirection.Parents) ? type.newSupertypeHierarchy(DefaultWorkingCopyOwner.PRIMARY, monitor) : type.newTypeHierarchy(type.getJavaProject(), DefaultWorkingCopyOwner.PRIMARY, monitor);
 		if (direction == TypeHierarchyDirection.Children || direction == TypeHierarchyDirection.Both) {
-			List<TypeHierarchyItem> childrenItems = new ArrayList<TypeHierarchyItem>();
+			List<TypeHierarchyItem> childrenItems = new ArrayList<>();
 			IType[] children = typeHierarchy.getSubtypes(type);
 			for (IType childType : children) {
 				TypeHierarchyItem childItem = TypeHierarchyCommand.toTypeHierarchyItem(childType);
@@ -191,7 +191,7 @@ public class TypeHierarchyCommand {
 			item.setChildren(childrenItems);
 		}
 		if (direction == TypeHierarchyDirection.Parents || direction == TypeHierarchyDirection.Both) {
-			List<TypeHierarchyItem> parentsItems = new ArrayList<TypeHierarchyItem>();
+			List<TypeHierarchyItem> parentsItems = new ArrayList<>();
 			IType[] parents = typeHierarchy.getSupertypes(type);
 			for (IType parentType : parents) {
 				TypeHierarchyItem parentItem = TypeHierarchyCommand.toTypeHierarchyItem(parentType);

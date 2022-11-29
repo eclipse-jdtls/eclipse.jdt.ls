@@ -30,8 +30,8 @@ public class FXVersionUtil {
 	 * @return the value
 	 */
 	public static FXVersion getFxVersion(IVMInstall i) {
-		if (i instanceof IVMInstall2) {
-			final String javaVersion = ((IVMInstall2) i).getJavaVersion();
+		if (i instanceof IVMInstall2 vmInstall) {
+			final String javaVersion = vmInstall.getJavaVersion();
 			if (javaVersion == null) {
 				return FXVersion.UNKNOWN;
 			}

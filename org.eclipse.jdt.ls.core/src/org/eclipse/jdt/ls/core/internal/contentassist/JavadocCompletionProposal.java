@@ -232,12 +232,12 @@ public class JavadocCompletionProposal {
 		if (!JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_14)) {
 			ISourceRange range = type.getNameRange();
 			ASTNode node = NodeFinder.perform(unit, range.getOffset(), range.getLength()).getParent();
-			if (node instanceof RecordDeclaration) {
-				List components = ((RecordDeclaration) node).recordComponents();
+			if (node instanceof RecordDeclaration recordDeclaration) {
+				List<?> components = recordDeclaration.recordComponents();
 				List<String> paramList = new ArrayList<>(components.size());
 				for (Object o : components) {
-					if (o instanceof VariableDeclaration) {
-						paramList.add(((VariableDeclaration) o).getName().getFullyQualifiedName());
+					if (o instanceof VariableDeclaration variableDeclaration) {
+						paramList.add(variableDeclaration.getName().getFullyQualifiedName());
 					}
 				}
 				typeParamNames = paramList.toArray(new String[0]);

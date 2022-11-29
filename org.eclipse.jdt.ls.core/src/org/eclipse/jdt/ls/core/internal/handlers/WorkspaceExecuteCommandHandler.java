@@ -112,8 +112,8 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 			if (fDelegateCommandHandlerInstance == null) {
 				try {
 					Object extension = fConfigurationElement.createExecutableExtension(CLASS);
-					if (extension instanceof IDelegateCommandHandler) {
-						fDelegateCommandHandlerInstance = (IDelegateCommandHandler) extension;
+					if (extension instanceof IDelegateCommandHandler handler) {
+						fDelegateCommandHandlerInstance = handler;
 					} else {
 						String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implements org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler";
 						JavaLanguageServerPlugin.logError(message);
@@ -235,8 +235,8 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 			public void handleException(Throwable ex) {
 				IStatus status = new Status(IStatus.ERROR, IConstants.PLUGIN_ID, IStatus.OK, "Error in calling delegate command handler", ex);
 				JavaLanguageServerPlugin.log(status);
-				if (ex instanceof ResponseErrorException) {
-					throw (ResponseErrorException) ex;
+				if (ex instanceof ResponseErrorException responseErrorEx) {
+					throw responseErrorEx;
 				}
 				throw new ResponseErrorException(new ResponseError(ResponseErrorCode.UnknownErrorCode, ex.getMessage(), ex));
 			}

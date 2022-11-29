@@ -59,8 +59,8 @@ public class HtmlToPlainText {
 		@Override
 		public void head(Node node, int depth) {
 			String name = node.nodeName();
-			if (node instanceof TextNode) {
-				append(((TextNode) node).text()); // TextNodes carry all user-readable text in the DOM.
+			if (node instanceof TextNode textNode) {
+				append(textNode.text()); // TextNodes carry all user-readable text in the DOM.
 			} else if (name.equals("ul")) {
 				listNesting++;
 			} else if (name.equals("li")) {

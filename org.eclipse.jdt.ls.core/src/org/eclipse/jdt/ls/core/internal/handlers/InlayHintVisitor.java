@@ -284,8 +284,8 @@ class InlayHintVisitor extends ASTVisitor {
 	 * to be casted will be compared.
 	 */
 	private boolean isSameName(Expression argument, String paramName) {
-		if (argument instanceof CastExpression) {
-			argument = ((CastExpression) argument).getExpression();
+		if (argument instanceof CastExpression castExpression) {
+			argument = castExpression.getExpression();
 		}
 
 		if (!(argument instanceof SimpleName)) {

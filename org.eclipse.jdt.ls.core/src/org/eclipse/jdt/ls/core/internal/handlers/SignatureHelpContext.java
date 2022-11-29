@@ -195,13 +195,13 @@ public class SignatureHelpContext {
 	 * <pre>
 	 *     System.out.println(new String(""|))
 	 * </pre>
-	 * 
+	 *
 	 * In the above case, the inner class instance creation node will return.
 	 *
 	 *  <pre>
 	 *     System.out.println(new |String(""))
 	 * </pre>
-	 * 
+	 *
 	 * In the above case, the outer method invocation node will return.
 	 *
 	 * @param node method-like AST node
@@ -262,20 +262,20 @@ public class SignatureHelpContext {
 			return new int[]{ firstArg.getStartPosition(), lastArg.getStartPosition() + lastArg.getLength() };
 		} else {
 			ASTNode simpleNameNode = null;
-			if (node instanceof MethodInvocation) {
-				simpleNameNode = ((MethodInvocation) node).getName();
-			} else if (node instanceof ClassInstanceCreation) {
-				simpleNameNode = ((ClassInstanceCreation) node).getType();
-			} else if (node instanceof SuperMethodInvocation) {
-				simpleNameNode = ((SuperMethodInvocation) node).getName();
-			} else if (node instanceof MethodRef) {
-				simpleNameNode = ((MethodRef) node).getName();
+			if (node instanceof MethodInvocation methodInvocation) {
+				simpleNameNode = methodInvocation.getName();
+			} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+				simpleNameNode = classInstanceCreation.getType();
+			} else if (node instanceof SuperMethodInvocation superInvocation) {
+				simpleNameNode = superInvocation.getName();
+			} else if (node instanceof MethodRef methodRef) {
+				simpleNameNode = methodRef.getName();
 			} else if (node instanceof ConstructorInvocation) {
 				simpleNameNode = node;
 			} else if (node instanceof SuperConstructorInvocation) {
 				simpleNameNode = node;
 			}
-	
+
 			if (simpleNameNode == null) {
 				return null;
 			}
@@ -299,24 +299,24 @@ public class SignatureHelpContext {
 			return;
 		}
 
-		if (node instanceof MethodInvocation) {
-			this.methodName = ((MethodInvocation) node).getName().getIdentifier();
-		} else if (node instanceof ClassInstanceCreation) {
-			ITypeBinding binding = ((ClassInstanceCreation) node).getType().resolveBinding();
+		if (node instanceof MethodInvocation methodInvocation) {
+			this.methodName = methodInvocation.getName().getIdentifier();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			ITypeBinding binding = classInstanceCreation.getType().resolveBinding();
 			if (binding != null) {
 				this.methodName = binding.getErasure().getName();
 			}
-		} else if (node instanceof SuperMethodInvocation) {
-			this.methodName = ((SuperMethodInvocation) node).getName().getIdentifier();
-		} else if (node instanceof MethodRef) {
-			this.methodName = ((MethodRef) node).getName().getIdentifier();
-		} else if (node instanceof ConstructorInvocation) {
-			IMethodBinding binding = ((ConstructorInvocation) node).resolveConstructorBinding();
+		} else if (node instanceof SuperMethodInvocation superInvocation) {
+			this.methodName = superInvocation.getName().getIdentifier();
+		} else if (node instanceof MethodRef methodRef) {
+			this.methodName = methodRef.getName().getIdentifier();
+		} else if (node instanceof ConstructorInvocation constructorInvocation) {
+			IMethodBinding binding = constructorInvocation.resolveConstructorBinding();
 			if (binding != null) {
 				this.methodName = binding.getDeclaringClass().getName();
 			}
-		} else if (node instanceof SuperConstructorInvocation) {
-			IMethodBinding binding = ((SuperConstructorInvocation) node).resolveConstructorBinding();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			IMethodBinding binding = superConstructorInvocation.resolveConstructorBinding();
 			if (binding != null) {
 				this.methodName = binding.getDeclaringClass().getName();
 			}
@@ -339,16 +339,16 @@ public class SignatureHelpContext {
 		}
 
 		IMethodBinding methodBinding = null;
-		if (node instanceof MethodInvocation) {
-			methodBinding = ((MethodInvocation) node).resolveMethodBinding();
-		} else if (node instanceof ClassInstanceCreation) {
-			methodBinding = ((ClassInstanceCreation) node).resolveConstructorBinding();
-		} else if (node instanceof SuperMethodInvocation) {
-			methodBinding = ((SuperMethodInvocation) node).resolveMethodBinding();
-		} else if (node instanceof SuperConstructorInvocation) {
-			methodBinding = ((SuperConstructorInvocation) node).resolveConstructorBinding();
-		} else if (node instanceof ConstructorInvocation) {
-			methodBinding = ((ConstructorInvocation) node).resolveConstructorBinding();
+		if (node instanceof MethodInvocation methodInvocation) {
+			methodBinding = methodInvocation.resolveMethodBinding();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			methodBinding = classInstanceCreation.resolveConstructorBinding();
+		} else if (node instanceof SuperMethodInvocation superMethodInvocation) {
+			methodBinding = superMethodInvocation.resolveMethodBinding();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			methodBinding = superConstructorInvocation.resolveConstructorBinding();
+		} else if (node instanceof ConstructorInvocation constructorInvocation) {
+			methodBinding = constructorInvocation.resolveConstructorBinding();
 		}
 
 		if (methodBinding != null) {
@@ -376,18 +376,18 @@ public class SignatureHelpContext {
 			return null;
 		}
 
-		if (node instanceof MethodInvocation) {
-			return ((MethodInvocation) node).arguments();
-		} else if (node instanceof ClassInstanceCreation) {
-			return ((ClassInstanceCreation) node).arguments();
-		} else if (node instanceof SuperMethodInvocation) {
-			return ((SuperMethodInvocation) node).arguments();
-		} else if (node instanceof MethodRef) {
-			return ((MethodRef) node).parameters();
-		} else if (node instanceof SuperConstructorInvocation) {
-			return ((SuperConstructorInvocation) node).arguments();
-		} else if (node instanceof ConstructorInvocation) {
-			return ((ConstructorInvocation) node).arguments();
+		if (node instanceof MethodInvocation methodInvocation) {
+			return methodInvocation.arguments();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			return classInstanceCreation.arguments();
+		} else if (node instanceof SuperMethodInvocation superMethodInvocation) {
+			return superMethodInvocation.arguments();
+		} else if (node instanceof MethodRef methodRef) {
+			return methodRef.parameters();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			return superConstructorInvocation.arguments();
+		} else if (node instanceof ConstructorInvocation constructorInvocation) {
+			return constructorInvocation.arguments();
 		}
 
 		return null;
@@ -403,26 +403,25 @@ public class SignatureHelpContext {
 		}
 
 		IBinding binding = null;
-		if (node instanceof MethodInvocation) {
-			binding = ((MethodInvocation) node).resolveMethodBinding();
-		} else if (node instanceof ClassInstanceCreation) {
-			binding = ((ClassInstanceCreation) node).resolveConstructorBinding();
-		} else if (node instanceof SuperMethodInvocation) {
-			binding = ((SuperMethodInvocation) node).resolveMethodBinding();
-		} else if (node instanceof MethodRef) {
-			binding = ((MethodRef) node).resolveBinding();
-		} else if (node instanceof SuperConstructorInvocation) {
-			binding = ((SuperConstructorInvocation) node).resolveConstructorBinding();
-		} else if (node instanceof ConstructorInvocation) {
-			binding = ((ConstructorInvocation) node).resolveConstructorBinding();
+		if (node instanceof MethodInvocation methodInvocation) {
+			binding = methodInvocation.resolveMethodBinding();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			binding = classInstanceCreation.resolveConstructorBinding();
+		} else if (node instanceof SuperMethodInvocation superMethodInvocation) {
+			binding = superMethodInvocation.resolveMethodBinding();
+		} else if (node instanceof MethodRef methodRef) {
+			binding = methodRef.resolveBinding();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			binding = superConstructorInvocation.resolveConstructorBinding();
+		} else if (node instanceof ConstructorInvocation constructorInvocation) {
+			binding = constructorInvocation.resolveConstructorBinding();
 		}
 
 		if (binding == null) {
 			return;
 		}
 
-		if (binding instanceof IMethodBinding) {
-			IMethodBinding methodBinding = ((IMethodBinding) binding);
+		if (binding instanceof IMethodBinding methodBinding) {
 			if (methodBinding.isDefaultConstructor()) {
 				// default constructor won't have IJavaElement
 				this.parameterTypes = new String[0];
@@ -490,12 +489,12 @@ public class SignatureHelpContext {
 	 */
 	private int getOptionalExpressionLength(ASTNode node) {
 		Expression optionalExpression = null;
-		if (node instanceof MethodInvocation) {
-			optionalExpression = ((MethodInvocation) node).getExpression();
-		} else if (node instanceof ClassInstanceCreation) {
-			optionalExpression = ((ClassInstanceCreation) node).getExpression();
-		} else if (node instanceof SuperConstructorInvocation) {
-			optionalExpression = ((SuperConstructorInvocation) node).getExpression();
+		if (node instanceof MethodInvocation methodInvocation) {
+			optionalExpression = methodInvocation.getExpression();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			optionalExpression = classInstanceCreation.getExpression();
+		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
+			optionalExpression = superConstructorInvocation.getExpression();
 		}
 		if (optionalExpression == null) {
 			return 0;

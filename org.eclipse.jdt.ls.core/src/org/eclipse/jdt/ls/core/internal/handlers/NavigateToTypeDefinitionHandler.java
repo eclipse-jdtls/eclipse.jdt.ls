@@ -70,14 +70,14 @@ public class NavigateToTypeDefinitionHandler {
 			}
 			NodeFinder finder = new NodeFinder(ast, offset, 0);
 			ASTNode coveringNode = finder.getCoveringNode();
-			if (coveringNode instanceof SimpleName) {
-				IBinding resolvedBinding = ((SimpleName) coveringNode).resolveBinding();
+			if (coveringNode instanceof SimpleName name) {
+				IBinding resolvedBinding = name.resolveBinding();
 				if (resolvedBinding != null) {
 					ITypeBinding typeBinding = null;
-					if (resolvedBinding instanceof IVariableBinding) {
-						typeBinding = ((IVariableBinding) resolvedBinding).getType();
-					} else if (resolvedBinding instanceof ITypeBinding) {
-						typeBinding = (ITypeBinding) resolvedBinding;
+					if (resolvedBinding instanceof IVariableBinding variableBinding) {
+						typeBinding = variableBinding.getType();
+					} else if (resolvedBinding instanceof ITypeBinding resolvedTypeBinding) {
+						typeBinding = resolvedTypeBinding;
 					}
 					if (typeBinding != null && typeBinding.getJavaElement() != null) {
 						IJavaElement element = typeBinding.getJavaElement();
@@ -97,12 +97,12 @@ public class NavigateToTypeDefinitionHandler {
 							}
 							return JDTUtils.toLocation(element);
 						}
-						if (element instanceof IMember && ((IMember) element).getClassFile() != null) {
+						if (element instanceof IMember member && member.getClassFile() != null) {
 							List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 							if (!locations.isEmpty()) {
 								return locations.get(0);
 							}
-							return JDTUtils.toLocation(((IMember) element).getClassFile());
+							return JDTUtils.toLocation(member.getClassFile());
 						}
 					}
 				}

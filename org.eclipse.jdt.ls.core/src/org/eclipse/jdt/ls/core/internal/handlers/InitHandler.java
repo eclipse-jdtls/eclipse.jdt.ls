@@ -219,8 +219,8 @@ final public class InitHandler extends BaseInitHandler {
 		// This job causes Java LS sometimes to hang at https://github.com/eclipse-jdt/eclipse.jdt.core/blob/master/org.eclipse.jdt.apt.core/src/org/eclipse/jdt/apt/core/internal/generatedfile/GeneratedSourceFolderManager.java#L508
 		Job.getJobManager().wakeUp(ResourcesPlugin.FAMILY_AUTO_BUILD);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		if (workspace instanceof Workspace) {
-			((Workspace) workspace).getBuildManager().waitForAutoBuildOff();
+		if (workspace instanceof Workspace workspaceImpl) {
+			workspaceImpl.getBuildManager().waitForAutoBuildOff();
 		}
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
@@ -265,8 +265,8 @@ final public class InitHandler extends BaseInitHandler {
 			public boolean belongsTo(Object family) {
 				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
 				boolean equalToRootPaths = false;
-				if (family instanceof Collection<?>) {
-					equalToRootPaths = rootPathsSet.equals(((Collection<IPath>) family).stream().collect(Collectors.toSet()));
+				if (family instanceof Collection<?> familyCollection) {
+					equalToRootPaths = rootPathsSet.equals(familyCollection.stream().collect(Collectors.toSet()));
 				}
 				return JAVA_LS_INITIALIZATION_JOBS.equals(family) || equalToRootPaths;
 			}

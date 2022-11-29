@@ -315,8 +315,7 @@ public class RefactorProcessor {
 		SimpleName name= (SimpleName) node;
 		IBinding binding = name.resolveBinding();
 		try {
-			if (binding instanceof IVariableBinding) {
-				IVariableBinding varBinding = (IVariableBinding) binding;
+			if (binding instanceof IVariableBinding varBinding) {
 				if (varBinding.isParameter()) {
 					return false;
 				}
@@ -348,7 +347,7 @@ public class RefactorProcessor {
 				}
 
 				// Inline Local Variable
-				if (binding.getJavaElement() instanceof ILocalVariable && RefactoringAvailabilityTesterCore.isInlineTempAvailable((ILocalVariable) binding.getJavaElement())) {
+				if (binding.getJavaElement() instanceof ILocalVariable localVar && RefactoringAvailabilityTesterCore.isInlineTempAvailable(localVar)) {
 					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
 					boolean status;
 					try {
@@ -461,8 +460,8 @@ public class RefactorProcessor {
 			node = node.getParent();
 		}
 
-		if (node instanceof ClassInstanceCreation) {
-			return (ClassInstanceCreation) node;
+		if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			return classInstanceCreation;
 		} else if (node.getLocationInParent() == ClassInstanceCreation.ANONYMOUS_CLASS_DECLARATION_PROPERTY) {
 			return (ClassInstanceCreation) node.getParent();
 		} else {
@@ -499,8 +498,8 @@ public class RefactorProcessor {
 		}
 
 		LambdaExpression lambda;
-		if (covering instanceof LambdaExpression) {
-			lambda = (LambdaExpression) covering;
+		if (covering instanceof LambdaExpression lambdaExpression) {
+			lambda = lambdaExpression;
 		} else if (covering.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			lambda = (LambdaExpression) covering.getParent();
 		} else {
@@ -560,14 +559,14 @@ public class RefactorProcessor {
 		}
 
 		Type type = null;
-		if (varDeclaration instanceof SingleVariableDeclaration) {
-			type = ((SingleVariableDeclaration) varDeclaration).getType();
+		if (varDeclaration instanceof SingleVariableDeclaration singleVar) {
+			type = singleVar.getType();
 		} else if (varDeclaration instanceof VariableDeclarationFragment) {
 			ASTNode parent = varDeclaration.getParent();
-			if (parent instanceof VariableDeclarationStatement) {
-				type = ((VariableDeclarationStatement) parent).getType();
-			} else if (parent instanceof VariableDeclarationExpression) {
-				type = ((VariableDeclarationExpression) parent).getType();
+			if (parent instanceof VariableDeclarationStatement variableDeclStatement) {
+				type = variableDeclStatement.getType();
+			} else if (parent instanceof VariableDeclarationExpression variableDeclExpression) {
+				type = variableDeclExpression.getType();
 			}
 		}
 		if (type == null || !type.isVar()) {
@@ -589,8 +588,8 @@ public class RefactorProcessor {
 			while (node instanceof Name || node instanceof Type) {
 				node = node.getParent();
 			}
-			if (node instanceof VariableDeclarationStatement) {
-				List<VariableDeclarationFragment> fragments = ((VariableDeclarationStatement) node).fragments();
+			if (node instanceof VariableDeclarationStatement variableDeclStatement) {
+				List<VariableDeclarationFragment> fragments = variableDeclStatement.fragments();
 				if (fragments.size() > 0) {
 					// var is not allowed in a compound declaration
 					name = fragments.get(0).getName();
@@ -642,16 +641,14 @@ public class RefactorProcessor {
 		}
 		ITypeBinding expressionTypeBinding = null;
 
-		if (varDeclaration instanceof SingleVariableDeclaration) {
-			SingleVariableDeclaration svDecl = (SingleVariableDeclaration) varDeclaration;
+		if (varDeclaration instanceof SingleVariableDeclaration svDecl) {
 			type = svDecl.getType();
 			expression = svDecl.getInitializer();
 			if (expression != null) {
 				expressionTypeBinding = expression.resolveTypeBinding();
 			} else {
 				ASTNode parent = svDecl.getParent();
-				if (parent instanceof EnhancedForStatement) {
-					EnhancedForStatement efStmt = (EnhancedForStatement) parent;
+				if (parent instanceof EnhancedForStatement efStmt) {
 					expression = efStmt.getExpression();
 					if (expression != null) {
 						ITypeBinding expBinding = expression.resolveTypeBinding();
@@ -672,16 +669,15 @@ public class RefactorProcessor {
 					}
 				}
 			}
-		} else if (varDeclaration instanceof VariableDeclarationFragment) {
+		} else if (varDeclaration instanceof VariableDeclarationFragment variableDeclarationFragment) {
 			ASTNode parent = varDeclaration.getParent();
-			expression = ((VariableDeclarationFragment) varDeclaration).getInitializer();
+			expression = variableDeclarationFragment.getInitializer();
 			if (expression != null) {
 				expressionTypeBinding = expression.resolveTypeBinding();
 			}
-			if (parent instanceof VariableDeclarationStatement) {
-				type = ((VariableDeclarationStatement) parent).getType();
-			} else if (parent instanceof VariableDeclarationExpression) {
-				VariableDeclarationExpression varDecl = (VariableDeclarationExpression) parent;
+			if (parent instanceof VariableDeclarationStatement variableDeclarationStatement) {
+				type = variableDeclarationStatement.getType();
+			} else if (parent instanceof VariableDeclarationExpression varDecl) {
 				// cannot convert a VariableDeclarationExpression with multiple fragments to var.
 				if (varDecl.fragments().size() > 1) {
 					return false;
@@ -730,9 +726,7 @@ public class RefactorProcessor {
 
 		// get bindings for method invocation or variable access
 
-		if (name.getParent() instanceof MethodInvocation) {
-			MethodInvocation mi = (MethodInvocation) name.getParent();
-
+		if (name.getParent() instanceof MethodInvocation mi) {
 			Expression expression = mi.getExpression();
 			if (expression == null || expression.equals(name)) {
 				return false;
@@ -744,14 +738,12 @@ public class RefactorProcessor {
 			}
 
 			declaringClass = ((IMethodBinding) binding).getDeclaringClass();
-		} else if (name.getParent() instanceof QualifiedName) {
-			QualifiedName qn = (QualifiedName) name.getParent();
-
-			if (name.equals(qn.getQualifier()) || qn.getParent() instanceof ImportDeclaration) {
+		} else if (name.getParent() instanceof QualifiedName qualifiedName) {
+			if (name.equals(qualifiedName.getQualifier()) || qualifiedName.getParent() instanceof ImportDeclaration) {
 				return false;
 			}
 
-			binding = qn.resolveBinding();
+			binding = qualifiedName.resolveBinding();
 			if (!(binding instanceof IVariableBinding)) {
 				return false;
 			}
@@ -788,8 +780,8 @@ public class RefactorProcessor {
 			ImportRemover removerAllOccurences = new ImportRemover(context.getCompilationUnit().getJavaProject(), context.getASTRoot());
 			MethodInvocation mi = null;
 			QualifiedName qn = null;
-			if (name.getParent() instanceof MethodInvocation) {
-				mi = (MethodInvocation) name.getParent();
+			if (name.getParent() instanceof MethodInvocation parentInvocation) {
+				mi = parentInvocation;
 				// convert the method invocation
 				astRewrite.remove(mi.getExpression(), null);
 				remover.registerRemovedNode(mi.getExpression());
@@ -800,8 +792,8 @@ public class RefactorProcessor {
 					remover.registerRemovedNode(type);
 					removerAllOccurences.registerRemovedNode(type);
 				});
-			} else if (name.getParent() instanceof QualifiedName) {
-				qn = (QualifiedName) name.getParent();
+			} else if (name.getParent() instanceof QualifiedName qname) {
+				qn = qname;
 				// convert the field access
 				astRewrite.replace(qn, ASTNodeFactory.newName(node.getAST(), name.getFullyQualifiedName()), null);
 				remover.registerRemovedNode(qn);
@@ -819,9 +811,9 @@ public class RefactorProcessor {
 						return super.visit(methodInvocation);
 					}
 
-					if (methodInvocationExpression instanceof Name) {
-						String fullyQualifiedName = ((Name) methodInvocationExpression).getFullyQualifiedName();
-						if (miFinal != null && miFinal.getExpression() instanceof Name && ((Name) miFinal.getExpression()).getFullyQualifiedName().equals(fullyQualifiedName)
+					if (methodInvocationExpression instanceof Name name) {
+						String fullyQualifiedName = name.getFullyQualifiedName();
+						if (miFinal != null && miFinal.getExpression() instanceof Name exprName && exprName.getFullyQualifiedName().equals(fullyQualifiedName)
 								&& miFinal.getName().getIdentifier().equals(methodInvocation.getName().getIdentifier())) {
 							methodInvocation.typeArguments().forEach(type -> {
 								astRewriteReplaceAllOccurrences.remove((Type) type, null);
@@ -876,13 +868,13 @@ public class RefactorProcessor {
 		ASTNode node = nameNode.getParent();
 		while (node != null) {
 
-			if (node instanceof AbstractTypeDeclaration) {
-				ITypeBinding binding = ((AbstractTypeDeclaration) node).resolveBinding();
+			if (node instanceof AbstractTypeDeclaration typeDecl) {
+				ITypeBinding binding = typeDecl.resolveBinding();
 				if (binding != null && binding.isSubTypeCompatible(declaringClass)) {
 					return true;
 				}
-			} else if (node instanceof AnonymousClassDeclaration) {
-				ITypeBinding binding = ((AnonymousClassDeclaration) node).resolveBinding();
+			} else if (node instanceof AnonymousClassDeclaration anonymousClassDecl) {
+				ITypeBinding binding = anonymousClassDecl.resolveBinding();
 				if (binding != null && binding.isSubTypeCompatible(declaringClass)) {
 					return true;
 				}

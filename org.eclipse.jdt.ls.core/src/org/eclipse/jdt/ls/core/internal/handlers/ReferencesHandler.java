@@ -83,8 +83,7 @@ public final class ReferencesHandler {
 			if (monitor.isCanceled()) {
 				return Collections.emptyList();
 			}
-			if (preferenceManager.getPreferences().isIncludeAccessors() && elementToSearch instanceof IField) { // IField
-				IField field = (IField) elementToSearch;
+			if (preferenceManager.getPreferences().isIncludeAccessors() && elementToSearch instanceof IField field) { // IField
 				IMethod getter = GetterSetterUtil.getGetter(field);
 				if (getter != null) {
 					search(getter, locations, monitor, false);
@@ -137,8 +136,8 @@ public final class ReferencesHandler {
 					if (pair.getValueKind() == IMemberValuePair.K_STRING) {
 						String memberName = pair.getMemberName();
 						Object value = pair.getValue();
-						if ("builderClassName".equals(memberName) && value instanceof String && !((String) value).isEmpty()) {
-							return declaringType.getFullyQualifiedName() + "." + (String) value;
+						if ("builderClassName".equals(memberName) && value instanceof String stringValue && !stringValue.isEmpty()) {
+							return declaringType.getFullyQualifiedName() + "." + stringValue;
 						}
 					}
 				}
@@ -166,8 +165,7 @@ public final class ReferencesHandler {
 					return;
 				}
 				Object o = match.getElement();
-				if (o instanceof IJavaElement) {
-					IJavaElement element = (IJavaElement) o;
+				if (o instanceof IJavaElement element) {
 					ICompilationUnit compilationUnit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 					if (compilationUnit != null) {
 						Location location = JDTUtils.toLocation(compilationUnit, match.getOffset(), match.getLength());

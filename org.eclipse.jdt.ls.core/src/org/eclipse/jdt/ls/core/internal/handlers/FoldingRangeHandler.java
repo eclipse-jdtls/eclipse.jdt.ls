@@ -155,13 +155,13 @@ public class FoldingRangeHandler {
 	private void computeTypeRootRanges(List<FoldingRange> foldingRanges, ITypeRoot unit, IScanner scanner) throws CoreException {
 		if (unit.hasChildren()) {
 			for (IJavaElement child : unit.getChildren()) {
-				if (child instanceof IImportContainer) {
-					ISourceRange importRange = ((IImportContainer) child).getSourceRange();
+				if (child instanceof IImportContainer importContainer) {
+					ISourceRange importRange = importContainer.getSourceRange();
 					FoldingRange importFoldingRange = new FoldingRange(scanner.getLineNumber(importRange.getOffset()) - 1, scanner.getLineNumber(importRange.getOffset() + importRange.getLength()) - 1);
 					importFoldingRange.setKind(FoldingRangeKind.Imports);
 					foldingRanges.add(importFoldingRange);
-				} else if (child instanceof IType) {
-					computeTypeRanges(foldingRanges, (IType) child, scanner);
+				} else if (child instanceof IType type) {
+					computeTypeRanges(foldingRanges, type, scanner);
 				}
 			}
 		}
@@ -174,8 +174,8 @@ public class FoldingRangeHandler {
 		for (IJavaElement c : children) {
 			if (c instanceof IMethod || c instanceof IInitializer) {
 				computeMethodRanges(foldingRanges, (IMember) c, scanner);
-			} else if (c instanceof IType) {
-				computeTypeRanges(foldingRanges, (IType) c, scanner);
+			} else if (c instanceof IType type) {
+				computeTypeRanges(foldingRanges, type, scanner);
 			}
 		}
 	}

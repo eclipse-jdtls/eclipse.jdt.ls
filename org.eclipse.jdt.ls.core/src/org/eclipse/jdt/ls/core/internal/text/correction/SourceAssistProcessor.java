@@ -64,9 +64,9 @@ import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.DefaultJavaElementComparator;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
-import org.eclipse.jdt.ls.core.internal.codemanipulation.PartialSortMembersOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
+import org.eclipse.jdt.ls.core.internal.codemanipulation.PartialSortMembersOperation;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
@@ -74,8 +74,10 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler;
@@ -83,8 +85,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
-import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
@@ -580,7 +580,7 @@ public class SourceAssistProcessor {
 		if (names.size() == 1) {
 			actionMessage = Messages.format(ActionMessages.GenerateFinalModifiersAction_templateLabel, names.iterator().next());
 		}
-		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), possibleASTNodes.toArray(new ASTNode[0]));
+		IProposableFix fix = VariableDeclarationFixCore.createChangeModifierToFinalFix(context.getASTRoot(), possibleASTNodes.toArray(new ASTNode[0]));
 		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
 	}
 
@@ -746,19 +746,19 @@ public class SourceAssistProcessor {
 
 		ITypeBinding typeBinding = null;
 		while (node != null && !(node instanceof CompilationUnit)) {
-			if (node instanceof AbstractTypeDeclaration) {
-				typeBinding = ((AbstractTypeDeclaration) node).resolveBinding();
+			if (node instanceof AbstractTypeDeclaration typeDecl) {
+				typeBinding = typeDecl.resolveBinding();
 				break;
-			} else if (node instanceof AnonymousClassDeclaration) { // Anonymous
-				typeBinding = ((AnonymousClassDeclaration) node).resolveBinding();
+			} else if (node instanceof AnonymousClassDeclaration anonymousClassDecl) { // Anonymous
+				typeBinding = anonymousClassDecl.resolveBinding();
 				break;
 			}
 
 			node = node.getParent();
 		}
 
-		if (typeBinding != null && typeBinding.getJavaElement() instanceof IType) {
-			return (IType) typeBinding.getJavaElement();
+		if (typeBinding != null && typeBinding.getJavaElement() instanceof IType type) {
+			return type;
 		}
 
 		return unit.findPrimaryType();

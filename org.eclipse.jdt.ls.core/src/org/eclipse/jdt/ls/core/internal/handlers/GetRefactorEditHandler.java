@@ -102,8 +102,7 @@ public class GetRefactorEditHandler {
 				// String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
 				proposal = (LinkedCorrectionProposal) RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params.context, context, context.getCoveringNode(), false, locations);
 				positionKey = null;
-				if (proposal instanceof RefactoringCorrectionProposal) {
-					RefactoringCorrectionProposal rcp = (RefactoringCorrectionProposal) proposal;
+				if (proposal instanceof RefactoringCorrectionProposal rcp) {
 					IntroduceParameterRefactoring refactoring = (IntroduceParameterRefactoring) rcp.getRefactoring();
 					ParameterInfo parameterInfo = refactoring.getAddedParameterInfo();
 					if (parameterInfo != null) {

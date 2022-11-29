@@ -52,14 +52,14 @@ public class JSONUtility {
 		if(clazz == null ){
 			throw new IllegalArgumentException("Class can not be null");
 		}
-		if(object instanceof JsonElement){
-			return gson.fromJson((JsonElement) object, clazz);
+		if (object instanceof JsonElement json) {
+			return gson.fromJson(json, clazz);
 		}
 		if (clazz.isInstance(object)) {
 			return clazz.cast(object);
 		}
-		if (object instanceof String) {
-			return gson.fromJson((String) object, clazz);
+		if (object instanceof String json) {
+			return gson.fromJson(json, clazz);
 		}
 		return null;
 	}

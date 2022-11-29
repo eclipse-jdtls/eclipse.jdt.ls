@@ -82,7 +82,7 @@ public class ContentProviderManager {
 	}
 
 	private String getContent(Object source, String cacheKey, Class<? extends IContentProvider> providerType, IProgressMonitor monitor) {
-		URI uri = source instanceof URI ? (URI) source : null;
+		URI uri = source instanceof URI u ? u : null;
 		List<ContentProviderDescriptor> matches = findMatchingProviders(uri);
 		if (monitor.isCanceled()) {
 			return EMPTY_CONTENT;
@@ -108,8 +108,8 @@ public class ContentProviderManager {
 				String content = null;
 				if (uri != null) {
 					content = contentProvider.getContent(uri, monitor);
-				} else if (source instanceof IClassFile) {
-					content = ((IDecompiler) contentProvider).getSource((IClassFile) source, monitor);
+				} else if (source instanceof IClassFile classFile) {
+					content = ((IDecompiler) contentProvider).getSource(classFile, monitor);
 				}
 				if (monitor.isCanceled()) {
 					return EMPTY_CONTENT;
@@ -202,8 +202,8 @@ public class ContentProviderManager {
 		public synchronized IContentProvider getContentProvider() {
 			try {
 				Object extension = configurationElement.createExecutableExtension(CLASS);
-				if (extension instanceof IContentProvider) {
-					return (IContentProvider) extension;
+				if (extension instanceof IContentProvider contentProvider) {
+					return contentProvider;
 				} else {
 					String message = "Invalid extension to " + EXTENSION_POINT_ID + ". Must implement " + IContentProvider.class.getName();
 					JavaLanguageServerPlugin.logError(message);

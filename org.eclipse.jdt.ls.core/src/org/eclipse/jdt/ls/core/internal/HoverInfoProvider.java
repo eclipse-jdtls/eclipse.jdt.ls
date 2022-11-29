@@ -128,8 +128,8 @@ public class HoverInfoProvider {
 			}
 			if (JDTEnvironmentUtils.isSyntaxServer() || isResolved(curr, monitor)) {
 				IBuffer buffer = curr.getOpenable().getBuffer();
-				if (buffer == null && curr instanceof BinaryMember) {
-					IClassFile classFile = ((BinaryMember) curr).getClassFile();
+				if (buffer == null && curr instanceof BinaryMember binaryMember) {
+					IClassFile classFile = binaryMember.getClassFile();
 					if (classFile != null) {
 						Optional<IBuildSupport> bs = JavaLanguageServerPlugin.getProjectsManager().getBuildSupport(curr.getJavaProject().getProject());
 						if (bs.isPresent()) {
@@ -224,8 +224,7 @@ public class HoverInfoProvider {
 						return;
 					}
 					Object o = match.getElement();
-					if (o instanceof IJavaElement) {
-						IJavaElement element = (IJavaElement) o;
+					if (o instanceof IJavaElement element) {
 						if (element.getElementType() == IJavaElement.TYPE) {
 							res[0] = true;
 							return;
@@ -255,8 +254,7 @@ public class HoverInfoProvider {
 		} else {
 			elementLabel = JavaElementLabels.getElementLabel(element, COMMON_SIGNATURE_FLAGS);
 		}
-		if (element instanceof IField) {
-			IField field = (IField) element;
+		if (element instanceof IField field) {
 			IRegion region = null;
 			try {
 				ISourceRange nameRange = JDTUtils.getNameRange(field);
@@ -297,10 +295,10 @@ public class HoverInfoProvider {
 	public static MarkedString computeJavadoc(IJavaElement element) throws CoreException {
 		IMember member = null;
 		String result = null;
-		if (element instanceof ITypeParameter) {
-			member= ((ITypeParameter) element).getDeclaringMember();
-		} else if (element instanceof IMember) {
-			member= (IMember) element;
+		if (element instanceof ITypeParameter typeParameter) {
+			member = typeParameter.getDeclaringMember();
+		} else if (element instanceof IMember memberElement) {
+			member = memberElement;
 		} else if (element instanceof IPackageFragment) {
 			Reader r = JavadocContentAccess2.getMarkdownContentReader(element);
 			if (r != null) {
@@ -312,8 +310,8 @@ public class HoverInfoProvider {
 			if (r != null) {
 				result = getString(r);
 			}
-			if (member instanceof IMethod) {
-				String defaultValue = getDefaultValue((IMethod) member);
+			if (member instanceof IMethod method) {
+				String defaultValue = getDefaultValue(method);
 				if (defaultValue != null) {
 					if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 						result = (result == null ? CompletionResolveHandler.EMPTY_STRING : result) + "\n" + CompletionResolveHandler.DEFAULT + defaultValue;

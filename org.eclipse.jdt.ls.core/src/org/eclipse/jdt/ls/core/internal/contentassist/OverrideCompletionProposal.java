@@ -123,11 +123,10 @@ public class OverrideCompletionProposal {
 		ASTNode node= NodeFinder.perform(unit, offset, 1);
 		node= ASTResolving.findParentType(node);
 		String result = null;
-		if (node instanceof AnonymousClassDeclaration) {
-			declaringType= ((AnonymousClassDeclaration) node).resolveBinding();
+		if (node instanceof AnonymousClassDeclaration anonymousClassDeclaration) {
+			declaringType = anonymousClassDeclaration.resolveBinding();
 			descriptor= AnonymousClassDeclaration.BODY_DECLARATIONS_PROPERTY;
-		} else if (node instanceof AbstractTypeDeclaration) {
-			AbstractTypeDeclaration declaration= (AbstractTypeDeclaration) node;
+		} else if (node instanceof AbstractTypeDeclaration declaration) {
 			descriptor= declaration.getBodyDeclarationsProperty();
 			declaringType= declaration.resolveBinding();
 		}
