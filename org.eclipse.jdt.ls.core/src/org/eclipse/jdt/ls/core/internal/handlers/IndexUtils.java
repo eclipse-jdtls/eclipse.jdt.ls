@@ -38,6 +38,7 @@ import org.eclipse.jdt.internal.core.index.IndexLocation;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
 import org.eclipse.jdt.internal.core.search.indexing.ReadWriteMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 
 public class IndexUtils {
@@ -67,7 +68,6 @@ public class IndexUtils {
                             continue;
                         }
 
-                        boolean needDeleteLocalIndex = false;
                         File localIndexFile = localIndexLocation.getIndexFile();
                         if (localIndexLocation.exists()) {
                             File sharedIndexFile = sharedIndexLocation.getIndexFile();
@@ -75,48 +75,32 @@ public class IndexUtils {
                                 continue;
                             }
 
+                            JobHelpers.waitUntilIndexesReady(); // wait for index ready
                             if (indexManager.getIndex(sharedIndexLocation) != null) {
-                                // current classpath entry is using the shared index, delete local index directly.
-                                needDeleteLocalIndex = true;
+                                try {
+                                    // current classpath entry is using the shared index, delete the unused local index directly.
+                                    Files.deleteIfExists(localIndexFile.toPath());
+                                } catch (IOException e) {
+                                    JavaLanguageServerPlugin.logError(String.format("Failed to delete the local index %s: %s",
+                                        localIndexFile.getName(), e.getMessage()));
+                                }
                             } else {
                                 Index localIndex = indexManager.getIndex(localIndexLocation);
-                                if (localIndex == null) {
+                                if (localIndex == null || localIndex.hasChanged()) {
                                     continue;
-                                }
+                                } else {
+                                    ReadWriteMonitor monitor = localIndex.monitor;
+                                    if (monitor == null) { // index got deleted since acquired
+                                        continue;
+                                    }
 
-                                ReadWriteMonitor monitor = localIndex.monitor;
-                                if (monitor == null) { // index got deleted since acquired
-                                    continue;
-                                }
-    
-                                File tmpFile = new File(sharedIndexFile.getParent(), sharedIndexFile.getName() + "." + System.currentTimeMillis());
-                                try {
-                                    monitor.enterRead();
-                                    mkdirsFor(tmpFile);
-                                    Files.copy(localIndexFile.toPath(), tmpFile.toPath(), LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
-                                    Files.deleteIfExists(sharedIndexFile.toPath());
-                                    needDeleteLocalIndex = tmpFile.renameTo(sharedIndexFile);
-                                } catch (IOException e) {
-                                    JavaLanguageServerPlugin.logError(String.format("Failed to copy the local index %s to the shared index %s: %s",
-                                        localIndexFile.getName(), sharedIndexFile.getName(), e.getMessage()));
-                                } finally {
-                                    monitor.exitRead();
                                     try {
-                                        Files.deleteIfExists(tmpFile.toPath());
-                                    } catch (IOException e) {
-                                        // do nothing
+                                        monitor.enterRead();
+                                        copyIndex(localIndexFile, sharedIndexFile);
+                                    } finally {
+                                        monitor.exitRead();
                                     }
                                 }
-                            }
-                        }
-
-                        if (needDeleteLocalIndex) {
-                            try {
-                                // Remove the local index after it has been copied to the shared index location.
-                                Files.deleteIfExists(localIndexFile.toPath());
-                            } catch (IOException e) {
-                                JavaLanguageServerPlugin.logError(String.format("Failed to delete the local index %s: %s",
-                                    localIndexFile.getName(), e.getMessage()));
                             }
                         }
                     }
@@ -125,6 +109,27 @@ public class IndexUtils {
                 JavaLanguageServerPlugin.logException(e);
             }
         }
+    }
+
+    private static boolean copyIndex(File from, File to) {
+        File tmpFile = new File(to.getParent(), to.getName() + "." + System.currentTimeMillis());
+        try {
+            mkdirsFor(tmpFile);
+            Files.copy(from.toPath(), tmpFile.toPath(), LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
+            Files.deleteIfExists(to.toPath());
+            return tmpFile.renameTo(to);
+        } catch (IOException e) {
+            JavaLanguageServerPlugin.logError(String.format("Failed to copy the local index %s to the shared index %s: %s",
+                from.getName(), to.getName(), e.getMessage()));
+        } finally {
+            try {
+                Files.deleteIfExists(tmpFile.toPath());
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
+
+        return false;
     }
 
     private static IndexLocation getLocalIndexLocation(IPath savedIndexPath, IPath containerPath) {
