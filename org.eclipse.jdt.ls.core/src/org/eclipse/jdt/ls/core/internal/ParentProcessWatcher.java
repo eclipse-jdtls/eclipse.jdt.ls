@@ -54,8 +54,8 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		if (!parentProcessStillRunning()) {
 			JavaLanguageServerPlugin.logInfo("Parent process stopped running, forcing server exit");
 			task.cancel(true);
-			if (JavaLanguageServerPlugin.getInstance() != null && JavaLanguageServerPlugin.getInstance().getProtocol() instanceof org.eclipse.lsp4j.services.LanguageServer) {
-				((org.eclipse.lsp4j.services.LanguageServer) JavaLanguageServerPlugin.getInstance().getProtocol()).exit();
+			if (JavaLanguageServerPlugin.getInstance() != null && JavaLanguageServerPlugin.getInstance().getProtocol() instanceof org.eclipse.lsp4j.services.LanguageServer languageServer) {
+				languageServer.exit();
 			} else {
 				server.exit();
 				Executors.newSingleThreadScheduledExecutor().schedule(() -> {

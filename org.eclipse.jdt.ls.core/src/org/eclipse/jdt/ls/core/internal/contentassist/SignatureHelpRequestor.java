@@ -216,10 +216,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 				type = unit.getJavaProject().findType(fullyQualifiedName, new NullProgressMonitor());
 			}
 			if (type != null) {
-				if (proposal instanceof InternalCompletionProposal) {
-					Binding binding = ((InternalCompletionProposal) proposal).getBinding();
-					if (binding instanceof MethodBinding) {
-						MethodBinding methodBinding = (MethodBinding) binding;
+				if (proposal instanceof InternalCompletionProposal internalCompletionProposal) {
+					Binding binding = internalCompletionProposal.getBinding();
+					if (binding instanceof MethodBinding methodBinding) {
 						MethodBinding original = methodBinding.original();
 						char[] signature;
 						if (original != binding) {

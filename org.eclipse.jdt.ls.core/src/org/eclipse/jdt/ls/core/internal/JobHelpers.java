@@ -139,8 +139,8 @@ public final class JobHelpers {
 	private static List<IBackgroundProcessingQueue> getProcessingQueues(IJobManager jobManager) {
 		ArrayList<IBackgroundProcessingQueue> queues = new ArrayList<>();
 		for(Job job : jobManager.find(null)) {
-			if(job instanceof IBackgroundProcessingQueue) {
-				queues.add((IBackgroundProcessingQueue) job);
+			if (job instanceof IBackgroundProcessingQueue backgroundProcessingQueue) {
+				queues.add(backgroundProcessingQueue);
 			}
 		}
 		return queues;

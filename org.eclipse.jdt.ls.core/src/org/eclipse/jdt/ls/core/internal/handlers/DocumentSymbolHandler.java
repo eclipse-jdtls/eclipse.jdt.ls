@@ -108,8 +108,8 @@ public class DocumentSymbolHandler {
 			if (monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
-			if (element instanceof IParent) {
-				collectChildren(unit, filter(((IParent) element).getChildren()), symbols, monitor);
+			if (element instanceof IParent parent) {
+				collectChildren(unit, filter(parent.getChildren()), symbols, monitor);
 			}
 			int type = element.getElementType();
 			if (type != IJavaElement.TYPE && type != IJavaElement.FIELD && type != IJavaElement.METHOD) {
@@ -181,9 +181,9 @@ public class DocumentSymbolHandler {
 				}
 			}
 			symbol.setDetail(getDetail(unit, name));
-			if (unit instanceof IParent) {
+			if (unit instanceof IParent parent) {
 				//@formatter:off
-				IJavaElement[] children = filter(((IParent) unit).getChildren());
+				IJavaElement[] children = filter(parent.getChildren());
 				symbol.setChildren(Stream.of(children)
 						.map(child -> toDocumentSymbol(child, monitor))
 						.filter(Objects::nonNull)
@@ -296,10 +296,8 @@ public class DocumentSymbolHandler {
 		case IJavaElement.METHOD:
 			try {
 				// TODO handle `IInitializer`. What should be the `SymbolKind`?
-				if (element instanceof IMethod) {
-					if (((IMethod) element).isConstructor()) {
-						return SymbolKind.Constructor;
-					}
+				if (element instanceof IMethod method && method.isConstructor()) {
+					return SymbolKind.Constructor;
 				}
 				return SymbolKind.Method;
 			} catch (JavaModelException e) {

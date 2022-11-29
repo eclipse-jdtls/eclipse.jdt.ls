@@ -135,8 +135,8 @@ public class UnresolvedElementsSubProcessor {
 		boolean suggestVariableProposals= true;
 		int typeKind= 0;
 
-		while (selectedNode instanceof ParenthesizedExpression) {
-			selectedNode= ((ParenthesizedExpression) selectedNode).getExpression();
+		while (selectedNode instanceof ParenthesizedExpression parenthesizedExpression) {
+			selectedNode = parenthesizedExpression.getExpression();
 		}
 
 
@@ -166,8 +166,8 @@ public class UnresolvedElementsSubProcessor {
 			} else if (parent instanceof SimpleType || parent instanceof NameQualifiedType) {
 				suggestVariableProposals= false;
 				typeKind= TypeKinds.REF_TYPES_AND_VAR;
-			} else if (parent instanceof QualifiedName) {
-				Name qualifier= ((QualifiedName) parent).getQualifier();
+			} else if (parent instanceof QualifiedName name) {
+				Name qualifier = name.getQualifier();
 				if (qualifier != node) {
 					binding= qualifier.resolveTypeBinding();
 				} else {
@@ -185,10 +185,10 @@ public class UnresolvedElementsSubProcessor {
 			} else if (locationInParent == SwitchCase.EXPRESSION_PROPERTY || locationInParent == SwitchCase.EXPRESSIONS2_PROPERTY) {
 				ASTNode caseParent = node.getParent().getParent();
 				ITypeBinding switchExp = null;
-				if (caseParent instanceof SwitchStatement) {
-					switchExp = ((SwitchStatement) caseParent).getExpression().resolveTypeBinding();
-				} else if (caseParent instanceof SwitchExpression) {
-					switchExp = ((SwitchExpression) caseParent).getExpression().resolveTypeBinding();
+				if (caseParent instanceof SwitchStatement switchStatement) {
+					switchExp = switchStatement.getExpression().resolveTypeBinding();
+				} else if (caseParent instanceof SwitchExpression switchExpression) {
+					switchExp = switchExpression.getExpression().resolveTypeBinding();
 				}
 				if (switchExp != null && switchExp.isEnum()) {
 					binding= switchExp;
@@ -407,10 +407,10 @@ public class UnresolvedElementsSubProcessor {
 				break;
 			case ASTNode.ASSIGNMENT:
 				Assignment assignment= (Assignment) parent;
-				if (isWriteAccess && assignment.getRightHandSide() instanceof SimpleName) {
-					otherNameInAssign= ((SimpleName) assignment.getRightHandSide()).getIdentifier();
-				} else if (!isWriteAccess && assignment.getLeftHandSide() instanceof SimpleName) {
-					otherNameInAssign= ((SimpleName) assignment.getLeftHandSide()).getIdentifier();
+				if (isWriteAccess && assignment.getRightHandSide() instanceof SimpleName name) {
+					otherNameInAssign = name.getIdentifier();
+				} else if (!isWriteAccess && assignment.getLeftHandSide() instanceof SimpleName name) {
+					otherNameInAssign = name.getIdentifier();
 				}
 				break;
 			case ASTNode.METHOD_INVOCATION:
@@ -437,8 +437,7 @@ public class UnresolvedElementsSubProcessor {
 
 			loop: for (int i= 0; i < varsAndMethodsInScope.length && newProposals.size() <= 50; i++) {
 				IBinding varOrMeth= varsAndMethodsInScope[i];
-				if (varOrMeth instanceof IVariableBinding) {
-					IVariableBinding curr= (IVariableBinding) varOrMeth;
+				if (varOrMeth instanceof IVariableBinding curr) {
 					String currName= curr.getName();
 					if (currName.equals(otherNameInAssign)) {
 						continue loop;
@@ -482,8 +481,7 @@ public class UnresolvedElementsSubProcessor {
 						String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_changevariable_description, BasicElementLabels.getJavaElementName(currName));
 						newProposals.add(new RenameNodeCorrectionProposal(label, cu, node.getStartPosition(), node.getLength(), currName, relevance));
 					}
-				} else if (varOrMeth instanceof IMethodBinding) {
-					IMethodBinding curr= (IMethodBinding) varOrMeth;
+				} else if (varOrMeth instanceof IMethodBinding curr) {
 					if (!curr.isConstructor() && guessedType != null && canAssign(curr.getReturnType(), guessedType)) {
 						if (NameMatcher.isSimilarName(curr.getName(), identifier)) {
 							AST ast= astRoot.getAST();
@@ -587,15 +585,15 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		Name node= null;
-		if (selectedNode instanceof Annotation) {
-			selectedNode = ((Annotation) selectedNode).getTypeName();
+		if (selectedNode instanceof Annotation annotation) {
+			selectedNode = annotation.getTypeName();
 		}
-		if (selectedNode instanceof SimpleType) {
-			node= ((SimpleType) selectedNode).getName();
-		} else if (selectedNode instanceof NameQualifiedType) {
-			node= ((NameQualifiedType) selectedNode).getName();
-		} else if (selectedNode instanceof ArrayType) {
-			Type elementType= ((ArrayType) selectedNode).getElementType();
+		if (selectedNode instanceof SimpleType simpleType) {
+			node = simpleType.getName();
+		} else if (selectedNode instanceof NameQualifiedType type) {
+			node = type.getName();
+		} else if (selectedNode instanceof ArrayType type) {
+			Type elementType = type.getElementType();
 			if (elementType.isSimpleType()) {
 				node= ((SimpleType) elementType).getName();
 			} else if (elementType.isNameQualifiedType()) {
@@ -603,8 +601,8 @@ public class UnresolvedElementsSubProcessor {
 			} else {
 				return;
 			}
-		} else if (selectedNode instanceof Name) {
-			node= (Name) selectedNode;
+		} else if (selectedNode instanceof Name name) {
+			node = name;
 		} else {
 			return;
 		}
@@ -612,8 +610,8 @@ public class UnresolvedElementsSubProcessor {
 		// change to similar type proposals
 		addSimilarTypeProposals(context, kind, cu, node, IProposalRelevance.SIMILAR_TYPE, proposals);
 
-		while (node.getParent() instanceof QualifiedName) {
-			node= (Name) node.getParent();
+		while (node.getParent() instanceof QualifiedName parentName) {
+			node = parentName;
 		}
 
 		if (selectedNode != node) {
@@ -627,13 +625,12 @@ public class UnresolvedElementsSubProcessor {
 
 	private static void addEnhancedForWithoutTypeProposals(ICompilationUnit cu, ASTNode selectedNode,
 			Collection<ChangeCorrectionProposal> proposals) {
-		if (selectedNode instanceof SimpleName && (selectedNode.getLocationInParent() == SimpleType.NAME_PROPERTY || selectedNode.getLocationInParent() == NameQualifiedType.NAME_PROPERTY)) {
+		if (selectedNode instanceof SimpleName simpleName && (selectedNode.getLocationInParent() == SimpleType.NAME_PROPERTY || selectedNode.getLocationInParent() == NameQualifiedType.NAME_PROPERTY)) {
 			ASTNode type= selectedNode.getParent();
 			if (type.getLocationInParent() == SingleVariableDeclaration.TYPE_PROPERTY) {
 				SingleVariableDeclaration svd= (SingleVariableDeclaration) type.getParent();
 				if (svd.getLocationInParent() == EnhancedForStatement.PARAMETER_PROPERTY) {
 					if (svd.getName().getLength() == 0) {
-						SimpleName simpleName= (SimpleName) selectedNode;
 						String name= simpleName.getIdentifier();
 						int relevance= StubUtility.hasLocalVariableName(cu.getJavaProject(), name) ? 10 : 7;
 						String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_create_loop_variable_description, BasicElementLabels.getJavaElementName(name));
@@ -814,15 +811,15 @@ public class UnresolvedElementsSubProcessor {
 					if (binding != null && binding.isRecovered()) {
 						binding = null;
 					}
-					if (binding instanceof ITypeBinding) {
-						enclosingType = (IType) binding.getJavaElement();
-					} else if (binding instanceof IPackageBinding) {
+					if (binding instanceof ITypeBinding typeBinding) {
+						enclosingType = (IType) typeBinding.getJavaElement();
+					} else if (binding instanceof IPackageBinding packageBinding) {
 						qualifier = qualifierName;
-						enclosingPackage = (IPackageFragment) binding.getJavaElement();
+						enclosingPackage = (IPackageFragment) packageBinding.getJavaElement();
 					} else {
 						IJavaElement[] res = cu.codeSelect(qualifierName.getStartPosition(), qualifierName.getLength());
-						if (res != null && res.length > 0 && res[0] instanceof IType) {
-							enclosingType = (IType) res[0];
+						if (res != null && res.length > 0 && res[0] instanceof IType type) {
+							enclosingType = type;
 						} else {
 							qualifier = qualifierName;
 							enclosingPackage = JavaModelUtil.getPackageFragmentRoot(cu).getPackageFragment(ASTResolving.getFullName(qualifierName));
@@ -868,13 +865,13 @@ public class UnresolvedElementsSubProcessor {
 			while (declaration != null) {
 				IBinding binding= null;
 				int rel= baseRel;
-				if (declaration instanceof MethodDeclaration) {
-					binding= ((MethodDeclaration) declaration).resolveBinding();
+				if (declaration instanceof MethodDeclaration methodDeclaration) {
+					binding = methodDeclaration.resolveBinding();
 					if (isLikelyMethodTypeParameterName(name)) {
 						rel+= 2;
 					}
-				} else if (declaration instanceof TypeDeclaration) {
-					binding= ((TypeDeclaration) declaration).resolveBinding();
+				} else if (declaration instanceof TypeDeclaration typeDeclaration) {
+					binding = typeDeclaration.resolveBinding();
 					rel++;
 				}
 				if (binding != null) {
@@ -908,13 +905,11 @@ public class UnresolvedElementsSubProcessor {
 		boolean isSuperInvocation;
 
 		ASTNode invocationNode= nameNode.getParent();
-		if (invocationNode instanceof MethodInvocation) {
-			MethodInvocation methodImpl= (MethodInvocation) invocationNode;
+		if (invocationNode instanceof MethodInvocation methodImpl) {
 			arguments= methodImpl.arguments();
 			sender= methodImpl.getExpression();
 			isSuperInvocation= false;
-		} else if (invocationNode instanceof SuperMethodInvocation) {
-			SuperMethodInvocation methodImpl= (SuperMethodInvocation) invocationNode;
+		} else if (invocationNode instanceof SuperMethodInvocation methodImpl) {
 			arguments= methodImpl.arguments();
 			sender= methodImpl.getQualifier();
 			isSuperInvocation= true;
@@ -1085,7 +1080,7 @@ public class UnresolvedElementsSubProcessor {
 			return;
 		}
 
-		if (sender instanceof Name && ((Name) sender).resolveBinding() instanceof ITypeBinding) {
+		if (sender instanceof Name name && name.resolveBinding() instanceof ITypeBinding) {
 			return; // static access
 		}
 
@@ -1094,16 +1089,16 @@ public class UnresolvedElementsSubProcessor {
 			parent= parent.getParent();
 		}
 		boolean hasCastProposal= false;
-		if (parent instanceof CastExpression) {
+		if (parent instanceof CastExpression castExpression) {
 			//	(TestCase) x.getName() -> ((TestCase) x).getName
-			hasCastProposal= useExistingParentCastProposal(cu, (CastExpression) parent, sender, invocationNode.getName(), getArgumentTypes(invocationNode.arguments()), proposals);
+			hasCastProposal = useExistingParentCastProposal(cu, castExpression, sender, invocationNode.getName(), getArgumentTypes(invocationNode.arguments()), proposals);
 		}
 		if (!hasCastProposal) {
 			// x.getName() -> ((TestCase) x).getName
 
 			Expression target= sender;
-			while (target instanceof ParenthesizedExpression) {
-				target= ((ParenthesizedExpression) target).getExpression();
+			while (target instanceof ParenthesizedExpression parenthesizedExpression) {
+				target = parenthesizedExpression.getExpression();
 			}
 
 			String label;
@@ -1435,8 +1430,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		if (nDiffs == 0) {
-			if (nameNode.getParent() instanceof MethodInvocation) {
-				MethodInvocation inv= (MethodInvocation) nameNode.getParent();
+			if (nameNode.getParent() instanceof MethodInvocation inv) {
 				if (inv.getExpression() == null) {
 					addQualifierToOuterProposal(context, inv, methodBinding, proposals);
 				}
@@ -1573,19 +1567,19 @@ public class UnresolvedElementsSubProcessor {
 
 	private static String getExpressionBaseName(Expression expr) {
 		IBinding argBinding= Bindings.resolveExpressionBinding(expr, true);
-		if (argBinding instanceof IVariableBinding) {
+		if (argBinding instanceof IVariableBinding argVariableBinding) {
 			IJavaProject project= null;
 			ASTNode root= expr.getRoot();
-			if (root instanceof CompilationUnit) {
-				ITypeRoot typeRoot= ((CompilationUnit) root).getTypeRoot();
+			if (root instanceof CompilationUnit unit) {
+				ITypeRoot typeRoot = unit.getTypeRoot();
 				if (typeRoot != null) {
 					project= typeRoot.getJavaProject();
 				}
 			}
-			return StubUtility.getBaseName((IVariableBinding)argBinding, project);
+			return StubUtility.getBaseName(argVariableBinding, project);
 		}
-		if (expr instanceof SimpleName) {
-			return ((SimpleName) expr).getIdentifier();
+		if (expr instanceof SimpleName name) {
+			return name.getIdentifier();
 		}
 		return null;
 	}
@@ -1675,8 +1669,8 @@ public class UnresolvedElementsSubProcessor {
 			ClassInstanceCreation creation= (ClassInstanceCreation) selectedNode;
 
 			IBinding binding= creation.getType().resolveBinding();
-			if (binding instanceof ITypeBinding) {
-				targetBinding= (ITypeBinding) binding;
+			if (binding instanceof ITypeBinding typeBinding) {
+				targetBinding = typeBinding;
 				arguments= creation.arguments();
 			}
 		} else if (type == ASTNode.SUPER_CONSTRUCTOR_INVOCATION) {
@@ -1730,8 +1724,8 @@ public class UnresolvedElementsSubProcessor {
 		IJavaElement[] elements= cu.codeSelect(offset, len);
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement curr= elements[i];
-			if (curr instanceof IType && !TypeFilter.isFiltered((IType) curr)) {
-				String qualifiedTypeName= ((IType) curr).getFullyQualifiedName('.');
+			if (curr instanceof IType type && !TypeFilter.isFiltered(type)) {
+				String qualifiedTypeName = type.getFullyQualifiedName('.');
 
 				CompilationUnit root= context.getASTRoot();
 

@@ -52,8 +52,7 @@ public class OrganizeImportsCommand {
 
 	public Object organizeImports(List<Object> arguments) throws CoreException {
 		WorkspaceEdit edit = new WorkspaceEdit();
-		if (arguments != null && !arguments.isEmpty() && arguments.get(0) instanceof String) {
-			final String fileUri = (String) arguments.get(0);
+		if (arguments != null && !arguments.isEmpty() && arguments.get(0) instanceof String fileUri) {
 			final IPath rootPath = ResourceUtils.filePathFromURI(fileUri);
 			if (rootPath == null) {
 				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "URI is not found"));
@@ -184,8 +183,7 @@ public class OrganizeImportsCommand {
 
 	private void collectCompilationUnits(Object element, Collection<IJavaElement> result, String packagePrefix) {
 		try {
-			if (element instanceof IJavaElement) {
-				IJavaElement elem = (IJavaElement) element;
+			if (element instanceof IJavaElement elem) {
 				if (elem.exists()) {
 					switch (elem.getElementType()) {
 						case IJavaElement.TYPE:

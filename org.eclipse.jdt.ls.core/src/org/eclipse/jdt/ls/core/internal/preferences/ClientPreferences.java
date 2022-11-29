@@ -217,26 +217,17 @@ public class ClientPreferences {
 
 	public boolean isExtractMethodInferSelectionSupported() {
 		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
-		if (supportList instanceof List<?>) {
-			return ((List<?>)supportList).contains("extractMethod");
-		}
-		return false;
+		return supportList instanceof List<?> list && list.contains("extractMethod");
 	}
 
 	public boolean isExtractVariableInferSelectionSupported() {
 		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
-		if (supportList instanceof List<?>) {
-			return ((List<?>)supportList).contains("extractVariable");
-		}
-		return false;
+		return supportList instanceof List<?> list && list.contains("extractVariable");
 	}
 
 	public boolean isExtractFieldInferSelectionSupported() {
 		Object supportList = extendedClientCapabilities.getOrDefault("inferSelectionSupport", new ArrayList<>());
-		if (supportList instanceof List<?>) {
-			return ((List<?>)supportList).contains("extractField");
-		}
-		return false;
+		return supportList instanceof List<?> list && list.contains("extractField");
 	}
 
 	public boolean isAdvancedIntroduceParameterRefactoringSupported() {

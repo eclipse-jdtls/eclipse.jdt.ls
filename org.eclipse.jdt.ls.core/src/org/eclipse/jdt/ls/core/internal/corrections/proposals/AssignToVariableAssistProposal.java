@@ -247,10 +247,10 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 
 		BodyDeclaration bodyDecl= ASTResolving.findParentBodyDeclaration(nodeToAssign);
 		Block body;
-		if (bodyDecl instanceof MethodDeclaration) {
-			body= ((MethodDeclaration) bodyDecl).getBody();
-		} else if (bodyDecl instanceof Initializer) {
-			body= ((Initializer) bodyDecl).getBody();
+		if (bodyDecl instanceof MethodDeclaration method) {
+			body = method.getBody();
+		} else if (bodyDecl instanceof Initializer initializer) {
+			body = initializer.getBody();
 		} else {
 			return null;
 		}
@@ -401,7 +401,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		if (fParamNames != null) {
 			paramNames = new ArrayList<>();
 			paramNames.addAll(fParamNames);
-			if (nodeToAssign instanceof SingleVariableDeclaration && ((SingleVariableDeclaration) nodeToAssign).getName() != null) {
+			if (nodeToAssign instanceof SingleVariableDeclaration singleVar && singleVar.getName() != null) {
 				int index = fNodesToAssign.indexOf(nodeToAssign);
 				if (index >= 0 && index < paramNames.size()) {
 					paramNames.remove(index);
@@ -429,10 +429,9 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 					break;
 				case ASTNode.EXPRESSION_STATEMENT:
 					Expression expr= ((ExpressionStatement) curr).getExpression();
-					if (expr instanceof Assignment) {
-						Assignment assignment= (Assignment) expr;
+					if (expr instanceof Assignment assignment) {
 						Expression rightHand = assignment.getRightHandSide();
-						if (rightHand instanceof SimpleName && paramsBefore.contains(((SimpleName) rightHand).getIdentifier())) {
+						if (rightHand instanceof SimpleName simpleName && paramsBefore.contains(simpleName.getIdentifier())) {
 							IVariableBinding binding = Bindings.getAssignedVariable(assignment);
 							if (binding == null || binding.isField()) {
 								break;

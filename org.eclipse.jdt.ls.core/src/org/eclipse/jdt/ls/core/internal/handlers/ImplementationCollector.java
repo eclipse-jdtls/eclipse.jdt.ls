@@ -162,8 +162,8 @@ public class ImplementationCollector<T> {
 		ITypeBinding parentTypeBinding = null;
 		if (node instanceof SimpleName) {
 			ASTNode parent = node.getParent();
-			if (parent instanceof MethodInvocation) {
-				Expression expression = ((MethodInvocation) parent).getExpression();
+			if (parent instanceof MethodInvocation methodInvocation) {
+				Expression expression = methodInvocation.getExpression();
 				if (expression == null) {
 					parentTypeBinding= Bindings.getBindingOfParentType(node);
 				} else {
@@ -190,8 +190,7 @@ public class ImplementationCollector<T> {
 				public void acceptSearchMatch(SearchMatch match) throws CoreException {
 					if (match.getAccuracy() == SearchMatch.A_ACCURATE) {
 						Object element = match.getElement();
-						if (element instanceof IMethod) {
-							IMethod methodFound = (IMethod) element;
+						if (element instanceof IMethod methodFound) {
 							if (!JdtFlags.isAbstract(methodFound)) {
 								T result = mapper.convert(methodFound, match.getOffset(), match.getLength());
 								if (result != null) {

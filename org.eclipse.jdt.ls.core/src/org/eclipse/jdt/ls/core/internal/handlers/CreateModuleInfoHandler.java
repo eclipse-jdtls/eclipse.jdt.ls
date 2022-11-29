@@ -90,7 +90,7 @@ public class CreateModuleInfoHandler {
 			IPackageFragmentRoot targetPkgFragmentRoot = null;
 			for (IPackageFragmentRoot packageFragmentRoot : packageFragmentRoots) {
 				if (packageFragmentRoot.getPackageFragment("").getCompilationUnit(JavaModelUtil.MODULE_INFO_JAVA).exists()) {
-					JavaLanguageServerPlugin.getInstance().getClientConnection().showNotificationMessage(MessageType.Error, 
+					JavaLanguageServerPlugin.getInstance().getClientConnection().showNotificationMessage(MessageType.Error,
 						"The module-info.java file already exists in the source folder \"" + packageFragmentRoot.getElementName() + "\"");
 					return null;
 				}
@@ -137,8 +137,7 @@ public class CreateModuleInfoHandler {
 		HashSet<String> exportedPackages = new HashSet<>();
 		for (IPackageFragmentRoot packageFragmentRoot : packageFragmentRoots) {
 			for (IJavaElement child : packageFragmentRoot.getChildren()) {
-				if (child instanceof IPackageFragment) {
-					IPackageFragment pkgFragment = (IPackageFragment) child;
+				if (child instanceof IPackageFragment pkgFragment) {
 					if (!pkgFragment.isDefaultPackage() && pkgFragment.getCompilationUnits().length != 0) {
 						exportedPackages.add(pkgFragment.getElementName());
 					}

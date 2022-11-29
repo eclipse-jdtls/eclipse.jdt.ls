@@ -1104,36 +1104,35 @@ public class Preferences {
 		Set<RuntimeEnvironment> runtimes = new HashSet<>();
 		boolean[] hasDefault = { false };
 		for (Object object : runtimeList) {
-			if (object instanceof Map) {
+			if (object instanceof Map<?, ?> map) {
 				RuntimeEnvironment runtime = new RuntimeEnvironment();
-				Map<?, ?> map = (Map<?, ?>) object;
 				map.forEach((k, v) -> {
-					if (k instanceof String) {
-						switch ((String) k) {
+					if (k instanceof String key) {
+						switch (key) {
 							case "name":
-								if (v instanceof String) {
-									runtime.setName((String) v);
+								if (v instanceof String value) {
+									runtime.setName(value);
 								}
 								break;
 							case "path":
-								if (v instanceof String) {
-									runtime.setPath(ResourceUtils.expandPath((String) v));
+								if (v instanceof String value) {
+									runtime.setPath(ResourceUtils.expandPath(value));
 								}
 								break;
 							case "javadoc":
-								if (v instanceof String) {
-									runtime.setJavadoc(ResourceUtils.expandPath((String) v));
+								if (v instanceof String value) {
+									runtime.setJavadoc(ResourceUtils.expandPath(value));
 								}
 								break;
 							case "sources":
-								if (v instanceof String) {
-									runtime.setSources(ResourceUtils.expandPath((String) v));
+								if (v instanceof String value) {
+									runtime.setSources(ResourceUtils.expandPath(value));
 								}
 								break;
 							case "default":
 								if (!hasDefault[0]) {
-									if (v instanceof Boolean) {
-										runtime.setDefault((Boolean) v);
+									if (v instanceof Boolean bool) {
+										runtime.setDefault(bool);
 									}
 									hasDefault[0] = true;
 								}

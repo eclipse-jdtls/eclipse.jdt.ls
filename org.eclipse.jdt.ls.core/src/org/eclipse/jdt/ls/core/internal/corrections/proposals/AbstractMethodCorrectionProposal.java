@@ -150,7 +150,7 @@ public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrect
 			Type returnType= getNewMethodType(rewrite, context);
 			decl.setReturnType2(returnType);
 
-			boolean isVoid= returnType instanceof PrimitiveType && PrimitiveType.VOID.equals(((PrimitiveType)returnType).getPrimitiveTypeCode());
+			boolean isVoid = returnType instanceof PrimitiveType primitiveType && PrimitiveType.VOID.equals(primitiveType.getPrimitiveTypeCode());
 			if (!isAbstractMethod && !isVoid) {
 				ReturnStatement returnStatement= ast.newReturnStatement();
 				returnStatement.setExpression(ASTNodeFactory.newDefaultExpression(ast, returnType, 0));
@@ -200,8 +200,8 @@ public abstract class AbstractMethodCorrectionProposal extends ASTRewriteCorrect
 		int lastMethod= 0;
 		for (int i= nDecls - 1; i >= 0; i--) {
 			BodyDeclaration curr= decls.get(i);
-			if (curr instanceof MethodDeclaration) {
-				if (((MethodDeclaration) curr).isConstructor()) {
+			if (curr instanceof MethodDeclaration method) {
+				if (method.isConstructor()) {
 					return i + 1;
 				}
 				lastMethod= i;

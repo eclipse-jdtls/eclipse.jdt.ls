@@ -121,8 +121,7 @@ public class WorkspaceEventsHandler {
 			unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 			if (unit.getResource().exists()) {
 				IJavaElement parent = unit.getParent();
-				if (parent instanceof PackageFragment) {
-					PackageFragment pkg = (PackageFragment) parent;
+				if (parent instanceof PackageFragment pkg) {
 					if (JavaModelManager.determineIfOnClasspath(unit.getResource(), unit.getJavaProject()) != null) {
 						OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
 						elementInfo.addChild(unit);

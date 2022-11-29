@@ -120,8 +120,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	private void updateEncoding(IProgressMonitor monitor) throws CoreException {
 		if (preferenceManager != null && ProjectEncodingMode.SETDEFAULT.equals(preferenceManager.getPreferences().getProjectEncoding())) {
 			IWorkspace workspace = ResourcesPlugin.getWorkspace();
-			if (workspace instanceof Workspace) {
-				Workspace ws = (Workspace) workspace;
+			if (workspace instanceof Workspace ws) {
 				CharsetManager charsetManager = ws.getCharsetManager();
 				String encoding = ResourcesPlugin.getEncoding();
 				for (IProject project : ProjectUtils.getAllProjects()) {
@@ -560,8 +559,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	public static Runnable interruptAutoBuild() throws CoreException {
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		if (workspace instanceof Workspace) {
-			((Workspace) workspace).getBuildManager().interrupt();
+		if (workspace instanceof Workspace ws) {
+			ws.getBuildManager().interrupt();
 			return () -> {
 			};
 		} else {
@@ -595,7 +594,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			List<IResourceFilterDescription> filters = Stream.of(project.getFilters())
 					.filter(f -> {
 						FileInfoMatcherDescription matcher = f.getFileInfoMatcherDescription();
-								return CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && (matcher.getArguments() instanceof String) && ((String) matcher.getArguments()).contains(CREATED_BY_JAVA_LANGUAGE_SERVER);
+						return CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && matcher.getArguments() instanceof String args && args.contains(CREATED_BY_JAVA_LANGUAGE_SERVER);
 					})
 					.collect(Collectors.toList());
 			boolean filterExists = false;

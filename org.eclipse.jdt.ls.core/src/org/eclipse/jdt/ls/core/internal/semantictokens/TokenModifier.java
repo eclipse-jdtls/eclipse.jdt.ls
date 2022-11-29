@@ -132,7 +132,7 @@ public enum TokenModifier {
 	 * @return A bitmask with the {@link #CONSTRUCTOR} bit set accordingly.
 	 */
 	public static int checkConstructor(IBinding binding) {
-		if (binding instanceof IMethodBinding && ((IMethodBinding) binding).isConstructor()) {
+		if (binding instanceof IMethodBinding methodBinding && methodBinding.isConstructor()) {
 			return CONSTRUCTOR.bitmask;
 		}
 		return 0;
@@ -145,14 +145,12 @@ public enum TokenModifier {
 	 * @return A bitmask with the {@link #GENERIC} bit set accordingly.
 	 */
 	public static int checkGeneric(IBinding binding) {
-		if (binding instanceof ITypeBinding) {
-			ITypeBinding typeBinding = (ITypeBinding) binding;
+		if (binding instanceof ITypeBinding typeBinding) {
 			if (typeBinding.isGenericType() || typeBinding.isParameterizedType()) {
 				return GENERIC.bitmask;
 			}
 		}
-		if (binding instanceof IMethodBinding) {
-			IMethodBinding methodBinding = (IMethodBinding) binding;
+		if (binding instanceof IMethodBinding methodBinding) {
 			if (methodBinding.isGenericMethod() || methodBinding.isParameterizedMethod()) {
 				return GENERIC.bitmask;
 			}

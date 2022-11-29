@@ -332,13 +332,12 @@ public class StandardProjectsManager extends ProjectsManager {
 		});
 		if (properties != null && !properties.isEmpty()) {
 			properties.forEach((k, v) -> {
-				if (k instanceof String && v instanceof String) {
-					String path = (String) k;
+				if (k instanceof String path && v instanceof String value) {
 					if (!"file_export_version".equals(path) && path.charAt(0) != '@' && path.charAt(0) != '!') {
 						String[] decoded = EclipsePreferences.decodePath(path);
 						String key = decoded[1];
 						if (key != null) {
-							javaOptions.put(key, (String) v);
+							javaOptions.put(key, value);
 						}
 					}
 				}
@@ -360,8 +359,7 @@ public class StandardProjectsManager extends ProjectsManager {
 	private static void initializeDefaultOptions(Preferences preferences) {
 		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
 		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
-		if (defaultVM instanceof AbstractVMInstall) {
-			AbstractVMInstall jvm = (AbstractVMInstall) defaultVM;
+		if (defaultVM instanceof AbstractVMInstall jvm) {
 			long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
 			String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
 			JavaCore.setComplianceOptions(compliance, defaultOptions);

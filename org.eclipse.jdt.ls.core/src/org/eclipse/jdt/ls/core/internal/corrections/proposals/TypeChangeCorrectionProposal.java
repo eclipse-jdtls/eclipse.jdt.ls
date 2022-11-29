@@ -159,8 +159,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 				type = imports.addImport(fNewType, ast, context, fTypeLocation);
 			}
 
-			if (declNode instanceof MethodDeclaration) {
-				MethodDeclaration methodDecl= (MethodDeclaration) declNode;
+			if (declNode instanceof MethodDeclaration methodDecl) {
 				Type origReturnType= methodDecl.getReturnType2();
 				rewrite.set(methodDecl, MethodDeclaration.RETURN_TYPE2_PROPERTY, type, null);
 				DimensionRewrite.removeAllChildren(methodDecl, MethodDeclaration.EXTRA_DIMENSIONS2_PROPERTY, rewrite, null);
@@ -182,18 +181,15 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 					}
 				}
 
-			} else if (declNode instanceof AnnotationTypeMemberDeclaration) {
-				AnnotationTypeMemberDeclaration methodDecl= (AnnotationTypeMemberDeclaration) declNode;
+			} else if (declNode instanceof AnnotationTypeMemberDeclaration methodDecl) {
 				rewrite.set(methodDecl, AnnotationTypeMemberDeclaration.TYPE_PROPERTY, type, null);
 			} else if (declNode instanceof VariableDeclarationFragment) {
 				ASTNode parent= declNode.getParent();
-				if (parent instanceof FieldDeclaration) {
-					FieldDeclaration fieldDecl= (FieldDeclaration) parent;
-					if (fieldDecl.fragments().size() > 1 && (fieldDecl.getParent() instanceof AbstractTypeDeclaration)) { // split
+				if (parent instanceof FieldDeclaration fieldDecl) {
+					if (fieldDecl.fragments().size() > 1 && fieldDecl.getParent() instanceof AbstractTypeDeclaration typeDecl) { // split
 						VariableDeclarationFragment placeholder= (VariableDeclarationFragment) rewrite.createMoveTarget(declNode);
 						FieldDeclaration newField= ast.newFieldDeclaration(placeholder);
 						newField.setType(type);
-						AbstractTypeDeclaration typeDecl= (AbstractTypeDeclaration) fieldDecl.getParent();
 
 						ListRewrite listRewrite= rewrite.getListRewrite(typeDecl, typeDecl.getBodyDeclarationsProperty());
 						if (fieldDecl.fragments().indexOf(declNode) == 0) { // if it as the first in the list-> insert before
@@ -206,8 +202,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 						DimensionRewrite.removeAllChildren(declNode, VariableDeclarationFragment.EXTRA_DIMENSIONS2_PROPERTY, rewrite, null);
 						TypeAnnotationRewrite.removePureTypeAnnotations(fieldDecl, FieldDeclaration.MODIFIERS2_PROPERTY, rewrite, null);
 					}
-				} else if (parent instanceof VariableDeclarationStatement) {
-					VariableDeclarationStatement varDecl= (VariableDeclarationStatement) parent;
+				} else if (parent instanceof VariableDeclarationStatement varDecl) {
 					if (varDecl.fragments().size() > 1 && (varDecl.getParent() instanceof Block)) { // split
 						VariableDeclarationFragment placeholder= (VariableDeclarationFragment) rewrite.createMoveTarget(declNode);
 						VariableDeclarationStatement newStat= ast.newVariableDeclarationStatement(placeholder);
@@ -234,8 +229,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 							}
 						}
 					}
-				} else if (parent instanceof VariableDeclarationExpression) {
-					VariableDeclarationExpression varDecl= (VariableDeclarationExpression) parent;
+				} else if (parent instanceof VariableDeclarationExpression varDecl) {
 					Type oldType = (Type) rewrite.get(varDecl, VariableDeclarationExpression.TYPE_PROPERTY);
 					rewrite.set(varDecl, VariableDeclarationExpression.TYPE_PROPERTY, type, null);
 					DimensionRewrite.removeAllChildren(declNode, VariableDeclarationFragment.EXTRA_DIMENSIONS2_PROPERTY, rewrite, null);
@@ -247,8 +241,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 						}
 					}
 				}
-			} else if (declNode instanceof SingleVariableDeclaration) {
-				SingleVariableDeclaration variableDeclaration= (SingleVariableDeclaration) declNode;
+			} else if (declNode instanceof SingleVariableDeclaration variableDeclaration) {
 				Type oldType = (Type) rewrite.get(variableDeclaration, SingleVariableDeclaration.TYPE_PROPERTY);
 				rewrite.set(variableDeclaration, SingleVariableDeclaration.TYPE_PROPERTY, type, null);
 				DimensionRewrite.removeAllChildren(declNode, SingleVariableDeclaration.EXTRA_DIMENSIONS2_PROPERTY, rewrite, null);
@@ -267,8 +260,8 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 
 	private void sortTypes(ITypeBinding[] typeProposals) {
 		ITypeBinding oldType;
-		if (fBinding instanceof IMethodBinding) {
-			oldType= ((IMethodBinding) fBinding).getReturnType();
+		if (fBinding instanceof IMethodBinding methodBinding) {
+			oldType = methodBinding.getReturnType();
 		} else {
 			oldType= ((IVariableBinding) fBinding).getType();
 		}
@@ -298,24 +291,23 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 		}
 		ASTNode processNode = null;
 		List<VariableDeclarationFragment> fragments = null;
-		if (node instanceof VariableDeclarationStatement) {
-			fragments = ((VariableDeclarationStatement) node).fragments();
-		} else if (node instanceof VariableDeclarationExpression) {
-			fragments = ((VariableDeclarationExpression) node).fragments();
+		if (node instanceof VariableDeclarationStatement variableDecl) {
+			fragments = variableDecl.fragments();
+		} else if (node instanceof VariableDeclarationExpression variableDecl) {
+			fragments = variableDecl.fragments();
 		}
 		if (fragments != null && fragments.size() == 1) {
 			VariableDeclarationFragment varFrag = fragments.get(0);
 			processNode = varFrag.getInitializer();
-			if (processNode == null && declaringNode instanceof VariableDeclarationFragment) {
-				processNode = ((VariableDeclarationFragment) declaringNode).getInitializer();
+			if (processNode == null && declaringNode instanceof VariableDeclarationFragment variableDeclFragment) {
+				processNode = variableDeclFragment.getInitializer();
 			}
 		}
 		ParameterizedType createdType = null;
-		if (processNode instanceof ClassInstanceCreation) {
-			ClassInstanceCreation creation = (ClassInstanceCreation) processNode;
+		if (processNode instanceof ClassInstanceCreation creation) {
 			Type type = creation.getType();
-			if (type instanceof ParameterizedType) {
-				createdType = (ParameterizedType) type;
+			if (type instanceof ParameterizedType parameterizedType) {
+				createdType = parameterizedType;
 			}
 		}
 		if (createdType == null) {

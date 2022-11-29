@@ -114,9 +114,9 @@ public class RefactorProposalUtility {
 					int memberType = node.getNodeType();
 					String enclosingTypeName = getEnclosingType(node);
 					String projectName = cu.getJavaProject().getProject().getName();
-					if (node instanceof AbstractTypeDeclaration) {
+					if (node instanceof AbstractTypeDeclaration typeDecl) {
 						MoveTypeInfo moveTypeInfo = new MoveTypeInfo(displayName, enclosingTypeName, projectName);
-						if (isMoveInnerAvailable((AbstractTypeDeclaration) node)) {
+						if (isMoveInnerAvailable(typeDecl)) {
 							moveTypeInfo.addDestinationKind("newFile");
 						}
 
@@ -140,9 +140,9 @@ public class RefactorProposalUtility {
 							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
 									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveMemberInfo(displayName, memberType, enclosingTypeName, projectName))));
 						}
-					} else if (node instanceof MethodDeclaration) {
+					} else if (node instanceof MethodDeclaration methodDecl) {
 						// move instance method.
-						if (isMoveMethodAvailable((MethodDeclaration) node)) {
+						if (isMoveMethodAvailable(methodDecl)) {
 							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
 									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveMemberInfo(displayName))));
 						}
@@ -191,20 +191,20 @@ public class RefactorProposalUtility {
 	}
 
 	private static boolean isMoveStaticMemberAvailable(ASTNode declaration) throws JavaModelException {
-		if (declaration instanceof MethodDeclaration) {
-			IMethodBinding method = ((MethodDeclaration) declaration).resolveBinding();
+		if (declaration instanceof MethodDeclaration methodDecl) {
+			IMethodBinding method = methodDecl.resolveBinding();
 			return method != null && RefactoringAvailabilityTesterCore.isMoveStaticAvailable((IMember) method.getJavaElement());
-		} else if (declaration instanceof FieldDeclaration) {
+		} else if (declaration instanceof FieldDeclaration fieldDecl) {
 			List<IMember> members = new ArrayList<>();
-			for (Object fragment : ((FieldDeclaration) declaration).fragments()) {
+			for (Object fragment : fieldDecl.fragments()) {
 				IVariableBinding variable = ((VariableDeclarationFragment) fragment).resolveBinding();
 				if (variable != null) {
 					members.add((IField) variable.getJavaElement());
 				}
 			}
 			return RefactoringAvailabilityTesterCore.isMoveStaticMembersAvailable(members.toArray(new IMember[0]));
-		} else if (declaration instanceof AbstractTypeDeclaration) {
-			ITypeBinding type = ((AbstractTypeDeclaration) declaration).resolveBinding();
+		} else if (declaration instanceof AbstractTypeDeclaration typeDecl) {
+			ITypeBinding type = typeDecl.resolveBinding();
 			return type != null && RefactoringAvailabilityTesterCore.isMoveStaticAvailable((IType) type.getJavaElement());
 		}
 
@@ -221,24 +221,24 @@ public class RefactorProposalUtility {
 	}
 
 	private static String getDisplayName(ASTNode declaration) {
-		if (declaration instanceof MethodDeclaration) {
-			IMethodBinding method = ((MethodDeclaration) declaration).resolveBinding();
+		if (declaration instanceof MethodDeclaration methodDecl) {
+			IMethodBinding method = methodDecl.resolveBinding();
 			if (method != null) {
 				String name = method.getName();
 				String[] parameters = Stream.of(method.getParameterTypes()).map(type -> type.getName()).toArray(String[]::new);
 				return name + "(" + String.join(",", parameters) + ")";
 			}
-		} else if (declaration instanceof FieldDeclaration) {
+		} else if (declaration instanceof FieldDeclaration fieldDecl) {
 			List<String> fieldNames = new ArrayList<>();
-			for (Object fragment : ((FieldDeclaration) declaration).fragments()) {
+			for (Object fragment : fieldDecl.fragments()) {
 				IVariableBinding variable = ((VariableDeclarationFragment) fragment).resolveBinding();
 				if (variable != null) {
 					fieldNames.add(variable.getName());
 				}
 			}
 			return String.join(",", fieldNames);
-		} else if (declaration instanceof AbstractTypeDeclaration) {
-			ITypeBinding type = ((AbstractTypeDeclaration) declaration).resolveBinding();
+		} else if (declaration instanceof AbstractTypeDeclaration typeDecl) {
+			ITypeBinding type = typeDecl.resolveBinding();
 			if (type != null) {
 				return type.getName();
 			}
@@ -820,8 +820,8 @@ public class RefactorProposalUtility {
 		while (astNode != null && !(astNode instanceof TypeDeclaration || astNode instanceof AnonymousClassDeclaration)) {
 			astNode = astNode.getParent();
 		}
-		if (astNode instanceof TypeDeclaration) {
-			ITypeBinding typeBinding = ((TypeDeclaration) astNode).resolveBinding();
+		if (astNode instanceof TypeDeclaration typeDecl) {
+			ITypeBinding typeBinding = typeDecl.resolveBinding();
 			if (typeBinding == null) {
 				return suggestedName;
 			}

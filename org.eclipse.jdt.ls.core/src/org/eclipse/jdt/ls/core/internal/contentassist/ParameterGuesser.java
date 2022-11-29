@@ -122,7 +122,7 @@ public class ParameterGuesser {
 		}
 
 		// add 'this'
-		if (currentType != null && !(fEnclosingElement instanceof IMethod && Flags.isStatic(((IMethod) fEnclosingElement).getFlags()))) {
+		if (currentType != null && !(fEnclosingElement instanceof IMethod method && Flags.isStatic(method.getFlags()))) {
 			String fullyQualifiedName= currentType.getFullyQualifiedName('.');
 			if (fullyQualifiedName.equals(expectedType)) {
 				res.add(new Variable(fullyQualifiedName, "this", Variable.LITERALS, false, res.size())); //$NON-NLS-1$

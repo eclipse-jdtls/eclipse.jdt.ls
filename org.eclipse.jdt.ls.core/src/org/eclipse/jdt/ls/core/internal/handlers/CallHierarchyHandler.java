@@ -148,8 +148,7 @@ public class CallHierarchyHandler {
 			return null;
 		}
 
-		if (root instanceof ICompilationUnit) {
-			ICompilationUnit unit = (ICompilationUnit) root;
+		if (root instanceof ICompilationUnit unit) {
 			if (root.getResource() == null) {
 				return null;
 			}
@@ -164,8 +163,8 @@ public class CallHierarchyHandler {
 		List<IJavaElement> selectedElements = codeResolve(root, offset);
 		Stream<IJavaElement> possibleElements = selectedElements.stream().filter(CallHierarchyCore::isPossibleInputElement);
 		Optional<IJavaElement> firstElement = possibleElements.findFirst();
-		if (firstElement.isPresent() && firstElement.get() instanceof IMember) {
-			candidate = (IMember) firstElement.get();
+		if (firstElement.isPresent() && firstElement.get() instanceof IMember member) {
+			candidate = member;
 		}
 
 		// If the member cannot be resolved, retrieve the enclosing method.
@@ -266,8 +265,8 @@ public class CallHierarchyHandler {
 	}
 
 	private List<IJavaElement> codeResolve(IJavaElement input, int offset) throws JavaModelException {
-		if (input instanceof ICodeAssist) {
-			return Arrays.asList(((ICodeAssist) input).codeSelect(offset, 0));
+		if (input instanceof ICodeAssist codeAssist) {
+			return Arrays.asList(codeAssist.codeSelect(offset, 0));
 		}
 		return emptyList();
 	}
@@ -347,16 +346,15 @@ public class CallHierarchyHandler {
 		Assert.isNotNull(locationType, "locationType");
 
 		Location location = locationType.toLocation(element);
-		if (location == null && element instanceof IType) {
-			IType type = (IType) element;
+		if (location == null && element instanceof IType type) {
 			ICompilationUnit unit = (ICompilationUnit) type.getAncestor(COMPILATION_UNIT);
 			IClassFile classFile = (IClassFile) type.getAncestor(CLASS_FILE);
 			if (unit != null || (classFile != null && classFile.getSourceRange() != null)) {
 				location = locationType.toLocation(type);
 			}
 		}
-		if (location == null && element instanceof IMember && ((IMember) element).getClassFile() != null) {
-			location = JDTUtils.toLocation(((IMember) element).getClassFile());
+		if (location == null && element instanceof IMember member && member.getClassFile() != null) {
+			location = JDTUtils.toLocation(member.getClassFile());
 		}
 		return location;
 	}

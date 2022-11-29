@@ -273,8 +273,8 @@ public abstract class BaseDocumentLifeCycleHandler {
 				if (!monitor.isCanceled()) {
 					ICompilationUnit original = workingCopy.getPrimary();
 					IResource resource = original.getResource();
-					if (resource instanceof IFile) {
-						return new DocumentAdapter(workingCopy, (IFile) resource);
+					if (resource instanceof IFile file) {
+						return new DocumentAdapter(workingCopy, file);
 					}
 				}
 				return DocumentAdapter.Null;
@@ -367,8 +367,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
 					if (unit.getResource().exists()) {
 						IJavaElement parent = unit.getParent();
-						if (parent instanceof PackageFragment) {
-							PackageFragment pkg = (PackageFragment) parent;
+						if (parent instanceof PackageFragment pkg) {
 							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
 							elementInfo.addChild(unit);
 						}
@@ -573,7 +572,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (javaProject == null) {
 			return;
 		}
-		
+
 		IProject project = javaProject.getProject();
 		if (ProjectUtils.isUnmanagedFolder(project)) {
 			PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();

@@ -166,8 +166,8 @@ public class MoveHandler {
 
 							IJavaElement[] fragments = root.getChildren();
 							for (IJavaElement fragment : fragments) {
-								if (fragment instanceof IPackageFragment) {
-									PackageNode packageNode = PackageNode.createPackageNode((IPackageFragment) fragment);
+								if (fragment instanceof IPackageFragment pkg) {
+									PackageNode packageNode = PackageNode.createPackageNode(pkg);
 									packageNode.setParentOfSelectedFile(selectedPackages.contains(fragment));
 									packageNodes.add(packageNode);
 								}
@@ -198,8 +198,8 @@ public class MoveHandler {
 			node = node.getParent();
 		}
 
-		if (node != null && node instanceof MethodDeclaration) {
-			return (MethodDeclaration) node;
+		if (node instanceof MethodDeclaration methodDeclaration) {
+			return methodDeclaration;
 		}
 
 		return null;
@@ -266,8 +266,8 @@ public class MoveHandler {
 		try {
 			if ("moveResource".equalsIgnoreCase(moveParams.moveKind)) {
 				String targetUri = null;
-				if (moveParams.destination instanceof String) {
-					targetUri = (String) moveParams.destination;
+				if (moveParams.destination instanceof String dest) {
+					targetUri = dest;
 				} else {
 					String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
 					PackageNode packageNode = JSONUtility.toLsp4jModel(json, PackageNode.class);
@@ -304,8 +304,8 @@ public class MoveHandler {
 	}
 
 	private static String resolveTargetTypeName(Object destinationObj) throws IllegalArgumentException {
-		if (destinationObj instanceof String) {
-			return (String) destinationObj;
+		if (destinationObj instanceof String dest) {
+			return dest;
 		}
 
 		String json = (destinationObj== null ? null : new Gson().toJson(destinationObj));
@@ -356,8 +356,8 @@ public class MoveHandler {
 			IJavaElement targetElement = null;
 			for (IContainer container : targetContainers) {
 				targetElement = JavaCore.create(container);
-				if (targetElement instanceof IPackageFragmentRoot) {
-					targetElement = ((IPackageFragmentRoot) targetElement).getPackageFragment("");
+				if (targetElement instanceof IPackageFragmentRoot root) {
+					targetElement = root.getPackageFragment("");
 				}
 
 				if (targetElement != null) {
@@ -496,17 +496,17 @@ public class MoveHandler {
 
 		BodyDeclaration bodyDeclaration = getSelectedMemberDeclaration(unit, params);
 		List<IJavaElement> elements = new ArrayList<>();
-		if (bodyDeclaration instanceof MethodDeclaration) {
-			elements.add(((MethodDeclaration) bodyDeclaration).resolveBinding().getJavaElement());
-		} else if (bodyDeclaration instanceof FieldDeclaration) {
-			for (Object fragment : ((FieldDeclaration) bodyDeclaration).fragments()) {
+		if (bodyDeclaration instanceof MethodDeclaration methodDecl) {
+			elements.add(methodDecl.resolveBinding().getJavaElement());
+		} else if (bodyDeclaration instanceof FieldDeclaration fieldDecl) {
+			for (Object fragment : fieldDecl.fragments()) {
 				elements.add(((VariableDeclarationFragment) fragment).resolveBinding().getJavaElement());
 			}
-		} else if (bodyDeclaration instanceof AbstractTypeDeclaration) {
-			elements.add(((AbstractTypeDeclaration) bodyDeclaration).resolveBinding().getJavaElement());
+		} else if (bodyDeclaration instanceof AbstractTypeDeclaration typeDecl) {
+			elements.add(typeDecl.resolveBinding().getJavaElement());
 		}
 
-		IMember[] members = elements.stream().filter(element -> element instanceof IMember).map(element -> (IMember) element).toArray(IMember[]::new);
+		IMember[] members = elements.stream().filter(IMember.class::isInstance).map(IMember.class::cast).toArray(IMember[]::new);
 		return moveStaticMember(members, destinationTypeName, monitor);
 	}
 
@@ -515,7 +515,7 @@ public class MoveHandler {
 			return new RefactorWorkspaceEdit("Failed to move static member because no members are selected or no destination is specified.");
 		}
 
-		CodeGenerationSettings settings = members[0].getTypeRoot() instanceof ICompilationUnit ? PreferenceManager.getCodeGenerationSettings((ICompilationUnit) members[0].getTypeRoot())
+		CodeGenerationSettings settings = members[0].getTypeRoot() instanceof ICompilationUnit unit ? PreferenceManager.getCodeGenerationSettings(unit)
 											: PreferenceManager.getCodeGenerationSettings(members[0].getJavaProject().getProject());
 		MoveStaticMembersProcessor processor = new MoveStaticMembersProcessor(members, settings);
 		Refactoring refactoring = new MoveRefactoring(processor);

@@ -80,8 +80,7 @@ public class CastCorrectionProposal extends ASTRewriteCorrectionProposal {
 			node= parent;
 			parent= parent.getParent();
 		}
-		if (parent instanceof MethodInvocation) {
-			MethodInvocation invocation= (MethodInvocation) node.getParent();
+		if (parent instanceof MethodInvocation invocation) {
 			if (invocation.getExpression() == node) {
 				IBinding targetContext= ASTResolving.getParentMethodOrTypeBinding(node);
 				ITypeBinding[] bindings= ASTResolving.getQualifierGuess(node.getRoot(), invocation.getName().getIdentifier(), invocation.arguments(), targetContext);
@@ -160,16 +159,16 @@ public class CastCorrectionProposal extends ASTRewriteCorrectionProposal {
 
 	private static boolean needsOuterParantheses(ASTNode nodeToCast) {
 		ASTNode parent= nodeToCast.getParent();
-		if (parent instanceof MethodInvocation) {
-			if (((MethodInvocation)parent).getExpression() == nodeToCast) {
+		if (parent instanceof MethodInvocation methodInvocation) {
+			if (methodInvocation.getExpression() == nodeToCast) {
 				return true;
 			}
-		} else if (parent instanceof QualifiedName) {
-			if (((QualifiedName)parent).getQualifier() == nodeToCast) {
+		} else if (parent instanceof QualifiedName name) {
+			if (name.getQualifier() == nodeToCast) {
 				return true;
 			}
-		} else if (parent instanceof FieldAccess) {
-			if (((FieldAccess)parent).getExpression() == nodeToCast) {
+		} else if (parent instanceof FieldAccess fieldAccess) {
+			if (fieldAccess.getExpression() == nodeToCast) {
 				return true;
 			}
 		}

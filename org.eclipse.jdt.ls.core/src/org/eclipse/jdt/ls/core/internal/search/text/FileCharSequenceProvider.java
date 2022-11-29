@@ -45,8 +45,7 @@ public class FileCharSequenceProvider {
 	}
 
 	public void releaseCharSequence(CharSequence seq) throws IOException {
-		if (seq instanceof FileCharSequence) {
-			FileCharSequence curr= (FileCharSequence) seq;
+		if (seq instanceof FileCharSequence curr) {
 			try {
 				curr.close();
 			} finally {
@@ -70,10 +69,10 @@ public class FileCharSequenceProvider {
 
 		public void throwWrappedException() throws CoreException, IOException {
 			Throwable wrapped= getCause();
-			if (wrapped instanceof CoreException) {
-				throw (CoreException) wrapped;
-			} else if (wrapped instanceof IOException) {
-				throw (IOException) wrapped;
+			if (wrapped instanceof CoreException coreEx) {
+				throw coreEx;
+			} else if (wrapped instanceof IOException ioEx) {
+				throw ioEx;
 			}
 			// not possible
 		}

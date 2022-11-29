@@ -268,18 +268,17 @@ public class JavaElementLinks {
 				element = element.getParent();
 			}
 
-			if (element instanceof ILocalVariable) {
-				element = ((ILocalVariable) element).getDeclaringMember();
-			} else if (element instanceof ITypeParameter) {
-				element = ((ITypeParameter) element).getDeclaringMember();
+			if (element instanceof ILocalVariable localVariable) {
+				element = localVariable.getDeclaringMember();
+			} else if (element instanceof ITypeParameter typeParameter) {
+				element = typeParameter.getDeclaringMember();
 			}
-			if (element instanceof IMember && !(element instanceof IType)) {
-				element = ((IMember) element).getDeclaringType();
+			if (element instanceof IMember member && !(element instanceof IType)) {
+				element = member.getDeclaringType();
 			}
 
-			if (element instanceof IPackageFragment) {
+			if (element instanceof IPackageFragment root) {
 				try {
-					IPackageFragment root = (IPackageFragment) element;
 					element = resolvePackageInfoType(root, refTypeName);
 					if (element == null) {
 						// find it as package
@@ -291,9 +290,8 @@ public class JavaElementLinks {
 				}
 			}
 
-			if (element instanceof IType) {
+			if (element instanceof IType type) {
 				try {
-					IType type = (IType) element;
 					if (refTypeName.length() > 0) {
 						type = resolveType(type, refTypeName);
 						if (type == null) {

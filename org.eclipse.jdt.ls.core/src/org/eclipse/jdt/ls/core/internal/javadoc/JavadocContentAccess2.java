@@ -586,11 +586,11 @@ public class JavadocContentAccess2 {
 	 *             is thrown when the element's Javadoc cannot be accessed
 	 */
 	public static String getHTMLContent(IJavaElement element, boolean useAttachedJavadoc) throws CoreException {
-		if (element instanceof IPackageFragment) {
-			return getHTMLContent((IPackageFragment) element);
+		if (element instanceof IPackageFragment packageFragment) {
+			return getHTMLContent(packageFragment);
 		}
-		if (element instanceof IPackageDeclaration) {
-			return getHTMLContent((IPackageDeclaration) element);
+		if (element instanceof IPackageDeclaration packageDecl) {
+			return getHTMLContent(packageDecl);
 		}
 		if (!(element instanceof IMember || element instanceof ITypeParameter || (element instanceof ILocalVariable && (((ILocalVariable) element).isParameter())))) {
 			return null;
@@ -607,12 +607,12 @@ public class JavadocContentAccess2 {
 					}
 				}
 				IMember member = null;
-				if (element instanceof ILocalVariable) {
-					member = ((ILocalVariable) element).getDeclaringMember();
-				} else if (element instanceof ITypeParameter) {
-					member = ((ITypeParameter) element).getDeclaringMember();
-				} else if (element instanceof IMember) {
-					member = (IMember) element;
+				if (element instanceof ILocalVariable localVariable) {
+					member = localVariable.getDeclaringMember();
+				} else if (element instanceof ITypeParameter typeParam) {
+					member = typeParam.getDeclaringMember();
+				} else if (element instanceof IMember memberElement) {
+					member = memberElement;
 				}
 				if (canInheritJavadoc(member)) {
 					IMethod method = (IMethod) member;
@@ -714,12 +714,12 @@ public class JavadocContentAccess2 {
 
 	private static String getHTMLContentFromSource(IJavaElement element) throws JavaModelException {
 		IMember member;
-		if (element instanceof ILocalVariable) {
-			member = ((ILocalVariable) element).getDeclaringMember();
-		} else if (element instanceof ITypeParameter) {
-			member = ((ITypeParameter) element).getDeclaringMember();
-		} else if (element instanceof IMember) {
-			member = (IMember) element;
+		if (element instanceof ILocalVariable localVariable) {
+			member = localVariable.getDeclaringMember();
+		} else if (element instanceof ITypeParameter typeParam) {
+			member = typeParam.getDeclaringMember();
+		} else if (element instanceof IMember memberElement) {
+			member = memberElement;
 		} else {
 			return null;
 		}
@@ -864,12 +864,12 @@ public class JavadocContentAccess2 {
 	}
 
 	private static boolean canInheritJavadoc(IMember member) {
-		if (member instanceof IMethod && member.getJavaProject().exists()) {
+		if (member instanceof IMethod method && member.getJavaProject().exists()) {
 			/*
 			 * Exists test catches ExternalJavaProject, in which case no hierarchy can be built.
 			 */
 			try {
-				return !((IMethod) member).isConstructor();
+				return !method.isConstructor();
 			} catch (JavaModelException e) {
 
 			}
@@ -966,20 +966,20 @@ public class JavadocContentAccess2 {
 				int size = fragments.size();
 				if (size > 0) {
 					Object first = fragments.get(0);
-					if (first instanceof SimpleName) {
-						String name = ((SimpleName) first).getIdentifier();
+					if (first instanceof SimpleName simpleName) {
+						String name = simpleName.getIdentifier();
 						if (elementName.equals(name)) {
 							handleContentElements(fragments.subList(1, size));
 							return;
 						}
-					} else if (size > 2 && fElement instanceof ITypeParameter && first instanceof TextElement) {
-						String firstText = ((TextElement) first).getText();
+					} else if (size > 2 && fElement instanceof ITypeParameter && first instanceof TextElement textElement) {
+						String firstText = textElement.getText();
 						if ("<".equals(firstText)) { //$NON-NLS-1$
 							Object second = fragments.get(1);
 							Object third = fragments.get(2);
-							if (second instanceof SimpleName && third instanceof TextElement) {
-								String name = ((SimpleName) second).getIdentifier();
-								String thirdText = ((TextElement) third).getText();
+							if (second instanceof SimpleName secondName && third instanceof TextElement thirdTextElement) {
+								String name = secondName.getIdentifier();
+								String thirdText = thirdTextElement.getText();
 								if (elementName.equals(name) && ">".equals(thirdText)) { //$NON-NLS-1$
 									handleContentElements(fragments.subList(3, size));
 									return;
@@ -1038,21 +1038,21 @@ public class JavadocContentAccess2 {
 				int size = fragments.size();
 				if (size > 0) {
 					Object first = fragments.get(0);
-					if (first instanceof SimpleName) {
-						String name = ((SimpleName) first).getIdentifier();
+					if (first instanceof SimpleName simpleName) {
+						String name = simpleName.getIdentifier();
 						int paramIndex = parameterNames.indexOf(name);
 						if (paramIndex != -1) {
 							parameterNames.set(paramIndex, null);
 						}
 						parameters.add(tag);
-					} else if (size > 2 && first instanceof TextElement) {
-						String firstText = ((TextElement) first).getText();
+					} else if (size > 2 && first instanceof TextElement firstTextElement) {
+						String firstText = firstTextElement.getText();
 						if ("<".equals(firstText)) { //$NON-NLS-1$
 							Object second = fragments.get(1);
 							Object third = fragments.get(2);
-							if (second instanceof SimpleName && third instanceof TextElement) {
-								String name = ((SimpleName) second).getIdentifier();
-								String thirdText = ((TextElement) third).getText();
+							if (second instanceof SimpleName secondSimpleName && third instanceof TextElement thirdTextElement) {
+								String name = secondSimpleName.getIdentifier();
+								String thirdText = thirdTextElement.getText();
 								if (">".equals(thirdText)) { //$NON-NLS-1$
 									int paramIndex = typeParameterNames.indexOf(name);
 									if (paramIndex != -1) {
@@ -1075,8 +1075,8 @@ public class JavadocContentAccess2 {
 				List<? extends ASTNode> fragments = tag.fragments();
 				if (fragments.size() > 0) {
 					Object first = fragments.get(0);
-					if (first instanceof Name) {
-						String name = ASTNodes.getSimpleNameIdentifier((Name) first);
+					if (first instanceof Name firstName) {
+						String name = ASTNodes.getSimpleNameIdentifier(firstName);
 						int exceptionIndex = exceptionNames.indexOf(name);
 						if (exceptionIndex != -1) {
 							exceptionNames.set(exceptionIndex, null);
@@ -1341,11 +1341,11 @@ public class JavadocContentAccess2 {
 						Object first = fragments.get(0);
 						Object second = fragments.get(1);
 						Object third = fragments.get(2);
-						if (first instanceof TextElement && second instanceof SimpleName && third instanceof TextElement) {
-							String firstText = ((TextElement) first).getText();
-							String thirdText = ((TextElement) third).getText();
+						if (first instanceof TextElement firstTextElement && second instanceof SimpleName secondSimpleName && third instanceof TextElement thirdTextElement) {
+							String firstText = firstTextElement.getText();
+							String thirdText = thirdTextElement.getText();
 							if ("<".equals(firstText) && ">".equals(thirdText)) { //$NON-NLS-1$ //$NON-NLS-2$
-								String name = ((SimpleName) second).getIdentifier();
+								String name = secondSimpleName.getIdentifier();
 								if (name.equals(typeParamName)) {
 									handleContentElements(fragments.subList(3, fragments.size()));
 									break;
@@ -1388,8 +1388,8 @@ public class JavadocContentAccess2 {
 					List<? extends ASTNode> fragments = tag.fragments();
 					if (fragments.size() > 0) {
 						Object first = fragments.get(0);
-						if (first instanceof SimpleName) {
-							String name = ((SimpleName) first).getIdentifier();
+						if (first instanceof SimpleName simpleName) {
+							String name = simpleName.getIdentifier();
 							if (name.equals(paramName)) {
 								handleContentElements(fragments.subList(1, fragments.size()));
 								break;
@@ -1429,8 +1429,8 @@ public class JavadocContentAccess2 {
 					List<? extends ASTNode> fragments = tag.fragments();
 					if (fragments.size() > 0) {
 						Object first = fragments.get(0);
-						if (first instanceof Name) {
-							String name = ASTNodes.getSimpleNameIdentifier((Name) first);
+						if (first instanceof Name firstName) {
+							String name = ASTNodes.getSimpleNameIdentifier(firstName);
 							if (name.equals(simpleName)) {
 								if (fragments.size() > 1) {
 									handleContentElements(fragments.subList(1, fragments.size()));
@@ -1456,7 +1456,7 @@ public class JavadocContentAccess2 {
 		ASTNode previousNode = null;
 		for (Iterator<? extends ASTNode> iter = nodes.iterator(); iter.hasNext();) {
 			ASTNode child = iter.next();
-			boolean isInSnippet = previousNode instanceof TagElement && TagElement.TAG_SNIPPET.equals(((TagElement) previousNode).getTagName());
+			boolean isInSnippet = previousNode instanceof TagElement previousTag && TagElement.TAG_SNIPPET.equals(previousTag.getTagName());
 			if (previousNode != null) {
 				int previousEnd = previousNode.getStartPosition() + previousNode.getLength();
 				int childStart = child.getStartPosition();
@@ -1477,10 +1477,10 @@ public class JavadocContentAccess2 {
 			}
 
 			previousNode = child;
-			if (child instanceof TextElement) {
-				String text = ((TextElement) child).getText();
+			if (child instanceof TextElement textElement) {
+				String text = textElement.getText();
 				if (JavaDocHTMLPathHandler.containsHTMLTag(text)) {
-					text = JavaDocHTMLPathHandler.getValidatedHTMLSrcAttribute((TextElement) child, fElement);
+					text = JavaDocHTMLPathHandler.getValidatedHTMLSrcAttribute(textElement, fElement);
 				}
 
 				if (skipLeadingWhitespace) {
@@ -1489,8 +1489,8 @@ public class JavadocContentAccess2 {
 				// workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=233481 :
 				text = text.replaceAll("(\r\n?|\n)([ \t]*\\*)", "$1"); //$NON-NLS-1$ //$NON-NLS-2$
 				handleText(markSnippet(text, isInSnippet));
-			} else if (child instanceof TagElement) {
-				handleInlineTagElement((TagElement) child);
+			} else if (child instanceof TagElement tagElement) {
+				handleInlineTagElement(tagElement);
 			} else {
 				// This is unexpected. Fail gracefully by just copying the source.
 				int start = child.getStartPosition();
@@ -1624,17 +1624,15 @@ public class JavadocContentAccess2 {
 				return false;
 			}
 			if (fragments.isEmpty()) {
-				if (fElement instanceof IField && JdtFlags.isStatic((IField) fElement) && JdtFlags.isFinal((IField) fElement)) {
-					IField field = (IField) fElement;
+				if (fElement instanceof IField field && JdtFlags.isStatic((IField) fElement) && JdtFlags.isFinal((IField) fElement)) {
 					return handleConstantValue(field, false);
 				}
 			} else if (fragments.size() == 1) {
 				Object first = fragments.get(0);
-				if (first instanceof MemberRef) {
-					MemberRef memberRef = (MemberRef) first;
+				if (first instanceof MemberRef memberRef) {
 					if (memberRef.getQualifier() == null) {
 						SimpleName name = memberRef.getName();
-						IType type = fElement instanceof IType ? (IType) fElement : ((IMember) fElement).getDeclaringType();
+						IType type = fElement instanceof IType typeElement ? typeElement : ((IMember) fElement).getDeclaringType();
 						while (type != null) {
 							IField field = type.getField(name.getIdentifier());
 							if (field != null && field.exists()) {
@@ -1663,14 +1661,13 @@ public class JavadocContentAccess2 {
 			CompilationUnit cuNode = CoreASTProvider.getInstance().getAST(field.getTypeRoot(), CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 			if (cuNode != null) {
 				ASTNode nameNode = NodeFinder.perform(cuNode, nameRange);
-				if (nameNode instanceof SimpleName) {
-					IBinding binding = ((SimpleName) nameNode).resolveBinding();
-					if (binding instanceof IVariableBinding) {
-						IVariableBinding variableBinding = (IVariableBinding) binding;
+				if (nameNode instanceof SimpleName simpleName) {
+					IBinding binding = simpleName.resolveBinding();
+					if (binding instanceof IVariableBinding variableBinding) {
 						Object constantValue = variableBinding.getConstantValue();
 						if (constantValue != null) {
-							if (constantValue instanceof String) {
-								text = ASTNodes.getEscapedStringLiteral((String) constantValue);
+							if (constantValue instanceof String s) {
+								text = ASTNodes.getEscapedStringLiteral(s);
 							} else {
 								text = constantValue.toString(); // Javadoc tool is even worse for chars...
 							}
@@ -1712,7 +1709,7 @@ public class JavadocContentAccess2 {
 
 		try {
 			String url = null;
-			if (fElement instanceof IMember && ((IMember) fElement).isBinary()) {
+			if (fElement instanceof IMember member && member.isBinary()) {
 				URL javadocBaseLocation = JavaDocLocations.getJavadocBaseLocation(fElement);
 				if (javadocBaseLocation != null) {
 					url = javadocBaseLocation.toExternalForm();
@@ -1777,8 +1774,8 @@ public class JavadocContentAccess2 {
 				int size = fragments.size();
 				if (size > 0) {
 					Object first = fragments.get(0);
-					if (first instanceof SimpleName) {
-						String name = ((SimpleName) first).getIdentifier();
+					if (first instanceof SimpleName simpleName) {
+						String name = simpleName.getIdentifier();
 						String[] parameterNames = fMethod.getParameterNames();
 						for (int i = 0; i < parameterNames.length; i++) {
 							if (name.equals(parameterNames[i])) {
@@ -1786,15 +1783,15 @@ public class JavadocContentAccess2 {
 								return handleInherited(inherited);
 							}
 						}
-					} else if (size > 2 && first instanceof TextElement) {
-						String firstText = ((TextElement) first).getText();
+					} else if (size > 2 && first instanceof TextElement firstTextElement) {
+						String firstText = firstTextElement.getText();
 						if ("<".equals(firstText)) { //$NON-NLS-1$
 							Object second = fragments.get(1);
 							Object third = fragments.get(2);
-							if (second instanceof SimpleName && third instanceof TextElement) {
-								String thirdText = ((TextElement) third).getText();
+							if (second instanceof SimpleName secondSimpleName && third instanceof TextElement thirdTextElement) {
+								String thirdText = thirdTextElement.getText();
 								if (">".equals(thirdText)) { //$NON-NLS-1$
-									String name = ((SimpleName) second).getIdentifier();
+									String name = secondSimpleName.getIdentifier();
 									ITypeParameter[] typeParameters = fMethod.getTypeParameters();
 									for (int i = 0; i < typeParameters.length; i++) {
 										ITypeParameter typeParameter = typeParameters[i];
@@ -1817,8 +1814,8 @@ public class JavadocContentAccess2 {
 				List<? extends ASTNode> fragments = blockTag.fragments();
 				if (fragments.size() > 0) {
 					Object first = fragments.get(0);
-					if (first instanceof Name) {
-						String name = ASTNodes.getSimpleNameIdentifier((Name) first);
+					if (first instanceof Name firstName) {
+						String name = ASTNodes.getSimpleNameIdentifier(firstName);
 						CharSequence inherited = fJavadocLookup.getInheritedExceptionDescription(fMethod, name);
 						return handleInherited(inherited);
 					}
@@ -1998,19 +1995,19 @@ public class JavadocContentAccess2 {
 		if (size > 0) {
 			Object first = fragments.get(0);
 			fBuf.append(PARAM_NAME_START);
-			if (first instanceof SimpleName) {
-				String name = ((SimpleName) first).getIdentifier();
+			if (first instanceof SimpleName simpleName) {
+				String name = simpleName.getIdentifier();
 				fBuf.append(name);
 				i++;
-			} else if (first instanceof TextElement) {
-				String firstText = ((TextElement) first).getText();
+			} else if (first instanceof TextElement textElement) {
+				String firstText = textElement.getText();
 				if ("<".equals(firstText)) { //$NON-NLS-1$
 					fBuf.append("&lt;"); //$NON-NLS-1$
 					i++;
 					if (size > 1) {
 						Object second = fragments.get(1);
-						if (second instanceof SimpleName) {
-							String name = ((SimpleName) second).getIdentifier();
+						if (second instanceof SimpleName secondSimpleName) {
+							String name = secondSimpleName.getIdentifier();
 							fBuf.append(name);
 							i++;
 							if (size > 2) {
@@ -2035,8 +2032,7 @@ public class JavadocContentAccess2 {
 		int fs= fragments.size();
 		if (fs > 0) {
 			Object first= fragments.get(0);
-			if (first instanceof TextElement) {
-				TextElement memberRef= (TextElement) first;
+			if (first instanceof TextElement memberRef) {
 				fBuf.append(BlOCK_TAG_TITLE_START + "Summary: " + memberRef.getText() + BlOCK_TAG_TITLE_END); //$NON-NLS-1$
 				return;
 			}
@@ -2047,8 +2043,7 @@ public class JavadocContentAccess2 {
 		if (node != null) {
 			Object val = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_IS_VALID);
 			Object valError = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_ERROR);
-			if (val instanceof Boolean
-					&& ((Boolean)val).booleanValue() && valError == null) {
+			if (val instanceof Boolean bool && bool.booleanValue() && valError == null) {
 				int fs= node.fragments().size();
 				if (fs > 0) {
 					fBuf.append("<pre>"); //$NON-NLS-1$
@@ -2084,8 +2079,7 @@ public class JavadocContentAccess2 {
 		int fs= fragments.size();
 		if (fs > 0) {
 			Object first= fragments.get(0);
-			if (first instanceof TextElement) {
-				TextElement memberRef= (TextElement) first;
+			if (first instanceof TextElement memberRef) {
 				fBuf.append(  memberRef.getText() );
 				return;
 			}
@@ -2102,18 +2096,15 @@ public class JavadocContentAccess2 {
 			String[] refMethodParamTypes = null;
 			String[] refMethodParamNames = null;
 			int startPosition = -1;
-			if (first instanceof Name) {
-				Name name = (Name) first;
+			if (first instanceof Name name) {
 				refTypeName = name.getFullyQualifiedName();
 				startPosition = name.getStartPosition();
-			} else if (first instanceof MemberRef) {
-				MemberRef memberRef = (MemberRef) first;
+			} else if (first instanceof MemberRef memberRef) {
 				Name qualifier = memberRef.getQualifier();
 				refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 				refMemberName = memberRef.getName().getIdentifier();
 				startPosition = memberRef.getStartPosition();
-			} else if (first instanceof MethodRef) {
-				MethodRef methodRef = (MethodRef) first;
+			} else if (first instanceof MethodRef methodRef) {
 				Name qualifier = methodRef.getQualifier();
 				refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 				refMemberName = methodRef.getName().getIdentifier();
@@ -2175,12 +2166,7 @@ public class JavadocContentAccess2 {
 	}
 
 	private static boolean isWhitespaceTextElement(Object fragment) {
-		if (!(fragment instanceof TextElement)) {
-			return false;
-		}
-
-		TextElement textElement = (TextElement) fragment;
-		return textElement.getText().trim().length() == 0;
+		return fragment instanceof TextElement textElement && textElement.getText().trim().length() == 0;
 	}
 
 	private boolean containsOnlyNull(List<String> parameterNames) {
@@ -2224,11 +2210,7 @@ public class JavadocContentAccess2 {
 	 * @since 3.9
 	 */
 	public static String getHTMLContent(IPackageDeclaration packageDeclaration) throws CoreException {
-		IJavaElement element = packageDeclaration.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
-		if (element instanceof IPackageFragment) {
-			return getHTMLContent((IPackageFragment) element);
-		}
-		return null;
+		return packageDeclaration.getAncestor(IJavaElement.PACKAGE_FRAGMENT) instanceof IPackageFragment pkg ? getHTMLContent(pkg) : null;
 	}
 
 	/**
@@ -2298,8 +2280,7 @@ public class JavadocContentAccess2 {
 			Object[] nonJavaResources = packageFragment.getNonJavaResources();
 			// 2.1 ==>If the package.html file is present in the source or directly in the binary jar
 			for (Object nonJavaResource : nonJavaResources) {
-				if (nonJavaResource instanceof IFile) {
-					IFile iFile = (IFile) nonJavaResource;
+				if (nonJavaResource instanceof IFile iFile) {
 					if (iFile.exists() && JavaModelUtil.PACKAGE_HTML.equals(iFile.getName())) {
 						return getIFileContent(iFile);
 					}
@@ -2310,8 +2291,7 @@ public class JavadocContentAccess2 {
 			if (isBinary) {
 				for (Object nonJavaResource : nonJavaResources) {
 					// The content is from an external binary class folder
-					if (nonJavaResource instanceof IJarEntryResource) {
-						IJarEntryResource jarEntryResource = (IJarEntryResource) nonJavaResource;
+					if (nonJavaResource instanceof IJarEntryResource jarEntryResource) {
 						String encoding = getSourceAttachmentEncoding(root);
 						if (JavaModelUtil.PACKAGE_HTML.equals(jarEntryResource.getName()) && jarEntryResource.isFile()) {
 							return getHTMLContent(jarEntryResource, encoding);
@@ -2375,18 +2355,18 @@ public class JavadocContentAccess2 {
 				IWorkspaceRoot wsRoot = ResourcesPlugin.getWorkspace().getRoot();
 				IResource res = wsRoot.findMember(sourceAttachmentPath);
 
-				if (res instanceof IFile) {
+				if (res instanceof IFile ifile) {
 					// zip in the workspace
 					IPath location = res.getLocation();
 					if (location == null) {
 						return null;
 					}
 					file = location.toFile();
-					encoding = ((IFile) res).getCharset(false);
+					encoding = ifile.getCharset(false);
 
-				} else if (res instanceof IContainer) {
+				} else if (res instanceof IContainer container) {
 					// folder in the workspace
-					res = ((IContainer) res).findMember(filePath);
+					res = container.findMember(filePath);
 					if (!(res instanceof IFile)) {
 						return null;
 					}

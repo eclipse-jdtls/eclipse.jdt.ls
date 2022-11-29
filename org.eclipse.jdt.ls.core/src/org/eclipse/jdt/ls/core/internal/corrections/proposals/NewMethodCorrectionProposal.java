@@ -76,18 +76,18 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 			return getInterfaceMethodModifiers(targetTypeDecl, true);
 		}
 		ASTNode invocationNode= getInvocationNode();
-		if (invocationNode instanceof MethodInvocation) {
+		if (invocationNode instanceof MethodInvocation methodInvocation) {
 			int modifiers= 0;
-			Expression expression= ((MethodInvocation)invocationNode).getExpression();
+			Expression expression = methodInvocation.getExpression();
 			if (expression != null) {
-				if (expression instanceof Name && ((Name) expression).resolveBinding().getKind() == IBinding.TYPE) {
+				if (expression instanceof Name name && name.resolveBinding().getKind() == IBinding.TYPE) {
 					modifiers |= Modifier.STATIC;
 				}
 			} else if (ASTResolving.isInStaticContext(invocationNode)) {
 				modifiers |= Modifier.STATIC;
 			}
 			ASTNode node= ASTResolving.findParentType(invocationNode);
-			boolean isParentInterface= node instanceof TypeDeclaration && ((TypeDeclaration) node).isInterface();
+			boolean isParentInterface = node instanceof TypeDeclaration typeDecl && typeDecl.isInterface();
 			if (isTargetInterface || isParentInterface) {
 				if (expression == null && !targetTypeDecl.equals(node)) {
 					modifiers|= Modifier.STATIC;
@@ -118,8 +118,7 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 
 	private int getInterfaceMethodModifiers(ASTNode targetTypeDecl, boolean createAbstractMethod) {
 		// for interface and annotation members copy the modifiers from an existing member
-		if (targetTypeDecl instanceof TypeDeclaration) {
-			TypeDeclaration type= (TypeDeclaration) targetTypeDecl;
+		if (targetTypeDecl instanceof TypeDeclaration type) {
 			MethodDeclaration[] methodDecls= type.getMethods();
 			if (methodDecls.length > 0) {
 				if (createAbstractMethod) {
@@ -156,10 +155,10 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 	protected SimpleName getNewName(ASTRewrite rewrite) {
 		ASTNode invocationNode= getInvocationNode();
 		String name;
-		if (invocationNode instanceof MethodInvocation) {
-			name= ((MethodInvocation)invocationNode).getName().getIdentifier();
-		} else if (invocationNode instanceof SuperMethodInvocation) {
-			name= ((SuperMethodInvocation)invocationNode).getName().getIdentifier();
+		if (invocationNode instanceof MethodInvocation methodInvocation) {
+			name = methodInvocation.getName().getIdentifier();
+		} else if (invocationNode instanceof SuperMethodInvocation superInvocation) {
+			name = superInvocation.getName().getIdentifier();
 		} else {
 			name= getSenderBinding().getName(); // name of the class
 		}
@@ -175,8 +174,7 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 
 		Type newTypeNode= null;
 
-		if (node.getParent() instanceof MethodInvocation) {
-			MethodInvocation parent= (MethodInvocation) node.getParent();
+		if (node.getParent() instanceof MethodInvocation parent) {
 			if (parent.getExpression() == node) {
 				ITypeBinding[] bindings= ASTResolving.getQualifierGuess(node.getRoot(), parent.getName().getIdentifier(), parent.arguments(), getSenderBinding());
 				if (bindings.length > 0) {

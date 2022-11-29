@@ -292,9 +292,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		Map<IResource, List<IMarker>> map = markers.stream().collect(Collectors.groupingBy(IMarker::getResource));
 		for (Map.Entry<IResource, List<IMarker>> entry : map.entrySet()) {
 			IResource resource = entry.getKey();
-			if (resource instanceof IProject) {
+			if (resource instanceof IProject project) {
 				try {
-					IProject project = (IProject) resource;
 					publishMarkers(project, entry.getValue().toArray(new IMarker[0]));
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);

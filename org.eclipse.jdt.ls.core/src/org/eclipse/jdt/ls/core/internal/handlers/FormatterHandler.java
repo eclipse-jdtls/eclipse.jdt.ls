@@ -183,8 +183,7 @@ public class FormatterHandler {
 
 	private static org.eclipse.lsp4j.TextEdit convertEdit(TextEdit edit, IDocument document) {
 		org.eclipse.lsp4j.TextEdit textEdit = new org.eclipse.lsp4j.TextEdit();
-		if (edit instanceof ReplaceEdit) {
-			ReplaceEdit replaceEdit = (ReplaceEdit) edit;
+		if (edit instanceof ReplaceEdit replaceEdit) {
 			textEdit.setNewText(replaceEdit.getText());
 			int offset = edit.getOffset();
 			textEdit.setRange(new Range(createPosition(document, offset), createPosition(document, offset + edit.getLength())));

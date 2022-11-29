@@ -219,8 +219,7 @@ public class GetterSetterCorrectionSubProcessor {
 			return proposal;
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();
-			if (element instanceof IField) {
-				IField field = (IField) element;
+			if (element instanceof IField field) {
 				try {
 					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
 						return new SelfEncapsulateFieldProposal(relevance, field);
@@ -304,8 +303,7 @@ public class GetterSetterCorrectionSubProcessor {
 			return proposal;
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();
-			if (element instanceof IField) {
-				IField field = (IField) element;
+			if (element instanceof IField field) {
 				try {
 					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
 						return new SelfEncapsulateFieldProposal(relevance, field);

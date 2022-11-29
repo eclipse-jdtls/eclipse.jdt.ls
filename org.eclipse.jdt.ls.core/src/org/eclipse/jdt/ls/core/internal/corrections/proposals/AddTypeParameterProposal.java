@@ -64,8 +64,8 @@ public class AddTypeParameterProposal extends ASTRewriteCorrectionProposal {
 		fTypeParamName= name;
 		fBounds= bounds;
 
-		if (binding instanceof IMethodBinding) {
-			String[] args = { BasicElementLabels.getJavaElementName(fTypeParamName), org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature((IMethodBinding) binding) };
+		if (binding instanceof IMethodBinding methodBinding) {
+			String[] args = { BasicElementLabels.getJavaElementName(fTypeParamName), org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodBinding) };
 			setDisplayName(Messages.format(CorrectionMessages.AddTypeParameterProposal_method_label, args));
 		} else {
 			String[] args = { BasicElementLabels.getJavaElementName(fTypeParamName), org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature((ITypeBinding) binding) };

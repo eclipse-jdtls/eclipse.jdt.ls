@@ -91,14 +91,14 @@ public class CodeActionUtility {
 			if (parent instanceof VariableDeclarationFragment) {
 				return CodeActionUtility.getFieldNamesFromASTNode(parent);
 			}
-		} else if (node instanceof VariableDeclarationFragment) {
-			SimpleName name = ((VariableDeclarationFragment) node).getName();
+		} else if (node instanceof VariableDeclarationFragment varibleDecl) {
+			SimpleName name = varibleDecl.getName();
 			if (name != null) {
 				return Arrays.asList(name.getIdentifier());
 			}
-		} else if (node instanceof FieldDeclaration) {
+		} else if (node instanceof FieldDeclaration fieldDecl) {
 			List<String> names = new ArrayList<>();
-			List<VariableDeclarationFragment> fragments = ((FieldDeclaration) node).fragments();
+			List<VariableDeclarationFragment> fragments = fieldDecl.fragments();
 			for (VariableDeclarationFragment fragment : fragments) {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
 			}
@@ -113,9 +113,9 @@ public class CodeActionUtility {
 			if (name != null) {
 				return Arrays.asList(name.getIdentifier());
 			}
-		} else if (node instanceof VariableDeclarationStatement) {
+		} else if (node instanceof VariableDeclarationStatement variableDecl) {
 			List<String> names = new ArrayList<>();
-			List<VariableDeclarationFragment> fragments = ((VariableDeclarationStatement) node).fragments();
+			List<VariableDeclarationFragment> fragments = variableDecl.fragments();
 			for (VariableDeclarationFragment fragment : fragments) {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
 			}

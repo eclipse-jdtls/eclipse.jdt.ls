@@ -80,8 +80,7 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 
 			ASTNode body= getBody();
 			// For lambda the body can be a block or an expression.
-			if (body instanceof Block) {
-				Block block= (Block) body;
+			if (body instanceof Block block) {
 				List<Statement> statements= block.statements();
 				int nStatements= statements.size();
 				ASTNode lastStatement= null;
@@ -89,8 +88,8 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 					lastStatement= statements.get(nStatements - 1);
 				}
 
-				if (returnBinding != null && lastStatement instanceof ExpressionStatement && lastStatement.getNodeType() != ASTNode.ASSIGNMENT) {
-					Expression expression= ((ExpressionStatement) lastStatement).getExpression();
+				if (returnBinding != null && lastStatement instanceof ExpressionStatement expressionStatement && lastStatement.getNodeType() != ASTNode.ASSIGNMENT) {
+					Expression expression = expressionStatement.getExpression();
 					ITypeBinding binding= expression.resolveTypeBinding();
 					if (binding != null && binding.isAssignmentCompatible(returnBinding)) {
 						Expression placeHolder= (Expression) rewrite.createMoveTarget(expression);

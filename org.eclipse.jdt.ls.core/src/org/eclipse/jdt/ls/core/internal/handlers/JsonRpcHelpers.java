@@ -175,10 +175,10 @@ final public class JsonRpcHelpers {
 		if (buffer == null) {
 			return null;
 		}
-		if (buffer instanceof IDocument) {
-			return (IDocument) buffer;
-		} else if (buffer instanceof org.eclipse.jdt.ls.core.internal.DocumentAdapter) {
-			IDocument document = ((org.eclipse.jdt.ls.core.internal.DocumentAdapter) buffer).getDocument();
+		if (buffer instanceof IDocument doc) {
+			return doc;
+		} else if (buffer instanceof org.eclipse.jdt.ls.core.internal.DocumentAdapter adapter) {
+			IDocument document = adapter.getDocument();
 			if (document != null) {
 				return document;
 			}

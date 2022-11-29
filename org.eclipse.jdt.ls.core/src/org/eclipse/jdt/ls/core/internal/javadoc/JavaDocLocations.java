@@ -173,9 +173,9 @@ public class JavaDocLocations {
 				appendTypePath(mainType, pathBuffer);
 				break;
 			case IJavaElement.CLASS_FILE:
-				if (element instanceof IModularClassFile) {
+				if (element instanceof IModularClassFile modularClassFile) {
 					try {
-						appendModuleSummaryPath(((IModularClassFile) element).getModule(), pathBuffer);
+						appendModuleSummaryPath(modularClassFile.getModule(), pathBuffer);
 					} catch (JavaModelException e) {
 						return null;
 					}
@@ -208,10 +208,10 @@ public class JavaDocLocations {
 
 				if (decl.isOnDemand()) {
 					IJavaElement cont = JavaModelUtil.findTypeContainer(element.getJavaProject(), Signature.getQualifier(decl.getElementName()));
-					if (cont instanceof IType) {
-						appendTypePath((IType) cont, pathBuffer);
-					} else if (cont instanceof IPackageFragment) {
-						appendPackageSummaryPath((IPackageFragment) cont, pathBuffer);
+					if (cont instanceof IType type) {
+						appendTypePath(type, pathBuffer);
+					} else if (cont instanceof IPackageFragment pkg) {
+						appendPackageSummaryPath(pkg, pathBuffer);
 					}
 				} else {
 					IType imp = element.getJavaProject().findType(decl.getElementName());

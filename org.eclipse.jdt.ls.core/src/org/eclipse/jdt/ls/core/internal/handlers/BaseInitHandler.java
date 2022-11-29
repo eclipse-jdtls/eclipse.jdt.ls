@@ -108,8 +108,7 @@ public abstract class BaseInitHandler {
 			logInfo("No workspace folders or root uri was defined. Falling back on " + workspaceLocation);
 			rootPaths.add(workspaceLocation);
 		}
-		if (initializationOptions.get(SETTINGS_KEY) instanceof Map) {
-			Object settings = initializationOptions.get(SETTINGS_KEY);
+		if (initializationOptions.get(SETTINGS_KEY) instanceof Map<?, ?> settings) {
 			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);

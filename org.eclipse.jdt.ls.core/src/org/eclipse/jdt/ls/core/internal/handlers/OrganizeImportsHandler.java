@@ -157,11 +157,11 @@ public final class OrganizeImportsHandler {
 					}
 				}
 				TextEdit firstStatic = staticEdit.getChildren()[0];
-				if (firstStatic instanceof InsertEdit) {
+				if (firstStatic instanceof InsertEdit firstStaticInsert) {
 					if (edit.getChildrenSize() > 0) {
 						TextEdit firstEdit = edit.getChildren()[0];
-						if (firstEdit instanceof InsertEdit) {
-							if (areEqual((InsertEdit) firstEdit, (InsertEdit) firstStatic)) {
+						if (firstEdit instanceof InsertEdit firstEditInsert) {
+							if (areEqual(firstEditInsert, firstStaticInsert)) {
 								edit.removeChild(firstEdit);
 							}
 						}

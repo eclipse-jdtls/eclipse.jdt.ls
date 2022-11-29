@@ -152,10 +152,9 @@ public class CompletionResolveHandler {
 					String name = data.get(DATA_FIELD_NAME);
 					String[] paramSigs = CharOperation.NO_STRINGS;
 					if(data.containsKey( DATA_FIELD_SIGNATURE)){
-						if (proposal instanceof InternalCompletionProposal) {
-							Binding binding = ((InternalCompletionProposal) proposal).getBinding();
-							if (binding instanceof MethodBinding) {
-								MethodBinding methodBinding = (MethodBinding) binding;
+						if (proposal instanceof InternalCompletionProposal internalProposal) {
+							Binding binding = internalProposal.getBinding();
+							if (binding instanceof MethodBinding methodBinding) {
 								MethodBinding original = methodBinding.original();
 								char[] signature;
 								if (original != binding) {

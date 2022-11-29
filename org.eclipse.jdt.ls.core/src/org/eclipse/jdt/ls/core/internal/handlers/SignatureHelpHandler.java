@@ -97,10 +97,10 @@ public class SignatureHelpHandler {
 				int pos = contextInfomation[0] + 1;
 				if (method != null) {
 					int start;
-					if (node instanceof MethodInvocation) {
-						start = ((MethodInvocation) node).getName().getStartPosition();
-					} else if (node instanceof ClassInstanceCreation) {
-						start = ((ClassInstanceCreation) node).getType().getStartPosition();
+					if (node instanceof MethodInvocation methodInvocation) {
+						start = methodInvocation.getName().getStartPosition();
+					} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+						start = classInstanceCreation.getType().getStartPosition();
 					} else {
 						start = node.getStartPosition();
 					}
@@ -266,19 +266,18 @@ public class SignatureHelpHandler {
 
 	private IMethod getMethod(ASTNode node) throws JavaModelException {
 		IBinding binding;
-		if (node instanceof MethodInvocation) {
-			binding = ((MethodInvocation) node).resolveMethodBinding();
-		} else if (node instanceof MethodRef) {
-			binding = ((MethodRef) node).resolveBinding();
-		} else if (node instanceof ClassInstanceCreation) {
-			binding = ((ClassInstanceCreation) node).resolveConstructorBinding();
+		if (node instanceof MethodInvocation methodInvocation) {
+			binding = methodInvocation.resolveMethodBinding();
+		} else if (node instanceof MethodRef methodRef) {
+			binding = methodRef.resolveBinding();
+		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
+			binding = classInstanceCreation.resolveConstructorBinding();
 		} else {
 			binding = null;
 		}
 		if (binding != null) {
 			IJavaElement javaElement = binding.getJavaElement();
-			if (javaElement instanceof IMethod) {
-				IMethod method = (IMethod) javaElement;
+			if (javaElement instanceof IMethod method) {
 				return method;
 			}
 		}

@@ -70,7 +70,6 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrecti
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
@@ -217,7 +216,7 @@ public class InvertBooleanUtility {
 				}
 				// set new name
 				rewrite.replace(name, newName, null);
-			} else if (name.getParent() instanceof PrefixExpression && ((PrefixExpression) name.getParent()).getOperator() == PrefixExpression.Operator.NOT) {
+			} else if (name.getParent() instanceof PrefixExpression prefixExpression && prefixExpression.getOperator() == PrefixExpression.Operator.NOT) {
 				rewrite.replace(name.getParent(), newName, null);
 			} else {
 				PrefixExpression expression = ast.newPrefixExpression();
@@ -387,8 +386,7 @@ public class InvertBooleanUtility {
 
 	private static Expression getRenamedNameCopy(SimpleNameRenameProvider provider, ASTRewrite rewrite, Expression expression) {
 		if (provider != null) {
-			if (expression instanceof SimpleName) {
-				SimpleName name = (SimpleName) expression;
+			if (expression instanceof SimpleName name) {
 				SimpleName newName = provider.getRenamed(name);
 				if (newName != null) {
 					return newName;
@@ -406,11 +404,10 @@ public class InvertBooleanUtility {
 	private static Expression getInversedExpression(ASTRewrite rewrite, Expression expression, SimpleNameRenameProvider provider) {
 		AST ast = rewrite.getAST();
 
-		if (expression instanceof BooleanLiteral) {
-			return ast.newBooleanLiteral(!((BooleanLiteral) expression).booleanValue());
+		if (expression instanceof BooleanLiteral booleanLiteral) {
+			return ast.newBooleanLiteral(!booleanLiteral.booleanValue());
 		}
-		if (expression instanceof InfixExpression) {
-			InfixExpression infixExpression = (InfixExpression) expression;
+		if (expression instanceof InfixExpression infixExpression) {
 			InfixExpression.Operator operator = infixExpression.getOperator();
 			if (operator == InfixExpression.Operator.LESS) {
 				return getInversedInfixExpression(rewrite, infixExpression, InfixExpression.Operator.GREATER_EQUALS, provider);
@@ -446,16 +443,14 @@ public class InvertBooleanUtility {
 				return getInversedNotExpression(rewrite, expression, ast);
 			}
 		}
-		if (expression instanceof PrefixExpression) {
-			PrefixExpression prefixExpression = (PrefixExpression) expression;
+		if (expression instanceof PrefixExpression prefixExpression) {
 			if (prefixExpression.getOperator() == PrefixExpression.Operator.NOT) {
 				Expression operand = prefixExpression.getOperand();
-				if ((operand instanceof ParenthesizedExpression) && NecessaryParenthesesChecker.canRemoveParentheses(operand, expression.getParent(), expression.getLocationInParent())) {
-					operand = ((ParenthesizedExpression) operand).getExpression();
+				if (operand instanceof ParenthesizedExpression parenthesizedExpression && NecessaryParenthesesChecker.canRemoveParentheses(operand, expression.getParent(), expression.getLocationInParent())) {
+					operand = parenthesizedExpression.getExpression();
 				}
 				Expression renamedNameCopy = getRenamedNameCopy(provider, rewrite, operand);
-				if (renamedNameCopy instanceof InfixExpression) {
-					InfixExpression infixExpression = (InfixExpression) renamedNameCopy;
+				if (renamedNameCopy instanceof InfixExpression infixExpression) {
 					infixExpression.setOperator(((InfixExpression) operand).getOperator());
 				}
 				return renamedNameCopy;
@@ -464,11 +459,10 @@ public class InvertBooleanUtility {
 		if (expression instanceof InstanceofExpression) {
 			return getInversedNotExpression(rewrite, expression, ast);
 		}
-		if (expression instanceof ParenthesizedExpression) {
-			ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression) expression;
+		if (expression instanceof ParenthesizedExpression parenthesizedExpression) {
 			Expression innerExpression = parenthesizedExpression.getExpression();
-			while (innerExpression instanceof ParenthesizedExpression) {
-				innerExpression = ((ParenthesizedExpression) innerExpression).getExpression();
+			while (innerExpression instanceof ParenthesizedExpression innerParenthesizedExpression) {
+				innerExpression = innerParenthesizedExpression.getExpression();
 			}
 			if (innerExpression instanceof InstanceofExpression) {
 				return getInversedExpression(rewrite, innerExpression, provider);
@@ -476,8 +470,7 @@ public class InvertBooleanUtility {
 			parenthesizedExpression = getParenthesizedExpression(ast, getInversedExpression(rewrite, innerExpression, provider));
 			return parenthesizedExpression;
 		}
-		if (expression instanceof ConditionalExpression) {
-			ConditionalExpression conditionalExpression = (ConditionalExpression) expression;
+		if (expression instanceof ConditionalExpression conditionalExpression) {
 			ConditionalExpression newExpression = ast.newConditionalExpression();
 			newExpression.setExpression((Expression) rewrite.createCopyTarget(conditionalExpression.getExpression()));
 			newExpression.setThenExpression(getInversedExpression(rewrite, conditionalExpression.getThenExpression()));
@@ -519,8 +512,8 @@ public class InvertBooleanUtility {
 
 		// check that infix expression is part of first level && condition of IfStatement
 		InfixExpression topInfixExpression = infixExpression;
-		while (topInfixExpression.getParent() instanceof InfixExpression && ((InfixExpression) topInfixExpression.getParent()).getOperator() == andOperator) {
-			topInfixExpression = (InfixExpression) topInfixExpression.getParent();
+		while (topInfixExpression.getParent() instanceof InfixExpression parentInfixExpression && parentInfixExpression.getOperator() == andOperator) {
+			topInfixExpression = parentInfixExpression;
 		}
 		if (ifStatement.getExpression() != topInfixExpression) {
 			return false;
@@ -696,13 +689,13 @@ public class InvertBooleanUtility {
 
 	private static Expression combineOperands(ASTRewrite rewrite, Expression existing, Expression originalNode, boolean removeParentheses, Operator operator) {
 		if (existing == null && removeParentheses) {
-			while (originalNode instanceof ParenthesizedExpression) {
-				originalNode = ((ParenthesizedExpression) originalNode).getExpression();
+			while (originalNode instanceof ParenthesizedExpression parenthesizedExpression) {
+				originalNode = parenthesizedExpression.getExpression();
 			}
 		}
 		Expression newRight = (Expression) rewrite.createMoveTarget(originalNode);
-		if (originalNode instanceof InfixExpression) {
-			((InfixExpression) newRight).setOperator(((InfixExpression) originalNode).getOperator());
+		if (originalNode instanceof InfixExpression infixExpression) {
+			((InfixExpression) newRight).setOperator(infixExpression.getOperator());
 		}
 
 		if (existing == null) {

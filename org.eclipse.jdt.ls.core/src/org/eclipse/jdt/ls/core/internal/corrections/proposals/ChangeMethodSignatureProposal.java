@@ -125,9 +125,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		}
 		createImportRewrite(astRoot);
 
-		if (newMethodDecl instanceof MethodDeclaration) {
-			MethodDeclaration decl= (MethodDeclaration) newMethodDecl;
-
+		if (newMethodDecl instanceof MethodDeclaration decl) {
 			ASTRewrite rewrite= ASTRewrite.create(astRoot.getAST());
 			if (fParameterChanges != null) {
 				modifyParameters(rewrite, decl);
@@ -165,8 +163,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 				SingleVariableDeclaration oldParam= parameters.get(k);
 				usedNames.add(oldParam.getName().getIdentifier());
 				k++;
-			} else if (curr instanceof InsertDescription) {
-				InsertDescription desc= (InsertDescription) curr;
+			} else if (curr instanceof InsertDescription desc) {
 				SingleVariableDeclaration newNode= ast.newSingleVariableDeclaration();
 				newNode.setType(imports.addImport(desc.type, ast, context, TypeLocation.PARAMETER));
 				newNode.setName(ast.newSimpleName("x")); //$NON-NLS-1$
@@ -199,9 +196,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 				if (tagNode != null) {
 					rewrite.remove(tagNode, null);
 				}
-			} else if (curr instanceof EditDescription) {
-				EditDescription desc= (EditDescription) curr;
-
+			} else if (curr instanceof EditDescription desc) {
 				ITypeBinding newTypeBinding= desc.type;
 				SingleVariableDeclaration decl= parameters.get(k);
 
@@ -289,9 +284,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		// set names for new parameters
 		for (int i= 0; i < fParameterChanges.length; i++) {
 			ChangeDescription curr= fParameterChanges[i];
-			if (curr instanceof ModifyDescription) {
-				ModifyDescription desc= (ModifyDescription) curr;
-
+			if (curr instanceof ModifyDescription desc) {
 				String typeKey= getParamTypeGroupId(i);
 				String nameKey= getParamNameGroupId(i);
 
@@ -358,8 +351,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 
 			if (curr == null) {
 				k++;
-			} else if (curr instanceof InsertDescription) {
-				InsertDescription desc= (InsertDescription) curr;
+			} else if (curr instanceof InsertDescription desc) {
 				String type= imports.addImport(desc.type, context);
 				ASTNode newNode= imports.addImport(desc.type, ast, context, TypeLocation.EXCEPTION);
 
@@ -386,9 +378,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 				if (tagNode != null) {
 					rewrite.remove(tagNode, null);
 				}
-			} else if (curr instanceof EditDescription) {
-				EditDescription desc= (EditDescription) curr;
-
+			} else if (curr instanceof EditDescription desc) {
 				Type oldNode= exceptions.get(k);
 
 				String type= imports.addImport(desc.type, context);
@@ -403,9 +393,9 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 					rewrite.replace((ASTNode) tagNode.fragments().get(0), newRef, null);
 				}
 
-			} else if (curr instanceof SwapDescription) {
+			} else if (curr instanceof SwapDescription desc) {
 				Type decl1= exceptions.get(k);
-				Type decl2= exceptions.get(((SwapDescription) curr).index);
+				Type decl2 = exceptions.get(desc.index);
 
 				rewrite.replace(decl1, rewrite.createCopyTarget(decl2), null);
 				rewrite.replace(decl2, rewrite.createCopyTarget(decl1), null);

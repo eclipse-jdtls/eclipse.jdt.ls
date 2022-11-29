@@ -330,8 +330,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			return;
 		}
 		String version = "";
-		if (vmInstall instanceof AbstractVMInstall) {
-			AbstractVMInstall jvm = (AbstractVMInstall) vmInstall;
+		if (vmInstall instanceof AbstractVMInstall jvm) {
 			version = jvm.getJavaVersion();
 			long jdkLevel = CompilerOptions.versionToJdkLevel(jvm.getJavaVersion());
 			String compliance = CompilerOptions.versionFromJdkLevel(jdkLevel);
