@@ -1,5 +1,29 @@
 # Change Log
 
+# [1.18.0 (December 1st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/108?closed=1)
+ * enhancement - Add setting for clean ups to be applied when document is saved. See [#2298](https://github.com/eclipse/eclipse.jdt.ls/pull/2298), [#2307](https://github.com/eclipse/eclipse.jdt.ls/issues/2307), [#2342](https://github.com/eclipse/eclipse.jdt.ls/pull/2342).
+ * enhancement - Support "Add all missing imports". See [#2292](https://github.com/eclipse/eclipse.jdt.ls/pull/2292).
+ * enhancement - Support Gradle annotation processing. See [#2319](https://github.com/eclipse/eclipse.jdt.ls/pull/2319).
+ * enhancement - Add an option to configure null analysis, and set to `interactive` by default. See [#2279](https://github.com/eclipse/eclipse.jdt.ls/pull/2279), [#2314](https://github.com/eclipse/eclipse.jdt.ls/pull/2314).
+ * enhancement - Add contribution points for completion customization. See [#2110](https://github.com/eclipse/eclipse.jdt.ls/pull/2110).
+ * enhancement - Allow the language server to be run without using `IApplication`. See [#2311](https://github.com/eclipse/eclipse.jdt.ls/issues/2311).
+ * enhancement - Improve Lombok support and renaming fields when an accessor is present. See [#2339](https://github.com/eclipse/eclipse.jdt.ls/pull/2339).
+ * bug fix - Display the postfix completions at the bottom of the list. See [#2343](https://github.com/eclipse/eclipse.jdt.ls/pull/2343).
+ * bug fix - Do not reset existing project options when setting null analysis options. See [#2299](https://github.com/eclipse/eclipse.jdt.ls/pull/2299).
+ * bug fix - Code action response may contain `null` as one of the code actions. See [#2327](https://github.com/eclipse/eclipse.jdt.ls/issues/2327).
+ * bug fix - Inlay hints should not show up next to Lombok annotations. See [#2323](https://github.com/eclipse/eclipse.jdt.ls/issues/2323).
+ * bug fix - Ensure language server always terminates. See [#2302](https://github.com/eclipse/eclipse.jdt.ls/issues/2302).
+ * bug fix - Prevent a deadlock during language server initialization. See [#2301](https://github.com/eclipse/eclipse.jdt.ls/pull/2301).
+ * bug fix - Always send `begin` work done progress before sending `end`. See [#2258](https://github.com/eclipse/eclipse.jdt.ls/pull/2258).
+ * bug fix - Use existing Gradle project `.settings/` location if available. See [#2289](https://github.com/eclipse/eclipse.jdt.ls/pull/2289).
+ * bug fix - Avoid re-using the same job for the "Publish Diagnostics" job. See [#2356](https://github.com/eclipse/eclipse.jdt.ls/pull/2356).
+ * build - Use Predicate for filter. See [#2355](https://github.com/eclipse/eclipse.jdt.ls/pull/2355).
+ * build - WorkspaceDiagnosticsHandlerTest.testMissingNatures fails sometimes. See [#2331](https://github.com/eclipse/eclipse.jdt.ls/issues/2331).
+ * build - ProjectsManagerTest.testCancelInitJob fails randomly. See [#2326](https://github.com/eclipse/eclipse.jdt.ls/issues/2326).
+ * build - Fix CodeQL Java analysis error. See [#2318](https://github.com/eclipse/eclipse.jdt.ls/pull/2318).
+ * build - Set proper ranges for dependencies on LSP4J. See [#2310](https://github.com/eclipse/eclipse.jdt.ls/issues/2310).
+ * build - Bump Tycho from 2.7.5 to 3.0.0. See [#2260](https://github.com/eclipse/eclipse.jdt.ls/pull/2260).
+
 # [1.17.0 (October 27th, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/107?closed=1)
  * performance - Improve project initialization. See [#2252](https://github.com/eclipse/eclipse.jdt.ls/pull/2252).
  * performance - Re-use ExecutorService to avoid creating extra threads and resource leak. See [#2041](https://github.com/eclipse/eclipse.jdt.ls/pull/2041).
