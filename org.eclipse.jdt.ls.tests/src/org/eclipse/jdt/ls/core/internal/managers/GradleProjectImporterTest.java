@@ -42,7 +42,6 @@ import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -162,7 +161,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			} else {
 				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
 			}
-			String requiredVersion = "7.3";
+			String requiredVersion = "7.3.3";
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
 			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
