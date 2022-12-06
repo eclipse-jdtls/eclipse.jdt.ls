@@ -22,6 +22,7 @@
     <stringAttribute key="featurePluginResolution" value="workspace"/>
     <booleanAttribute key="includeOptional" value="false"/>
     <stringAttribute key="location" value="${workspace_loc}/../runtime-JDT-LS"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
         <mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
         <mapEntry key="CLIENT_PORT" value="5036"/>
@@ -43,10 +44,10 @@
     <setAttribute key="selected_target_bundles">
         <setEntry value="ch.qos.logback.classic@default:default"/>
         <setEntry value="ch.qos.logback.core@default:default"/>
-        <setEntry value="ch.qos.logback.slf4j@default:false"/>
-        <setEntry value="com.google.gson@default:default"/>
+        <setEntry value="com.google.gson*2.9.1@default:default"/>
+        <setEntry value="com.google.gson*2.8.9.v20220111-1409@default:default"/>
         <setEntry value="com.google.guava@default:default"/>
-        <setEntry value="com.ibm.icu@default:default"/>
+        <setEntry value="com.ibm.icu*71.1.0@default:default"/>
         <setEntry value="javax.inject@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
         <setEntry value="org.apache.commons.codec@default:default"/>
@@ -98,7 +99,6 @@
         <setEntry value="org.eclipse.m2e.apt.core@default:default"/>
         <setEntry value="org.eclipse.m2e.core@default:default"/>
         <setEntry value="org.eclipse.m2e.jdt@default:default"/>
-        <setEntry value="org.eclipse.m2e.maven.runtime.slf4j.simple@default:default"/>
         <setEntry value="org.eclipse.m2e.maven.runtime@default:default"/>
         <setEntry value="org.eclipse.m2e.workspace.cli@default:default"/>
         <setEntry value="org.eclipse.osgi.compatibility.state@default:false"/>
@@ -129,6 +129,7 @@
         <setEntry value="org.osgi.util.promise@default:default"/>
         <setEntry value="org.osgi.util.xml@default:default"/>
         <setEntry value="org.slf4j.api@default:default"/>
+        <setEntry value="slf4j.api@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="org.eclipse.jdt.ls.core@default:default"/>

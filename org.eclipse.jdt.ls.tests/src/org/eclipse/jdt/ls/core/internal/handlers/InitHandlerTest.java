@@ -91,6 +91,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -131,7 +132,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testExecuteCommandProvider() throws Exception {
-		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+		Mockito.lenient().when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
 		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
 
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
@@ -153,9 +154,9 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testStaticCommandWithDynamicRegistration() throws Exception {
-		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
-		when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
-		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+		Mockito.lenient().when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
+		Mockito.lenient().when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
+		Mockito.lenient().when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
 
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
@@ -174,8 +175,8 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testStaticCommandWithoutDynamicRegistration() throws Exception {
 		when(commandHandler.getAllCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2", "cmd3", "cmd4")));
-		when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
-		when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
+		Mockito.lenient().when(commandHandler.getStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd1", "cmd2")));
+		Mockito.lenient().when(commandHandler.getNonStaticCommands()).thenReturn(new HashSet<>(Arrays.asList("cmd3", "cmd4")));
 
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.FALSE);
@@ -342,6 +343,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		// for test purposes only
 		removeExclusionPattern(javaProject);
+		JobHelpers.waitForJobsToComplete();
 		File outputDir = new File(new File(location), javaProject.getOutputLocation().removeFirstSegments(1).toOSString());
 		File outputFile = new File(outputDir, "test.properties");
 		String resourceName = location + "/src/main/resources/test.properties";
@@ -402,7 +404,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testInitOnSymbolicLinkFolder() throws Exception {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
-		when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
+		Mockito.lenient().when(mockCapabilies.isWorkspaceChangeWatchedFilesDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 
 		File tempDirectory = new File(System.getProperty("java.io.tmpdir"), "/projects_symbolic_link-" + new Random().nextInt(10000));
