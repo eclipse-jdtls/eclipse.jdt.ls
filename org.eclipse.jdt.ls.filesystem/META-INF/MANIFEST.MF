@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: org.eclipse.jdt.ls.filesystem;singleton:=true
+Bundle-Name: %Bundle-Name
+Bundle-Version: 1.19.0.qualifier
+Export-Package: org.eclipse.jdt.ls.core.internal.filesystem;x-friends:="org.eclipse.jdt.ls.tests"
+Bundle-Localization: plugin
+Bundle-Activator: org.eclipse.jdt.ls.core.internal.filesystem.JDTLSFilesystemActivator
+Bundle-Vendor: %Bundle-Vendor
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.core.filesystem;bundle-version="1.9.500",
+ org.eclipse.core.resources;bundle-version="3.18.100",
+ org.eclipse.jdt.core;bundle-version="3.32.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Automatic-Module-Name: org.eclipse.jdt.ls.application
+Bundle-ActivationPolicy: lazy

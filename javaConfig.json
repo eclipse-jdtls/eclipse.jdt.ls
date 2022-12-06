@@ -1,6 +1,7 @@
 {
     "projects": [
         "org.eclipse.jdt.ls.core",
+        "org.eclipse.jdt.ls.filesystem",
 		"org.eclipse.jdt.ls.logback.appender",
         "org.eclipse.jdt.ls.target",
         "org.eclipse.jdt.ls.tests",
