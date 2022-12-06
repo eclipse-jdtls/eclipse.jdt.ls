@@ -16,7 +16,8 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.m2e.feature.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.m2e.logback.feature.feature.group" version="0.0.0"/>
-	        <repository location="https://download.eclipse.org/technology/m2e/releases/2.0.1/"/>
+            <unit id="ch.qos.logback.classic" version="0.0.0"/>
+	        <repository location="https://download.eclipse.org/technology/m2e/releases/latest/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
@@ -27,7 +28,7 @@
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.26-I-builds/I20221027-1800"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.27-I-builds/I20221205-1800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtend.sdk.feature.group" version="0.0.0"/>
