@@ -384,10 +384,19 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 */
 	private void synchronizeBundles() {
 		try {
-			List<String> bundlesToRefresh = (ArrayList<String>) JavaLanguageServerPlugin.getInstance()
+			Object commandResult = JavaLanguageServerPlugin.getInstance()
 				.getClientConnection().executeClientCommand("_java.reloadBundles.command");
-			if (bundlesToRefresh.size() > 0) {
-				BundleUtils.loadBundles(bundlesToRefresh);
+			if (commandResult instanceof List<?> list) {
+				List<String> bundlesToRefresh = (List<String>) commandResult;
+				if (bundlesToRefresh.size() > 0) {
+					BundleUtils.loadBundles(bundlesToRefresh);
+				}
+			} else if (commandResult instanceof Map<?, ?> m) {
+				String message = (String) m.get("message");
+				JavaLanguageServerPlugin.logError(message);
+			} else {
+				JavaLanguageServerPlugin.logError(
+					"Unexpected result from executeClientCommand: " + commandResult);
 			}
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e);
