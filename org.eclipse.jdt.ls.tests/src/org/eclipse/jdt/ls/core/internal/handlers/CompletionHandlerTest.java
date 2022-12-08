@@ -3568,6 +3568,47 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(items.get(0).getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\, \\$\\{2:\\w+\\}\\) -> \\$\\{0\\}"));
 	}
 
+	@Test
+	public void testCompletion_MatchCaseOff() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			//@formatter:off
+					"package org.sample",
+					"public class Test {",
+					"	public static void main(String[] args) {",
+					"		i",
+					"	}",
+					"}"));
+					//@formatter:on
+			CompletionList list = requestCompletions(unit, "		i");
+			assertFalse(list.getItems().isEmpty());
+			boolean hasUpperCase = list.getItems().stream()
+				.anyMatch(t -> Character.isUpperCase(t.getLabel().charAt(0)));
+			assertTrue(hasUpperCase);
+	}
+
+	@Test
+	public void testCompletion_MatchCaseFirstLetter() throws Exception {
+		try {
+			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.FIRSTLETTER);
+			ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			//@formatter:off
+					"package org.sample",
+					"public class Test {",
+					"	public static void main(String[] args) {",
+					"		i",
+					"	}",
+					"}"));
+					//@formatter:on
+			CompletionList list = requestCompletions(unit, "		i");
+			assertFalse(list.getItems().isEmpty());
+			boolean hasUpperCase = list.getItems().stream()
+				.anyMatch(t -> Character.isUpperCase(t.getLabel().charAt(0)));
+			assertFalse(hasUpperCase);
+		} finally {
+			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.OFF);
+		}
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}

@@ -35,11 +35,13 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionMatchCaseMode;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionRankingAggregation;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
@@ -174,17 +176,24 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if (isFiltered(proposal)) {
 			return;
 		}
-		if (!isIgnored(proposal.getKind())) {
-			if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
-				acceptPotentialMethodDeclaration(proposal);
-			} else {
-				if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
-					// Hacky way to boost relevance of current package, for package completions, until
-					// https://bugs.eclipse.org/518140 is fixed
-					proposal.setRelevance(proposal.getRelevance() + 1);
-				}
-				proposals.add(proposal);
+
+		if (isIgnored(proposal.getKind())) {
+			return;
+		}
+
+		if (!matchCase(proposal)) {
+			return;
+		}
+
+		if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
+			acceptPotentialMethodDeclaration(proposal);
+		} else {
+			if (proposal.getKind() == CompletionProposal.PACKAGE_REF && unit.getParent() != null && String.valueOf(proposal.getCompletion()).equals(unit.getParent().getElementName())) {
+				// Hacky way to boost relevance of current package, for package completions, until
+				// https://bugs.eclipse.org/518140 is fixed
+				proposal.setRelevance(proposal.getRelevance() + 1);
 			}
+			proposals.add(proposal);
 		}
 	}
 
@@ -510,4 +519,31 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return fullTypeName != null && TypeFilter.isFiltered(fullTypeName);
 	}
 
+	/**
+	 * Check if the case is match between the proposal and the token according to the preference.
+	 * @param proposal completion proposal.
+	 */
+	private boolean matchCase(CompletionProposal proposal) {
+		if (CompletionMatchCaseMode.FIRSTLETTER != preferenceManager.getPreferences().getCompletionMatchCaseMode()) {
+			return true;
+		}
+
+		if (this.context.getToken().length == 0 || proposal.getCompletion().length == 0) {
+			return true;
+		}
+
+		char firstCharOfCompletion;
+		if (proposal.getKind() == CompletionProposal.TYPE_REF) {
+			String simpleTypeName = SignatureUtil.getSimpleTypeName(proposal);
+			firstCharOfCompletion = simpleTypeName.charAt(0);
+		} else {
+			firstCharOfCompletion = proposal.getCompletion()[0];
+		}
+
+		if (this.context.getToken()[0] != firstCharOfCompletion) {
+			return false;
+		}
+
+		return true;
+	}
 }
