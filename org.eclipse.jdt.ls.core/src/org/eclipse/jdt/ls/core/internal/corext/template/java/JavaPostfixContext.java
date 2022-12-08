@@ -64,6 +64,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
@@ -319,6 +320,10 @@ public class JavaPostfixContext extends JavaContext {
 			return false;
 
 		if (template.getName().toLowerCase().startsWith(getPrefixKey().toLowerCase()) == false) {
+			return false;
+		}
+
+		if (selectedNode instanceof Javadoc) {
 			return false;
 		}
 

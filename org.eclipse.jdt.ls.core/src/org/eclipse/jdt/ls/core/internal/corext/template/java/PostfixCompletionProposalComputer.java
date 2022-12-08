@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
@@ -130,6 +131,15 @@ public class PostfixCompletionProposalComputer {
 
 				@Override
 				public boolean visit(BooleanLiteral node) {
+					int start= node.getStartPosition();
+					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
+						bestNode[0]= node;
+					}
+					return true;
+				}
+
+				@Override
+				public boolean visit(Javadoc node) {
 					int start= node.getStartPosition();
 					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
