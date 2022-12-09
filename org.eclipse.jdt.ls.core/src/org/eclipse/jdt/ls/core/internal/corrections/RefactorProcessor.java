@@ -152,6 +152,7 @@ public class RefactorProcessor {
 				getConvertForLoopProposal(context, coveringNode, proposals);
 				getAssignToVariableProposals(context, coveringNode, locations, proposals, params);
 				getIntroduceParameterProposals(params, context, coveringNode, locations, proposals);
+				getExtractInterfaceProposal(params, context, proposals);
 			}
 			return proposals;
 		}
@@ -983,5 +984,24 @@ public class RefactorProcessor {
 			node = parent;
 		}
 		return null;
+	}
+
+	private boolean getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+		if (proposals == null) {
+			return false;
+		}
+
+		if (!this.preferenceManager.getClientPreferences().isExtractInterfaceSupport() || !this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			return false;
+		}
+
+		ChangeCorrectionProposal proposal = RefactorProposalUtility.getExtractInterfaceProposal(params, context);
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
 	}
 }

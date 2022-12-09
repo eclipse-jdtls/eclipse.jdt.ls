@@ -70,6 +70,7 @@ public final class CorrectionMessages extends NLS {
 	public static String QuickAssistProcessor_name_extension_from_interface;
 	public static String QuickAssistProcessor_convert_to_static_import;
 	public static String QuickAssistProcessor_convert_to_static_import_replace_all;
+	public static String RefactorProcessor_extract_interface;
 	public static String SerialVersionHashOperation_computing_id;
 	public static String SerialVersionHashOperation_error_classnotfound;
 	public static String SerialVersionHashOperation_save_caption;

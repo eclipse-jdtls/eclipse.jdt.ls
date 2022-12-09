@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
+import org.eclipse.jdt.ls.core.internal.handlers.ExtractInterfaceHandler.CheckExtractInterfaceResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
@@ -1097,6 +1098,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<List<InlayHint>> inlayHint(InlayHintParams params) {
 		logInfo(">> textDocument/inlayHint");
 		return computeAsync(monitor -> new InlayHintsHandler(preferenceManager).inlayHint(params, monitor));
+	}
+
+	@Override
+	public CompletableFuture<CheckExtractInterfaceResponse> checkExtractInterfaceStatus(CodeActionParams params) {
+		logInfo(">> java/checkExtractInterfaceStatus");
+		return computeAsync((monitor) -> ExtractInterfaceHandler.checkExtractInterfaceStatus(params));
 	}
 
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {

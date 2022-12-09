@@ -96,6 +96,7 @@ public interface IProposalRelevance {
 	public static final int RETURN_ALLOCATED_OBJECT_MATCH= 7;
 	public static final int CREATE_LOCAL= 7;
 	public static final int DECLARE_SEALED_AS_DIRECT_SUPER_TYPE = 7;
+	public static final int EXTRACT_INTERFACE = 7;
 
 	public static final int MOVE_REFACTORING = 6;
 	public static final int REMOVE_SEMICOLON= 6;
