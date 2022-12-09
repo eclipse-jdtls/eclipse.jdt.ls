@@ -58,7 +58,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToVariable() throws Exception {
-		setIgnoredCommands("Assign statement to new field", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
+		setIgnoredCommands("Assign statement to new field", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment");
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -80,7 +80,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	private void testAssignVariable(ICompilationUnit cu, Range range) throws JavaModelException {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(2, codeActions.size());
+		assertEquals(1, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, action.getKind());
@@ -93,7 +93,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToField() throws Exception {
-		setIgnoredCommands("Assign statement to new local variable", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
+		setIgnoredCommands("Assign statement to new local variable", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment");
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -115,7 +115,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	private void testAssignField(ICompilationUnit cu, Range range) throws JavaModelException {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(2, codeActions.size());
+		assertEquals(1, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, action.getKind());

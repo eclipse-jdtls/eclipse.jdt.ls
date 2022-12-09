@@ -125,8 +125,6 @@ import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
@@ -138,6 +136,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -170,6 +170,7 @@ public class QuickAssistProcessor {
 
 	public List<ProposalKindWrapper> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
+		String declsToFinal = this.preferenceManager.getPreferences().getCodeGenerationAddFinalForNewDeclaration();
 		if (coveringNode != null) {
 			// ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
 			ArrayList<ProposalKindWrapper> resultingCollections = new ArrayList<>();
@@ -178,8 +179,8 @@ public class QuickAssistProcessor {
 			//			getRenameLocalProposals(context, coveringNode, locations, resultingCollections);
 			//			getRenameRefactoringProposal(context, coveringNode, locations, resultingCollections);
 			//			getAssignToVariableProposals(context, coveringNode, locations, resultingCollections);
-			getAssignParamToFieldProposals(context, coveringNode, resultingCollections);
-			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections);
+			getAssignParamToFieldProposals(context, coveringNode, resultingCollections, ("all".equals(declsToFinal) || "fields".equals(declsToFinal)));
+			getAssignAllParamsToFieldsProposals(context, coveringNode, resultingCollections, ("all".equals(declsToFinal) || "fields".equals(declsToFinal)));
 			//			getInferDiamondArgumentsProposal(context, coveringNode, locations, resultingCollections);
 			//			getGenerateForLoopProposals(context, coveringNode, locations, resultingCollections);
 
@@ -300,7 +301,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections, boolean addFinal) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -345,12 +346,12 @@ public class QuickAssistProcessor {
 			}
 		}
 
-		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD, false);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD, addFinal);
 		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
 
-	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections, boolean addFinal) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -378,7 +379,7 @@ public class QuickAssistProcessor {
 			return true;
 		}
 
-		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS, false);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS, addFinal);
 		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
