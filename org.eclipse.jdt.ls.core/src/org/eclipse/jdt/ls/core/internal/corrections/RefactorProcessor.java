@@ -257,10 +257,11 @@ public class RefactorProcessor {
 	}
 
 	private boolean getAssignToVariableProposals(IInvocationContext context, ASTNode node, IProblemLocation[] locations, Collection<ProposalKindWrapper> resultingCollections, CodeActionParams params) {
+		String declsToFinal = this.preferenceManager.getPreferences().getCodeGenerationAddFinalForNewDeclaration();
 		try {
 			Map formatterOptions = null;
 			ProposalKindWrapper proposal = RefactorProposalUtility.getAssignVariableProposal(params, context, locations != null && locations.length != 0, formatterOptions,
-					this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), locations);
+					this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), locations, ("all".equals(declsToFinal) || "variables".equals(declsToFinal)));
 			if (proposal != null) {
 				resultingCollections.add(proposal);
 			}

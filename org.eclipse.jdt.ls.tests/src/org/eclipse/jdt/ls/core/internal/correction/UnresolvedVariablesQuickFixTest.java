@@ -25,7 +25,9 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -2416,6 +2418,36 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 		Expected e1 = new Expected("Add all missing tags", buf.toString());
 
 		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAssignStatementToVariabledWithFinalSetting() throws Exception {
+		preferences.setCodeGenerationAddFinalForNewDeclaration("variables");
+		try {
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("public class E {\n");
+			buf.append("    public  void test() {\n");
+			buf.append("        System.getenv(\"foo\");\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+			buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("public class E {\n");
+			buf.append("    public  void test() {\n");
+			buf.append("        final String getenv = System.getenv(\"foo\");\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			Expected e1 = new Expected("Assign statement to new local variable", buf.toString());
+
+			Range selection = CodeActionUtil.getRange(cu, "getenv");
+			assertCodeActions(cu, selection, e1);
+		} finally {
+			preferences.setCodeGenerationAddFinalForNewDeclaration(null);
+		}
 	}
 
 	@Test

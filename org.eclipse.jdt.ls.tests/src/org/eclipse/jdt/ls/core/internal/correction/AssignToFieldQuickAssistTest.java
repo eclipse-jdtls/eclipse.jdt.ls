@@ -60,6 +60,37 @@ public class AssignToFieldQuickAssistTest extends AbstractQuickFixTest {
 	}
 
 	@Test
+	public void testAssignParamToFieldWithFinalSetting() throws Exception {
+		preferences.setCodeGenerationAddFinalForNewDeclaration("fields");
+		try {
+			IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+			StringBuilder buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("public class E {\n");
+			buf.append("    public  E(int count) {\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+			buf = new StringBuilder();
+			buf.append("package test1;\n");
+			buf.append("public class E {\n");
+			buf.append("    private final int count;\n");
+			buf.append("\n");
+			buf.append("    public  E(int count) {\n");
+			buf.append("        this.count = count;\n");
+			buf.append("    }\n");
+			buf.append("}\n");
+			Expected e1 = new Expected("Assign parameter to new field", buf.toString());
+
+			Range selection = CodeActionUtil.getRange(cu, "count");
+			assertCodeActions(cu, selection, e1);
+		} finally {
+			preferences.setCodeGenerationAddFinalForNewDeclaration(null);
+		}
+	}
+
+	@Test
 	public void testAssignParamToField2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();

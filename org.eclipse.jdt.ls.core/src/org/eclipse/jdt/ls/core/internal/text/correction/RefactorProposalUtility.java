@@ -477,7 +477,7 @@ public class RefactorProposalUtility {
 	}
 
 	public static ProposalKindWrapper getAssignVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
-			IProblemLocation[] locations)
+			IProblemLocation[] locations, boolean addFinal)
 			throws CoreException {
 		ASTNode node = context.getCoveringNode();
 		Statement statement = ASTResolving.findParentStatement(node);
@@ -509,16 +509,17 @@ public class RefactorProposalUtility {
 		if (returnAsCommand) {
 			AssignToVariableAssistCommandProposal p = new AssignToVariableAssistCommandProposal(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance,
 					APPLY_REFACTORING_COMMAND_ID,
-					Arrays.asList(ASSIGN_VARIABLE_COMMAND, params));
+					Arrays.asList(ASSIGN_VARIABLE_COMMAND, params), addFinal);
 			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		} else {
-			AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance, false);
+			AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance, addFinal);
 			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		}
 	}
 
 	public static ProposalKindWrapper getAssignFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
 			IProblemLocation[] locations) throws CoreException {
+		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
 		ASTNode node = context.getCoveringNode();
 		Statement statement = ASTResolving.findParentStatement(node);
 		if (!(statement instanceof ExpressionStatement)) {
@@ -548,12 +549,14 @@ public class RefactorProposalUtility {
 			} else {
 				relevance = IProposalRelevance.EXTRACT_LOCAL;
 			}
+
 			if (returnAsCommand) {
 				AssignToVariableAssistCommandProposal proposal = new AssignToVariableAssistCommandProposal(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
-						Arrays.asList(ASSIGN_FIELD_COMMAND, params));
+						Arrays.asList(ASSIGN_FIELD_COMMAND, params), ("all".equals(declsToFinal) || "fields".equals(declsToFinal)));
 				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			} else {
-				AssignToVariableAssistProposalCore proposal = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance, false);
+				AssignToVariableAssistProposalCore proposal = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance,
+						("all".equals(declsToFinal) || "fields".equals(declsToFinal)));
 				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			}
 		}

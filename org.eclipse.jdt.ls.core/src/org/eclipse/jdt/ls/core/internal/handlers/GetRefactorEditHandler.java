@@ -33,8 +33,6 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -49,6 +47,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.ChangeAnnotation;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
@@ -258,8 +258,10 @@ public class GetRefactorEditHandler {
 
 	private static ProposalKindWrapper getAssignVariableProposal(GetRefactorEditParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions, IProblemLocation[] locations)
 			throws CoreException {
+		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
+
 		if (RefactorProposalUtility.ASSIGN_VARIABLE_COMMAND.equals(refactorType)) {
-			return RefactorProposalUtility.getAssignVariableProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
+			return RefactorProposalUtility.getAssignVariableProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations, ("all".equals(declsToFinal) || "variables".equals(declsToFinal)));
 		}
 		if (RefactorProposalUtility.ASSIGN_FIELD_COMMAND.equals(refactorType)) {
 			return RefactorProposalUtility.getAssignFieldProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);

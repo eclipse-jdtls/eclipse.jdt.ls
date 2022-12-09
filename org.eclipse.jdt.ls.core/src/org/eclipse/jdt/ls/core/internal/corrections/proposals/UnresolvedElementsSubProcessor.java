@@ -150,6 +150,8 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 	 */
 	@Override
 	protected ProposalKindWrapper newVariableCorrectionProposalToT(NewVariableCorrectionProposalCore core, int uid) {
+		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
+		core.setAddFinal("all".equals(declsToFinal) || "variables".equals(declsToFinal));
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
 	}
 
