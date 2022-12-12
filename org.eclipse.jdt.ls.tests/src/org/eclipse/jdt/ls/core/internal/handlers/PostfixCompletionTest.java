@@ -459,6 +459,25 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(list.getItems().size() > 0);
 	}
 
+	@Test
+	public void test_JavaDoc() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public enum Test {\n" +
+			"	/**\n" +
+			"	* {@link ArrayList}\n" +
+			"	* Match case for the first letter.\n" +
+			"	*/\n" +
+			"	FIRSTLETTER;\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "letter.");
+		assertTrue(list.getItems().isEmpty());
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}

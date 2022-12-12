@@ -64,6 +64,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
@@ -315,7 +316,9 @@ public class JavaPostfixContext extends JavaContext {
 		if (isForceEvaluation())
 			return true;
 
-		if (selectedNode == null) // We can evaluate to true only if we have a valid inner expression
+		// We can evaluate to true only if we have a valid inner expression
+		// Do not evalute within Javadoc elements
+		if (selectedNode == null || selectedNode instanceof Javadoc)
 			return false;
 
 		if (template.getName().toLowerCase().startsWith(getPrefixKey().toLowerCase()) == false) {
