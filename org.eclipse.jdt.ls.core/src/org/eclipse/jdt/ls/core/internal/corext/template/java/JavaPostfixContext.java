@@ -316,14 +316,12 @@ public class JavaPostfixContext extends JavaContext {
 		if (isForceEvaluation())
 			return true;
 
-		if (selectedNode == null) // We can evaluate to true only if we have a valid inner expression
+		// We can evaluate to true only if we have a valid inner expression
+		// Do not evalute within Javadoc elements
+		if (selectedNode == null || selectedNode instanceof Javadoc)
 			return false;
 
 		if (template.getName().toLowerCase().startsWith(getPrefixKey().toLowerCase()) == false) {
-			return false;
-		}
-
-		if (selectedNode instanceof Javadoc) {
 			return false;
 		}
 

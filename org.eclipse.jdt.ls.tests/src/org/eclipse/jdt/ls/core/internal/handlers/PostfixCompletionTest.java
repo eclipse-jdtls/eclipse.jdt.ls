@@ -467,6 +467,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 			"package org.sample;\n" +
 			"public enum Test {\n" +
 			"	/**\n" +
+			"	* {@link ArrayList}\n" +
 			"	* Match case for the first letter.\n" +
 			"	*/\n" +
 			"	FIRSTLETTER;\n" +

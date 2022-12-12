@@ -144,7 +144,7 @@ public class PostfixCompletionProposalComputer {
 					if (invOffset > start && start >= bestNode[0].getStartPosition()) {
 						bestNode[0]= node;
 					}
-					return true;
+					return false;
 				}
 
 				@Override
