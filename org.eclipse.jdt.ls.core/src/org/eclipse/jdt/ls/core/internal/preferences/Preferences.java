@@ -61,6 +61,7 @@ import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionMatchCaseMode;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
 import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -307,6 +308,11 @@ public class Preferences {
 	 * Preference key to enable/disable postfix completion.
 	 */
 	public static final String POSTFIX_COMPLETION_KEY = "java.completion.postfix.enabled";
+
+	/**
+	 * Preference key to specify whether to match case when completion.
+	 */
+	public static final String COMPLETION_MATCH_CASE_MODE_KEY = "java.completion.matchCase";
 
 	/**
 	 * Preference key to enable/disable the 'foldingRange'.
@@ -556,6 +562,7 @@ public class Preferences {
 	private boolean autobuildEnabled;
 	private boolean completionEnabled;
 	private boolean postfixCompletionEnabled;
+	private CompletionMatchCaseMode completionMatchCaseMode;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
@@ -800,6 +807,7 @@ public class Preferences {
 		autobuildEnabled = true;
 		completionEnabled = true;
 		postfixCompletionEnabled = true;
+		completionMatchCaseMode = CompletionMatchCaseMode.OFF;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
@@ -969,6 +977,9 @@ public class Preferences {
 
 		boolean postfixEnabled = getBoolean(configuration, POSTFIX_COMPLETION_KEY, true);
 		prefs.setPostfixCompletionEnabled(postfixEnabled);
+
+		String completionMatchCaseMode = getString(configuration, COMPLETION_MATCH_CASE_MODE_KEY, null);
+		prefs.setCompletionMatchCaseMode(CompletionMatchCaseMode.fromString(completionMatchCaseMode, CompletionMatchCaseMode.OFF));
 
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
@@ -1371,6 +1382,14 @@ public class Preferences {
 
 	public void setPostfixCompletionEnabled(boolean postfixCompletionEnabled) {
 		this.postfixCompletionEnabled = postfixCompletionEnabled;
+	}
+
+	public CompletionMatchCaseMode getCompletionMatchCaseMode() {
+		return completionMatchCaseMode;
+	}
+
+	public void setCompletionMatchCaseMode(CompletionMatchCaseMode completionMatchCaseMode) {
+		this.completionMatchCaseMode = completionMatchCaseMode;
 	}
 
 	public Preferences setCompletionOverwrite(boolean completionOverwrite) {
