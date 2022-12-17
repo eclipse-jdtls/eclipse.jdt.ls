@@ -13,11 +13,14 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOrdinaryClassFile;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -36,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.legacy.typeHierarchy.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyDirection;
@@ -83,37 +87,46 @@ public class TypeHierarchyCommand {
 			return null;
 		}
 		try {
-			IType type = null;
+			IMember member = null;
+			IMethod targetMethod = null;
 			if (itemInput == null) {
-				type = getType(uri, position, monitor);
+				member = getMember(uri, position, monitor);
+				if (member instanceof IMethod) {
+					targetMethod = (IMethod) member;
+				}
 			} else {
-				String handleIdentifier = JSONUtility.toModel(itemInput.getData(), String.class);
+				Map<String, String> data = JSONUtility.toModel(itemInput.getData(), Map.class);
+				String handleIdentifier = data.get("element");
 				IJavaElement element = JavaCore.create(handleIdentifier);
-				if (element instanceof IType theType) {
-					type = theType;
+				String methodIdentifier = data.get("method");
+				if (methodIdentifier != null) {
+					targetMethod = (IMethod) JavaCore.create(methodIdentifier);
+				}
+				if (element instanceof IType || element instanceof IMethod) {
+					member = (IMember) element;
 				} else if (element instanceof IOrdinaryClassFile classFile) {
-					type = classFile.getType();
+					member = classFile.getType();
 				} else {
 					return null;
 				}
 			}
-			TypeHierarchyItem item = TypeHierarchyCommand.toTypeHierarchyItem(type);
+			TypeHierarchyItem item = TypeHierarchyCommand.toTypeHierarchyItem(member);
 			if (item == null) {
 				return null;
 			}
-			resolve(item, type, direction, resolve, monitor);
+			resolve(item, member, targetMethod, direction, resolve, monitor);
 			return item;
 		} catch (JavaModelException e) {
 			return null;
 		}
 	}
 
-	private IType getType(String uri, Position position, IProgressMonitor monitor) throws JavaModelException {
+	private IMember getMember(String uri, Position position, IProgressMonitor monitor) throws JavaModelException {
 		IJavaElement typeElement = findTypeElement(JDTUtils.resolveTypeRoot(uri), position, monitor);
 		if (typeElement instanceof IType type) {
 			return type;
 		} else if (typeElement instanceof IMethod method) {
-			return method.getDeclaringType();
+			return method;
 		} else {
 			return null;
 		}
@@ -134,12 +147,16 @@ public class TypeHierarchyCommand {
 		return element;
 	}
 
-	private static TypeHierarchyItem toTypeHierarchyItem(IType type) throws JavaModelException {
-		if (type == null) {
+	private static TypeHierarchyItem toTypeHierarchyItem(IMember member) throws JavaModelException {
+		return toTypeHierarchyItem(member, false, null);
+	}
+
+	private static TypeHierarchyItem toTypeHierarchyItem(IMember member, boolean excludeMember, IMethod targetMethod) throws JavaModelException {
+		if (member == null) {
 			return null;
 		}
-		Location location = getLocation(type, LocationType.FULL_RANGE);
-		Location selectLocation = getLocation(type, LocationType.NAME_RANGE);
+		Location location = getLocation(member, LocationType.FULL_RANGE);
+		Location selectLocation = getLocation(member, LocationType.NAME_RANGE);
 		if (location == null || selectLocation == null) {
 			return null;
 		}
@@ -147,6 +164,14 @@ public class TypeHierarchyCommand {
 		item.setRange(location.getRange());
 		item.setUri(location.getUri());
 		item.setSelectionRange(selectLocation.getRange());
+
+		IType type = null;
+		if (member instanceof IType) {
+			type = (IType) member;
+		} else {
+			type = member.getDeclaringType();
+		}
+
 		String fullyQualifiedName = type.getFullyQualifiedName();
 		int index = fullyQualifiedName.lastIndexOf('.');
 		if (index >= 1 && index < fullyQualifiedName.length() - 1 && !type.isAnonymous()) {
@@ -159,24 +184,41 @@ public class TypeHierarchyCommand {
 				item.setDetail(packageFragment.getElementName());
 			}
 		}
-		item.setKind(DocumentSymbolHandler.mapKind(type));
-		item.setDeprecated(JDTUtils.isDeprecated(type));
-		item.setData(type.getHandleIdentifier());
+		item.setKind(excludeMember ? SymbolKind.Null : DocumentSymbolHandler.mapKind(type));
+		item.setDeprecated(JDTUtils.isDeprecated(member));
+		Map<String, String> data = new HashMap<>();
+		data.put("element", member.getHandleIdentifier());
+		if (targetMethod != null) {
+			data.put("method", targetMethod.getHandleIdentifier());
+			data.put("method_name", targetMethod.getElementName());
+		} else if (member instanceof IMethod) {
+			data.put("method", member.getHandleIdentifier());
+			data.put("method_name", member.getElementName());
+		}
+		item.setData(data);
 		return item;
 	}
 
-	private static Location getLocation(IType type, LocationType locationType) throws JavaModelException {
-		Location location = locationType.toLocation(type);
-		if (location == null && type.getClassFile() != null) {
-			location = JDTUtils.toLocation(type.getClassFile());
+	private static Location getLocation(IMember member, LocationType locationType) throws JavaModelException {
+		Location location = locationType.toLocation(member);
+		if (location == null && member.getClassFile() != null) {
+			location = JDTUtils.toLocation(member.getClassFile());
 		}
 		return location;
 	}
 
-	private void resolve(TypeHierarchyItem item, IType type, TypeHierarchyDirection direction, int resolve, IProgressMonitor monitor) throws JavaModelException {
+	private void resolve(TypeHierarchyItem item, IMember member, IMethod targetMethod, TypeHierarchyDirection direction, int resolve, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor.isCanceled() || resolve <= 0) {
 			return;
 		}
+
+		IType type = null;
+		if (member instanceof IType) {
+			type = (IType) member;
+		} else {
+			type = member.getDeclaringType();
+		}
+
 		ITypeHierarchy typeHierarchy;
 		if (direction == TypeHierarchyDirection.Parents) {
 			typeHierarchy = type.newSupertypeHierarchy(DefaultWorkingCopyOwner.PRIMARY, monitor);
@@ -188,11 +230,18 @@ public class TypeHierarchyCommand {
 			List<TypeHierarchyItem> childrenItems = new ArrayList<>();
 			IType[] children = typeHierarchy.getSubtypes(type);
 			for (IType childType : children) {
-				TypeHierarchyItem childItem = TypeHierarchyCommand.toTypeHierarchyItem(childType);
+				TypeHierarchyItem childItem = null;
+				if (targetMethod != null) {
+					IMethod[] matches = childType.findMethods(targetMethod);
+					boolean excludeMember = matches == null || matches.length == 0;
+					childItem = TypeHierarchyCommand.toTypeHierarchyItem(excludeMember ? childType : matches[0], excludeMember, targetMethod);
+				} else {
+					childItem = TypeHierarchyCommand.toTypeHierarchyItem(childType);
+				}
 				if (childItem == null) {
 					continue;
 				}
-				resolve(childItem, childType, direction, resolve - 1, monitor);
+				resolve(childItem, childType, targetMethod, direction, resolve - 1, monitor);
 				childrenItems.add(childItem);
 			}
 			item.setChildren(childrenItems);
@@ -201,11 +250,21 @@ public class TypeHierarchyCommand {
 			List<TypeHierarchyItem> parentsItems = new ArrayList<>();
 			IType[] parents = typeHierarchy.getSupertypes(type);
 			for (IType parentType : parents) {
-				TypeHierarchyItem parentItem = TypeHierarchyCommand.toTypeHierarchyItem(parentType);
+				TypeHierarchyItem parentItem = null;
+				if (targetMethod != null) {
+					IMethod[] matches = parentType.findMethods(targetMethod);
+					boolean excludeMember = matches == null || matches.length == 0;
+					// Do not show java.lang.Object unless target method is based there
+					if (!excludeMember || !"java.lang.Object".equals(parentType.getFullyQualifiedName())) {
+						parentItem = TypeHierarchyCommand.toTypeHierarchyItem(excludeMember ? parentType : matches[0], excludeMember, targetMethod);
+					}
+				} else {
+					parentItem = TypeHierarchyCommand.toTypeHierarchyItem(parentType);
+				}
 				if (parentItem == null) {
 					continue;
 				}
-				resolve(parentItem, parentType, direction, resolve - 1, monitor);
+				resolve(parentItem, parentType, targetMethod, direction, resolve - 1, monitor);
 				parentsItems.add(parentItem);
 			}
 			item.setParents(parentsItems);
