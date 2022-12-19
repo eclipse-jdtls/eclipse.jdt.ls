@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
@@ -3607,6 +3608,24 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} finally {
 			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.OFF);
 		}
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2376
+	@Test
+	public void testCompletion_selectSnippetItem() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						" 		sysout\n" +
+						"	}\n"+
+				"}\n");
+
+		CompletionList list = requestCompletions(unit, "sysout");
+		CompletionItem completionItem = list.getItems().get(0);
+		Map<String, String> data = JSONUtility.toModel(completionItem.getData(), Map.class);
+		long requestId = Long.parseLong(data.get("rid"));
+		assertNotNull(CompletionResponses.get(requestId));
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
