@@ -322,6 +322,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 
 		response.setProposals(proposals);
+		response.setItems(res);
 		CompletionResponses.store(response);
 		return res;
 	}
