@@ -66,33 +66,45 @@ public class GradleCompatibilityProcessor {
 				ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
 				IModuleDescription moduleDescription = javaProject.getModuleDescription();
 				if (moduleDescription == null) {
-					// For a project doesn't have a module description file (module-info.java), there should be nothing in the module path.
-					// See: https://github.com/gradle/gradle/issues/16922
-					if (result.modulepaths.length > 0) {
-						addProposal(context, uri, proposals);
-					}
+					addProposalForNonModulerProject(result, context, uri, proposals);
 				} else {
-					// For a project has a module description file (module-info.java), we should check that all the dependencies in classpath don't contain
-					// module description (either description or automatic description, the supported inferred modules in Gradle)
-					// See: https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
-					for (String classpath : result.classpaths) {
-						IPackageFragmentRoot packageFragmentRoot = javaProject.findPackageFragmentRoot(new Path(classpath));
-						if (packageFragmentRoot instanceof JarPackageFragmentRoot) {
-							// try to get module description
-							IModuleDescription jarModuleDescription = ((JarPackageFragmentRoot) packageFragmentRoot).getModuleDescription();
-							if (jarModuleDescription == null) {
-								// fall back to get automatic module description
-								jarModuleDescription = ((JarPackageFragmentRoot) packageFragmentRoot).getAutomaticModuleDescription();
-							}
-							if (jarModuleDescription != null) {
-								addProposal(context, uri, proposals);
-								break;
-							}
-						}
-					}
+					addProposalForModulerProject(javaProject, result, context, uri, proposals);
 				}
 			} catch (CoreException | URISyntaxException e) {
 				return;
+			}
+		}
+	}
+
+	private static void addProposalForNonModulerProject(ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
+		// For a project doesn't have a module description file (module-info.java), there should be nothing in the module path.
+		// See: https://github.com/gradle/gradle/issues/16922
+		if (result.modulepaths.length > 0) {
+			addProposal(context, uri, proposals);
+		}
+	}
+
+	private static void addProposalForModulerProject(IJavaProject javaProject, ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
+		// For a project has a module description file (module-info.java), we should check that all the dependencies in classpath don't contain
+		// module description (either description or automatic description, the supported inferred modules in Gradle)
+		// See: https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
+		for (String classpath : result.classpaths) {
+			try {
+				IPackageFragmentRoot packageFragmentRoot = javaProject.findPackageFragmentRoot(new Path(classpath));
+				if (packageFragmentRoot instanceof JarPackageFragmentRoot) {
+					// try to get module description
+					IModuleDescription jarModuleDescription = ((JarPackageFragmentRoot) packageFragmentRoot).getModuleDescription();
+					if (jarModuleDescription == null) {
+						// fall back to get automatic module description
+						jarModuleDescription = ((JarPackageFragmentRoot) packageFragmentRoot).getAutomaticModuleDescription();
+					}
+					if (jarModuleDescription != null) {
+						addProposal(context, uri, proposals);
+						break;
+					}
+				}
+			} catch (CoreException e) {
+				continue;
 			}
 		}
 	}
