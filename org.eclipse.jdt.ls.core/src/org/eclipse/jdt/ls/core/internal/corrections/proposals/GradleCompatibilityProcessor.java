@@ -76,18 +76,45 @@ public class GradleCompatibilityProcessor {
 		}
 	}
 
+	/**
+	 * Add proposal for a non-modular project. For a project doesn't have a module
+	 * description file (module-info.java), there should be nothing in the module
+	 * path. See: https://github.com/gradle/gradle/issues/16922
+	 * 
+	 * @param result
+	 *                      the classpath result
+	 * @param context
+	 *                      the invocation context
+	 * @param uri
+	 *                      the project uri
+	 * @param proposals
+	 *                      the current proposals
+	 */
 	private static void addProposalForNonModulerProject(ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
-		// For a project doesn't have a module description file (module-info.java), there should be nothing in the module path.
-		// See: https://github.com/gradle/gradle/issues/16922
 		if (result.modulepaths.length > 0) {
 			addProposal(context, uri, proposals);
 		}
 	}
 
+	/**
+	 * Add proposal for a modular project. For a project has a module description
+	 * file (module-info.java), we should check that all the dependencies in
+	 * classpath don't contain module description (either description or automatic
+	 * description, the supported inferred modules in Gradle) See:
+	 * https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
+	 * 
+	 * @param javaProject
+	 *                        the java project
+	 * @param result
+	 *                        the classpath result
+	 * @param context
+	 *                        the invocation context
+	 * @param uri
+	 *                        the project uri
+	 * @param proposals
+	 *                        the current proposals
+	 */
 	private static void addProposalForModulerProject(IJavaProject javaProject, ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
-		// For a project has a module description file (module-info.java), we should check that all the dependencies in classpath don't contain
-		// module description (either description or automatic description, the supported inferred modules in Gradle)
-		// See: https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
 		for (String classpath : result.classpaths) {
 			try {
 				IPackageFragmentRoot packageFragmentRoot = javaProject.findPackageFragmentRoot(new Path(classpath));
