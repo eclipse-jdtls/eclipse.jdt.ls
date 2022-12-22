@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -211,7 +212,9 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 
 			fLinkedProposalModel = new LinkedProposalModelCore();
 
-			fScope = CodeScopeBuilder.perform(fAnalyzer.getEnclosingBodyDeclaration(), fSelection).findScope(fSelection.getOffset(), fSelection.getLength());
+			BodyDeclaration enclosingBodyDeclaration = fAnalyzer.getEnclosingBodyDeclaration();
+			Selection ignoreSelection = Selection.createFromStartEnd(fSelection.getOffset(), enclosingBodyDeclaration.getStartPosition() + enclosingBodyDeclaration.getLength());
+			fScope = CodeScopeBuilder.perform(enclosingBodyDeclaration, ignoreSelection).findScope(fSelection.getOffset(), fSelection.getLength());
 			fScope.setCursor(fSelection.getOffset());
 
 			fSelectedNodes = fAnalyzer.getSelectedNodes();
