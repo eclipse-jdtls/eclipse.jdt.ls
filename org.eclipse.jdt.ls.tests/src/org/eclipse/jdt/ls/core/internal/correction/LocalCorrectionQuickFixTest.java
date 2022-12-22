@@ -1024,6 +1024,42 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2, e3, e4);
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/2711
+	@Test
+	public void testBug2711() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n" //
+				+ "public class E {\n" //
+				+ "    public void test () {\n" //
+				+ "        throw new Exception();\n" //
+				+ "        try {\n" //
+				+ "        } catch (Exception e) {\n" //
+				+ "            // TODO: handle exception\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		buf = new StringBuilder();
+		buf.append("package test1;\n" //
+				+ "public class E {\n" //
+				+ "    public void test () {\n" //
+				+ "        try {\n" //
+				+ "            throw new Exception();\n" //
+				+ "        } catch (Exception e) {\n" //
+				+ "            // TODO Auto-generated catch block\n" //
+				+ "            e.printStackTrace();\n" //
+				+ "        }\n" //
+				+ "        try {\n" //
+				+ "        } catch (Exception e) {\n" //
+				+ "            // TODO: handle exception\n" //
+				+ "        }\n" //
+				+ "    }\n" //
+				+ "}");
+		Expected e1 = new Expected("Surround with try/catch", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
 	@Test
 	public void testMultiCatchUncaughtExceptions() throws Exception {
 
