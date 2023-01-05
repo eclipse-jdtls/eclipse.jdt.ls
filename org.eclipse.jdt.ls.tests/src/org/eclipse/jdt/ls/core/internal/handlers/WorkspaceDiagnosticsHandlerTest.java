@@ -256,8 +256,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
-		assertEquals(diags.toString(), 1, diags.size());
-		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diags.get(0).getMessage());
+		// https://github.com/redhat-developer/vscode-java/issues/2857
+		// m2e 2.2.0 returns 3 markers
+		assertEquals(diags.toString(), 3, diags.size());
+		Diagnostic diag = diags.stream().filter(d -> d.getMessage().startsWith("Project build error")).findFirst().get();
+		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diag.getMessage());
 	}
 
 	@Test
