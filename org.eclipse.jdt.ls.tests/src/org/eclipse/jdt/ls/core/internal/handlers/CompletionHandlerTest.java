@@ -69,6 +69,7 @@ import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
+import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
@@ -76,6 +77,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.junit.After;
@@ -3626,6 +3628,39 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Map<String, String> data = JSONUtility.toModel(completionItem.getData(), Map.class);
 		long requestId = Long.parseLong(data.get("rid"));
 		assertNotNull(CompletionResponses.get(requestId));
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2387
+	@Test
+	public void testCompletion_multiLineRange() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"public class Foo {\n"
+					+ "    public static void main(String[] args) {\n"
+					+ "        if (true) {\n"
+					+ "            java.util.List<String> list = new java.util.ArrayList<>();\n"
+					+ "            list.add\n"
+					+ "            (\"test\"\n"
+					+ "            );\n"
+					+ "        }\n"
+					+ "    }\n"
+					+ "}\n");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "list.");
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().startsWith("add")).collect(Collectors.toList());
+		assertTrue(completionItems.size() > 0);
+		for (CompletionItem completionItem: completionItems) {
+			assertNotNull(completionItem);
+			Either<TextEdit, InsertReplaceEdit> textEdit = completionItem.getTextEdit();
+			assertNotNull(textEdit);
+			Range replace = textEdit.isRight() ? textEdit.getRight().getReplace() : null;
+			if (replace == null) {
+				replace = textEdit.isLeft() ? textEdit.getLeft().getRange() : (textEdit.getRight().getInsert() != null ? textEdit.getRight().getInsert() : textEdit.getRight().getReplace());
+			}
+			assertEquals(replace.getStart().getLine(), replace.getEnd().getLine());
+		}
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
