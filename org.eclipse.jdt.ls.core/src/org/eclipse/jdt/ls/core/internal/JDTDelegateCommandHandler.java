@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
@@ -35,7 +36,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.PasteEventParams;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
-import org.eclipse.jdt.ls.core.internal.managers.GradleUtils;
 import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -130,7 +130,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					String projectUri = (String) arguments.get(0);
 					String gradleVersion = arguments.size() > 1 ? (String) arguments.get(1) : null;
 					if (gradleVersion == null) {
-						gradleVersion = GradleUtils.CURRENT_GRADLE;
+						gradleVersion = GradleVersion.current().getVersion();
 					}
 					return GradleProjectImporter.upgradeGradleVersion(projectUri, gradleVersion, monitor);
 				case "java.project.resolveWorkspaceSymbol":

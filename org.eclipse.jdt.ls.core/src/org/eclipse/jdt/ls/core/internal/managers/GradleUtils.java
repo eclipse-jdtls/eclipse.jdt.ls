@@ -47,9 +47,11 @@ import org.gradle.tooling.model.build.GradleEnvironment;
 public class GradleUtils {
 
 	public static String MAX_SUPPORTED_JAVA = JavaCore.VERSION_17;
-	public static String CURRENT_GRADLE = "7.3.1";
 	// see https://github.com/gradle/gradle/pull/17397
 	public static String INVALID_TYPE_FIXED_VERSION = "7.2";
+	// see https://github.com/gradle/gradle/issues/890
+	// see https://github.com/gradle/gradle/issues/16922
+	public static String JPMS_SUPPORTED_VERSION = "7.0.1";
 
 	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
 

@@ -45,6 +45,7 @@ import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.SynchronizationResult;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.DefaultGradleBuild;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.resources.IFile;
@@ -247,7 +248,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				}
 			}
 			if (JavaLanguageServerPlugin.getProjectsManager() != null && JavaLanguageServerPlugin.getProjectsManager().getConnection() != null) {
-				GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleUtils.CURRENT_GRADLE);
+				GradleCompatibilityInfo info = new GradleCompatibilityInfo(gradleStatus.getProjectUri(), gradleStatus.getMessage(), gradleStatus.getHighestJavaVersion(), GradleVersion.current().getVersion());
 				EventNotification notification = new EventNotification().withType(EventType.IncompatibleGradleJdkIssue).withData(info);
 				JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
 			}
@@ -271,7 +272,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 							IMarker marker = ResourceUtils.createWarningMarker(GRADLE_UPGRADE_WRAPPER_MARKER_ID, wrapperProperties, GRADLE_INVALID_TYPE_CODE_MESSAGE, INVALID_TYPE_CODE_ID, reader.getLineNumber());
 							marker.setAttribute(GRADLE_MARKER_COLUMN_START, 0);
 							marker.setAttribute(GRADLE_MARKER_COLUMN_END, line.length());
-							UpgradeGradleWrapperInfo info = new UpgradeGradleWrapperInfo(gradleStatus.getProjectUri(), GRADLE_INVALID_TYPE_CODE_MESSAGE, GradleUtils.CURRENT_GRADLE);
+							UpgradeGradleWrapperInfo info = new UpgradeGradleWrapperInfo(gradleStatus.getProjectUri(), GRADLE_INVALID_TYPE_CODE_MESSAGE, GradleVersion.current().getVersion());
 							EventNotification notification = new EventNotification().withType(EventType.UpgradeGradleWrapper).withData(info);
 							JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(notification);
 							break;
@@ -531,9 +532,26 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return shouldSynchronize;
 	}
 
-	public static boolean upgradeGradleVersion(String projectUri, String gradleVersion, IProgressMonitor monitor) {
+	/**
+	 * update the gradle wrapper to the given version
+	 * @param projectUri uri of the project
+	 * @param gradleVersion the target gradle version
+	 * @param monitor the progress monitor
+	 * @return the path to the new gradle-wrapper.properties file
+	 */
+	public static String upgradeGradleVersion(String projectUri, String gradleVersion, IProgressMonitor monitor) {
 		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", gradleVersion);
 		Path projectFolder = Paths.get(URI.create(projectUri));
+		// try to get root project directory
+		IProject project = ProjectUtils.getProjectFromUri(projectUri);
+		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
+		if (build.isEmpty()) {
+			return null;
+		}
+		GradleBuild gradleBuild = build.get();
+		if (gradleBuild instanceof DefaultGradleBuild) {
+			projectFolder = ((DefaultGradleBuild) gradleBuild).getBuildConfig().getRootProjectDirectory().toPath();
+		}
 		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
 		Properties properties = new Properties();
 		if (propertiesFile.exists()) {
@@ -541,7 +559,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				properties.load(stream);
 				properties.setProperty("distributionUrl", newDistributionUrl);
 			} catch (IOException e) {
-				return false;
+				return null;
 			}
 		} else {
 			properties.setProperty("distributionBase", "GRADLE_USER_HOME");
@@ -553,10 +571,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		try {
 			properties.store(new FileOutputStream(propertiesFile), null);
 		} catch (Exception e) {
-			return false;
+			return null;
 		}
-		BuildConfiguration build = getBuildConfiguration(projectFolder);
-		GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(build);
 		try {
 			gradleBuild.withConnection(connection -> {
 				connection.newBuild().forTasks("wrapper").run();
@@ -565,7 +581,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		} catch (Exception e) {
 			// Do nothing
 		}
-		return true;
+		return propertiesFile.getAbsolutePath();
 	}
 
 	/**
