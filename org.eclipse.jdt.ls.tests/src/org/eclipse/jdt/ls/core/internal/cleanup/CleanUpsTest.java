@@ -521,4 +521,41 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	public void testTryWithResourceCleanUp() throws Exception {
+		String contents = "" + //
+				"package test1;\n" + //
+				"import java.io.FileInputStream;\n" + //
+				"import java.io.IOException;\n" + //
+				"public class A {\n" + //
+				"    public void test() {\n" + //
+				"        final FileInputStream inputStream = new FileInputStream(\"out.txt\");\n" + //
+				"        try {\n" + //
+				"            System.out.println(inputStream.read());\n" + //
+				"        } finally {\n" + //
+				"            inputStream.close();\n" + //
+				"        }\n" + //
+				"    }\n" + //
+				"}\n";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = "" + //
+				"package test1;\n" + //
+				"import java.io.FileInputStream;\n" + //
+				"import java.io.IOException;\n" + //
+				"public class A {\n" + //
+				"    public void test() {\n" + //
+				"        final FileInputStream inputStream = new FileInputStream(\"out.txt\");\n" + //
+				"        try (inputStream) {\n" + //
+				"            System.out.println(inputStream.read());\n" + //
+				"        }\n" + //
+				"    }\n" + //
+				"}\n";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("tryWithResource"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
 }
