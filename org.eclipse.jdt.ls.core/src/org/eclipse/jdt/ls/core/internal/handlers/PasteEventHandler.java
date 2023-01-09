@@ -262,9 +262,11 @@ public class PasteEventHandler {
 		tempUnit.applyTextEdit(new ReplaceEdit(offset, length, insertText), monitor);
 		if (originalDocumentUri != null) {
 			ICompilationUnit tempOriginalUnit = JDTUtils.resolveCompilationUnit(originalDocumentUri);
+			boolean isClassFile = false;
 			if (tempOriginalUnit == null) {
 				IClassFile classFile = JDTUtils.resolveClassFile(originalDocumentUri);
 				if (classFile != null) {
+					isClassFile = true;
 					tempOriginalUnit = classFile.getWorkingCopy(new WorkingCopyOwner() {
 					}, monitor);
 				}
@@ -284,7 +286,9 @@ public class PasteEventHandler {
 					return candidates.toArray(new ImportCandidate[] {});
 				};
 			}
-			tempOriginalUnit.discardWorkingCopy();
+			if (isClassFile) {
+				tempOriginalUnit.discardWorkingCopy();
+			}
 		}
 		TextEdit edit = OrganizeImportsHandler.organizeImports(tempUnit, chooseFunc, true, monitor);
 		if (edit == null) {
