@@ -233,7 +233,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 						item.setLabel(decorators + " " + item.getLabel());
 					}
 					Map<String, String> itemData = (Map<String, String>) item.getData();
-					Map<String, String> rankingData = (Map<String, String>) rankingResult.getData();
+					Map<String, String> rankingData = rankingResult.getData();
 					for (String key : rankingData.keySet()) {
 						itemData.put(key, rankingData.get(key));
 					}
@@ -311,6 +311,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
 			if (proposal.getKind() == CompletionProposal.TYPE_REF && range != null && newText != null) {
 				$.setFilterText(newText);
+			}
+			// See https://github.com/eclipse/eclipse.jdt.ls/issues/2387
+			Range replace;
+			if (preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()) {
+				replace = $.getTextEdit().isRight() ? $.getTextEdit().getRight().getReplace() : null;
+			} else {
+				replace = range;
+			}
+			if (replace != null && replace.getEnd().getLine() != replace.getStart().getLine()) {
+				replace.setEnd(replace.getStart());
 			}
 		}
 		return $;
