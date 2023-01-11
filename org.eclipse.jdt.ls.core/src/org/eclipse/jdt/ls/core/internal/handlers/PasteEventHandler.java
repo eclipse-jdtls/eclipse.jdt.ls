@@ -12,25 +12,42 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
+import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
+import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
+import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.text.edits.ReplaceEdit;
+import org.eclipse.text.edits.TextEdit;
 
 /**
  * Handles paste events, modifying the pasted value and supplying additional
@@ -179,7 +196,15 @@ public class PasteEventHandler {
 		parser.setSource(cu);
 		parser.setResolveBindings(false);
 		CompilationUnit ast = (CompilationUnit) parser.createAST(monitor);
-		return handleStringPasteEvent(params, cu, ast, monitor);
+		DocumentPasteEdit edit = handleStringPasteEvent(params, cu, ast, monitor);
+		if (edit == null) {
+			try {
+				edit = getMissingImportsWorkspaceEdit(params, cu, monitor);
+			} catch (CoreException e) {
+				// Do nothing
+			}
+		}
+		return edit;
 	}
 
 	private static DocumentPasteEdit handleStringPasteEvent(PasteEventParams params, ICompilationUnit cu, CompilationUnit ast, IProgressMonitor monitor) {
@@ -223,6 +248,55 @@ public class PasteEventHandler {
 		String newText = StringEscapeUtils.escapeJava(params.getText()).replaceAll("((?:\\\\r)?\\\\n)", "$1\" + //" + eol + leadingIndentation + "\"");
 		return new DocumentPasteEdit(newText);
 
+	}
+
+	public static DocumentPasteEdit getMissingImportsWorkspaceEdit(PasteEventParams params, ICompilationUnit cu, IProgressMonitor monitor) throws CoreException {
+		Range range = params.getLocation().getRange();
+		String originalDocumentUri = params.getCopiedDocumentUri();
+		String insertText = params.getText();
+		int offset = JsonRpcHelpers.toOffset(cu, range.getStart().getLine(), range.getStart().getCharacter());
+		int length = JsonRpcHelpers.toOffset(cu, range.getEnd().getLine(), range.getEnd().getCharacter()) - offset;
+		Function<ImportSelection[], ImportCandidate[]> chooseFunc = null;
+		ICompilationUnit tempUnit = RenameAnalyzeUtil.createNewWorkingCopy(cu, new TextChangeManager(true), new WorkingCopyOwner() {
+		}, new SubProgressMonitor(monitor == null ? new NullProgressMonitor() : monitor, 1));
+		tempUnit.applyTextEdit(new ReplaceEdit(offset, length, insertText), monitor);
+		if (originalDocumentUri != null) {
+			ICompilationUnit tempOriginalUnit = JDTUtils.resolveCompilationUnit(originalDocumentUri);
+			boolean isClassFile = false;
+			if (tempOriginalUnit == null) {
+				IClassFile classFile = JDTUtils.resolveClassFile(originalDocumentUri);
+				if (classFile != null) {
+					isClassFile = true;
+					tempOriginalUnit = classFile.getWorkingCopy(new WorkingCopyOwner() {
+					}, monitor);
+				}
+			}
+			if (tempOriginalUnit != null) {
+				Set<String> names = Arrays.stream(tempOriginalUnit.getImports()).map(importDecl -> importDecl.getElementName()).filter(name -> name != null).collect(Collectors.toSet());
+				chooseFunc = (selections) -> {
+					List<ImportCandidate> candidates = new ArrayList<>();
+					for (ImportSelection selection : selections) {
+						for (ImportCandidate candidate : selection.candidates) {
+							if (names.contains(candidate.fullyQualifiedName)) {
+								candidates.add(candidate);
+								break;
+							}
+						}
+					}
+					return candidates.toArray(new ImportCandidate[] {});
+				};
+			}
+			if (isClassFile) {
+				tempOriginalUnit.discardWorkingCopy();
+			}
+		}
+		TextEdit edit = OrganizeImportsHandler.organizeImports(tempUnit, chooseFunc, true, monitor);
+		if (edit == null) {
+			return null;
+		}
+		WorkspaceEdit workspaceEdit = SourceAssistProcessor.convertToWorkspaceEdit(tempUnit, edit);
+		tempUnit.discardWorkingCopy();
+		return new DocumentPasteEdit(insertText, workspaceEdit);
 	}
 
 	private static String getEol(String text) {
