@@ -55,8 +55,10 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaModelStatus;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.core.ClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -406,12 +408,8 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				}
 			}
 
-			if (currentPath.equals(outputPath)) {
-				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The output path cannot be equal to the source path, please provide a new path."));
-			} else if (currentPath.isPrefixOf(outputPath)) {
+			if (currentPath.isPrefixOf(outputPath)) {
 				exclusionPatterns.add(outputPath.makeRelativeTo(currentPath).addTrailingSeparator());
-			} else if (outputPath.isPrefixOf(currentPath)) {
-				throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The specified output path contains source folders, please provide a new path instead."));
 			}
 
 			if (canAddToSourceEntries) {
@@ -426,7 +424,14 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 			}
 		}
 		newEntries.addAll(sourceEntries);
-		return newEntries.toArray(IClasspathEntry[]::new);
+
+		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
+		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, outputPath);
+		if (!checkStatus.isOK()) {
+			throw new CoreException(checkStatus);
+		}
+
+		return rawClasspath;
 	}
 
 	public static IPath getOutputPath(IJavaProject javaProject, String outputPath, boolean isUpdate) throws CoreException {
