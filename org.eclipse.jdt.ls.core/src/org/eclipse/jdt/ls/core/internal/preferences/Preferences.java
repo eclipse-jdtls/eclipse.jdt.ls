@@ -51,6 +51,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -1280,6 +1282,9 @@ public class Preferences {
 
 	public Preferences setJavaCompletionFavoriteMembers(List<String> javaCompletionFavoriteMembers) {
 		this.javaCompletionFavoriteMembers = (javaCompletionFavoriteMembers == null || javaCompletionFavoriteMembers.isEmpty()) ? JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT : javaCompletionFavoriteMembers;
+		IEclipsePreferences prefs = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
+		String value = String.join(";", JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers());
+		prefs.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, value);
 		return this;
 	}
 

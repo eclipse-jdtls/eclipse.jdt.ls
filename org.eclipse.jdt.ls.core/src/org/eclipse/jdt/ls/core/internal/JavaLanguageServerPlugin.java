@@ -48,7 +48,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
@@ -56,7 +55,6 @@ import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
-import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsConstants;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
@@ -185,9 +183,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 			preferenceManager = new StandardPreferenceManager();
 			projectsManager = new StandardProjectsManager(preferenceManager);
 		}
-		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
-		fDefaultPreferenceStore.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, "");
-
 		digestStore = new DigestStore(getStateLocation().toFile());
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(IConstants.PLUGIN_ID, projectsManager);
@@ -233,10 +228,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaManipulation.setPreferenceNodeId(null);
 		// Set the ID to use for preference lookups
 		JavaManipulation.setPreferenceNodeId(IConstants.PLUGIN_ID);
-
-		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
-		fDefaultPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, DEFAULT_MEMBER_SORT_ORDER);
-		fDefaultPreferenceStore.put(CodeGenerationSettingsConstants.CODEGEN_USE_OVERRIDE_ANNOTATION, Boolean.TRUE.toString());
 
 		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
 		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();

@@ -208,6 +208,8 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 			IJavaProject javaProject = JavaCore.create(project);
 			IType type = javaProject.findType("org.sample.MyTest");
 			ICompilationUnit unit = type.getCompilationUnit();
+			int importsCount = unit.getImports().length;
+			assertEquals(2, importsCount);
 			TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
 				return new ImportCandidate[0];
 			});
@@ -224,6 +226,34 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 			Optional<IImportDeclaration> el = Stream.of(imports).filter(p -> p.getElementName().equals("org.hamcrest.MatcherAssert.assertThat")).findFirst();
 			assertNotNull(el.get());
 		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
+		}
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2861
+	@Test
+	public void testRemoveStaticImports() throws Exception {
+		importProjects("maven/salut4");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
+		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
+		int staticImportOnDemandThreshold = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getStaticImportOnDemandThreshold();
+		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setStaticImportOnDemandThreshold(1);
+			List<String> list = new ArrayList<>();
+			list.add("org.sample.Test2.*");
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(list);
+			IJavaProject javaProject = JavaCore.create(project);
+			IType type = javaProject.findType("org.sample.Test1");
+			ICompilationUnit unit = type.getCompilationUnit();
+			int importsCount = unit.getImports().length;
+			assertEquals(2, importsCount);
+			TextEdit edit = OrganizeImportsHandler.organizeImports(unit, (selections) -> {
+				return new ImportCandidate[0];
+			});
+			assertNull(edit);
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setStaticImportOnDemandThreshold(staticImportOnDemandThreshold);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
 		}
 	}
