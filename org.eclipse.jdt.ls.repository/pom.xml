@@ -9,4 +9,19 @@
 	<artifactId>org.eclipse.jdt.ls.repository</artifactId>
 	<packaging>eclipse-repository</packaging>
 	<name>${base.name} :: P2 Update site</name>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-p2-repository-plugin</artifactId>
+				<configuration>
+					<skipArchive>true</skipArchive>
+					<includeAllDependencies>true</includeAllDependencies>
+					<includeAllSources>true</includeAllSources>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>
