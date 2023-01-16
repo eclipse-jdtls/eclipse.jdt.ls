@@ -114,4 +114,26 @@ public class TypeHierarchyCommandTest extends AbstractInvisibleProjectBasedTest 
 			}
 		}
 	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/2871
+	@Test
+	public void testMultipleProjects() throws Exception {
+		importProjects("eclipse/gh2871");
+		IProject project = WorkspaceHelper.getProject("project1");
+		IProgressMonitor monitor = new NullProgressMonitor();
+		TypeHierarchyParams params = new TypeHierarchyParams();
+		String uriString = project.getFile("src/org/sample/First.java").getLocationURI().toString();
+		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uriString);
+		Position position = new Position(1, 22);
+		params.setTextDocument(identifier);
+		params.setResolve(1);
+		params.setDirection(TypeHierarchyDirection.Both);
+		params.setPosition(position);
+		TypeHierarchyItem item = fCommand.typeHierarchy(params, monitor);
+		assertNotNull(item);
+		assertEquals(item.getName(), "First");
+		assertNotNull(item.getChildren());
+		assertEquals(item.getChildren().size(), 1);
+		assertEquals(item.getChildren().get(0).getName(), "Second");
+	}
 }
