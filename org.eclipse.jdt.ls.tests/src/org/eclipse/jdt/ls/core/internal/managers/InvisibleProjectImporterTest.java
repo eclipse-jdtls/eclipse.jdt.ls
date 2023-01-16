@@ -260,11 +260,11 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertTrue("Output path should be excluded from source path", isOutputExcluded);
 	}
 
-	@Test(expected = CoreException.class)
+	@Test
 	public void testSpecifyingOutputPathEqualToSourcePath() throws Exception {
 		Preferences preferences = preferenceManager.getPreferences();
 		preferences.setInvisibleProjectOutputPath("src");
-		copyAndImportFolder("singlefile/simple", "src/App.java");
+		copyAndImportFolder("singlefile/simple2", "src/App.java");
 		waitForBackgroundJobs();
 	}
 
