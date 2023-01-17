@@ -809,7 +809,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	public void testMissingMethodComment2() throws Exception {
+	public void testMissingOverrideMethodComment1() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -822,22 +822,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("/**\n");
-		buf.append(" *\n");
-		buf.append(" */\n");
-		buf.append("public class E {\n");
-		buf.append("    /* (non-Javadoc)\n");
-		buf.append("     * @see java.lang.Object#toString()\n");
-		buf.append("     */\n");
-		buf.append("    public String toString() {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'toString'", buf.toString());
-		assertCodeActions(cu, e1);
+		assertCodeActionNotExists(cu, "Add Javadoc for 'toString'");
 	}
 
 	@Test
@@ -871,7 +856,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	public void testMissingMethodComment4() throws Exception {
+	public void testMissingOverrideMethodComment2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
@@ -890,28 +875,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("B.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package pack;\n");
-		buf.append("\n");
-		buf.append("/**\n");
-		buf.append(" */\n");
-		buf.append("public class B extends A<Integer> {\n");
-		buf.append("    /* (non-Javadoc)\n");
-		buf.append("     * @see pack.A#foo(java.lang.Number)\n");
-		buf.append("     */\n");
-		buf.append("    public void foo(Integer x) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		buf.append("class A<T extends Number> {\n");
-		buf.append("    /**\n");
-		buf.append("     * @param x\n");
-		buf.append("     */\n");
-		buf.append("    public void foo(T x) {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'foo'", buf.toString());
-		assertCodeActions(cu, e1);
+		assertCodeActionNotExists(cu, "Add Javadoc for 'foo'");
 	}
 
 	@Test

@@ -418,10 +418,6 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	double rate;\r\n" +
 				"	Cloneable[] anArray;\r\n" +
 				"	List<String> aList;\r\n" +
-				"	/* (non-Javadoc)\r\n" +
-				"	 * @see java.lang.Object#hashCode()\r\n" +
-				"	 */\r\n" +
-				"	\r\n" +
 				"	@Override\r\n" +
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
@@ -435,10 +431,6 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
-				"	/* (non-Javadoc)\r\n" +
-				"	 * @see java.lang.Object#equals(java.lang.Object)\r\n" +
-				"	 */\r\n" +
-				"	\r\n" +
 				"	@Override\r\n" +
 				"	public boolean equals(Object obj) {\r\n" +
 				"		if (this == obj)\r\n" +

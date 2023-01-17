@@ -228,10 +228,6 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 				"	int id;\r\n" +
 				"	List<String> aList;\r\n" +
 				"	String[] arrays;\r\n" +
-				"	/* (non-Javadoc)\r\n" +
-				"	 * @see java.lang.Object#toString()\r\n" +
-				"	 */\r\n" +
-				"	\r\n" +
 				"	@Override\r\n" +
 				"	public String toString() {\r\n" +
 				"		final int maxLen = 10;\r\n" +
