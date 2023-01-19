@@ -54,14 +54,14 @@ def find_equinox_launcher(jdtls_base_directory):
 def get_shared_config_path(jdtls_base_path):
 	system = platform.system()
 
-	if system == 'Linux':
+	if system in ['Linux', 'FreeBSD']:
 		config_dir = 'config_linux'
 	elif system == 'Darwin':
 		config_dir = 'config_mac'
 	elif system == 'Windows':
 		config_dir = 'config_win'
 	else:
-		raise Exception("Unknown platform {} detected".format(platform))
+		raise Exception("Unknown platform {} detected".format(system))
 
 	return jdtls_base_path / config_dir
 
