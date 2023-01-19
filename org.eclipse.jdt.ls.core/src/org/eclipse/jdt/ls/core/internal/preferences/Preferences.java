@@ -189,6 +189,11 @@ public class Preferences {
 	 * Preference key to enable/disable maven offline mode.
 	 */
 	public static final String IMPORT_MAVEN_OFFLINE = "java.import.maven.offline.enabled";
+
+	/**
+	 * Preference key to enable/disable maven test classpath flag.
+	 */
+	public static final String MAVEN_DISABLE_TEST_CLASSPATH_FLAG = "java.import.maven.disableTestClasspathFlag";
 	/**
 	 * Preference key to enable/disable downloading Maven source artifacts.
 	 */
@@ -549,6 +554,7 @@ public class Preferences {
 	private boolean gradleAnnotationProcessingEnabled;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
+	private boolean mavenDisableTestClasspathFlag;
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
 	private boolean mavenUpdateSnapshots;
@@ -793,6 +799,7 @@ public class Preferences {
 		gradleAnnotationProcessingEnabled = true;
 		importMavenEnabled = true;
 		mavenOffline = false;
+		mavenDisableTestClasspathFlag = false;
 		mavenDownloadSources = false;
 		eclipseDownloadSources = false;
 		mavenUpdateSnapshots = false;
@@ -935,6 +942,8 @@ public class Preferences {
 		prefs.setImportMavenEnabled(importMavenEnabled);
 		boolean mavenOffline = getBoolean(configuration, IMPORT_MAVEN_OFFLINE, false);
 		prefs.setMavenOffline(mavenOffline);
+		boolean mavenDisableTestClasspathFlag = getBoolean(configuration, MAVEN_DISABLE_TEST_CLASSPATH_FLAG, false);
+		prefs.setMavenDisableTestClasspathFlag(mavenDisableTestClasspathFlag);
 		boolean mavenDownloadSources = getBoolean(configuration, MAVEN_DOWNLOAD_SOURCES, false);
 		prefs.setMavenDownloadSources(mavenDownloadSources);
 		boolean eclipseDownloadSources = getBoolean(configuration, ECLIPSE_DOWNLOAD_SOURCES, false);
@@ -1336,6 +1345,10 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenDisableTestClasspathFlag(boolean enabled) {
+		this.mavenDisableTestClasspathFlag = enabled;
+		return this;
+	}
 
 	public Preferences setMavenDownloadSources(boolean enabled) {
 		this.mavenDownloadSources = enabled;
@@ -1653,6 +1666,10 @@ public class Preferences {
 
 	public boolean isMavenOffline() {
 		return mavenOffline;
+	}
+
+	public boolean isMavenDisableTestClasspathFlag() {
+		return mavenDisableTestClasspathFlag;
 	}
 
 	public boolean isMavenDownloadSources() {

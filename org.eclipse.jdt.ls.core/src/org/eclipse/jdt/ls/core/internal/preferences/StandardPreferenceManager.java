@@ -12,8 +12,13 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.util.List;
 import java.util.Objects;
 
+import org.apache.maven.settings.Activation;
+import org.apache.maven.settings.Profile;
+import org.apache.maven.settings.Settings;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -23,6 +28,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.m2e.apt.MavenJdtAptPlugin;
 import org.eclipse.m2e.apt.preferences.PreferencesConstants;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -40,6 +46,9 @@ import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
  *
  */
 public class StandardPreferenceManager extends PreferenceManager {
+	private static final String TRUE = "true";
+	private static final String JAVALS_PROFILE = "javals.profile";
+	public static final String M2E_DISABLE_TEST_CLASSPATH_FLAG = "m2e.disableTestClasspathFlag";
 	private static final String M2E_APT_ID = MavenJdtAptPlugin.PLUGIN_ID;
 	private IMavenConfiguration mavenConfig;
 
@@ -89,7 +98,38 @@ public class StandardPreferenceManager extends PreferenceManager {
 				preferences.setMavenUserSettings(oldMavenSettings);
 			}
 		}
-
+		try {
+			Settings mavenSettings = MavenPlugin.getMaven().getSettings();
+			boolean oldDisableTest = false;
+			List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
+			for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
+				if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
+					if (TRUE.equals(settingsProfile.getProperties().get(M2E_DISABLE_TEST_CLASSPATH_FLAG))) {
+						oldDisableTest = true;
+						break;
+					}
+				}
+			}
+			if (oldDisableTest != preferences.isMavenDisableTestClasspathFlag()) {
+				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
+				if (preferences.isMavenDisableTestClasspathFlag()) {
+					Profile profile = new Profile();
+					profile.setId(JAVALS_PROFILE);
+					Activation activation = new Activation();
+					activation.setActiveByDefault(true);
+					profile.setActivation(activation);
+					profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
+					mavenSettings.addProfile(profile);
+				}
+				for (IProject project : ProjectUtils.getAllProjects()) {
+					if (ProjectUtils.isMavenProject(project)) {
+						JavaLanguageServerPlugin.getProjectsManager().updateProject(project, true);
+					}
+				}
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
 		String newMavenNotCoveredExecutionSeverity = preferences.getMavenNotCoveredPluginExecutionSeverity();
 		String oldMavenNotCoveredExecutionSeverity = getMavenConfiguration().getNotCoveredMojoExecutionSeverity();
 		if (!Objects.equals(newMavenNotCoveredExecutionSeverity, oldMavenNotCoveredExecutionSeverity)) {

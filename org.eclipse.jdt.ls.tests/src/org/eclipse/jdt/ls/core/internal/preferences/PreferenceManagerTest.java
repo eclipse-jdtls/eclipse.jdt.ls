@@ -24,8 +24,11 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.maven.settings.Settings;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
@@ -33,6 +36,7 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jface.text.templates.Template;
+import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
@@ -210,5 +214,40 @@ public class PreferenceManagerTest {
 			preferenceManager.update(preferences);
 			assertFalse(store.getBoolean(MavenPreferenceConstants.P_OFFLINE, false));
 		}
+	}
+
+	@Test
+	public void testMavenDisableTestFlag() throws Exception {
+		try {
+			PreferenceManager.initialize();
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertFalse(preferenceManager.getPreferences().isMavenDisableTestClasspathFlag());
+			assertFalse(getDisableTestFlag());
+			preferences.setMavenDisableTestClasspathFlag(true);
+			preferenceManager.update(preferences);
+			assertTrue(preferenceManager.getPreferences().isMavenDisableTestClasspathFlag());
+			assertTrue(getDisableTestFlag());
+		} finally {
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertFalse(preferenceManager.getPreferences().isMavenDisableTestClasspathFlag());
+			assertFalse(getDisableTestFlag());
+		}
+	}
+
+	private boolean getDisableTestFlag() throws CoreException {
+		Settings mavenSettings = MavenPlugin.getMaven().getSettings();
+		boolean disableTest = false;
+		List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
+		for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
+			if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
+				if ("true".equals(settingsProfile.getProperties().get(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG))) {
+					disableTest = true;
+					break;
+				}
+			}
+		}
+		return disableTest;
 	}
 }
