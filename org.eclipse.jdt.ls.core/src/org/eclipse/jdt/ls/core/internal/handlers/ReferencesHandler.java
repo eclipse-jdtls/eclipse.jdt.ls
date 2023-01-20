@@ -21,12 +21,15 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IClasspathContainer;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
@@ -53,13 +56,13 @@ public final class ReferencesHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-	private IJavaSearchScope createSearchScope() throws JavaModelException {
+	private IJavaSearchScope createSearchScope(IJavaElement elementToSearch) throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		int scope = IJavaSearchScope.SOURCES;
-		if (preferenceManager.isClientSupportsClassFileContent()) {
-			scope |= IJavaSearchScope.APPLICATION_LIBRARIES;
+		int includeMask = IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS | IJavaSearchScope.APPLICATION_LIBRARIES;
+		if (isInsideJRE(elementToSearch)) {
+			includeMask |= IJavaSearchScope.SYSTEM_LIBRARIES;
 		}
-		return SearchEngine.createJavaSearchScope(projects, scope);
+		return SearchEngine.createJavaSearchScope(projects, includeMask);
 	}
 
 	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
@@ -148,7 +151,26 @@ public final class ReferencesHandler {
 		return declaringType.getFullyQualifiedName() + "." + declaringType.getElementName() + "Builder";
 	}
 
-	private void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor, boolean isIncludeDeclaration) throws CoreException, JavaModelException {
+	// copied from org.eclipse.jdt.internal.ui.search.JavaSearchScopeFactory.isInsideJRE(IJavaElement)
+	private boolean isInsideJRE(IJavaElement element) {
+		IPackageFragmentRoot root = (IPackageFragmentRoot) element.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+		if (root != null) {
+			try {
+				IClasspathEntry entry = root.getRawClasspathEntry();
+				if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+					IClasspathContainer container = JavaCore.getClasspathContainer(entry.getPath(), root.getJavaProject());
+					return container != null && container.getKind() == IClasspathContainer.K_DEFAULT_SYSTEM;
+				}
+				return false;
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return true; // include JRE in doubt
+	}
+
+	// for test purpose only
+	public void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor, boolean isIncludeDeclaration) throws CoreException, JavaModelException {
 		boolean includeClassFiles = preferenceManager.isClientSupportsClassFileContent();
 		boolean includeDecompiledSources = preferenceManager.getPreferences().isIncludeDecompiledSources();
 		SearchEngine engine = new SearchEngine();
@@ -157,7 +179,7 @@ public final class ReferencesHandler {
 			SearchPattern patternDecl = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.DECLARATIONS);
 			pattern = SearchPattern.createOrPattern(pattern, patternDecl);
 		}
-		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
+		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(elementToSearch), new SearchRequestor() {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {

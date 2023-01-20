@@ -19,10 +19,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -173,6 +175,21 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertEquals(new Range(new Position(12, 20), new Position(12, 32)), l.getRange());
 		l = references.get(1);
 		assertEquals(new Range(new Position(14, 15), new Position(14, 25)), l.getRange());
+	}
+
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2405
+	@Test
+	public void testReferencesInJRE() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		IJavaProject javaProject = JavaCore.create(project);
+		IType system = javaProject.findType("java.lang.System");
+		IField field = system.getField("out");
+		assertTrue(field.exists());
+		List<Location> references = new ArrayList<>();
+		handler.search(field, references, monitor, true);
+		assertNotNull("findReferences should not return null", references);
+		Location location = references.stream().filter(r -> r.getUri().startsWith("jdt://contents/rtstubs.jar/java.lang/System.class")).findFirst().get();
+		assertNotNull(location);
 	}
 
 }
