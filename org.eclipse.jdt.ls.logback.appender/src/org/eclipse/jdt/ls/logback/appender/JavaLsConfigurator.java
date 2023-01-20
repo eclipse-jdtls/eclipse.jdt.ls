@@ -38,9 +38,14 @@ public class JavaLsConfigurator extends ContextAwareBase implements Configurator
 			eca.setContext(lc);
 			eca.setName("JavaLS");
 			eca.start();
+
 			Logger rootLogger = lc.getLogger(Logger.ROOT_LOGGER_NAME);
 			rootLogger.setLevel(Level.DEBUG);
 			rootLogger.addAppender(eca);
+
+			Logger httpLogger = lc.getLogger("org.apache.hc.client5.http");
+			httpLogger.setLevel(Level.INFO);
+			httpLogger.setAdditive(false);
 		}
 	}
 }
