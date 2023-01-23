@@ -107,8 +107,6 @@
         <setEntry value="org.eclipse.osgi@-1:true"/>
         <setEntry value="org.eclipse.swt@default:default"/>
         <setEntry value="org.eclipse.text@default:default"/>
-        <setEntry value="org.eclipse.xtend.lib.macro@default:default"/>
-        <setEntry value="org.eclipse.xtend.lib@default:default"/>
         <setEntry value="org.eclipse.xtext.xbase.lib@default:default"/>
         <setEntry value="org.gradle.toolingapi@default:default"/>
         <setEntry value="org.hamcrest.core@default:default"/>
