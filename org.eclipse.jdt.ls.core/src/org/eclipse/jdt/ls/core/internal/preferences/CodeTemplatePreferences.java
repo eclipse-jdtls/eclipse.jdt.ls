@@ -20,7 +20,7 @@ import org.eclipse.jface.text.templates.SimpleTemplateVariableResolver;
 import org.eclipse.jface.text.templates.TemplateContext;
 
 public class CodeTemplatePreferences {
-    private static final String CODETEMPLATES_PREFIX = "org.eclipse.jdt.ui.text.codetemplates."; //$NON-NLS-1$
+	private static final String CODETEMPLATES_PREFIX = "org.eclipse.jdt.ui.text.codetemplates."; //$NON-NLS-1$
 	public static final String COMMENT_SUFFIX = "comment"; //$NON-NLS-1$
 	public static final String BODY_SUFFIX = "body"; //$NON-NLS-1$
 	private static final String BLOCK_SUFFIX = "block"; //$NON-NLS-1$
@@ -53,6 +53,12 @@ public class CodeTemplatePreferences {
 	 * A named preference that defines the template for method body content
 	 */
 	public static final String CODETEMPLATE_METHODBODY = CODETEMPLATES_PREFIX + "method" + BODY_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for method body content when
+	 * method is a super implementation
+	 */
+	public static final String CODETEMPLATE_METHODBODY_SUPER = CODETEMPLATES_PREFIX + "method" + BODY_SUFFIX + "alternative"; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for delegate method comments
@@ -172,7 +178,13 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value from method body content
 	 */
-	public static final String CODETEMPLATE_METHODBODY_DEFAULT = "// ${todo} Auto-generated method stub\n${body_statement}";
+	public static final String CODETEMPLATE_METHODBODY_DEFAULT = "// ${todo} Auto-generated method stub\nthrow new UnsupportedOperationException(\"Unimplemented method \'${enclosing_method}\'\");";
+
+	/**
+	 * Default value from method body content when method is a super implementation
+	 */
+	public static final String CODETEMPLATE_METHODBODY_SUPER_DEFAULT = "// ${todo} Auto-generated method stub\n${body_statement}";
+
 	/**
 	 * Default value for catch body content
 	 */

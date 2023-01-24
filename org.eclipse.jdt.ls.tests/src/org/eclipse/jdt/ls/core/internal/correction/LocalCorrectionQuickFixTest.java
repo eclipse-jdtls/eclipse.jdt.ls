@@ -73,8 +73,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    @Override\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        // TODO Auto-generated method stub\n");
-		buf.append("        \n");
-		buf.append("    }\n");
+		buf.append("        throw new UnsupportedOperationException(\"Unimplemented method \'foo\'\");\n");		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Add unimplemented methods", buf.toString());
 		assertCodeActions(cu, e1);
@@ -105,8 +104,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    @Override\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        // TODO Auto-generated method stub\n");
-		buf.append("        \n");
-		buf.append("    }\n");
+		buf.append("        throw new UnsupportedOperationException(\"Unimplemented method \'foo\'\");\n");		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Add unimplemented methods", buf.toString());
 		assertCodeActions(cu, e1);
