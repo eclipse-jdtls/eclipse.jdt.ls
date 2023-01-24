@@ -140,7 +140,7 @@ public class OverrideMethodsOperation {
 		ImportRewriteContext context = new ContextSensitiveImportRewriteContext(astRoot, typeNode.getStartPosition(), importRewrite);
 		ASTNode insertion = StubUtility2Core.getNodeToInsertBefore(listRewrite, insertPosition);
 		for (IMethodBinding methodBinding : methodBindings) {
-			MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(cu, astRewrite, importRewrite, context, methodBinding, typeBinding, settings, typeBinding.isInterface(), typeNode, false);
+			MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(cu, astRewrite, importRewrite, context, methodBinding, null, typeBinding, settings, typeBinding.isInterface(), !typeBinding.isInterface(), typeNode, false);
 			if (stub == null) {
 				continue;
 			}

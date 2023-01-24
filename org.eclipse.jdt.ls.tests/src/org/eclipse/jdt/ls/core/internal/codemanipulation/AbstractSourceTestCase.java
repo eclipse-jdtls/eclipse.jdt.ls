@@ -63,13 +63,15 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 		StubUtility.setCodeTemplate(CodeTemplateContextType.SETTERSTUB_ID, setterBody, null);
 
 		String methodComment = "/**\r\n" + " * ${tags}\r\n" + " */";
-		String methodBody = "// ${todo} Auto-generated method stub\r\n" + "${body_statement}";
+		String methodBody = "// ${todo} Auto-generated method stub\nthrow new UnsupportedOperationException(\"Unimplemented method \'${enclosing_method}\'\");";
+		String methodBodySuper = "// ${todo} Auto-generated method stub\r\n" + "${body_statement}";
 
 		String constructorComment = "/**\r\n" + " * ${tags}\r\n" + " */";
 		String constructorBody = "${body_statement}\r\n" + "// ${todo} Auto-generated constructor stub";
 
 		StubUtility.setCodeTemplate(CodeTemplateContextType.METHODCOMMENT_ID, methodComment, null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.METHODSTUB_ID, methodBody, null);
+		StubUtility.setCodeTemplate(CodeTemplateContextType.METHODSTUB_ALTERNATIVE_ID, methodBodySuper, null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORCOMMENT_ID, constructorComment, null);
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, constructorBody, null);
 	}

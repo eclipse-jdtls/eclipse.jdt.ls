@@ -139,7 +139,7 @@ public class OverrideCompletionProposal {
 			if (methodToOverride != null) {
 				CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(fCompilationUnit);
 				MethodDeclaration stub = StubUtility2Core.createImplementationStubCore(fCompilationUnit, rewrite, importRewrite,
-						context, methodToOverride, declaringType, settings, declaringType.isInterface(), node,
+						context, methodToOverride, null, declaringType, settings, declaringType.isInterface(), !declaringType.isInterface(), node,
 						snippetStringSupport);
 				ListRewrite rewriter= rewrite.getListRewrite(node, descriptor);
 				rewriter.insertFirst(stub, null);

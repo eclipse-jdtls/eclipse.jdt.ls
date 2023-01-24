@@ -123,7 +123,13 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY,
 			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT),
-
+	/**
+	 * Method body content template for super implementations
+	 */
+	METHODBODYSUPER(
+			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER,
+			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER_DEFAULT),
 	/**
 	 * Snippet `public class` content template
 	 */
