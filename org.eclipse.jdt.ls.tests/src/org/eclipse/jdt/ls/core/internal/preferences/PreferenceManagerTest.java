@@ -40,6 +40,7 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
+import org.eclipse.m2e.core.lifecyclemapping.model.PluginExecutionAction;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,6 +74,7 @@ public class PreferenceManagerTest {
 		reset(mavenConfig);
 		when(mavenConfig.getUserSettingsFile()).thenReturn(path);
 		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
+		when(mavenConfig.getDefaultMojoExecutionAction()).thenReturn(PluginExecutionAction.ignore);
 		preferenceManager.update(preferences);
 		verify(mavenConfig, never()).setUserSettingsFile(anyString());
 
@@ -249,5 +251,25 @@ public class PreferenceManagerTest {
 			}
 		}
 		return disableTest;
+	}
+
+	@Test
+	public void testMavenDefaultMojoExecution() throws Exception {
+		try {
+			PreferenceManager.initialize();
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertEquals("ignore", preferenceManager.getPreferences().getMavenDefaultMojoExecutionAction());
+			preferences.setMavenDefaultMojoExecutionAction("warn");
+			preferenceManager.update(preferences);
+			assertEquals("warn", preferenceManager.getPreferences().getMavenDefaultMojoExecutionAction());
+			preferences.setMavenDefaultMojoExecutionAction("unknown");
+			preferenceManager.update(preferences);
+			assertEquals("ignore", preferenceManager.getPreferences().getMavenDefaultMojoExecutionAction());
+		} finally {
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertEquals("ignore", preferenceManager.getPreferences().getMavenDefaultMojoExecutionAction());
+		}
 	}
 }

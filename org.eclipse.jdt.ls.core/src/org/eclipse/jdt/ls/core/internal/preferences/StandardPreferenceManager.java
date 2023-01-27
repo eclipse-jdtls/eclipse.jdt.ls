@@ -37,6 +37,7 @@ import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
+import org.eclipse.m2e.core.lifecyclemapping.model.PluginExecutionAction;
 
 /**
  * Preference manager
@@ -132,11 +133,27 @@ public class StandardPreferenceManager extends PreferenceManager {
 		}
 		String newMavenNotCoveredExecutionSeverity = preferences.getMavenNotCoveredPluginExecutionSeverity();
 		String oldMavenNotCoveredExecutionSeverity = getMavenConfiguration().getNotCoveredMojoExecutionSeverity();
+		boolean updateMavenProjects = false;
 		if (!Objects.equals(newMavenNotCoveredExecutionSeverity, oldMavenNotCoveredExecutionSeverity)) {
 			try {
 				((MavenConfigurationImpl) getMavenConfiguration()).setNotCoveredMojoExecutionSeverity(newMavenNotCoveredExecutionSeverity);
+				updateMavenProjects = true;
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("failed to set not covered Maven plugin execution severity", e);
+			}
+		}
+		String newMavenDefaultMavenExecutionAction = preferences.getMavenDefaultMojoExecutionAction();
+		String oldMavenDefaultMavenExecutionAction = getMavenConfiguration().getDefaultMojoExecutionAction() == null ? null : getMavenConfiguration().getDefaultMojoExecutionAction().name();
+		if (!Objects.equals(newMavenDefaultMavenExecutionAction, oldMavenDefaultMavenExecutionAction)) {
+			PluginExecutionAction action = PluginExecutionAction.valueOf(newMavenDefaultMavenExecutionAction == null ? "ignore" : newMavenDefaultMavenExecutionAction);
+			getMavenConfiguration().setDefaultMojoExecutionAction(action);
+			updateMavenProjects = true;
+		}
+		if (updateMavenProjects) {
+			for (IProject project : ProjectUtils.getAllProjects()) {
+				if (ProjectUtils.isMavenProject(project)) {
+					JavaLanguageServerPlugin.getProjectsManager().updateProject(project, true);
+				}
 			}
 		}
 		updateParallelBuild(preferences.getMaxConcurrentBuilds());

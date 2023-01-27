@@ -83,6 +83,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		when(p.isImportMavenEnabled()).thenReturn(true);
 		when(p.isSignatureHelpEnabled()).thenReturn(true);
 		when(p.isSignatureHelpDescriptionEnabled()).thenReturn(false);
+		when(p.getMavenDefaultMojoExecutionAction()).thenReturn("ignore");
 		handler = new SignatureHelpHandler(preferenceManager);
 	}
 
