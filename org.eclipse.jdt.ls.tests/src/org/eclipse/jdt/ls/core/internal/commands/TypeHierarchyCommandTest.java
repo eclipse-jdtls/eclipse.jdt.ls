@@ -25,9 +25,9 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.TypeHierarchyDirection;
-import org.eclipse.lsp4j.TypeHierarchyItem;
-import org.eclipse.lsp4j.TypeHierarchyParams;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyDirection;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyItem;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyParams;
 import org.junit.Before;
 import org.junit.Test;
 
