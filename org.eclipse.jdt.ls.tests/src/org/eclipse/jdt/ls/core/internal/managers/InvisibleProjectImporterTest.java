@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter.JavaFi
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
+import org.eclipse.lsp4j.RelativePattern;
 import org.junit.Test;
 
 public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedTest {
@@ -115,11 +117,13 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		//watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
 		assertEquals(12, watchers.size()); // basic(9) + project(1) + library(1)
-		String srcGlobPattern = watchers.stream().filter(w -> "**/src/**".equals(w.getGlobPattern())).findFirst().get().getGlobPattern();
+		String srcGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter("**/src/**"::equals).findFirst().get();
 		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
-		String projGlobPattern = watchers.stream().filter(w -> w.getGlobPattern().endsWith(projectFolder.getName() + "/**")).findFirst().get().getGlobPattern();
+		String projGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(w -> w.endsWith(projectFolder.getName() + "/**"))
+				.findFirst().get();
 		assertTrue("Unexpected project glob pattern: " + projGlobPattern, projGlobPattern.endsWith(projectFolder.getName() + "/**"));
-		String libGlobPattern = watchers.stream().filter(w -> w.getGlobPattern().endsWith(projectFolder.getName() + "/lib/**")).findFirst().get().getGlobPattern();
+		String libGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(w -> w.endsWith(projectFolder.getName() + "/lib/**"))
+				.findFirst().get();
 		assertTrue("Unexpected library glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
 	}
 
@@ -140,11 +144,11 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
-		watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
+		watchers.sort((a, b) -> a.getGlobPattern().map(Function.identity(), RelativePattern::getPattern).compareTo(b.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
 		assertEquals(10, watchers.size());
-		String srcGlobPattern = watchers.get(7).getGlobPattern();
+		String srcGlobPattern = watchers.get(7).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
 		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
-		String libGlobPattern = watchers.get(9).getGlobPattern();
+		String libGlobPattern = watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
 		assertTrue("Unexpected lib glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
 	}
 

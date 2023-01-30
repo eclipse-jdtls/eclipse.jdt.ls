@@ -26,11 +26,11 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.lsp4j.InlayHint;
+import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.eclipse.lsp4j.proposed.InlayHint;
-import org.eclipse.lsp4j.proposed.InlayHintParams;
 import org.junit.Test;
 
 public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {

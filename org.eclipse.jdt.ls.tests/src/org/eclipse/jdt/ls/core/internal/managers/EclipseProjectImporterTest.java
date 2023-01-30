@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
@@ -38,6 +39,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
+import org.eclipse.lsp4j.RelativePattern;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -234,7 +236,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertIsJavaProject(project);
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		assertEquals(11, watchers.size());
-		String srcGlobPattern = watchers.get(9).getGlobPattern();
+		String srcGlobPattern = watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
 		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.endsWith("projectwithrootsource/**"));
 	}
 
