@@ -9,7 +9,7 @@
     <booleanAttribute key="automaticValidate" value="false"/>
     <stringAttribute key="bootstrap" value=""/>
     <stringAttribute key="checked" value="[NONE]"/>
-    <booleanAttribute key="clearConfig" value="false"/>
+    <booleanAttribute key="clearConfig" value="true"/>
     <booleanAttribute key="clearws" value="true"/>
     <booleanAttribute key="clearwslog" value="false"/>
     <stringAttribute key="configLocation" value="${workspace_loc}/.metadata/.plugins/org.eclipse.pde.core/jdt.ls.socket-stream.syntaxserver"/>
@@ -23,6 +23,7 @@
     <stringAttribute key="featurePluginResolution" value="workspace"/>
     <booleanAttribute key="includeOptional" value="false"/>
     <stringAttribute key="location" value="${workspace_loc}/../runtime-syntaxserver"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
         <mapEntry key="CLIENT_HOST" value="127.0.0.1"/>
         <mapEntry key="CLIENT_PORT" value="5037"/>
@@ -43,9 +44,10 @@
     <stringAttribute key="product" value="org.eclipse.sdk.ide"/>
     <setAttribute key="selected_features"/>
     <setAttribute key="selected_target_bundles">
-        <setEntry value="com.google.gson@default:default"/>
+        <setEntry value="com.google.gson*2.8.9.v20220111-1409@default:default"/>
+        <setEntry value="com.google.gson*2.9.1@default:default"/>
         <setEntry value="com.google.guava@default:default"/>
-        <setEntry value="com.ibm.icu@default:default"/>
+        <setEntry value="com.ibm.icu*71.1.0@default:default"/>
         <setEntry value="javax.inject@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.felix.scr@1:true"/>
