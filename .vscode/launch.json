@@ -1,0 +1,21 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "java",
+			"name": "Attach to JDT-LS (Standard)",
+			"request": "attach",
+			"hostName": "localhost",
+			"port": 1044,
+			"projectName": "org.eclipse.jdt.ls.core"
+		},
+		{
+			"type": "java",
+			"name": "Attach to JDT-LS (Syntax)",
+			"request": "attach",
+			"hostName": "localhost",
+			"port": 1045,
+			"projectName": "org.eclipse.jdt.ls.core"
+		}
+	]
+}
