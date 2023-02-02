@@ -89,6 +89,11 @@ public interface JavaCodeActionKind {
 	public static final String REFACTOR_EXTRACT_FIELD = CodeActionKind.RefactorExtract + ".field";
 
 	/**
+	 * Extract interface kind
+	 */
+	public static final String REFACTOR_EXTRACT_INTERFACE = CodeActionKind.RefactorExtract + ".interface";
+
+	/**
 	 * Move kind
 	 */
 	public static final String REFACTOR_MOVE = CodeActionKind.Refactor + ".move";

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
@@ -39,12 +40,14 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionPropos
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
+import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.Refactoring;
 
 public class GetRefactorEditHandler {
 	public static final String RENAME_COMMAND = "java.action.rename";
@@ -108,6 +111,25 @@ public class GetRefactorEditHandler {
 					if (parameterInfo != null) {
 						positionKey = parameterInfo.getNewName();
 					}
+				}
+			} else if (RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND.equals(params.command)) {
+				if (params.commandArguments != null && params.commandArguments.size() == 3) {
+					List<String> handleIdentifiers = Arrays.asList(JSONUtility.toModel(params.commandArguments.get(0), String[].class));
+					String interfaceName = JSONUtility.toModel(params.commandArguments.get(1), String.class);
+					PackageNode packageNode = JSONUtility.toLsp4jModel(params.commandArguments.get(2), PackageNode.class);
+					if (handleIdentifiers == null || interfaceName == null || packageNode == null) {
+						return null;
+					}
+					Refactoring refactoring = ExtractInterfaceHandler.getExtractInterfaceRefactoring(params.context, handleIdentifiers, interfaceName, packageNode);
+					if (refactoring == null) {
+						return null;
+					}
+					Change change = refactoring.createChange(new NullProgressMonitor());
+					if (change == null) {
+						return null;
+					}
+					WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
+					return new RefactorWorkspaceEdit(edit, null);
 				}
 			}
 

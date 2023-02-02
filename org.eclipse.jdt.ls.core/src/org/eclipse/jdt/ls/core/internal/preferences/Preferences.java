@@ -488,6 +488,8 @@ public class Preferences {
 	 */
 	public static final String JAVA_CLEANUPS_ACTIONS_ON_SAVE = "java.cleanup.actionsOnSave";
 
+	public static final String JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE = "java.refactoring.extract.interface.replace";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -632,6 +634,7 @@ public class Preferences {
 	private List<String> nullableTypes;
 	private FeatureStatus nullAnalysisMode;
 	private List<String> cleanUpActionsOnSave;
+	private boolean extractInterfaceReplaceEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -858,6 +861,7 @@ public class Preferences {
 		nullableTypes = new ArrayList<>();
 		nullAnalysisMode = FeatureStatus.disabled;
 		cleanUpActionsOnSave = new ArrayList<>();
+		extractInterfaceReplaceEnabled = false;
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1207,6 +1211,8 @@ public class Preferences {
 		prefs.setNullAnalysisMode(FeatureStatus.fromString(nullAnalysisMode, FeatureStatus.disabled));
 		List<String> cleanupActionsOnSave = getList(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE, Collections.emptyList());
 		prefs.setCleanUpActionsOnSave(cleanupActionsOnSave);
+		boolean extractInterfaceReplaceEnabled = getBoolean(configuration, JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE, false);
+		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
 		return prefs;
 	}
 
@@ -2120,6 +2126,14 @@ public class Preferences {
 
 	public FeatureStatus getNullAnalysisMode() {
 		return this.nullAnalysisMode;
+	}
+
+	public void setExtractInterfaceReplaceEnabled(boolean extractInterfaceReplaceEnabled) {
+		this.extractInterfaceReplaceEnabled = extractInterfaceReplaceEnabled;
+	}
+
+	public boolean getExtractInterfaceReplaceEnabled() {
+		return this.extractInterfaceReplaceEnabled;
 	}
 
 	/**

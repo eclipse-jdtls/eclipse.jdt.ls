@@ -111,7 +111,7 @@ public class MoveHandler {
 		return null;
 	}
 
-	private static MoveDestinationsResponse getPackageDestinations(String[] documentUris) {
+	public static MoveDestinationsResponse getPackageDestinations(String[] documentUris) {
 		if (documentUris == null) {
 			documentUris = new String[0];
 		}

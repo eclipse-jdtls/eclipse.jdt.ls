@@ -51,11 +51,13 @@ import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -72,8 +74,10 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -86,6 +90,7 @@ public class RefactorProposalUtility {
 	public static final String EXTRACT_CONSTANT_COMMAND = "extractConstant";
 	public static final String EXTRACT_METHOD_COMMAND = "extractMethod";
 	public static final String EXTRACT_FIELD_COMMAND = "extractField";
+	public static final String EXTRACT_INTERFACE_COMMAND = "extractInterface";
 	public static final String ASSIGN_FIELD_COMMAND = "assignField";
 	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
 	public static final String MOVE_FILE_COMMAND = "moveFile";
@@ -812,6 +817,27 @@ public class RefactorProposalUtility {
 			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, cu, introduceParameterRefactoring, relevance);
 			proposal.setLinkedProposalModel(linkedProposalModel);
 			return proposal;
+		}
+		return null;
+	}
+
+	public static ChangeCorrectionProposal getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context) {
+		ICompilationUnit cu = context.getCompilationUnit();
+		if (cu == null) {
+			return null;
+		}
+		IType type = cu.findPrimaryType();
+		if (type == null) {
+			return null;
+		}
+		try {
+			CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
+			ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(type, settings);
+			if (RefactoringAvailabilityTester.isExtractInterfaceAvailable(type) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				return new CUCorrectionCommandProposal(CorrectionMessages.RefactorProcessor_extract_interface, JavaCodeActionKind.REFACTOR_EXTRACT_INTERFACE, cu, IProposalRelevance.EXTRACT_INTERFACE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND, params));
+			}
+		} catch (CoreException e) {
+			// Do nothing
 		}
 		return null;
 	}

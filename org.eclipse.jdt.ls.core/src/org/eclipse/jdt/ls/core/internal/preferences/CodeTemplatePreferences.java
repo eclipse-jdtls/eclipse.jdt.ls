@@ -132,8 +132,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for override comments
 	 */
-	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "/* (non-Javadoc)\n" + " * ${see_to_overridden}\n"
-			+ " */\n";
+	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "";
 
 	/**
 	 * Default value for method comments
