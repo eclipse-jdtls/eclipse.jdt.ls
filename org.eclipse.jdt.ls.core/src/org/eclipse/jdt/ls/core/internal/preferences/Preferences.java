@@ -78,6 +78,7 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class Preferences {
 
+	private static final String IGNORE = "ignore";
 	public static final String LINE = "line";
 	/**
 	 * Specifies the folder path to the JDK .
@@ -305,6 +306,8 @@ public class Preferences {
 	public static final String MAVEN_GLOBAL_SETTINGS_KEY = "java.configuration.maven.globalSettings";
 
 	public static final String MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY = "java.configuration.maven.notCoveredPluginExecutionSeverity";
+
+	public static final String MAVEN_DEFAULT_MOJO_EXECUTION_ACTION = "java.configuration.maven.defaultMojoExecutionAction";
 
 	/**
 	 * Preference key to enable/disable the 'completion'.
@@ -596,6 +599,7 @@ public class Preferences {
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
 	private String mavenNotCoveredPluginExecutionSeverity;
+	private String mavenDefaultMojoExecutionAction;
 
 	private List<String> javaCompletionFavoriteMembers;
 	private List<?> gradleWrapperList;
@@ -853,7 +857,8 @@ public class Preferences {
 		includeSourceMethodDeclarations = false;
 		insertSpaces = true;
 		tabSize = DEFAULT_TAB_SIZE;
-		mavenNotCoveredPluginExecutionSeverity = "ignore";
+		mavenNotCoveredPluginExecutionSeverity = IGNORE;
+		mavenDefaultMojoExecutionAction = IGNORE;
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
@@ -1080,8 +1085,11 @@ public class Preferences {
 		String mavenGlobalSettings = getString(configuration, MAVEN_GLOBAL_SETTINGS_KEY, null);
 		prefs.setMavenGlobalSettings(mavenGlobalSettings);
 
-		String mavenNotCoveredPluginExecution = getString(configuration, MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY, "ignore");
+		String mavenNotCoveredPluginExecution = getString(configuration, MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY, IGNORE);
 		prefs.setMavenNotCoveredPluginExecutionSeverity(mavenNotCoveredPluginExecution);
+
+		String mavenDefaultMojoExecution = getString(configuration, MAVEN_DEFAULT_MOJO_EXECUTION_ACTION, IGNORE);
+		prefs.setMavenDefaultMojoExecutionAction(mavenDefaultMojoExecution);
 
 		String sortOrder = getString(configuration, MEMBER_SORT_ORDER, null);
 		prefs.setMembersSortOrder(sortOrder);
@@ -1816,8 +1824,31 @@ public class Preferences {
 		return mavenNotCoveredPluginExecutionSeverity;
 	}
 
-	public void setMavenNotCoveredPluginExecutionSeverity(String mavenNotCoveredPluginExecutionSeverity) {
+	public Preferences setMavenNotCoveredPluginExecutionSeverity(String mavenNotCoveredPluginExecutionSeverity) {
 		this.mavenNotCoveredPluginExecutionSeverity = mavenNotCoveredPluginExecutionSeverity;
+		return this;
+	}
+
+	public String getMavenDefaultMojoExecutionAction() {
+		return mavenDefaultMojoExecutionAction;
+	}
+
+	public Preferences setMavenDefaultMojoExecutionAction(String mavenDefaultMojoExecutionAction) {
+		if (mavenDefaultMojoExecutionAction == null) {
+			mavenDefaultMojoExecutionAction = IGNORE;
+		}
+		switch (mavenDefaultMojoExecutionAction) {
+			case IGNORE:
+			case "execute":
+			case "warn":
+			case "error":
+				break;
+			default:
+				mavenDefaultMojoExecutionAction = IGNORE;
+				break;
+		}
+		this.mavenDefaultMojoExecutionAction = mavenDefaultMojoExecutionAction;
+		return this;
 	}
 
 	public String[] getImportOrder() {

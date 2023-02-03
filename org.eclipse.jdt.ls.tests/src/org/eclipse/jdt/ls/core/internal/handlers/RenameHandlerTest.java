@@ -78,6 +78,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(p.getProjectConfigurations()).thenReturn(null);
 		when(preferenceManager.getPreferences()).thenReturn(p);
 		when(p.isRenameEnabled()).thenReturn(true);
+		when(p.getMavenDefaultMojoExecutionAction()).thenReturn("ignore");
 		handler = new RenameHandler(preferenceManager);
 	}
 
