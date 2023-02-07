@@ -526,7 +526,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			boolean autoBuildChanged = ProjectsManager.setAutoBuilding(isAutobuildEnabled);
 			if (jvmChanged || nullAnalysisOptionsUpdated && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(true));
-			} else if (autoBuildChanged) {
+			} else if (autoBuildChanged && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(false));
 			}
 		} catch (CoreException e) {
