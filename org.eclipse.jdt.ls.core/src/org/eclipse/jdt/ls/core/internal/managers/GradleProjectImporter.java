@@ -568,6 +568,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			properties.setProperty("zipStoreBase", "GRADLE_USER_HOME");
 			properties.setProperty("zipStorePath", "wrapper/dists");
 		}
+		if (monitor.isCanceled()) {
+			return null;
+		}
 		try {
 			properties.store(new FileOutputStream(propertiesFile), null);
 		} catch (Exception e) {
@@ -581,6 +584,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		} catch (Exception e) {
 			// Do nothing
 		}
+
 		return propertiesFile.getAbsolutePath();
 	}
 
