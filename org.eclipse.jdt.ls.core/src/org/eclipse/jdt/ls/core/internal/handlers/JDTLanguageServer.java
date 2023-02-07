@@ -522,10 +522,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		try {
-			boolean autoBuildChanged = ProjectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
-			if (jvmChanged || nullAnalysisOptionsUpdated) {
+			boolean isAutobuildEnabled = preferenceManager.getPreferences().isAutobuildEnabled();
+			boolean autoBuildChanged = ProjectsManager.setAutoBuilding(isAutobuildEnabled);
+			if (jvmChanged || nullAnalysisOptionsUpdated && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(true));
-			} else if (autoBuildChanged) {
+			} else if (autoBuildChanged && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(false));
 			}
 		} catch (CoreException e) {
