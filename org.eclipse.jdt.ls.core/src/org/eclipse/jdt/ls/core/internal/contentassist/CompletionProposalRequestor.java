@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -231,6 +232,11 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 					String decorators = rankingResult.getDecorators();
 					if (!decorators.isEmpty()) {
 						item.setLabel(decorators + " " + item.getLabel());
+						// when the item has decorators, set the filter text to avoid client takes the
+						// decorators into consideration when filtering.
+						if (StringUtils.isEmpty(item.getFilterText())) {
+							item.setFilterText(item.getInsertText());
+						}
 					}
 					Map<String, String> itemData = (Map<String, String>) item.getData();
 					Map<String, String> rankingData = rankingResult.getData();
