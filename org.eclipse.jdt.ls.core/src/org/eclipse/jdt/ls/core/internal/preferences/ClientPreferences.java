@@ -400,4 +400,11 @@ public class ClientPreferences {
 				: List.of();
 	}
 
+	public boolean isChangeAnnotationSupport() {
+		return v3supported
+			&& capabilities.getWorkspace() != null
+			&& capabilities.getWorkspace().getWorkspaceEdit() != null
+			&& capabilities.getWorkspace().getWorkspaceEdit().getChangeAnnotationSupport() != null;
+	}
+
 }

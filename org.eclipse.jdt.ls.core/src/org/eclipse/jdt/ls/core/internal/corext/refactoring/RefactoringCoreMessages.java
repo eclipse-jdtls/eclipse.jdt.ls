@@ -69,6 +69,8 @@ public final class RefactoringCoreMessages extends NLS {
 
 	public static String ChangeSignatureRefactoring_change_signature;
 
+	public static String ChangeSignatureRefactoring_change_signature_for;
+
 	public static String ChangeSignatureRefactoring_changed_parameter_pattern;
 
 	public static String ChangeSignatureRefactoring_changed_parameters;

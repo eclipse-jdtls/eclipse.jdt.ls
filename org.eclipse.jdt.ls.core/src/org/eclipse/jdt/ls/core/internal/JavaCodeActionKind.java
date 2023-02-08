@@ -114,6 +114,11 @@ public interface JavaCodeActionKind {
 	public static final String REFACTOR_INTRODUCE_PARAMETER = CodeActionKind.Refactor + ".introduce.parameter";
 
 	/**
+	 * Change Signature
+	 */
+	public static final String REFACTOR_CHANGE_SIGNATURE = CodeActionKind.Refactor + ".change.signature";
+
+	/**
 	 * Base kind for "quickassist" code actions
 	 */
 	public static final String QUICK_ASSIST = "quickassist";

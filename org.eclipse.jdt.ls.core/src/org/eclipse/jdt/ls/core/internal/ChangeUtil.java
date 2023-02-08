@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilati
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.nls.changes.CreateFileChange;
+import org.eclipse.lsp4j.AnnotatedTextEdit;
 import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.CreateFileOptions;
 import org.eclipse.lsp4j.DeleteFile;
@@ -87,34 +88,48 @@ public class ChangeUtil {
 	 * @throws CoreException
 	 */
 	public static WorkspaceEdit convertToWorkspaceEdit(Change change) throws CoreException {
+		return convertToWorkspaceEdit(change, null);
+	}
+
+		/**
+	 * Converts Change to WorkspaceEdit for further consumption.
+	 *
+	 * @param change
+	 *            {@link Change} to convert
+	 * @param annotationId
+	 *            {@link AnnotatedTextEdit} the annotation id of the AnnotatedTextEdit
+	 * @return {@link WorkspaceEdit} converted from the change
+	 * @throws CoreException
+	 */
+	public static WorkspaceEdit convertToWorkspaceEdit(Change change, String annotationId) throws CoreException {
 		WorkspaceEdit edit = new WorkspaceEdit();
 		if (change instanceof CompositeChange compositeChange) {
-			convertCompositeChange(compositeChange, edit);
+			convertCompositeChange(compositeChange, edit, annotationId);
 		} else {
-			convertSingleChange(change, edit);
+			convertSingleChange(change, edit, annotationId);
 		}
 		return edit;
 	}
 
-	private static void convertSingleChange(Change change, WorkspaceEdit edit) throws CoreException {
+	private static void convertSingleChange(Change change, WorkspaceEdit edit, String annotationId) throws CoreException {
 		if (change instanceof CompositeChange) {
 			return;
 		}
 
 		if (change instanceof TextChange textChange) {
-			convertTextChange(textChange, edit);
+			convertTextChange(textChange, edit, annotationId);
 		} else if (change instanceof ResourceChange resourceChange) {
-			convertResourceChange(resourceChange, edit);
+			convertResourceChange(resourceChange, edit, annotationId);
 		}
 	}
 
-	private static void convertCompositeChange(CompositeChange change, WorkspaceEdit edit) throws CoreException {
+	private static void convertCompositeChange(CompositeChange change, WorkspaceEdit edit, String annotationId) throws CoreException {
 		Change[] changes = change.getChildren();
 		for (Change ch : changes) {
 			if (ch instanceof CompositeChange compositeChange) {
-				convertCompositeChange(compositeChange, edit);
+				convertCompositeChange(compositeChange, edit, annotationId);
 			} else {
-				convertSingleChange(ch, edit);
+				convertSingleChange(ch, edit, annotationId);
 			}
 		}
 	}
@@ -129,7 +144,7 @@ public class ChangeUtil {
 	 *            instance of workspace edit changes
 	 * @throws CoreException
 	 */
-	private static void convertResourceChange(ResourceChange resourceChange, WorkspaceEdit edit) throws CoreException {
+	private static void convertResourceChange(ResourceChange resourceChange, WorkspaceEdit edit, String annotationId) throws CoreException {
 		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 			return;
 		}
@@ -144,17 +159,17 @@ public class ChangeUtil {
 		if (resourceChange instanceof RenameCompilationUnitChange renameCUChange) {
 			convertCUResourceChange(edit, renameCUChange);
 		} else if (resourceChange instanceof RenamePackageChange renamePackageChange) {
-			convertRenamePackcageChange(edit, renamePackageChange);
+			convertRenamePackcageChange(edit, renamePackageChange, annotationId);
 		} else if (resourceChange instanceof MoveCompilationUnitChange moveCUChange) {
-			convertMoveCompilationUnitChange(edit, moveCUChange);
+			convertMoveCompilationUnitChange(edit, moveCUChange, annotationId);
 		} else if (resourceChange instanceof CreateFileChange createFileChange) {
 			convertCreateFileChange(edit, createFileChange);
 		} else if (resourceChange instanceof CreateCompilationUnitChange createCUChange) {
-			convertCreateCompilationUnitChange(edit, createCUChange);
+			convertCreateCompilationUnitChange(edit, createCUChange, annotationId);
 		}
 	}
 
-	private static void convertMoveCompilationUnitChange(WorkspaceEdit edit, MoveCompilationUnitChange change) throws JavaModelException {
+	private static void convertMoveCompilationUnitChange(WorkspaceEdit edit, MoveCompilationUnitChange change, String annotationId) throws JavaModelException {
 		IPackageFragment newPackage = change.getDestinationPackage();
 		ICompilationUnit unit = change.getCu();
 		CompilationUnit astCU = RefactoringASTParser.parseWithASTProvider(unit, true, new NullProgressMonitor());
@@ -165,7 +180,7 @@ public class ChangeUtil {
 		if (!Objects.equals(oldPackageName, newPackage.getElementName())) {
 			// update the package declaration
 			if (updatePackageStatement(astCU, newPackage.getElementName(), rewrite, unit)) {
-				convertTextEdit(edit, unit, rewrite.rewriteAST());
+				convertTextEdit(edit, unit, rewrite.rewriteAST(), annotationId);
 			}
 		}
 
@@ -177,17 +192,17 @@ public class ChangeUtil {
 		edit.getDocumentChanges().add(Either.forRight(cuResourceChange));
 	}
 
-	private static void convertCreateCompilationUnitChange(WorkspaceEdit edit, CreateCompilationUnitChange change) {
+	private static void convertCreateCompilationUnitChange(WorkspaceEdit edit, CreateCompilationUnitChange change, String annotationId) {
 		ICompilationUnit unit = change.getCu();
 		CreateFile createFile = new CreateFile();
 		createFile.setUri(JDTUtils.toURI(unit));
 		createFile.setOptions(new CreateFileOptions(false, true));
 		edit.getDocumentChanges().add(Either.forRight(createFile));
 		InsertEdit textEdit = new InsertEdit(0, change.getPreview());
-		convertTextEdit(edit, unit, textEdit);
+		convertTextEdit(edit, unit, textEdit, annotationId);
 	}
 
-	private static void convertRenamePackcageChange(WorkspaceEdit edit, RenamePackageChange packageChange) throws CoreException {
+	private static void convertRenamePackcageChange(WorkspaceEdit edit, RenamePackageChange packageChange, String annotationId) throws CoreException {
 		IPackageFragment pack = (IPackageFragment) packageChange.getModifiedElement();
 		IPath newPackageFragment = new Path(packageChange.getNewName().replace('.', IPath.SEPARATOR));
 		IPath oldPackageFragment = new Path(packageChange.getOldName().replace('.', IPath.SEPARATOR));
@@ -198,7 +213,7 @@ public class ChangeUtil {
 			for (IPackageFragment currentPackage : allPackages) {
 				String newPkgName = packageChange.getNewName() + currentPackage.getElementName().substring(oldPrefix.length());
 				//update package's declaration
-				convertPackageUpdateEdit(currentPackage.getCompilationUnits(), newPkgName, edit);
+				convertPackageUpdateEdit(currentPackage.getCompilationUnits(), newPkgName, edit, annotationId);
 			}
 
 			RenameFile renameFile = new RenameFile();
@@ -207,7 +222,7 @@ public class ChangeUtil {
 			edit.getDocumentChanges().add(Either.forRight(renameFile));
 		} else {
 			//update package's declaration
-			convertPackageUpdateEdit(pack.getCompilationUnits(), packageChange.getNewName(), edit);
+			convertPackageUpdateEdit(pack.getCompilationUnits(), packageChange.getNewName(), edit, annotationId);
 
 			CreateFile createFile = new CreateFile();
 			createFile.setUri(ResourceUtils.fixURI(newPackagePath.append(TEMP_FILE_NAME).toFile().toURI()));
@@ -249,7 +264,7 @@ public class ChangeUtil {
 		edit.getDocumentChanges().add(Either.forRight(createFile));
 	}
 
-	private static void convertTextChange(TextChange textChange, WorkspaceEdit rootEdit) {
+	private static void convertTextChange(TextChange textChange, WorkspaceEdit rootEdit, String annotationId) {
 		Object modifiedElement = textChange.getModifiedElement();
 		if (!(modifiedElement instanceof IJavaElement)) {
 			return;
@@ -260,16 +275,16 @@ public class ChangeUtil {
 			return;
 		}
 		ICompilationUnit compilationUnit = (ICompilationUnit) ((IJavaElement) modifiedElement).getAncestor(IJavaElement.COMPILATION_UNIT);
-		convertTextEdit(rootEdit, compilationUnit, textEdits);
+		convertTextEdit(rootEdit, compilationUnit, textEdits, annotationId);
 	}
 
-	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit) {
+	private static void convertTextEdit(WorkspaceEdit root, ICompilationUnit unit, TextEdit edit, String annotationId) {
 		if (edit == null) {
 			return;
 		}
 
 		TextEditConverter converter = new TextEditConverter(unit, edit);
-		List<org.eclipse.lsp4j.TextEdit> textEdits = filterTextEdits(converter.convert());
+		List<org.eclipse.lsp4j.TextEdit> textEdits = filterTextEdits(converter.convert(annotationId));
 		if (textEdits == null || textEdits.isEmpty()) {
 			return;
 		}
@@ -332,18 +347,18 @@ public class ChangeUtil {
 		return type.getDeclaringType() == null && JavaCore.removeJavaLikeExtension(cuName).equals(typeName);
 	}
 
-	private static void convertPackageUpdateEdit(ICompilationUnit[] cus, String newPkgName, WorkspaceEdit rootEdit) throws JavaModelException {
+	private static void convertPackageUpdateEdit(ICompilationUnit[] cus, String newPkgName, WorkspaceEdit rootEdit, String annotationId) throws JavaModelException {
 		for (ICompilationUnit cu : cus) {
-			convertPackageUpdateEdit(cu, newPkgName, rootEdit);
+			convertPackageUpdateEdit(cu, newPkgName, rootEdit, annotationId);
 		}
 	}
 
-	private static void convertPackageUpdateEdit(ICompilationUnit cu, String newPkgName, WorkspaceEdit rootEdit) throws JavaModelException {
+	private static void convertPackageUpdateEdit(ICompilationUnit cu, String newPkgName, WorkspaceEdit rootEdit, String annotationId) throws JavaModelException {
 		CompilationUnit unit = new RefactoringASTParser(IASTSharedValues.SHARED_AST_LEVEL).parse(cu, true);
 		ASTRewrite rewrite = ASTRewrite.create(unit.getAST());
 		if (updatePackageStatement(unit, newPkgName, rewrite, cu)) {
 			TextEdit textEdit = rewrite.rewriteAST();
-			convertTextEdit(rootEdit, cu, textEdit);
+			convertTextEdit(rootEdit, cu, textEdit, annotationId);
 		}
 	}
 
