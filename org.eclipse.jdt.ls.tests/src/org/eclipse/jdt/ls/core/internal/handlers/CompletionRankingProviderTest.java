@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -85,6 +86,7 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 		CompletionItem recommended = list.getItems().get(0);
 		assertTrue(recommended.getLabel().startsWith("★"));
 		assertTrue(((Map)recommended.getData()).containsKey("foo"));
+		assertEquals(recommended.getFilterText(), recommended.getInsertText());
 		assertTrue(((Map)recommended.getData()).containsKey(CompletionRanking.COMPLETION_EXECUTION_TIME));
 	}
 
