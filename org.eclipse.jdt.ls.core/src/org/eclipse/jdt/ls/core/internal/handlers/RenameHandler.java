@@ -41,6 +41,8 @@ import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
 
 public class RenameHandler {
 
+	DocumentLifeCycleHandler documentLifeCycleHandler;
+
 	public static RenameOptions createOptions() {
 		RenameOptions renameOptions = new RenameOptions();
 		renameOptions.setPrepareProvider(true);
@@ -51,6 +53,11 @@ public class RenameHandler {
 
 	public RenameHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+	}
+
+	public RenameHandler(PreferenceManager preferenceManager, DocumentLifeCycleHandler documentLifeCycleHandler) {
+		this(preferenceManager);
+		this.documentLifeCycleHandler = documentLifeCycleHandler;
 	}
 
 	public WorkspaceEdit rename(RenameParams params, IProgressMonitor monitor) {
@@ -95,6 +102,10 @@ public class RenameHandler {
 			}
 
 			Change change = create.getChange();
+			if (change != null && elements.length == 1 && this.documentLifeCycleHandler != null) {
+				// consider: update variable table
+				this.documentLifeCycleHandler.cleanRenameReferenceCache(unit);
+			}
 			return ChangeUtil.convertToWorkspaceEdit(change);
 		} catch (CoreException | AssertionFailedException ex) {
 			JavaLanguageServerPlugin.logException("Problem with rename for " + params.getTextDocument().getUri(), ex);

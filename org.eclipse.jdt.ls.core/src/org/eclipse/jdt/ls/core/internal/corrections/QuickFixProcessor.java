@@ -51,6 +51,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSu
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -75,7 +77,7 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public List<ChangeCorrectionProposal> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ChangeCorrectionProposal> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations, DocumentLifeCycleHandler documentLifeCycleHandler) throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
@@ -84,7 +86,7 @@ public class QuickFixProcessor {
 		for (int i = 0; i < locations.length; i++) {
 			IProblemLocationCore curr = locations[i];
 			if (handledProblems(curr, locations, handledProblems)) {
-				process(params, context, curr, resultingCollections);
+				process(params, context, curr, resultingCollections, documentLifeCycleHandler);
 			}
 		}
 		return resultingCollections;
@@ -107,7 +109,7 @@ public class QuickFixProcessor {
 		return handledProblems.add(problemId);
 	}
 
-	private void process(CodeActionParams params, IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private void process(CodeActionParams params, IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals, DocumentLifeCycleHandler documentLifeCycleHandler) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
@@ -668,7 +670,9 @@ public class QuickFixProcessor {
 			// TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context,
 			// problem, proposals);
 			// break;
-
+			case BaseDocumentLifeCycleHandler.RENAME_REFERENCE_PROBLEM_ID:
+				LocalCorrectionsSubProcessor.getManualRenameCorrectionProposals(context, problem, proposals, documentLifeCycleHandler);
+				break;
 			default:
 				String str = problem.toString();
 				System.out.println(str);

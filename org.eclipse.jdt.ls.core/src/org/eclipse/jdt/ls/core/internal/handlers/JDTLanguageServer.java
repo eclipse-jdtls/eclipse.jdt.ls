@@ -704,7 +704,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
 		logInfo(">> document/codeAction");
-		CodeActionHandler handler = new CodeActionHandler(this.preferenceManager);
+		CodeActionHandler handler = new CodeActionHandler(this.preferenceManager, this.documentLifeCycleHandler);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.getCodeActionCommands(params, monitor);
@@ -813,7 +813,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
 		logInfo(">> document/rename");
-		RenameHandler handler = new RenameHandler(preferenceManager);
+		RenameHandler handler = new RenameHandler(preferenceManager, this.documentLifeCycleHandler);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.rename(params, monitor);

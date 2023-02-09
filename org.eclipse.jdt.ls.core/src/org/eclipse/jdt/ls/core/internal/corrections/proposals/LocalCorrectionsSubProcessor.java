@@ -21,12 +21,16 @@
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
@@ -101,7 +105,9 @@ import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -111,13 +117,18 @@ import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
+import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.Range;
 
 public class LocalCorrectionsSubProcessor {
 
 	private static final String ADD_STATIC_ACCESS_ID = "org.eclipse.jdt.ui.correction.changeToStatic"; //$NON-NLS-1$
+	private static final String RENAME_REFERENCES_COMMAND = "java.action.renameReferences";
 
 	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
 		ICompilationUnit cu = context.getCompilationUnit();
@@ -1109,4 +1120,33 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
+	public static void getManualRenameCorrectionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals, DocumentLifeCycleHandler documentLifeCycleHandler) throws CoreException {
+		if (!JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getRenameReferencesEnabled()) {
+			return;
+		}
+		ICompilationUnit cu = context.getCompilationUnit();
+		if (cu == null) {
+			return;
+		}
+		IResource resource = cu.getResource();
+		if (resource == null) {
+			return;
+		}
+		IMarker[] markers = resource.findMarkers(BaseDocumentLifeCycleHandler.RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+		Arrays.stream(markers).forEach(marker -> {
+			try {
+				if (Objects.equals(problem.getOffset(), marker.getAttribute(IMarker.CHAR_START)) && Objects.equals(problem.getOffset() + problem.getLength(), marker.getAttribute(IMarker.CHAR_END))) {
+					String originalName = (String) marker.getAttribute("originalName");
+					String newName = (String) marker.getAttribute("newName");
+					Range range = JDTUtils.toRange(cu, problem.getOffset(), problem.getLength());
+					if (originalName != null && newName != null) {
+						String label = Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_manual_rename_label, new String[]{ originalName, newName });
+						proposals.add(new CUCorrectionCommandProposal(label, CodeActionKind.QuickFix, cu, IProposalRelevance.RENAME_REFACTORING_QUICK_FIX, RENAME_REFERENCES_COMMAND, Arrays.asList(cu.getResource().getLocationURI().toString(), originalName, newName, range)));
+					}
+				}
+			} catch (CoreException e) {
+				// Do nothing
+			}
+		});
+	}
 }

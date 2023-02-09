@@ -383,4 +383,17 @@ public final class ResourceUtils {
 		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
 		return marker;
 	}
+
+	/**
+	 * Creates a simple info marker with the given type, id and status message to the given resource.
+	 */
+	public static IMarker createInfoMarker(String type, IResource resource, String message, int id, int start, int end) throws CoreException {
+		IMarker marker = resource.createMarker(type);
+		marker.setAttribute(IJavaModelMarker.ID, id);
+		marker.setAttribute(IMarker.MESSAGE, message);
+		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_INFO);
+		marker.setAttribute(IMarker.CHAR_START, start);
+		marker.setAttribute(IMarker.CHAR_END, end);
+		return marker;
+	}
 }

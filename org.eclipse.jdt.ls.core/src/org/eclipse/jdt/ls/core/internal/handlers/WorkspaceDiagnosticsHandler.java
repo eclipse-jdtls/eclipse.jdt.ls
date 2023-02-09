@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.eclipse.core.internal.resources.CheckMissingNaturesListener;
 import org.eclipse.core.internal.resources.ValidateProjectEncoding;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -177,7 +179,18 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				markers = resource.findMarkers(null, false, IResource.DEPTH_ONE);
 				document = JsonRpcHelpers.toDocument(cu.getBuffer());
 			} else if (handler != null) {
-				handler.triggerValidation(cu);
+				// ignore rename marker deltas
+				IMarkerDelta[] markerDeltas = delta.getMarkerDeltas();
+				boolean isAllRenameReferenceMarker = true;
+				for (IMarkerDelta markerDelta : markerDeltas) {
+					if (!markerDelta.getType().equals(BaseDocumentLifeCycleHandler.RENAME_REFERENCE_MARKER_ID)) {
+						isAllRenameReferenceMarker = false;
+						break;
+					}
+				}
+				if (isAllRenameReferenceMarker == false) {
+					handler.triggerValidation(cu);
+				}
 			}
 		} // or a build file
 		else if (projectsManager.isBuildFile(file)) {

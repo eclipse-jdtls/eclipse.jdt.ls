@@ -127,6 +127,7 @@ public final class CorrectionMessages extends NLS {
 	public static String LocalCorrectionsSubProcessor_hiding_field_label;
 	public static String LocalCorrectionsSubProcessor_rename_var_label;
 	public static String LocalCorrectionsSubProcessor_hiding_argument_label;
+	public static String LocalCorrectionsSubProcessor_manual_rename_label;
 	public static String LocalCorrectionsSubProcessor_setparenteses_description;
 	public static String LocalCorrectionsSubProcessor_setparenteses_instanceof_description;
 	public static String LocalCorrectionsSubProcessor_InferGenericTypeArguments;

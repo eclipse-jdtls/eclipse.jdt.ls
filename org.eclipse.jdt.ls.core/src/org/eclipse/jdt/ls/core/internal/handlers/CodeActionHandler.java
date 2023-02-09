@@ -81,6 +81,7 @@ public class CodeActionHandler {
 	private NonProjectFixProcessor nonProjectFixProcessor;
 
 	private PreferenceManager preferenceManager;
+	private DocumentLifeCycleHandler documentLifeCycleHandler;
 
 	public CodeActionHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -89,6 +90,11 @@ public class CodeActionHandler {
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
 		this.refactorProcessor = new RefactorProcessor(preferenceManager);
 		this.nonProjectFixProcessor = new NonProjectFixProcessor(preferenceManager);
+	}
+
+	public CodeActionHandler(PreferenceManager preferenceManager, DocumentLifeCycleHandler documentLifeCycleHandler) {
+		this(preferenceManager);
+		this.documentLifeCycleHandler = documentLifeCycleHandler;
 	}
 
 	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
@@ -159,7 +165,7 @@ public class CodeActionHandler {
 		if (containsKind(codeActionKinds, CodeActionKind.QuickFix)) {
 			try {
 				codeActions.addAll(nonProjectFixProcessor.getCorrections(params, context, locations));
-				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(params, context, locations);
+				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(params, context, locations, documentLifeCycleHandler);
 				this.quickFixProcessor.addAddAllMissingImportsProposal(context, quickfixProposals);
 				Set<ChangeCorrectionProposal> quickSet = new TreeSet<>(comparator);
 				quickSet.addAll(quickfixProposals);
