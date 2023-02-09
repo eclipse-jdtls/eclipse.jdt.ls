@@ -216,7 +216,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		return Status.OK_STATUS;
 	}
 
-	private IStatus publishDiagnostics(IProgressMonitor monitor) throws JavaModelException {
+	public IStatus publishDiagnostics(IProgressMonitor monitor) throws JavaModelException {
 		long start = System.currentTimeMillis();
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
