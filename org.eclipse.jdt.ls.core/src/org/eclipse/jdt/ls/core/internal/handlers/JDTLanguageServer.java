@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
@@ -528,6 +529,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				buildWorkspace(Either.forLeft(true));
 			} else if (autoBuildChanged && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(false));
+			} else if (nullAnalysisOptionsUpdated && !isAutobuildEnabled) {
+				documentLifeCycleHandler.publishDiagnostics(new NullProgressMonitor());
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
