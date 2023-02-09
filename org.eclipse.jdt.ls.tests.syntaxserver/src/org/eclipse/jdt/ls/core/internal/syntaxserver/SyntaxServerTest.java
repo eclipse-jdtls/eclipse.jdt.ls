@@ -38,6 +38,7 @@ import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -49,8 +50,10 @@ import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.DocumentSymbolParams;
+import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.HoverParams;
 import org.eclipse.lsp4j.Location;
@@ -62,6 +65,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.TypeDefinitionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
@@ -345,6 +349,37 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 			assertEquals(CompletionItemKind.Method, item.getKind());
 			assertTrue(StringUtils.isNotBlank(item.getSortText()));
 		}
+	}
+	
+	@Test
+	public void testDocumentFormatting() throws Exception {
+		URI fileURI = openFile("maven/salut4", "src/main/java/java/Completion.java");
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(fileURI);
+		assertNotNull(cu);
+		cu.getBuffer().setContents(
+				"""
+				package java;
+				
+				
+			         		public class Completion{  String name  ;  
+				  }""");
+		cu.makeConsistent(null);
+
+		String uri = ResourceUtils.fixURI(fileURI);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		DocumentFormattingParams params = new DocumentFormattingParams(textDocument, options);
+		List<? extends TextEdit> edits = server.formatting(params).get();
+		assertNotNull(edits);
+
+		String expectedText = """
+			package java;
+			
+			public class Completion {
+			    String name;
+			}""";
+		String newText = TextEditUtil.apply(cu, edits);
+		assertEquals(expectedText, newText);
 	}
 
 	@Test

@@ -75,6 +75,14 @@ public class BaseJDTLanguageServer {
 		}
 	}
 
+	protected void toggleCapability(boolean enabled, String id, String capability, Object options) {
+		if (enabled) {
+			registerCapability(id, capability, options);
+		} else {
+			unregisterCapability(id, capability);
+		}
+	}
+
 	protected <R> CompletableFuture<R> computeAsync(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)));
 	}

@@ -70,11 +70,11 @@ public class FormatterHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-	List<? extends org.eclipse.lsp4j.TextEdit> formatting(DocumentFormattingParams params, IProgressMonitor monitor) {
+	public List<? extends org.eclipse.lsp4j.TextEdit> formatting(DocumentFormattingParams params, IProgressMonitor monitor) {
 		return format(params.getTextDocument().getUri(), params.getOptions(), (Range) null, monitor);
 	}
 
-	List<? extends org.eclipse.lsp4j.TextEdit> rangeFormatting(DocumentRangeFormattingParams params, IProgressMonitor monitor) {
+	public List<? extends org.eclipse.lsp4j.TextEdit> rangeFormatting(DocumentRangeFormattingParams params, IProgressMonitor monitor) {
 		return format(params.getTextDocument().getUri(), params.getOptions(), params.getRange(), monitor);
 	}
 

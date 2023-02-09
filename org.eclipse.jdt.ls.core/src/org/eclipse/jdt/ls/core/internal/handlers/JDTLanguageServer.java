@@ -536,15 +536,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 
-
-	private void toggleCapability(boolean enabled, String id, String capability, Object options) {
-		if (enabled) {
-			registerCapability(id, capability, options);
-		} else {
-			unregisterCapability(id, capability);
-		}
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.WorkspaceService#didChangeWatchedFiles(org.eclipse.lsp4j.DidChangeWatchedFilesParams)
 	 */
