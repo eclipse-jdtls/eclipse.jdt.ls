@@ -44,6 +44,7 @@ import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -115,7 +116,9 @@ public class DocumentSymbolHandler {
 			if (type != IJavaElement.TYPE && type != IJavaElement.FIELD && type != IJavaElement.METHOD) {
 				continue;
 			}
-
+			if (element instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
+				continue;
+			}
 			Location location = JDTUtils.toLocation(element);
 			if (location != null) {
 				SymbolInformation si = new SymbolInformation();
@@ -160,6 +163,9 @@ public class DocumentSymbolHandler {
 	private DocumentSymbol toDocumentSymbol(IJavaElement unit, IProgressMonitor monitor) {
 		int type = unit.getElementType();
 		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT) {
+			return null;
+		}
+		if (unit instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
 			return null;
 		}
 		if (monitor.isCanceled()) {

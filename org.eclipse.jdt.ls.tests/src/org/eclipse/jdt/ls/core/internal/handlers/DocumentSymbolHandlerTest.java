@@ -30,9 +30,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.google.common.collect.TreeTraverser;
-
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
@@ -50,6 +49,8 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.collect.TreeTraverser;
 
 /**
  * @author snjeza
@@ -209,6 +210,23 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(SymbolKind.Interface, deprecated.getKind());
 		assertNotNull(deprecated.getDeprecated());
 		assertTrue("Should be deprecated", deprecated.getDeprecated());
+	}
+
+	@Test
+	public void testLombok() throws Exception {
+		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
+		if (lombokDisabled) {
+			return;
+		}
+		importProjects("maven/mavenlombok");
+		project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		String className = "org.sample.Test";
+		List<? extends SymbolInformation> symbols = getSymbols(className);
+		//@formatter:on
+		assertFalse("No symbols found for " + className, symbols.isEmpty());
+		assertHasSymbol("Test", "Test.java", SymbolKind.Class, symbols);
+		Optional<? extends SymbolInformation> method = symbols.stream().filter(s -> (s.getKind() == SymbolKind.Method)).findAny();
+		assertFalse(method.isPresent());
 	}
 
 	private List<? extends DocumentSymbol> internalGetHierarchicalSymbols(IProject project, IProgressMonitor monitor, String className)
