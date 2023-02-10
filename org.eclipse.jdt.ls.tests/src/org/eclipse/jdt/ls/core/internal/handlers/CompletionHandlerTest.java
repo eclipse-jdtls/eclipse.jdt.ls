@@ -3504,7 +3504,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testCompletion_withConflictingTypeNames() throws Exception{
+	public void testCompletion_withConflictingTypeNames() throws Exception {
+		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
+		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		Mockito.when(mockCapabilies.isResolveAdditionalTextEditsSupport()).thenReturn(true);
 		getWorkingCopy("src/java/List.java",
 			"package util;\n" +
 			"public class List {\n" +
@@ -3528,7 +3531,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = list.getItems().stream().filter(p -> "java.util.List".equals(p.getDetail()))
 			.collect(Collectors.toList());
 		assertFalse("java.util.List not found",items.isEmpty());
-		assertEquals("java.util.List", items.get(0).getTextEdit().getLeft().getNewText());
+		CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
+		assertEquals("java.util.List", resolved.getTextEdit().getLeft().getNewText());
 	}
 
 	@Test

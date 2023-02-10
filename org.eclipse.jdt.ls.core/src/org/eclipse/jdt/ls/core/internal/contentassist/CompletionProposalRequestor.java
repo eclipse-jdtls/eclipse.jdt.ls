@@ -338,7 +338,14 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		this.context = context;
 		response.setContext(context);
 		this.descriptionProvider = new CompletionProposalDescriptionProvider(unit, context);
-		this.proposalProvider = new CompletionProposalReplacementProvider(unit, context, response.getOffset(), preferenceManager.getPreferences(), preferenceManager.getClientPreferences());
+		this.proposalProvider = new CompletionProposalReplacementProvider(
+			unit,
+			context,
+			response.getOffset(),
+			preferenceManager.getPreferences(),
+			preferenceManager.getClientPreferences(),
+			false
+		);
 	}
 
 
