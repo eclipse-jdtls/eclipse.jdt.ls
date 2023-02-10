@@ -28,6 +28,8 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.dom.AST;
@@ -257,8 +259,19 @@ public class PasteEventHandler {
 		if (params.getLocation().getUri().equals(originalDocumentUri)) {
 			return new DocumentPasteEdit(insertText);
 		}
+		IType primaryType = cu.findPrimaryType();
+		if (primaryType == null) {
+			return new DocumentPasteEdit(insertText);
+		}
+		ISourceRange sourceRange = primaryType.getSourceRange();
+		if (sourceRange == null) {
+			return new DocumentPasteEdit(insertText);
+		}
 		int offset = JsonRpcHelpers.toOffset(cu, range.getStart().getLine(), range.getStart().getCharacter());
 		int length = JsonRpcHelpers.toOffset(cu, range.getEnd().getLine(), range.getEnd().getCharacter()) - offset;
+		if (offset <= sourceRange.getOffset() || offset + length >= sourceRange.getOffset() + sourceRange.getLength()) {
+			return new DocumentPasteEdit(insertText);
+		}
 		Function<ImportSelection[], ImportCandidate[]> chooseFunc = null;
 		ICompilationUnit tempUnit = RenameAnalyzeUtil.createNewWorkingCopy(cu, new TextChangeManager(true), new WorkingCopyOwner() {
 		}, new SubProgressMonitor(monitor == null ? new NullProgressMonitor() : monitor, 1));
