@@ -92,12 +92,23 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private static final long DOCUMENT_LIFECYCLE_MAX_DEBOUNCE = 400; /*ms*/
 
+	/**
+	 * The min & init value of adaptive debounce time for publish diagnostic job.
+	 */
+	private static final long PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE = 400; /*ms*/
+
+	/**
+	 * The max value of adaptive debounce time for publish diagnostic job.
+	 */
+	private static final long PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE = 2000; /*ms*/
+
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
 	private WorkspaceJob publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 	private Map<String, Integer> documentVersions = new HashMap<>();
-	private MovingAverage movingAverage = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
+	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
+	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
 
 	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
 		this.sharedASTProvider = CoreASTProvider.getInstance();
@@ -105,9 +116,12 @@ public abstract class BaseDocumentLifeCycleHandler {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
 				@Override
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-					long start = System.currentTimeMillis();
+					long startTime = System.nanoTime();
 					IStatus status = performValidation(monitor);
-					movingAverage.update(System.currentTimeMillis() - start);
+					if (status.getSeverity() != IStatus.CANCEL) {
+						long elapsedTime = System.nanoTime() - startTime;
+						movingAverageForValidation.update(elapsedTime / 1_000_000);
+					}
 					return status;
 				}
 
@@ -156,7 +170,18 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	private long getDocumentLifecycleDelay() {
-		return Math.min(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE, Math.round(1.5 * movingAverage.value));
+		return Math.min(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE, Math.round(1.5 * movingAverageForValidation.value));
+	}
+
+	/**
+	 * @return the delay time of the publish diagnostics job. The value ranges in
+	 * ({@link #PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE}, {@link #PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE}) ms.
+	 */
+	private long getPublishDiagnosticsDelay() {
+		return Math.min(
+			Math.max(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE, Math.round(1.5 * movingAverageForDiagnostics.value)), 
+			PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE
+		);
 	}
 
 	private ISchedulingRule getRule(Set<ICompilationUnit> units) {
@@ -209,7 +234,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
-			publishDiagnosticsJob.schedule(400);
+			publishDiagnosticsJob.schedule(getPublishDiagnosticsDelay());
 		} else {
 			return publishDiagnostics(new NullProgressMonitor());
 		}
@@ -652,7 +677,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 		@Override
 		public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-			return publishDiagnostics(monitor);
+			long startTime = System.nanoTime();
+			IStatus status = publishDiagnostics(monitor);
+			if (status.getSeverity() != IStatus.CANCEL) {
+				long elapsedTime = System.nanoTime() - startTime;
+				movingAverageForDiagnostics.update(elapsedTime / 1_000_000);
+			}
+			return status;
 		}
 
 		/* (non-Javadoc)
