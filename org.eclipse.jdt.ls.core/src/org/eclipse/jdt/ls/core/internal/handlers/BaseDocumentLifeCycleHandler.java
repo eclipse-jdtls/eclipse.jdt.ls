@@ -118,8 +118,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 				public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 					long startTime = System.nanoTime();
 					IStatus status = performValidation(monitor);
-					long elapsedTime = System.nanoTime() - startTime;
-					movingAverageForValidation.update(elapsedTime / 1_000_000);
+					if (status.getSeverity() != IStatus.CANCEL) {
+						long elapsedTime = System.nanoTime() - startTime;
+						movingAverageForValidation.update(elapsedTime / 1_000_000);
+					}
 					return status;
 				}
 
@@ -677,8 +679,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 		public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 			long startTime = System.nanoTime();
 			IStatus status = publishDiagnostics(monitor);
-			long elapsedTime = System.nanoTime() - startTime;
-			movingAverageForDiagnostics.update(elapsedTime / 1_000_000);
+			if (status.getSeverity() != IStatus.CANCEL) {
+				long elapsedTime = System.nanoTime() - startTime;
+				movingAverageForDiagnostics.update(elapsedTime / 1_000_000);
+			}
 			return status;
 		}
 
