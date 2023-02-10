@@ -50,10 +50,12 @@ import org.eclipse.jdt.core.dom.CreationReference;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionMethodReference;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -110,7 +112,9 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
 import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
@@ -205,10 +209,12 @@ public class QuickAssistProcessor {
 				//				getRemoveBlockProposals(context, coveringNode, resultingCollections);
 				//				getConvertStringConcatenationProposals(context, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
+			getStringConcatToTextBlockProposal(context, coveringNode, resultingCollections);
 			// }
 			getAddMethodDeclaration(context, coveringNode, resultingCollections);
 			getTryWithResourceProposals(locations, context, coveringNode, resultingCollections);
 			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
+
 			List<Integer> javaDocCommentProblems = Arrays.asList(IProblem.JavadocMissing);
 			if (!problemExists(locations, javaDocCommentProblems)) {
 				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
@@ -1759,6 +1765,40 @@ public class QuickAssistProcessor {
 		}
 
 		return true;
+	}
+
+	private static boolean getStringConcatToTextBlockProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+		if (resultingCollections == null) {
+			return false;
+		}
+		ASTNode exp = null;
+		if (node instanceof Assignment || node instanceof VariableDeclarationFragment || node instanceof FieldDeclaration || node instanceof InfixExpression) {
+			exp = node;
+		} else {
+			ASTNode parent = node.getParent();
+			if (parent instanceof Assignment || parent instanceof VariableDeclarationFragment || parent instanceof FieldDeclaration || parent instanceof InfixExpression) {
+				exp = parent;
+			}
+		}
+		if (exp == null) {
+			return false;
+		}
+
+		IProposableFix fix = StringConcatToTextBlockFixCore.createStringConcatToTextBlockFix(exp);
+		if (fix == null) {
+			return false;
+		}
+
+		// add correction proposal
+		try {
+			CompilationUnitChange change = fix.createChange(null);
+			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.CONVERT_TO_TEXT_BLOCK);
+			resultingCollections.add(proposal);
+			return true;
+		} catch (CoreException e) {
+			// ignore
+		}
+		return false;
 	}
 
 }

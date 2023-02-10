@@ -193,6 +193,7 @@ public interface IProposalRelevance {
 	public static final int REPLACE_WITH_UNQUALIFIED_ENUM_CONSTANT= 5;
 	public static final int OVERRIDE_DEFAULT_METHOD= 5;
 	public static final int ADD_MISSING_ANNOTATION_ATTRIBUTES = 5;
+	public static final int CONVERT_TO_TEXT_BLOCK = 5;
 
 	public static final int ADD_MISSING_TAG= 4;
 	public static final int INSERT_FALL_THROUGH= 4;
