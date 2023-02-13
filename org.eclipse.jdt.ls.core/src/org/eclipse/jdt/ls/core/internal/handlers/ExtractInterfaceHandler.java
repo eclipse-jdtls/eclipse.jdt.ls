@@ -26,7 +26,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.core.SourceField;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
-import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessorLS;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
@@ -51,7 +51,7 @@ public class ExtractInterfaceHandler {
 			return null;
 		}
 		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
-		ExtractInterfaceProcessorLS processor = new ExtractInterfaceProcessorLS(type, settings);
+		ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(type, settings);
 		IMember[] extractableMembers;
 		try {
 			extractableMembers = processor.getExtractableMembers();
@@ -88,7 +88,7 @@ public class ExtractInterfaceHandler {
 			return null;
 		}
 		CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
-		ExtractInterfaceProcessorLS processor = new ExtractInterfaceProcessorLS(type, settings);
+		ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(type, settings);
 		try {
 			IMember[] selectedMembers = Arrays.stream(processor.getExtractableMembers()).filter((member) -> {
 				return handleIdentifiers.contains(member.getHandleIdentifier());
