@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +32,7 @@ import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -67,6 +69,22 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private boolean isComplete = true;
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
+	/**
+	 * stores all the imported types from static imports and single type import declarations.
+	 * For example:
+	 * <ul>
+	 *   <li>import java.awt.List; -> java.awt.List</li>
+	 *   <li>import static java.awt.List.*; -> java.awt.List</li>
+	 *   <li>import static java.awt.List.ERROR; -> java.awt.List</li>
+	 * </ul>
+	 */
+	private Set<String> importedTypes = new HashSet<>();
+	/**
+	 * stores all the imported package or type names from an on demand import declaration.
+	 * For example:
+	 *   import java.awt.*; -> java.awt
+	 */
+	private Set<String> onDemandImportedPackagesOrTypes = new HashSet<>();
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -149,6 +167,22 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		response.setOffset(offset);
 		fIsTestCodeExcluded = !isTestSource(unit.getJavaProject(), unit);
 		setRequireExtendedContext(true);
+		try {
+			for (IImportDeclaration importDeclaration : this.unit.getImports()) {
+				// 'static' is not a valid Java identifier so it's safe to simply check
+				// if the import declaration is a static import by contains().
+				String elementName = importDeclaration.getElementName();
+				if (importDeclaration.getSource().contains("static")) {
+					importedTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
+				} else if (importDeclaration.isOnDemand()) {
+					onDemandImportedPackagesOrTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
+				} else {
+					importedTypes.add(elementName);
+				}
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException("Failed to get imports during completion", e);
+		}
 	}
 
 	private boolean isTestSource(IJavaProject project, ICompilationUnit cu) {
@@ -479,7 +513,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	protected boolean isTypeFiltered(CompletionProposal proposal) {
 		char[] declaringType = getDeclaringType(proposal);
-		return declaringType != null && TypeFilter.isFiltered(declaringType);
+		return declaringType != null && !this.isImported(declaringType) && TypeFilter.isFiltered(declaringType);
 	}
 
 	/**
@@ -532,7 +566,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	@Override
 	public boolean isIgnored(char[] fullTypeName) {
-		return fullTypeName != null && TypeFilter.isFiltered(fullTypeName);
+		return fullTypeName != null && !this.isImported(fullTypeName) && TypeFilter.isFiltered(fullTypeName);
 	}
 
 	/**
@@ -561,5 +595,25 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Check if the type appears in the import declarations.
+	 */
+	private boolean isImported(char[] fullyQualifiedName) {
+		String typeName = new String(fullyQualifiedName);
+		if (this.importedTypes.contains(typeName)) {
+			return true;
+		}
+
+		int lastDotIdx = typeName.lastIndexOf('.');
+		if (lastDotIdx >= 0) {
+			String typeParent = typeName.substring(0, lastDotIdx);
+			if (this.onDemandImportedPackagesOrTypes.contains(typeParent)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
