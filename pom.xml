@@ -19,7 +19,7 @@
 		<base.name>JDT Language Server</base.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<tycho-version>3.0.1</tycho-version>
-		<tycho-extras-version>${tycho-version}</tycho-extras-version>
+		<tycho-extras-version>3.0.2</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/eclipse/eclipse.jdt.ls.git</tycho.scmUrl>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 		<coverage.filter>org.eclipse.jdt.ls.*</coverage.filter>
