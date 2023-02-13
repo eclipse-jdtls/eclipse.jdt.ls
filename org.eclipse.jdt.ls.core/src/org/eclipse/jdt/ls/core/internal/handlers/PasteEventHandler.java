@@ -254,6 +254,9 @@ public class PasteEventHandler {
 		Range range = params.getLocation().getRange();
 		String originalDocumentUri = params.getCopiedDocumentUri();
 		String insertText = params.getText();
+		if (params.getLocation().getUri().equals(originalDocumentUri)) {
+			return new DocumentPasteEdit(insertText);
+		}
 		int offset = JsonRpcHelpers.toOffset(cu, range.getStart().getLine(), range.getStart().getCharacter());
 		int length = JsonRpcHelpers.toOffset(cu, range.getEnd().getLine(), range.getEnd().getCharacter()) - offset;
 		Function<ImportSelection[], ImportCandidate[]> chooseFunc = null;
