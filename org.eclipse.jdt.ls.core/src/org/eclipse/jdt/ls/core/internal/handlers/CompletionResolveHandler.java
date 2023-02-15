@@ -138,8 +138,15 @@ public class CompletionResolveHandler {
 		}
 
 		if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-			CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(unit, completionResponse.getContext(), completionResponse.getOffset(), manager.getPreferences(), manager.getClientPreferences());
-			proposalProvider.updateAdditionalTextEdits(completionResponse.getProposals().get(proposalId), param, '\0');
+			CompletionProposalReplacementProvider proposalProvider = new CompletionProposalReplacementProvider(
+				unit,
+				completionResponse.getContext(),
+				completionResponse.getOffset(),
+				manager.getPreferences(),
+				manager.getClientPreferences(),
+				true
+			);
+			proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 		}
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			String typeName = stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));

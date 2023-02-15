@@ -41,6 +41,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
@@ -91,39 +92,31 @@ public class CompletionProposalReplacementProvider {
 	private final ClientPreferences client;
 	private Preferences preferences;
 	private String anonymousTypeNewBody;
+	/**
+	 * whether the provider is used during `completionItem/resolve` request.
+	 */
+	private boolean isResolvingRequest;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, Preferences preferences, ClientPreferences clientPrefs) {
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset,
+			Preferences preferences, ClientPreferences clientPrefs, boolean isResolvingRequest) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
 		this.offset = offset;
 		this.preferences = preferences == null ? new Preferences() : preferences;
 		this.client = clientPrefs;
+		this.isResolvingRequest = isResolvingRequest;
 	}
 
 	/**
-	 * Update the replacement together with additionalTextEdits for the given item.
-	 * It's originally designed to defer expensive calculation of the imports into completion/resolve stage.
-	 * @param proposal
-	 * @param item
-	 * @param trigger
-	 */
-	public void updateAdditionalTextEdits(CompletionProposal proposal, CompletionItem item, char trigger) {
-		updateReplacement(proposal, item, trigger, true);
-	}
-
-	/**
-	 * Updates the replacement but NO additional replacement for the given item.
-	 *
+	 * Update the replacement.
+	 * 
+	 * When {@link #isResolvingRequest} is <code>true</code>, additionalTextEdits will also be resolved.
 	 * @param proposal
 	 * @param item
 	 * @param trigger
 	 */
 	public void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger) {
-		updateReplacement(proposal, item, trigger, false);
-	}
-
-	private void updateReplacement(CompletionProposal proposal, CompletionItem item, char trigger, boolean isResolving) {
 		// reset importRewrite
 		this.importRewrite = TypeProposalUtils.createImportRewrite(compilationUnit);
 
@@ -207,7 +200,7 @@ public class CompletionProposalReplacementProvider {
 			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
 		}
 
-		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
+		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolvingRequest)) {
 			addImports(additionalTextEdits);
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
@@ -1033,12 +1026,19 @@ public class CompletionProposalReplacementProvider {
 
 		/* Add imports if the preference is on. */
 		if (importRewrite != null) {
-			CompilationUnit cu = SharedASTProviderCore.getAST(compilationUnit, SharedASTProviderCore.WAIT_NO, new NullProgressMonitor());
-			ContextSensitiveImportRewriteContext rewriteContext = null;
-			if (cu != null) {
-				rewriteContext = new ContextSensitiveImportRewriteContext(cu, this.offset, this.importRewrite);
+			ImportRewriteContext context = null;
+			// Only get more context-aware result during 'completionItem/resolve' request.
+			// This is because 'ContextSensitiveImportRewriteContext.findInContext()'' is a very
+			// heavy operation. If we do that when listing the completion items, the performance
+			// will downgrade a lot.
+			if (isResolvingRequest) {
+				CompilationUnit cu = SharedASTProviderCore.getAST(compilationUnit, SharedASTProviderCore.WAIT_NO, new NullProgressMonitor());
+				if (cu != null) {
+					context = new ContextSensitiveImportRewriteContext(cu, this.offset, this.importRewrite);
+				}
 			}
-			return importRewrite.addImport(qualifiedTypeName, rewriteContext);
+			
+			return importRewrite.addImport(qualifiedTypeName, context);
 		}
 
 		// fall back for the case we don't have an import rewrite (see
