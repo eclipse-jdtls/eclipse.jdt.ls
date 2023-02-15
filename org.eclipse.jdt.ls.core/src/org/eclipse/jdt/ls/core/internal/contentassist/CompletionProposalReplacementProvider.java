@@ -95,22 +95,23 @@ public class CompletionProposalReplacementProvider {
 	/**
 	 * whether the provider is used during `completionItem/resolve` request.
 	 */
-	private boolean isResolving;
+	private boolean isResolvingRequest;
 
-	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset, Preferences preferences, ClientPreferences clientPrefs, boolean isResolving) {
+	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset,
+			Preferences preferences, ClientPreferences clientPrefs, boolean isResolvingRequest) {
 		super();
 		this.compilationUnit = compilationUnit;
 		this.context = context;
 		this.offset = offset;
 		this.preferences = preferences == null ? new Preferences() : preferences;
 		this.client = clientPrefs;
-		this.isResolving = isResolving;
+		this.isResolvingRequest = isResolvingRequest;
 	}
 
 	/**
 	 * Update the replacement.
 	 * 
-	 * When {@link #isResolving} is <code>true</code>, additionalTextEdits will also be resolved.
+	 * When {@link #isResolvingRequest} is <code>true</code>, additionalTextEdits will also be resolved.
 	 * @param proposal
 	 * @param item
 	 * @param trigger
@@ -199,7 +200,7 @@ public class CompletionProposalReplacementProvider {
 			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
 		}
 
-		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolving)) {
+		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolvingRequest)) {
 			addImports(additionalTextEdits);
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
@@ -1030,7 +1031,7 @@ public class CompletionProposalReplacementProvider {
 			// This is because 'ContextSensitiveImportRewriteContext.findInContext()'' is a very
 			// heavy operation. If we do that when listing the completion items, the performance
 			// will downgrade a lot.
-			if (isResolving) {
+			if (isResolvingRequest) {
 				CompilationUnit cu = SharedASTProviderCore.getAST(compilationUnit, SharedASTProviderCore.WAIT_NO, new NullProgressMonitor());
 				if (cu != null) {
 					context = new ContextSensitiveImportRewriteContext(cu, this.offset, this.importRewrite);
