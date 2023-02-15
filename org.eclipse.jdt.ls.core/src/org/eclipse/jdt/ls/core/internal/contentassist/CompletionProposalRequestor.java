@@ -169,10 +169,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		setRequireExtendedContext(true);
 		try {
 			for (IImportDeclaration importDeclaration : this.unit.getImports()) {
-				// 'static' is not a valid Java identifier so it's safe to simply check
-				// if the import declaration is a static import by contains().
 				String elementName = importDeclaration.getElementName();
-				if (importDeclaration.getSource().contains("static")) {
+				if (isStaticImport(importDeclaration)) {
 					importedTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
 				} else if (importDeclaration.isOnDemand()) {
 					onDemandImportedPackagesOrTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
@@ -595,6 +593,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		return true;
+	}
+
+	private boolean isStaticImport(IImportDeclaration importElement) {
+		try {
+			return Flags.isStatic(importElement.getFlags());
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+		}
+		return false;
 	}
 
 	/**
