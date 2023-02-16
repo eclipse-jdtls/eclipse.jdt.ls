@@ -1,6 +1,6 @@
 # Change Log
 
-# [1.20.0 (February 16th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/110?closed=1)
+# [1.20.0 (February 20th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/110?closed=1)
  * performance - Skip generated methods when calculating document symbols. See [#2446](https://github.com/eclipse/eclipse.jdt.ls/issues/2446).
  * performance - Make the debounce adaptive for the publish diagnostic job. See [#2443](https://github.com/eclipse/eclipse.jdt.ls/pull/2443).
  * performance - Only perform context sensitive import rewrite when resolving completion items. See [#2453](https://github.com/eclipse/eclipse.jdt.ls/pull/2453).
