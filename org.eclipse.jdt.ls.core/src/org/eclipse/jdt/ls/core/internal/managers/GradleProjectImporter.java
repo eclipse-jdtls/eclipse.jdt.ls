@@ -534,23 +534,36 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	/**
 	 * update the gradle wrapper to the given version
-	 * @param projectUri uri of the project
-	 * @param gradleVersion the target gradle version
-	 * @param monitor the progress monitor
+	 *
+	 * @param projectUri
+	 *                          uri of the project
+	 * @param gradleVersion
+	 *                          the target gradle version
+	 * @param monitor
+	 *                          the progress monitor
 	 * @return the path to the new gradle-wrapper.properties file
+	 *
+	 *         Upgrade the Gradle version in given project uri. The method includes
+	 *         two steps: modify the gradle properties file and execute "wrapper"
+	 *         task.
+	 *
+	 *         If the GradleBuild related to the project exists, we will use that
+	 *         instance to get root project directory, and execute wrapper task.
+	 *         Otherwise, we will directly regard the given uri as project uri, and
+	 *         create a new GradleBuild for that project uri and execute wrapper
+	 *         task.
 	 */
 	public static String upgradeGradleVersion(String projectUri, String gradleVersion, IProgressMonitor monitor) {
 		String newDistributionUrl = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", gradleVersion);
 		Path projectFolder = Paths.get(URI.create(projectUri));
-		// try to get root project directory
 		IProject project = ProjectUtils.getProjectFromUri(projectUri);
 		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
-		if (build.isEmpty()) {
-			return null;
-		}
-		GradleBuild gradleBuild = build.get();
-		if (gradleBuild instanceof DefaultGradleBuild) {
-			projectFolder = ((DefaultGradleBuild) gradleBuild).getBuildConfig().getRootProjectDirectory().toPath();
+		GradleBuild gradleBuild = null;
+		if (!build.isEmpty()) {
+			gradleBuild = build.get();
+			if (gradleBuild instanceof DefaultGradleBuild) {
+				projectFolder = ((DefaultGradleBuild) gradleBuild).getBuildConfig().getRootProjectDirectory().toPath();
+			}
 		}
 		File propertiesFile = projectFolder.resolve("gradle").resolve("wrapper").resolve("gradle-wrapper.properties").toFile();
 		Properties properties = new Properties();
@@ -577,6 +590,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return null;
 		}
 		try {
+			if (gradleBuild == null) {
+				gradleBuild = GradleCore.getWorkspace().createBuild(getBuildConfiguration(projectFolder));
+			}
 			gradleBuild.withConnection(connection -> {
 				connection.newBuild().forTasks("wrapper").run();
 				return null;
