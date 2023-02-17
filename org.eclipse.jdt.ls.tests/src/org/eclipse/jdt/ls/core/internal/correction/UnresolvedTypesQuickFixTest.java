@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Path;
@@ -1574,6 +1573,33 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 			.filter((action) -> action.getKind().equals((CodeActionKind.QuickFix)) && action.getTitle().equals(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description))
 			.collect(Collectors.toList());
 		assertEquals(1, addAllMissingImportsActions.size());
+	}
+
+	@Test
+	public void testIgnoreTypeFilter() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("public class E {\n");
+		buf.append("    void foo() {\n");
+		buf.append("        List v= new ArrayList();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.ArrayList;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("public class E {\n");
+		buf.append("    void foo() {\n");
+		buf.append("        List v= new ArrayList();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Import 'List' (java.util)", buf.toString());
+
+		assertCodeActions(cu, e1);
 	}
 
 }

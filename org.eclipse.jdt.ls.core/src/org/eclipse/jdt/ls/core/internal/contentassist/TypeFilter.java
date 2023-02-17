@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
@@ -23,7 +26,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.ui.util.StringMatcher;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 /**
@@ -74,23 +76,47 @@ public class TypeFilter {
 		}
 	}
 
-	private StringMatcher[] fStringMatchers;
+	public synchronized void removeFilterIfMatched(Collection<String> importedElements) {
+		if (importedElements == null || importedElements.isEmpty()) {
+			return;
+		}
+
+		StringMatcherEx[] matchers= getStringMatchers();
+		Set<StringMatcherEx> newMatchers = new HashSet<>();
+		for (String importedElement : importedElements) {
+			for (int i= 0; i < matchers.length; i++) {
+				StringMatcherEx cur= matchers[i];
+				if (cur.endsWithWildcard()) {
+					importedElement += ".";
+				}
+				if (!cur.match(importedElement)) {
+					newMatchers.add(cur);
+				}
+			}
+		}
+		
+		if (this.fStringMatchers.length != newMatchers.size()) {
+			this.fStringMatchers = newMatchers.toArray(StringMatcherEx[]::new);
+		}
+	}
+
+	private StringMatcherEx[] fStringMatchers;
 
 	public TypeFilter() {
 		fStringMatchers= null;
 	}
 
-	private synchronized StringMatcher[] getStringMatchers() {
+	private synchronized StringMatcherEx[] getStringMatchers() {
 		if (fStringMatchers == null) {
 			String str = getPreference(TYPEFILTER_ENABLED);
 			StringTokenizer tok= new StringTokenizer(str, ";"); //$NON-NLS-1$
 			int nTokens= tok.countTokens();
 
-			fStringMatchers= new StringMatcher[nTokens];
+			fStringMatchers= new StringMatcherEx[nTokens];
 			for (int i= 0; i < nTokens; i++) {
 				String curr= tok.nextToken();
 				if (curr.length() > 0) {
-					fStringMatchers[i]= new StringMatcher(curr, false, false);
+					fStringMatchers[i]= new StringMatcherEx(curr, false, false);
 				}
 			}
 		}
@@ -106,9 +132,9 @@ public class TypeFilter {
 	 * @return <code>true</code> iff the given type is filtered out
 	 */
 	public boolean filter(String fullTypeName) {
-		StringMatcher[] matchers= getStringMatchers();
+		StringMatcherEx[] matchers= getStringMatchers();
 		for (int i= 0; i < matchers.length; i++) {
-			StringMatcher curr= matchers[i];
+			StringMatcherEx curr= matchers[i];
 			if (curr.match(fullTypeName)) {
 				return true;
 			}
