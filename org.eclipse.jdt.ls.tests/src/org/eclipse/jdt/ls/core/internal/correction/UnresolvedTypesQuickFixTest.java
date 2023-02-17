@@ -1578,26 +1578,26 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testIgnoreTypeFilter() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        List v= new ArrayList();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		String before = """
+package test1;
+import java.util.ArrayList;
+public class E {
+	void foo() {
+		List v= new ArrayList();
+	}
+}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.ArrayList;\n");
-		buf.append("import java.util.List;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        List v= new ArrayList();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Import 'List' (java.util)", buf.toString());
+		String after = """
+package test1;
+import java.util.ArrayList;
+import java.util.List;
+public class E {
+	void foo() {
+		List v= new ArrayList();
+	}
+}""";
+		Expected e1 = new Expected("Import 'List' (java.util)", after);
 
 		assertCodeActions(cu, e1);
 	}
