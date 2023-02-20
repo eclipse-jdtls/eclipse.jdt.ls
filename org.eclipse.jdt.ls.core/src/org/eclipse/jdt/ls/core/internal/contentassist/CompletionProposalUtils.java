@@ -13,15 +13,26 @@
 
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
-import org.eclipse.jdt.internal.ui.util.StringMatcher;
+import org.eclipse.jdt.core.CompletionProposal;
 
-public class StringMatcherEx extends StringMatcher {
+public class CompletionProposalUtils {
 
-    public StringMatcherEx(String pattern, boolean ignoreCase, boolean ignoreWildCards) {
-        super(pattern, ignoreCase, ignoreWildCards);
-    }
+	private static final char SEMICOLON = ';';
 
-    public boolean endsWithWildcard() {
-        return fPattern.endsWith(".*") || fPattern.endsWith(".?");
-    }
+	private CompletionProposalUtils() {}
+
+	public static boolean isImportCompletion(CompletionProposal proposal) {
+		char[] completion = proposal.getCompletion();
+		if (completion.length == 0) {
+			return false;
+		}
+
+		char last = completion[completion.length - 1];
+		/*
+		 * Proposals end in a semicolon when completing types in normal imports
+		 * or when completing static members, in a period when completing types
+		 * in static imports.
+		 */
+		return last == SEMICOLON || last == '.';
+	}
 }

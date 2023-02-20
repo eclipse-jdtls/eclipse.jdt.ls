@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000-2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.util.StringMatcher;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 /**
@@ -81,14 +82,11 @@ public class TypeFilter {
 			return;
 		}
 
-		StringMatcherEx[] matchers= getStringMatchers();
-		Set<StringMatcherEx> newMatchers = new HashSet<>();
+		StringMatcher[] matchers= getStringMatchers();
+		Set<StringMatcher> newMatchers = new HashSet<>();
 		for (String importedElement : importedElements) {
 			for (int i= 0; i < matchers.length; i++) {
-				StringMatcherEx cur= matchers[i];
-				if (cur.endsWithWildcard()) {
-					importedElement += ".";
-				}
+				StringMatcher cur= matchers[i];
 				if (!cur.match(importedElement)) {
 					newMatchers.add(cur);
 				}
@@ -96,27 +94,27 @@ public class TypeFilter {
 		}
 		
 		if (this.fStringMatchers.length != newMatchers.size()) {
-			this.fStringMatchers = newMatchers.toArray(StringMatcherEx[]::new);
+			this.fStringMatchers = newMatchers.toArray(StringMatcher[]::new);
 		}
 	}
 
-	private StringMatcherEx[] fStringMatchers;
+	private StringMatcher[] fStringMatchers;
 
 	public TypeFilter() {
 		fStringMatchers= null;
 	}
 
-	private synchronized StringMatcherEx[] getStringMatchers() {
+	private synchronized StringMatcher[] getStringMatchers() {
 		if (fStringMatchers == null) {
 			String str = getPreference(TYPEFILTER_ENABLED);
 			StringTokenizer tok= new StringTokenizer(str, ";"); //$NON-NLS-1$
 			int nTokens= tok.countTokens();
 
-			fStringMatchers= new StringMatcherEx[nTokens];
+			fStringMatchers= new StringMatcher[nTokens];
 			for (int i= 0; i < nTokens; i++) {
 				String curr= tok.nextToken();
 				if (curr.length() > 0) {
-					fStringMatchers[i]= new StringMatcherEx(curr, false, false);
+					fStringMatchers[i]= new StringMatcher(curr, false, false);
 				}
 			}
 		}
@@ -132,9 +130,9 @@ public class TypeFilter {
 	 * @return <code>true</code> iff the given type is filtered out
 	 */
 	public boolean filter(String fullTypeName) {
-		StringMatcherEx[] matchers= getStringMatchers();
+		StringMatcher[] matchers= getStringMatchers();
 		for (int i= 0; i < matchers.length; i++) {
-			StringMatcherEx curr= matchers[i];
+			StringMatcher curr= matchers[i];
 			if (curr.match(fullTypeName)) {
 				return true;
 			}

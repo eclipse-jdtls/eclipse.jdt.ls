@@ -479,7 +479,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.JAVADOC_TYPE_REF:
-			case CompletionProposal.PACKAGE_REF:
 			case CompletionProposal.TYPE_REF:
 				return isTypeFiltered(proposal);
 			case CompletionProposal.METHOD_REF:
@@ -494,6 +493,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 	protected boolean isTypeFiltered(CompletionProposal proposal) {
+		// always includes type completions for import declarations.
+		if (CompletionProposalUtils.isImportCompletion(proposal)) {
+			return false;
+		}
 		char[] declaringType = getDeclaringType(proposal);
 		return declaringType != null && TypeFilter.isFiltered(declaringType);
 	}
