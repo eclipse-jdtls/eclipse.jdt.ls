@@ -3263,13 +3263,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_IgnoreTypeFilterWhenImported5() throws JavaModelException {
-		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
-		//@formatter:off
-				"package org.sample;\n"
-			+	"import java.util.List;"
-			+	"public class Test {\n\n"
-			+	"}\n");
-		//@formatter:on
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", """
+				package org.sample;
+				import java.util.List;
+				public class Test {
+				}""");
 		try {
 			List<String> filteredTypes = new ArrayList<>();
 			filteredTypes.add("java.util.*");
