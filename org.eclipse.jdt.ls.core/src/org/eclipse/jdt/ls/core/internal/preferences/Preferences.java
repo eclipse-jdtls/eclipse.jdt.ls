@@ -2277,23 +2277,11 @@ public class Preferences {
 								}
 							}
 						}
+						return findTypeInProject(javaProject, annotationType, classpathStorage);
 					} else {
 						// for unknown types, try to find type in the project
 						try {
-							IType type = javaProject.findType(annotationType);
-							if (type != null) {
-								IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
-								IClasspathEntry classpathEntry = javaProject.getClasspathEntryFor(fragmentRoot.getPath());
-								if (classpathEntry == null || !classpathEntry.isTest()) {
-									String classpath = fragmentRoot.getPath().toOSString();
-									if (classpathStorage.containsKey(annotationType)) {
-										classpathStorage.get(annotationType).add(classpath);
-									} else {
-										classpathStorage.put(annotationType, new ArrayList<>(Arrays.asList(classpath)));
-									}
-									return annotationType;
-								}
-							}
+							return findTypeInProject(javaProject, annotationType, classpathStorage);
 						} catch (JavaModelException e) {
 							continue;
 						}
@@ -2301,6 +2289,24 @@ public class Preferences {
 				}
 			} catch (CoreException | URISyntaxException e) {
 				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return null;
+	}
+
+	private String findTypeInProject(IJavaProject javaProject, String annotationType, Map<String, List<String>> classpathStorage) throws JavaModelException {
+		IType type = javaProject.findType(annotationType);
+		if (type != null) {
+			IJavaElement fragmentRoot = type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+			IClasspathEntry classpathEntry = javaProject.getClasspathEntryFor(fragmentRoot.getPath());
+			if (classpathEntry == null || !classpathEntry.isTest()) {
+				String classpath = fragmentRoot.getPath().toOSString();
+				if (classpathStorage.containsKey(annotationType)) {
+					classpathStorage.get(annotationType).add(classpath);
+				} else {
+					classpathStorage.put(annotationType, new ArrayList<>(Arrays.asList(classpath)));
+				}
+				return annotationType;
 			}
 		}
 		return null;

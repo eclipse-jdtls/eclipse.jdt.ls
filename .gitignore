@@ -4,6 +4,7 @@ target/
 bin/
 **/lib/
 !org.eclipse.jdt.ls.tests/projects/singlefile/simple/lib/
+!org.eclipse.jdt.ls.tests/projects/eclipse/testnullable2/lib/
 !org.eclipse.jdt.ls.tests/projects/maven/salut5/node_modules/
 !org.eclipse.jdt.ls.tests/fakejdk2/17a/bin
 !org.eclipse.jdt.ls.tests/fakejdk2/17a/lib

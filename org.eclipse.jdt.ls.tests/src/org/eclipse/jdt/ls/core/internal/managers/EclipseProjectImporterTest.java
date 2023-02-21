@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -24,24 +25,33 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 
 public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
 
@@ -236,6 +246,38 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertEquals(11, watchers.size());
 		String srcGlobPattern = watchers.get(9).getGlobPattern();
 		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.endsWith("projectwithrootsource/**"));
+	}
+
+	@Test
+	public void testNullAnalysis() throws Exception {
+		this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+		this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
+		try {
+			String name = "testnullable2";
+			importProjects("eclipse/" + name);
+			IProject project = getProject(name);
+			assertIsJavaProject(project);
+			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
+				BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
+				buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+			}
+			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
+			assertEquals(2, markers.length);
+			IMarker marker = getWarningMarker(project, "Null type mismatch: required '@Nonnull Test' but the provided value is null");
+			assertNotNull(marker);
+			assertTrue(marker.getResource() instanceof IFile);
+			assertEquals("Main.java", ((IFile) marker.getResource()).getFullPath().lastSegment());
+			IJavaProject javaProject = JavaCore.create(project);
+			Map<String, String> options = javaProject.getOptions(true);
+			assertEquals(JavaCore.ENABLED, options.get(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS));
+			assertNoErrors(project);
+		} finally {
+			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		}
 	}
 
 	@After
