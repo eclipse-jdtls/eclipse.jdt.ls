@@ -13,9 +13,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
@@ -77,25 +76,23 @@ public class TypeFilter {
 		}
 	}
 
+	/**
+	 * Remove the type filter if any of the imported element matches.
+	 */
 	public synchronized void removeFilterIfMatched(Collection<String> importedElements) {
 		if (importedElements == null || importedElements.isEmpty()) {
 			return;
 		}
 
-		StringMatcher[] matchers= getStringMatchers();
-		Set<StringMatcher> newMatchers = new HashSet<>();
-		for (String importedElement : importedElements) {
-			for (int i= 0; i < matchers.length; i++) {
-				StringMatcher cur= matchers[i];
-				if (!cur.match(importedElement)) {
-					newMatchers.add(cur);
+		StringMatcher[] matchers = getStringMatchers();
+		this.fStringMatchers = Arrays.stream(matchers).filter(m -> {
+			for (String importedElement : importedElements) {
+				if (m.match(importedElement)) {
+					return false;
 				}
 			}
-		}
-		
-		if (this.fStringMatchers.length != newMatchers.size()) {
-			this.fStringMatchers = newMatchers.toArray(StringMatcher[]::new);
-		}
+			return true;
+		}).toArray(size -> new StringMatcher[size]);
 	}
 
 	private StringMatcher[] fStringMatchers;
