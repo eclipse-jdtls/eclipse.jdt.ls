@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2023 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -200,7 +200,8 @@ public class CompletionProposalReplacementProvider {
 			item.setTextEdit(Either.forLeft(new org.eclipse.lsp4j.TextEdit(insertReplaceEdit.getInsert(), text)));
 		}
 
-		if (!isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() || isResolvingRequest)) {
+		if (!CompletionProposalUtils.isImportCompletion(proposal) && (!client.isResolveAdditionalTextEditsSupport() ||
+				isResolvingRequest)) {
 			addImports(additionalTextEdits);
 			if(!additionalTextEdits.isEmpty()){
 				item.setAdditionalTextEdits(additionalTextEdits);
@@ -959,7 +960,7 @@ public class CompletionProposalReplacementProvider {
 		String replacement = String.valueOf(proposal.getCompletion());
 
 		/* No import rewriting ever from within the import section. */
-		if (isImportCompletion(proposal)) {
+		if (CompletionProposalUtils.isImportCompletion(proposal)) {
 			return replacement;
 		}
 
@@ -1055,21 +1056,6 @@ public class CompletionProposalReplacementProvider {
 
 		/* Default: use the fully qualified type name. */
 		return qualifiedTypeName;
-	}
-
-	private boolean isImportCompletion(CompletionProposal proposal) {
-		char[] completion = proposal.getCompletion();
-		if (completion.length == 0) {
-			return false;
-		}
-
-		char last = completion[completion.length - 1];
-		/*
-		 * Proposals end in a semicolon when completing types in normal imports
-		 * or when completing static members, in a period when completing types
-		 * in static imports.
-		 */
-		return last == SEMICOLON || last == '.';
 	}
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2022 Red Hat Inc. and others.
+ * Copyright (c) 2016-2023 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -13,9 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +32,6 @@ import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -69,22 +68,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private boolean isComplete = true;
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
-	/**
-	 * stores all the imported types from static imports and single type import declarations.
-	 * For example:
-	 * <ul>
-	 *   <li>import java.awt.List; -> java.awt.List</li>
-	 *   <li>import static java.awt.List.*; -> java.awt.List</li>
-	 *   <li>import static java.awt.List.ERROR; -> java.awt.List</li>
-	 * </ul>
-	 */
-	private Set<String> importedTypes = new HashSet<>();
-	/**
-	 * stores all the imported package or type names from an on demand import declaration.
-	 * For example:
-	 *   import java.awt.*; -> java.awt
-	 */
-	private Set<String> onDemandImportedPackagesOrTypes = new HashSet<>();
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -168,16 +151,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		fIsTestCodeExcluded = !isTestSource(unit.getJavaProject(), unit);
 		setRequireExtendedContext(true);
 		try {
-			for (IImportDeclaration importDeclaration : this.unit.getImports()) {
-				String elementName = importDeclaration.getElementName();
-				if (isStaticImport(importDeclaration)) {
-					importedTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
-				} else if (importDeclaration.isOnDemand()) {
-					onDemandImportedPackagesOrTypes.add(elementName.substring(0, elementName.lastIndexOf('.')));
-				} else {
-					importedTypes.add(elementName);
-				}
-			}
+			List<String> importedElements = Arrays.stream(this.unit.getImports())
+					.map(t -> t.getElementName())
+					.toList();
+			TypeFilter.getDefault().removeFilterIfMatched(importedElements);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to get imports during completion", e);
 		}
@@ -502,7 +479,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
 			case CompletionProposal.JAVADOC_TYPE_REF:
-			case CompletionProposal.PACKAGE_REF:
 			case CompletionProposal.TYPE_REF:
 				return isTypeFiltered(proposal);
 			case CompletionProposal.METHOD_REF:
@@ -517,8 +493,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 	protected boolean isTypeFiltered(CompletionProposal proposal) {
+		// always includes type completions for import declarations.
+		if (CompletionProposalUtils.isImportCompletion(proposal)) {
+			return false;
+		}
 		char[] declaringType = getDeclaringType(proposal);
-		return declaringType != null && !this.isImported(declaringType) && TypeFilter.isFiltered(declaringType);
+		return declaringType != null && TypeFilter.isFiltered(declaringType);
 	}
 
 	/**
@@ -571,7 +551,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	@Override
 	public boolean isIgnored(char[] fullTypeName) {
-		return fullTypeName != null && !this.isImported(fullTypeName) && TypeFilter.isFiltered(fullTypeName);
+		return fullTypeName != null && TypeFilter.isFiltered(fullTypeName);
 	}
 
 	/**
@@ -600,34 +580,5 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		return true;
-	}
-
-	private boolean isStaticImport(IImportDeclaration importElement) {
-		try {
-			return Flags.isStatic(importElement.getFlags());
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.log(e);
-		}
-		return false;
-	}
-
-	/**
-	 * Check if the type appears in the import declarations.
-	 */
-	private boolean isImported(char[] fullyQualifiedName) {
-		String typeName = new String(fullyQualifiedName);
-		if (this.importedTypes.contains(typeName)) {
-			return true;
-		}
-
-		int lastDotIdx = typeName.lastIndexOf('.');
-		if (lastDotIdx >= 0) {
-			String typeParent = typeName.substring(0, lastDotIdx);
-			if (this.onDemandImportedPackagesOrTypes.contains(typeParent)) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }

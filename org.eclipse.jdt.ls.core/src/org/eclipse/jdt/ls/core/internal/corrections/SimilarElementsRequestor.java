@@ -14,7 +14,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.CompletionProposal;
@@ -180,6 +182,10 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 
 	private SimilarElement[] process(ICompilationUnit cu, int pos) throws JavaModelException {
 		try {
+			List<String> importedElements = Arrays.stream(cu.getImports())
+						.map(t -> t.getElementName())
+						.toList();
+			TypeFilter.getDefault().removeFilterIfMatched(importedElements);
 			cu.codeComplete(pos, this);
 			processKeywords();
 			return fResult.toArray(new SimilarElement[fResult.size()]);

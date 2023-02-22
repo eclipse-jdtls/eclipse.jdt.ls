@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Path;
@@ -1574,6 +1573,33 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 			.filter((action) -> action.getKind().equals((CodeActionKind.QuickFix)) && action.getTitle().equals(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description))
 			.collect(Collectors.toList());
 		assertEquals(1, addAllMissingImportsActions.size());
+	}
+
+	@Test
+	public void testIgnoreTypeFilter() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String before = """
+package test1;
+import java.util.ArrayList;
+public class E {
+	void foo() {
+		List v= new ArrayList();
+	}
+}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+package test1;
+import java.util.ArrayList;
+import java.util.List;
+public class E {
+	void foo() {
+		List v= new ArrayList();
+	}
+}""";
+		Expected e1 = new Expected("Import 'List' (java.util)", after);
+
+		assertCodeActions(cu, e1);
 	}
 
 }

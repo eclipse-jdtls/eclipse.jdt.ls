@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000-2023 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
@@ -72,6 +74,25 @@ public class TypeFilter {
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * Remove the type filter if any of the imported element matches.
+	 */
+	public synchronized void removeFilterIfMatched(Collection<String> importedElements) {
+		if (importedElements == null || importedElements.isEmpty()) {
+			return;
+		}
+
+		StringMatcher[] matchers = getStringMatchers();
+		this.fStringMatchers = Arrays.stream(matchers).filter(m -> {
+			for (String importedElement : importedElements) {
+				if (m.match(importedElement)) {
+					return false;
+				}
+			}
+			return true;
+		}).toArray(size -> new StringMatcher[size]);
 	}
 
 	private StringMatcher[] fStringMatchers;
