@@ -35,6 +35,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * @author Fred Bricon
@@ -84,31 +85,44 @@ public class MavenCentralIdentifier implements IMavenArtifactIdentifier {
 		return null;
 	}
 
-	private ArtifactKey find(String searchUrl, IProgressMonitor monitor) throws IOException, InterruptedException {
-		Duration timeout = Duration.ofSeconds(10);
-		HttpClient client = HttpClient.newBuilder()
-				.connectTimeout(timeout)
-				.proxy(ProxySelector.getDefault())
-	            .version(Version.HTTP_2)
-				.build();
-		HttpRequest httpRequest = HttpRequest.newBuilder()
-				.timeout(timeout)
-		        .uri(URI.create(searchUrl))
-		        .GET()
-		        .build();
-
-		if (monitor == null) {
-			monitor = new NullProgressMonitor();
+	private ArtifactKey find(String searchUrl, IProgressMonitor monitor) {
+		String timeoutStr = System.getProperty("java.lsp.mavensearch.timeout", "10");
+		long seconds;
+		try {
+			seconds = Long.parseLong(timeoutStr);
+		} catch (NumberFormatException e) {
+			seconds = 10;
 		}
-		if (monitor.isCanceled()) {
-			return null;
-		}
+		seconds = seconds <= 0 ? 10 : seconds;
+		Duration timeout = Duration.ofSeconds(seconds);
+		try {
+			HttpClient client = HttpClient.newBuilder()
+					.connectTimeout(timeout)
+					.proxy(ProxySelector.getDefault())
+			        .version(Version.HTTP_2)
+					.build();
+			HttpRequest httpRequest = HttpRequest.newBuilder()
+					.timeout(timeout)
+			        .uri(URI.create(searchUrl))
+			        .GET()
+			        .build();
 
-		//TODO implement request cancellation, according to monitor status
-		HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-		JsonElement jsonElement = new JsonParser().parse(response.body());
-		if (jsonElement != null && jsonElement.isJsonObject()) {
-			return extractKey(jsonElement.getAsJsonObject());
+			if (monitor == null) {
+				monitor = new NullProgressMonitor();
+			}
+			if (monitor.isCanceled()) {
+				JavaLanguageServerPlugin.logInfo("Maven Central search cancelled");
+				return null;
+			}
+
+			//TODO implement request cancellation, according to monitor status
+			HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+			JsonElement jsonElement = new JsonParser().parse(response.body());
+			if (jsonElement != null && jsonElement.isJsonObject()) {
+				return extractKey(jsonElement.getAsJsonObject());
+			}
+		} catch (JsonSyntaxException | IOException | InterruptedException e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
 		return null;
 	}

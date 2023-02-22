@@ -528,16 +528,32 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		TextDocumentPositionParams position = getParams(payload);
 
 		// perform hover
+		int retries = 0;
 		HoverHandler handler = new HoverHandler(preferenceManager);
-		Hover hover = handler.hover(position, monitor);
-		if (hover.getContents().getLeft().size() < 2) {
-			JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
-			waitForBackgroundJobs();
+		Hover hover = null;
+		while (remark.getSourceAttachmentPath() == null && retries++ < 3) {
+			File lastUpdated = new File(remarkFile.getParentFile(), "m2e-lastUpdated.properties");
+			if (lastUpdated.exists()) {
+				FileUtils.forceDelete(lastUpdated);
+			}
+			String timeoutStr = System.getProperty("java.lsp.mavensearch.timeout", "10");
+			long timeout;
+			try {
+				timeout = Long.parseLong(timeoutStr);
+			} catch (Exception e) {
+				timeout = 10;
+			}
+			timeout = timeout * retries;
+			System.setProperty("java.lsp.mavensearch.timeout", String.valueOf(timeout));
 			hover = handler.hover(position, monitor);
+			if (hover.getContents().getLeft().size() < 2) {
+				JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
+				waitForBackgroundJobs();
+				hover = handler.hover(position, monitor);
+			}
+			remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
 		}
-
 		// verify library has source attachment
-		remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
 		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
