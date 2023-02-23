@@ -1,0 +1,2 @@
+These files are extracted from lsp4j-0.12.0-sources.jar.
+They're still used by JDT-LS but aren't supported by newer LSP/LSP4J.

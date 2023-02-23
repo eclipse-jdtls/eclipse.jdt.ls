@@ -54,6 +54,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
 import org.eclipse.lsp4j.FileSystemWatcher;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class SyntaxProjectsManager extends ProjectsManager {
 	//@formatter:off
@@ -138,9 +139,9 @@ public class SyntaxProjectsManager extends ProjectsManager {
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
 			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
 			patterns.addAll(Stream.of(sources).map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
-	
+
 			for (String pattern : patterns) {
-				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
+				FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(pattern));
 				fileWatchers.add(watcher);
 			}
 	
@@ -159,7 +160,7 @@ public class SyntaxProjectsManager extends ProjectsManager {
 		return Collections.emptyList();
 	}
 
-	
+
 	private static IPath[] listAllSourcePaths() throws JavaModelException {
 		Set<IPath> classpaths = new HashSet<>();
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();

@@ -92,6 +92,7 @@ import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WatchKind;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.xml.sax.InputSource;
 
 public class StandardProjectsManager extends ProjectsManager {
@@ -507,14 +508,13 @@ public class StandardProjectsManager extends ProjectsManager {
 			}
 			patterns.addAll(sources.stream().map(p -> ResourceUtils.toGlobPattern(p, false)).collect(Collectors.toList()));
 			for (String pattern : patterns) {
-				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
+				FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(pattern));
 				fileWatchers.add(watcher);
 			}
 			// Watch on project root folders.
 			for (IProject project : projects) {
 				if (ProjectUtils.isVisibleProject(project) && project.exists()) {
-					FileSystemWatcher watcher = new FileSystemWatcher(
-						ResourceUtils.toGlobPattern(project.getLocation(), false), WatchKind.Delete);
+					FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(ResourceUtils.toGlobPattern(project.getLocation(), false)), WatchKind.Delete);
 					fileWatchers.add(watcher);
 				}
 			}

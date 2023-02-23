@@ -415,6 +415,6 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(JDTUtils.toURI(cu));
 
 		TextDocumentPositionParams params = new TextDocumentPositionParams(identifier, pos);
-		return handler.prepareRename(params, monitor);
+		return Either.forLeft(handler.prepareRename(params, monitor));
 	}
 }

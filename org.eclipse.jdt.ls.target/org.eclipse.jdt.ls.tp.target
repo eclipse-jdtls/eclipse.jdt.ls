@@ -3,8 +3,6 @@
 <target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="113">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="com.google.gson" version="2.7.0.v20170129-0911"/>
-            <unit id="com.google.gson.source" version="2.7.0.v20170129-0911"/>
             <unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
             <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
             <repository location="https://download.eclipse.org/tools/orbit/R-builds/R20200529191137/repository"/>
@@ -32,10 +30,10 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2021-09/202109151000/"/>
+            <repository location="https://download.eclipse.org/releases/2022-12/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.12.0/"/>
+           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.20.0/"/>
            <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
         </location>
     </locations>

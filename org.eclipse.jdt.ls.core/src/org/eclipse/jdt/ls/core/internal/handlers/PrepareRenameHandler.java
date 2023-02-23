@@ -30,11 +30,9 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.lsp4j.PrepareRenameResult;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode;
 
@@ -46,8 +44,7 @@ public class PrepareRenameHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public Either<Range, PrepareRenameResult> prepareRename(TextDocumentPositionParams params, IProgressMonitor monitor) {
-
+	public Range prepareRename(TextDocumentPositionParams params, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit != null) {
 			try {
@@ -62,7 +59,7 @@ public class PrepareRenameHandler {
 						if (occurrences != null) {
 							for (OccurrenceLocation loc : occurrences) {
 								if (monitor.isCanceled()) {
-									return Either.forLeft(new Range());
+									return new Range();
 								}
 								if (loc.getOffset() <= offset && loc.getOffset() + loc.getLength() >= offset) {
 									// https://github.com/redhat-developer/vscode-java/issues/2805
@@ -80,7 +77,7 @@ public class PrepareRenameHandler {
 									ASTNode node = context.getCoveredNode();
 									// Rename package is not fully supported yet.
 									if (!isBinaryOrPackage(node)) {
-										return Either.forLeft(JDTUtils.toRange(unit, loc.getOffset(), loc.getLength()));
+										return JDTUtils.toRange(unit, loc.getOffset(), loc.getLength());
 									}
 								}
 							}

@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
@@ -37,7 +36,6 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.services.LanguageClient;
 
 import com.google.common.collect.ImmutableList;
@@ -76,12 +74,6 @@ public class JavaClientConnection {
 		@JsonNotification("language/progressReport")
 		void sendProgressReport(ProgressReport report);
 
-		// TODO : remove this method when LSP4J will provide InlayHint support. See
-		// https://github.com/eclipse/lsp4j/issues/570
-		@JsonRequest("workspace/inlayHint/refresh")
-		default CompletableFuture<Void> refreshInlayHints() {
-			throw new UnsupportedOperationException();
-		}
 	}
 
 	private final LogHandler logHandler;
@@ -221,8 +213,6 @@ public class JavaClientConnection {
 		return this.client.configuration(configurationParams).join();
 	}
 
-	// TODO : remove this method when LSP4J will provide InlayHint support. See
-	// https://github.com/eclipse/lsp4j/issues/570
 	public CompletableFuture<Void> refreshInlayHints() {
 		return this.client.refreshInlayHints();
 	}

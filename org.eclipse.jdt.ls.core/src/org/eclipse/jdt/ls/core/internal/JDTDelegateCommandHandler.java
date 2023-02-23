@@ -36,13 +36,13 @@ import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.PasteEventParams;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
-import org.eclipse.lsp4j.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.eclipse.lsp4j.TypeHierarchyDirection;
-import org.eclipse.lsp4j.TypeHierarchyItem;
-import org.eclipse.lsp4j.TypeHierarchyParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
+import org.eclipse.lsp4j.legacy.typeHierarchy.ResolveTypeHierarchyItemParams;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyDirection;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyItem;
+import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyParams;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 
