@@ -128,6 +128,9 @@ public class DocumentHighlightHandler {
 	}
 
 	private static List<DocumentHighlight> convertToHighlights(CompilationUnit ast, OccurrenceLocation[] locations) {
+		if (locations == null || locations.length == 0) {
+			return Collections.emptyList();
+		}
 		List<DocumentHighlight> highlights = new ArrayList<>(locations.length);
 		for (OccurrenceLocation loc : locations) {
 			highlights.add(convertToHighlight(ast, loc));
