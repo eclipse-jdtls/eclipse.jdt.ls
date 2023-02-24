@@ -2277,11 +2277,17 @@ public class Preferences {
 								}
 							}
 						}
-						return findTypeInProject(javaProject, annotationType, classpathStorage);
+						String aType = findTypeInProject(javaProject, annotationType, classpathStorage);
+						if (aType != null) {
+							return aType;
+						}
 					} else {
 						// for unknown types, try to find type in the project
 						try {
-							return findTypeInProject(javaProject, annotationType, classpathStorage);
+							String aType = findTypeInProject(javaProject, annotationType, classpathStorage);
+							if (aType != null) {
+								return aType;
+							}
 						} catch (JavaModelException e) {
 							continue;
 						}
