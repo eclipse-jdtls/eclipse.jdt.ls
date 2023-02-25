@@ -16,17 +16,23 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.Objects;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 public class InlayHintsPreferenceChangeListener implements IPreferencesChangeListener {
 
     @Override
     public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
+        PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+        ClientPreferences clientPreferences = preferencesManager.getClientPreferences();
+        if (!clientPreferences.isRefreshInlayHintsSupported()) {
+            return;
+        }
         if (!Objects.equals(oldPreferences.getInlayHintsParameterMode(), newPreferences.getInlayHintsParameterMode())) {
             JavaLanguageServerPlugin.getInstance().getClientConnection().refreshInlayHints();
         }
-
         if (!Objects.equals(oldPreferences.getInlayHintsExclusionList(), newPreferences.getInlayHintsExclusionList())) {
             InlayHintFilterManager.instance().reset();
             JavaLanguageServerPlugin.getInstance().getClientConnection().refreshInlayHints();

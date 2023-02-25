@@ -24,6 +24,7 @@ import org.eclipse.lsp4j.DiagnosticsTagSupport;
 import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.ResourceOperationKind;
+import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 /**
@@ -381,4 +382,11 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
 	}
 
+	public boolean isRefreshInlayHintsSupported() {
+		WorkspaceClientCapabilities workspace = capabilities.getWorkspace();
+		return v3supported
+			&& workspace.getInlayHint() != null
+			&& workspace.getInlayHint().getRefreshSupport() != null
+			&& workspace.getInlayHint().getRefreshSupport().booleanValue();
+	}
 }
