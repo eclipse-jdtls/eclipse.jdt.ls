@@ -23,7 +23,6 @@ public class LanguageServerApplication implements IApplication {
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
-
 		JavaLanguageServerPlugin.startLanguageServer(this);
 		synchronized (waitLock) {
 			while (!shutdown) {
@@ -61,7 +60,7 @@ public class LanguageServerApplication implements IApplication {
 	/**
 	 * @return the parentProcessId
 	 */
-	long getParentProcessId() {
+	public long getParentProcessId() {
 		return parentProcessId;
 	}
 }
