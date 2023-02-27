@@ -3382,7 +3382,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertEquals(CompletionItemKind.Method, resolvedItem.getKind());
 		String documentation = resolvedItem.getDocumentation().getLeft();
-		assertEquals(" Test ", documentation);
+		assertEquals(" Test \n" //
+				+ " * Parameters:\n" //
+				+ "   - e test", documentation);
 	}
 
 	// See https://github.com/redhat-developer/vscode-java/issues/2034

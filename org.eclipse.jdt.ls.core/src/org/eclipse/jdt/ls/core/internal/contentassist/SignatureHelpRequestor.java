@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -44,9 +46,11 @@ import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.SignatureHelpUtils;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
@@ -151,8 +155,9 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		SignatureInformation $ = new SignatureInformation();
 		StringBuilder description = descriptionProvider.createMethodProposalDescription(methodProposal);
 		$.setLabel(description.toString());
+		String documentation = null;
 		if (isDescriptionEnabled) {
-			$.setDocumentation(this.computeJavaDoc(methodProposal));
+			documentation = this.computeJavaDoc(methodProposal);
 		}
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
@@ -174,8 +179,17 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 			builder.append(parameterTypes[i]);
 			builder.append(' ');
 			builder.append(parameterNames[i]);
+			ParameterInformation parameterInformation = new ParameterInformation(builder.toString());
+			if (documentation != null) {
+				Pattern p = Pattern.compile("\\*  \\*\\*" + new String(parameterNames[i]) + "\\*\\*[\\s]+([^\n\r]+)");
+				Matcher m = p.matcher(documentation);
+				if (m.find()) {
+					String paramDocs = m.group(1);
+					parameterInformation.setDocumentation(new MarkupContent(MarkupKind.MARKDOWN, paramDocs));
+				}
+			}
 
-			parameterInfos.add(new ParameterInformation(builder.toString()));
+			parameterInfos.add(parameterInformation);
 		}
 
 		$.setParameters(parameterInfos);
@@ -239,7 +253,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 							String javadoc = null;
 							try {
 								javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-									Reader reader = JavadocContentAccess.getPlainTextContentReader(method);
+									Reader reader = JavadocContentAccess2.getMarkdownContentReader(method);
 									return reader == null ? null : CharStreams.toString(reader);
 								}, 500, TimeUnit.MILLISECONDS);
 							} catch (UncheckedTimeoutException tooSlow) {
