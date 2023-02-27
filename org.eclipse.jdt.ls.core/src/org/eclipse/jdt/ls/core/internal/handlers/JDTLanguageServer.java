@@ -343,6 +343,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		if (preferenceManager.getClientPreferences().isImplementationDynamicRegistered()) {
 			registerCapability(Preferences.IMPLEMENTATION_ID, Preferences.IMPLEMENTATION);
 		}
+		if (preferenceManager.getClientPreferences().isInlayHintDynamicRegistered()) {
+			registerCapability(Preferences.INLAY_HINT_ID, Preferences.INLAY_HINT);
+		}
 	}
 
 	/**
