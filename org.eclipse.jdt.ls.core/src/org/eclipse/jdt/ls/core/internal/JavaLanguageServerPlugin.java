@@ -38,8 +38,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -156,15 +154,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	@Override
 	public void start(BundleContext bundleContext) throws Exception {
 		super.start(bundleContext);
-		try {
-			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
-			IWorkspace workspace = ResourcesPlugin.getWorkspace();
-			IWorkspaceDescription description = workspace.getDescription();
-			description.setAutoBuilding(false);
-			workspace.setDescription(description);
-		} catch (BundleException e) {
-			logException(e.getMessage(), e);
-		}
 		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
 		try {
 			redirectStandardStreams(isDebug);

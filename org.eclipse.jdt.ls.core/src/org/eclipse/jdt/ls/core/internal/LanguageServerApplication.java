@@ -12,8 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleException;
 
 public class LanguageServerApplication implements IApplication {
 
@@ -23,6 +30,7 @@ public class LanguageServerApplication implements IApplication {
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
+		prepareWorkspace();
 		JavaLanguageServerPlugin.startLanguageServer(this);
 		synchronized (waitLock) {
 			while (!shutdown) {
@@ -36,6 +44,18 @@ public class LanguageServerApplication implements IApplication {
 			}
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	private static void prepareWorkspace() throws CoreException {
+		try {
+			Platform.getBundle(ResourcesPlugin.PI_RESOURCES).start(Bundle.START_TRANSIENT);
+			IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			IWorkspaceDescription description = workspace.getDescription();
+			description.setAutoBuilding(false);
+			workspace.setDescription(description);
+		} catch (BundleException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
 	}
 
 	@Override
