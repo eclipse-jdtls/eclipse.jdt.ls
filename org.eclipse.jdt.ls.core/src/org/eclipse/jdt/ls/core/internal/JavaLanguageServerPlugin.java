@@ -12,23 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.Channels;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -114,9 +105,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private static JavaLanguageServerPlugin pluginInstance;
 	private static BundleContext context;
 	private ServiceTracker<IProxyService, IProxyService> proxyServiceTracker = null;
-	private static InputStream in;
-	private static PrintStream out;
-	private static PrintStream err;
 
 	private ISourceDownloader sourceDownloader;
 
@@ -154,12 +142,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	@Override
 	public void start(BundleContext bundleContext) throws Exception {
 		super.start(bundleContext);
-		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
-		try {
-			redirectStandardStreams(isDebug);
-		} catch (FileNotFoundException e) {
-			logException(e.getMessage(), e);
-		}
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
 		setPreferenceNodeId();
@@ -354,7 +336,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 				throw new RuntimeException("Error when opening a socket channel at " + host + ":" + port + ".", e);
 			}
 		} else {
-			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory();
+			ConnectionStreamFactory connectionFactory = new ConnectionStreamFactory(languageServer);
 			InputStream in = connectionFactory.getInputStream();
 			OutputStream out = connectionFactory.getOutputStream();
 			Function<MessageConsumer, MessageConsumer> wrapper;
@@ -470,41 +452,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	public static String getVersion() {
 		return context == null ? "Unknown" : context.getBundle().getVersion().toString();
-	}
-
-	private static void redirectStandardStreams(boolean isDebug) throws FileNotFoundException {
-		in = System.in;
-		out = System.out;
-		err = System.err;
-		System.setIn(new ByteArrayInputStream(new byte[0]));
-		if (isDebug) {
-			String id = "jdt.ls-" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-			File workspaceFile = root.getRawLocation().makeAbsolute().toFile();
-			File rootFile = new File(workspaceFile, ".metadata");
-			rootFile.mkdirs();
-			File outFile = new File(rootFile, ".out-" + id + ".log");
-			FileOutputStream stdFileOut = new FileOutputStream(outFile);
-			System.setOut(new PrintStream(stdFileOut));
-			File errFile = new File(rootFile, ".error-" + id + ".log");
-			FileOutputStream stdFileErr = new FileOutputStream(errFile);
-			System.setErr(new PrintStream(stdFileErr));
-		} else {
-			System.setOut(new PrintStream(new ByteArrayOutputStream()));
-			System.setErr(new PrintStream(new ByteArrayOutputStream()));
-		}
-	}
-
-	public static InputStream getIn() {
-		return in;
-	}
-
-	public static PrintStream getOut() {
-		return out;
-	}
-
-	public static PrintStream getErr() {
-		return err;
 	}
 
 	public static PreferenceManager getPreferencesManager() {

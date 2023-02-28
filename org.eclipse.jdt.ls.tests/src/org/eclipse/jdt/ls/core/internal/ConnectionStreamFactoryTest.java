@@ -39,9 +39,10 @@ public class ConnectionStreamFactoryTest {
 
 	@Test
 	public void testStdInOut() throws IOException {
-		ConnectionStreamFactory tested = new ConnectionStreamFactory();
-		Assert.assertSame(tested.getInputStream(), JavaLanguageServerPlugin.getIn());
-		Assert.assertSame(tested.getOutputStream(), JavaLanguageServerPlugin.getOut());
+		LanguageServerApplication languageServer = new LanguageServerApplication();
+		ConnectionStreamFactory tested = new ConnectionStreamFactory(languageServer);
+		Assert.assertSame(tested.getInputStream(), languageServer.getIn());
+		Assert.assertSame(tested.getOutputStream(), languageServer.getOut());
 		Assert.assertNotSame(tested.getInputStream(), System.in);
 		Assert.assertNotSame(tested.getOutputStream(), System.out);
 		System.out.println("test");
@@ -49,7 +50,7 @@ public class ConnectionStreamFactoryTest {
 	}
 
 	private void checkStreamProvider(Class<? extends StreamProvider> providerClass){
-		ConnectionStreamFactory tested = new ConnectionStreamFactory();
+		ConnectionStreamFactory tested = new ConnectionStreamFactory(null);
 		StreamProvider provider = tested.getSelectedStream();
 		Assert.assertSame(providerClass, provider.getClass());
 	}
