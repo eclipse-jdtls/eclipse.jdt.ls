@@ -23,11 +23,14 @@ import org.eclipse.lsp4j.CompletionItemCapabilities;
 import org.eclipse.lsp4j.CompletionItemTagSupportCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.FormattingCapabilities;
+import org.eclipse.lsp4j.InlayHintCapabilities;
+import org.eclipse.lsp4j.InlayHintWorkspaceCapabilities;
 import org.eclipse.lsp4j.RangeFormattingCapabilities;
 import org.eclipse.lsp4j.RenameCapabilities;
 import org.eclipse.lsp4j.SignatureHelpCapabilities;
 import org.eclipse.lsp4j.SymbolTagSupportCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
+import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,9 +48,13 @@ public class ClientPreferencesTest {
 	@Mock
 	private TextDocumentClientCapabilities text;
 
+	@Mock
+	private WorkspaceClientCapabilities workspace;
+
 	@Before
 	public void setup() {
 		when(cap.getTextDocument()).thenReturn(text);
+		when(cap.getWorkspace()).thenReturn(workspace);
 		prefs = new ClientPreferences(cap);
 	}
 
@@ -133,6 +140,20 @@ public class ClientPreferencesTest {
 		assertFalse(prefs.isRenameDynamicRegistrationSupported());
 		when(text.getRename()).thenReturn(new RenameCapabilities(true));
 		assertTrue(prefs.isRenameDynamicRegistrationSupported());
+	}
+
+	@Test
+	public void testIsInlayHintDynamicRegistrationSupported() throws Exception {
+		assertFalse(prefs.isInlayHintDynamicRegistered());
+		when(text.getInlayHint()).thenReturn(new InlayHintCapabilities(true));
+		assertTrue(prefs.isInlayHintDynamicRegistered());
+	}
+
+	@Test
+	public void testIsInlayHintRefreshSupported() throws Exception {
+		assertFalse(prefs.isInlayHintRefreshSupported());
+		when(workspace.getInlayHint()).thenReturn(new InlayHintWorkspaceCapabilities(true));
+		assertTrue(prefs.isInlayHintRefreshSupported());
 	}
 
 	@Test

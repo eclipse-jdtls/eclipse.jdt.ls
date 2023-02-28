@@ -173,6 +173,10 @@ final public class InitHandler extends BaseInitHandler {
 		if (!preferenceManager.getClientPreferences().isSelectionRangeDynamicRegistered()) {
 			capabilities.setSelectionRangeProvider(Boolean.TRUE);
 		}
+		if (!preferenceManager.getClientPreferences().isInlayHintDynamicRegistered()) {
+			capabilities.setInlayHintProvider(Boolean.TRUE);
+		}
+		
 		capabilities.setCallHierarchyProvider(Boolean.TRUE);
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);

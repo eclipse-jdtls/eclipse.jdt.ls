@@ -163,6 +163,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getSelectionRange());
 	}
 
+	public boolean isInlayHintDynamicRegistered() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getInlayHint());
+	}
+
 	public boolean isWillSaveRegistered() {
 		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSave());
 	}
@@ -379,6 +383,13 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
+	}
+
+	public boolean isInlayHintRefreshSupported() {
+		return v3supported
+			&& capabilities.getWorkspace().getInlayHint() != null
+			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport() != null
+			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport().booleanValue();
 	}
 
 }
