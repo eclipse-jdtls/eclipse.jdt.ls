@@ -231,7 +231,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 					return engine.complete(document, jdtCtx.getOffset(), scc.getCompilationUnit());
 				}
 			}
-		} catch (BadLocationException | JavaModelException e) {
+		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 		return Collections.emptyList();

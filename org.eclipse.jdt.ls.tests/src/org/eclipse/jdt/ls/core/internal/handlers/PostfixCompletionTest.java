@@ -478,6 +478,24 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(list.getItems().isEmpty());
 	}
 
+	@Test
+	public void testCompletion_GenericAnonymousClass() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"import java.util.ArrayList;\n" +
+				"public class Test {\n" +
+				"	public static void main(String[] args) {\n" +
+				"		 ArrayList list = new ArrayList() {}. \n" +
+				"	}\n" +
+				"}\n"
+			);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "{}.");
+		assertFalse(list.getItems().isEmpty());
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}
