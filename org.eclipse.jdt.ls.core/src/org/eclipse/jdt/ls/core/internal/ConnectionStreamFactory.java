@@ -74,7 +74,7 @@ public class ConnectionStreamFactory {
 		 */
 		@Override
 		public InputStream getInputStream() throws IOException {
-			return JavaLanguageServerPlugin.getIn();
+			return application.getIn();
 		}
 
 		/* (non-Javadoc)
@@ -82,12 +82,17 @@ public class ConnectionStreamFactory {
 		 */
 		@Override
 		public OutputStream getOutputStream() throws IOException {
-			return JavaLanguageServerPlugin.getOut();
+			return application.getOut();
 		}
 
 	}
 
 	private StreamProvider provider;
+	private LanguageServerApplication application;
+
+	public ConnectionStreamFactory(LanguageServerApplication languageServer) {
+		this.application = languageServer;
+	}
 
 	/**
 	 *

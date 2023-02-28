@@ -12,8 +12,19 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Platform;
@@ -28,9 +39,14 @@ public class LanguageServerApplication implements IApplication {
 	private long parentProcessId;
 	private final Object waitLock = new Object();
 
+	private InputStream in;
+	private PrintStream out;
+	private PrintStream err;
+
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
 		prepareWorkspace();
+		prepareStreams();
 		JavaLanguageServerPlugin.startLanguageServer(this);
 		synchronized (waitLock) {
 			while (!shutdown) {
@@ -83,4 +99,54 @@ public class LanguageServerApplication implements IApplication {
 	public long getParentProcessId() {
 		return parentProcessId;
 	}
+
+	private void prepareStreams() {
+		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
+		in = System.in;
+		out = System.out;
+		err = System.err;
+		System.setIn(new ByteArrayInputStream(new byte[0]));
+		if (isDebug) {
+			String id = "jdt.ls-" + new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			File workspaceFile = root.getRawLocation().makeAbsolute().toFile();
+			File rootFile = new File(workspaceFile, ".metadata");
+			rootFile.mkdirs();
+			File outFile = new File(rootFile, ".out-" + id + ".log");
+			try {
+				FileOutputStream stdFileOut = new FileOutputStream(outFile);
+				System.setOut(new PrintStream(stdFileOut));
+				File errFile = new File(rootFile, ".error-" + id + ".log");
+				FileOutputStream stdFileErr = new FileOutputStream(errFile);
+				System.setErr(new PrintStream(stdFileErr));
+			} catch (FileNotFoundException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		} else {
+			System.setOut(new PrintStream(new ByteArrayOutputStream()));
+			System.setErr(new PrintStream(new ByteArrayOutputStream()));
+		}
+	}
+
+	public InputStream getIn() {
+		if (in == null) {
+			prepareStreams();
+		}
+		return in;
+	}
+
+	public PrintStream getOut() {
+		if (out == null) {
+			prepareStreams();
+		}
+		return out;
+	}
+
+	public PrintStream getErr() {
+		if (err == null) {
+			prepareStreams();
+		}
+		return err;
+	}
+
 }
