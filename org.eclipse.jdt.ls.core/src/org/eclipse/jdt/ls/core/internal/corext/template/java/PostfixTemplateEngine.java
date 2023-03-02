@@ -19,19 +19,20 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
+import org.eclipse.jdt.internal.corext.template.java.CompilationUnitContext;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
-import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
-import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
@@ -39,6 +40,10 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 
 public class PostfixTemplateEngine {
+	private static String Switch_Name = "switch"; //$NON-NLS-1$
+	private static String Switch_Default = "switch case statement"; //$NON-NLS-1$
+
+	private static String NEW_RECORD_TEMPLATE_NAME = "new_record"; //$NON-NLS-1$
 	private ASTNode currentNode;
 
 	private ASTNode parentNode;
@@ -76,7 +81,11 @@ public class PostfixTemplateEngine {
 
 		Template[] templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaPostfixContextType.ID_ALL);
 		Template[] availableTemplates = Arrays.stream(templates).filter(t -> context.canEvaluate(t)).toArray(Template[]::new);
+		boolean needsCheck = !isJava12OrHigherProject(compilationUnit);
 		for (Template template : availableTemplates) {
+			if (!canEvaluate(context, template, needsCheck)) {
+				continue;
+			}
 			final CompletionItem item = new CompletionItem();
 			context.setActiveTemplateName(template.getName());
 			String content = evaluateGenericTemplate(context, template);
@@ -109,13 +118,58 @@ public class PostfixTemplateEngine {
 	}
 
 	/**
+	 * see
+	 * org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateEngine.isTemplateAllowed(Template,
+	 * CompilationUnitContext)
+	 */
+	private boolean isTemplateAllowed(Template template, CompilationUnitContext context) {
+		if (Switch_Name.equals(template.getName())) {
+			if (Switch_Default.equals(template.getDescription())) {
+				return true;
+			}
+			return false;
+		}
+		if (NEW_RECORD_TEMPLATE_NAME.equals(template.getName()) && JavaModelUtil.is16OrHigher(context.getJavaProject())) {
+			return true;
+		}
+		return true;
+	}
+
+	/**
+	 * see
+	 * org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateEngine.canEvaluate(CompilationUnitContext,
+	 * Template, boolean)
+	 */
+	private boolean canEvaluate(CompilationUnitContext context, Template template, boolean needsCheck) {
+		if (!needsCheck) {
+			return context.canEvaluate(template);
+		}
+		if (isTemplateAllowed(template, context)) {
+			return context.canEvaluate(template);
+		}
+		return false;
+	}
+
+	/**
+	 * see
+	 * org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateEngine.isJava12OrHigherProject(ICompilationUnit)
+	 */
+	private boolean isJava12OrHigherProject(ICompilationUnit compUnit) {
+		if (compUnit != null) {
+			IJavaProject javaProject = compUnit.getJavaProject();
+			return JavaModelUtil.is12OrHigher(javaProject);
+		}
+		return false;
+	}
+
+	/**
 	 * @See org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateProposal#apply(org.eclipse.jface.text.ITextViewer, char, int, int)
 	 */
 	private String evaluateGenericTemplate(JavaPostfixContext postfixContext, Template template) {
 		TemplateBuffer buffer = null;
 		try {
 			buffer = postfixContext.evaluate(template);
-		} catch (BadLocationException | TemplateException e) {
+		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			return null;
 		}
