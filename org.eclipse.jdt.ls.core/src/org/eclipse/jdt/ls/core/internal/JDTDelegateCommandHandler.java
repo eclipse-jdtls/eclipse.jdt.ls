@@ -12,6 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +160,14 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					String proposalId = (String) arguments.get(1);
 					completionHandler.onDidCompletionItemSelect(requestId, proposalId);
 					return new Object();
+				case "java.decompile":
+					String uri = (String) arguments.get(0);
+					try {
+						byte[] bytes = Files.readAllBytes(Paths.get(new URI(uri)));
+						return DisassemblerContentProvider.getContent(bytes, monitor);
+					} catch (IOException | URISyntaxException | CoreException e) {
+						return false;
+					}
 				default:
 					break;
 			}
