@@ -40,7 +40,7 @@ public class DisassemblerContentProvider implements IDecompiler {
 		try {
 			return getContent(Files.readAllBytes(Paths.get(uri)), monitor);
 		} catch (IOException e) {
-			throw new CoreException(new Status(Status.ERROR, "", "Error opening " + uri, e));
+			throw new CoreException(new Status(Status.ERROR, IConstants.PLUGIN_ID , "Error opening " + uri, e));
 		}
 	}
 
@@ -49,7 +49,7 @@ public class DisassemblerContentProvider implements IDecompiler {
 		return getContent(classFile.getBytes(), monitor);
 	}
 
-	private String getContent(byte[] bytes, IProgressMonitor monitor) throws CoreException {
+	public static String getContent(byte[] bytes, IProgressMonitor monitor) throws CoreException {
 		ClassFileBytesDisassembler disassembler = ToolFactory.createDefaultClassFileBytesDisassembler();
 		String disassembledByteCode = null;
 		try {
@@ -58,7 +58,7 @@ public class DisassemblerContentProvider implements IDecompiler {
 				disassembledByteCode = DISASSEMBLED_HEADER + disassembledByteCode;
 			}
 		} catch (ClassFormatException e) {
-			throw new CoreException(new Status(Status.ERROR, "", "Error disassembling", e));
+			throw new CoreException(new Status(Status.ERROR, IConstants.PLUGIN_ID, "Error disassembling", e));
 		}
 		return disassembledByteCode;
 	}

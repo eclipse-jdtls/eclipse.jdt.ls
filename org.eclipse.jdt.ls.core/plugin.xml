@@ -121,6 +121,9 @@
             <command
                   id="java.completion.onDidSelect">
             </command>
+            <command
+                  id="java.decompile">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
