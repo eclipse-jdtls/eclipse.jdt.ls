@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -179,7 +180,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private long getPublishDiagnosticsDelay() {
 		return Math.min(
-			Math.max(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE, Math.round(1.5 * movingAverageForDiagnostics.value)), 
+			Math.max(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE, Math.round(1.5 * movingAverageForDiagnostics.value)),
 			PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE
 		);
 	}
@@ -351,17 +352,24 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
-		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
-		try {
-			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleSaved(params);
-				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Handle document save ", e);
+		IFile file = JDTUtils.findFile(params.getTextDocument().getUri());
+		if (file != null && !Objects.equals(ProjectsManager.getDefaultProject(), file.getProject())) {
+			// no need for a workspace runnable, change is trivial
+			handleSaved(params);
+		} else {
+			// some refactorings may be applied by the way, wrap those in a WorkspaceRunnable
+			ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
+			try {
+				JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						handleSaved(params);
+					}
+				}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Handle document save ", e);
+			}
 		}
 	}
 
