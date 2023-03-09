@@ -407,4 +407,8 @@ public class ClientPreferences {
 			&& capabilities.getWorkspace().getWorkspaceEdit().getChangeAnnotationSupport() != null;
 	}
 
+	public boolean skipTextEventPropagation() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipTextEventPropagation", "false").toString());
+	}
+
 }
