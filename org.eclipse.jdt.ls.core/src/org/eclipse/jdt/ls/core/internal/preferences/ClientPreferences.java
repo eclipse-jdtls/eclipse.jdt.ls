@@ -421,6 +421,10 @@ public class ClientPreferences {
 			&& capabilities.getWorkspace() != null
 			&& capabilities.getWorkspace().getWorkspaceEdit() != null
 			&& capabilities.getWorkspace().getWorkspaceEdit().getChangeAnnotationSupport() != null;
+    }
+
+	public boolean skipProjectConfiguration() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipProjectConfiguration", "false").toString());
 	}
 
 }
