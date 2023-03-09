@@ -101,20 +101,22 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	@Override
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
-		SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
-		cleanInvalidProjects(rootPaths, subMonitor.split(20));
-		createJavaProject(getDefaultProject(), subMonitor.split(10));
-		cleanupResources(getDefaultProject());
-		Collection<IPath> projectConfigurations = preferenceManager.getPreferences().getProjectConfigurations();
-		if (projectConfigurations == null) {
-			// old way to import project
-			importProjects(rootPaths, subMonitor.split(70));
-		} else {
-			importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
+		if (!preferenceManager.getClientPreferences().skipProjectConfiguration()) {
+			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+			cleanInvalidProjects(rootPaths, subMonitor.split(20));
+			createJavaProject(getDefaultProject(), subMonitor.split(10));
+			cleanupResources(getDefaultProject());
+			Collection<IPath> projectConfigurations = preferenceManager.getPreferences().getProjectConfigurations();
+			if (projectConfigurations == null) {
+				// old way to import project
+				importProjects(rootPaths, subMonitor.split(70));
+			} else {
+				importProjectsFromConfigurationFiles(rootPaths, projectConfigurations, monitor);
+			}
+			updateEncoding(monitor);
+			reportProjectsStatus();
+			subMonitor.done();
 		}
-		updateEncoding(monitor);
-		reportProjectsStatus();
-		subMonitor.done();
 	}
 
 	private void updateEncoding(IProgressMonitor monitor) throws CoreException {
