@@ -31,14 +31,25 @@ import org.eclipse.lsp4j.MessageType;
  */
 public class LogHandler {
 
+	/**
+	 * The filter that decide whether an Eclipse log message gets forwarded to the client
+	 * via {@link org.eclipse.lsp4j.services.LanguageClient#logMessage(org.eclipse.lsp4j.MessageParams)}
+	 * <p>Clients who load the LS in same process can override the default log handler.
+	 * This usually needs to be done very early, before the language server starts.</p>
+	 */
+	public static Predicate<IStatus> defaultLogFilter = new DefaultLogFilter();
+
 	private ILogListener logListener;
 	private DateFormat dateFormat;
 	private int logLevelMask;
 	private JavaClientConnection connection;
 	private Predicate<IStatus> filter;
 
+	/**
+	 * Equivalent to <code>LogHandler(defaultLogFilter)</code>.
+	 */
 	public LogHandler() {
-		this(new DefaultLogFilter());
+		this(defaultLogFilter);
 	}
 
 	public LogHandler(Predicate<IStatus> filter) {
