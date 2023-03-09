@@ -443,4 +443,8 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipProjectConfiguration", "false").toString());
 	}
 
+	public boolean skipTextEventPropagation() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipTextEventPropagation", "false").toString());
+	}
+
 }

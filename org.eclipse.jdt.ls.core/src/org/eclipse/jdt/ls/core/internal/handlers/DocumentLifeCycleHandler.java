@@ -31,12 +31,10 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 
 	private JavaClientConnection connection;
-	private PreferenceManager preferenceManager;
 
 	public DocumentLifeCycleHandler(JavaClientConnection connection, PreferenceManager preferenceManager, ProjectsManager projectsManager, boolean delayValidation) {
-		super(delayValidation);
+		super(preferenceManager, delayValidation);
 		this.connection = connection;
-		this.preferenceManager = preferenceManager;
 	}
 
 	@Override

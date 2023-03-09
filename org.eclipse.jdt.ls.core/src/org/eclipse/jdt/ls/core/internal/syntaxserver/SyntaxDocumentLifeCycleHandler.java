@@ -22,7 +22,6 @@ import java.util.Optional;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -49,13 +48,11 @@ public class SyntaxDocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler
 
 	private JavaClientConnection connection;
 	private ProjectsManager projectsManager;
-	private PreferenceManager preferenceManager;
 
 	public SyntaxDocumentLifeCycleHandler(JavaClientConnection connection, ProjectsManager projectsManager, PreferenceManager preferenceManager, boolean delayValidation) {
-		super(delayValidation);
+		super(preferenceManager, delayValidation);
 		this.connection = connection;
 		this.projectsManager = projectsManager;
-		this.preferenceManager = preferenceManager;
 	}
 
 	public void setClient(JavaClientConnection connection) {

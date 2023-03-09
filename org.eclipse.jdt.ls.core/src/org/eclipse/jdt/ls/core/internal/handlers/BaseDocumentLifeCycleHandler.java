@@ -110,8 +110,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private Map<String, Integer> documentVersions = new HashMap<>();
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
+	protected final PreferenceManager preferenceManager;
 
-	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
+	public BaseDocumentLifeCycleHandler(PreferenceManager preferenceManager, boolean delayValidation) {
+		this.preferenceManager = preferenceManager;
 		this.sharedASTProvider = CoreASTProvider.getInstance();
 		if (delayValidation) {
 			this.validationTimer = new WorkspaceJob("Validate documents") {
@@ -422,34 +424,36 @@ public abstract class BaseDocumentLifeCycleHandler {
 				sharedASTProvider.disposeAST();
 				CodeActionHandler.codeActionStore.clear();
 			}
-			List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
-			for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
-				Range range = changeEvent.getRange();
-				int length;
-				IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
-				final int startOffset;
-				if (range != null) {
-					Position start = range.getStart();
-					startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
-					length = DiagnosticsHelper.getLength(unit, range);
-				} else {
-					// range is optional and if not given, the whole file content is replaced
-					length = unit.getSource().length();
-					startOffset = 0;
+			if (!preferenceManager.getClientPreferences().skipTextEventPropagation()) {
+				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
+				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
+	
+					Range range = changeEvent.getRange();
+					int length;
+					IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+					final int startOffset;
+					if (range != null) {
+						Position start = range.getStart();
+						startOffset = JsonRpcHelpers.toOffset(document, start.getLine(), start.getCharacter());
+						length = DiagnosticsHelper.getLength(unit, range);
+					} else {
+						// range is optional and if not given, the whole file content is replaced
+						length = unit.getSource().length();
+						startOffset = 0;
+					}
+	
+					TextEdit edit = null;
+					String text = changeEvent.getText();
+					if (length == 0) {
+						edit = new InsertEdit(startOffset, text);
+					} else if (text.isEmpty()) {
+						edit = new DeleteEdit(startOffset, length);
+					} else {
+						edit = new ReplaceEdit(startOffset, length, text);
+					}
+					edit.apply(document, TextEdit.NONE);
 				}
-
-				TextEdit edit = null;
-				String text = changeEvent.getText();
-				if (length == 0) {
-					edit = new InsertEdit(startOffset, text);
-				} else if (text.isEmpty()) {
-					edit = new DeleteEdit(startOffset, length);
-				} else {
-					edit = new ReplaceEdit(startOffset, length, text);
-				}
-				edit.apply(document, TextEdit.NONE);
-
 			}
 			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
