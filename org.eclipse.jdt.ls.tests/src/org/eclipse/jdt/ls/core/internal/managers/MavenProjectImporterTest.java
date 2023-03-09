@@ -392,6 +392,18 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		}
 	}
 
+	// https://github.com/eclipse/eclipse.jdt.ls/issues/2017
+	@Test
+	public void testImportModulesWithSameArtifactId() throws Exception {
+		importProjects("maven/multimodule-same-artifacts");
+		IProject[] projects = ProjectUtils.getAllProjects(false);
+		assertEquals(4, projects.length); // three projects & parent module
+		// See MavenProjectImporter.DUPLICATE_ARTIFACT_TEMPLATE
+		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.one-my-app")));
+		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.two-my-app")));
+		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));
+	}
+
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
 
 		int updateProjectJobCalled;
