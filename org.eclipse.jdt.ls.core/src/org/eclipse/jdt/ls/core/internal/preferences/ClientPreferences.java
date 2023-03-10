@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -390,6 +391,13 @@ public class ClientPreferences {
 			&& capabilities.getWorkspace().getInlayHint() != null
 			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport() != null
 			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport().booleanValue();
+	}
+
+	public Collection<String> excludedMarkerTypes() {
+		Object list = extendedClientCapabilities.getOrDefault("excludedMarkerTypes", null);
+		return list instanceof Collection<?> excludedMarkerTypes //
+				? excludedMarkerTypes.stream().filter(String.class::isInstance).map(String.class::cast).toList() //
+				: List.of();
 	}
 
 }
