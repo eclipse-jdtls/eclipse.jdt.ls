@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -339,8 +340,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @return a list of {@link Diagnostic}s
 	 */
 	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers, boolean isDiagnosticTagSupported) {
-		List<Diagnostic> diagnostics = markers.stream().map(m -> toDiagnostic(range, m, isDiagnosticTagSupported)).filter(d -> d != null).collect(Collectors.toList());
-		return diagnostics;
+		return markers.stream().filter(marker -> JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
+			try {
+				return marker.isSubtypeOf(markerType);
+			} catch (CoreException e) {
+				return false;
+			}
+		})).map(m -> toDiagnostic(range, m, isDiagnosticTagSupported)) //
+				.filter(Objects::nonNull) //
+				.collect(Collectors.toList());
 	}
 
 	private static Diagnostic toDiagnostic(Range range, IMarker marker, boolean isDiagnosticTagSupported) {
@@ -371,7 +379,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 
 	/**
 	 * Transforms {@link IMarker}s of a {@link IDocument} into a list of
-	 * {@link Diagnostic}s.
+	 * {@link Diagnostic}s; excluding marker types configured in
+	 * {@link ClientPreferences}
 	 *
 	 * @param document
 	 * @param markers
@@ -379,9 +388,15 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 */
 	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers, boolean isDiagnosticTagSupported) {
 		List<Diagnostic> diagnostics = Stream.of(markers)
-				.map(m -> toDiagnostic(document, m, isDiagnosticTagSupported))
-				.filter(d -> d != null)
-				.collect(Collectors.toList());
+				.filter(marker -> JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
+					try {
+						return marker.isSubtypeOf(markerType);
+					} catch (CoreException e) {
+						return false;
+					}
+				})).map(m -> toDiagnostic(document, m, isDiagnosticTagSupported)) //
+				.filter(Objects::nonNull) //
+				.collect(Collectors.toCollection(ArrayList::new));
 		return diagnostics;
 	}
 
