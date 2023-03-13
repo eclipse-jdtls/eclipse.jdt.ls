@@ -100,7 +100,7 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		Object arg2 = arguments.get(2);
 		assertEquals(true, arg2 instanceof ChangeSignatureInfo);
 		ChangeSignatureInfo info = (ChangeSignatureInfo) arg2;
-		assertEquals("public", info.accessType);
+		assertEquals("public", info.modifier);
 		assertEquals(0, info.exceptions.length);
 		assertEquals("=TestProject/src<p{A.java[A~getName~QString;", info.methodIdentifier);
 		assertEquals("getName", info.methodName);

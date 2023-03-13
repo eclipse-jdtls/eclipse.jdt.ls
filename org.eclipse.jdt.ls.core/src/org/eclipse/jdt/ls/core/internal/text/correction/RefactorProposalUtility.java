@@ -892,15 +892,15 @@ public class RefactorProposalUtility {
 	public static class ChangeSignatureInfo {
 
 		public String methodIdentifier;
-		public String accessType;
+		public String modifier;
 		public String returnType;
 		public String methodName;
 		public MethodParameter[] parameters;
 		public MethodException[] exceptions;
 
-		public ChangeSignatureInfo(String methodIdentifier, String accessType, String returnType, String methodName, MethodParameter[] parameters, MethodException[] exceptions) {
+		public ChangeSignatureInfo(String methodIdentifier, String modifier, String returnType, String methodName, MethodParameter[] parameters, MethodException[] exceptions) {
 			this.methodIdentifier = methodIdentifier;
-			this.accessType = accessType;
+			this.modifier = modifier;
 			this.returnType = returnType;
 			this.methodName = methodName;
 			this.parameters = parameters;
