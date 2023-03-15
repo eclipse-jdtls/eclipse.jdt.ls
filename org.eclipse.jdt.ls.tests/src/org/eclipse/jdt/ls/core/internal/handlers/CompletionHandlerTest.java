@@ -489,8 +489,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			CompletionList list = requestCompletions(unit, "/**");
 			assertNotNull(list);
-			assertEquals(2, list.getItems().size());
-			CompletionItem item = list.getItems().get(1);
+			assertEquals(1, list.getItems().size());
+			CompletionItem item = list.getItems().get(0);
 			assertNull(item.getInsertText());
 			assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
 			assertEquals(CompletionItemKind.Snippet, item.getKind());
@@ -532,8 +532,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 			CompletionList list = requestCompletions(unit, "/**");
 			assertNotNull(list);
-			assertEquals(2, list.getItems().size());
-			CompletionItem item = list.getItems().get(1);
+			assertEquals(1, list.getItems().size());
+			CompletionItem item = list.getItems().get(0);
 			assertNull(item.getInsertText());
 			assertEquals(JavadocCompletionProposal.JAVA_DOC_COMMENT, item.getLabel());
 			assertEquals(CompletionItemKind.Snippet, item.getKind());
