@@ -232,6 +232,9 @@ public class CompletionHandler{
 		proposals.sort(PROPOSAL_COMPARATOR);
 		CompletionList list = new CompletionList(proposals);
 		list.setIsIncomplete(!collector.isComplete() || completionForConstructor);
+		if (isCompletionListItemDefaultsSupport()){
+			list.setItemDefaults(collector.getCompletionItemDefaults());
+		}
 		return list;
 	}
 
@@ -285,5 +288,10 @@ public class CompletionHandler{
 
 	public boolean isIndexEngineEnabled() {
 		return !JDTEnvironmentUtils.isSyntaxServer();
+	}
+
+	private boolean isCompletionListItemDefaultsSupport() {
+		return this.manager != null && this.manager.getClientPreferences() != null
+				&& (this.manager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport() || this.manager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport());
 	}
 }
