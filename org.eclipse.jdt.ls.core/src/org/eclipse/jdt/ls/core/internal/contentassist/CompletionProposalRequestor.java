@@ -50,9 +50,12 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
+import org.eclipse.lsp4j.InsertReplaceRange;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -68,6 +71,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private boolean isComplete = true;
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
+	private CompletionItemDefaults itemDefaults;
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -115,6 +119,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return isComplete;
 	}
 
+	public CompletionItemDefaults getCompletionItemDefaults() {
+		if (itemDefaults == null) {
+			itemDefaults = new CompletionItemDefaults();
+		}
+		return itemDefaults;
+	}
 	// Update SUPPORTED_KINDS when mapKind changes
 	// @formatter:off
 	public static final Set<CompletionItemKind> SUPPORTED_KINDS = ImmutableSet.of(CompletionItemKind.Constructor,
@@ -231,6 +241,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		int limit = Math.min(proposals.size(), maxCompletions);
 		List<CompletionItem> completionItems = new ArrayList<>(limit);
 
+		if (!proposals.isEmpty()){
+			initializeCompletionListItemDefaults(proposals.get(0));
+		}
 		//Let's compute replacement texts for the most relevant results only
 		for (int i = 0; i < limit; i++) {
 			CompletionProposal proposal = proposals.get(i);
@@ -299,8 +312,22 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return resultCombination;
 	}
 
+	private void initializeCompletionListItemDefaults(CompletionProposal proposal) {
+		CompletionItem completionItem = new CompletionItem();
+		CompletionItemDefaults itemDefaults = getCompletionItemDefaults();
+		proposalProvider.updateReplacement(proposal, completionItem, '\0');
+		if (completionItem.getInsertTextFormat() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()) {
+			itemDefaults.setInsertTextFormat(completionItem.getInsertTextFormat());
+		}
+		if (completionItem.getTextEdit() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()) {
+			itemDefaults.setEditRange(getEditRange(completionItem, preferenceManager));
+		}
+	}
+
+
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
+		CompletionItemDefaults itemDefaults = getCompletionItemDefaults();
 		$.setKind(mapKind(proposal));
 		if (Flags.isDeprecated(proposal.getFlags())) {
 			if (preferenceManager.getClientPreferences().isCompletionItemTagSupported()) {
@@ -337,8 +364,25 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			if (replace != null && replace.getEnd().getLine() != replace.getStart().getLine()) {
 				replace.setEnd(replace.getStart());
 			}
+			if (itemDefaults.getEditRange() != null && itemDefaults.getEditRange().equals(getEditRange($, preferenceManager))) {
+				$.setTextEditText(newText);
+				$.setTextEdit(null);
+			}
+		}
+		if (itemDefaults.getInsertTextFormat() != null && itemDefaults.getInsertTextFormat() == $.getInsertTextFormat()) {
+			$.setInsertTextFormat(null);
 		}
 		return $;
+	}
+
+	private static Either<Range, InsertReplaceRange> getEditRange(CompletionItem completionItem, PreferenceManager preferenceManager) {
+		if (preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()) {
+			return Either.forRight(new InsertReplaceRange(completionItem.getTextEdit().getRight().getInsert(), completionItem.getTextEdit().getRight().getReplace()));
+		} else {
+			Range range = completionItem.getTextEdit().isLeft() ? completionItem.getTextEdit().getLeft().getRange()
+					: (completionItem.getTextEdit().getRight().getInsert() != null ? completionItem.getTextEdit().getRight().getInsert() : completionItem.getTextEdit().getRight().getReplace());
+			return Either.forLeft(range);
+		}
 	}
 
 	@Override
@@ -356,7 +400,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			false
 		);
 	}
-
 
 	private CompletionItemKind mapKind(final CompletionProposal proposal) {
 		//When a new CompletionItemKind is added, don't forget to update SUPPORTED_KINDS

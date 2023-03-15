@@ -386,6 +386,22 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
 	}
 
+	public boolean isCompletionListItemDefaultsEditRangeSupport() {
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains("editRange");
+	}
+
+	public boolean isCompletionListItemDefaultsInsertTextFormatSupport() {
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains("insertTextFormat");
+	}
+
 	public boolean isInlayHintRefreshSupported() {
 		return v3supported
 			&& capabilities.getWorkspace().getInlayHint() != null
