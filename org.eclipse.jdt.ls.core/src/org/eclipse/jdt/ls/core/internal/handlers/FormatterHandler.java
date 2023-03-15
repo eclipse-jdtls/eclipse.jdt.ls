@@ -38,6 +38,7 @@ import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.FormatterPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -150,6 +151,7 @@ public class FormatterHandler {
 		Map<String, String> customOptions = options.entrySet().stream().filter(map -> chekIfValueIsNotNull(map.getValue())).collect(toMap(e -> e.getKey(), e -> getOptionValue(e.getValue())));
 
 		eclipseOptions.putAll(customOptions);
+		eclipseOptions.putAll(FormatterPreferences.toEclipseOptions(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getFormatterSettings()));
 
 		Integer tabSize = options.getTabSize();
 		if (tabSize != null) {
