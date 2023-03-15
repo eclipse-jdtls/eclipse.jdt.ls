@@ -18,11 +18,13 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -116,7 +118,29 @@ public class ChangeSignatureHandler {
 						newExceptionInfos.add(ExceptionInfo.createInfoForAddedException(type));
 					}
 				} else {
-					IType type = cu.getJavaProject().findType(exception.type);
+					IType type = null;
+					if (exception.type.equals("Exception")) {
+						// special handling for java.lang.Exception
+						type = cu.getJavaProject().findType("java.lang.Exception");
+					}
+					if (type == null) {
+						// find possible types with the fully qualified name in the project
+						type = cu.getJavaProject().findType(exception.type);
+					}
+					if (type == null) {
+						// find possible match types in existing import declarations
+						for (IImportDeclaration importDeclaration : cu.getImports()) {
+							String importName = importDeclaration.getElementName();
+							int dotIndex = importName.lastIndexOf(".");
+							if (dotIndex != -1 && dotIndex < importName.length() - 1) {
+								String typeName = importName.substring(dotIndex + 1);
+								if (typeName.equals(exception.type)) {
+									type = cu.getJavaProject().findType(importName);
+									break;
+								}
+							}
+						}
+					}
 					if (type == null) {
 						// exception.type is not FQN, or it should be found via IJavaProject.findType()
 						SearchEngine engine = new SearchEngine();
@@ -128,8 +152,12 @@ public class ChangeSignatureHandler {
 								@Override
 								public void acceptTypeNameMatch(TypeNameMatch match) {
 									IType type = match.getType();
-									if (type.exists()) {
-										foundTypes.add(type);
+									try {
+										if (type.exists() && JdtFlags.isPublic(type)) {
+											foundTypes.add(type);
+										}
+									} catch (JavaModelException e) {
+										JavaLanguageServerPlugin.log(e);
 									}
 								}
 							}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, new NullProgressMonitor());
