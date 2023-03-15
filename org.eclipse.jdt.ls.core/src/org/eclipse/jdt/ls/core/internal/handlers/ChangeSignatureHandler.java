@@ -136,7 +136,7 @@ public class ChangeSignatureHandler {
 							if (foundTypes.size() == 1) {
 								type = foundTypes.get(0);
 							} else {
-								JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(new MessageParams(MessageType.Error, "Ambigious exception types are found for " + exception.type + ", please use full full qualified name instead."));
+								JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(new MessageParams(MessageType.Error, "Ambigious exception types are found for " + exception.type + ", please use fully qualified name instead."));
 								return null;
 							}
 						}

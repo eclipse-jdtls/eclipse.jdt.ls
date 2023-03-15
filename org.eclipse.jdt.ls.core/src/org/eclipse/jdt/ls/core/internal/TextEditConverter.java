@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.util.SimpleDocument;
-import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.AnnotatedTextEdit;
@@ -92,12 +91,9 @@ public class TextEditConverter extends TextEditVisitor {
 	@Override
 	public boolean visit(InsertEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+			org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 			te.setNewText(edit.getText());
 			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
-			if (te instanceof AnnotatedTextEdit ate) {
-				ate.setAnnotationId(this.changeAnnotation);
-			}
 			converted.add(te);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
@@ -112,7 +108,7 @@ public class TextEditConverter extends TextEditVisitor {
 	public boolean visit(CopySourceEdit edit) {
 		try {
 			if (edit.getTargetEdit() != null) {
-				org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+				org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 				Document doc = new Document(compilationUnit.getSource());
 				edit.apply(doc, TextEdit.UPDATE_REGIONS);
@@ -121,9 +117,6 @@ public class TextEditConverter extends TextEditVisitor {
 					content = applySourceModifier(content, edit.getSourceModifier());
 				}
 				te.setNewText(content);
-				if (te instanceof AnnotatedTextEdit ate) {
-					ate.setAnnotationId(this.changeAnnotation);
-				}
 				converted.add(te);
 			}
 			return false;
@@ -139,12 +132,9 @@ public class TextEditConverter extends TextEditVisitor {
 	@Override
 	public boolean visit(DeleteEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+			org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 			te.setNewText("");
 			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
-			if (te instanceof AnnotatedTextEdit ate) {
-				ate.setAnnotationId(this.changeAnnotation);
-			}
 			converted.add(te);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
@@ -158,15 +148,12 @@ public class TextEditConverter extends TextEditVisitor {
 	@Override
 	public boolean visit(MultiTextEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+			org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 			Document doc = new Document(compilationUnit.getSource());
 			edit.apply(doc, TextEdit.UPDATE_REGIONS);
 			String content = doc.get(edit.getOffset(), edit.getLength());
 			te.setNewText(content);
-			if (te instanceof AnnotatedTextEdit ate) {
-				ate.setAnnotationId(this.changeAnnotation);
-			}
 			converted.add(te);
 			return false;
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
@@ -181,12 +168,9 @@ public class TextEditConverter extends TextEditVisitor {
 	@Override
 	public boolean visit(ReplaceEdit edit) {
 		try {
-			org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+			org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 			te.setNewText(edit.getText());
 			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
-			if (te instanceof AnnotatedTextEdit ate) {
-				ate.setAnnotationId(this.changeAnnotation);
-			}
 			converted.add(te);
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
@@ -204,7 +188,7 @@ public class TextEditConverter extends TextEditVisitor {
 	public boolean visit(CopyTargetEdit edit) {
 		try {
 			if (edit.getSourceEdit() != null) {
-				org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+				org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 
 				Document doc = new Document(compilationUnit.getSource());
@@ -216,9 +200,6 @@ public class TextEditConverter extends TextEditVisitor {
 				}
 
 				te.setNewText(content);
-				if (te instanceof AnnotatedTextEdit ate) {
-					ate.setAnnotationId(this.changeAnnotation);
-				}
 				converted.add(te);
 			}
 			return false; // do not visit children
@@ -239,12 +220,9 @@ public class TextEditConverter extends TextEditVisitor {
 			// If MoveSourcedEdit & MoveTargetEdit are the same level, should delete the original contenxt.
 			// See issue#https://github.com/redhat-developer/vscode-java/issues/253
 			if (edit.getParent() != null && edit.getTargetEdit() != null && edit.getParent().equals(edit.getTargetEdit().getParent())) {
-				org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+				org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 				te.setNewText("");
 				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
-				if (te instanceof AnnotatedTextEdit ate) {
-					ate.setAnnotationId(this.changeAnnotation);
-				}
 				converted.add(te);
 				return false;
 			}
@@ -264,7 +242,7 @@ public class TextEditConverter extends TextEditVisitor {
 	public boolean visit(MoveTargetEdit edit) {
 		try {
 			if (edit.getSourceEdit() != null) {
-				org.eclipse.lsp4j.TextEdit te = this.changeAnnotation != null ? new org.eclipse.lsp4j.AnnotatedTextEdit() : new org.eclipse.lsp4j.TextEdit();
+				org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
 				te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
 
 				Document doc = new Document(compilationUnit.getSource());
@@ -274,9 +252,6 @@ public class TextEditConverter extends TextEditVisitor {
 					content = applySourceModifier(content, edit.getSourceEdit().getSourceModifier());
 				}
 				te.setNewText(content);
-				if (te instanceof AnnotatedTextEdit ate) {
-					ate.setAnnotationId(this.changeAnnotation);
-				}
 				converted.add(te);
 				return false; // do not visit children
 			}
@@ -303,5 +278,14 @@ public class TextEditConverter extends TextEditVisitor {
 			JavaLanguageServerPlugin.logException("Error applying edit to document", e);
 		}
 		return subDocument.get();
+	}
+
+	private org.eclipse.lsp4j.TextEdit createTextEdit(String changeAnnotation) {
+		if (changeAnnotation == null) {
+			return new org.eclipse.lsp4j.TextEdit();
+		}
+		AnnotatedTextEdit ate = new org.eclipse.lsp4j.AnnotatedTextEdit();
+		ate.setAnnotationId(changeAnnotation);
+		return ate;
 	}
 }
