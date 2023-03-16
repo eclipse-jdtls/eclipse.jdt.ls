@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.21.0-SNAPSHOT</version>
+		<version>1.22.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.jdt.ls.repository</artifactId>
 	<packaging>eclipse-repository</packaging>
