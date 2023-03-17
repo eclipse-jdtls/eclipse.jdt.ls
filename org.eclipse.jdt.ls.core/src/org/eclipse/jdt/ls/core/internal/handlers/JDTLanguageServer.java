@@ -369,7 +369,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 */
 	private void syncCapabilitiesToSettings() {
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
-			toggleCapability(preferenceManager.getPreferences().isCompletionEnabled(), Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+			toggleCapability(preferenceManager.getPreferences().isCompletionEnabled(), Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.getDefaultCompletionOptions(preferenceManager));
 		}
 		if (preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			toggleCapability(preferenceManager.getPreferences().isJavaFormatEnabled(), Preferences.FORMATTING_ID, Preferences.TEXT_DOCUMENT_FORMATTING, null);

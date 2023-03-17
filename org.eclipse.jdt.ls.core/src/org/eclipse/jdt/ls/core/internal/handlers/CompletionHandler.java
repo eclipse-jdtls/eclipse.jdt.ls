@@ -50,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemOptions;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
@@ -60,7 +61,16 @@ import com.google.common.collect.Sets;
 
 public class CompletionHandler{
 
-	public final static CompletionOptions DEFAULT_COMPLETION_OPTIONS = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*", " "));
+	public final static CompletionOptions getDefaultCompletionOptions(PreferenceManager preferenceManager) {
+		CompletionOptions completionOptions = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*", " "));
+		if (preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()) {
+			CompletionItemOptions completionItemOptions = new CompletionItemOptions();
+			completionItemOptions.setLabelDetailsSupport(Boolean.TRUE);
+			completionOptions.setCompletionItem(completionItemOptions);
+		}
+		return completionOptions;
+	}
+
 	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
 
 	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<>() {

@@ -218,7 +218,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 					new DocumentOnTypeFormattingOptions(";", Arrays.asList("\n", "}")));
 		}
 		if (preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
-			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+			registerCapability(Preferences.COMPLETION_ID, Preferences.COMPLETION, CompletionHandler.getDefaultCompletionOptions(preferenceManager));
 		}
 
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
