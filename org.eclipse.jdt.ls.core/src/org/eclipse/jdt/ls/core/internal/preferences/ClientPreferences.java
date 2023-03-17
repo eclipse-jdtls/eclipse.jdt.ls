@@ -410,6 +410,14 @@ public class ClientPreferences {
 		return isCompletionListItemDefaultsEditRangeSupport() || isCompletionListItemDefaultsInsertTextFormatSupport();
 	}
 
+	public boolean isCompletionItemLabelDetailsSupport() {
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getLabelDetailsSupport() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getLabelDetailsSupport().booleanValue();
+	}
+
 	public boolean isInlayHintRefreshSupported() {
 		return v3supported
 			&& capabilities.getWorkspace().getInlayHint() != null

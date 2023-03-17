@@ -78,6 +78,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void test_cast() throws JavaModelException {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -96,6 +97,8 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(0);
 		assertEquals("cast", item.getLabel());
+		assertNull(item.getLabelDetails().getDetail());
+		assertEquals("Casts the expression to a new type", item.getLabelDetails().getDescription());
 		assertEquals(item.getInsertText(), "((${1})a)${0}");
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
 		Range range = item.getAdditionalTextEdits().get(0).getRange();
@@ -577,5 +580,6 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(false);
 	}
 }

@@ -50,6 +50,8 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeLensOptions;
+import org.eclipse.lsp4j.CompletionItemOptions;
+import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentFilter;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
@@ -111,7 +113,7 @@ final public class InitHandler extends BaseInitHandler {
 	public void registerCapabilities(InitializeResult initializeResult) {
 		ServerCapabilities capabilities = new ServerCapabilities();
 		if (!preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
-			capabilities.setCompletionProvider(CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+			capabilities.setCompletionProvider(CompletionHandler.getDefaultCompletionOptions(preferenceManager));
 		}
 		if (!preferenceManager.getClientPreferences().isFormattingDynamicRegistrationSupported()) {
 			capabilities.setDocumentFormattingProvider(Boolean.TRUE);
@@ -185,7 +187,7 @@ final public class InitHandler extends BaseInitHandler {
 		if (!preferenceManager.getClientPreferences().isInlayHintDynamicRegistered()) {
 			capabilities.setInlayHintProvider(Boolean.TRUE);
 		}
-		
+
 		capabilities.setCallHierarchyProvider(Boolean.TRUE);
 		TextDocumentSyncOptions textDocumentSyncOptions = new TextDocumentSyncOptions();
 		textDocumentSyncOptions.setOpenClose(Boolean.TRUE);

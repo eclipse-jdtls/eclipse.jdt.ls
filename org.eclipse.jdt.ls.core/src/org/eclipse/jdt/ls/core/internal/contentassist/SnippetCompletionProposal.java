@@ -71,6 +71,7 @@ import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.CompletionItemLabelDetails;
 import org.eclipse.lsp4j.InsertTextFormat;
 
 public class SnippetCompletionProposal extends CompletionProposal {
@@ -318,6 +319,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 				item.setTextEditText(SnippetUtils.templateToSnippet(template.getPattern()));
 			}
 			item.setDetail(template.getDescription());
+			if (isCompletionItemLabelDetailsSupport()){
+				CompletionItemLabelDetails itemLabelDetails = new CompletionItemLabelDetails();
+				itemLabelDetails.setDescription(template.getDescription());
+				item.setLabelDetails(itemLabelDetails);
+			}
 
 			Map<String, String> data = new HashMap<>(3);
 			data.put(CompletionResolveHandler.DATA_FIELD_URI, uri);
@@ -333,6 +339,10 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		response.setItems(res);
 		CompletionResponses.store(response);
 		return res;
+	}
+
+	private static boolean isCompletionItemLabelDetailsSupport() {
+		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionItemLabelDetailsSupport();
 	}
 
 	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {

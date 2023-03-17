@@ -292,6 +292,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_constructor() throws Exception{
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -307,7 +308,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Comparator<CompletionItem> comparator = (CompletionItem a, CompletionItem b) -> a.getSortText().compareTo(b.getSortText());
 		Collections.sort(items, comparator);
 		CompletionItem ctor = items.get(0);
-		assertEquals("Object()", ctor.getLabel());
+		assertEquals("Object", ctor.getLabel());
+		// createMethodProposalLabel
+		assertEquals("()", ctor.getLabelDetails().getDetail());
+		assertNull(ctor.getLabelDetails().getDescription());
 		assertEquals("java.lang.Object.Object()", ctor.getDetail());
 		assertEquals("Object", ctor.getInsertText());
 
@@ -327,6 +331,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_import_package() throws JavaModelException{
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -343,6 +348,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		// Check completion item
 		assertNull(item.getInsertText());
 		assertEquals("java.sql",item.getLabel());
+		// createPackageProposalLabel
+		assertNull(item.getLabelDetails().getDetail());
+		assertEquals("(package)",item.getLabelDetails().getDescription());
 		assertEquals("(package) java.sql", item.getDetail());
 		assertEquals(CompletionItemKind.Module, item.getKind() );
 		assertEquals("999999215", item.getSortText());
@@ -554,6 +562,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_import_static() throws JavaModelException{
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
+
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import static java.util.concurrent.TimeUnit. \n" +
@@ -571,7 +581,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem daysFieldItem = list.getItems().get(0);
 		// Check completion item
 		assertEquals("DAYS", daysFieldItem.getInsertText());
-		assertEquals("DAYS : TimeUnit", daysFieldItem.getLabel());
+		// createLabelWithTypeAndDeclaration
+		assertEquals("DAYS", daysFieldItem.getLabel());
+		assertEquals("TimeUnit", daysFieldItem.getLabelDetails().getDescription());
+		assertNull(daysFieldItem.getLabelDetails().getDetail());
+
+		//
 		assertEquals(CompletionItemKind.EnumMember, daysFieldItem.getKind());
 		assertEquals("999999210", daysFieldItem.getSortText());
 
@@ -596,7 +611,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem valuesMethodItem = list.getItems().get(7);
 		// Check completion item
 		assertEquals("valueOf", valuesMethodItem.getInsertText());
-		assertEquals("valueOf(String) : TimeUnit", valuesMethodItem.getLabel());
+		assertEquals("valueOf", valuesMethodItem.getLabel());
+		assertEquals("(String)", valuesMethodItem.getLabelDetails().getDetail());
+		assertEquals("TimeUnit", valuesMethodItem.getLabelDetails().getDescription());
 		assertEquals(CompletionItemKind.Method, valuesMethodItem.getKind());
 		assertEquals("999999211", valuesMethodItem.getSortText());
 		TextEdit teValues = valuesMethodItem.getTextEdit().getLeft();
@@ -822,6 +839,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(false);
 		return mockCapabilies;
 	}
 
@@ -1282,6 +1300,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testSnippet_while() throws JavaModelException {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -1300,6 +1319,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(1);
 		assertEquals("while", item.getLabel());
+		assertNull(item.getLabelDetails().getDetail());
+		assertEquals("while statement", item.getLabelDetails().getDescription());
+
 		String insertText = item.getInsertText();
 		assertEquals("while (${1:condition:var(boolean)}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
 		CompletionItem resolved = server.resolveCompletionItem(item).join();
@@ -2011,6 +2033,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_methodOverrideWithParams() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy(
 				//@formatter:off
 				"src/org/sample/Test.java",
@@ -2045,6 +2068,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_methodOverrideWithException() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy(
 				//@formatter:off
 				"src/org/sample/Test.java",
@@ -2063,6 +2087,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("deleteSomething", oride.getInsertText());
 		assertNotNull(oride.getTextEdit());
 		String text = oride.getTextEdit().getLeft().getNewText();
+
+		assertEquals(oride.getLabel(), "deleteSomething");
+		assertEquals(oride.getLabelDetails().getDetail(), "()");
+		assertEquals(oride.getLabelDetails().getDescription(), "void");
 
 		String expectedText = "@Override\n"+
 				"protected void deleteSomething() throws IOException {\n" +
@@ -2216,6 +2244,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_AnonymousType() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"public class Foo {\n"+
@@ -2230,13 +2259,18 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "new ");
 		assertNotNull(list);
 		CompletionItem ci = list.getItems().stream()
-				.filter(item -> item.getLabel().startsWith("Foo.IFoo()  Anonymous Inner Type"))
+				.filter(item -> item.getLabel().startsWith("Foo.IFoo"))
 				.findFirst().orElse(null);
 		assertNotNull(ci);
 
 		assertEquals("Foo.IFoo", ci.getInsertText());
 		assertEquals(CompletionItemKind.Constructor, ci.getKind());
-		assertEquals("java.Foo.IFoo", ci.getDetail());
+		// createAnonymousTypeLabel
+		assertEquals("Foo.IFoo", ci.getLabel());
+		assertEquals("()", ci.getLabelDetails().getDetail());
+		assertEquals("Anonymous Inner Type", ci.getLabelDetails().getDescription());
+
+
 		assertEquals("999998684", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
 		assertTextEdit(2, 23, 23, "IFoo() {\n" +
@@ -3479,6 +3513,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	// See https://github.com/redhat-developer/vscode-java/issues/2034
 	@Test
 	public void testCompletion_Anonymous() throws JavaModelException {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java",
 		//@formatter:off
 					"package org.sample;\n"
@@ -3497,7 +3532,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "= A");
 		assertNotNull(list);
 		assertTrue(list.getItems().size() > 0);
-		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("Arrays - java.util")).findFirst().orElse(null);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("Arrays")).findFirst().orElse(null);
+		// createTypeProposalLabel
+		assertEquals("Arrays", ci.getLabel());
+		assertNull(ci.getLabelDetails().getDetail());
+		assertEquals("java.util", ci.getLabelDetails().getDescription());
+
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("java.util.Arrays", ci.getDetail());
 	}
@@ -3582,6 +3622,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_Lambda() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
 			"import java.util.function.Consumer;",
 			"public class Test {",
@@ -3594,10 +3635,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "c = ");
 		assertNotNull(list);
 		CompletionItem lambda = list.getItems().stream()
-				.filter(item -> (item.getLabel().matches("\\(Object \\w+\\) -> : void") && item.getKind() == CompletionItemKind.Method))
+				.filter(item -> (item.getLabel().matches("\\(Object \\w+\\) ->") && item.getKind() == CompletionItemKind.Method))
 				.findFirst().orElse(null);
 		assertNotNull(lambda);
 		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\$\\{1:\\w+\\} -> \\$\\{0\\}"));
+
+		assertEquals(lambda.getLabel(), "(Object arg0) ->");
+		assertNull(lambda.getLabelDetails().getDetail());
+		assertEquals(lambda.getLabelDetails().getDescription(), "void");
 	}
 
 	@Test

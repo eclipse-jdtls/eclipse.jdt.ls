@@ -30,6 +30,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.SemanticTokensHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.CompletionItemOptions;
+import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentFilter;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.SaveOptions;
@@ -73,7 +75,7 @@ public class SyntaxInitHandler extends BaseInitHandler {
 			capabilities.setHoverProvider(Boolean.TRUE);
 		}
 		if (!preferenceManager.getClientPreferences().isCompletionDynamicRegistered()) {
-			capabilities.setCompletionProvider(CompletionHandler.DEFAULT_COMPLETION_OPTIONS);
+			capabilities.setCompletionProvider(CompletionHandler.getDefaultCompletionOptions(preferenceManager));
 		}
 		if (!preferenceManager.getClientPreferences().isDocumentHighlightDynamicRegistered()) {
 			capabilities.setDocumentHighlightProvider(Boolean.TRUE);
