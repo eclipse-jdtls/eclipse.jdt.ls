@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
@@ -55,13 +56,17 @@ import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.ExceptionInfo;
+import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
@@ -77,6 +82,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionPropos
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodException;
+import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodParameter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -91,6 +98,7 @@ public class RefactorProposalUtility {
 	public static final String EXTRACT_METHOD_COMMAND = "extractMethod";
 	public static final String EXTRACT_FIELD_COMMAND = "extractField";
 	public static final String EXTRACT_INTERFACE_COMMAND = "extractInterface";
+	public static final String CHANGE_SIGNATURE_COMMAND = "changeSignature";
 	public static final String ASSIGN_FIELD_COMMAND = "assignField";
 	public static final String CONVERT_VARIABLE_TO_FIELD_COMMAND = "convertVariableToField";
 	public static final String MOVE_FILE_COMMAND = "moveFile";
@@ -840,6 +848,64 @@ public class RefactorProposalUtility {
 			// Do nothing
 		}
 		return null;
+	}
+
+	public static ChangeCorrectionProposal getChangeSignatureProposal(CodeActionParams params, IInvocationContext context) {
+		ICompilationUnit cu = context.getCompilationUnit();
+		if (cu == null) {
+			return null;
+		}
+		ASTNode methodNode = CodeActionUtility.inferASTNode(context.getCoveringNode(), MethodDeclaration.class);
+		if (methodNode == null) {
+			return null;
+		}
+		IMethodBinding methodBinding = ((MethodDeclaration) methodNode).resolveBinding();
+		if (methodBinding == null) {
+			return null;
+		}
+		IJavaElement element = methodBinding.getJavaElement();
+		if (element instanceof IMethod method) {
+			try {
+				ChangeSignatureProcessor processor = new ChangeSignatureProcessor(method);
+				if (RefactoringAvailabilityTester.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					List<MethodParameter> parameters = new ArrayList<>();
+					for (ParameterInfo info : processor.getParameterInfos()) {
+						parameters.add(new MethodParameter(info.getOldTypeName(), info.getOldName(), info.getDefaultValue() == null ? "null" : info.getDefaultValue(), info.getOldIndex()));
+					}
+					List<MethodException> exceptions = new ArrayList<>();
+					for (ExceptionInfo info : processor.getExceptionInfos()) {
+						exceptions.add(new MethodException(info.getFullyQualifiedName(), info.getElement().getHandleIdentifier()));
+					}
+					ChangeSignatureInfo info = new ChangeSignatureInfo(method.getHandleIdentifier(), JdtFlags.getVisibilityString(processor.getVisibility()), processor.getReturnTypeString(), method.getElementName(),
+							parameters.toArray(MethodParameter[]::new), exceptions.toArray(MethodException[]::new));
+					String label = Messages.format(RefactoringCoreMessages.ChangeSignatureRefactoring_change_signature_for, new String[] { method.getElementName() });
+					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE, cu, IProposalRelevance.CHANGE_METHOD_SIGNATURE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+							Arrays.asList(RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND, params, info));
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return null;
+	}
+
+	public static class ChangeSignatureInfo {
+
+		public String methodIdentifier;
+		public String modifier;
+		public String returnType;
+		public String methodName;
+		public MethodParameter[] parameters;
+		public MethodException[] exceptions;
+
+		public ChangeSignatureInfo(String methodIdentifier, String modifier, String returnType, String methodName, MethodParameter[] parameters, MethodException[] exceptions) {
+			this.methodIdentifier = methodIdentifier;
+			this.modifier = modifier;
+			this.returnType = returnType;
+			this.methodName = methodName;
+			this.parameters = parameters;
+			this.exceptions = exceptions;
+		}
 	}
 
 	public static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {

@@ -153,6 +153,7 @@ public class RefactorProcessor {
 				getAssignToVariableProposals(context, coveringNode, locations, proposals, params);
 				getIntroduceParameterProposals(params, context, coveringNode, locations, proposals);
 				getExtractInterfaceProposal(params, context, proposals);
+				getChangeSignatureProposal(params, context, proposals);
 			}
 			return proposals;
 		}
@@ -996,6 +997,21 @@ public class RefactorProcessor {
 		}
 
 		ChangeCorrectionProposal proposal = RefactorProposalUtility.getExtractInterfaceProposal(params, context);
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
+	private boolean getChangeSignatureProposal(CodeActionParams params, IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+		if (proposals == null) {
+			return false;
+		}
+
+		ChangeCorrectionProposal proposal = RefactorProposalUtility.getChangeSignatureProposal(params, context);
 
 		if (proposal == null) {
 			return false;

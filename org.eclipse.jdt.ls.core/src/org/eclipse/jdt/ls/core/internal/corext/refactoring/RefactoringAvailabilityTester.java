@@ -167,7 +167,7 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static boolean isChangeSignatureAvailable(final IMethod method) throws JavaModelException {
-		return Checks.isAvailable(method) && !Flags.isAnnotation(method.getDeclaringType().getFlags());
+		return (method != null) && Checks.isAvailable(method) && !Flags.isAnnotation(method.getDeclaringType().getFlags());
 	}
 
 	//	public static boolean isChangeSignatureAvailable(final IStructuredSelection selection) throws JavaModelException {

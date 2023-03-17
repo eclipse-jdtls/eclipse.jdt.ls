@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,9 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
@@ -29,6 +33,7 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -42,6 +47,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrect
 import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.PackageNode;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
+import org.eclipse.lsp4j.ChangeAnnotation;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.FormattingOptions;
@@ -130,6 +136,43 @@ public class GetRefactorEditHandler {
 					}
 					WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);
 					return new RefactorWorkspaceEdit(edit, null);
+				}
+			} else if (RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND.equals(params.command)) {
+ 				if (params.commandArguments != null && params.commandArguments.size() == 8) {
+					String handleIdentifier = JSONUtility.toModel(params.commandArguments.get(0), String.class);
+					Boolean isDelegate = JSONUtility.toModel(params.commandArguments.get(1), Boolean.class);
+					String methodName = JSONUtility.toModel(params.commandArguments.get(2), String.class);
+					String modifier = JSONUtility.toModel(params.commandArguments.get(3), String.class);
+					String returnType = JSONUtility.toModel(params.commandArguments.get(4), String.class);
+					List<ChangeSignatureHandler.MethodParameter> parameters = Arrays.asList(JSONUtility.toModel(params.commandArguments.get(5), ChangeSignatureHandler.MethodParameter[].class));
+					List<ChangeSignatureHandler.MethodException> exceptions = Arrays.asList(JSONUtility.toModel(params.commandArguments.get(6), ChangeSignatureHandler.MethodException[].class));
+					Boolean preview = JSONUtility.toModel(params.commandArguments.get(7), Boolean.class);
+					if (handleIdentifier == null) {
+						return null;
+					}
+					IJavaElement element = JavaCore.create(handleIdentifier);
+					if (element instanceof IMethod method) {
+						Refactoring refactoring = ChangeSignatureHandler.getChangeSignatureRefactoring(params.context, method, isDelegate, methodName, modifier, returnType, parameters, exceptions);
+						if (refactoring == null) {
+							return null;
+						}
+						Change change = refactoring.createChange(new NullProgressMonitor());
+						if (change == null) {
+							return null;
+						}
+						WorkspaceEdit edit;
+						if (preview && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isChangeAnnotationSupport()) {
+							edit = ChangeUtil.convertToWorkspaceEdit(change, ChangeSignatureHandler.CHANGE_SIGNATURE_ANNOTATION_ID);
+							Map<String, ChangeAnnotation> annotations = new HashMap<>();
+							ChangeAnnotation annotation = new ChangeAnnotation("");
+							annotation.setNeedsConfirmation(true);
+							annotations.put(ChangeSignatureHandler.CHANGE_SIGNATURE_ANNOTATION_ID, annotation);
+							edit.setChangeAnnotations(annotations);
+						} else {
+							edit = ChangeUtil.convertToWorkspaceEdit(change);
+						}
+						return new RefactorWorkspaceEdit(edit, null);
+					}
 				}
 			}
 
