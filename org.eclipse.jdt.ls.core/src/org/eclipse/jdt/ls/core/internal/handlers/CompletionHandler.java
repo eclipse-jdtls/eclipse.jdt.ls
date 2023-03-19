@@ -56,6 +56,7 @@ import org.eclipse.lsp4j.CompletionItemOptions;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -280,8 +281,10 @@ public class CompletionHandler{
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector, subMonitor));
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
-					ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector);
-					proposals.addAll(chain.computeCompletionProposals());
+					if (manager.getPreferences().isChainCompletionEnabled() && params.getContext().getTriggerKind() != CompletionTriggerKind.TriggerCharacter) {
+						ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector);
+						proposals.addAll(chain.computeCompletionProposals());
+					}
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}

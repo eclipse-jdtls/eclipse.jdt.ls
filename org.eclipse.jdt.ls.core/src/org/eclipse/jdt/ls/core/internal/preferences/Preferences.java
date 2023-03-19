@@ -502,6 +502,11 @@ public class Preferences {
 
 	public static final String JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE = "java.refactoring.extract.interface.replace";
 
+	/**
+	 * Preference key to enable/disable chain completion.
+	 */
+	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -656,6 +661,7 @@ public class Preferences {
 	private boolean extractInterfaceReplaceEnabled;
 	private boolean telemetryEnabled;
 	private boolean validateAllOpenBuffersOnChanges;
+	private boolean chainCompletionEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -1255,6 +1261,8 @@ public class Preferences {
 		prefs.setTelemetryEnabled(telemetryEnabled);
 		boolean validateAllOpenBuffers = getBoolean(configuration, JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES, true);
 		prefs.setValidateAllOpenBuffersOnChanges(validateAllOpenBuffers);
+		boolean chainCompletionEnabled = getBoolean(configuration, CHAIN_COMPLETION_KEY, false);
+		prefs.setChainCompletionEnabled(chainCompletionEnabled);
 		return prefs;
 	}
 
@@ -2211,6 +2219,14 @@ public class Preferences {
 
 	public boolean getExtractInterfaceReplaceEnabled() {
 		return this.extractInterfaceReplaceEnabled;
+	}
+
+	public void setChainCompletionEnabled(boolean chainCompletionEnabled) {
+		this.chainCompletionEnabled = chainCompletionEnabled;
+	}
+
+	public boolean isChainCompletionEnabled() {
+		return this.chainCompletionEnabled;
 	}
 
 	/**
