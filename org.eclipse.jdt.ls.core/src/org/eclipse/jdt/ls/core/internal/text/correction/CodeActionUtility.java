@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class CodeActionUtility {
 
@@ -86,8 +87,8 @@ public class CodeActionUtility {
 	}
 
 	public static List<String> getFieldNamesFromASTNode(ASTNode node) {
+		ASTNode parent = node.getParent();
 		if (node instanceof SimpleName) {
-			ASTNode parent = node.getParent();
 			if (parent instanceof VariableDeclarationFragment) {
 				return CodeActionUtility.getFieldNamesFromASTNode(parent);
 			}
@@ -103,6 +104,9 @@ public class CodeActionUtility {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
 			}
 			return names;
+		}
+		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJavaQuickFixShowAtLine() && parent instanceof FieldDeclaration) {
+			return CodeActionUtility.getFieldNamesFromASTNode(parent);
 		}
 		return Collections.emptyList();
 	}
