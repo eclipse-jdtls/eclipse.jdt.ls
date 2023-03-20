@@ -324,6 +324,23 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(18, range.getEnd().getCharacter());
 	}
 
+	@Test
+	public void testCompletion_constructor_withParameterHelpEnabled() throws JavaModelException {
+		enableSignatureHelp();
+
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class MyUniqueClassName {\n"+
+						"	void foo() {\n"+
+						"		new MyUniqueClass\n"+
+						"	}\n"+
+						"}\n");
+
+
+		CompletionList list = requestCompletions(unit, "new MyUniqueClass");
+		assertEquals("MyUniqueClassName", list.getItems().get(0).getFilterText());
+	}
+
 
 	@Test
 	public void testCompletion_import_package() throws JavaModelException{
@@ -677,6 +694,21 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci.getAdditionalTextEdits());
 		List<TextEdit> edits = ci.getAdditionalTextEdits();
 		assertEquals(2, edits.size());
+	}
+
+	@Test
+	public void testCompletion_method_withSignatureHelpEnabled() throws JavaModelException {
+		enableSignatureHelp();
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo(String parameter) {\n"+
+						"parameter.lengt\n" +
+						"	}\n"+
+				"}\n");
+
+		CompletionList list = requestCompletions(unit, "parameter.lengt");
+		assertEquals("put", list.getItems().get(0).getFilterText());
 	}
 
 	@Test
@@ -3832,5 +3864,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
 		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(isSignatureHelpSuported);
+	}
+
+	private void enableSignatureHelp() {
+		Preferences preferencesSpy = Mockito.spy(preferences);
+		when(preferencesSpy.isSignatureHelpEnabled()).thenReturn(true);
+		when(preferenceManager.getPreferences()).thenReturn(preferencesSpy);
 	}
 }
