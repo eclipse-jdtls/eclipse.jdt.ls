@@ -85,7 +85,7 @@ public class WorkspaceSymbolHandler {
 			SearchEngine engine = new SearchEngine();
 			boolean isSymbolTagSupported = preferenceManager != null && preferenceManager.getClientPreferences().isSymbolTagSupported();
 			WorkspaceSymbolTypeRequestor typeRequestor = new WorkspaceSymbolTypeRequestor(symbols, maxResults, sourceOnly, isSymbolTagSupported, monitor);
-			if (!typeName.isEmpty()) {
+			if (!typeName.isEmpty() && !typeName.equals("*")) {
 				// search for qualifier = qualifierName, type = typeName
 				engine.searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope,typeRequestor , IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 			}
