@@ -39,6 +39,9 @@ import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandPropo
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class GradleCompatibilityProcessor {
+
+	private static String UPGRADE_GRADLE_CLIENT_COMMAND = "java.project.upgradeGradle.command";
+
 	public static void getGradleCompatibilityProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		IJavaProject javaProject = context.getCompilationUnit().getJavaProject();
 		if (javaProject == null) {
@@ -137,7 +140,7 @@ public class GradleCompatibilityProcessor {
 	}
 
 	private static void addProposal(IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
-		proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, CodeActionKind.QuickFix, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH, "java.project.upgradeGradle",
+		proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, CodeActionKind.QuickFix, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH, UPGRADE_GRADLE_CLIENT_COMMAND,
 				Arrays.asList(uri.toString(), GradleUtils.JPMS_SUPPORTED_VERSION)));
 	}
 }
