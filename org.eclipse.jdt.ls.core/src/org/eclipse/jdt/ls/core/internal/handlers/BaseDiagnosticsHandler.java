@@ -156,20 +156,23 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				return;
 			}
-			List<IMarker> list = new ArrayList<>();
-			for (IMarker marker : markers) {
-				String markerType;
+			List<IMarker> list = Arrays.stream(markers).filter(marker -> {
 				try {
-					markerType = marker.getType();
+					return !marker.isSubtypeOf(IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER) //
+							&& !marker.isSubtypeOf(IJavaModelMarker.TASK_MARKER) //
+							&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(excluded -> {
+								try {
+									return marker.isSubtypeOf(excluded);
+								} catch (CoreException e) {
+									JavaLanguageServerPlugin.log(e);
+									return false;
+								}
+							});
 				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-					continue;
+					JavaLanguageServerPlugin.log(e);
+					return false;
 				}
-				if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(markerType) || IJavaModelMarker.TASK_MARKER.equals(markerType)) {
-					continue;
-				}
-				list.add(marker);
-			}
+			}).toList();
 			if (!list.isEmpty()) {
 				IDocument document;
 				try {

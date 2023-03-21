@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.eclipse.core.internal.resources.CheckMissingNaturesListener;
 import org.eclipse.core.internal.resources.ValidateProjectEncoding;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -119,6 +121,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 */
 	@Override
 	public boolean visit(IResourceDelta delta) throws CoreException {
+		if (delta.getFlags() == IResourceDelta.MARKERS && Arrays.stream(delta.getMarkerDeltas()).map(IMarkerDelta::getMarker).noneMatch(WorkspaceDiagnosticsHandler::isInteresting)) {
+			return false;
+		}
 		IResource resource = delta.getResource();
 		if (resource == null) {
 			return false;
@@ -340,13 +345,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 * @return a list of {@link Diagnostic}s
 	 */
 	public static List<Diagnostic> toDiagnosticArray(Range range, Collection<IMarker> markers, boolean isDiagnosticTagSupported) {
-		return markers.stream().filter(marker -> JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
-			try {
-				return marker.isSubtypeOf(markerType);
-			} catch (CoreException e) {
-				return false;
-			}
-		})).map(m -> toDiagnostic(range, m, isDiagnosticTagSupported)) //
+		return markers.stream().filter(WorkspaceDiagnosticsHandler::isInteresting).map(m -> toDiagnostic(range, m, isDiagnosticTagSupported)) //
 				.filter(Objects::nonNull) //
 				.collect(Collectors.toList());
 	}
@@ -388,16 +387,20 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 	 */
 	public static List<Diagnostic> toDiagnosticsArray(IDocument document, IMarker[] markers, boolean isDiagnosticTagSupported) {
 		List<Diagnostic> diagnostics = Stream.of(markers)
-				.filter(marker -> JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
-					try {
-						return marker.isSubtypeOf(markerType);
-					} catch (CoreException e) {
-						return false;
-					}
-				})).map(m -> toDiagnostic(document, m, isDiagnosticTagSupported)) //
+				.filter(WorkspaceDiagnosticsHandler::isInteresting).map(m -> toDiagnostic(document, m, isDiagnosticTagSupported)) //
 				.filter(Objects::nonNull) //
 				.collect(Collectors.toCollection(ArrayList::new));
 		return diagnostics;
+	}
+
+	private static boolean isInteresting(IMarker marker) {
+		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
+			try {
+				return marker.isSubtypeOf(markerType);
+			} catch (CoreException e) {
+				return true; // resource not accessible makes the marker not interesting
+			}
+		});
 	}
 
 	private static Diagnostic toDiagnostic(IDocument document, IMarker marker, boolean isDiagnosticTagSupported) {
