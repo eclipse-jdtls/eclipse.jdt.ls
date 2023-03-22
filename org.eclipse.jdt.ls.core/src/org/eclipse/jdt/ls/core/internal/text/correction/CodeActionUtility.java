@@ -30,6 +30,8 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class CodeActionUtility {
 
@@ -103,6 +105,12 @@ public class CodeActionUtility {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
 			}
 			return names;
+		}
+		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJavaQuickFixShowAtLine()) {
+			ASTNode fieldDecl = ASTNodes.getParent(node, FieldDeclaration.class);
+			if (fieldDecl != null) {
+				return CodeActionUtility.getFieldNamesFromASTNode(fieldDecl);
+			}
 		}
 		return Collections.emptyList();
 	}

@@ -199,6 +199,56 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 	}
 
 	@Test
+	public void testGenerateAccessorsQuickAssistAtLine() throws JavaModelException {
+		String value = this.preferences.getJavaQuickFixShowAt();
+		try {
+			this.preferences.setJavaQuickFixShowAt("line");
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+					"\r\n" +
+					"public class A {\r\n" +
+					"	public String name = \"name\";\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "public S");
+			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+			Assert.assertNotNull(codeActions);
+			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+		} finally {
+			this.preferences.setJavaQuickFixShowAt(value);
+		}
+	}
+
+	@Test
+	public void testGenerateAccessorsQuickAssistAtLine1() throws JavaModelException {
+		String value = this.preferences.getJavaQuickFixShowAt();
+		try {
+			this.preferences.setJavaQuickFixShowAt("line");
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+					"\r\n" +
+					"public class A {\r\n" +
+					"	public java.lang.String name = \"name\";\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, ".lang.");
+			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+			Assert.assertNotNull(codeActions);
+			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter and Setter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Getter for 'name'"));
+			Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, CodeActionHandler.COMMAND_ID_APPLY_EDIT, "Generate Setter for 'name'"));
+		} finally {
+			this.preferences.setJavaQuickFixShowAt(value);
+		}
+	}
+
+	@Test
 	public void testGenerateAccessorsQuickAssistForMultipleFieldDeclaration() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
