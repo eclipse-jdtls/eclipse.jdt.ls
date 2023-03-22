@@ -337,11 +337,11 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
 		}
 
-		Optional<Either<Command, CodeAction>> generateConstructorResponse = codeActions.stream().filter(codeAction -> {
-			return "Generate Constructors".equals(codeAction.getRight().getTitle());
+		Optional<Either<Command, CodeAction>> generateToStringResponse = codeActions.stream().filter(codeAction -> {
+			return "Generate toString()".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quick assist 'Convert to lambda expression'", generateConstructorResponse.isPresent());
-		CodeAction unresolvedCodeAction = generateConstructorResponse.get().getRight();
+		Assert.assertTrue("Should return the quick assist 'Generate toString()'", generateToStringResponse.isPresent());
+		CodeAction unresolvedCodeAction = generateToStringResponse.get().getRight();
 		Assert.assertNotNull("Should preserve the data property for the unresolved code action", unresolvedCodeAction.getData());
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
@@ -352,10 +352,9 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("    private void hello() {\n");
 		buf.append("    }\n");
 		buf.append("\n");
-		buf.append("    /**\n");
-		buf.append("     * \n");
-		buf.append("     */\n");
-		buf.append("    public E() {\n");
+		buf.append("    @Override\n");
+		buf.append("    public String toString() {\n");
+		buf.append("        return \"E []\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		Assert.assertEquals(buf.toString(), actual);

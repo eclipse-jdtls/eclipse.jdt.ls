@@ -505,6 +505,12 @@ public class SourceAssistProcessor {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
 			}
+
+			boolean hasNonStaticField = hasFields(type, false);
+			if (!hasNonStaticField) {
+				return Optional.empty();
+			}
+
 		} catch (JavaModelException e) {
 			return Optional.empty();
 		}
