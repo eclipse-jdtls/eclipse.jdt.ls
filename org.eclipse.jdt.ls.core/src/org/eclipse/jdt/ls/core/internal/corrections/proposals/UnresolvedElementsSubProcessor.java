@@ -842,7 +842,7 @@ public class UnresolvedElementsSubProcessor {
 						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_INTERFACE, enclosing, rel + 2));
 					}
 					if ((kind & TypeKinds.ENUMS) != 0) {
-						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_ENUM, enclosing, rel));
+						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_ENUM, enclosing, rel + 1));
 					}
 					if ((kind & TypeKinds.ANNOTATIONS) != 0) {
 						proposals.add(new NewCUProposal(cu, node, NewCUProposal.K_ANNOTATION, enclosing, rel + 1));
