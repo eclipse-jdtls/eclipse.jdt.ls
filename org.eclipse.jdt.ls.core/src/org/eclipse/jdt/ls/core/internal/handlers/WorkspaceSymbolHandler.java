@@ -13,7 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -50,9 +52,9 @@ public class WorkspaceSymbolHandler {
 	}
 
 	public static List<SymbolInformation> search(String query, int maxResults, String projectName, boolean sourceOnly, IProgressMonitor monitor) {
-		ArrayList<SymbolInformation> symbols = new ArrayList<>();
+		Set<SymbolInformation> symbols = new HashSet<>();
 		if (StringUtils.isBlank(query)) {
-			return symbols;
+			return new ArrayList<>(symbols);
 		}
 
 		try {
@@ -108,7 +110,7 @@ public class WorkspaceSymbolHandler {
 			monitor.done();
 		}
 
-		return symbols;
+		return new ArrayList<>(symbols);
 	}
 
 	private static IJavaSearchScope createSearchScope(String projectName, boolean sourceOnly) throws JavaModelException {
@@ -141,13 +143,13 @@ public class WorkspaceSymbolHandler {
 	}
 
 	private static class WorkspaceSymbolTypeRequestor extends TypeNameMatchRequestor {
-		private ArrayList<SymbolInformation> symbols;
+		private Set<SymbolInformation> symbols;
 		private int maxResults;
 		private boolean sourceOnly;
 		private boolean isSymbolTagSupported;
 		private IProgressMonitor monitor;
 
-		public WorkspaceSymbolTypeRequestor(ArrayList<SymbolInformation> symbols, int maxResults, boolean sourceOnly, boolean isSymbolTagSupported, IProgressMonitor monitor) {
+		public WorkspaceSymbolTypeRequestor(Set<SymbolInformation> symbols, int maxResults, boolean sourceOnly, boolean isSymbolTagSupported, IProgressMonitor monitor) {
 			this.symbols = symbols;
 			this.maxResults = maxResults;
 			this.sourceOnly = sourceOnly;
@@ -214,12 +216,12 @@ public class WorkspaceSymbolHandler {
 	}
 
 	private static class WorkspaceSymbolMethodRequestor extends MethodNameMatchRequestor {
-		private ArrayList<SymbolInformation> symbols;
+		private Set<SymbolInformation> symbols;
 		private int maxResults;
 		private boolean isSymbolTagSupported;
 		private IProgressMonitor monitor;
 
-		public WorkspaceSymbolMethodRequestor(ArrayList<SymbolInformation> symbols, int maxResults, boolean isSymbolTagSupported, IProgressMonitor monitor) {
+		public WorkspaceSymbolMethodRequestor(Set<SymbolInformation> symbols, int maxResults, boolean isSymbolTagSupported, IProgressMonitor monitor) {
 			this.symbols = symbols;
 			this.maxResults = maxResults;
 			this.isSymbolTagSupported = isSymbolTagSupported;

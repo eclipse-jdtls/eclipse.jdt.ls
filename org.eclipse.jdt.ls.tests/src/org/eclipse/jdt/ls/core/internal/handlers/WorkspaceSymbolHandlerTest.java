@@ -19,7 +19,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -196,6 +198,13 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		results = WorkspaceSymbolHandler.search("java.lang", monitor);
 		assertTrue(results.size() > 1);
 		assertTrue(results.stream().anyMatch(s -> "Exception".equals(s.getName()) && "java.lang".equals(s.getContainerName())));
+	}
+
+	@Test
+	public void testSearchWithoutDuplicate() {
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("*", monitor);
+		Set<SymbolInformation> resultsSet = new HashSet<>(results);
+		assertEquals(results.size(), resultsSet.size());
 	}
 
 	@Test
