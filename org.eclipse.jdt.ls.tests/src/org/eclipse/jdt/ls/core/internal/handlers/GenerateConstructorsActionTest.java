@@ -103,7 +103,31 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 	}
 
 	@Test
-	public void testGenerateConstructorsEnabled_emptyFields() throws JavaModelException {
+	public void testGenerateConstructorsQuickAssistWithAllStaticFields() throws JavaModelException {
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+					"\r\n" +
+					"public class A {\r\n" +
+					"	static String name;\r\n" +
+					"}"
+					, true, null);
+			//@formatter:on
+			// test for field declaration
+			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "static String name");
+			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+			Assert.assertNotNull(codeActions);
+			Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+			Assert.assertNull(constructorAction);
+			// test for type declaration
+			params = CodeActionUtil.constructCodeActionParams(unit, "class A");
+			codeActions = server.codeAction(params).join();
+			Assert.assertNotNull(codeActions);
+			constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
+			Assert.assertNull(constructorAction);
+		}
+
+	@Test
+	public void testGenerateConstructorsDisabled_emptyFields() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
 				"\r\n" +
@@ -115,10 +139,7 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
-		Assert.assertNotNull(constructorAction);
-		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
-		Assert.assertNotNull(constructorCommand);
-		Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, constructorCommand.getCommand());
+		Assert.assertNull(constructorAction);
 	}
 
 	@Test
