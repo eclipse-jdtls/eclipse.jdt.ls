@@ -292,10 +292,29 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					pm.projectsImported(monitor);
 
 					IndexUtils.copyIndexesToSharedLocation();
-					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
-					logInfo(">> build jobs finished");
-					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
-				} catch (OperationCanceledException | CoreException e) {
+					Job waitThenPublishDiagnostics = new Job("Wait for builds, then publish diagnostics") { // should not run in workspace!
+						@Override
+						public IStatus run(IProgressMonitor monitor) {
+							JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+							logInfo(">> build jobs finished");
+							try {
+								workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+							} catch (CoreException e) {
+								logException(e.getMessage(), e);
+								return e.getStatus();
+							}
+							return Status.OK_STATUS;
+						}
+
+						@Override
+						public boolean belongsTo(Object family) {
+							return JAVA_LSP_INITIALIZE_WORKSPACE.equals(family);
+						}
+					};
+					waitThenPublishDiagnostics.setSystem(true);
+					waitThenPublishDiagnostics.setPriority(Job.BUILD);
+					waitThenPublishDiagnostics.schedule();
+				} catch (OperationCanceledException e) {
 					logException(e.getMessage(), e);
 					return Status.CANCEL_STATUS;
 				}
