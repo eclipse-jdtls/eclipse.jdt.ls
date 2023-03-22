@@ -114,9 +114,10 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
 		assertEquals("Found " + results.size() + " results", 2, results.size());
+		assertTrue(results.stream().anyMatch(s -> "org.sample".equals(s.getContainerName())));
+		assertTrue(results.stream().anyMatch(s -> "java".equals(s.getContainerName())));
 		SymbolInformation symbol = results.get(0);
 		assertEquals(SymbolKind.Interface, symbol.getKind());
-		assertEquals("java", symbol.getContainerName());
 		assertEquals(query, symbol.getName());
 		Location location = symbol.getLocation();
 		assertNotEquals("Range should not equal the default range", JDTUtils.newRange(), location.getRange());
