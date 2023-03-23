@@ -102,10 +102,10 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
 
 		defEclipsePrefs.put("recommenders.chain.min_chain_length", "2");
-		defEclipsePrefs.put("recommenders.chain.max_chain_length", "4");
+		defEclipsePrefs.put("recommenders.chain.max_chain_length", "3");
 		defEclipsePrefs.put("recommenders.chain.max_chains", "20");
 		defEclipsePrefs.put("recommenders.chain.timeout", "1");
-		defEclipsePrefs.put("recommenders.chain.ignore_types", "java.lang.Object"); //$NON-NLS-1$
+		defEclipsePrefs.put("recommenders.chain.ignore_types", ""); //$NON-NLS-1$
 
 		ContextTypeRegistry registry = new ContextTypeRegistry();
 		// Register standard context types from JDT

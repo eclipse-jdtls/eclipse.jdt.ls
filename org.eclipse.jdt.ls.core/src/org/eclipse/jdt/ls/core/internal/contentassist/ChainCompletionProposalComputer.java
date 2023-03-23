@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
@@ -173,7 +174,27 @@ public class ChainCompletionProposalComputer {
 	private boolean shouldPerformCompletionOnExpectedType() {
 		CompilationUnit cuNode = getASTRoot();
 		AST ast = cuNode.getAST();
-		return ast.resolveWellKnownType(ChainElementAnalyzer.getExpectedFullyQualifiedTypeName(coll.getContext())) != null || ChainElementAnalyzer.getExpectedType(cu.getJavaProject(), coll.getContext()) != null;
+		ITypeBinding binding = ast.resolveWellKnownType(ChainElementAnalyzer.getExpectedFullyQualifiedTypeName(coll.getContext()));
+		return (binding != null && !isPrimitiveOrBoxedPrimitive(binding) && !"java.lang.String".equals(binding.getQualifiedName()) && !"java.lang.Object".equals(binding.getQualifiedName()))
+				|| ChainElementAnalyzer.getExpectedType(cu.getJavaProject(), coll.getContext()) != null;
+	}
+
+	private boolean isPrimitiveOrBoxedPrimitive(ITypeBinding binding) {
+		if (binding.isPrimitive()) {
+			return true;
+		}
+
+		return switch (binding.getQualifiedName()) {
+			case "java.lang.Boolean" -> true;
+			case "java.lang.Byte" -> true;
+			case "java.lang.Character" -> true;
+			case "java.lang.Short" -> true;
+			case "java.lang.Double" -> true;
+			case "java.lang.Float" -> true;
+			case "java.lang.Integer" -> true;
+			case "java.lang.Long" -> true;
+			default -> false;
+		};
 	}
 
 	private CompilationUnit getASTRoot() {
