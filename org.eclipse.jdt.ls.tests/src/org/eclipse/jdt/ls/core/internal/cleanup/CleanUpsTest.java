@@ -579,4 +579,65 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	public void testOrganizeImportsCleanup() throws Exception {
+		String contents = """
+			package test1;
+			public class A {
+			    public void test() {
+			        List<String> a1;
+				    Iterator<String> a2;
+				    Map<String, String> a3;
+				    Set<String> a4;
+				    JarFile a5;
+				    StringTokenizer a6;
+				    Path a7;
+				    URI a8;
+				    HttpURLConnection a9;
+				    InputStream a10;
+				    Field a11;
+				    Parser a12;
+			    }
+			}
+			""";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = """
+			package test1;
+
+			import java.io.InputStream;
+			import java.net.HttpURLConnection;
+			import java.net.URI;
+			import java.nio.file.Path;
+			import java.util.Iterator;
+			import java.util.List;
+			import java.util.Map;
+			import java.util.Set;
+			import java.util.StringTokenizer;
+			import java.util.jar.JarFile;
+
+			public class A {
+			    public void test() {
+			        List<String> a1;
+				    Iterator<String> a2;
+				    Map<String, String> a3;
+				    Set<String> a4;
+				    JarFile a5;
+				    StringTokenizer a6;
+				    Path a7;
+				    URI a8;
+				    HttpURLConnection a9;
+				    InputStream a10;
+				    Field a11;
+				    Parser a12;
+			    }
+			}
+			""";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("organizeImports"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
 }
