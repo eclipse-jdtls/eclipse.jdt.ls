@@ -90,7 +90,7 @@ class PostfixPreferences {
 	public static final String NULL_CONTENT = "if (${i:inner_expression(java.lang.Object,array)} == null) {\n" +
 		"\t$${0}\n" +
 	"}";
-	public static final String SYSOUT_CONTENT = "System.out.println(${i:inner_expression(java.lang.String)}${});$${0}";
+	public static final String SYSOUT_CONTENT = "System.out.println(${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String THROW_CONTENT = "throw ${true:inner_expression(java.lang.Throwable)};";
 	public static final String VAR_CONTENT = "${field:newType(inner_expression)} $${1:${var:newName(inner_expression)}} = ${inner_expression};$${0}";
 	public static final String WHILE_CONTENT = "while (${i:inner_expression(boolean)}) {\n" +
@@ -106,7 +106,7 @@ class PostfixPreferences {
 	public static final String IF_DESCRIPTION = "Creates a if statement";
 	public static final String NNULL_DESCRIPTION = "Creates an if statement and checks if the expression does not resolve to null";
 	public static final String NULL_DESCRIPTION = "Creates an if statement which checks if expression resolves to null";
-	public static final String SYSOUT_DESCRIPTION = "Sends the affected string to a System.out.println(..) call";
+	public static final String SYSOUT_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
 	public static final String THROW_DESCRIPTION = "Throws the given Exception";
 	public static final String VAR_DESCRIPTION = "Creates a new variable";
 	public static final String WHILE_DESCRIPTION = "Creates a while loop";

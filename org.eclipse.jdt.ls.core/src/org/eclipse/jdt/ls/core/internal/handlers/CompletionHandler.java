@@ -130,7 +130,9 @@ public class CompletionHandler{
 
 	public void onDidCompletionItemSelect(String requestId, String proposalId) throws CoreException {
 		triggerSignatureHelp();
-
+		if (proposalId.isEmpty() || requestId.isEmpty()) {
+			return;
+		}
 		int pId = Integer.parseInt(proposalId);
 		long rId = Long.parseLong(requestId);
 		CompletionResponse completionResponse = CompletionResponses.get(rId);
