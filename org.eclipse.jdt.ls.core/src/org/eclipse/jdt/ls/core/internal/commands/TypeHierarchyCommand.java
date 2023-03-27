@@ -230,6 +230,9 @@ public class TypeHierarchyCommand {
 			List<TypeHierarchyItem> childrenItems = new ArrayList<>();
 			IType[] children = typeHierarchy.getSubtypes(type);
 			for (IType childType : children) {
+				if (monitor.isCanceled()) {
+					return;
+				}
 				TypeHierarchyItem childItem = null;
 				if (targetMethod != null) {
 					IMethod[] matches = childType.findMethods(targetMethod);
@@ -250,6 +253,9 @@ public class TypeHierarchyCommand {
 			List<TypeHierarchyItem> parentsItems = new ArrayList<>();
 			IType[] parents = typeHierarchy.getSupertypes(type);
 			for (IType parentType : parents) {
+				if (monitor.isCanceled()) {
+					return;
+				}
 				TypeHierarchyItem parentItem = null;
 				if (targetMethod != null) {
 					IMethod[] matches = parentType.findMethods(targetMethod);
