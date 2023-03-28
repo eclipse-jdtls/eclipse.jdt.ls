@@ -486,6 +486,7 @@ public class Preferences {
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
 
+	public static final String JAVA_REFACTORING_RENAME_REFERENCES = "java.refactoring.rename.references";
 	/**
 	 * Preference key for list of cleanups to run on save
 	 */
@@ -641,6 +642,7 @@ public class Preferences {
 	private FeatureStatus nullAnalysisMode;
 	private List<String> cleanUpActionsOnSave;
 	private boolean extractInterfaceReplaceEnabled;
+	private boolean renameReferencesEnabled;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -1223,6 +1225,8 @@ public class Preferences {
 		prefs.setCleanUpActionsOnSave(cleanupActionsOnSave);
 		boolean extractInterfaceReplaceEnabled = getBoolean(configuration, JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE, false);
 		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
+		boolean renameReferencesEnabled = getBoolean(configuration, JAVA_REFACTORING_RENAME_REFERENCES, false);
+		prefs.setRenameReferencesEnabled(renameReferencesEnabled);
 		return prefs;
 	}
 
@@ -2167,6 +2171,14 @@ public class Preferences {
 
 	public boolean getExtractInterfaceReplaceEnabled() {
 		return this.extractInterfaceReplaceEnabled;
+	}
+
+	public void setRenameReferencesEnabled(boolean renameReferencesEnabled) {
+		this.renameReferencesEnabled = renameReferencesEnabled;
+	}
+
+	public boolean getRenameReferencesEnabled() {
+		return this.renameReferencesEnabled;
 	}
 
 	/**

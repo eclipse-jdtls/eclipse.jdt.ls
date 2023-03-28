@@ -43,8 +43,10 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -204,6 +206,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Mockito.lenient().when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
 		Mockito.lenient().when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		Mockito.lenient().when(preferenceManager.getPreferences().getRenameReferencesEnabled()).thenReturn(true);
 		return mockPreferences;
 	}
 
@@ -697,6 +700,67 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		problems = astRoot.getProblems();
 		assertEquals("Unexpected number of errors", 0, problems.length);
+	}
+
+	@Test
+	public void testRenameReferences() throws Exception {
+		try {
+			Mockito.lenient().when(preferenceManager.getPreferences().getRenameReferencesEnabled()).thenReturn(true);
+			newDefaultProject();
+			// @formatter:off
+			String content =
+					"package org;\n" +
+					"public class Foo {\n" +
+					"\tpublic void test(){\n" +
+					"\t}\n" +
+					"\n" +
+					"\tpublic String getString(){\n" +
+					"\t}\n" +
+					"}";
+			// @formatter:on
+			temp = createTempFolder();
+			File file = createTempFile(temp, "Foo.java", content);
+			URI uri = file.toURI();
+			ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+			openDocument(cu, cu.getSource(), 1);
+
+			// change 1
+			IType[] types = cu.getAllTypes();
+			assertEquals("Unexpected number of types", 1, types.length);
+			IMethod[] methods = types[0].getMethods();
+			assertEquals("Unexpected number of methods", 2, methods.length);
+			changeDocument(cu, "test1", 2, JDTUtils.toRange(cu, methods[0].getNameRange().getOffset(), methods[0].getNameRange().getLength()));
+			IMarker[] markers = cu.getResource().findMarkers(BaseDocumentLifeCycleHandler.RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+			assertEquals("Unexpected number of markers", 1, markers.length);
+			String originalName = (String) markers[0].getAttribute("originalName");
+			assertEquals("Unexpected originalName", "test", originalName);
+			String newName = (String) markers[0].getAttribute("newName");
+			assertEquals("Unexpected newName", "test1", newName);
+
+			// change 2
+			types = cu.getAllTypes();
+			assertEquals("Unexpected number of types", 1, types.length);
+			methods = types[0].getMethods();
+			assertEquals("Unexpected number of methods", 2, methods.length);
+			changeDocument(cu, "test12", 3, JDTUtils.toRange(cu, methods[0].getNameRange().getOffset(), methods[0].getNameRange().getLength()));
+			markers = cu.getResource().findMarkers(BaseDocumentLifeCycleHandler.RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+			assertEquals("Unexpected number of markers", 1, markers.length);
+			originalName = (String) markers[0].getAttribute("originalName");
+			assertEquals("Unexpected originalName", "test", originalName);
+			newName = (String) markers[0].getAttribute("newName");
+			assertEquals("Unexpected newName", "test12", newName);
+
+			// rollback change
+			types = cu.getAllTypes();
+			assertEquals("Unexpected number of types", 1, types.length);
+			methods = types[0].getMethods();
+			assertEquals("Unexpected number of methods", 2, methods.length);
+			changeDocument(cu, "test", 4, JDTUtils.toRange(cu, methods[0].getNameRange().getOffset(), methods[0].getNameRange().getLength()));
+			markers = cu.getResource().findMarkers(BaseDocumentLifeCycleHandler.RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+			assertEquals("Unexpected number of markers", 0, markers.length);
+		} finally {
+			Mockito.lenient().when(preferenceManager.getPreferences().getRenameReferencesEnabled()).thenReturn(false);
+		}
 	}
 
 	@Test

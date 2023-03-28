@@ -46,22 +46,30 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.OpenableElementInfo;
 import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
+import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -103,6 +111,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 	 */
 	private static final long PUBLISH_DIAGNOSTICS_MAX_DEBOUNCE = 2000; /*ms*/
 
+	public static final String RENAME_REFERENCE_MARKER_ID = IConstants.PLUGIN_ID + ".renameReferenceMarker";
+	public static final int RENAME_REFERENCE_PROBLEM_ID = IProblem.Syntax + 2000;
+
 	private CoreASTProvider sharedASTProvider;
 	private WorkspaceJob validationTimer;
 	private WorkspaceJob publishDiagnosticsJob;
@@ -110,6 +121,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private Map<String, Integer> documentVersions = new HashMap<>();
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
+
+	private Map<String, List<MemberInfo>> documentMemberInfos = new HashMap<>();
+	private Map<String, List<IMarker>> documentMarkers = new HashMap<>();
 
 	public BaseDocumentLifeCycleHandler(boolean delayValidation) {
 		this.sharedASTProvider = CoreASTProvider.getInstance();
@@ -303,11 +317,18 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 		};
 		int flags = ICompilationUnit.FORCE_PROBLEM_DETECTION | ICompilationUnit.ENABLE_BINDINGS_RECOVERY | ICompilationUnit.ENABLE_STATEMENTS_RECOVERY;
+		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getRenameReferencesEnabled()) {
+			provideRenameReferencesMarkers(unit);
+		}
 		unit.reconcile(ICompilationUnit.NO_AST, flags, wcOwner, monitor);
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		documentVersions.remove(params.getTextDocument().getUri());
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		if (cu != null) {
+			this.documentMemberInfos.remove(cu.getResource().getLocationURI().toString());
+		}
 		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -410,6 +431,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 			// see https://github.com/redhat-developer/vscode-java/issues/274
 			checkPackageDeclaration(uri, unit);
 			inferInvisibleProjectSourceRoot(unit);
+			if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getRenameReferencesEnabled()) {
+				this.documentMemberInfos.put(unit.getResource().getLocationURI().toString(), this.getMemberInfos(unit));
+			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Error while opening document. URI: " + uri, e);
 		}
@@ -465,6 +489,87 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 
 		return unit;
+	}
+
+	private void provideRenameReferencesMarkers(ICompilationUnit unit) {
+		String uri = unit.getResource().getLocationURI().toString();
+		List<MemberInfo> memberInfos = this.getMemberInfos(unit);
+		try {
+			if (this.documentMemberInfos.containsKey(uri)) {
+				// delete existing markers
+				List<IMarker> currentMarkers = this.documentMarkers.get(uri);
+				if (currentMarkers != null) {
+					unit.getResource().deleteMarkers(RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+					currentMarkers.clear();
+				} else {
+					currentMarkers = new ArrayList<>();
+					this.documentMarkers.put(uri, currentMarkers);
+				}
+				List<MemberInfo> cacheMemberInfos = this.documentMemberInfos.get(uri);
+				if (cacheMemberInfos.size() == memberInfos.size()) {
+					for (int i = 0; i < memberInfos.size(); i++) {
+						MemberInfo memberInfo = memberInfos.get(i);
+						String name = memberInfo.getName();
+						MemberInfo cacheMemberInfo = cacheMemberInfos.get(i);
+						if (name == null) {
+							this.documentMemberInfos.put(uri, memberInfos);
+							break;
+						}
+						if (cacheMemberInfo.getName().equals(name)) {
+							continue;
+						}
+						String message = Messages.format(CorrectionMessages.LocalCorrectionsSubProcessor_manual_rename_label, new String[]{ cacheMemberInfo.getName(), name });
+						IMarker marker = ResourceUtils.createInfoMarker(RENAME_REFERENCE_MARKER_ID, unit.getResource(), message, RENAME_REFERENCE_PROBLEM_ID, memberInfo.getNameRange().getOffset(), memberInfo.getNameRange().getOffset() + memberInfo.getNameRange().getLength());
+						marker.setAttribute("originalName", cacheMemberInfo.getName());
+						marker.setAttribute("newName", name);
+						currentMarkers.add(marker);
+					}
+				} else {
+					// update the storage names list
+					this.documentMemberInfos.put(uri, memberInfos);
+				}
+			} else {
+				// initialize the storage names list
+				this.documentMemberInfos.put(uri, memberInfos);
+			}
+		} catch (CoreException e) {
+			// Do nothing
+		}
+	}
+
+	private List<MemberInfo> getMemberInfos(ICompilationUnit unit) {
+		List<MemberInfo> members = new ArrayList<>();
+		try {
+			IType[] types = unit.getAllTypes();
+			for (IType type : types) {
+				for (IJavaElement child : type.getChildren()) {
+					if (child instanceof IMember member && Modifier.isPublic(member.getFlags())) {
+						members.add(new MemberInfo(member.getElementName(), member.getNameRange()));
+					}
+				}
+			}
+		} catch (JavaModelException e) {
+			// do nothing
+		}
+		return members;
+	}
+
+	public void cleanRenameReferenceCache(ICompilationUnit unit) {
+		if (unit == null) {
+			return;
+		}
+		IResource resource = unit.getResource();
+		if (resource == null) {
+			return;
+		}
+		String uri = resource.getLocationURI().toString();
+		this.documentMemberInfos.remove(uri);
+		this.documentMarkers.remove(uri);
+		try {
+			unit.getResource().deleteMarkers(RENAME_REFERENCE_MARKER_ID, false, IResource.DEPTH_ONE);
+		} catch (CoreException e) {
+			// do nothing
+		}
 	}
 
 	public ICompilationUnit handleClosed(DidCloseTextDocumentParams params) {
@@ -741,6 +846,24 @@ public abstract class BaseDocumentLifeCycleHandler {
 			}
 		}
 
+	}
+
+	private static class MemberInfo {
+		private String name;
+		private ISourceRange nameRange;
+
+		public MemberInfo(String name, ISourceRange nameRange) {
+			this.name = name;
+			this.nameRange = nameRange;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public ISourceRange getNameRange() {
+			return nameRange;
+		}
 	}
 
 }
