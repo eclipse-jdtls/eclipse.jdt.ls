@@ -93,6 +93,9 @@ public class PostfixTemplateEngine {
 				continue;
 			}
 			item.setInsertText(content);
+			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsSupport()) {
+				item.setTextEditText(content);
+			}
 			List<TextEdit> additionalEdits = new ArrayList<>();
 			// use additional test edit to remove the code that needs to be replaced
 			additionalEdits.add(new TextEdit(range, ""));

@@ -310,6 +310,30 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void test_sysout_multiple_items() throws Exception {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public class Test {\n" +
+				"	void sysop(){}\n" +
+				"	public void testMethod(Object args) {\n" +
+				"		new Test().syso\n" +
+				"	}\n" +
+				"}\n");
+		CompletionList list = requestCompletions(unit, "new Test().syso");
+		//@formatter:on
+		assertNotNull(list);
+
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("sysout")).findFirst().orElse(null);
+		assertNotNull(ci);
+
+		assertEquals("System.out.println(new Test());${0}", ci.getInsertText());
+		assertEquals("System.out.println(new Test());${0}", ci.getTextEditText());
+		assertEquals(CompletionItemKind.Snippet, ci.getKind());
+	}
+
+	@Test
 	public void test_sysout_object() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -539,11 +563,12 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	private void mockLSP3Client() {
-		mockLSPClient(true, true);
+		mockLSPClient(true, true, true);
 	}
 
-	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
+	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported, boolean isCompletionListItemDefaultsSupport) {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 	}
 }

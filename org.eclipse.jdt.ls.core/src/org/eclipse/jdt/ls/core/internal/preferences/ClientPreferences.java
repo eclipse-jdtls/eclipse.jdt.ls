@@ -406,6 +406,10 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains("insertTextFormat");
 	}
 
+	public boolean isCompletionListItemDefaultsSupport() {
+		return isCompletionListItemDefaultsEditRangeSupport() || isCompletionListItemDefaultsInsertTextFormatSupport();
+	}
+
 	public boolean isInlayHintRefreshSupported() {
 		return v3supported
 			&& capabilities.getWorkspace().getInlayHint() != null

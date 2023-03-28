@@ -110,7 +110,7 @@ public class CompletionProposalReplacementProvider {
 
 	/**
 	 * Update the replacement.
-	 * 
+	 *
 	 * When {@link #isResolvingRequest} is <code>true</code>, additionalTextEdits will also be resolved.
 	 * @param proposal
 	 * @param item
@@ -191,6 +191,9 @@ public class CompletionProposalReplacementProvider {
 		if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {
 			// fallback
 			item.setInsertText(text);
+			if (client.isCompletionListItemDefaultsSupport()) {
+				item.setTextEditText(SnippetUtils.templateToSnippet(text));
+			}
 		} else if (client.isCompletionInsertReplaceSupport()) {
 			insertReplaceEdit.setNewText(text);
 			item.setTextEdit(Either.forRight(insertReplaceEdit));
@@ -1038,7 +1041,7 @@ public class CompletionProposalReplacementProvider {
 					context = new ContextSensitiveImportRewriteContext(cu, this.offset, this.importRewrite);
 				}
 			}
-			
+
 			return importRewrite.addImport(qualifiedTypeName, context);
 		}
 

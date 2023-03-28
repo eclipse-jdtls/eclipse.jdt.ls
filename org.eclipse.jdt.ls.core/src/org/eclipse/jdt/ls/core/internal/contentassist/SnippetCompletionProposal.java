@@ -309,6 +309,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			item.setKind(CompletionItemKind.Snippet);
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 			item.setInsertText(SnippetUtils.templateToSnippet(template.getPattern()));
+			if (isCompletionListItemDefaultsSupport()) {
+				item.setTextEditText(SnippetUtils.templateToSnippet(template.getPattern()));
+			}
 			item.setDetail(template.getDescription());
 
 			Map<String, String> data = new HashMap<>(3);
@@ -441,6 +444,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		try {
 			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.CLASSSNIPPET_PUBLIC : CodeGenerationTemplate.CLASSSNIPPET_DEFAULT;
 			classSnippetItem.setInsertText(getSnippetContent(scc, template, true));
+			if (isCompletionListItemDefaultsSupport()) {
+				classSnippetItem.setTextEditText(getSnippetContent(scc, template, true));
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -464,6 +470,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		try {
 			CodeGenerationTemplate template = ((scc.needsPublic(monitor))) ? CodeGenerationTemplate.INTERFACESNIPPET_PUBLIC : CodeGenerationTemplate.INTERFACESNIPPET_DEFAULT;
 			interfaceSnippetItem.setInsertText(getSnippetContent(scc, template, true));
+			if (isCompletionListItemDefaultsSupport()) {
+				interfaceSnippetItem.setTextEditText(getSnippetContent(scc, template, true));
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -496,6 +505,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		try {
 			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.RECORDSNIPPET_PUBLIC : CodeGenerationTemplate.RECORDSNIPPET_DEFAULT;
 			recordSnippet.setInsertText(getSnippetContent(scc, template, true));
+			if (isCompletionListItemDefaultsSupport()) {
+				recordSnippet.setTextEditText(getSnippetContent(scc, template, true));
+			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e.getStatus());
 			return null;
@@ -553,5 +565,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 	private static Predicate<IType> isTypeExists(String typeName) {
 		return type -> type.getElementName().equals(typeName);
+	}
+
+	private static boolean isCompletionListItemDefaultsSupport() {
+		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsSupport();
 	}
 }
