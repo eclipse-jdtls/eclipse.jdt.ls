@@ -220,6 +220,7 @@ public class ChainCompletionProposalComputer {
 		final CompletionItem ci = new CompletionItem();
 		ci.setLabel(label);
 		ci.setInsertText(insert);
+		ci.setTextEditText(insert);
 		ci.setKind(CompletionItemKind.Method);
 
 		ChainElement root = chain.getElements().get(0);
@@ -234,6 +235,13 @@ public class ChainCompletionProposalComputer {
 		for (ChainType chainType : expectedTypes) {
 			if (chainType.getType() == null) {
 				continue;
+			}
+
+			if ("java.util.List".equals(chainType.getType().getFullyQualifiedName()) || "java.util.Set".equals(chainType.getType().getFullyQualifiedName()) || "java.util.Map".equals(chainType.getType().getFullyQualifiedName())) {
+				IType type = project.findType("java.util.Collections");
+				if (type != null) {
+					results.add(new ChainElement(type, false));
+				}
 			}
 
 			if (JavaModelUtil.is1d8OrHigher(project)) {
