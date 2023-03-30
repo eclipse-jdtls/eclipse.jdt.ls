@@ -9,6 +9,6 @@ When telemetry events are enabled, the following information is emitted :
  * The total number of Java projects within the workspace
  * The lowest and highest Java compiler source level used (eg. 11 & 17)
  * Whether the project(s) are being imported for the first time (eg. true)
- * The current time (in milliseconds) at which the language server started, initialized the workspace project(s), and completed building the project(s)
+ * The elapsed time (in milliseconds) at which the language server initialized the workspace project(s), declared as ready for requests, and completed building the project(s)
  * The number of libraries that were indexed after project initialization
  * The total size (in bytes) of libraries that were indexed after project initialization

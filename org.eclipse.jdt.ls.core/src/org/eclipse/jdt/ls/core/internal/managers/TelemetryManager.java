@@ -94,14 +94,18 @@ public class TelemetryManager {
 			}
 		}
 
+		long projectInitElapsedTime, serviceReadyElapsedTime, buildFinishedElapsedTime;
+		projectInitElapsedTime = this.projectsInitializedTime - this.languageServerStartTime;
+		serviceReadyElapsedTime = this.serviceReadyTime - this.languageServerStartTime;
+		buildFinishedElapsedTime = buildFinishedTime - this.languageServerStartTime;
+
 		properties.add("buildToolNames", buildToolNamesList);
 		properties.addProperty("javaProjectCount", javaProjectCount);
 		properties.addProperty("compiler.source.min", Float.toString(sourceLevelMin));
 		properties.addProperty("compiler.source.max", Float.toString(sourceLevelMax));
-		properties.addProperty("timestamp.languageserverstart", Long.toString(this.languageServerStartTime));
-		properties.addProperty("timestamp.projectsinitialized", Long.toString(this.projectsInitializedTime));
-		properties.addProperty("timestamp.serviceready", Long.toString(this.serviceReadyTime));
-		properties.addProperty("timestamp.buildFinished", Long.toString(buildFinishedTime));
+		properties.addProperty("time.projectsinitialized", Long.toString(projectInitElapsedTime));
+		properties.addProperty("time.serviceready", Long.toString(serviceReadyElapsedTime));
+		properties.addProperty("time.buildFinished", Long.toString(buildFinishedElapsedTime));
 		properties.addProperty("initialization.first", Boolean.toString(this.firstTimeInitialization));
 
 		IndexManager manager = JavaModelManager.getIndexManager();
