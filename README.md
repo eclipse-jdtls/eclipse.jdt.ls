@@ -65,7 +65,6 @@ java \
 	-Dosgi.bundles.defaultStartLevel=4 \
 	-Declipse.product=org.eclipse.jdt.ls.core.product \
 	-Dlog.level=ALL \
-	-noverify \
 	-Xmx1G \
 	--add-modules=ALL-SYSTEM \
 	--add-opens java.base/java.util=ALL-UNNAMED \
