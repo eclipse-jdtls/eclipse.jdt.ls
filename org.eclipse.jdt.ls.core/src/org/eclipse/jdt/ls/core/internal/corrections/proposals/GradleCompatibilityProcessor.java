@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
@@ -39,6 +40,10 @@ import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandPropo
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class GradleCompatibilityProcessor {
+
+	private static String UPGRADE_GRADLE_COMMAND_ADVANCED = "java.project.upgradeGradle.command";
+	private static String UPGRADE_GRADLE_COMMAND = "java.project.upgradeGradle";
+
 	public static void getGradleCompatibilityProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
 		IJavaProject javaProject = context.getCompilationUnit().getJavaProject();
 		if (javaProject == null) {
@@ -80,7 +85,7 @@ public class GradleCompatibilityProcessor {
 	 * Add proposal for a non-modular project. For a project doesn't have a module
 	 * description file (module-info.java), there should be nothing in the module
 	 * path. See: https://github.com/gradle/gradle/issues/16922
-	 * 
+	 *
 	 * @param result
 	 *                      the classpath result
 	 * @param context
@@ -102,7 +107,7 @@ public class GradleCompatibilityProcessor {
 	 * classpath don't contain module description (either description or automatic
 	 * description, the supported inferred modules in Gradle) See:
 	 * https://docs.gradle.org/current/userguide/java_library_plugin.html#sec:java_library_modular)
-	 * 
+	 *
 	 * @param javaProject
 	 *                        the java project
 	 * @param result
@@ -137,7 +142,8 @@ public class GradleCompatibilityProcessor {
 	}
 
 	private static void addProposal(IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
-		proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, CodeActionKind.QuickFix, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH, "java.project.upgradeGradle",
+		proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, CodeActionKind.QuickFix, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH,
+				JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedUpgradeGradleSupport() ? UPGRADE_GRADLE_COMMAND_ADVANCED : UPGRADE_GRADLE_COMMAND,
 				Arrays.asList(uri.toString(), GradleUtils.JPMS_SUPPORTED_VERSION)));
 	}
 }
