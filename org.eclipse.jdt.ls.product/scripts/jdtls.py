@@ -70,7 +70,9 @@ def main(args):
 	jdtls_data_path = os.path.join(tempfile.gettempdir(), "jdtls-" + sha1(cwd_name.encode()).hexdigest())
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--validate-java-version", default=True, action=argparse.BooleanOptionalAction)
+	parser.add_argument('--validate-java-version', action='store_true')
+	parser.add_argument('--no-validate-java-version', dest='validate-java-version', action='store_false')
+	parser.set_defaults(feature=True)
 	parser.add_argument("--jvm-arg",
 			default=[],
 			action="append",
