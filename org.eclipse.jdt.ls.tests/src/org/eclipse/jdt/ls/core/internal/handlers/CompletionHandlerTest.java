@@ -814,11 +814,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
-	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp) {
+	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp, boolean isCompletionListItemDefaultsSupport) {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(supportCompletionSnippets);
 		Mockito.lenient().when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 		return mockCapabilies;
 	}
 
@@ -844,6 +847,38 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Foo.myTestString : String", item.getDetail());
 		assertNotNull(item.getTextEdit());
 		assertTextEdit(4, 8, 15, "myTestString", item.getTextEdit().getLeft());
+		//Not checking the range end character
+	}
+
+	@Test
+	public void testCompletion_field_itemDefaults_enabled() throws JavaModelException{
+		mockClientPreferences(true, true, true);
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sq \n" +
+						"public class Foo {\n"+
+						"private String myTestString;\n"+
+						"	void foo() {\n"+
+						"   this.myTestS\n"+
+						"	}\n"+
+				"}\n");
+		//@formatter:on
+
+		CompletionList list = requestCompletions(unit, "this.myTestS");
+
+		assertNotNull(list);
+		assertNotNull(list.getItemDefaults().getEditRange());
+		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Field, item.getKind());
+		assertEquals("myTestString", item.getInsertText());
+		assertEquals("Foo.myTestString : String", item.getDetail());
+		//check that the fields covered by itemDefaults are set to null
+		assertNull(item.getTextEdit());
+		assertNull(item.getInsertTextFormat());
 		//Not checking the range end character
 	}
 
@@ -1273,6 +1308,40 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_while_itemDefaults_enabled_generic_snippets() throws JavaModelException {
+		mockClientPreferences(true, true, true);
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(boolean con) {\n" +
+			"		while" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "while");
+
+		assertNotNull(list);
+		assertNotNull(list.getItemDefaults().getEditRange());
+		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(1);
+		assertEquals("while", item.getLabel());
+		String insertText = item.getTextEditText();
+		assertEquals("while (${1:condition:var(boolean)}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
+		//check that the fields covered by itemDefaults are set to null
+		assertNull(item.getTextEdit());
+		assertNull(item.getInsertTextFormat());
+
+		CompletionItem resolved = server.resolveCompletionItem(item).join();
+		assertNotNull(resolved.getTextEdit());
+		assertEquals("while (${1:con}) {\n\t$TM_SELECTED_TEXT${0}\n}", resolved.getTextEdit().getLeft().getNewText());
+	}
+
+	@Test
 	public void testSnippet_dowhile() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -1633,6 +1702,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_inner_class_itemDefaults_enabled_type_definition() throws JavaModelException {
+		mockClientPreferences(true, true, true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\n");
+		CompletionList list = requestCompletions(unit, "");
+
+		assertNotNull(list);
+		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(5);
+		assertEquals("class", item.getLabel());
+		String te = item.getTextEditText();
+		assertEquals("/**\n * ${1:InnerTest}\n */\npublic class ${1:InnerTest} {\n\n\t${0}\n}", te);
+		//check that the fields covered by itemDefaults are set to null
+		assertNull(item.getTextEdit());
+		assertNull(item.getInsertTextFormat());
+	}
+
+	@Test
 	public void testSnippet_sibling_inner_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
@@ -1840,7 +1931,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			importProjects("eclipse/"+projectName);
 			project = WorkspaceHelper.getProject(projectName);
 		}
-		mockClientPreferences(supportSnippets, true);
+		mockClientPreferences(supportSnippets, true, false);
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -1881,7 +1972,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			importProjects("eclipse/" + projectName);
 			project = WorkspaceHelper.getProject(projectName);
 		}
-		mockClientPreferences(supportSnippets, true);
+		mockClientPreferences(supportSnippets, true, false);
 
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
