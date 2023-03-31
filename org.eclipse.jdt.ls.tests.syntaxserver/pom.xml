@@ -40,7 +40,7 @@
 				</os>
 			</activation>
 			<properties>
-				<os.testArgs>-XstartOnFirstThread -noverify</os.testArgs>
+				<os.testArgs>-XstartOnFirstThread</os.testArgs>
 			</properties>
 			<build>
 				<pluginManagement>
