@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -310,7 +311,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void test_sysout_multiple_items() throws Exception {
+	public void test_sysout_itemDefaults_enabled() throws Exception {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 				"src/org/sample/Test.java",
@@ -324,12 +325,16 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "new Test().syso");
 		//@formatter:on
 		assertNotNull(list);
+		assertNotNull(list.getItemDefaults().getEditRange());
+		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
 
 		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("sysout")).findFirst().orElse(null);
 		assertNotNull(ci);
 
-		assertEquals("System.out.println(new Test());${0}", ci.getInsertText());
 		assertEquals("System.out.println(new Test());${0}", ci.getTextEditText());
+		//check that the fields covered by itemDefaults are set to null
+		assertNull(ci.getTextEdit());
+		assertNull(ci.getInsertTextFormat());
 		assertEquals(CompletionItemKind.Snippet, ci.getKind());
 	}
 
@@ -570,5 +575,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
 	}
 }

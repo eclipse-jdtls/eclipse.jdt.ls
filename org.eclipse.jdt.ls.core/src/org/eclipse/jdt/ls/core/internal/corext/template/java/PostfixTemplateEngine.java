@@ -34,6 +34,7 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
@@ -64,8 +65,9 @@ public class PostfixTemplateEngine {
 	 * @param document The IDocument instance.
 	 * @param offset offset where the completion action happens.
 	 * @param compilationUnit the compilation unit.
+	 * @param completionItemDefaults the completion itemDefaults
 	 */
-	public List<CompletionItem> complete(IDocument document, int offset, ICompilationUnit compilationUnit) {
+	public List<CompletionItem> complete(IDocument document, int offset, ICompilationUnit compilationUnit, CompletionItemDefaults completionItemDefaults) {
 		List<CompletionItem> res = new ArrayList<>();
 		JavaPostfixContextType type = (JavaPostfixContextType) JavaLanguageServerPlugin.getInstance()
 				.getTemplateContextRegistry().getContextType(JavaPostfixContextType.ID_ALL);
@@ -102,6 +104,9 @@ public class PostfixTemplateEngine {
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
+			if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet) {
+				item.setInsertTextFormat(null);
+			}
 			item.setDetail(template.getDescription());
 			item.setDocumentation(SnippetUtils.beautifyDocument(content));
 			// we hope postfix shows at the bottom of the completion list.

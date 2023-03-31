@@ -69,6 +69,7 @@ import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
 import org.eclipse.jface.text.templates.TemplateException;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
 
@@ -198,16 +199,17 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 	}
 
-	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionContext completionContext, IProgressMonitor monitor) throws JavaModelException {
+	public static List<CompletionItem> getSnippets(ICompilationUnit cu, CompletionProposalRequestor collector, IProgressMonitor monitor) throws JavaModelException {
+		CompletionContext completionContext = collector.getContext();
 		if (cu == null) {
 			throw new IllegalArgumentException("Compilation unit must not be null"); //$NON-NLS-1$
 		}
 
 		List<CompletionItem> res = new ArrayList<>();
 		SnippetCompletionContext scc = new SnippetCompletionContext(cu, completionContext);
-		res.addAll(getGenericSnippets(scc));
-		res.addAll(getTypeDefinitionSnippets(scc, monitor));
-		res.addAll(getPostfixSnippets(scc));
+		res.addAll(getGenericSnippets(scc, collector.getCompletionItemDefaults()));
+		res.addAll(getTypeDefinitionSnippets(scc, monitor, collector.getCompletionItemDefaults()));
+		res.addAll(getPostfixSnippets(scc, collector.getCompletionItemDefaults()));
 
 		return res;
 	}
@@ -216,7 +218,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	 * Return the list of postfix completion items.
 	 * @param scc Snippet completion context.
 	 */
-	private static List<CompletionItem> getPostfixSnippets(SnippetCompletionContext scc) {
+	private static List<CompletionItem> getPostfixSnippets(SnippetCompletionContext scc, CompletionItemDefaults completionItemDefaults) {
 		if (!isPostfixSupported()) {
 			return Collections.emptyList();
 		}
@@ -228,7 +230,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 				PostfixCompletionProposalComputer computer = new PostfixCompletionProposalComputer();
 				PostfixTemplateEngine engine = computer.computeCompletionEngine(jdtCtx, document, jdtCtx.getOffset());
 				if (engine != null) {
-					return engine.complete(document, jdtCtx.getOffset(), scc.getCompilationUnit());
+					return engine.complete(document, jdtCtx.getOffset(), scc.getCompilationUnit(), completionItemDefaults);
 				}
 			}
 		} catch (Exception e) {
@@ -269,7 +271,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		return Arrays.stream(templates).anyMatch(t -> t.getName().toLowerCase().startsWith((new String(token)).toLowerCase()));
 	}
 
-	private static List<CompletionItem> getGenericSnippets(SnippetCompletionContext scc) throws JavaModelException {
+	private static List<CompletionItem> getGenericSnippets(SnippetCompletionContext scc, CompletionItemDefaults completionItemDefaults) throws JavaModelException {
 		CompletionResponse response = new CompletionResponse();
 		response.setContext(scc.getCompletionContext());
 		response.setOffset(scc.getCompletionContext().getOffset());
@@ -308,6 +310,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
+			if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet){
+				item.setInsertTextFormat(null);
+			}
 			item.setInsertText(SnippetUtils.templateToSnippet(template.getPattern()));
 			if (isCompletionListItemDefaultsSupport()) {
 				item.setTextEditText(SnippetUtils.templateToSnippet(template.getPattern()));
@@ -356,7 +361,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		return content;
 	}
 
-	private static List<CompletionItem> getTypeDefinitionSnippets(SnippetCompletionContext scc, IProgressMonitor monitor) throws JavaModelException {
+	private static List<CompletionItem> getTypeDefinitionSnippets(SnippetCompletionContext scc, IProgressMonitor monitor, CompletionItemDefaults completionItemDefaults) throws JavaModelException {
 		char[] completionToken = scc.getCompletionContext().getToken();
 		boolean isInterfacePrefix = true;
 		boolean isClassPrefix = true;
@@ -397,7 +402,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 
 		for (CompletionItem item : res) {
-			setFields(item, scc.getCompilationUnit());
+			setFields(item, scc.getCompilationUnit(), completionItemDefaults);
 		}
 		return res;
 	}
@@ -515,9 +520,12 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		return recordSnippet;
 	}
 
-	private static void setFields(CompletionItem ci, ICompilationUnit cu) {
+	private static void setFields(CompletionItem ci, ICompilationUnit cu, CompletionItemDefaults completionItemDefaults) {
 		ci.setKind(CompletionItemKind.Snippet);
 		ci.setInsertTextFormat(InsertTextFormat.Snippet);
+		if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet){
+			ci.setInsertTextFormat(null);
+		}
 		ci.setDocumentation(SnippetUtils.beautifyDocument(ci.getInsertText()));
 	}
 
