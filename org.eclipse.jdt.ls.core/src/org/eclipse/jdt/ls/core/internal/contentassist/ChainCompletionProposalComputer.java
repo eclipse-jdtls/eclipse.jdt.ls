@@ -19,10 +19,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -31,6 +34,7 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
@@ -42,6 +46,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
@@ -59,6 +64,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.TextEdit;
 
 public class ChainCompletionProposalComputer {
@@ -73,9 +79,12 @@ public class ChainCompletionProposalComputer {
 
 	private Map<String, List<TextEdit>> additionalEdits = new HashMap<>();
 
-	public ChainCompletionProposalComputer(ICompilationUnit cu, CompletionProposalRequestor coll) {
+	private boolean snippetStringSupported;
+
+	public ChainCompletionProposalComputer(ICompilationUnit cu, CompletionProposalRequestor coll, boolean snippetStringSupported) {
 		this.cu = cu;
 		this.coll = coll;
+		this.snippetStringSupported = snippetStringSupported;
 	}
 
 	public List<CompletionItem> computeCompletionProposals() {
@@ -90,37 +99,58 @@ public class ChainCompletionProposalComputer {
 		final int minDepth = Integer.parseInt(JavaManipulation.getPreference("recommenders.chain.min_chain_length", cu.getJavaProject()));
 		final int maxDepth = Integer.parseInt(JavaManipulation.getPreference("recommenders.chain.max_chain_length", cu.getJavaProject()));
 
-		excludedTypes = JavaManipulation.getPreference("recommenders.chain.ignore_types", cu.getJavaProject()).split("\\|"); //$NON-NLS-1$
+		excludedTypes = JavaManipulation.getPreference("recommenders.chain.ignore_types", cu.getJavaProject()).split("\\|");
 		for (int i = 0; i < excludedTypes.length; ++i) {
-			excludedTypes[i] = "L" + excludedTypes[i].replace('.', '/'); //$NON-NLS-1$
+			excludedTypes[i] = "L" + excludedTypes[i].replace('.', '/');
 		}
 
 		final IType invocationType = cu.findPrimaryType();
 
 		final List<ChainType> expectedTypes = resolveBindingsForExpectedTypes(cu.getJavaProject(), coll.getContext());
-		final ChainFinder finder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
-		final ExecutorService executor = Executors.newSingleThreadExecutor();
+		final ChainFinder mainFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
+		final ChainFinder contextFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
+		final ExecutorService executor = Executors.newFixedThreadPool(2);
 		try {
-			Future<?> future = executor.submit(() -> {
+			CompletableFuture<Void> mainChains = CompletableFuture.runAsync(() -> {
 				if (findEntrypoints(expectedTypes, cu.getJavaProject())) {
-					finder.startChainSearch(entrypoints, maxChains, minDepth, maxDepth);
+					mainFinder.startChainSearch(entrypoints, maxChains, minDepth, maxDepth);
 				}
-			});
+			}, executor);
+
+			CompletableFuture<Void> contextChains = CompletableFuture.runAsync(() -> {
+				try {
+					List<ChainElement> contextEntrypoint = computeContextEntrypoint(expectedTypes, cu.getJavaProject());
+					if (!contextEntrypoint.isEmpty()) {
+						contextFinder.startChainSearch(contextEntrypoint, maxChains, 1, 2);
+					}
+				} catch (JavaModelException e) {
+					// ignore
+				}
+			}, executor);
+			CompletableFuture<Void> future = CompletableFuture.allOf(mainChains, contextChains);
+
 			long timeout = Long.parseLong(JavaManipulation.getPreference("recommenders.chain.timeout", cu.getJavaProject()));
 			future.get(timeout, TimeUnit.SECONDS);
 		} catch (final Exception e) {
-			finder.cancel();
+			mainFinder.cancel();
+			contextFinder.cancel();
 			executor.shutdownNow();
 		}
-
-		return buildCompletionProposals(finder.getChains());
+		List<Chain> found = new ArrayList<>();
+		found.addAll(mainFinder.getChains());
+		found.addAll(contextFinder.getChains());
+		return buildCompletionProposals(found);
 	}
 
 	private List<CompletionItem> buildCompletionProposals(final List<Chain> chains) {
 		final List<CompletionItem> proposals = new LinkedList<>();
 
 		for (final Chain chain : chains) {
-			proposals.add(create(chain));
+			try {
+				proposals.add(create(chain));
+			} catch (JavaModelException e) {
+				// ignore
+			}
 		}
 		return proposals;
 	}
@@ -149,12 +179,6 @@ public class ChainCompletionProposalComputer {
 				}
 			}
 		}
-		try {
-			entrypoints.addAll(computeContextEntrypoints(expectedTypes, project));
-		} catch (JavaModelException e) {
-			// continue
-		}
-
 		return !entrypoints.isEmpty();
 	}
 
@@ -214,13 +238,15 @@ public class ChainCompletionProposalComputer {
 		return String.valueOf(element.getElementName()).startsWith(prefix);
 	}
 
-	private CompletionItem create(final Chain chain) {
-		final String label = ChainElement.createChainCode(chain, true, 0);
-		final String insert = ChainElement.createChainCode(chain, false, chain.getExpectedDimensions());
+	private CompletionItem create(final Chain chain) throws JavaModelException {
+		final String label = createChainCode(chain, true, 0);
+		final String insert = createChainCode(chain, false, chain.getExpectedDimensions());
 		final CompletionItem ci = new CompletionItem();
-		ci.setLabel(label);
-		ci.setInsertText(insert);
+
 		ci.setTextEditText(insert);
+		ci.setInsertText(insert.substring(0, insert.indexOf('(')));
+		ci.setInsertTextFormat(snippetStringSupported ? InsertTextFormat.Snippet : InsertTextFormat.PlainText);
+		ci.setLabel(label);
 		ci.setKind(CompletionItemKind.Method);
 
 		ChainElement root = chain.getElements().get(0);
@@ -230,7 +256,74 @@ public class ChainCompletionProposalComputer {
 		return ci;
 	}
 
-	private List<ChainElement> computeContextEntrypoints(List<ChainType> expectedTypes, IJavaProject project) throws JavaModelException {
+	private String createChainCode(final Chain chain, final boolean createAsTitle, final int expectedDimension) throws JavaModelException {
+		final AtomicInteger counter = new AtomicInteger(1);
+		StringBuilder sb = new StringBuilder(64);
+		for (final ChainElement edge : chain.getElements()) {
+			switch (edge.getElementType()) {
+				case FIELD:
+				case TYPE:
+				case LOCAL_VARIABLE:
+					appendVariableString(edge, sb);
+					break;
+				case METHOD:
+					final IMethod method = (IMethod) edge.getElement();
+					if (createAsTitle) {
+						StringBuffer tmp = new StringBuffer(sb.toString());
+						JavaElementLabelsCore.getMethodLabel(method, JavaElementLabelsCore.ALL_DEFAULT, tmp);
+						sb = new StringBuilder(tmp.toString());
+					} else {
+						sb.append(method.getElementName());
+						appendParameters(sb, method, counter);
+					}
+					break;
+				default:
+			}
+			final boolean appendVariables = !createAsTitle && snippetStringSupported;
+			appendArrayDimensions(sb, edge.getReturnTypeDimension(), expectedDimension, appendVariables, counter);
+			sb.append(".");
+		}
+		deleteLastChar(sb);
+		return sb.toString();
+	}
+
+	private static void appendVariableString(final ChainElement edge, final StringBuilder sb) {
+		if (edge.requiresThisForQualification() && sb.length() == 0) {
+			sb.append("this.");
+		}
+		sb.append((edge.getElement()).getElementName());
+	}
+
+	private void appendParameters(final StringBuilder sb, final IMethod method, final AtomicInteger counter) throws JavaModelException {
+		sb.append("(");
+		if (snippetStringSupported) {
+			String[] parameterNames = method.getParameterNames();
+			if (parameterNames == null) {
+				parameterNames = Stream.of(method.getParameterTypes()).map(ts -> Signature.getSignatureSimpleName(Signature.getElementType(ts))).map(n -> n.substring(0, 1).toLowerCase() + n.substring(1)).map(n -> {
+					int index = n.indexOf('<');
+					return (index > -1) ? n.substring(0, index) : n;
+				}).toArray(String[]::new);
+			}
+			sb.append(Stream.of(parameterNames).map(n -> "${%s:%s}".formatted(counter.getAndIncrement(), n)).collect(Collectors.joining(", ")));
+		}
+		sb.append(")");
+	}
+
+	private void appendArrayDimensions(final StringBuilder sb, final int dimension, final int expectedDimension, final boolean appendVariables, final AtomicInteger counter) {
+		for (int i = dimension; i-- > expectedDimension;) {
+			sb.append("[");
+			if (appendVariables) {
+				sb.append("${%s:%s}".formatted(counter.getAndIncrement(), "i"));
+			}
+			sb.append("]");
+		}
+	}
+
+	private static StringBuilder deleteLastChar(final StringBuilder sb) {
+		return sb.deleteCharAt(sb.length() - 1);
+	}
+
+	private List<ChainElement> computeContextEntrypoint(List<ChainType> expectedTypes, IJavaProject project) throws JavaModelException {
 		final List<ChainElement> results = new ArrayList<>();
 		for (ChainType chainType : expectedTypes) {
 			if (chainType.getType() == null) {

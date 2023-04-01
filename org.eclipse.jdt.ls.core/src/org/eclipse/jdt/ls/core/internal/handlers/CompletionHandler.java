@@ -282,7 +282,7 @@ public class CompletionHandler{
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
 					if (manager.getPreferences().isChainCompletionEnabled() && params.getContext().getTriggerKind() != CompletionTriggerKind.TriggerCharacter) {
-						ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector);
+						ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector, this.isSnippetStringSupported());
 						proposals.addAll(chain.computeCompletionProposals());
 					}
 				} catch (OperationCanceledException e) {
