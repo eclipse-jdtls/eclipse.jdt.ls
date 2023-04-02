@@ -3533,7 +3533,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		public class Foo {
 			void f() {
 				syser
-			} 
+			}
 		};
 		""");
 		//@formatter:on
@@ -3543,6 +3543,22 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = list.getItems().get(0);
 		assertEquals("syserr", item.getLabel());
 		assertEquals(new Range(new Position(2, 2), new Position(2, 7)), item.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
+	}
+
+	@Test
+	public void testCompletion_forArrayTypeReceivers() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Arr.java", """
+				public class Arr {
+					void foo() {
+				 		String[] names = new S
+					}
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "new ");
+		CompletionItem completionItem = list.getItems().get(0);
+		assertEquals("Array type completion EditText", "String[]", completionItem.getInsertText());
+		assertEquals("Array type completion Label", "String[] - java.lang", completionItem.getLabel());
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
