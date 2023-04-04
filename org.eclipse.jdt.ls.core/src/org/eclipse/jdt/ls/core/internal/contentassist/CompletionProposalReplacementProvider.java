@@ -97,6 +97,8 @@ public class CompletionProposalReplacementProvider {
 	 */
 	private boolean isResolvingRequest;
 
+	final Map<String, IBinding> bindings = new HashMap<>();
+
 	public CompletionProposalReplacementProvider(ICompilationUnit compilationUnit, CompletionContext context, int offset,
 			Preferences preferences, ClientPreferences clientPrefs, boolean isResolvingRequest) {
 		super();
@@ -937,13 +939,16 @@ public class CompletionProposalReplacementProvider {
 		for (int i= 0; i < keys.length; i++) {
 			keys[i]= String.valueOf(chKeys[0]);
 		}
+		// https://github.com/eclipse/eclipse.jdt.ls/pull/2535
+		if (bindings.size() > 0) {
+			return (ITypeBinding) bindings.get(keys[0]);
+		}
 
 		final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 		parser.setProject(compilationUnit.getJavaProject());
 		parser.setResolveBindings(true);
 		parser.setStatementsRecovery(true);
 
-		final Map<String, IBinding> bindings= new HashMap<>();
 		ASTRequestor requestor= new ASTRequestor() {
 			@Override
 			public void acceptBinding(String bindingKey, IBinding binding) {
