@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -68,6 +69,8 @@ import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.TextEdit;
 
 public class ChainCompletionProposalComputer {
+
+	private static final char[] KEYWORD_NEW = "new".toCharArray();
 
 	private List<ChainElement> entrypoints;
 
@@ -196,6 +199,14 @@ public class ChainCompletionProposalComputer {
 	}
 
 	private boolean shouldPerformCompletionOnExpectedType() {
+		if (coll.getContext().getToken() != null && CharOperation.equals(coll.getContext().getToken(), KEYWORD_NEW)) {
+			return false;
+		}
+
+		if (coll.getContext().getTokenLocation() == CompletionContext.TL_CONSTRUCTOR_START) {
+			return false;
+		}
+
 		CompilationUnit cuNode = getASTRoot();
 		AST ast = cuNode.getAST();
 		ITypeBinding binding = ast.resolveWellKnownType(ChainElementAnalyzer.getExpectedFullyQualifiedTypeName(coll.getContext()));
@@ -244,7 +255,7 @@ public class ChainCompletionProposalComputer {
 		final CompletionItem ci = new CompletionItem();
 
 		ci.setTextEditText(insert);
-		ci.setInsertText(insert.substring(0, insert.indexOf('(')));
+		ci.setInsertText(getQualifiedMethodName(insert));
 		ci.setInsertTextFormat(snippetStringSupported ? InsertTextFormat.Snippet : InsertTextFormat.PlainText);
 		ci.setLabel(label);
 		ci.setKind(CompletionItemKind.Method);
@@ -254,6 +265,16 @@ public class ChainCompletionProposalComputer {
 			ci.setAdditionalTextEdits(addImport(((IType) root.getElement()).getFullyQualifiedName()));
 		}
 		return ci;
+	}
+
+	// given Collection.emptyList()
+	// return Collection.emptyList
+	private String getQualifiedMethodName(String name) {
+		int index = name.indexOf('(');
+		if (index > 0) {
+			return name.substring(0, index);
+		}
+		return name;
 	}
 
 	private String createChainCode(final Chain chain, final boolean createAsTitle, final int expectedDimension) throws JavaModelException {
