@@ -230,7 +230,8 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
-		assertEquals(1, getCacheSize());
+		// https://github.com/eclipse/eclipse.jdt.ls/pull/2535
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		buf = new StringBuilder();
@@ -244,7 +245,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		saveDocument(cu1);
@@ -252,7 +253,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported();
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(0);
 
 		closeDocument(cu1);
@@ -284,7 +285,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		buf = new StringBuilder();
@@ -300,7 +301,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		closeDocument(cu1);
@@ -395,7 +396,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		buf = new StringBuilder();
@@ -407,7 +408,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(true, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		saveDocument(cu1);
@@ -415,7 +416,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported();
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(0);
 
 		closeDocument(cu1);
@@ -461,7 +462,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu2, 1));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		openDocument(cu1, cu1.getSource(), 1);
@@ -471,7 +472,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu2, 1), new ExpectedProblemReport(cu1, 0));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(2);
 
 		buf = new StringBuilder();
@@ -487,7 +488,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu2, 0), new ExpectedProblemReport(cu1, 0));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(2);
 
 		saveDocument(cu1);
@@ -497,7 +498,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
 		assertNewProblemReported();
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(0);
 
 		closeDocument(cu1);
@@ -800,7 +801,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported(new ExpectedProblemReport(cu1, 1));
-		assertEquals(1, getCacheSize());
+		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(1);
 
 		StringBuilder buf2 = new StringBuilder();
