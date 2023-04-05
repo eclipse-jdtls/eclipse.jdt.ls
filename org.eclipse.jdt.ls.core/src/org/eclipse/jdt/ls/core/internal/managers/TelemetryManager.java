@@ -12,13 +12,23 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jdt.internal.core.JavaModelManager;
-import org.eclipse.jdt.internal.core.search.indexing.IndexManager;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -69,6 +79,11 @@ public class TelemetryManager {
 	}
 
 	public void onBuildFinished(long buildFinishedTime) {
+		// avoid this computation entirely if disabled
+		if (!prefs.getPreferences().isTelemetryEnabled()) {
+			return;
+		}
+
 		JsonObject properties = new JsonObject();
 		float sourceLevelMin = 0, sourceLevelMax = 0;
 		int javaProjectCount = 0;
@@ -101,37 +116,81 @@ public class TelemetryManager {
 
 		properties.add("buildToolNames", buildToolNamesList);
 		properties.addProperty("javaProjectCount", javaProjectCount);
-		properties.addProperty("compiler.source.min", Float.toString(sourceLevelMin));
-		properties.addProperty("compiler.source.max", Float.toString(sourceLevelMax));
+		if (sourceLevelMin != 0) {
+			properties.addProperty("compiler.source.min", Float.toString(sourceLevelMin));
+		}
+		if (sourceLevelMax != 0) {
+			properties.addProperty("compiler.source.max", Float.toString(sourceLevelMax));
+		}
 		properties.addProperty("time.projectsinitialized", Long.toString(projectInitElapsedTime));
 		properties.addProperty("time.serviceready", Long.toString(serviceReadyElapsedTime));
 		properties.addProperty("time.buildFinished", Long.toString(buildFinishedElapsedTime));
 		properties.addProperty("initialization.first", Boolean.toString(this.firstTimeInitialization));
 
-		IndexManager manager = JavaModelManager.getIndexManager();
-		if (manager != null) {
-			int indexCount = manager.indexLocations.elementSize;
-			long librarySize = computeDependencySize(manager);
-			properties.addProperty("dependency.size", Long.toString(librarySize));
-			properties.addProperty("dependency.count", Integer.toString(indexCount));
-		}
+		Map<IPath, Long> deps = computeDependencySize();
+		int indexCount = deps.size();
+		long librarySize = deps.values().stream().reduce(0l, Long::sum);
+		properties.addProperty("dependency.count", Integer.toString(indexCount));
+		properties.addProperty("dependency.size", Long.toString(librarySize));
 
 		telemetryEvent(JAVA_PROJECT_BUILD, properties);
 	}
 
 	/**
-	 * The total size (in bytes) of all dependencies in the workspace that have been
-	 * indexed. This should correspond to the total size of dependencies used by a
+	 * The total size (in bytes) of all dependencies in the workspace
+	 * This should correspond to the total size of dependencies used by a
 	 * project.
-	 *
-	 * @param manager
-	 *                    the index manager for the workspace
 	 *
 	 * @return the size (in bytes) of all dependencies indexed in the workspace.
 	 */
-	private static long computeDependencySize(IndexManager manager) {
-		Object[] libraries = manager.indexLocations.keyTable;
-		return Arrays.asList(libraries).stream().mapToLong(lib -> lib != null ? ((IPath) lib).toFile().length() : 0).sum();
+	private static Map<IPath, Long> computeDependencySize() {
+		Map<IPath, Long> result = new HashMap<>();
+		for (IJavaProject proj : ProjectUtils.getJavaProjects()) {
+			if (!ProjectsManager.DEFAULT_PROJECT_NAME.equals(proj.getProject().getName())) {
+				try {
+					IPackageFragmentRoot[] pfroots = proj.getPackageFragmentRoots();
+					List<String> vmLibraries = getVMLibraries(proj);
+					for (IPackageFragmentRoot pfroot : pfroots) {
+						IPath pfPath = pfroot.getPath();
+						if (isValidDependency(pfroot, vmLibraries)) {
+							result.put(pfPath, pfPath.toFile().length());
+						}
+					}
+				} catch (CoreException e) {
+					// continue
+				}
+			}
+		}
+		return result;
+	}
+
+	private static List<String> getVMLibraries(IJavaProject proj) throws CoreException {
+		IVMInstall vmInstall = JavaRuntime.getVMInstall(proj.getJavaProject());
+		if (vmInstall == null) {
+			return Collections.emptyList();
+		}
+		List<String> vmLibLocations = Arrays.stream(JavaRuntime.getLibraryLocations(vmInstall)).map(lib -> {
+			try {
+				return lib.getSystemLibraryPath().toFile().getCanonicalPath();
+			} catch (IOException e) {
+				return null;
+			}
+		}).filter(Objects::nonNull).collect(Collectors.toList());
+		return vmLibLocations;
+	}
+
+	private static boolean isValidDependency(IPackageFragmentRoot pfRoot, List<String> vmLibLocations) {
+		try {
+			if (pfRoot.getKind() == IPackageFragmentRoot.K_BINARY && pfRoot.getPath() != null) {
+				String pfPath = pfRoot.getPath().toFile().getCanonicalPath();
+				if (!vmLibLocations.contains(pfPath)) {
+					return true;
+				}
+			}
+		} catch (CoreException | IOException e) {
+			return false;
+		}
+		return false;
 	}
 
 	private void telemetryEvent(String name, JsonObject properties) {
