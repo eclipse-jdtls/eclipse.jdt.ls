@@ -40,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.PasteEventParams;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
+import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -163,9 +164,9 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.decompile":
 					String uri = (String) arguments.get(0);
 					try {
-						byte[] bytes = Files.readAllBytes(Paths.get(new URI(uri)));
-						return DisassemblerContentProvider.getContent(bytes, monitor);
-					} catch (IOException | URISyntaxException | CoreException e) {
+						ContentProviderManager contentProvider = JavaLanguageServerPlugin.getContentProviderManager();
+						return contentProvider.getContent(new URI(uri), monitor);
+					} catch (URISyntaxException e) {
 						return false;
 					}
 				default:

@@ -39,7 +39,7 @@ public class ContentProviderManager {
 	private static final String PRIORITY = "priority";
 	private static final String URI_PATTERN = "uriPattern";
 	private static final int DEFAULT_PRIORITY = 500;
-	private static final Pattern DEFAULT_URI_PATTERN = Pattern.compile("jdt://contents/.*\\.class.*");
+	private static final Pattern DEFAULT_URI_PATTERN = Pattern.compile(".*\\.class.*");
 
 	private final PreferenceManager preferenceManager;
 
