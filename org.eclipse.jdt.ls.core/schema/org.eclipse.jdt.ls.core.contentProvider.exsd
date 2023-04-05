@@ -23,21 +23,21 @@
          <attribute name="point" type="string" use="required">
             <annotation>
                <documentation>
-                  
+
                </documentation>
             </annotation>
          </attribute>
          <attribute name="id" type="string">
             <annotation>
                <documentation>
-                  
+
                </documentation>
             </annotation>
          </attribute>
          <attribute name="name" type="string">
             <annotation>
                <documentation>
-                  
+
                </documentation>
                <appinfo>
                   <meta.attribute translatable="true"/>
@@ -76,15 +76,15 @@
          <attribute name="uriPattern" type="string">
             <annotation>
                <documentation>
-                  Regular expression that matches URIs this contentProvider can support. The default file matches .class files: &quot;jdt://contents/.*\.class.*&quot;
+                  Regular expression that matches URIs this contentProvider can support. The default file matches .class files: &quot;.*\.class.*&quot;
                </documentation>
             </annotation>
          </attribute>
          <attribute name="cacheable" type="boolean">
             <annotation>
                <documentation>
-                  DEPRECATED: This attribute is now ignored. 
- 
+                  DEPRECATED: This attribute is now ignored.
+
 Indicates that the server can safely cache content for a period of time. true by default.
                </documentation>
                <appinfo>
