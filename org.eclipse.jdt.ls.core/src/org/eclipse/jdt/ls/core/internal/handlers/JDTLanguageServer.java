@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
@@ -74,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverr
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
+import org.eclipse.jdt.ls.core.internal.lsp.ValidateDocumentParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
@@ -858,6 +860,20 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public void didClose(DidCloseTextDocumentParams params) {
 		debugTrace(">> document/didClose");
 		documentLifeCycleHandler.didClose(params);
+	}
+
+	
+	@Override
+	public void validateDocument(ValidateDocumentParams params) {
+		logInfo(">> java/validateDocument");
+		computeAsync((monitor) -> {
+			try {
+				documentLifeCycleHandler.validateDocument(params.getTextDocument().getUri(), true, monitor);
+			} catch (JavaModelException e) {
+				// ignore
+			}
+			return null;
+		});
 	}
 
 	/* (non-Javadoc)
