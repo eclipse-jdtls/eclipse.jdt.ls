@@ -1,5 +1,31 @@
 # Change Log
 
+# [1.22.0 (April 13th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/112?closed=1)
+ * performance - Cache and re-use type bindings for a completion invocation. See [#2535](https://github.com/eclipse/eclipse.jdt.ls/pull/2535).
+ * performance - Avoid retrieving AST root during diagnostic publishing. See [#2574](https://github.com/eclipse/eclipse.jdt.ls/pull/2574).
+ * performance - Support resolving dependencies in parallel for Maven projects. See [#2563](https://github.com/eclipse/eclipse.jdt.ls/pull/2563).
+ * performance - Implement `itemDefaults` for completion responses. See [#2475](https://github.com/eclipse/eclipse.jdt.ls/issues/2475).
+ * enhancement - Add "Change signature" refactoring. See [#2497](https://github.com/eclipse/eclipse.jdt.ls/pull/2497).
+ * enhancement - Add command to support decompiling class files with the contributed decompiler. See [#2515](https://github.com/eclipse/eclipse.jdt.ls/pull/2515), [#2578](https://github.com/eclipse/eclipse.jdt.ls/pull/2578).
+ * enhancement - Implement `labelDetails` for completion items. See [#2476](https://github.com/eclipse/eclipse.jdt.ls/issues/2476).
+ * enhancement - `sysout` postfix completion should be applicable to any variable. See [#2559](https://github.com/eclipse/eclipse.jdt.ls/pull/2559).
+ * enhancement - Support for `telemetry/event` notification. See [#21](https://github.com/eclipse/eclipse.jdt.ls/issues/21).
+ * enhancement - Add extended client capability, `skipProjectConfiguration`, to skip project configuration. See [#2523](https://github.com/eclipse/eclipse.jdt.ls/pull/2523).
+ * bug fix - Ensure we do not return duplicate search results for workspace symbols. See [#2547](https://github.com/eclipse/eclipse.jdt.ls/pull/2547).
+ * bug fix - Delegate commands should respect cancellation events from the client. See [#2415](https://github.com/eclipse/eclipse.jdt.ls/issues/2415).
+ * bug fix - Code action to generate accessor outside of identifier no longer available. See [#2533](https://github.com/eclipse/eclipse.jdt.ls/issues/2533).
+ * bug fix - Support importing multi-Maven projects with the same `artifactId`. See [#2017](https://github.com/eclipse/eclipse.jdt.ls/issues/2017).
+ * bug fix - Do not show `Generate Constructors` quick assist for static fields. See [#2142](https://github.com/eclipse/eclipse.jdt.ls/issues/2142).
+ * bug fix - Increase relevance of "Create enum". See [#2551](https://github.com/eclipse/eclipse.jdt.ls/pull/2551).
+ * bug fix - Fix `IdentationError` due to mix of spaces and tabs. See [#2581](https://github.com/eclipse/eclipse.jdt.ls/pull/2581).
+ * bug fix - Separate `java.project.upgradeGradle` client and server command. See [#2550](https://github.com/eclipse/eclipse.jdt.ls/pull/2550).
+ * bug fix - Improve marker exclusion extended client capability. See [#2540](https://github.com/eclipse/eclipse.jdt.ls/pull/2540).
+ * build - Launch script should use syntax prior to Python 3.9. See [#2153](https://github.com/eclipse/eclipse.jdt.ls/issues/2153).
+ * build - Bump tycho-version from 3.0.3 to 3.0.4. See [#2548](https://github.com/eclipse/eclipse.jdt.ls/pull/2548).
+ * build - Bump maven-resources-plugin from 3.3.0 to 3.3.1. See [#2555](https://github.com/eclipse/eclipse.jdt.ls/pull/2555).
+ * build - Make `WorkspaceSymbolHandlerTest.testProjectSearch` more consistent. See [#2553](https://github.com/eclipse/eclipse.jdt.ls/pull/2553).
+ * debt - Remove `-noverify` option from `README.md`. See [#2566](https://github.com/eclipse/eclipse.jdt.ls/pull/2566).
+
 # [1.21.0 (March 16th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/111?closed=1)
  * performance - Allow language server to declare availability sooner by postponing autobuild. See [#2527](https://github.com/eclipse/eclipse.jdt.ls/pull/2527).
  * performance - Save operations need not run in workspace runnable when project is not unmanaged. See [#2449](https://github.com/eclipse/eclipse.jdt.ls/pull/2449).
