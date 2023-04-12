@@ -729,7 +729,7 @@ public class Preferences {
 	}
 
 	public static enum FormatterScheme {
-		eclipse;
+		eclipse, google;
 
 		static FormatterScheme fromString(String value, FormatterScheme defaultValue) {
 			if (value != null) {
@@ -1688,6 +1688,10 @@ public class Preferences {
 
 	public Map<String, String> getFormatterSettings() {
 		return this.formatterSettings;
+	}
+
+	public FormatterScheme getFormatterScheme() {
+		return this.formatterScheme;
 	}
 
 	public String getSettingsUrl() {

@@ -62,6 +62,7 @@ Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jd
  org.eclipse.lsp4j.legacy.typeHierarchy;x-friends:="org.eclipse.jdt.ls.tests"
 Bundle-ClassPath: lib/jsoup-1.14.2.jar,
  lib/remark-1.2.0.jar,
+ lib/google-java-format-1.13.0.jar,
  .
 Bundle-Vendor: %Bundle-Vendor
 Automatic-Module-Name: org.eclipse.jdt.ls.core

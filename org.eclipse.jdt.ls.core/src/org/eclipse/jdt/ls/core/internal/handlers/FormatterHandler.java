@@ -40,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.FormatterPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FormatterScheme;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -56,6 +57,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
+
+import com.google.googlejavaformat.java.GoogleJavaFormatter;
 
 /**
  * @author IBM Corporation (Markus Keller)
@@ -109,18 +112,29 @@ public class FormatterHandler {
 			return Collections.emptyList();
 		}
 
-		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options, cu));
+		CodeFormatter formatter;
+		if (this.preferenceManager.getPreferences().getFormatterScheme().equals(FormatterScheme.google)) {
+			formatter = new GoogleJavaFormatter();
+		} else {
+			formatter = ToolFactory.createCodeFormatter(getOptions(options, cu));
+		}
 
 		String lineDelimiter = TextUtilities.getDefaultLineDelimiter(document);
 		String sourceToFormat = document.get();
 		int kind = getFormattingKind(cu, includeComments);
-		TextEdit format = formatter.format(kind, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
-		if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
-			// nothing to return
-			return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
+
+		try {
+			TextEdit format = formatter.format(kind, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
+			if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
+				// nothing to return
+				return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
+			}
+			MultiTextEdit flatEdit = TextEditUtil.flatten(format);
+			return convertEdits(flatEdit.getChildren(), document);
+		} catch (Throwable e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
-		MultiTextEdit flatEdit = TextEditUtil.flatten(format);
-		return convertEdits(flatEdit.getChildren(), document);
+		return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 	}
 
 	private int getFormattingKind(ICompilationUnit cu, boolean includeComments) {
