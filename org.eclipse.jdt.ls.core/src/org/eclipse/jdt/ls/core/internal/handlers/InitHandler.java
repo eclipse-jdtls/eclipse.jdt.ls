@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.internal.resources.Workspace;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.WorkspaceJob;
@@ -33,15 +35,25 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.CompilationUnit;
+import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
+import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
@@ -50,8 +62,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeLensOptions;
-import org.eclipse.lsp4j.CompletionItemOptions;
-import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.DocumentFilter;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
@@ -269,6 +279,7 @@ final public class InitHandler extends BaseInitHandler {
 					resetBuildState.run();
 					projectsManager.registerListeners();
 					preferenceManager.addPreferencesChangeListener(new InlayHintsPreferenceChangeListener());
+					initializeLombok();
 				}
 				return Status.OK_STATUS;
 			}
@@ -291,6 +302,63 @@ final public class InitHandler extends BaseInitHandler {
 		job.setPriority(Job.BUILD);
 		job.setRule(ResourcesPlugin.getWorkspace().getRoot());
 		job.schedule();
+	}
+
+	// a workaround for https://github.com/redhat-developer/vscode-java/issues/3046
+	private void initializeLombok() {
+		boolean lombokExists = false;
+		try {
+			List<String> inputArguments = ManagementFactory.getRuntimeMXBean().getInputArguments();
+			if (inputArguments != null) {
+				for (String arg : inputArguments) {
+					if (arg.trim().startsWith("-javaagent:") && arg.contains("lombok")) {
+						lombokExists = true;
+						break;
+					}
+				}
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		if (!lombokExists) {
+			return;
+		}
+		long start = System.currentTimeMillis();
+		ICompilationUnit unit = null;
+		try {
+			IProject project = ProjectsManager.getDefaultProject();
+			if (project != null) {
+				IJavaProject javaProject = JavaCore.create(project);
+				if (javaProject != null) {
+					IClasspathEntry[] classpath = javaProject.getRawClasspath();
+					for (IClasspathEntry entry : classpath) {
+						if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+							IPackageFragmentRoot[] packageFragmentRoots = javaProject.findPackageFragmentRoots(entry);
+							if (packageFragmentRoots.length > 0) {
+								IPackageFragmentRoot packageFragmentRoot = packageFragmentRoots[0];
+								IPackageFragment packageFragment = packageFragmentRoot.getPackageFragment("");
+								if (packageFragment instanceof PackageFragment) {
+									unit = new CompilationUnit((PackageFragment) packageFragment, "Dummy.java", DefaultWorkingCopyOwner.PRIMARY);
+									unit.becomeWorkingCopy(new NullProgressMonitor());
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		} finally {
+			if (unit != null) {
+				try {
+					unit.discardWorkingCopy();
+				} catch (JavaModelException e) {
+					// ignore
+				}
+			}
+		}
+		JavaLanguageServerPlugin.logInfo("Lombok initialized in " + (System.currentTimeMillis() - start) + "ms");
 	}
 
 	private void startBundle(String symbolicName) {
