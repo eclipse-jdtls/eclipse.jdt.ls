@@ -338,6 +338,18 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+		// assertNoErrors(project);
+	}
+
+	@Test
+	public void testJava20Project() throws Exception {
+		IProject project = importMavenProject("salut-java20");
+		assertIsJavaProject(project);
+		assertEquals("20", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 

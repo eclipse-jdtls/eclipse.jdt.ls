@@ -43,7 +43,7 @@ public class StringConcatToTextBlockCleanUp implements ISimpleCleanUp {
 		if (unit == null) {
 			return null;
 		}
-		return StringConcatToTextBlockFixCore.createCleanUp(unit);
+		return StringConcatToTextBlockFixCore.createCleanUp(unit, false);
 	}
 
 	/* (non-Javadoc)
