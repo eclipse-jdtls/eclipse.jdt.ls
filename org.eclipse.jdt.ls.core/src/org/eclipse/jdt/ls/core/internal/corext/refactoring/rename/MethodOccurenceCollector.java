@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.search.MethodDeclarationMatch;
 import org.eclipse.jdt.core.search.MethodReferenceMatch;
 import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.internal.corext.refactoring.CuCollectingSearchRequestor;
 import org.eclipse.jdt.internal.corext.refactoring.base.ReferencesInBinaryContext;
 
 class MethodOccurenceCollector extends CuCollectingSearchRequestor {
