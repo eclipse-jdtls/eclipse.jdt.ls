@@ -275,10 +275,6 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("gradleChecksumWrapperPromptSupport", "false").toString());
 	}
 
-	public boolean isResolveAdditionalTextEditsSupport() {
-		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("resolveAdditionalTextEditsSupport", "false").toString());
-	}
-
 	/**
 	 * The command which will be triggered when the completion item is selected. Different clients can have different
 	 * command ids. The command id is set in the 'onCompletionItemSelectedCommand' field of the extended client capabilities.
@@ -416,6 +412,25 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getLabelDetailsSupport() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getLabelDetailsSupport().booleanValue();
+	}
+
+	public boolean isResolveAdditionalTextEditsSupport() {
+		return isPropertySupportedForCompletionResolve("additionalTextEdits")
+			// TODO: the extended capability 'resolveAdditionalTextEditsSupport' should be deprecated.
+			|| Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("resolveAdditionalTextEditsSupport", "false").toString());
+	}
+
+	public boolean isCompletionResolveDocumentSupport() {
+		return isPropertySupportedForCompletionResolve("documentation");
+	}
+
+	public boolean isPropertySupportedForCompletionResolve(String property) {
+		return (v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getResolveSupport() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getResolveSupport().getProperties() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getResolveSupport().getProperties().contains(property));
 	}
 
 	public boolean isInlayHintRefreshSupported() {
