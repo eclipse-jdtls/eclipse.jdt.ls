@@ -16,10 +16,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
+
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeLensCapabilities;
 import org.eclipse.lsp4j.CompletionCapabilities;
 import org.eclipse.lsp4j.CompletionItemCapabilities;
+import org.eclipse.lsp4j.CompletionItemResolveSupportCapabilities;
 import org.eclipse.lsp4j.CompletionItemTagSupportCapabilities;
 import org.eclipse.lsp4j.DocumentSymbolCapabilities;
 import org.eclipse.lsp4j.FormattingCapabilities;
@@ -178,6 +181,20 @@ public class ClientPreferencesTest {
 		when(text.getCompletion()).thenReturn(capabilities);
 		itemCapabilities.setTagSupport(new CompletionItemTagSupportCapabilities());
 		assertTrue(prefs.isCompletionItemTagSupported());
+	}
+
+	@Test
+	public void testIsPropertySupportedForCompletionResolve() {
+		String property = "property";
+		assertFalse(prefs.isPropertySupportedForCompletionResolve(property));
+		CompletionItemCapabilities itemCapabilities = new CompletionItemCapabilities();
+		CompletionCapabilities capabilities = new CompletionCapabilities(itemCapabilities);
+		when(text.getCompletion()).thenReturn(capabilities);
+
+		CompletionItemResolveSupportCapabilities resolveCapabilities = new CompletionItemResolveSupportCapabilities();
+		resolveCapabilities.setProperties(Collections.singletonList(property));
+		itemCapabilities.setResolveSupport(resolveCapabilities);
+		assertTrue(prefs.isPropertySupportedForCompletionResolve(property));
 	}
 
 	@Test

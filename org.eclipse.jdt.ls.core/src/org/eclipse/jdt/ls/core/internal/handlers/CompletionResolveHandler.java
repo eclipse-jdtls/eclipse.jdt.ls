@@ -129,7 +129,9 @@ public class CompletionResolveHandler {
 				Range range = JDTUtils.toRange(unit, ctx.getOffset(), 0);
 				TextEdit textEdit = new TextEdit(range, content);
 				param.setTextEdit(Either.forLeft(textEdit));
-				param.setDocumentation(SnippetUtils.beautifyDocument(content));
+				if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
+					param.setDocumentation(SnippetUtils.beautifyDocument(content));
+				}
 				param.setData(null);
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -148,6 +150,12 @@ public class CompletionResolveHandler {
 			);
 			proposalProvider.updateReplacement(completionResponse.getProposals().get(proposalId), param, '\0');
 		}
+
+		if (!manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
+			return param;
+		}
+
+		// below code is for resolving documentation
 		if (data.containsKey(DATA_FIELD_DECLARATION_SIGNATURE)) {
 			String typeName = stripSignatureToFQN(String.valueOf(data.get(DATA_FIELD_DECLARATION_SIGNATURE)));
 			try {
