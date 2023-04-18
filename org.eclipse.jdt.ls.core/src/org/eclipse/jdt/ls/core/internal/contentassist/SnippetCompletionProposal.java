@@ -73,6 +73,9 @@ import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemLabelDetails;
 import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class SnippetCompletionProposal extends CompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
@@ -310,14 +313,29 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			final CompletionItem item = new CompletionItem();
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
-			item.setInsertTextFormat(InsertTextFormat.Snippet);
+
 			if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet){
 				item.setInsertTextFormat(null);
+			} else {
+				item.setInsertTextFormat(InsertTextFormat.Snippet);
 			}
-			item.setInsertText(SnippetUtils.templateToSnippet(template.getPattern()));
-			if (isCompletionListItemDefaultsSupport()) {
-				item.setTextEditText(SnippetUtils.templateToSnippet(template.getPattern()));
+
+			if (isCompletionLazyResolveTextEditEnabled()) {
+				String insertText = SnippetUtils.templateToSnippet(template.getPattern());
+				if (isCompletionListItemDefaultsSupport() && completionItemDefaults.getEditRange() != null) {
+					item.setTextEditText(insertText);
+				} else {
+					item.setInsertText(insertText);
+				}
+			} else {
+				String content = SnippetCompletionProposal.evaluateGenericTemplate(cu, completionContext, template);
+				if (isCompletionListItemDefaultsSupport() && completionItemDefaults.getEditRange() != null) {
+					item.setTextEditText(content);
+				} else {
+					setTextEdit(completionContext, cu, item, content);
+				}
 			}
+
 			item.setDetail(template.getDescription());
 			if (isCompletionItemLabelDetailsSupport()){
 				CompletionItemLabelDetails itemLabelDetails = new CompletionItemLabelDetails();
@@ -339,6 +357,21 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		response.setItems(res);
 		CompletionResponses.store(response);
 		return res;
+	}
+
+	/**
+	 * Set the text edit for the completion item.
+	 * @param completionContext the completion context
+	 * @param cu the compilation unit
+	 * @param item the completion item
+	 * @param content the new text of the text edit
+	 * @throws JavaModelException
+	 */
+	public static void setTextEdit(CompletionContext completionContext, ICompilationUnit cu, final CompletionItem item, String content) throws JavaModelException {
+		int length = completionContext.getTokenEnd() - completionContext.getTokenStart();
+		Range range = JDTUtils.toRange(cu, completionContext.getTokenStart(), length);
+		TextEdit textEdit = new TextEdit(range, content);
+		item.setTextEdit(Either.forLeft(textEdit));
 	}
 
 	private static boolean isCompletionItemLabelDetailsSupport() {
@@ -587,5 +620,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 	private static boolean isCompletionListItemDefaultsSupport() {
 		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsSupport();
+	}
+	
+	private static boolean isCompletionLazyResolveTextEditEnabled() {
+		return JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCompletionLazyResolveTextEditEnabled();
 	}
 }

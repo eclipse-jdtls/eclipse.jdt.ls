@@ -125,13 +125,14 @@ public class CompletionResolveHandler {
 				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
 				Template template = ((SnippetCompletionProposal) proposal).getTemplate();
 				String content = SnippetCompletionProposal.evaluateGenericTemplate(unit, ctx, template);
-
-				Range range = JDTUtils.toRange(unit, ctx.getOffset(), 0);
-				TextEdit textEdit = new TextEdit(range, content);
-				param.setTextEdit(Either.forLeft(textEdit));
 				if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
 					param.setDocumentation(SnippetUtils.beautifyDocument(content));
 				}
+
+				if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
+					SnippetCompletionProposal.setTextEdit(ctx, unit, param, content);
+				}
+
 				param.setData(null);
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
