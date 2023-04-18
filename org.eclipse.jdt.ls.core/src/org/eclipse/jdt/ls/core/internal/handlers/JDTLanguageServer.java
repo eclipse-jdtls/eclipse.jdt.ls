@@ -591,13 +591,17 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
-		CompletionHandler handler = new CompletionHandler(preferenceManager);
-		IProgressMonitor monitor = new NullProgressMonitor();
-		if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
-			waitForLifecycleJobs(monitor);
+		try {
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			IProgressMonitor monitor = new NullProgressMonitor();
+			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
+				waitForLifecycleJobs(monitor);
+			}
+			Either<List<CompletionItem>, CompletionList> result = handler.completion(position, monitor);
+			return CompletableFuture.completedFuture(result);
+		} catch (Exception ex) {
+			return CompletableFuture.failedFuture(ex);
 		}
-		Either<List<CompletionItem>, CompletionList> result = handler.completion(position, monitor);
-		return CompletableFuture.completedFuture(result);
 	}
 
 	/* (non-Javadoc)
@@ -606,13 +610,17 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
-		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		IProgressMonitor monitor = new NullProgressMonitor();
-		if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
-			waitForLifecycleJobs(monitor);
+		try {
+			CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
+			IProgressMonitor monitor = new NullProgressMonitor();
+			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
+				waitForLifecycleJobs(monitor);
+			}
+			CompletionItem result = handler.resolve(unresolved, monitor);
+			return CompletableFuture.completedFuture(result);
+		} catch (Exception ex) {
+			return CompletableFuture.failedFuture(ex);
 		}
-		CompletionItem result = handler.resolve(unresolved, monitor);
-		return CompletableFuture.completedFuture(result);
 	}
 
 	/* (non-Javadoc)
