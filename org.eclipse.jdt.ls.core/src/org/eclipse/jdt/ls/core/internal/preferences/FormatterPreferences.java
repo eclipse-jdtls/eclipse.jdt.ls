@@ -37,6 +37,7 @@ public class FormatterPreferences {
 		Map.entry("format.line.comments", DefaultCodeFormatterConstants.FORMATTER_COMMENT_FORMAT_LINE_COMMENT),
 		Map.entry("format.block.comments", DefaultCodeFormatterConstants.FORMATTER_COMMENT_FORMAT_BLOCK_COMMENT),
 		Map.entry("format.javadoc.comments", DefaultCodeFormatterConstants.FORMATTER_COMMENT_FORMAT_JAVADOC_COMMENT),
+		Map.entry("parentheses.positions.in.method.invocation", DefaultCodeFormatterConstants.FORMATTER_PARENTHESES_POSITIONS_IN_METHOD_INVOCATION),
 		Map.entry("keep.loop.body.block.on.one.line", DefaultCodeFormatterConstants.FORMATTER_KEEP_LOOP_BODY_BLOCK_ON_ONE_LINE),
 		Map.entry("keep.anonymous.type.declaration.on.one.line", DefaultCodeFormatterConstants.FORMATTER_KEEP_ANONYMOUS_TYPE_DECLARATION_ON_ONE_LINE),
 		Map.entry("keep.type.declaration.on.one.line", DefaultCodeFormatterConstants.FORMATTER_KEEP_TYPE_DECLARATION_ON_ONE_LINE),
