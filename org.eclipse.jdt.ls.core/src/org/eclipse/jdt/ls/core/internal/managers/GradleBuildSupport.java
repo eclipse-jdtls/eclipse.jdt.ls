@@ -88,7 +88,7 @@ public class GradleBuildSupport implements IBuildSupport {
 		if (!applies(project)) {
 			return;
 		}
-		JavaLanguageServerPlugin.logInfo("Starting Gradle update for " + project.getName());
+		JavaLanguageServerPlugin.debugTrace("Starting Gradle update for " + project.getName());
 		Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
 		if (build.isPresent()) {
 			GradleBuild gradleBuild = build.get();

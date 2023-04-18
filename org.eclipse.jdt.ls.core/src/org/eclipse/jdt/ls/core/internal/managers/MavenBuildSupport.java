@@ -77,7 +77,7 @@ public class MavenBuildSupport implements IBuildSupport {
 		}
 		Path pomPath = project.getFile("pom.xml").getLocation().toFile().toPath();
 		if (digestStore.updateDigest(pomPath) || force) {
-			JavaLanguageServerPlugin.logInfo("Starting Maven update for " + project.getName());
+			JavaLanguageServerPlugin.debugTrace("Starting Maven update for " + project.getName());
 			boolean updateSnapshots = JavaLanguageServerPlugin.getPreferencesManager() == null ? false : JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenUpdateSnapshots();
 			if (shouldCollectProjects()) {
 				Set<IProject> projectSet = new LinkedHashSet<>();
