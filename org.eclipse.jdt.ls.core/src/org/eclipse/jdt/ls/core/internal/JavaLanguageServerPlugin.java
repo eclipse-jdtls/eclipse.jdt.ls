@@ -404,6 +404,15 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * log ths message as {@link IStatus#INFO} if the debug trace if enabled
+	 */
+	public static void debugTrace(String message) {
+		if (context != null && Boolean.getBoolean("jdt.ls.debug")) {
+			log(new Status(IStatus.INFO, context.getBundle().getSymbolicName(), message));
+		}
+	}
+
 	public static void logException(Throwable ex) {
 		if (context != null) {
 			String message = ex.getMessage();

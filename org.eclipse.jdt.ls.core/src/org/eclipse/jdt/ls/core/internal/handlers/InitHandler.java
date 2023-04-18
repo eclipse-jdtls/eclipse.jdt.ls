@@ -296,7 +296,7 @@ final public class InitHandler extends BaseInitHandler {
 	private void startBundle(String symbolicName) {
 		try {
 			long start = System.currentTimeMillis();
-			JavaLanguageServerPlugin.logInfo("Starting " + symbolicName);
+			JavaLanguageServerPlugin.debugTrace("Starting " + symbolicName);
 			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
 			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
 		} catch (BundleException e) {
