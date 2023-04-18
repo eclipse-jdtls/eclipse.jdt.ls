@@ -135,6 +135,7 @@ This repository only contains the server implementation. Here are some known cli
 * [Oni](https://github.com/onivim/oni/wiki/Language-Support#java) : modern modal editing - powered by Neovim.
 * [LSP Java](https://github.com/emacs-lsp/lsp-java) : a Java LSP client for Emacs
 * [Eclipse Theia](https://github.com/theia-ide/theia) : Theia is a cloud & desktop IDE framework implemented in TypeScript
+* [Eclipse IDE JDT.LS](https://github.com/redhat-developer/eclipseide-jdtls/) : an extension for Eclipse IDE
 * [coc-java](https://github.com/neoclide/coc-java) : an extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [MS Paint IDE](https://github.com/MSPaintIDE/MSPaintIDE) : an IDE for programming in MS Paint
 * [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls) : an extension for Neovim
