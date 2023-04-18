@@ -592,19 +592,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
 		CompletionHandler handler = new CompletionHandler(preferenceManager);
-		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
-			monitors[0] = monitor;
-			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
-				waitForLifecycleJobs(monitor);
-			}
-			return handler.completion(position, monitor);
-		});
-		result.join();
-		if (monitors[0].isCanceled()) {
-			result.cancel(true);
+		IProgressMonitor monitor = new NullProgressMonitor();
+		if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
+			waitForLifecycleJobs(monitor);
 		}
-		return result;
+		Either<List<CompletionItem>, CompletionList> result = handler.completion(position, monitor);
+		return CompletableFuture.completedFuture(result);
 	}
 
 	/* (non-Javadoc)
@@ -614,19 +607,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
 		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
-			monitors[0] = monitor;
-			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
-				waitForLifecycleJobs(monitor);
-			}
-			return handler.resolve(unresolved, monitor);
-		});
-		result.join();
-		if (monitors[0].isCanceled()) {
-			result.cancel(true);
+		IProgressMonitor monitor = new NullProgressMonitor();
+		if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
+			waitForLifecycleJobs(monitor);
 		}
-		return result;
+		CompletionItem result = handler.resolve(unresolved, monitor);
+		return CompletableFuture.completedFuture(result);
 	}
 
 	/* (non-Javadoc)
