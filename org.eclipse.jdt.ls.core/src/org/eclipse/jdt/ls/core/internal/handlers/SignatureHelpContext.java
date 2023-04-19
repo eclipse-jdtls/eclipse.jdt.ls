@@ -123,7 +123,7 @@ public class SignatureHelpContext {
 		}
 
 		String source = unit.getSource();
-		if (source == null) {
+		if (source == null || triggerOffset >= source.length()) {
 			return;
 		}
 
