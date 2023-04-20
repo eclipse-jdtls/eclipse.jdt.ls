@@ -428,7 +428,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			if (!preferenceManager.getClientPreferences().skipTextEventPropagation()) {
 				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
-	
+
 					Range range = changeEvent.getRange();
 					int length;
 					IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
@@ -442,7 +442,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 						length = unit.getSource().length();
 						startOffset = 0;
 					}
-	
+
 					TextEdit edit = null;
 					String text = changeEvent.getText();
 					if (length == 0) {
@@ -537,6 +537,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (unit.getResource() != null && unit.getJavaProject() != null && unit.getJavaProject().getProject().getName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 			try {
 				CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+				if (astRoot == null) {
+					return unit;
+				}
 				IProblem[] problems = astRoot.getProblems();
 				for (IProblem problem : problems) {
 					if (problem.getID() == IProblem.PackageIsNotExpectedPackage) {
@@ -623,6 +626,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private boolean needInferSourceRoot(IJavaProject javaProject, ICompilationUnit unit) {
 		if (javaProject.isOnClasspath(unit)) {
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+			if (astRoot == null) {
+				return false;
+			}
 			IProblem[] problems = astRoot.getProblems();
 			boolean isPackageNotMatch = Arrays.stream(problems)
 					.anyMatch(p -> p.getID() == IProblem.PackageIsNotExpectedPackage);

@@ -128,6 +128,9 @@ public class GenerateGetterSetterOperation {
 		if (astRoot == null) {
 			astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 		}
+		if (astRoot == null) {
+			return null;
+		}
 
 		final ASTRewrite astRewrite = ASTRewrite.create(astRoot.getAST());
 		ListRewrite listRewriter = null;

@@ -983,6 +983,30 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSignatureHelp_invalidAST() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				class X {
+					public static void main(string[] args) {
+
+					}
+
+					static void fun() {
+						int a
+						for (l < 10) {
+
+						}
+					}
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("X.java", content, false, null);
+		SignatureHelp help = getSignatureHelp(cu, 2, 37);
+		assertEquals(0, help.getSignatures().size());
+	}
+
+	@Test
 	public void testSignatureHelp_nestedInvocation() throws JavaModelException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();

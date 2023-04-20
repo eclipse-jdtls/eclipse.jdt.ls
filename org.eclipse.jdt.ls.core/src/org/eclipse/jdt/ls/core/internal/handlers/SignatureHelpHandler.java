@@ -287,6 +287,9 @@ public class SignatureHelpHandler {
 	private ASTNode getNode(ICompilationUnit unit, int[] contextInfomation, IProgressMonitor monitor) {
 		if (contextInfomation[0] != -1) {
 			CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
+			if (ast == null) {
+				return null;
+			}
 			ASTNode node = NodeFinder.perform(ast, contextInfomation[0], 1);
 			if (node instanceof MethodInvocation || node instanceof ClassInstanceCreation || node instanceof MethodRef) {
 				return node;
