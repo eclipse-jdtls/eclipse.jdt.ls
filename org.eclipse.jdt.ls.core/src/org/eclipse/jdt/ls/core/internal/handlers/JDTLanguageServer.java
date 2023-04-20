@@ -450,6 +450,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<Object> shutdown() {
 		logInfo(">> shutdown");
 		return computeAsync((monitor) -> {
+			shutdownJob.setSystem(true);
 			shutdownJob.schedule();
 			shutdownReceived = true;
 			if (preferenceManager.getClientPreferences().shouldLanguageServerExitOnShutdown()) {
@@ -473,6 +474,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			}, 1, TimeUnit.MINUTES);
 		}
 		if (!shutdownReceived) {
+			shutdownJob.setSystem(true);
 			shutdownJob.schedule();
 		}
 		try {
