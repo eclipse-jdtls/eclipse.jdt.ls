@@ -314,7 +314,10 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 
-			if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet){
+			if (isCompletionListItemDefaultsSupport() &&
+				completionItemDefaults.getInsertTextFormat() != null &&
+				completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet
+			) {
 				item.setInsertTextFormat(null);
 			} else {
 				item.setInsertTextFormat(InsertTextFormat.Snippet);
