@@ -591,20 +591,17 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
-		CompletionHandler handler = new CompletionHandler(preferenceManager);
-		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
-			monitors[0] = monitor;
+		try {
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			IProgressMonitor monitor = new NullProgressMonitor();
 			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
 				waitForLifecycleJobs(monitor);
 			}
-			return handler.completion(position, monitor);
-		});
-		result.join();
-		if (monitors[0].isCanceled()) {
-			result.cancel(true);
+			Either<List<CompletionItem>, CompletionList> result = handler.completion(position, monitor);
+			return CompletableFuture.completedFuture(result);
+		} catch (Exception ex) {
+			return CompletableFuture.failedFuture(ex);
 		}
-		return result;
 	}
 
 	/* (non-Javadoc)
@@ -613,20 +610,17 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<CompletionItem> resolveCompletionItem(CompletionItem unresolved) {
 		logInfo(">> document/resolveCompletionItem");
-		CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
-		final IProgressMonitor[] monitors = new IProgressMonitor[1];
-		CompletableFuture<CompletionItem> result = computeAsync((monitor) -> {
-			monitors[0] = monitor;
+		try {
+			CompletionResolveHandler handler = new CompletionResolveHandler(preferenceManager);
+			IProgressMonitor monitor = new NullProgressMonitor();
 			if ((Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION))) {
 				waitForLifecycleJobs(monitor);
 			}
-			return handler.resolve(unresolved, monitor);
-		});
-		result.join();
-		if (monitors[0].isCanceled()) {
-			result.cancel(true);
+			CompletionItem result = handler.resolve(unresolved, monitor);
+			return CompletableFuture.completedFuture(result);
+		} catch (Exception ex) {
+			return CompletableFuture.failedFuture(ex);
 		}
-		return result;
 	}
 
 	/* (non-Javadoc)
