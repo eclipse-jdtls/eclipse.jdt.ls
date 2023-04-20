@@ -16,13 +16,13 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IFile;
@@ -108,7 +108,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private Job validationTimer;
 	private Job publishDiagnosticsJob;
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
-	private Set<ICompilationUnit> toValidate = Collections.synchronizedSet(new HashSet<>());
+	private Set<ICompilationUnit> toValidate = ConcurrentHashMap.newKeySet();
 	private Map<String, Integer> documentVersions = new HashMap<>();
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
