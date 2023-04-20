@@ -51,6 +51,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -184,10 +185,14 @@ public class MoveHandler {
 	}
 
 	private static MethodDeclaration getSelectedMethodDeclaration(ICompilationUnit unit, CodeActionParams params) {
+		CompilationUnit ast = CodeActionHandler.getASTRoot(unit);
+		if (ast == null) {
+			return null;
+		}
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
+		context.setASTRoot(ast);
 
 		ASTNode node = context.getCoveredNode();
 		if (node == null) {
@@ -608,10 +613,14 @@ public class MoveHandler {
 	}
 
 	private static BodyDeclaration getSelectedMemberDeclaration(ICompilationUnit unit, CodeActionParams params) {
+		CompilationUnit ast = CodeActionHandler.getASTRoot(unit);
+		if (ast == null) {
+			return null;
+		}
 		int start = DiagnosticsHelper.getStartOffset(unit, params.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		context.setASTRoot(CodeActionHandler.getASTRoot(unit));
+		context.setASTRoot(ast);
 
 		ASTNode node = context.getCoveredNode();
 		if (node == null) {

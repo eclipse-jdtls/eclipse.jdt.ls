@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
 
 /**
  * Default Log filter. Excludes the following messages from being logged to the
@@ -29,16 +30,21 @@ import org.eclipse.core.runtime.IStatus;
 public class DefaultLogFilter implements Predicate<IStatus> {
 
 	private static final String MISSING_RESOURCE_FILTER_TYPE = "Missing resource filter type";
+	
+	private static final String AST_CREATION_ERROR = "Exception occurred during compilation unit conversion";
 
 	@Override
 	public boolean test(IStatus status) {
-		return accepts(getMessage(status));
-	}
 
-	private boolean accepts(String message) {
+		String message = getMessage(status);
 		// Checking for status messages is a bit weak, since it could still change in theory (although highly unlikely)
 		// and might fail in case of I18n'ed messages
-		if (message == null || message.startsWith(MISSING_RESOURCE_FILTER_TYPE)) {
+		if (message == null || message.startsWith(MISSING_RESOURCE_FILTER_TYPE) 
+				// Hack to silence errors logged in CoreASTProvider.getAST()
+				// See https://github.com/eclipse/eclipse.jdt.ls/issues/2608
+				// See https://github.com/eclipse-jdt/eclipse.jdt.core/issues/317
+				|| message.startsWith(AST_CREATION_ERROR)
+				|| JavaManipulation.ID_PLUGIN.equals(status.getPlugin())) {
 			return false;
 		}
 		return true;

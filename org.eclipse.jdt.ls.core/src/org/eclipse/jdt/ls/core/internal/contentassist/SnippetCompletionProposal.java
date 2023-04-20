@@ -157,7 +157,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 						}
 						if (node instanceof CompletionOnSingleNameReference) {
 							CompilationUnit ast = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
-							if (monitor.isCanceled()) {
+							if (ast == null || monitor.isCanceled()) {
 								return false;
 							}
 							org.eclipse.jdt.core.dom.ASTNode astNode = ASTNodeSearchUtil.getAstNode(ast, completionContext.getOffset(), 1);
@@ -433,6 +433,9 @@ public class SnippetCompletionProposal extends CompletionProposal {
 				if (acceptClass && node instanceof CompletionOnSingleNameReference) {
 					if (completionContext.getEnclosingElement() instanceof IMethod) {
 						CompilationUnit ast = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+						if (ast == null) {
+							return true;
+						}
 						org.eclipse.jdt.core.dom.ASTNode astNode = ASTNodeSearchUtil.getAstNode(ast, completionContext.getTokenStart(), completionContext.getTokenEnd() - completionContext.getTokenStart() + 1);
 						return (astNode == null || (astNode.getParent() instanceof ExpressionStatement));
 					}

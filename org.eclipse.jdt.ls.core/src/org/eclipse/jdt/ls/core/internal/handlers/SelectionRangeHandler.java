@@ -46,7 +46,9 @@ public class SelectionRangeHandler {
 		}
 
 		CompilationUnit ast = CoreASTProvider.getInstance().getAST(root, CoreASTProvider.WAIT_YES, monitor);
-
+		if (ast == null) {
+			return Collections.emptyList();
+		}
 		// extra logic to check within the line comments and block comments, which are not parts of the AST
 		@SuppressWarnings("unchecked")
 		List<Comment> comments = new ArrayList<Comment>(ast.getCommentList());

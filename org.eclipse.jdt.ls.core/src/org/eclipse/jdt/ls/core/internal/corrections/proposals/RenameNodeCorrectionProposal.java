@@ -46,7 +46,9 @@ public class RenameNodeCorrectionProposal extends CUCorrectionProposal {
 
 		// build a full AST
 		CompilationUnit unit = CoreASTProvider.getInstance().getAST(getCompilationUnit(), CoreASTProvider.WAIT_YES, null);
-
+		if (unit == null) {
+			return;
+		}
 		ASTNode name= NodeFinder.perform(unit, fOffset, fLength);
 		if (name instanceof SimpleName simpleName) {
 
