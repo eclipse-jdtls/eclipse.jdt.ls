@@ -123,7 +123,6 @@ public class JavadocCompletionProposal {
 			}
 			ci.setDocumentation(documentation);
 			Map<String, String> data = new HashMap<>(3);
-			data.put(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(cu));
 			data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "0");
 			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "0");
 			ci.setData(data);

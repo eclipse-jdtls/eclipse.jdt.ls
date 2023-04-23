@@ -30,6 +30,7 @@ public class CompletionResponse {
 	private Long id;
 	private int offset;
 	private CompletionContext context;
+	private String uri;
 	private List<CompletionProposal> proposals;
 	private List<CompletionItem> items;
 
@@ -55,6 +56,18 @@ public class CompletionResponse {
 	 */
 	public void setContext(CompletionContext context) {
 		this.context = context;
+	}
+	/**
+	 * the uri of the document.
+	 */
+	public String getUri() {
+		return uri;
+	}
+	/**
+	 * @param uri the document uri to set.
+	 */
+	public void setUri(String uri) {
+		this.uri = uri;
 	}
 	/**
 	 * @return the proposals

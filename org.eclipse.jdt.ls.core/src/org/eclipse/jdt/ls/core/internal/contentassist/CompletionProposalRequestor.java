@@ -280,6 +280,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			response.setProposals(proposals);
 		}
 		response.setItems(completionItems);
+		response.setUri(this.uri);
 		CompletionResponses.store(response);
 
 		return completionItems;
@@ -339,7 +340,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 		Map<String, String> data = new HashMap<>();
 		// append data field so that resolve request can use it.
-		data.put(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 		data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(index));
 		$.setData(data);

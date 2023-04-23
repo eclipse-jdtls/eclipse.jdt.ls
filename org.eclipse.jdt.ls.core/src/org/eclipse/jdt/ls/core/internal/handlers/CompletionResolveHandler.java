@@ -84,7 +84,6 @@ public class CompletionResolveHandler {
 		this.manager = manager;
 	}
 
-	public static final String DATA_FIELD_URI = "uri";
 	public static final String DATA_FIELD_DECLARATION_SIGNATURE = "decl_signature";
 	public static final String DATA_FIELD_SIGNATURE= "signature";
 	public static final String DATA_FIELD_NAME = "name";
@@ -99,7 +98,7 @@ public class CompletionResolveHandler {
 		Map<String, String> data = JSONUtility.toModel(param.getData(),Map.class);
 		// clean resolve data
 		param.setData(null);
-		if (!CompletionProposalRequestor.SUPPORTED_KINDS.contains(param.getKind()) || data == null || !data.containsKey(DATA_FIELD_URI) || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
+		if (!CompletionProposalRequestor.SUPPORTED_KINDS.contains(param.getKind()) || data == null || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
 			return param;
 		}
 		int proposalId = Integer.parseInt(data.get(DATA_FIELD_PROPOSAL_ID));
@@ -108,7 +107,8 @@ public class CompletionResolveHandler {
 		if (completionResponse == null || completionResponse.getProposals().size() <= proposalId) {
 			throw new IllegalStateException("Invalid completion proposal");
 		}
-		String uri = data.get(DATA_FIELD_URI);
+
+		String uri = completionResponse.getUri();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null) {
 			throw new IllegalStateException(NLS.bind("Unable to match Compilation Unit from {0} ", uri));

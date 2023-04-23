@@ -316,7 +316,6 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
 			assertNotNull(data);
-			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_URI)));
 			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID)));
 			assertTrue(StringUtils.isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
 		}
