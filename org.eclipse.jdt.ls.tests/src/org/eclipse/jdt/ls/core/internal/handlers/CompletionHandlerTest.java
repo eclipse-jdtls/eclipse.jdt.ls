@@ -123,6 +123,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 		preferences.setPostfixCompletionEnabled(false);
+		preferences.setCompletionLazyResolveTextEditEnabled(true);
 	}
 
 	@After
@@ -1031,6 +1032,35 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_NonLazyResolve() throws JavaModelException {
+		try {
+			preferences.setCompletionLazyResolveTextEditEnabled(false);
+			//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public class Test {\n" +
+				"	public void testMethod() {\n" +
+				"		sysout" +
+				"	}\n" +
+				"}"
+			);
+			//@formatter:on
+			CompletionList list = requestCompletions(unit, "sysout");
+
+			assertNotNull(list);
+
+			List<CompletionItem> items = new ArrayList<>(list.getItems());
+			CompletionItem item = items.get(0);
+			assertEquals("sysout", item.getLabel());
+			String newText = item.getTextEdit().getLeft().getNewText();
+			assertEquals("System.out.println(${0});", newText);
+		} finally {
+			preferences.setCompletionLazyResolveTextEditEnabled(true);
+		}
+	}
+
+	@Test
 	public void testSnippet_sysout() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
@@ -1075,7 +1105,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (CompletionItem item : items) {
 			if (CompletionItemKind.Snippet.equals(item.getKind()) && "sout".equals(item.getLabel())) {
 				String insertText = item.getInsertText();
-		assertEquals("System.out.println(${0});", insertText);
+				assertEquals("System.out.println(${0});", insertText);
 				return;
 			}
 		}
@@ -3978,9 +4008,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		mockLSPClient(false, false);
 	}
 
-	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
+	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSupported) {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
-		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(isSignatureHelpSuported);
+		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(isSignatureHelpSupported);
 	}
 }

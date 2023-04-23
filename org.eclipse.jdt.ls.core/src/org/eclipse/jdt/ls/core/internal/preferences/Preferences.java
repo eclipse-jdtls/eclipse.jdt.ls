@@ -325,6 +325,11 @@ public class Preferences {
 	public static final String COMPLETION_MATCH_CASE_MODE_KEY = "java.completion.matchCase";
 
 	/**
+	 * Preference key to specify whether text edit of completion item can be lazily resolved.
+	 */
+	public static final String COMPLETION_LAZY_RESOLVE_TEXT_EDIT_ENABLED_KEY = "java.completion.lazyResolveTextEdit.enabled";
+
+	/**
 	 * Preference key to enable/disable the 'foldingRange'.
 	 */
 	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
@@ -580,6 +585,7 @@ public class Preferences {
 	private boolean completionEnabled;
 	private boolean postfixCompletionEnabled;
 	private CompletionMatchCaseMode completionMatchCaseMode;
+	private boolean completionLazyResolveTextEditEnabled;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
@@ -830,6 +836,7 @@ public class Preferences {
 		completionEnabled = true;
 		postfixCompletionEnabled = true;
 		completionMatchCaseMode = CompletionMatchCaseMode.OFF;
+		completionLazyResolveTextEditEnabled = false;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
@@ -1007,6 +1014,9 @@ public class Preferences {
 
 		String completionMatchCaseMode = getString(configuration, COMPLETION_MATCH_CASE_MODE_KEY, null);
 		prefs.setCompletionMatchCaseMode(CompletionMatchCaseMode.fromString(completionMatchCaseMode, CompletionMatchCaseMode.OFF));
+
+		boolean completionLazyResolveTextEditEnabled = getBoolean(configuration, COMPLETION_LAZY_RESOLVE_TEXT_EDIT_ENABLED_KEY, false);
+		prefs.setCompletionLazyResolveTextEditEnabled(completionLazyResolveTextEditEnabled);
 
 		boolean completionOverwrite = getBoolean(configuration, JAVA_COMPLETION_OVERWRITE_KEY, true);
 		prefs.setCompletionOverwrite(completionOverwrite);
@@ -1431,6 +1441,14 @@ public class Preferences {
 
 	public void setCompletionMatchCaseMode(CompletionMatchCaseMode completionMatchCaseMode) {
 		this.completionMatchCaseMode = completionMatchCaseMode;
+	}
+
+	public boolean isCompletionLazyResolveTextEditEnabled() {
+		return completionLazyResolveTextEditEnabled;
+	}
+
+	public void setCompletionLazyResolveTextEditEnabled(boolean completionLazyResolveTextEditEnabled) {
+		this.completionLazyResolveTextEditEnabled = completionLazyResolveTextEditEnabled;
 	}
 
 	public Preferences setCompletionOverwrite(boolean completionOverwrite) {
