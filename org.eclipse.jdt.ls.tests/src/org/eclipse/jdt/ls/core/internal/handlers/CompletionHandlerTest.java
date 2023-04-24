@@ -264,7 +264,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			@SuppressWarnings("unchecked")
 			Map<String,String> data = (Map<String, String>) item.getData();
 			assertNotNull(data);
-			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_URI)));
 			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID)));
 			assertTrue(isNotBlank(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID)));
 		}
@@ -283,15 +282,13 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertFalse("No proposals were found",list.getItems().isEmpty());
 
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		for ( CompletionItem item : items) {
-			@SuppressWarnings("unchecked")
-			Map<String,String> data = (Map<String, String>) item.getData();
-			assertNotNull(data);
-			String uri = data.get(CompletionResolveHandler.DATA_FIELD_URI);
-			assertTrue(isNotBlank(uri));
-			assertTrue("unexpected URI prefix: " + uri, uri.matches("file://.*/src/java/Foo\\.java"));
-		}
+		Map<String,String> data = (Map<String, String>) list.getItems().get(0).getData();
+		long requestId = Long.parseLong(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID));
+		CompletionResponse completionResponse = CompletionResponses.get(requestId);
+		assertNotNull(completionResponse);
+		String uri = completionResponse.getUri();
+		assertNotNull(uri);
+		assertTrue("unexpected URI prefix: " + uri, uri.matches("file://.*/src/java/Foo\\.java"));
 	}
 
 

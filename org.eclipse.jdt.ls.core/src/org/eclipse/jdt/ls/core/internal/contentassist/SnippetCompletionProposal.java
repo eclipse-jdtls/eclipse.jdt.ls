@@ -346,8 +346,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 				item.setLabelDetails(itemLabelDetails);
 			}
 
-			Map<String, String> data = new HashMap<>(3);
-			data.put(CompletionResolveHandler.DATA_FIELD_URI, uri);
+			Map<String, String> data = new HashMap<>(2);
 			data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
 			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(i));
 			item.setData(data);
@@ -358,6 +357,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 		response.setProposals(proposals);
 		response.setItems(res);
+		response.setUri(uri);
 		CompletionResponses.store(response);
 		return res;
 	}
