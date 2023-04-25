@@ -77,6 +77,37 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCastLazyResolve() throws JavaModelException {
+		try {
+			preferences.setCompletionLazyResolveTextEditEnabled(true);
+			//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public class Test {\n" +
+				"	public void testMethod(String a) {\n" +
+				"		a.cast" +
+				"	}\n" +
+				"}"
+			);
+			//@formatter:on
+			CompletionList list = requestCompletions(unit, "a.cast");
+
+			assertNotNull(list);
+
+			List<CompletionItem> items = new ArrayList<>(list.getItems());
+			CompletionItem item = items.get(0);
+			assertEquals("cast", item.getLabel());
+			assertEquals(item.getInsertText(), "((${1})${inner_expression})${0}");
+			assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+			Range range = item.getAdditionalTextEdits().get(0).getRange();
+			assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
+		} finally {
+			preferences.setCompletionLazyResolveTextEditEnabled(false);
+		}
+	}
+
+	@Test
 	public void test_cast() throws JavaModelException {
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		//@formatter:off
