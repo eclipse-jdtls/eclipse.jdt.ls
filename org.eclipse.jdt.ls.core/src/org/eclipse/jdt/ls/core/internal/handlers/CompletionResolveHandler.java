@@ -47,6 +47,9 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacem
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContext;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposal;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -123,16 +126,41 @@ public class CompletionResolveHandler {
 			try {
 				CompletionContext ctx = completionResponse.getContext();
 				CompletionProposal proposal = completionResponse.getProposals().get(proposalId);
-				Template template = ((SnippetCompletionProposal) proposal).getTemplate();
-				String content = SnippetCompletionProposal.evaluateGenericTemplate(unit, ctx, template);
-				if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
-					param.setDocumentation(SnippetUtils.beautifyDocument(content));
-				}
+				if (proposal instanceof SnippetCompletionProposal) {
+					Template template = ((SnippetCompletionProposal) proposal).getTemplate();
+					String content = SnippetCompletionProposal.evaluateGenericTemplate(unit, ctx, template);
+					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
+						param.setDocumentation(SnippetUtils.beautifyDocument(content));
+					}
+	
+					if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
+						SnippetCompletionProposal.setTextEdit(ctx, unit, param, content);
+					}
+				} else if (proposal instanceof PostfixCompletionProposal) {
+					JavaPostfixContext postfixContext = ((PostfixCompletionProposal) proposal).getContext();
+					Template template = ((PostfixCompletionProposal) proposal).getTemplate();
+					postfixContext.setActiveTemplateName(template.getName());
+					String content = PostfixTemplateEngine.evaluateGenericTemplate(postfixContext, template);
+					int length = postfixContext.getEnd() - postfixContext.getStart();
+					Range range = JDTUtils.toRange(unit, postfixContext.getStart(), length);
+					if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
+						TextEdit textEdit = new TextEdit(range, content);
+						param.setTextEdit(Either.forLeft(textEdit));
+					}
 
-				if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
-					SnippetCompletionProposal.setTextEdit(ctx, unit, param, content);
-				}
+					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
+						param.setDocumentation(SnippetUtils.beautifyDocument(content));
+					}
 
+					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
+						param.setDetail(template.getDescription());
+					}
+
+					if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
+						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, range, template);
+					}
+				}
+	
 				param.setData(null);
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);

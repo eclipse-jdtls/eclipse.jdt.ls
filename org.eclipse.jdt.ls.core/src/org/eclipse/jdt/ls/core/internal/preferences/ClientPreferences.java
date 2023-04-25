@@ -424,6 +424,10 @@ public class ClientPreferences {
 		return isPropertySupportedForCompletionResolve("documentation");
 	}
 
+	public boolean isCompletionResolveDetailSupport() {
+		return isPropertySupportedForCompletionResolve("detail");
+	}
+
 	public boolean isPropertySupportedForCompletionResolve(String property) {
 		return (v3supported
 			&& capabilities.getTextDocument().getCompletion() != null

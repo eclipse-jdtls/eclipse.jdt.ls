@@ -14,10 +14,12 @@ package org.eclipse.jdt.ls.core.internal.corext.template.java;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.core.CompletionContext;
+import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
@@ -30,6 +32,10 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResponses;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateBuffer;
@@ -83,52 +89,97 @@ public class PostfixTemplateEngine {
 		}
 
 		Template[] templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaPostfixContextType.ID_ALL);
-		Template[] availableTemplates = Arrays.stream(templates).filter(t -> context.canEvaluate(t)).toArray(Template[]::new);
+		Template[] availableTemplates = Arrays.stream(templates).filter(context::canEvaluate).toArray(Template[]::new);
 		boolean needsCheck = !isJava12OrHigherProject(compilationUnit);
+		CompletionResponse response = new CompletionResponse();
+		List<CompletionProposal> proposals = new ArrayList<>();
+		int i = 0;
 		for (Template template : availableTemplates) {
 			if (!canEvaluate(context, template, needsCheck)) {
 				continue;
 			}
 			final CompletionItem item = new CompletionItem();
-			context.setActiveTemplateName(template.getName());
-			String content = evaluateGenericTemplate(context, template);
-			if (StringUtils.isBlank(content)) {
-				continue;
-			}
-			item.setInsertText(content);
-			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsSupport()) {
-				item.setTextEditText(content);
-			}
-			List<TextEdit> additionalEdits = new ArrayList<>();
-			// use additional test edit to remove the code that needs to be replaced
-			additionalEdits.add(new TextEdit(range, ""));
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
-			item.setInsertTextFormat(InsertTextFormat.Snippet);
-			if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet) {
-				item.setInsertTextFormat(null);
+
+			setInsertTextFormat(item, completionItemDefaults);
+
+			String content = "";
+			if (isCompletionLazyResolveTextEditEnabled()) {
+				content = SnippetUtils.templateToSnippet(template.getPattern());
+			} else {
+				context.setActiveTemplateName(template.getName());
+				content = evaluateGenericTemplate(context, template);
 			}
-			item.setDetail(template.getDescription());
+			setTextEdit(item, content, completionItemDefaults);
+
+			if (!getClientPreferences().isResolveAdditionalTextEditsSupport()) {
+				setAdditionalTextEdit(item, compilationUnit, context, range, template);
+			}
+
 			if (isCompletionItemLabelDetailsSupport()) {
 				CompletionItemLabelDetails itemLabelDetails = new CompletionItemLabelDetails();
 				itemLabelDetails.setDescription(template.getDescription());
 				item.setLabelDetails(itemLabelDetails);
 			}
-			item.setDocumentation(SnippetUtils.beautifyDocument(content));
+
+			if (!getClientPreferences().isCompletionResolveDetailSupport()) {
+				item.setDetail(template.getDescription());
+			}
+
+			if (!getClientPreferences().isCompletionResolveDocumentSupport()) {
+				item.setDocumentation(SnippetUtils.beautifyDocument(content));
+			}
+
 			// we hope postfix shows at the bottom of the completion list.
 			item.setSortText(SortTextHelper.convertRelevance(0));
-			List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
-			if (jdtTextEdits != null && jdtTextEdits.size() > 0) {
-				for (org.eclipse.text.edits.TextEdit edit : jdtTextEdits) {
-					TextEditConverter converter = new TextEditConverter(compilationUnit, edit);
-					additionalEdits.addAll(converter.convert());
-				}
-			}
-			item.setAdditionalTextEdits(additionalEdits);
+
+			Map<String, String> data = new HashMap<>(2);
+			data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, String.valueOf(response.getId()));
+			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(i++));
+			item.setData(data);
+
+			proposals.add(new PostfixCompletionProposal(template, context));
 			res.add(item);
 		}
 
+		response.setProposals(proposals);
+		response.setItems(res);
+		response.setUri(JDTUtils.toURI(compilationUnit));
+		CompletionResponses.store(response);
 		return res;
+	}
+
+	private void setTextEdit(final CompletionItem item, String content, CompletionItemDefaults completionItemDefaults) {
+		if (getClientPreferences().isCompletionListItemDefaultsSupport() && completionItemDefaults.getEditRange() != null) {
+			item.setTextEditText(content);
+		} else {
+			item.setInsertText(content);
+		}
+	}
+
+	private void setInsertTextFormat(final CompletionItem item, CompletionItemDefaults completionItemDefaults) {
+		if (!getClientPreferences().isCompletionListItemDefaultsSupport() ||
+			completionItemDefaults.getInsertTextFormat() == null ||
+			completionItemDefaults.getInsertTextFormat() != InsertTextFormat.Snippet
+		) {
+			item.setInsertTextFormat(InsertTextFormat.Snippet);
+		}
+	}
+
+	public static void setAdditionalTextEdit(final CompletionItem item, ICompilationUnit compilationUnit,
+			JavaPostfixContext context, Range range, Template template) {
+		List<TextEdit> additionalEdits = new ArrayList<>();
+		// use additional test edit to remove the code that needs to be replaced
+		additionalEdits.add(new TextEdit(range, ""));
+		List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
+		if (jdtTextEdits != null && !jdtTextEdits.isEmpty()) {
+			for (org.eclipse.text.edits.TextEdit edit : jdtTextEdits) {
+				TextEditConverter converter = new TextEditConverter(compilationUnit, edit);
+				additionalEdits.addAll(converter.convert());
+			}
+		}
+		item.setAdditionalTextEdits(additionalEdits);
 	}
 
 	private boolean isCompletionItemLabelDetailsSupport() {
@@ -183,7 +234,7 @@ public class PostfixTemplateEngine {
 	/**
 	 * @See org.eclipse.jdt.internal.ui.text.template.contentassist.TemplateProposal#apply(org.eclipse.jface.text.ITextViewer, char, int, int)
 	 */
-	private String evaluateGenericTemplate(JavaPostfixContext postfixContext, Template template) {
+	public static String evaluateGenericTemplate(JavaPostfixContext postfixContext, Template template) {
 		TemplateBuffer buffer = null;
 		try {
 			buffer = postfixContext.evaluate(template);
@@ -199,5 +250,13 @@ public class PostfixTemplateEngine {
 			return null;
 		}
 		return content;
+	}
+
+	private ClientPreferences getClientPreferences() {
+		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences();
+	}
+
+	private boolean isCompletionLazyResolveTextEditEnabled() {
+		return JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCompletionLazyResolveTextEditEnabled();
 	}
 }
