@@ -400,6 +400,33 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void test_syserr_object() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(String a) {\n" +
+			"		Boolean foo = true;\n" +
+			"		foo.syserr" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "foo.syserr");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("syserr", item.getLabel());
+		assertEquals(item.getInsertText(), "System.err.println(foo);${0}");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(4, 2), new Position(4, 12)), range);
+	}
+
+	@Test
 	public void test_throw() throws JavaModelException {
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
