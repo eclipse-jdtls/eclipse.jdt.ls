@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.23.0 (April 27th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/113?closed=1)
+ * performance - Completion handling should not be done in asynchronous thread pool. See [#2605](https://github.com/eclipse/eclipse.jdt.ls/pull/2605).
+ * performance - Support lazily resolving postfix completion items. See [#2616](https://github.com/eclipse/eclipse.jdt.ls/issues/2616).
+ * performance - Place the URI of a document into the completion response store. See [#2614](https://github.com/eclipse/eclipse.jdt.ls/pull/2614).
+ * enhancement - Provide Java 20 support. See [#2585](https://github.com/eclipse/eclipse.jdt.ls/issues/2585).
+ * enhancement - Support for clients that do not implement `resolve` for completions. See [#2584](https://github.com/eclipse/eclipse.jdt.ls/issues/2584), [#2598](https://github.com/eclipse/eclipse.jdt.ls/pull/2598).
+ * enhancement - Add `syserr` postfix completion. See [#2620](https://github.com/eclipse/eclipse.jdt.ls/pull/2620).
+ * enhancement - Add an `extendedClientCapability` to skip propagation of text edits from `didChange`. See [#2522](https://github.com/eclipse/eclipse.jdt.ls/pull/2522).
+ * bug fix - `NullPointerException` in `signatureHelp/codeAction/inlayHint` when AST is not generated. See [#2608](https://github.com/eclipse/eclipse.jdt.ls/issues/2608).
+ * bug fix - `StringIndexOutOfBoundsException` on `textDocument/signatureHelp` when triggered from end of document. See [#2606](https://github.com/eclipse/eclipse.jdt.ls/issues/2606).
+ * bug fix - Some logged information should only be shown in debug mode. See [#2603](https://github.com/eclipse/eclipse.jdt.ls/issues/2603).
+ * build - Update maven wrapper to 3.9.1. See [#2599](https://github.com/eclipse/eclipse.jdt.ls/pull/2599).
+ * debt - Remove unnecessary files about "Change Signature refactoring". See [#2571](https://github.com/eclipse/eclipse.jdt.ls/pull/2571).
+ * documentation - Add Eclipse IDE JDT.LS to the "Clients" section of the `README.md`. See [#2602](https://github.com/eclipse/eclipse.jdt.ls/pull/2602).
+
 # [1.22.0 (April 13th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/112?closed=1)
  * performance - Cache and re-use type bindings for a completion invocation. See [#2535](https://github.com/eclipse/eclipse.jdt.ls/pull/2535).
  * performance - Avoid retrieving AST root during diagnostic publishing. See [#2574](https://github.com/eclipse/eclipse.jdt.ls/pull/2574).

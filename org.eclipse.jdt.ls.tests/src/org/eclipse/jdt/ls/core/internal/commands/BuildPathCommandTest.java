@@ -117,7 +117,7 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(listResult.status);
 		SourcePath[] sourcePaths = listResult.data;
 		assertNotNull(sourcePaths);
-		assertEquals(sourcePaths.length, 5);
+		assertEquals(sourcePaths.length, 6);
 
 		IResource srcResource = project.findMember("src");
 		Result addSrcResult = BuildPathCommand.addToSourcePath(JDTUtils.getFileURI(srcResource));
