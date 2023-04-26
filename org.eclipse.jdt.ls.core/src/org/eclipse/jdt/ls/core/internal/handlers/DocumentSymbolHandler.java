@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
@@ -147,7 +148,13 @@ public class DocumentSymbolHandler {
 
 	private List<DocumentSymbol> getHierarchicalOutline(ITypeRoot unit, IProgressMonitor monitor) {
 		try {
-			return Stream.of(filter(unit.getChildren())).map(child -> toDocumentSymbol(child, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
+			IJavaElement[] children = unit.getChildren();
+			Stream<IJavaElement> childrenStream = Stream.of(filter(children));
+			if (unit instanceof IClassFile) {
+				// Prepend Package element as the first child
+				childrenStream = Stream.concat(Stream.of(unit.getParent()), childrenStream);
+			}
+			return childrenStream.map(child -> toDocumentSymbol(child, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
 		} catch (OperationCanceledException e) {
 			logInfo("User abort while collecting the document symbols.");
 		} catch (JavaModelException e) {
