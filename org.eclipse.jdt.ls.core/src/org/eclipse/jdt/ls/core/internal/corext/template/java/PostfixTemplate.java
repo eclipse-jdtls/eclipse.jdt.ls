@@ -26,6 +26,7 @@ public enum PostfixTemplate {
 	NNULL(PostfixPreferences.NNULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NNULL_CONTENT, PostfixPreferences.NNULL_DESCRIPTION),
 	NULL(PostfixPreferences.NULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NULL_CONTENT, PostfixPreferences.NULL_DESCRIPTION),
 	SYSOUT(PostfixPreferences.SYSOUT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUT_CONTENT, PostfixPreferences.SYSOUT_DESCRIPTION),
+	SYSERR(PostfixPreferences.SYSERR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSERR_CONTENT, PostfixPreferences.SYSERR_DESCRIPTION),
 	THROW(PostfixPreferences.THROW_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.THROW_CONTENT, PostfixPreferences.THROW_DESCRIPTION),
 	VAR(PostfixPreferences.VAR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.VAR_CONTENT, PostfixPreferences.VAR_DESCRIPTION),
 	WHILE(PostfixPreferences.WHILE_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.WHILE_CONTENT, PostfixPreferences.WHILE_DESCRIPTION);
@@ -63,6 +64,7 @@ class PostfixPreferences {
 	public static final String NNULL_ID = "org.eclipse.jdt.postfixcompletion.nnull";
 	public static final String NULL_ID = "org.eclipse.jdt.postfixcompletion.null";
 	public static final String SYSOUT_ID = "org.eclipse.jdt.postfixcompletion.sysout";
+	public static final String SYSERR_ID = "org.eclipse.jdt.postfixcompletion.syserr";
 	public static final String THROW_ID = "org.eclipse.jdt.postfixcompletion.throw";
 	public static final String VAR_ID = "org.eclipse.jdt.postfixcompletion.var";
 	public static final String WHILE_ID = "org.eclipse.jdt.postfixcompletion.while";
@@ -91,6 +93,7 @@ class PostfixPreferences {
 		"\t$${0}\n" +
 	"}";
 	public static final String SYSOUT_CONTENT = "System.out.println(${i:inner_expression(java.lang.Object)}${});$${0}";
+	public static final String SYSERR_CONTENT = "System.err.println(${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String THROW_CONTENT = "throw ${true:inner_expression(java.lang.Throwable)};";
 	public static final String VAR_CONTENT = "${field:newType(inner_expression)} $${1:${var:newName(inner_expression)}} = ${inner_expression};$${0}";
 	public static final String WHILE_CONTENT = "while (${i:inner_expression(boolean)}) {\n" +
@@ -107,6 +110,7 @@ class PostfixPreferences {
 	public static final String NNULL_DESCRIPTION = "Creates an if statement and checks if the expression does not resolve to null";
 	public static final String NULL_DESCRIPTION = "Creates an if statement which checks if expression resolves to null";
 	public static final String SYSOUT_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
+	public static final String SYSERR_DESCRIPTION = "Sends the affected object to a System.err.println(..) call";
 	public static final String THROW_DESCRIPTION = "Throws the given Exception";
 	public static final String VAR_DESCRIPTION = "Creates a new variable";
 	public static final String WHILE_DESCRIPTION = "Creates a while loop";
