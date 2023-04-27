@@ -50,6 +50,7 @@ import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
@@ -72,7 +73,6 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemLabelDetails;
-import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -314,14 +314,8 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 
-			if (isCompletionListItemDefaultsSupport() &&
-				completionItemDefaults.getInsertTextFormat() != null &&
-				completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet
-			) {
-				item.setInsertTextFormat(null);
-			} else {
-				item.setInsertTextFormat(InsertTextFormat.Snippet);
-			}
+			CompletionUtils.setInsertTextFormat(item, completionItemDefaults);
+			CompletionUtils.setInsertTextMode(item, completionItemDefaults);
 
 			if (isCompletionLazyResolveTextEditEnabled()) {
 				String insertText = SnippetUtils.templateToSnippet(template.getPattern());
@@ -571,10 +565,8 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 	private static void setFields(CompletionItem ci, ICompilationUnit cu, CompletionItemDefaults completionItemDefaults) {
 		ci.setKind(CompletionItemKind.Snippet);
-		ci.setInsertTextFormat(InsertTextFormat.Snippet);
-		if (completionItemDefaults.getInsertTextFormat() != null && completionItemDefaults.getInsertTextFormat() == InsertTextFormat.Snippet){
-			ci.setInsertTextFormat(null);
-		}
+		CompletionUtils.setInsertTextFormat(ci, completionItemDefaults);
+		CompletionUtils.setInsertTextMode(ci, completionItemDefaults);
 		ci.setDocumentation(SnippetUtils.beautifyDocument(ci.getInsertText()));
 	}
 
@@ -627,7 +619,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	private static boolean isCompletionListItemDefaultsSupport() {
 		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsSupport();
 	}
-	
+
 	private static boolean isCompletionLazyResolveTextEditEnabled() {
 		return JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCompletionLazyResolveTextEditEnabled();
 	}

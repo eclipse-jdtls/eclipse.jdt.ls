@@ -62,6 +62,7 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.TextEdit;
@@ -195,6 +196,10 @@ public class CompletionProposalReplacementProvider {
 			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		} else {
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
+		}
+		if (isResolvingRequest || (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")
+				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation)) {
+			item.setInsertTextMode(InsertTextMode.AdjustIndentation);
 		}
 		String text = completionBuffer.toString();
 		if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {

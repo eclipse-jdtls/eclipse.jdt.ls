@@ -55,6 +55,7 @@ import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.InsertReplaceRange;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -72,7 +73,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private boolean isComplete = true;
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
-	private CompletionItemDefaults itemDefaults;
+	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -121,9 +122,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 	public CompletionItemDefaults getCompletionItemDefaults() {
-		if (itemDefaults == null) {
-			itemDefaults = new CompletionItemDefaults();
-		}
 		return itemDefaults;
 	}
 	// Update SUPPORTED_KINDS when mapKind changes
@@ -316,20 +314,23 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private void initializeCompletionListItemDefaults(CompletionProposal proposal) {
 		CompletionItem completionItem = new CompletionItem();
-		CompletionItemDefaults itemDefaults = getCompletionItemDefaults();
 		proposalProvider.updateReplacement(proposal, completionItem, '\0');
-		if (completionItem.getInsertTextFormat() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()) {
+		if (completionItem.getInsertTextFormat() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")) {
 			itemDefaults.setInsertTextFormat(completionItem.getInsertTextFormat());
 		}
-		if (completionItem.getTextEdit() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()) {
+		if (completionItem.getTextEdit() != null && preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")) {
 			itemDefaults.setEditRange(getEditRange(completionItem, preferenceManager));
+		}
+		if (preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode") &&
+			preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation) &&
+			preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation
+		) {
+			itemDefaults.setInsertTextMode(InsertTextMode.AdjustIndentation);
 		}
 	}
 
-
 	public CompletionItem toCompletionItem(CompletionProposal proposal, int index) {
 		final CompletionItem $ = new CompletionItem();
-		CompletionItemDefaults itemDefaults = getCompletionItemDefaults();
 		$.setKind(mapKind(proposal));
 		if (Flags.isDeprecated(proposal.getFlags())) {
 			if (preferenceManager.getClientPreferences().isCompletionItemTagSupported()) {
