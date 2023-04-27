@@ -70,6 +70,7 @@ import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Position;
@@ -391,6 +392,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_javadocComment() throws JavaModelException {
+		mockClientPreferences(true, true, true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AdjustIndentation);
 		ICompilationUnit unit = getWorkingCopy(
 		//@formatter:off
 		"src/java/Foo.java",
@@ -409,6 +412,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Snippet, item.getKind());
 		assertEquals("999999999", item.getSortText());
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		assertNull(item.getInsertTextMode());
 		assertNotNull(item.getTextEdit());
 		assertEquals("\n * ${0}\n * @param i\n * @param s\n", item.getTextEdit().getLeft().getNewText());
 		Range range = item.getTextEdit().getLeft().getRange();
@@ -423,6 +427,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
+		Mockito.when(mockCapabilies.isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
+		Mockito.when(mockCapabilies.getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
+
 		ICompilationUnit unit = getWorkingCopy(
 		//@formatter:off
 		"src/java/Foo.java",
@@ -441,6 +448,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Snippet, item.getKind());
 		assertEquals("999999999", item.getSortText());
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.PlainText);
+		assertEquals(item.getInsertTextMode(), InsertTextMode.AdjustIndentation);
 		assertNotNull(item.getTextEdit());
 		assertEquals("\n * @param i\n * @param s\n", item.getTextEdit().getLeft().getNewText());
 		Range range = item.getTextEdit().getLeft().getRange();
@@ -860,14 +868,17 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(supportCompletionSnippets);
 		Mockito.lenient().when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(false);
 		return mockCapabilies;
 	}
 
 	@Test
 	public void testCompletion_field() throws JavaModelException{
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -888,12 +899,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Foo.myTestString : String", item.getDetail());
 		assertNotNull(item.getTextEdit());
 		assertTextEdit(4, 8, 15, "myTestString", item.getTextEdit().getLeft());
+		assertEquals(item.getInsertTextMode(), InsertTextMode.AdjustIndentation);
 		//Not checking the range end character
 	}
 
 	@Test
 	public void testCompletion_field_itemDefaults_enabled() throws JavaModelException{
 		mockClientPreferences(true, true, true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -911,6 +924,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertNotNull(list.getItemDefaults().getEditRange());
 		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
 
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);
@@ -920,11 +934,39 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//check that the fields covered by itemDefaults are set to null
 		assertNull(item.getTextEdit());
 		assertNull(item.getInsertTextFormat());
+		assertNull(item.getInsertTextMode());
 		//Not checking the range end character
 	}
 
 	@Test
+	public void testCompletion_field_itemDefaults_enabled_AdjustIndentation() throws JavaModelException{
+		mockClientPreferences(true, true, true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AdjustIndentation);
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"import java.sq \n" +
+						"public class Foo {\n"+
+						"private String myTestString;\n"+
+						"	void foo() {\n"+
+						"   this.myTestS\n"+
+						"	}\n"+
+				"}\n");
+		//@formatter:on
+
+		CompletionList list = requestCompletions(unit, "this.myTestS");
+
+		assertNotNull(list);
+		assertNull(list.getItemDefaults().getInsertTextMode());
+
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertNull(item.getInsertTextMode());
+	}
+
+	@Test
 	public void testCompletion_import_type() throws JavaModelException{
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AdjustIndentation);
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
 				"import java.sq \n" +
@@ -944,6 +986,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(item.getTextEdit());
 		assertTextEdit(3, 3, 15, "java.util.Map", item.getTextEdit().getLeft());
 		assertTrue(item.getFilterText().startsWith("java.util.Ma"));
+		assertNull(item.getInsertTextMode());
 		//Not checking the range end character
 	}
 
@@ -1298,11 +1341,13 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSnippet_inner_class_itemDefaults_enabled_type_definition() throws JavaModelException {
 		mockClientPreferences(true, true, true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\npublic class Test {}\n");
 		CompletionList list = requestCompletions(unit, "");
 
 		assertNotNull(list);
 		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
 
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		assertFalse(items.isEmpty());
@@ -1315,6 +1360,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//check that the fields covered by itemDefaults are set to null
 		assertNull(item.getTextEdit());
 		assertNull(item.getInsertTextFormat());
+		assertNull(item.getInsertTextMode());
 	}
 
 	@Test

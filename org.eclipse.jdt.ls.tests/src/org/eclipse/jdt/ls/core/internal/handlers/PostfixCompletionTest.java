@@ -32,6 +32,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
@@ -110,6 +111,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void test_cast() throws JavaModelException {
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -132,12 +134,14 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("Casts the expression to a new type", item.getLabelDetails().getDescription());
 		assertEquals(item.getInsertText(), "((${1})a)${0}");
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		assertEquals(item.getInsertTextMode(), InsertTextMode.AdjustIndentation);
 		Range range = item.getAdditionalTextEdits().get(0).getRange();
 		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
 	}
 
 	@Test
 	public void test_if() throws JavaModelException {
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AdjustIndentation);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -158,6 +162,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("if", item.getLabel());
 		assertEquals(item.getInsertText(), "if (a) {\n\t${0}\n}");
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		assertNull(item.getInsertTextMode());
 		Range range = item.getAdditionalTextEdits().get(0).getRange();
 		assertEquals(new Range(new Position(3, 2), new Position(3, 6)), range);
 	}
@@ -361,6 +366,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertNotNull(list.getItemDefaults().getEditRange());
 		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
 
 		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().startsWith("sysout")).findFirst().orElse(null);
 		assertNotNull(ci);
@@ -369,6 +375,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		//check that the fields covered by itemDefaults are set to null
 		assertNull(ci.getTextEdit());
 		assertNull(ci.getInsertTextFormat());
+		assertNull(ci.getInsertTextMode());
 		assertEquals(CompletionItemKind.Snippet, ci.getKind());
 	}
 
@@ -636,8 +643,10 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(false);
 	}
 }

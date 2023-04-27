@@ -41,6 +41,7 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
+import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
@@ -50,8 +51,8 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
-import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -105,15 +106,23 @@ public class JavadocCompletionProposal {
 				// ignore
 			}
 			final CompletionItem ci = new CompletionItem();
+			CompletionItemDefaults completionItemDefaults = collector.getCompletionItemDefaults();
 			Range range = JDTUtils.toRange(unit, offset, 0);
 			boolean isSnippetSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
 			String replacement = prepareTemplate(buf.toString(), lineDelimiter, isSnippetSupported);
-			ci.setTextEdit(Either.forLeft(new TextEdit(range, replacement)));
+			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange") &&
+				completionItemDefaults != null && completionItemDefaults.getEditRange() != null &&
+				completionItemDefaults.getEditRange().getLeft() == range) {
+				ci.setTextEditText(replacement);
+			} else {
+				ci.setTextEdit(Either.forLeft(new TextEdit(range, replacement)));
+			}
 			ci.setFilterText(JAVA_DOC_COMMENT);
 			ci.setLabel(JAVA_DOC_COMMENT);
 			ci.setSortText(SortTextHelper.convertRelevance(0));
 			ci.setKind(CompletionItemKind.Snippet);
-			ci.setInsertTextFormat(isSnippetSupported ? InsertTextFormat.Snippet : InsertTextFormat.PlainText);
+			CompletionUtils.setInsertTextFormat(ci, completionItemDefaults);
+			CompletionUtils.setInsertTextMode(ci, completionItemDefaults);
 			String documentation = prepareTemplate(buf.toString(), lineDelimiter, false);
 			if (documentation.indexOf(lineDelimiter) == 0) {
 				documentation = documentation.replaceFirst(lineDelimiter, "");
@@ -191,7 +200,6 @@ public class JavadocCompletionProposal {
 		}
 		return false;
 	}
-
 
 	private String createJavaDocTags(IDocument document, int offset, String indentation, String lineDelimiter, ICompilationUnit unit) throws CoreException, BadLocationException {
 		IJavaElement element = unit.getElementAt(offset);

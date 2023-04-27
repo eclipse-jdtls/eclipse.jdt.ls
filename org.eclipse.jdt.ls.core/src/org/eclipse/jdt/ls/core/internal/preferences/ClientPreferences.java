@@ -23,6 +23,7 @@ import java.util.Map;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DiagnosticsTagSupport;
 import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.ResourceOperationKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -386,24 +387,28 @@ public class ClientPreferences {
 			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertReplaceSupport().booleanValue();
 	}
 
-	public boolean isCompletionListItemDefaultsEditRangeSupport() {
+	public boolean isCompletionListItemDefaultsPropertySupport(String property) {
 		return v3supported
 			&& capabilities.getTextDocument().getCompletion() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionList() != null
 			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults() != null
-			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains("editRange");
+			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains(property);
 	}
 
-	public boolean isCompletionListItemDefaultsInsertTextFormatSupport() {
+	public boolean isCompletionItemInsertTextModeSupport(InsertTextMode insertMode) {
 		return v3supported
 			&& capabilities.getTextDocument().getCompletion() != null
-			&& capabilities.getTextDocument().getCompletion().getCompletionList() != null
-			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults() != null
-			&& capabilities.getTextDocument().getCompletion().getCompletionList().getItemDefaults().contains("insertTextFormat");
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertTextModeSupport() != null
+			&& capabilities.getTextDocument().getCompletion().getCompletionItem().getInsertTextModeSupport().getValueSet().contains(insertMode);
+	}
+
+	public InsertTextMode getCompletionItemInsertTextModeDefault() {
+		return capabilities.getTextDocument().getCompletion().getInsertTextMode();
 	}
 
 	public boolean isCompletionListItemDefaultsSupport() {
-		return isCompletionListItemDefaultsEditRangeSupport() || isCompletionListItemDefaultsInsertTextFormatSupport();
+		return isCompletionListItemDefaultsPropertySupport("editRange") || isCompletionListItemDefaultsPropertySupport("insertTextFormat") || isCompletionListItemDefaultsPropertySupport("insertTextMode");
 	}
 
 	public boolean isCompletionItemLabelDetailsSupport() {

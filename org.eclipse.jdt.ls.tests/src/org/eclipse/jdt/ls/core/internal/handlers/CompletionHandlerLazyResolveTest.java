@@ -35,6 +35,7 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.InsertTextFormat;
+import org.eclipse.lsp4j.InsertTextMode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -79,6 +80,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 
 	@Test
 	public void testSnippet_sysout() throws JavaModelException {
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AdjustIndentation);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -99,6 +101,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		assertEquals("sysout", item.getLabel());
 		String insertText = item.getInsertText();
 		assertEquals("System.out.println(${0});", insertText);
+		assertNull(item.getInsertTextMode());
 	}
 
 	@Test
@@ -526,6 +529,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 	@Test
 	public void testSnippet_while_itemDefaults_enabled_generic_snippets() throws JavaModelException {
 		mockClientPreferences(true, true, true);
+		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 		//@formatter:off
 		ICompilationUnit unit = getWorkingCopy(
 			"src/org/sample/Test.java",
@@ -542,6 +546,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		assertNotNull(list);
 		assertNotNull(list.getItemDefaults().getEditRange());
 		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
+		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
 
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		CompletionItem item = items.get(1);
@@ -551,6 +556,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		//check that the fields covered by itemDefaults are set to null
 		assertNull(item.getTextEdit());
 		assertNull(item.getInsertTextFormat());
+		assertNull(item.getInsertTextMode());
 
 		CompletionItem resolved = server.resolveCompletionItem(item).join();
 		assertNotNull(resolved.getTextEdit());
@@ -609,8 +615,10 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(supportCompletionSnippets);
 		Mockito.lenient().when(mockCapabilies.isSignatureHelpSupported()).thenReturn(supportSignatureHelp);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsEditRangeSupport()).thenReturn(isCompletionListItemDefaultsSupport);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsInsertTextFormatSupport()).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(isCompletionListItemDefaultsSupport);
+		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(isCompletionListItemDefaultsSupport);
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(false);
 		return mockCapabilies;
 	}

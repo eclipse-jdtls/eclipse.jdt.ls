@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.template.java.CompilationUnitContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
@@ -102,7 +103,8 @@ public class PostfixTemplateEngine {
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
 
-			setInsertTextFormat(item, completionItemDefaults);
+			CompletionUtils.setInsertTextFormat(item, completionItemDefaults);
+			CompletionUtils.setInsertTextMode(item, completionItemDefaults);
 
 			String content = "";
 			if (isCompletionLazyResolveTextEditEnabled()) {
@@ -155,15 +157,6 @@ public class PostfixTemplateEngine {
 			item.setTextEditText(content);
 		} else {
 			item.setInsertText(content);
-		}
-	}
-
-	private void setInsertTextFormat(final CompletionItem item, CompletionItemDefaults completionItemDefaults) {
-		if (!getClientPreferences().isCompletionListItemDefaultsSupport() ||
-			completionItemDefaults.getInsertTextFormat() == null ||
-			completionItemDefaults.getInsertTextFormat() != InsertTextFormat.Snippet
-		) {
-			item.setInsertTextFormat(InsertTextFormat.Snippet);
 		}
 	}
 
