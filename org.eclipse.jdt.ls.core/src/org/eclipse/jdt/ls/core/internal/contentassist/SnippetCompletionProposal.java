@@ -371,7 +371,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	 * @throws JavaModelException
 	 */
 	public static void setTextEdit(CompletionContext completionContext, ICompilationUnit cu, final CompletionItem item, String content) throws JavaModelException {
-		int length = completionContext.getTokenEnd() - completionContext.getTokenStart();
+		int length = completionContext.getTokenEnd() - completionContext.getTokenStart() + 1;
 		Range range = JDTUtils.toRange(cu, completionContext.getTokenStart(), length);
 		TextEdit textEdit = new TextEdit(range, content);
 		item.setTextEdit(Either.forLeft(textEdit));
