@@ -73,6 +73,7 @@ import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextEdit;
@@ -3980,6 +3981,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			}
 			assertEquals(replace.getStart().getLine(), replace.getEnd().getLine());
 		}
+	}
+
+	@Test
+	public void testCompletion_syserrSnipper() throws JavaModelException {
+		preferenceManager.getPreferences().setCompletionLazyResolveTextEditEnabled(false);
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"""
+		public class Foo {
+			void f() {
+				syser
+			} 
+		};
+		""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "syser");
+		assertNotNull(list);
+		assertEquals(1, list.getItems().size());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals("syserr", item.getLabel());
+		assertEquals(new Range(new Position(2, 2), new Position(2, 7)), item.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
