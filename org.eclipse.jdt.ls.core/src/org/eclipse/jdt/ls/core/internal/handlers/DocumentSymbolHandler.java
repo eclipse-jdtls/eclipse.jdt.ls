@@ -18,6 +18,7 @@ import static org.eclipse.jdt.core.IJavaElement.COMPILATION_UNIT;
 import static org.eclipse.jdt.core.IJavaElement.FIELD;
 import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
+import static org.eclipse.jdt.core.IJavaElement.PACKAGE_FRAGMENT;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
 import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
@@ -169,7 +170,7 @@ public class DocumentSymbolHandler {
 
 	private DocumentSymbol toDocumentSymbol(IJavaElement unit, IProgressMonitor monitor) {
 		int type = unit.getElementType();
-		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT) {
+		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT && type != PACKAGE_FRAGMENT) {
 			return null;
 		}
 		if (unit instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
@@ -317,6 +318,7 @@ public class DocumentSymbolHandler {
 				return SymbolKind.Method;
 			}
 		case IJavaElement.PACKAGE_DECLARATION:
+		case IJavaElement.PACKAGE_FRAGMENT:
 			return SymbolKind.Package;
 		}
 		return SymbolKind.String;
