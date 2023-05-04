@@ -145,7 +145,7 @@ public class PostfixTemplateEngine {
 
 		response.setProposals(proposals);
 		response.setItems(res);
-		response.setUri(JDTUtils.toURI(compilationUnit));
+		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, JDTUtils.toURI(compilationUnit));
 		CompletionResponses.store(response);
 		return res;
 	}
