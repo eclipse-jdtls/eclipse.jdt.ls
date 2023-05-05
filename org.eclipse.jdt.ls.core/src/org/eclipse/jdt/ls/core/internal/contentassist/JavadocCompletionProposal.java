@@ -16,9 +16,7 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -45,7 +43,6 @@ import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -122,10 +119,6 @@ public class JavadocCompletionProposal {
 				documentation = documentation.replaceFirst(lineDelimiter, "");
 			}
 			ci.setDocumentation(documentation);
-			Map<String, String> data = new HashMap<>(3);
-			data.put(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "0");
-			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "0");
-			ci.setData(data);
 			result.add(ci);
 		} catch (BadLocationException excp) {
 			// stop work
