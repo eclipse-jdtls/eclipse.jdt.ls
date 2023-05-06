@@ -174,7 +174,9 @@ public class CompletionHandler{
 
 		// get the cached completion execution time and set it to the selected item in case that providers need it.
 		String executionTime = completionResponse.getCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME);
-		((Map<String, String>)item.getData()).put(CompletionRanking.COMPLETION_EXECUTION_TIME, executionTime);
+		if (executionTime != null) {
+			((Map<String, String>)item.getData()).put(CompletionRanking.COMPLETION_EXECUTION_TIME, executionTime);
+		}
 
 		List<ICompletionRankingProvider> providers =
 				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
