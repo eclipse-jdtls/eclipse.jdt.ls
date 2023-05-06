@@ -357,7 +357,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 		response.setProposals(proposals);
 		response.setItems(res);
-		response.setUri(uri);
+		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		CompletionResponses.store(response);
 		return res;
 	}

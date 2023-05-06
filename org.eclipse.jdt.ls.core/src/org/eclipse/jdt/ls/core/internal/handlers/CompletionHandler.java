@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -121,6 +122,7 @@ public class CompletionHandler{
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
 		}
 		long executionTime = System.currentTimeMillis() - startTime;
+		String lastRequestId = null;
 		for (CompletionItem item : $.getItems()) {
 			String requestId = "";
 			String proposalId = "";
@@ -128,12 +130,27 @@ public class CompletionHandler{
 			if (data != null) {
 				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
 				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
-				data.put(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
+			}
+			if (requestId.isEmpty() || proposalId.isEmpty()) {
+				continue;
 			}
 			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
 					requestId,
 					proposalId
 			)));
+
+			if (Objects.equals(requestId, lastRequestId)) {
+				continue;
+			}
+			lastRequestId = requestId;
+			int pId = Integer.parseInt(proposalId);
+			long rId = Long.parseLong(requestId);
+			CompletionResponse completionResponse = CompletionResponses.get(rId);
+			if (completionResponse == null || completionResponse.getProposals().size() <= pId) {
+				JavaLanguageServerPlugin.logError("Failed to save common data for completion items.");
+				continue;
+			}
+			completionResponse.setCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
 		}
 		return Either.forRight($);
 	}
@@ -153,6 +170,12 @@ public class CompletionHandler{
 		CompletionItem item = completionResponse.getItems().get(pId);
 		if (item == null) {
 			throw ExceptionFactory.newException("Cannot get the completion item.");
+		}
+
+		// get the cached completion execution time and set it to the selected item in case that providers need it.
+		String executionTime = completionResponse.getCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME);
+		if (executionTime != null) {
+			((Map<String, String>)item.getData()).put(CompletionRanking.COMPLETION_EXECUTION_TIME, executionTime);
 		}
 
 		List<ICompletionRankingProvider> providers =

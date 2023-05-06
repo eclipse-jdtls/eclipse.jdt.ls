@@ -87,14 +87,15 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 		assertTrue(recommended.getLabel().startsWith("★"));
 		assertTrue(((Map)recommended.getData()).containsKey("foo"));
 		assertEquals(recommended.getFilterText(), recommended.getInsertText());
-		assertTrue(((Map)recommended.getData()).containsKey(CompletionRanking.COMPLETION_EXECUTION_TIME));
 	}
 
 	@Test
 	public void testOnDidCompletionItemSelect() throws Exception {
 		CompletionHandler handler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
 		CompletionResponse response = new CompletionResponse();
-		response.setItems(Arrays.asList(new CompletionItem()));
+		CompletionItem completionItem = new CompletionItem();
+		completionItem.setData(new HashMap<>());
+		response.setItems(Arrays.asList(completionItem));
 		CompletionResponses.store(response);
 		handler.onDidCompletionItemSelect(String.valueOf(response.getId()), "0");
 

@@ -280,7 +280,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			response.setProposals(proposals);
 		}
 		response.setItems(completionItems);
-		response.setUri(this.uri);
+		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		CompletionResponses.store(response);
 
 		return completionItems;

@@ -87,6 +87,7 @@ public class CompletionResolveHandler {
 		this.manager = manager;
 	}
 
+	public static final String DATA_FIELD_URI = "uri";
 	public static final String DATA_FIELD_DECLARATION_SIGNATURE = "decl_signature";
 	public static final String DATA_FIELD_SIGNATURE= "signature";
 	public static final String DATA_FIELD_NAME = "name";
@@ -111,7 +112,7 @@ public class CompletionResolveHandler {
 			throw new IllegalStateException("Invalid completion proposal");
 		}
 
-		String uri = completionResponse.getUri();
+		String uri = completionResponse.getCommonData(DATA_FIELD_URI);
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		if (unit == null) {
 			throw new IllegalStateException(NLS.bind("Unable to match Compilation Unit from {0} ", uri));

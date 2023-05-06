@@ -46,6 +46,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
+import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
@@ -287,9 +288,30 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		long requestId = Long.parseLong(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID));
 		CompletionResponse completionResponse = CompletionResponses.get(requestId);
 		assertNotNull(completionResponse);
-		String uri = completionResponse.getUri();
+		String uri = completionResponse.getCommonData(CompletionResolveHandler.DATA_FIELD_URI);
 		assertNotNull(uri);
 		assertTrue("unexpected URI prefix: " + uri, uri.matches("file://.*/src/java/Foo\\.java"));
+	}
+
+	@Test
+	public void testCompletion_dataFieldExecutionTime() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+			"src/java/Foo.java",
+			"public class Foo {\n"+
+				"	void foo() {\n"+
+				"		Objec\n"+
+				"	}\n"+
+				"}\n");
+		CompletionList list = requestCompletions(unit, "Objec");
+		assertNotNull(list);
+		assertFalse("No proposals were found",list.getItems().isEmpty());
+
+		Map<String,String> data = (Map<String, String>) list.getItems().get(0).getData();
+		long requestId = Long.parseLong(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID));
+		CompletionResponse completionResponse = CompletionResponses.get(requestId);
+		assertNotNull(completionResponse);
+		String time = completionResponse.getCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME);
+		assertNotNull(time);
 	}
 
 
