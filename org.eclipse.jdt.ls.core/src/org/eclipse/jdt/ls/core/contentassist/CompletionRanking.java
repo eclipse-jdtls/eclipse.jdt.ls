@@ -105,7 +105,10 @@ public class CompletionRanking {
 	/**
 	 * A map data structure that will be appended to completion item's data field. When a completion
 	 * item is selected, the selected item will be passed to the provider. Providers can use the stored
-	 * data to do post process on demand.
+	 * data to do post process on demand. Please note that the data will only be appended when item
+	 * selected event happens. The data will not exist during textDocument/completion and completionItem/resolve
+	 * phases.
+	 *
 	 * <p>
 	 * The key <code>"COMPLETION_EXECUTION_TIME"</code> is preserved to store the time calculating all the
 	 * completion items at the server side in millisecond.

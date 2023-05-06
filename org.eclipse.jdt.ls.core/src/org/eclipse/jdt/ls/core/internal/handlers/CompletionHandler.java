@@ -178,6 +178,11 @@ public class CompletionHandler{
 			((Map<String, String>)item.getData()).put(CompletionRanking.COMPLETION_EXECUTION_TIME, executionTime);
 		}
 
+		Map<String, String> contributedData = completionResponse.getCompletionItemData(pId);
+		if (contributedData != null) {
+			((Map<String, String>)item.getData()).putAll(contributedData);
+		}
+
 		List<ICompletionRankingProvider> providers =
 				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
 		for (ICompletionRankingProvider provider : providers) {

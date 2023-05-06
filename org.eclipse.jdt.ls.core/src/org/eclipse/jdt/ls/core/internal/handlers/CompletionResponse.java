@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,11 @@ public class CompletionResponse {
 	private Map<String, String> commonData = new HashMap<>();
 	private List<CompletionProposal> proposals;
 	private List<CompletionItem> items;
+	/**
+	 * Stores the data that are specific to each completion item.
+	 * Those data are contributed by the ranking providers.
+	 */
+	private List<Map<String, String>> completionItemData;
 
 	public CompletionResponse() {
 		id = idSeed.getAndIncrement();
@@ -108,5 +114,16 @@ public class CompletionResponse {
 	 */
 	public void setItems(List<CompletionItem> items) {
 		this.items = items;
+	}
+
+	public Map<String, String> getCompletionItemData(int index) {
+		if (completionItemData == null || index >= completionItemData.size()) {
+			return Collections.emptyMap();
+		}
+		return completionItemData.get(index);
+	}
+
+	public void setCompletionItemData(List<Map<String, String>> completionItemData) {
+		this.completionItemData = completionItemData;
 	}
 }
