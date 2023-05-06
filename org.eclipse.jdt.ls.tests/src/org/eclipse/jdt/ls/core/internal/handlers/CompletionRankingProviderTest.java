@@ -16,8 +16,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +41,12 @@ import org.eclipse.lsp4j.CompletionList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
@@ -55,18 +65,20 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
+	@Mock
 	private TestRankingProvider provider;
 
 	@Before
 	public void setUp() {
-		provider = new TestRankingProvider();
+		when(provider.rank(any(), any(), any(), any())).thenCallRealMethod();
+		doNothing().when(provider).onDidCompletionItemSelect(any());
 		JavaLanguageServerPlugin.getCompletionContributionService().registerRankingProvider(provider);
 	}
 
 	@After
 	public void tearDown() {
 		JavaLanguageServerPlugin.getCompletionContributionService().unregisterRankingProvider(provider);
-		provider = null;
+		reset(provider);
 	}
 
 	@Test
@@ -85,26 +97,31 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 
 		CompletionItem recommended = list.getItems().get(0);
 		assertTrue(recommended.getLabel().startsWith("★"));
-		assertTrue(((Map)recommended.getData()).containsKey("foo"));
 		assertEquals(recommended.getFilterText(), recommended.getInsertText());
 	}
 
 	@Test
-	public void testOnDidCompletionItemSelect() throws Exception {
-		CompletionHandler handler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
-		CompletionResponse response = new CompletionResponse();
-		CompletionItem completionItem = new CompletionItem();
-		completionItem.setData(new HashMap<>());
-		response.setItems(Arrays.asList(completionItem));
-		CompletionResponses.store(response);
-		handler.onDidCompletionItemSelect(String.valueOf(response.getId()), "0");
+	public void testOnDidCompletionItemSelect() throws Exception {ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"public class Foo {\n"+
+						"	void foo() {\n"+
+						" 		Integer.\n" +
+						"	}\n"+
+				"}\n");
 
-		assertTrue(provider.onDidCompletionItemSelectInvoked);
+		requestCompletions(unit, "Integer.");
+		CompletionHandler handler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
+
+		ArgumentCaptor<CompletionItem> argument = ArgumentCaptor.forClass(CompletionItem.class);
+		handler.onDidCompletionItemSelect(String.valueOf((new CompletionResponse()).getId() - 1), "0");
+
+		verify(provider, times(1)).onDidCompletionItemSelect(argument.capture());
+		Map<String, String> data = (Map<String, String>) argument.getValue().getData();
+		assertEquals("bar", data.get("foo"));
+		assertTrue(data.containsKey(CompletionRanking.COMPLETION_EXECUTION_TIME));
 	}
 
 	class TestRankingProvider implements ICompletionRankingProvider {
-
-		boolean onDidCompletionItemSelectInvoked = false;
 
 		@Override
 		public CompletionRanking[] rank(List<CompletionProposal> proposals, org.eclipse.jdt.core.CompletionContext context, ICompilationUnit unit, IProgressMonitor monitor) {
@@ -120,7 +137,6 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 
 		@Override
 		public void onDidCompletionItemSelect(CompletionItem item) {
-			onDidCompletionItemSelectInvoked = true;
 		}
 	}
 

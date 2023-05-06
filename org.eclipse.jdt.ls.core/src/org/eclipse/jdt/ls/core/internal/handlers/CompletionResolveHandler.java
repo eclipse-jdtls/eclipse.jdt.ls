@@ -93,8 +93,6 @@ public class CompletionResolveHandler {
 	public static final String DATA_FIELD_NAME = "name";
 	public static final String DATA_FIELD_REQUEST_ID = "rid";
 	public static final String DATA_FIELD_PROPOSAL_ID = "pid";
-	public static final String DATA_FIELD_CONSTANT_VALUE = "constant_value";
-	public static final String DATA_METHOD_DEFAULT_VALUE = "default_value";
 
 	public CompletionItem resolve(CompletionItem param, IProgressMonitor monitor) {
 

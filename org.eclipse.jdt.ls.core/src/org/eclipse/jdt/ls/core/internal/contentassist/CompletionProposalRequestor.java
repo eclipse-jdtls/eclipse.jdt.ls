@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -244,6 +245,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if (!proposals.isEmpty()){
 			initializeCompletionListItemDefaults(proposals.get(0));
 		}
+
+		List<Map<String, String>> contributedData = new LinkedList<>();
 		//Let's compute replacement texts for the most relevant results only
 		for (int i = 0; i < limit; i++) {
 			CompletionProposal proposal = proposals.get(i);
@@ -260,11 +263,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 							item.setFilterText(item.getInsertText());
 						}
 					}
-					Map<String, String> itemData = (Map<String, String>) item.getData();
 					Map<String, String> rankingData = rankingResult.getData();
-					for (String key : rankingData.keySet()) {
-						itemData.put(key, rankingData.get(key));
-					}
+					contributedData.add(rankingData);
 				}
 				completionItems.add(item);
 			} catch (Exception e) {
@@ -281,6 +281,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 		response.setItems(completionItems);
 		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
+		response.setCompletionItemData(contributedData);
 		CompletionResponses.store(response);
 
 		return completionItems;
