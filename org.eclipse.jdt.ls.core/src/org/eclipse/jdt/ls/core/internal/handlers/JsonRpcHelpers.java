@@ -84,7 +84,7 @@ final public class JsonRpcHelpers {
 			try {
 				return document.getLineOffset(line) + column;
 			} catch (BadLocationException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				JavaLanguageServerPlugin.debugTrace("toOffset: " + (e.getMessage() == null ? e.toString() : e.getMessage()));
 			}
 		}
 		return -1;
@@ -157,7 +157,7 @@ final public class JsonRpcHelpers {
 				int column = offset - document.getLineOffset(line);
 				return new int[] { line, column };
 			} catch (BadLocationException e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				JavaLanguageServerPlugin.debugTrace("toLine: " + (e.getMessage() == null ? e.toString() : e.getMessage()));
 			}
 		}
 		return null;
