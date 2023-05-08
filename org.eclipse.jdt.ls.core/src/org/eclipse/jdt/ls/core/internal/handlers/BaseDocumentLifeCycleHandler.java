@@ -302,14 +302,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		documentVersions.remove(params.getTextDocument().getUri());
-		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleClosed(params);
 				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document close ", e);
 		}
@@ -317,14 +316,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didOpen(DidOpenTextDocumentParams params) {
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
-		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleOpen(params);
 				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document open ", e);
 		}
@@ -332,14 +330,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didChange(DidChangeTextDocumentParams params) {
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
-		ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 		try {
 			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
 				@Override
 				public void run(IProgressMonitor monitor) throws CoreException {
 					handleChanged(params);
 				}
-			}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Handle document change ", e);
 		}
