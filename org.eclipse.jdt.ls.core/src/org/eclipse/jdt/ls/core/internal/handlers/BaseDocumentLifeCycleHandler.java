@@ -302,44 +302,32 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		documentVersions.remove(params.getTextDocument().getUri());
-		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleClosed(params);
-				}
-			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Handle document close ", e);
-		}
+		handleClosed(params);
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
-		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
-		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleOpen(params);
-				}
-			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Handle document open ", e);
+		String uri = params.getTextDocument().getUri();
+		documentVersions.put(uri, params.getTextDocument().getVersion());
+		IFile resource = JDTUtils.findFile(uri);
+		if (resource != null) { // Open a managed file from the existing projects.
+			handleOpen(params);
+		} else { // Open an unmanaged file, use a workspace runnable to mount it to default project or invisible project.
+			try {
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						handleOpen(params);
+					}
+				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Handle document open ", e);
+			}
 		}
 	}
 
 	public void didChange(DidChangeTextDocumentParams params) {
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
-		try {
-			ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-				@Override
-				public void run(IProgressMonitor monitor) throws CoreException {
-					handleChanged(params);
-				}
-			}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Handle document change ", e);
-		}
+		handleChanged(params);
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
@@ -349,7 +337,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 			handleSaved(params);
 		} else {
 			// some refactorings may be applied by the way, wrap those in a WorkspaceRunnable
-			ISchedulingRule rule = JDTUtils.getRule(params.getTextDocument().getUri());
 			try {
 				JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
 				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
@@ -357,7 +344,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					public void run(IProgressMonitor monitor) throws CoreException {
 						handleSaved(params);
 					}
-				}, rule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document save ", e);
 			}
