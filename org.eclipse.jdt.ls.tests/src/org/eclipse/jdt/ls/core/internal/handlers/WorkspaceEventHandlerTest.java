@@ -96,8 +96,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		File javaFile = new File(projectFile, "src/org/sample/Foo.java");
 		FileUtils.writeStringToFile(javaFile, source);
 		String uri = JDTUtils.toURI(unit);
-		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(new FileEvent(uri, FileChangeType.Changed)));
-		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).handleFileEvents(new FileEvent(uri, FileChangeType.Changed));
 		waitForBackgroundJobs();
 		assertTrue(classFile.lastModified() > lastModified);
 	}
@@ -124,12 +123,11 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		File newPack = new File(oldPack.getParent(), "mynewpack");
 		Files.move(oldPack, newPack);
 		assertTrue(unit.isWorkingCopy());
-		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(
+		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).handleFileEvents(
 			new FileEvent(newUri, FileChangeType.Created),
 			new FileEvent(parentUri, FileChangeType.Changed),
 			new FileEvent(oldUri, FileChangeType.Deleted)
-		));
-		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		);
 		assertFalse(unit.isWorkingCopy());
 	}
 
@@ -145,10 +143,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertTrue(module2.exists());
 
 		clientRequests.clear();
-		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams(Arrays.asList(
-			new FileEvent(projectUri, FileChangeType.Deleted)
-		));
-		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).didChangeWatchedFiles(params);
+		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).handleFileEvents(new FileEvent(projectUri, FileChangeType.Deleted));
 		waitForBackgroundJobs();
 		assertFalse(module2.exists());
 

@@ -171,6 +171,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
+	private WorkspaceEventsHandler workspaceEventHandler;
 	private WorkspaceDiagnosticsHandler workspaceDiagnosticsHandler;
 	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
@@ -241,6 +242,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
 		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
+		this.workspaceEventHandler = new WorkspaceEventsHandler(pm, this.client, this.documentLifeCycleHandler);
 		this.telemetryManager.setLanguageClient(client);
 		this.telemetryManager.setPreferenceManager(preferenceManager);
 	}
@@ -573,8 +575,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
 		debugTrace(">> workspace/didChangeWatchedFiles ");
-		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(pm, client, this.documentLifeCycleHandler);
-		handler.didChangeWatchedFiles(params);
+		this.workspaceEventHandler.didChangeWatchedFiles(params);
 	}
 
 	/* (non-Javadoc)

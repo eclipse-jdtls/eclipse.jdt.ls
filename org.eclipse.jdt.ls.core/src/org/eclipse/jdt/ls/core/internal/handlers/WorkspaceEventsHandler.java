@@ -13,8 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
@@ -49,11 +48,23 @@ public class WorkspaceEventsHandler {
 	private final ProjectsManager pm;
 	private final JavaClientConnection connection;
 	private final BaseDocumentLifeCycleHandler handler;
+	private final LinkedBlockingQueue<FileEvent> queue = new LinkedBlockingQueue<>();
 
 	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection, BaseDocumentLifeCycleHandler handler) {
 		this.pm = projects;
 		this.connection = connection;
 		this.handler = handler;
+		Thread eventThread = new Thread(() -> {
+			while(true) {
+				try {
+					FileEvent event = queue.take();
+					handleFileEvent(event);
+				} catch (InterruptedException e) {
+					break;
+				}
+			}
+		}, "WorkspaceEventsHandler");
+		eventThread.start();
 	}
 
 	private CHANGE_TYPE toChangeType(FileChangeType vtype) {
@@ -70,50 +81,64 @@ public class WorkspaceEventsHandler {
 	}
 
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams param) {
-		List<FileEvent> changes = param.getChanges().stream().distinct().collect(Collectors.toList());
-		for (FileEvent fileEvent : changes) {
-			CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
-			if (changeType == CHANGE_TYPE.DELETED) {
-				cleanUpDiagnostics(fileEvent.getUri());
-				handler.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(fileEvent.getUri())));
-				discardWorkingCopies(fileEvent.getUri());
+		param.getChanges().stream().distinct().forEach(event -> {
+			try {
+				queue.put(event);
+			} catch (InterruptedException e) {
+				// do nothing
 			}
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
-			if (unit != null && changeType == CHANGE_TYPE.CREATED && !unit.exists()) {
-				final ICompilationUnit[] units = new ICompilationUnit[1];
-				units[0] = unit;
+		});
+	}
+
+	// for test only
+	public void handleFileEvents(FileEvent... fileEvents) {
+		for (FileEvent fileEvent : fileEvents) {
+			handleFileEvent(fileEvent);
+		}
+	}
+
+	private void handleFileEvent(FileEvent fileEvent) {
+		CHANGE_TYPE changeType = toChangeType(fileEvent.getType());
+		if (changeType == CHANGE_TYPE.DELETED) {
+			cleanUpDiagnostics(fileEvent.getUri());
+			handler.didClose(new DidCloseTextDocumentParams(new TextDocumentIdentifier(fileEvent.getUri())));
+			discardWorkingCopies(fileEvent.getUri());
+		}
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(fileEvent.getUri());
+		if (unit != null && changeType == CHANGE_TYPE.CREATED && !unit.exists()) {
+			final ICompilationUnit[] units = new ICompilationUnit[1];
+			units[0] = unit;
+			try {
+				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
+					@Override
+					public void run(IProgressMonitor monitor) throws CoreException {
+						units[0] = createCompilationUnit(units[0]);
+					}
+				}, new NullProgressMonitor());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+			unit = units[0];
+		}
+		if (unit != null) {
+			if (unit.isWorkingCopy()) {
 				try {
-					ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-						@Override
-						public void run(IProgressMonitor monitor) throws CoreException {
-							units[0] = createCompilationUnit(units[0]);
-						}
-					}, new NullProgressMonitor());
+					IResource resource = unit.getUnderlyingResource();
+					if (resource != null && resource.exists()) {
+						resource.refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
+					}
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				}
-				unit = units[0];
+				return;
 			}
-			if (unit != null) {
-				if (unit.isWorkingCopy()) {
-					try {
-						IResource resource = unit.getUnderlyingResource();
-						if (resource != null && resource.exists()) {
-							resource.refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
-						}
-					} catch (CoreException e) {
-						JavaLanguageServerPlugin.logException(e.getMessage(), e);
-					}
-					continue;
-				}
-				if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED) {
-					if (unit.equals(CoreASTProvider.getInstance().getActiveJavaElement())) {
-						CoreASTProvider.getInstance().disposeAST();
-					}
+			if (changeType == CHANGE_TYPE.DELETED || changeType == CHANGE_TYPE.CHANGED) {
+				if (unit.equals(CoreASTProvider.getInstance().getActiveJavaElement())) {
+					CoreASTProvider.getInstance().disposeAST();
 				}
 			}
-			pm.fileChanged(fileEvent.getUri(), changeType);
 		}
+		pm.fileChanged(fileEvent.getUri(), changeType);
 	}
 
 	private ICompilationUnit createCompilationUnit(ICompilationUnit unit) {
