@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -160,27 +161,33 @@ public class CompletionProposalReplacementProvider {
 
 		setInsertReplaceRange(proposal, insertReplaceEdit);
 
-		switch (proposal.getKind()) {
-			case CompletionProposal.METHOD_DECLARATION:
-				appendMethodOverrideReplacement(completionBuffer, proposal);
-				break;
-			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-				if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
-					appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
-				} else {
+		if (preferences.isCompletionLazyResolveTextEditEnabled() && !isResolvingRequest) {
+			if (completionBuffer.isEmpty()) {
+				completionBuffer.append(getDefaultTextEditText(item));
+			}
+		} else {
+			switch (proposal.getKind()) {
+				case CompletionProposal.METHOD_DECLARATION:
+					appendMethodOverrideReplacement(completionBuffer, proposal);
+					break;
+				case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+					if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
+						appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
+					} else {
+						appendReplacementString(completionBuffer, proposal);
+					}
+					break;
+				case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+				case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+					appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
+					break;
+				case CompletionProposal.LAMBDA_EXPRESSION:
+					appendLambdaExpressionReplacement(completionBuffer, proposal);
+					break;
+				default:
 					appendReplacementString(completionBuffer, proposal);
-				}
-				break;
-			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-				appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
-				break;
-			case CompletionProposal.LAMBDA_EXPRESSION:
-				appendLambdaExpressionReplacement(completionBuffer, proposal);
-				break;
-			default:
-				appendReplacementString(completionBuffer, proposal);
-				break;
+					break;
+			}
 		}
 
 		//select insertTextFormat.
@@ -212,6 +219,22 @@ public class CompletionProposalReplacementProvider {
 				item.setAdditionalTextEdits(additionalTextEdits);
 			}
 		}
+	}
+
+	/**
+	 * Return a default text edit text (more like a placeholder). And let it
+	 * be corrected in completionItem/resolve request.
+	 */
+	private String getDefaultTextEditText(CompletionItem item) {
+		if (StringUtils.isNotBlank(item.getInsertText())) {
+			return item.getInsertText();
+		}
+
+		if (StringUtils.isNotBlank(item.getLabel())) {
+			return item.getLabel();
+		}
+
+		return "";
 	}
 
 	private void appendLambdaExpressionReplacement(StringBuilder completionBuffer, CompletionProposal proposal) {
