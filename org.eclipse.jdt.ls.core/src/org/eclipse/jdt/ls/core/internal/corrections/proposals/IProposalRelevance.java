@@ -285,6 +285,7 @@ public interface IProposalRelevance {
 	public static final int INSERT_INFERRED_TYPE_ARGUMENTS_ERROR= 1;
 	public static final int RETURN_ALLOCATED_OBJECT_VOID= 1;
 	public static final int CONVERT_TO_IF_RETURN= 1;
+	public static final int LAMBDA_EXPRESSION_AND_METHOD_REF_CLEANUP = 1;
 
 	public static final int CONVERT_TO_MESSAGE_FORMAT= 0;
 	public static final int COPY_ANNOTATION_JAR= 0;

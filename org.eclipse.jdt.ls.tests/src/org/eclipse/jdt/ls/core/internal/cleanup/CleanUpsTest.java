@@ -446,7 +446,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 		ICompilationUnit unit = pack1.createCompilationUnit("LambdaExpression.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
-		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpression"), monitor);
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpressionFromAnonymousClass"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		String expected = "package test1;\n" //
 				+ "\n" //
@@ -493,7 +493,8 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 		ICompilationUnit unit = pack1.createCompilationUnit("MultiCleanup.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
-		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpression", "instanceofPatternMatch", "stringConcatToTextBlock", "addFinalModifier"), monitor);
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpressionFromAnonymousClass", "instanceofPatternMatch", "stringConcatToTextBlock", "addFinalModifier"),
+				monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		String expected = "package test1;\n"
 				+ "\n"

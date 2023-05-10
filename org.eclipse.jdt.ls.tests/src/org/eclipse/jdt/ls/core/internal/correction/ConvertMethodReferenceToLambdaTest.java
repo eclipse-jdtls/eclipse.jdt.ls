@@ -34,7 +34,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
+public class ConvertMethodReferenceToLambdaTest extends AbstractQuickFixTest {
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
 
@@ -73,7 +73,7 @@ public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
 		assertEquals(2, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
-		assertEquals(CodeActionKind.QuickFix, action.getKind());
+		assertEquals(JavaCodeActionKind.QUICK_ASSIST, action.getKind());
 		assertEquals("Convert to lambda expression", action.getTitle());
 		Command c = action.getCommand();
 		assertEquals("java.apply.workspaceEdit", c.getCommand());
@@ -98,14 +98,14 @@ public class ConvertMethodReferenceToLambaTest extends AbstractQuickFixTest {
 		Range range = new Range(new Position(4, 39), new Position(4, 39));
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
 		assertEquals(2, codeActions.size());
-		Either<Command, CodeAction> codeAction = codeActions.get(0);
+		Either<Command, CodeAction> codeAction = codeActions.get(1);
 		CodeAction action = codeAction.getRight();
-		assertEquals(CodeActionKind.QuickFix, action.getKind());
-		assertEquals("Convert to method reference", action.getTitle());
+		assertEquals(JavaCodeActionKind.QUICK_ASSIST, action.getKind());
+		assertEquals("Clean up lambda expression", action.getTitle());
 		Command c = action.getCommand();
 		assertEquals("java.apply.workspaceEdit", c.getCommand());
 		assertNotNull(c.getArguments());
-		assertEquals("Convert to method reference", c.getTitle());
+		assertEquals("Clean up lambda expression", c.getTitle());
 	}
 
 }
