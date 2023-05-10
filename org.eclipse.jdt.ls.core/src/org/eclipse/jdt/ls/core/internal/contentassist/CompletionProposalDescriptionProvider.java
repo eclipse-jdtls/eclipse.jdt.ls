@@ -15,7 +15,6 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.CompletionContext;
@@ -26,7 +25,6 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionItem;
@@ -360,9 +358,6 @@ public class CompletionProposalDescriptionProvider {
 		detail.append(description);
 		item.setDetail(detail.toString());
 
-		setSignature(item, String.valueOf(methodProposal.getSignature()));
-		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
-		setName(item, String.valueOf(methodProposal.getName()));
 		if (fUnit != null && methodProposal.isConstructor() && typeInfo.length() > 0 && item.getData() != null && methodProposal.getRequiredProposals() != null && methodProposal.getRequiredProposals().length > 0) {
 			CompletionProposal requiredProposal = methodProposal.getRequiredProposals()[0];
 			try {
@@ -434,10 +429,6 @@ public class CompletionProposalDescriptionProvider {
 		declaringType= Signature.getSimpleName(declaringType);
 		typeBuffer.append(String.format("Override method in '%s'", declaringType));
 		item.setDetail(typeBuffer.toString());
-
-		setSignature(item, String.valueOf(methodProposal.getSignature()));
-		setDeclarationSignature(item, String.valueOf(methodProposal.getDeclarationSignature()));
-		setName(item, String.valueOf(methodProposal.getName()));
 	}
 
 	/**
@@ -483,7 +474,6 @@ public class CompletionProposalDescriptionProvider {
 		}
 		char[] fullName= Signature.toCharArray(signature);
 		createTypeProposalLabel(fullName, item);
-		setDeclarationSignature(item, String.valueOf(signature));
 	}
 
 	private void createJavadocTypeProposalLabel(CompletionProposal typeProposal, CompletionItem item) {
@@ -606,7 +596,6 @@ public class CompletionProposalDescriptionProvider {
 		char[] declaration= proposal.getDeclarationSignature();
 		StringBuilder detailBuf = new StringBuilder();
 		if (declaration != null) {
-			setDeclarationSignature(item, String.valueOf(declaration));
 			declaration= Signature.getSignatureSimpleName(declaration);
 			if (declaration.length > 0) {
 				if (proposal.getRequiredProposals() != null) {
@@ -625,7 +614,6 @@ public class CompletionProposalDescriptionProvider {
 		}
 		detailBuf.append(buf);
 		item.setDetail(detailBuf.toString());
-		setName(item,String.valueOf(name));
 	}
 
 	private void createPackageProposalLabel(CompletionProposal proposal, CompletionItem item) {
@@ -675,7 +663,6 @@ public class CompletionProposalDescriptionProvider {
 				item.setDetail(String.valueOf(signatureQualifier) + "." + name);
 			}
 		}
-		setDeclarationSignature(item, String.valueOf(declaringTypeSignature));
 	}
 
 	private void createLabelWithLambdaExpression(CompletionProposal proposal, CompletionItem item) {
@@ -692,35 +679,6 @@ public class CompletionProposalDescriptionProvider {
 			label.append(returnType);
 			item.setLabel(label.toString());
 		}
-	}
-
-	/**
-	 * Sets the signature for use on the resolve call.
-	 * @param item
-	 * @param signature
-	 */
-	@SuppressWarnings("unchecked")
-	private void setSignature(CompletionItem item, String signature){
-		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_SIGNATURE,String.valueOf(signature));
-	}
-	/**
-	 * Sets the declaration signature to data that is used on the resolve call.
-	 * @param item
-	 * @param signature
-	 */
-	@SuppressWarnings("unchecked")
-	private void setDeclarationSignature(CompletionItem item, String signature){
-		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_DECLARATION_SIGNATURE,String.valueOf(signature));
-	}
-
-	/**
-	 * Sets the name to data that is used on the resolve call.
-	 * @param item
-	 * @param name
-	 */
-	@SuppressWarnings("unchecked")
-	private void setName(CompletionItem item, String name){
-		((Map<String, String>)item.getData()).put(CompletionResolveHandler.DATA_FIELD_NAME,String.valueOf(name));
 	}
 
 	/**
