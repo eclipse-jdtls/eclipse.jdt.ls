@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -112,7 +113,9 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LambdaExpressionAndMethodRefFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
 import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
@@ -199,6 +202,7 @@ public class QuickAssistProcessor {
 				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
 				//				getAddInferredLambdaParameterTypes(context, coveringNode, resultingCollections);
 			getExtractMethodFromLambdaProposal(context, coveringNode, problemsAtLocation, resultingCollections);
+			getConvertLambdaExpressionAndMethodRefCleanUpProposal(context, coveringNode, resultingCollections);
 			getConvertMethodReferenceToLambdaProposal(context, coveringNode, resultingCollections);
 			getConvertLambdaToMethodReferenceProposal(context, coveringNode, resultingCollections);
 				//				getFixParenthesesInLambdaExpression(context, coveringNode, resultingCollections);
@@ -253,6 +257,32 @@ public class QuickAssistProcessor {
 			return true;
 		}
 		return false;
+	}
+
+	private static boolean getConvertLambdaExpressionAndMethodRefCleanUpProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
+			return false;
+		}
+		ASTNode node = ASTNodes.getFirstAncestorOrNull(coveringNode, LambdaExpression.class, BodyDeclaration.class);
+		if (!(node instanceof LambdaExpression)) {
+			return false;
+		}
+
+		IProposableFix fix = LambdaExpressionAndMethodRefFixCore.createLambdaExpressionAndMethodRefFix(node);
+		if (fix == null) {
+			return false;
+		}
+
+		// add correction proposal
+		try {
+			CompilationUnitChange change = fix.createChange(null);
+			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.LAMBDA_EXPRESSION_AND_METHOD_REF_CLEANUP);
+			proposals.add(proposal);
+			return true;
+		} catch (CoreException e) {
+			// ignore
+		}
+		return true;
 	}
 
 	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
@@ -863,7 +893,7 @@ public class QuickAssistProcessor {
 
 		// add proposal
 		String label = CorrectionMessages.QuickAssistProcessor_convert_to_lambda_expression;
-		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_METHOD_REFERENCE_TO_LAMBDA);
+		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_METHOD_REFERENCE_TO_LAMBDA);
 		proposal.setLinkedProposalModel(linkedProposalModel);
 		proposal.setEndPosition(rewrite.track(lambda));
 		resultingCollections.add(proposal);
@@ -871,6 +901,10 @@ public class QuickAssistProcessor {
 	}
 
 	private static boolean getConvertLambdaToMethodReferenceProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> resultingCollections) {
+		// Don't calculate if lambda expression clean up quick assist exists
+		if (!resultingCollections.stream().filter(proposal -> proposal.getName().equals(FixMessages.LambdaExpressionAndMethodRefFix_clean_up_expression_msg)).collect(Collectors.toList()).isEmpty()) {
+			return false;
+		}
 		LambdaExpression lambda;
 		if (coveringNode instanceof LambdaExpression lambdaExpr) {
 			lambda = lambdaExpr;
@@ -1090,7 +1124,7 @@ public class QuickAssistProcessor {
 
 		// add correction proposal
 		String label = CorrectionMessages.QuickAssistProcessor_convert_to_method_reference;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_TO_METHOD_REFERENCE);
+		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_TO_METHOD_REFERENCE);
 		if (importRewrite != null) {
 			proposal.setImportRewrite(importRewrite);
 		}

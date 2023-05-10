@@ -635,7 +635,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 
 		Assert.assertNotNull(codeActions);
-		CodeAction action = codeActions.get(1).getRight();
+		CodeAction action = codeActions.get(0).getRight();
 		Assert.assertEquals("Add missing method 'action' to class 'Foo'", action.getTitle());
 	}
 

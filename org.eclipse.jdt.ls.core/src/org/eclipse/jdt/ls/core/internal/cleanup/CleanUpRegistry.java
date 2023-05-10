@@ -50,6 +50,7 @@ public class CleanUpRegistry {
 		cleanUpsList.add(new InstanceofPatternMatch());
 		cleanUpsList.add(new LambdaExpressionCleanup());
 		cleanUpsList.add(new TryWithResourceCleanUp());
+		cleanUpsList.add(new LambdaExpressionAndMethodRefCleanUp());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
