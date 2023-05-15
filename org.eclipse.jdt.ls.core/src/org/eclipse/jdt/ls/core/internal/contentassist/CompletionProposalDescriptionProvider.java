@@ -468,9 +468,17 @@ public class CompletionProposalDescriptionProvider {
 	private void createTypeProposalLabel(CompletionProposal typeProposal, CompletionItem item) {
 		char[] signature;
 		if (fContext != null && fContext.isInJavadoc()) {
-			signature= Signature.getTypeErasure(typeProposal.getSignature());
+			if (typeProposal.getArrayDimensions() > 0) {
+				signature = Signature.createArraySignature(Signature.getTypeErasure(typeProposal.getSignature()), typeProposal.getArrayDimensions());
+			} else {
+				signature = Signature.getTypeErasure(typeProposal.getSignature());
+			}
 		} else {
-			signature= typeProposal.getSignature();
+			if (typeProposal.getArrayDimensions() > 0) {
+				signature = Signature.createArraySignature(typeProposal.getSignature(), typeProposal.getArrayDimensions());
+			} else {
+				signature = typeProposal.getSignature();
+			}
 		}
 		char[] fullName= Signature.toCharArray(signature);
 		createTypeProposalLabel(fullName, item);

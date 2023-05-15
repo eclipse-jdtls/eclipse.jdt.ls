@@ -504,12 +504,36 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal) {
+		final boolean completionSnippetsSupported = client.isCompletionSnippetsSupported();
 		if (!hasArgumentList(proposal)) {
-			String str = proposal.getKind() == CompletionProposal.TYPE_REF ? computeJavaTypeReplacementString(proposal) : String.valueOf(proposal.getCompletion());
-			if (client.isCompletionSnippetsSupported()) {
-				str = CompletionUtils.sanitizeCompletion(str);
-				if (proposal.getKind() == CompletionProposal.PACKAGE_REF && str != null && str.endsWith(".*;")) {
-					str = str.replace(".*;", ".${0:*};");
+			String str = null;
+			if (proposal.getKind() == CompletionProposal.TYPE_REF) {
+				str = computeJavaTypeReplacementString(proposal);
+				if (completionSnippetsSupported) {
+					str = CompletionUtils.sanitizeCompletion(str);
+				}
+
+				if (proposal.getArrayDimensions() > 0) {
+					StringBuilder arrayString = new StringBuilder(str);
+					for (int i = 0; i < proposal.getArrayDimensions(); i++) {
+						arrayString.append("[");
+						if (completionSnippetsSupported) {
+							arrayString.append("$").append(i + 1);
+						}
+						arrayString.append("]");
+					}
+					if (completionSnippetsSupported) {
+						arrayString.append("$0");
+					}
+					str = arrayString.toString();
+				}
+			} else {
+				str = String.valueOf(proposal.getCompletion());
+				if (completionSnippetsSupported) {
+					str = CompletionUtils.sanitizeCompletion(str);
+					if (proposal.getKind() == CompletionProposal.PACKAGE_REF && str != null && str.endsWith(".*;")) {
+						str = str.replace(".*;", ".${0:*};");
+					}
 				}
 			}
 			buffer.append(str);
@@ -518,7 +542,7 @@ public class CompletionProposalReplacementProvider {
 
 		// we're inserting a method plus the argument list - respect formatter preferences
 		appendMethodNameReplacement(buffer, proposal);
-		final boolean addParen  = client.isCompletionSnippetsSupported();
+		final boolean addParen = completionSnippetsSupported;
 		if(addParen) {
 			buffer.append(LPAREN);
 		}
