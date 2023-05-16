@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.buildship.core.internal.CorePlugin;
@@ -41,6 +42,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.Before;
@@ -62,7 +64,7 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 
 	@Before
 	public void setup() throws Exception {
-		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
+		System.setProperty(ProjectsManager.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 	}
 
 	@Test
@@ -77,33 +79,35 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		IPath projectDescriptionPath = FileUtil.toPath(projectDescription.getLocationURI());
 		assertTrue(projectDescriptionPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(ProjectsManager.generatesMetadataFilesAtProjectRoot(), new File(project.getLocation().toFile(), IProjectDescription.DESCRIPTION_FILE_NAME).exists());
 
 		IFile preferencesFile = project.getFile(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		IPath preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
+		IPath preferencesPath = preferencesFile.getLocation();
 		assertTrue(preferencesPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(preferencesPath), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(ProjectsManager.generatesMetadataFilesAtProjectRoot(), new File(project.getLocation().toFile(), EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME).exists());
 
 		// then we check the sub-module
 		project = WorkspaceHelper.getProject("app");
 		projectDescription = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		projectDescriptionPath = FileUtil.toPath(projectDescription.getLocationURI());
+		projectDescriptionPath = projectDescription.getLocation();
 		assertTrue(projectDescriptionPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(projectDescriptionPath), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().append(IProjectDescription.DESCRIPTION_FILE_NAME).toFile().exists(), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(ProjectsManager.generatesMetadataFilesAtProjectRoot(), new File(project.getLocation().toFile(), IProjectDescription.DESCRIPTION_FILE_NAME).exists());
 
 		IFile classpath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		IPath classpathPath = FileUtil.toPath(classpath.getLocationURI());
+		IPath classpathPath = classpath.getLocation();
 		assertTrue(classpathPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(classpathPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(classpathPath), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(ProjectsManager.generatesMetadataFilesAtProjectRoot(), new File(project.getLocation().toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists());
 
 		preferencesFile = project.getFile(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
+		preferencesPath = preferencesFile.getLocation();
 		assertTrue(preferencesPath.toFile().exists());
-		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertEquals(project.getLocation().isPrefixOf(preferencesPath), ProjectsManager.generatesMetadataFilesAtProjectRoot());
+		assertEquals(ProjectsManager.generatesMetadataFilesAtProjectRoot(), new File(project.getLocation().toFile(), EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME).exists());
 	}
 
 	@Test
@@ -115,7 +119,7 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		waitForBackgroundJobs();
 
 		List<IMarker> markers = ResourceUtils.findMarkers(project, IMarker.SEVERITY_ERROR);
-		assertTrue(markers.isEmpty());
+		assertEquals(Collections.emptyList(), markers);
 	}
 
 	@Test
@@ -149,8 +153,7 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 			assertIsJavaProject(project);
 			assertIsGradleProject(project);
 			IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-			// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-			File file = FileUtil.toPath(dotClasspath.getLocationURI()).toFile();
+			File file = dotClasspath.getLocation().toFile();
 			assertTrue(file.exists());
 			file.delete();
 			projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);

@@ -54,7 +54,6 @@
       <plugin id="org.eclipse.jdt.launching"/>
       <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
-      <plugin id="org.eclipse.jdt.ls.filesystem"/>
       <plugin id="org.eclipse.jdt.ls.logback.appender" fragment="true"/>
       <plugin id="org.eclipse.m2e.apt.core"/>
       <plugin id="org.eclipse.m2e.core"/>
