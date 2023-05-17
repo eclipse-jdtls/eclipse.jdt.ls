@@ -104,6 +104,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 
 	private SyntaxDocumentLifeCycleHandler documentLifeCycleHandler;
+	private WorkspaceEventsHandler workspaceEventHandler;
 	private ContentProviderManager contentProviderManager;
 	private ProjectsManager projectsManager;
 	private PreferenceManager preferenceManager;
@@ -261,6 +262,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	public void connectClient(JavaLanguageClient client) {
 		super.connectClient(client);
 		this.documentLifeCycleHandler.setClient(this.client);
+		this.workspaceEventHandler = new WorkspaceEventsHandler(this.projectsManager, this.client, this.documentLifeCycleHandler);
 	}
 
 	@Override
@@ -279,8 +281,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public void didChangeWatchedFiles(DidChangeWatchedFilesParams params) {
 		logInfo(">> workspace/didChangeWatchedFiles ");
-		WorkspaceEventsHandler handler = new WorkspaceEventsHandler(this.projectsManager, this.client, this.documentLifeCycleHandler);
-		handler.didChangeWatchedFiles(params);
+		this.workspaceEventHandler.didChangeWatchedFiles(params);
 	}
 
 	@Override
