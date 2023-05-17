@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -37,6 +38,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
@@ -77,6 +79,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.text.edits.DeleteEdit;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
@@ -362,7 +365,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			// checks if the underlying resource exists and refreshes to sync the newly created file.
 			if (!unit.getResource().isAccessible()) {
 				try {
-					unit.getResource().refreshLocal(IResource.DEPTH_ONE, new NullProgressMonitor());
+					refreshLocalResource(unit.getResource(), IResource.DEPTH_ZERO, new NullProgressMonitor());
 					if (unit.getResource().exists()) {
 						IJavaElement parent = unit.getParent();
 						if (parent instanceof PackageFragment pkg) {
@@ -485,7 +488,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (!unit.hasUnsavedChanges()) {
 			return false;
 		}
-		unit.getResource().refreshLocal(IResource.DEPTH_ZERO, null);
+		refreshLocalResource(unit.getResource(), IResource.DEPTH_ZERO, new NullProgressMonitor());
 		return unit.getResource().exists();
 	}
 
@@ -502,7 +505,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			try {
 				if (unit.getUnderlyingResource() != null && unit.getUnderlyingResource().exists()) {
 					try {
-						unit.getUnderlyingResource().refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
+						refreshLocalResource(unit.getUnderlyingResource(), IResource.DEPTH_ZERO, new NullProgressMonitor());
 					} catch (CoreException e) {
 						JavaLanguageServerPlugin.logException("Error while refreshing resource. URI: " + uri, e);
 					}
@@ -654,6 +657,43 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Copied from org.eclipse.core.internal.resources.Resource.refreshLocal(int, IProgressMonitor),
+	 * but set the scheduling rule to null while refreshing a file resource.
+	 */
+	private void refreshLocalResource(IResource resource, int depth, IProgressMonitor monitor) throws CoreException {
+		if (resource instanceof org.eclipse.core.internal.resources.File file) {
+			if (!file.getLocalManager().fastIsSynchronized(file)) {
+				String message = NLS.bind(org.eclipse.core.internal.utils.Messages.resources_refreshing, file.getFullPath());
+				SubMonitor progress = SubMonitor.convert(monitor, 100).checkCanceled();
+				progress.subTask(message);
+				boolean build = false;
+				SubMonitor split = progress.split(1);
+				final ISchedulingRule rule = null;
+				final Workspace workspace = (Workspace) file.getWorkspace();
+				try {
+					workspace.prepareOperation(rule, split);
+					if (!file.getProject().isAccessible()) {
+						return;
+					}
+					if (!file.exists() && file.isFiltered()) {
+						return;
+					}
+					workspace.beginOperation(true);
+					build = file.getLocalManager().refresh(file, IResource.DEPTH_ZERO, true, monitor);
+				} catch (OperationCanceledException e) {
+					workspace.getWorkManager().operationCanceled();
+					throw e;
+				} finally {
+					monitor.done();
+					workspace.endOperation(rule, build);
+				}
+			}
+		} else { // falls back to the default implementation for non-files
+			resource.refreshLocal(depth, monitor);
+		}
 	}
 
 	/**
