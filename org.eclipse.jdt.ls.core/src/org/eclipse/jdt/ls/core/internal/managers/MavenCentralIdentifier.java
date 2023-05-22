@@ -117,7 +117,7 @@ public class MavenCentralIdentifier implements IMavenArtifactIdentifier {
 
 			//TODO implement request cancellation, according to monitor status
 			HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-			JsonElement jsonElement = new JsonParser().parse(response.body());
+			JsonElement jsonElement = JsonParser.parseString(response.body());
 			if (jsonElement != null && jsonElement.isJsonObject()) {
 				return extractKey(jsonElement.getAsJsonObject());
 			}

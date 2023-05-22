@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Red Hat Inc. and others.
+ * Copyright (c) 2020, 2023 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -92,7 +92,7 @@ public class WrapperValidatorTest extends AbstractGradleBasedTest{
 			}
 		} else {
 			try (InputStream inputStream = url.openStream(); InputStreamReader inputStreamReader = new InputStreamReader(inputStream); Reader reader = new BufferedReader(inputStreamReader)) {
-				JsonElement jsonElement = new JsonParser().parse(reader);
+				JsonElement jsonElement = JsonParser.parseReader(reader);
 				if (jsonElement instanceof JsonArray) {
 					JsonArray array = (JsonArray) jsonElement;
 					for (JsonElement json : array) {
