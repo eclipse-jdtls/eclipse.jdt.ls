@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019 Microsoft Corporation and others.
+* Copyright (c) 2019, 2023 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -900,11 +900,11 @@ public class RefactorProcessor {
 			return false;
 		}
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
 		ICleanUpCore cleanUp = new AbstractCleanUpCore(options) {
 			@Override
 			public CleanUpRequirementsCore getRequirementsCore() {
-				return new CleanUpRequirementsCore(isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
+				return new CleanUpRequirementsCore(isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
 			}
 
 			@Override
@@ -913,8 +913,8 @@ public class RefactorProcessor {
 				if (compilationUnit == null) {
 					return null;
 				}
-				boolean convertForLoops = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
-				boolean checkIfLoopVarUsed = isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
+				boolean convertForLoops = isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED);
+				boolean checkIfLoopVarUsed = isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED);
 				return ConvertLoopFixCore.createCleanUp(compilationUnit, convertForLoops, convertForLoops,
 						isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL) && isEnabled(CleanUpConstants.VARIABLE_DECLARATIONS_USE_FINAL_LOCAL_VARIABLES), checkIfLoopVarUsed);
 			}
@@ -922,9 +922,9 @@ public class RefactorProcessor {
 			@Override
 			public String[] getStepDescriptions() {
 				List<String> result = new ArrayList<>();
-				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
+				if (isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
 					result.add(MultiFixMessages.Java50CleanUp_ConvertToEnhancedForLoop_description);
-					if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
+					if (isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
 						result.add(MultiFixMessages.Java50CleanUp_ConvertLoopOnlyIfLoopVarUsed_description);
 					}
 				}
@@ -934,7 +934,7 @@ public class RefactorProcessor {
 			@Override
 			public String getPreview() {
 				StringBuilder buf = new StringBuilder();
-				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
+				if (isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED)) {
 					buf.append("for (int element : ids) {\n"); //$NON-NLS-1$
 					buf.append("    double value= element / 2; \n"); //$NON-NLS-1$
 					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
@@ -945,7 +945,7 @@ public class RefactorProcessor {
 					buf.append("    System.out.println(value);\n"); //$NON-NLS-1$
 					buf.append("}\n"); //$NON-NLS-1$
 				}
-				if (isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED) && !isEnabled(CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
+				if (isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED) && !isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_ONLY_IF_LOOP_VAR_USED)) {
 					buf.append("for (int id : ids) {\n"); //$NON-NLS-1$
 					buf.append("    System.out.println(\"here\");\n"); //$NON-NLS-1$
 					buf.append("}\n"); //$NON-NLS-1$
