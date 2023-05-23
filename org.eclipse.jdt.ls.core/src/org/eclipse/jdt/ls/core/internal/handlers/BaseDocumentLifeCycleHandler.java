@@ -49,6 +49,7 @@ import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IProblemRequestor;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -265,7 +266,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
 		}
-		List<ICompilationUnit> validateCopy = new ArrayList<>(toValidate);
+		List<ICompilationUnit> validateCopy =
+			preferenceManager.getClientPreferences().validateAllOpenBuffersOnDidChange()
+				? Arrays.asList(JavaCore.getWorkingCopies(null)) : new ArrayList<>(toValidate);
 		if (validateCopy.isEmpty()) {
 			return Status.OK_STATUS;
 		}

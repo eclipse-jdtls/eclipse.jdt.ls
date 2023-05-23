@@ -471,4 +471,7 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipTextEventPropagation", "false").toString());
 	}
 
+	public boolean validateAllOpenBuffersOnDidChange() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("validateAllOpenBuffersOnDidChange", "true").toString());
+	}
 }
