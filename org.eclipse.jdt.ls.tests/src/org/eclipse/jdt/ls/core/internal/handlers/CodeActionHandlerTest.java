@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -342,6 +343,37 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(context);
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
+	}
+
+	@Test
+	public void testCodeAction_refreshDiagnosticsCommandInNewCUProposal() throws Exception {
+		when(clientPreferences.isResolveCodeActionSupported()).thenReturn(true);
+		preferences.setValidateAllOpenBuffersOnChanges(false);
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+				"src/org/sample/Foo.java",
+				"package org.sample;\n"+
+				"public class Foo {\n"+
+				"	public static void main(String[] args) {\n"+
+				"		CU obj;\n"+
+				"	}\n"+
+				"}\n");
+		//@formatter:off
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "CU");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(
+			Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedType), range))
+		);
+		params.setContext(context);
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull(codeActions);
+		Optional<Either<Command, CodeAction>> newCUProposal = codeActions.stream().filter(action -> action.isRight() && Objects.equals(action.getRight().getTitle(), "Create class 'CU'")).findFirst();
+		assertTrue(newCUProposal.isPresent());
+		assertNotNull(newCUProposal.get().getRight());
+		assertNotNull(newCUProposal.get().getRight().getCommand());
+		assertEquals("java.project.refreshDiagnostics", newCUProposal.get().getRight().getCommand().getCommand());
 	}
 
 	private static String getBaseKind(String codeActionKind) {

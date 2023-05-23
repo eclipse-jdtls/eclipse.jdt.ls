@@ -38,11 +38,21 @@ import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
 
 public class DiagnosticsCommand {
 
 	public static Object refreshDiagnostics(String uri, String scope, boolean syntaxOnly) {
+		return refreshDiagnostics(uri, scope, syntaxOnly, false);
+	}
+
+	public static Object refreshDiagnostics(String uri, String scope, boolean syntaxOnly, boolean waitForLifecycleJob) {
+		if (waitForLifecycleJob) {
+			JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
+		}
+
 		DiagnosticsState state = JavaLanguageServerPlugin.getNonProjectDiagnosticsState();
 		boolean refreshAll = false;
 		if (Objects.equals(scope, "thisFile")) {
