@@ -102,7 +102,7 @@ def main(args):
 			"-data", known_args.data] \
 			+ args
 
-	if system == 'Windows':
-		subprocess.run([java_executable] + exec_args)
-	else:
+	if os.name == 'posix':
 		os.execvp(java_executable, exec_args)
+	else:
+		subprocess.run([java_executable] + exec_args)
