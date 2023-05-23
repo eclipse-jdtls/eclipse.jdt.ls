@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -85,6 +86,18 @@ public final class MapFlattener {
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
+		}
+		return def;
+	}
+
+	public static Map<String, Object> getMap(Map<String, Object> configuration, String key) {
+		return getMap(configuration, key, Collections.emptyMap());
+	}
+
+	public static Map<String, Object> getMap(Map<String, Object> configuration, String key, Map<String, Object> def) {
+		Object val = getValue(configuration, key);
+		if (val instanceof Map) {
+			return (Map<String, Object>) val;
 		}
 		return def;
 	}

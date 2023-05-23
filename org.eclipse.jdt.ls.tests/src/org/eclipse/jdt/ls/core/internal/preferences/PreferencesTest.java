@@ -15,7 +15,11 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Map;
+
 import org.junit.Test;
+
+import com.google.gson.internal.LinkedTreeMap;
 
 public class PreferencesTest {
 
@@ -47,5 +51,18 @@ public class PreferencesTest {
 		// Negative will fallback to default
 		preferences.setStaticImportOnDemandThreshold(-1);
 		assertEquals(Preferences.IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT, preferences.getStaticImportOnDemandThreshold());
+	}
+
+	@Test
+	public void testContributedSettings() {
+		Map<String, Object> settings = new LinkedTreeMap<>();
+		Map<String, Object> contributedSettings = new LinkedTreeMap<>();
+		contributedSettings.put("foo", "bar");
+		contributedSettings.put("test", false);
+		settings.put("java._contribution_", contributedSettings);
+		Preferences preferences = Preferences.createFrom(settings);
+
+		assertEquals("bar", preferences.getContributedSettings().get("foo"));
+		assertEquals(false, preferences.getContributedSettings().get("test"));
 	}
 }

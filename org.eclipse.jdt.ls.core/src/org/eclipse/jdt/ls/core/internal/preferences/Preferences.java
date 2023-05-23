@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getBoolean;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
+import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getMap;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
 
@@ -651,6 +652,7 @@ public class Preferences {
 	private List<String> cleanUpActionsOnSave;
 	private boolean extractInterfaceReplaceEnabled;
 	private boolean telemetryEnabled;
+	private Map<String, Object> contributedSettings;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -881,6 +883,7 @@ public class Preferences {
 		cleanUpActionsOnSave = new ArrayList<>();
 		extractInterfaceReplaceEnabled = false;
 		telemetryEnabled = false;
+		contributedSettings = new HashMap<>();
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1240,6 +1243,9 @@ public class Preferences {
 		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
 		boolean telemetryEnabled = getBoolean(configuration, JAVA_TELEMETRY_ENABLED_KEY, false);
 		prefs.setTelemetryEnabled(telemetryEnabled);
+
+		Map<String, Object> contributedSettings = getMap(configuration, "java._contribution_");
+		prefs.setContributedSettings(contributedSettings);
 		return prefs;
 	}
 
@@ -2383,4 +2389,11 @@ public class Preferences {
 		return telemetryEnabled;
 	}
 
+	public Map<String, Object> getContributedSettings() {
+		return contributedSettings;
+	}
+
+	public void setContributedSettings(Map<String, Object> contributedSettings) {
+		this.contributedSettings = contributedSettings;
+	}
 }
