@@ -267,7 +267,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			return Status.CANCEL_STATUS;
 		}
 		List<ICompilationUnit> validateCopy =
-			preferenceManager.getClientPreferences().validateAllOpenBuffersOnDidChange()
+			preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()
 				? Arrays.asList(JavaCore.getWorkingCopies(null)) : new ArrayList<>(toValidate);
 		if (validateCopy.isEmpty()) {
 			return Status.OK_STATUS;
