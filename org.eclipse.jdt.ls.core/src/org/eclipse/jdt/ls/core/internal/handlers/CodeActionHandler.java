@@ -46,6 +46,10 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewAnnotationMemberProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewCUProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewMethodCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewVariableCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
@@ -198,7 +202,7 @@ public class CodeActionHandler {
 		}
 		try {
 			for (ChangeCorrectionProposal proposal : proposals) {
-				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(proposal, params.getContext());
+				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(params.getTextDocument().getUri(), proposal, params.getContext());
 				if (codeActionFromProposal.isPresent() && !codeActions.contains(codeActionFromProposal.get())) {
 					codeActions.add(codeActionFromProposal.get());
 				}
@@ -256,7 +260,7 @@ public class CodeActionHandler {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(String uri, ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
 		String name = proposal.getName();
 
 		Command command = null;
@@ -281,6 +285,18 @@ public class CodeActionHandler {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(proposal.getKind());
 			if (command == null) { // lazy resolve the edit.
+				if (!preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) {
+					if (proposal instanceof NewCUProposal
+						|| proposal instanceof NewMethodCorrectionProposal
+						|| proposal instanceof NewAnnotationMemberProposal
+						|| proposal instanceof NewVariableCorrectionProposal
+					) {
+						codeAction.setCommand(new Command("refresh Diagnostics", "java.project.refreshDiagnostics", Arrays.asList(
+							uri, "thisFile", false, true
+						)));
+					}
+				}
+
 				// The relevance is in descending order while CodeActionComparator sorts in ascending order
 				codeAction.setData(new CodeActionData(proposal, -proposal.getRelevance()));
 			} else {

@@ -99,7 +99,10 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.getAll":
 					return ProjectCommand.getAllJavaProjects();
 				case "java.project.refreshDiagnostics":
-					return DiagnosticsCommand.refreshDiagnostics((String) arguments.get(0), (String) arguments.get(1), (boolean) arguments.get(2));
+					if (arguments.size() < 4) {
+						return DiagnosticsCommand.refreshDiagnostics((String) arguments.get(0), (String) arguments.get(1), (boolean) arguments.get(2));
+					}
+					return DiagnosticsCommand.refreshDiagnostics((String) arguments.get(0), (String) arguments.get(1), (boolean) arguments.get(2), (boolean) arguments.get(3));
 				case "java.project.import":
 					ProjectCommand.importProject(monitor);
 					return null;
