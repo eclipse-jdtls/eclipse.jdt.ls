@@ -471,7 +471,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
-		assertNewProblemReported(new ExpectedProblemReport(cu2, 1), new ExpectedProblemReport(cu1, 0));
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
 		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(2);
 
@@ -487,9 +487,13 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.hasUnsavedChanges());
 		assertEquals(true, cu2.isWorkingCopy());
 		assertEquals(false, cu2.hasUnsavedChanges());
-		assertNewProblemReported(new ExpectedProblemReport(cu2, 0), new ExpectedProblemReport(cu1, 0));
+		assertNewProblemReported(new ExpectedProblemReport(cu1, 0));
 		assertEquals(0, getCacheSize());
 		assertNewASTsCreated(2);
+
+		closeDocument(cu2);
+		openDocument(cu2, cu2.getSource(), 1);
+		assertNewProblemReported(new ExpectedProblemReport(cu2, 0));
 
 		saveDocument(cu1);
 

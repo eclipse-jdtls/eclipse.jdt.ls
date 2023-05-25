@@ -470,5 +470,4 @@ public class ClientPreferences {
 	public boolean skipTextEventPropagation() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipTextEventPropagation", "false").toString());
 	}
-
 }

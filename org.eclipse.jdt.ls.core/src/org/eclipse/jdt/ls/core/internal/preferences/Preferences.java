@@ -465,6 +465,7 @@ public class Preferences {
 
 	public static final String JAVA_TELEMETRY_ENABLED_KEY = "java.telemetry.enabled";
 
+	public static final String JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES = "java.edit.validateAllOpenBuffersOnChanges";
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -651,6 +652,7 @@ public class Preferences {
 	private List<String> cleanUpActionsOnSave;
 	private boolean extractInterfaceReplaceEnabled;
 	private boolean telemetryEnabled;
+	private boolean validateAllOpenBuffersOnChanges;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -881,6 +883,7 @@ public class Preferences {
 		cleanUpActionsOnSave = new ArrayList<>();
 		extractInterfaceReplaceEnabled = false;
 		telemetryEnabled = false;
+		validateAllOpenBuffersOnChanges = true;
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1240,6 +1243,8 @@ public class Preferences {
 		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
 		boolean telemetryEnabled = getBoolean(configuration, JAVA_TELEMETRY_ENABLED_KEY, false);
 		prefs.setTelemetryEnabled(telemetryEnabled);
+		boolean validateAllOpenBuffers = getBoolean(configuration, JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES, true);
+		prefs.setValidateAllOpenBuffersOnChanges(validateAllOpenBuffers);
 		return prefs;
 	}
 
@@ -2383,4 +2388,11 @@ public class Preferences {
 		return telemetryEnabled;
 	}
 
+	public boolean isValidateAllOpenBuffersOnChanges() {
+		return validateAllOpenBuffersOnChanges;
+	}
+
+	public void setValidateAllOpenBuffersOnChanges(boolean validateAllOpenBuffersOnChanges) {
+		this.validateAllOpenBuffersOnChanges = validateAllOpenBuffersOnChanges;
+	}
 }

@@ -143,4 +143,7 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<CheckExtractInterfaceResponse> checkExtractInterfaceStatus(CodeActionParams params);
+
+	@JsonNotification
+	void validateDocument(ValidateDocumentParams params);
 }
