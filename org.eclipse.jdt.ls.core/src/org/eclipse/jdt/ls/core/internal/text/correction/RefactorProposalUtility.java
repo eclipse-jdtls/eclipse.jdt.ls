@@ -18,8 +18,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -36,6 +39,7 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -44,6 +48,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
@@ -55,6 +60,8 @@ import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.Selection;
+import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.ExceptionInfo;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
@@ -773,7 +780,8 @@ public class RefactorProposalUtility {
 
 		final ICompilationUnit cu = context.getCompilationUnit();
 		final ExtractMethodRefactoring extractMethodRefactoring = new ExtractMethodRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formattingOptions);
-		String uniqueMethodName = getUniqueMethodName(coveringNode, "extracted");
+		String suggestedName = proposeMethodNameHeuristic(context, coveringNode);
+		String uniqueMethodName = getUniqueMethodName(coveringNode, suggestedName);
 		extractMethodRefactoring.setMethodName(uniqueMethodName);
 		String label = CorrectionMessages.QuickAssistProcessor_extractmethod_description;
 		int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_METHOD;
@@ -807,6 +815,40 @@ public class RefactorProposalUtility {
 		}
 
 		return null;
+	}
+
+	private static String proposeMethodNameHeuristic(IInvocationContext context, ASTNode coveringNode) {
+
+		int selStart = context.getSelectionOffset();
+		int selEnd = context.getSelectionOffset() + context.getSelectionLength();
+
+		CompilationUnit cu = context.getASTRoot();
+
+		// Last unused local variable
+		Optional<IProblem> res = Arrays.asList(cu.getProblems()).stream().filter(p -> p.getID() == IProblem.LocalVariableIsNeverUsed).filter(p -> p.getSourceStart() >= selStart && p.getSourceEnd() <= selEnd)
+				.max((p1, p2) -> p1.getSourceStart() - p2.getSourceStart());
+		if (res.isPresent()) {
+			IProblem problem = res.get();
+			NodeFinder finder = new NodeFinder(cu, problem.getSourceStart(), problem.getSourceEnd() - problem.getSourceStart());
+			ASTNode nodeVar = finder.getCoveringNode();
+			if (nodeVar instanceof SimpleName) {
+				return "get" + StringUtils.capitalize(((SimpleName) nodeVar).getIdentifier());
+			}
+		}
+
+		// Last local variable
+		SelectionAnalyzer analyzer = new SelectionAnalyzer(Selection.createFromStartLength(context.getSelectionOffset(), context.getSelectionLength()), true);
+		cu.accept(analyzer);
+		List<ASTNode> varDeclStatements = Arrays.asList(analyzer.getSelectedNodes()).stream().filter(e -> e.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT).collect(Collectors.toList());
+		if (!varDeclStatements.isEmpty()) {
+			VariableDeclarationStatement lastStatement = (VariableDeclarationStatement) varDeclStatements.get(varDeclStatements.size() - 1);
+			List<?> fragments = lastStatement.fragments();
+			VariableDeclarationFragment fragment = (VariableDeclarationFragment) fragments.get(0);
+			String identifier = fragment.getName().getIdentifier();
+			return "get" + StringUtils.capitalize(identifier);
+		}
+
+		return "extracted";
 	}
 
 	public static CUCorrectionProposal getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocationCore[] problemLocations)
