@@ -210,8 +210,18 @@ public class ChainCompletionProposalComputer {
 		CompilationUnit cuNode = getASTRoot();
 		AST ast = cuNode.getAST();
 		ITypeBinding binding = ast.resolveWellKnownType(ChainElementAnalyzer.getExpectedFullyQualifiedTypeName(coll.getContext()));
-		return (binding != null && !isPrimitiveOrBoxedPrimitive(binding) && !"java.lang.String".equals(binding.getQualifiedName()) && !"java.lang.Object".equals(binding.getQualifiedName()))
-				|| ChainElementAnalyzer.getExpectedType(cu.getJavaProject(), coll.getContext()) != null;
+		IType type = ChainElementAnalyzer.getExpectedType(cu.getJavaProject(), coll.getContext());
+		return hasValidExpectedTypeResolution(binding, type);
+	}
+
+	private boolean hasValidExpectedTypeResolution(ITypeBinding binding, IType type) {
+		if(binding != null) {
+			return !isPrimitiveOrBoxedPrimitive(binding) && !"java.lang.String".equals(binding.getQualifiedName()) && !"java.lang.Object".equals(binding.getQualifiedName());
+		} else if (type != null) {
+			return !"java.lang.String".equals(type.getFullyQualifiedName()) && !"java.lang.Object".equals(type.getFullyQualifiedName());
+		} else {
+			return false;
+		}
 	}
 
 	private boolean isPrimitiveOrBoxedPrimitive(ITypeBinding binding) {

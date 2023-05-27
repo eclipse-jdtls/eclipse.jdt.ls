@@ -180,4 +180,86 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().endsWith("emptyList() <T>")).collect(Collectors.toList());
 		assertEquals("emptyList completion count", 0, completionItems.size());
 	}
+
+	@Test
+	public void testChainCompletionsOnPrimitiveVariableExpectNoCompletions() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"""
+						public class Foo {
+						    public static boo(IntChain chain) {
+								Integer variable = ;
+						    }
+
+							static class IntChain {
+								public Integer newInt() {
+									return 1;
+								}
+							}
+						}
+						""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "variable = ");
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("newInt")).collect(Collectors.toList());
+		assertEquals("emptyList completion count", 0, completionItems.size());
+	}
+
+	@Test
+	public void testChainCompletionsOnStringVariableExpectNoCompletions() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"""
+						public class Foo {
+						    public static boo(StringChain chain) {
+								String variable = //
+								"variable".concat("");
+						    }
+
+							static class StringChain {
+								public String newString() {
+									return "";
+								}
+							}
+						}
+						""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "variable = ");
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("newString")).collect(Collectors.toList());
+		assertEquals("emptyList completion count [binding]", 0, completionItems.size());
+
+		list = requestCompletions(unit, "\"variable\".concat(");
+		completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("newString")).collect(Collectors.toList());
+		assertEquals("emptyList completion count [type]", 0, completionItems.size());
+	}
+
+	@Test
+	public void testChainCompletionsOnObjectVariableExpectNoCompletions() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"""
+						public class Foo {
+						    public static boo(ObjectChain chain) {
+								Object variable = //
+								chain.equals(variable);
+						    }
+
+							static class ObjectChain {
+								public Object newObject() {
+									return new Object();
+								}
+							}
+						}
+						""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "variable = ");
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("newObject")).collect(Collectors.toList());
+		assertEquals("emptyList completion count", 0, completionItems.size());
+
+		list = requestCompletions(unit, "chain.equals(");
+		completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("newObject")).collect(Collectors.toList());
+		assertEquals("emptyList completion count [type]", 0, completionItems.size());
+	}
 }
