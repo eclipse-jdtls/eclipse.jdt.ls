@@ -102,13 +102,15 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 						""");
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "collect(");
-		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().endsWith("toList() <T>")).collect(Collectors.toList());
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("toList")).collect(Collectors.toList());
 		assertEquals("toList completion count", 1, completionItems.size());
 
 		CompletionItem completionItem = completionItems.get(0);
 		assertNotNull(completionItem);
 		assertEquals("Completion getTextEditText", "Collectors.toList()", completionItem.getTextEditText());
-
+		assertNotNull(completionItem.getLabelDetails());
+		assertEquals("Completion detail.description", "java.util.stream.Collector<T,?,java.util.List<T>>", completionItem.getLabelDetails().getDescription());
+		assertEquals("Completion detail.detail", " - Collectors.toList()", completionItem.getLabelDetails().getDetail());
 		assertNotNull(completionItem.getAdditionalTextEdits());
 		assertEquals("Additional edits count", 1, completionItem.getAdditionalTextEdits().size());
 		assertNotNull(completionItem.getAdditionalTextEdits().get(0));
@@ -130,7 +132,7 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 						""");
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "names =");
-		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().endsWith("emptyList() <T>")).collect(Collectors.toList());
+		List<CompletionItem> completionItems = list.getItems().stream().filter(i -> i.getLabel().contains("emptyList")).collect(Collectors.toList());
 		assertEquals("emptyList completion count", 1, completionItems.size());
 
 		CompletionItem completionItem = completionItems.get(0);

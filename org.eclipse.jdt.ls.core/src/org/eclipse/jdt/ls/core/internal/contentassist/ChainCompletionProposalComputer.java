@@ -47,7 +47,6 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
-import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
@@ -65,6 +64,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.CompletionItemLabelDetails;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.TextEdit;
 
@@ -215,7 +215,7 @@ public class ChainCompletionProposalComputer {
 	}
 
 	private boolean hasValidExpectedTypeResolution(ITypeBinding binding, IType type) {
-		if(binding != null) {
+		if (binding != null) {
 			return !isPrimitiveOrBoxedPrimitive(binding) && !"java.lang.String".equals(binding.getQualifiedName()) && !"java.lang.Object".equals(binding.getQualifiedName());
 		} else if (type != null) {
 			return !"java.lang.String".equals(type.getFullyQualifiedName()) && !"java.lang.Object".equals(type.getFullyQualifiedName());
@@ -260,15 +260,14 @@ public class ChainCompletionProposalComputer {
 	}
 
 	private CompletionItem create(final Chain chain) throws JavaModelException {
-		final String label = createChainCode(chain, true, 0);
-		final String insert = createChainCode(chain, false, chain.getExpectedDimensions());
+		final String insert = createInsertText(chain, chain.getExpectedDimensions());
 		final CompletionItem ci = new CompletionItem();
 
 		ci.setTextEditText(insert);
 		ci.setInsertText(getQualifiedMethodName(insert));
 		ci.setInsertTextFormat(snippetStringSupported ? InsertTextFormat.Snippet : InsertTextFormat.PlainText);
-		ci.setLabel(label);
 		ci.setKind(CompletionItemKind.Method);
+		setLabelDetails(chain, ci);
 
 		ChainElement root = chain.getElements().get(0);
 		if (root.getElementType() == ElementType.TYPE) {
@@ -287,7 +286,7 @@ public class ChainCompletionProposalComputer {
 		return name;
 	}
 
-	private String createChainCode(final Chain chain, final boolean createAsTitle, final int expectedDimension) throws JavaModelException {
+	private String createInsertText(final Chain chain, final int expectedDimension) throws JavaModelException {
 		final AtomicInteger counter = new AtomicInteger(1);
 		StringBuilder sb = new StringBuilder(64);
 		for (final ChainElement edge : chain.getElements()) {
@@ -299,23 +298,61 @@ public class ChainCompletionProposalComputer {
 					break;
 				case METHOD:
 					final IMethod method = (IMethod) edge.getElement();
-					if (createAsTitle) {
-						StringBuffer tmp = new StringBuffer(sb.toString());
-						JavaElementLabelsCore.getMethodLabel(method, JavaElementLabelsCore.ALL_DEFAULT, tmp);
-						sb = new StringBuilder(tmp.toString());
-					} else {
-						sb.append(method.getElementName());
-						appendParameters(sb, method, counter);
-					}
+					sb.append(method.getElementName());
+					appendParameters(sb, method, counter);
 					break;
 				default:
 			}
-			final boolean appendVariables = !createAsTitle && snippetStringSupported;
-			appendArrayDimensions(sb, edge.getReturnTypeDimension(), expectedDimension, appendVariables, counter);
+			appendArrayDimensions(sb, edge.getReturnTypeDimension(), expectedDimension, snippetStringSupported, counter);
 			sb.append(".");
 		}
 		deleteLastChar(sb);
 		return sb.toString();
+	}
+
+	private void setLabelDetails(final Chain chain, final CompletionItem item) throws JavaModelException {
+		final CompletionItemLabelDetails details = new CompletionItemLabelDetails();
+
+		ChainElement last = chain.getElements().get(chain.getElements().size() - 1);
+		String lastDetails = "";
+		switch (last.getElementType()) {
+			case FIELD:
+			case TYPE:
+			case LOCAL_VARIABLE:
+				item.setLabel(last.getElement().getElementName());
+				details.setDescription(last.getReturnType().toString());
+				break;
+			case METHOD:
+				final IMethod method = (IMethod) last.getElement();
+				item.setLabel(method.getElementName());
+				final String returnTypeSig = method.getReturnType();
+				details.setDescription(Signature.toQualifiedName(new String[] { Signature.getSignatureQualifier(returnTypeSig), Signature.getSignatureSimpleName(returnTypeSig) }));
+				lastDetails = "(%s)".formatted(Stream.of(method.getParameterNames()).collect(Collectors.joining(",")));
+				break;
+			default:
+		}
+
+		List<ChainElement> receivers = chain.getElements().subList(0, chain.getElements().size() - 1);
+		StringBuilder receiversString = new StringBuilder(64);
+		receiversString.append(" - ");
+		for (final ChainElement edge : receivers) {
+			switch (edge.getElementType()) {
+				case FIELD:
+				case TYPE:
+				case LOCAL_VARIABLE:
+					appendVariableString(edge, receiversString);
+					break;
+				case METHOD:
+					final IMethod method = (IMethod) edge.getElement();
+					receiversString.append(method.getElementName());
+					receiversString.append("(%s)".formatted(Stream.of(method.getParameterNames()).collect(Collectors.joining(","))));
+					break;
+				default:
+			}
+			receiversString.append(".");
+		}
+		details.setDetail(receiversString.append(item.getLabel()).append(lastDetails).toString());
+		item.setLabelDetails(details);
 	}
 
 	private static void appendVariableString(final ChainElement edge, final StringBuilder sb) {
