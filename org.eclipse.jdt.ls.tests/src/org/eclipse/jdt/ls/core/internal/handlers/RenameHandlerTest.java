@@ -574,7 +574,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				);
 	}
 
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar)
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
 	// https://github.com/eclipse/eclipse.jdt.ls/issues/1775
 	@Test
 	public void testRenameTypeLombok() throws Exception {
@@ -593,7 +593,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
 	}
 
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.20/lombok-1.18.20.jar)
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
 	// https://github.com/redhat-developer/vscode-java/issues/2805
 	@Test
 	public void testRenameMethodLombok() throws Exception {

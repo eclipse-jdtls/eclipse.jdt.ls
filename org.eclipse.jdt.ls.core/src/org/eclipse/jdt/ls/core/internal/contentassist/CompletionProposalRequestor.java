@@ -269,6 +269,32 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
+		// see https://github.com/eclipse/eclipse.jdt.ls/issues/2669
+		Either<Range, InsertReplaceRange> editRange = itemDefaults.getEditRange();
+		if (editRange != null) {
+			Range range;
+			if (editRange.getLeft() != null) {
+				range = editRange.getLeft();
+			} else if (editRange.getRight() != null) {
+				range = editRange.getRight().getInsert() != null ? editRange.getRight().getInsert() : editRange.getRight().getReplace();
+			} else {
+				range = null;
+			}
+			int line = -1;
+			if (range != null) {
+				int offset = response.getOffset();
+				try {
+					Range offsetRange = JDTUtils.toRange(unit, offset, 0);
+					line = offsetRange.getStart().getLine();
+				} catch (JavaModelException e) {
+					// ignore
+				}
+			}
+			if (range != null && range.getStart().getLine() != line) {
+				itemDefaults.setEditRange(null);
+				itemDefaults.setInsertTextFormat(null);
+			}
+		}
 
 		if (proposals.size() > maxCompletions) {
 			//we keep receiving completions past our capacity so that makes the whole result incomplete
