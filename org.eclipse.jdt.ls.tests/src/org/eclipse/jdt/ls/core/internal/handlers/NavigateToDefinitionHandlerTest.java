@@ -141,7 +141,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		testClass("org.apache.commons.lang3.stringutils", 6579, 20);
 	}
 
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.24/lombok-1.18.24.jar)
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
 	// https://github.com/redhat-developer/vscode-java/issues/2805
 	@Test
 	public void testLombok() throws Exception {
