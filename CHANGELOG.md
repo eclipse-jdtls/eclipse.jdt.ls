@@ -1,5 +1,28 @@
 # Change Log
 
+# [1.24.0 (June 1st, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/114?closed=1)
+ * performance - No need to run the reconcile operation in a workspace job. See [#2660](https://github.com/eclipse/eclipse.jdt.ls/pull/2660).
+ * performance - Avoid blocking the pipeline while handling `refreshLocal` during document lifecycle events. See [#2659](https://github.com/eclipse/eclipse.jdt.ls/pull/2659).
+ * performance - Avoid running document lifecycle in a workspace runnable unless it is necessary. See [#2641](https://github.com/eclipse/eclipse.jdt.ls/pull/2641), [#2637](https://github.com/eclipse/eclipse.jdt.ls/pull/2637).
+ * performance - Only append data on completion item selected. See [#2639](https://github.com/eclipse/eclipse.jdt.ls/pull/2639).
+ * performance - Remove some unnecessary completion item data fields. See [#2638](https://github.com/eclipse/eclipse.jdt.ls/issues/2638).
+ * performance - Remove `COMPLETION_EXECUTION_TIME` from the completion item response. See [#2621](https://github.com/eclipse/eclipse.jdt.ls/issues/2621).
+ * performance - Avoid validating all opened working copies when `didChange` is triggered on a document. See [#2587](https://github.com/eclipse/eclipse.jdt.ls/pull/2587), [#2664](https://github.com/eclipse/eclipse.jdt.ls/pull/2664).
+ * performance - Use separate thread to handle `didChangeWatchedFiles` events. See [#2643](https://github.com/eclipse/eclipse.jdt.ls/pull/2643).
+ * performance - Add option to lazily resolve the text edits. See [#1864](https://github.com/eclipse/eclipse.jdt.ls/issues/1864).
+ * enhancement - Add support for proper array completions. See [#2609](https://github.com/eclipse/eclipse.jdt.ls/issues/2609).
+ * enhancement - Completion items should support `InsertTextMode`. See [#2577](https://github.com/eclipse/eclipse.jdt.ls/issues/2577).
+ * bug fix - Missing javadoc for field during completion. See [#2645](https://github.com/eclipse/eclipse.jdt.ls/issues/2645).
+ * bug fix - Incorrect completion text edit ranges for snippets. See [#2626](https://github.com/eclipse/eclipse.jdt.ls/issues/2626).
+ * bug fix - Update completion resolve data for javadoc completions. See [#2636](https://github.com/eclipse/eclipse.jdt.ls/pull/2636).
+ * bug fix - Prevent sending shutdown job progress report. See [#2622](https://github.com/eclipse/eclipse.jdt.ls/pull/2622).
+ * bug fix - On Windows, `os.execvp` does not load the executable into current process. See [#2615](https://github.com/eclipse/eclipse.jdt.ls/issues/2615).
+ * bug fix - Fix constructor completion not working when match case turned on. See [#2676](https://github.com/eclipse/eclipse.jdt.ls/pull/2676).
+ * build - Update target platform to use m2e 2.3.0 release. See [#2666](https://github.com/eclipse/eclipse.jdt.ls/pull/2666).
+ * build - Bump maven-assembly-plugin from 3.5.0 to 3.6.0. See [#2656](https://github.com/eclipse/eclipse.jdt.ls/pull/2656).
+ * other - Remove unused imports. See [#2674](https://github.com/eclipse/eclipse.jdt.ls/pull/2674).
+ * other - `CleanUpConstants.CONTROL_STATMENTS_CONVERT_FOR_LOOP_TO_ENHANCED` is deprecated. See [#2662](https://github.com/eclipse/eclipse.jdt.ls/pull/2662).
+
 # [1.23.0 (April 27th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/113?closed=1)
  * performance - Completion handling should not be done in asynchronous thread pool. See [#2605](https://github.com/eclipse/eclipse.jdt.ls/pull/2605).
  * performance - Support lazily resolving postfix completion items. See [#2616](https://github.com/eclipse/eclipse.jdt.ls/issues/2616).
