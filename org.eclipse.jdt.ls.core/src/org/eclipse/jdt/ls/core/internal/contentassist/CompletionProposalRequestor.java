@@ -612,6 +612,19 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return true;
 		}
 
+		if (proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
+				|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
+				|| proposal.getKind() == CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
+			CompletionProposal[] requiredProposals = proposal.getRequiredProposals();
+			if (requiredProposals != null) {
+				for (CompletionProposal requiredProposal : requiredProposals) {
+					if (requiredProposal.getKind() == CompletionProposal.TYPE_REF) {
+						proposal = requiredProposal;
+					}
+				}
+			}
+		}
+
 		char firstCharOfCompletion;
 		if (proposal.getKind() == CompletionProposal.TYPE_REF) {
 			String simpleTypeName = SignatureUtil.getSimpleTypeName(proposal);
@@ -620,10 +633,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			firstCharOfCompletion = proposal.getCompletion()[0];
 		}
 
-		if (this.context.getToken()[0] != firstCharOfCompletion) {
-			return false;
-		}
-
-		return true;
+		return this.context.getToken()[0] == firstCharOfCompletion;
 	}
 }

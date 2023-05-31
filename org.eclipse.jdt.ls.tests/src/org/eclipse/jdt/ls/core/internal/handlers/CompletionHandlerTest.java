@@ -3518,6 +3518,30 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_MatchCaseFirstLetterForConstructor() throws Exception {
+		try {
+			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.FIRSTLETTER);
+			ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+			//@formatter:off
+					"package org.sample",
+					"public class Test {",
+					"	public static void main(String[] args) {",
+					"		String a = new S",
+					"	}",
+					"}"));
+					//@formatter:on
+			CompletionList list = requestCompletions(unit, "new S");
+			assertFalse(list.getItems().isEmpty());
+			assertTrue(list.getItems().stream()
+				.allMatch(t -> Character.isUpperCase(t.getLabel().charAt(0))));
+			assertTrue(list.getItems().stream()
+				.anyMatch(t -> t.getLabel().startsWith("String")));
+		} finally {
+			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.OFF);
+		}
+	}
+
 	// https://github.com/eclipse/eclipse.jdt.ls/issues/2376
 	@Test
 	public void testCompletion_selectSnippetItem() throws Exception {
