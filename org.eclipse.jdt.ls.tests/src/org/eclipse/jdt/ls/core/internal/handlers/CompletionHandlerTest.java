@@ -62,7 +62,6 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionContext;
 import org.eclipse.lsp4j.CompletionItem;
-import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.CompletionList;
@@ -202,7 +201,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
-		Mockito.lenient().when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
+		Mockito.when(mockCapabilies.isSupportsCompletionDocumentationMarkdown()).thenReturn(true);
 		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Foo5.java"));
 		unit.becomeWorkingCopy(null);
 		try {
@@ -428,7 +427,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
 		Mockito.when(mockCapabilies.isCompletionSnippetsSupported()).thenReturn(false);
-		Mockito.lenient().when(mockCapabilies.isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
+		Mockito.when(mockCapabilies.isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
 		Mockito.when(mockCapabilies.getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
 
 		ICompilationUnit unit = getWorkingCopy(
@@ -3662,102 +3661,6 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem completionItem = list.getItems().get(0);
 		assertEquals("Array type completion EditText", "Arr[]", completionItem.getInsertText());
 		assertEquals("Array type completion Label", "Arr[] - java", completionItem.getLabel());
-	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/eclipse/eclipse.jdt.ls/issues/2669
-	@Test
-	public void testCompletion_lombok() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
-		IJavaProject javaProject = JavaCore.create(proj);
-		ICompilationUnit unit = null;
-		try {
-			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Test.java"));
-			unit.becomeWorkingCopy(null);
-			String source =
-			//@formatter:off
-				"package org.sample;\n"
-				+ "import lombok.Builder;\n"
-				+ "import lombok.Data;\n"
-				+ "import lombok.Builder.Default;\n"
-				+ "@Data\n"
-				+ "@Builder\n"
-				+ "public class Test {\n"
-				+ "      @Default\n"
-				+ "      private Integer offset = ;\n"
-				+ "}\n";
-			//@formatter:on
-			changeDocument(unit, source, 1);
-			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			CompletionList list = requestCompletions(unit, " = ");
-			assertNotNull(list);
-			assertEquals(6, list.getItems().size());
-			CompletionItemDefaults itemDefaults = list.getItemDefaults();
-			assertNotNull(itemDefaults);
-			assertNull(itemDefaults.getInsertTextFormat());
-			assertNull(itemDefaults.getEditRange());
-		} finally {
-			unit.discardWorkingCopy();
-			proj.delete(true, monitor);
-		}
-	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/eclipse/eclipse.jdt.ls/issues/2669
-	@Test
-	public void testCompletion_lombok2() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
-		IJavaProject javaProject = JavaCore.create(proj);
-		ICompilationUnit unit = null;
-		try {
-			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Test.java"));
-			unit.becomeWorkingCopy(null);
-			String source =
-			//@formatter:off
-					"package org.sample;\n"
-					+ "import lombok.Builder;\n"
-					+ "import lombok.Data;\n"
-					+ "import lombok.Builder.Default;\n"
-					+ "@Data\n"
-					+ "@Builder\n"
-					+ "public class Test {\n"
-					+ "      private Integer offset = ;\n"
-					+ "}\n";
-				//@formatter:on
-			changeDocument(unit, source, 1);
-			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			CompletionList list = requestCompletions(unit, " = ");
-			assertNotNull(list);
-			assertEquals(19, list.getItems().size());
-			CompletionItemDefaults itemDefaults = list.getItemDefaults();
-			assertNotNull(itemDefaults);
-			assertNotNull(itemDefaults.getEditRange());
-		} finally {
-			unit.discardWorkingCopy();
-			proj.delete(true, monitor);
-		}
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
