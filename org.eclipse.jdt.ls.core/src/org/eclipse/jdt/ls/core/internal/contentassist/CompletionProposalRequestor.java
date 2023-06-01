@@ -245,11 +245,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		List<Map<String, String>> contributedData = new LinkedList<>();
-		//Let's compute replacement texts for the most relevant results only
-		for (int i = 0; i < limit; i++) {
-			CompletionProposal proposal = proposals.get(i);
+		int pId = 0; // store the index of the completion item in the list
+		int proposalIndex = 0; // to iterate through proposals
+		List<CompletionProposal> proposalsToBeCached = new LinkedList<>();
+		for (; pId < limit && proposalIndex < proposals.size(); proposalIndex++) {
+			CompletionProposal proposal = proposals.get(proposalIndex);
 			try {
-				CompletionItem item = toCompletionItem(proposal, i);
+				CompletionItem item = toCompletionItem(proposal, pId);
 				CompletionRankingAggregation rankingResult = proposalToRankingResult.get(proposal);
 				if (rankingResult != null) {
 					String decorators = rankingResult.getDecorators();
@@ -265,18 +267,21 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 					contributedData.add(rankingData);
 				}
 				completionItems.add(item);
+				proposalsToBeCached.add(proposal);
+				pId++;
 			} catch (Exception e) {
-				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				JavaLanguageServerPlugin.logException(
+					"Failed to convert completion proposal to completion item",
+					e
+				);
 			}
 		}
 
-		if (proposals.size() > maxCompletions) {
+		if (proposals.size() > proposalIndex) {
 			//we keep receiving completions past our capacity so that makes the whole result incomplete
 			isComplete = false;
-			response.setProposals(proposals.subList(0, limit));
-		} else {
-			response.setProposals(proposals);
 		}
+		response.setProposals(proposalsToBeCached);
 		response.setItems(completionItems);
 		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		response.setCompletionItemData(contributedData);
