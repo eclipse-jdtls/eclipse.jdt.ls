@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: org.eclipse.jdt.ls.filesystem;singleton:=true
 Bundle-Name: %Bundle-Name
-Bundle-Version: 1.24.0.qualifier
+Bundle-Version: 1.25.0.qualifier
 Export-Package: org.eclipse.jdt.ls.core.internal.filesystem;x-friends:="org.eclipse.jdt.ls.tests"
 Bundle-Localization: plugin
 Bundle-Activator: org.eclipse.jdt.ls.core.internal.filesystem.JDTLSFilesystemActivator
