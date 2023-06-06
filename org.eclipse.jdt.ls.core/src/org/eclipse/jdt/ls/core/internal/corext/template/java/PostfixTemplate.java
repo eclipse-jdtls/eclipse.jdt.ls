@@ -23,12 +23,22 @@ public enum PostfixTemplate {
 	FOR(PostfixPreferences.FOR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FOR_CONTENT, PostfixPreferences.FOR_DESCRIPTION),
 	FORI(PostfixPreferences.FORI_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORI_CONTENT, PostfixPreferences.FORI_DESCRIPTION),
 	FORR(PostfixPreferences.FORR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORR_CONTENT, PostfixPreferences.FORR_DESCRIPTION),
+	FORMAT(PostfixPreferences.FORMAT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.FORMAT_CONTENT,
+			PostfixPreferences.FORMAT_DESCRIPTION),
 	NNULL(PostfixPreferences.NNULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NNULL_CONTENT, PostfixPreferences.NNULL_DESCRIPTION),
 	NULL(PostfixPreferences.NULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NULL_CONTENT, PostfixPreferences.NULL_DESCRIPTION),
+	NOT(PostfixPreferences.NOT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NOT_CONTENT,
+			PostfixPreferences.NOT_DESCRIPTION),
 	SYSOUT(PostfixPreferences.SYSOUT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUT_CONTENT, PostfixPreferences.SYSOUT_DESCRIPTION),
+	SYSOUF(PostfixPreferences.SYSOUF_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUF_CONTENT,
+			PostfixPreferences.SYSOUF_DESCRIPTION),
+	SYSOUTV(PostfixPreferences.SYSOUTV_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUTV_CONTENT,
+			PostfixPreferences.SYSOUTV_DESCRIPTION),
 	SYSERR(PostfixPreferences.SYSERR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSERR_CONTENT, PostfixPreferences.SYSERR_DESCRIPTION),
 	THROW(PostfixPreferences.THROW_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.THROW_CONTENT, PostfixPreferences.THROW_DESCRIPTION),
 	VAR(PostfixPreferences.VAR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.VAR_CONTENT, PostfixPreferences.VAR_DESCRIPTION),
+	PAR(PostfixPreferences.PAR_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.PAR_CONTENT,
+			PostfixPreferences.PAR_DESCRIPTION),
 	WHILE(PostfixPreferences.WHILE_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.WHILE_CONTENT, PostfixPreferences.WHILE_DESCRIPTION);
 	//@formatter:off
 
@@ -60,13 +70,18 @@ class PostfixPreferences {
 	public static final String FOR_ID = "org.eclipse.jdt.postfixcompletion.for";
 	public static final String FORI_ID = "org.eclipse.jdt.postfixcompletion.fori";
 	public static final String FORR_ID = "org.eclipse.jdt.postfixcompletion.forr";
+	public static final String FORMAT_ID = "org.eclipse.jdt.postfixcompletion.format";
 	public static final String IF_ID = "org.eclipse.jdt.ls.postfixcompletion.if";
 	public static final String NNULL_ID = "org.eclipse.jdt.postfixcompletion.nnull";
 	public static final String NULL_ID = "org.eclipse.jdt.postfixcompletion.null";
+	public static final String NOT_ID = "org.eclipse.jdt.postfixcompletion.not";
 	public static final String SYSOUT_ID = "org.eclipse.jdt.postfixcompletion.sysout";
+	public static final String SYSOUTV_ID = "org.eclipse.jdt.postfixcompletion.sysoutv";
+	public static final String SYSOUF_ID = "org.eclipse.jdt.postfixcompletion.sysouf";
 	public static final String SYSERR_ID = "org.eclipse.jdt.postfixcompletion.syserr";
 	public static final String THROW_ID = "org.eclipse.jdt.postfixcompletion.throw";
 	public static final String VAR_ID = "org.eclipse.jdt.postfixcompletion.var";
+	public static final String PAR_ID = "org.eclipse.jdt.postfixcompletion.par";
 	public static final String WHILE_ID = "org.eclipse.jdt.postfixcompletion.while";
 
 	// Default Contents
@@ -83,6 +98,7 @@ class PostfixPreferences {
 	public static final String FORR_CONTENT = "for (int $${1:${index}} = ${i:inner_expression(array)}.length - 1; $${1:${index}} >= 0; $${1:${index}}--) {\n" +
 		"\t$${0}\n" +
 	"}";
+	public static final String FORMAT_CONTENT = "String.format(${i:inner_expression(java.lang.String)}${}, $${0});";
 	public static final String IF_CONTENT = "if (${i:inner_expression(boolean)}) {\n" +
 		"\t$${0}\n" +
 	"}";
@@ -92,10 +108,14 @@ class PostfixPreferences {
 	public static final String NULL_CONTENT = "if (${i:inner_expression(java.lang.Object,array)} == null) {\n" +
 		"\t$${0}\n" +
 	"}";
+	public static final String NOT_CONTENT = "!${i:inner_expression(boolean)}${}";
 	public static final String SYSOUT_CONTENT = "System.out.println(${i:inner_expression(java.lang.Object)}${});$${0}";
+	public static final String SYSOUTV_CONTENT = "System.out.println(\"${i:inner_expression(java.lang.Object)}${} = \" + ${i:inner_expression(java.lang.Object)}${});$${0}";
+	public static final String SYSOUF_CONTENT = "System.out.printf(\"\", ${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String SYSERR_CONTENT = "System.err.println(${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String THROW_CONTENT = "throw ${true:inner_expression(java.lang.Throwable)};";
 	public static final String VAR_CONTENT = "${field:newType(inner_expression)} $${1:${var:newName(inner_expression)}} = ${inner_expression};$${0}";
+	public static final String PAR_CONTENT = "(${i:inner_expression}${})";
 	public static final String WHILE_CONTENT = "while (${i:inner_expression(boolean)}) {\n" +
 		"\t$${0}\n" +
 	"}";
@@ -106,12 +126,17 @@ class PostfixPreferences {
 	public static final String FOR_DESCRIPTION = "Creates a for statement";
 	public static final String FORI_DESCRIPTION = "Creates a for statement which iterates over an array";
 	public static final String FORR_DESCRIPTION = "Creates a for statement which iterates over an array in reverse order";
+	public static final String FORMAT_DESCRIPTION = "Sends the affected object to the String.format(..) method";
 	public static final String IF_DESCRIPTION = "Creates a if statement";
 	public static final String NNULL_DESCRIPTION = "Creates an if statement and checks if the expression does not resolve to null";
 	public static final String NULL_DESCRIPTION = "Creates an if statement which checks if expression resolves to null";
+	public static final String NOT_DESCRIPTION = "Negates the expression";
 	public static final String SYSOUT_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
+	public static final String SYSOUTV_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
+	public static final String SYSOUF_DESCRIPTION = "Sends the affected object to a System.out.printf(..) call";
 	public static final String SYSERR_DESCRIPTION = "Sends the affected object to a System.err.println(..) call";
 	public static final String THROW_DESCRIPTION = "Throws the given Exception";
 	public static final String VAR_DESCRIPTION = "Creates a new variable";
+	public static final String PAR_DESCRIPTION = "Places the expression in parentheses";
 	public static final String WHILE_DESCRIPTION = "Creates a while loop";
 }
