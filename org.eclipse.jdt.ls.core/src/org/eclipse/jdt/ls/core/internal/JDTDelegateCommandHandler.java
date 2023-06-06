@@ -72,6 +72,23 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						// workspaceEdit on the custom command.
 						return result;
 					}
+				case "java.apply.workspaceEdit":
+					final WorkspaceEdit r = (WorkspaceEdit) JSONUtility.toLsp4jModel(arguments.get(0), WorkspaceEdit.class);
+
+					if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences()
+							.isWorkspaceApplyEditSupported()) {
+						JavaLanguageServerPlugin.getInstance().getClientConnection()
+								.applyWorkspaceEdit(r);
+						// return an empty object to avoid errors on client
+						return new Object();
+					} else {
+						// we are returning a workspace edit here in order to accomodate the clients
+						// that
+						// did not implement workspace/applyEdit from LSP. This still allows them to
+						// implement applying
+						// workspaceEdit on the custom command.
+						return r;
+					}
 				case "java.edit.stringFormatting":
 					FormatterHandler handler = new FormatterHandler(JavaLanguageServerPlugin.getPreferencesManager());
 					return handler.stringFormatting((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), Map.class), Integer.parseInt((String) arguments.get(2)), monitor);
