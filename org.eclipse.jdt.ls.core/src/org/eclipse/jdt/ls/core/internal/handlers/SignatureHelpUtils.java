@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -85,6 +86,25 @@ public class SignatureHelpUtils {
 			if (infos.isEmpty()) {
 				return help;
 			}
+
+			// first check if we should use the proposal from the last selected completion item.
+			if (CompletionHandler.selectedProposal != null) {
+				for (int i = 0; i < infos.size(); i++) {
+					SignatureInformation signatureInformation = infos.get(i);
+					CompletionProposal proposal = collector.getInfoProposals().get(signatureInformation);
+					if (Arrays.equals(proposal.getSignature(), CompletionHandler.selectedProposal.getSignature())) {
+						int activeParameter = getActiveParameter(triggerOffset, proposal , context);
+						if (activeParameter >= 0) {
+							help.setActiveSignature(i);
+							help.setActiveParameter(activeParameter);
+							return help;
+						}
+					}
+				}
+			}
+
+			// if not matching with the last selected proposal, clear the cache and fallback to guess strategy.
+			CompletionHandler.selectedProposal = null;
 			for (int i = 0; i < infos.size(); i++) {
 				SignatureInformation signatureInformation = infos.get(i);
 				CompletionProposal proposal = collector.getInfoProposals().get(signatureInformation);
@@ -118,7 +138,7 @@ public class SignatureHelpUtils {
 		
 		// since the signature information are sorted by the parameter numbers, if the user's code does not
 		// contain argument right now, we can say this is a match.
-		if (context.arguments().size() == 0) {
+		if (context.arguments().isEmpty()) {
 			return true;
 		}
 
@@ -175,17 +195,17 @@ public class SignatureHelpUtils {
 	private static int getActiveParameter(int triggerOffset, CompletionProposal proposal, SignatureHelpContext context) {
 		if (triggerOffset >= context.completionOffset()) {
 			boolean isVarargs = Flags.isVarargs(proposal.getFlags());
-			String[] parameterTypes = Signature.getParameterTypes(String.valueOf(proposal.getSignature()));
+			int parameterCount = Signature.getParameterCount(proposal.getSignature());
 			// when no argument is written yet but the method has at least one parameter,
 			// return 0 as the active parameter index.
-			if (parameterTypes.length > 0 && context.argumentRanges().size() == 0) {
+			if (parameterCount > 0 && context.argumentRanges().isEmpty()) {
 				return 0;
 			}
 			for (int i = 0; i < context.argumentRanges().size(); i++) {
 				int[] range = context.argumentRanges().get(i);
 				if (range[0] <= triggerOffset && range[1] >= triggerOffset) {
-					if (i >= parameterTypes.length && isVarargs) {
-						return parameterTypes.length - 1;
+					if (i >= parameterCount && isVarargs) {
+						return parameterCount - 1;
 					}
 					return i;
 				}
