@@ -73,7 +73,7 @@ public class CompletionProposalDescriptionProvider {
 	 *            the proposal to create the description for
 	 * @return the string of method signature suitable for display
 	 */
-	public StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
+	public static StringBuilder createMethodProposalDescription(CompletionProposal proposal) {
 		int kind = proposal.getKind();
 		StringBuilder description = new StringBuilder();
 		switch (kind) {
@@ -99,7 +99,7 @@ public class CompletionProposalDescriptionProvider {
 		return description; // dummy
 	}
 
-	private StringBuilder appendReturnType(StringBuilder description, CompletionProposal proposal){
+	private static StringBuilder appendReturnType(StringBuilder description, CompletionProposal proposal){
 		// TODO remove SignatureUtil.fix83600 call when bugs are fixed
 		char[] returnType = createTypeDisplayName(SignatureUtil.getUpperBound(Signature.getReturnType(SignatureUtil.fix83600(proposal.getSignature()))));
 		description.append(returnType);
@@ -148,7 +148,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @param methodProposal the method proposal
 	 * @return the modified <code>buffer</code>
 	 */
-	private StringBuilder appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal) {
+	private static StringBuilder appendUnboundedParameterList(StringBuilder buffer, CompletionProposal methodProposal) {
 		// TODO remove once https://bugs.eclipse.org/bugs/show_bug.cgi?id=85293
 		// gets fixed.
 		char[] signature= SignatureUtil.fix83600(methodProposal.getSignature());
@@ -209,7 +209,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @param typeName the type name to convert
 	 * @return the converted type name
 	 */
-	private char[] convertToVararg(char[] typeName) {
+	private static char[] convertToVararg(char[] typeName) {
 		if (typeName == null) {
 			return typeName;
 		}
@@ -243,7 +243,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @see Signature#toCharArray(char[])
 	 * @see Signature#getSimpleName(char[])
 	 */
-	private char[] createTypeDisplayName(char[] typeSignature) throws IllegalArgumentException {
+	private static char[] createTypeDisplayName(char[] typeSignature) throws IllegalArgumentException {
 		char[] displayName= Signature.getSimpleName(Signature.toCharArray(typeSignature));
 
 		// XXX see https://bugs.eclipse.org/bugs/show_bug.cgi?id=84675
@@ -278,7 +278,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @param parameterNames the parameter names
 	 * @return the display string of the parameter list defined by the passed arguments
 	 */
-	private final StringBuilder appendParameterSignature(StringBuilder buffer, char[][] parameterTypes, char[][] parameterNames) {
+	private static final StringBuilder appendParameterSignature(StringBuilder buffer, char[][] parameterTypes, char[][] parameterNames) {
 		if (parameterTypes != null) {
 			for (int i = 0; i < parameterTypes.length; i++) {
 				if (i > 0) {

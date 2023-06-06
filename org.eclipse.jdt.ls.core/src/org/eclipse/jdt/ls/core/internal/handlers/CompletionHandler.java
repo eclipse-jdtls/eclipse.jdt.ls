@@ -89,6 +89,8 @@ public class CompletionHandler{
 
 	};
 
+	public static CompletionProposal selectedProposal;
+
 	private PreferenceManager manager;
 
 	public CompletionHandler(PreferenceManager manager) {
@@ -163,10 +165,12 @@ public class CompletionHandler{
 		int pId = Integer.parseInt(proposalId);
 		long rId = Long.parseLong(requestId);
 		CompletionResponse completionResponse = CompletionResponses.get(rId);
-		if (completionResponse == null || completionResponse.getItems().size() <= pId) {
+		if (completionResponse == null || completionResponse.getItems().size() <= pId
+				|| completionResponse.getProposals().size() <= pId) {
 			throw ExceptionFactory.newException("Cannot get completion responses.");
 		}
 
+		selectedProposal = completionResponse.getProposals().get(pId);
 		CompletionItem item = completionResponse.getItems().get(pId);
 		if (item == null) {
 			throw ExceptionFactory.newException("Cannot get the completion item.");

@@ -35,6 +35,8 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalDescriptionProvider;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.MarkupContent;
@@ -1198,6 +1200,27 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelpParams position = getParams(payload);
 		SignatureHelp sh = handler.signatureHelp(position, monitor);
 		assertNotNull(sh);
+	}
+
+	@Test
+	public void testSignatureHelpForSelectedCompletionProposal() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				public class E {
+					public foo() {
+						new String()
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", content, false, null);
+		int offset = content.indexOf("new String(") + "new String(".length();
+		CompletionProposalRequestor collector = new CompletionProposalRequestor(cu, offset, preferenceManager);
+		cu.codeComplete(offset, collector, monitor);
+		CompletionHandler.selectedProposal = collector.getProposals().get(0);
+		SignatureHelp help = getSignatureHelp(cu, 3, 13);
+		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(CompletionHandler.selectedProposal);
+		assertEquals(description.toString(), help.getSignatures().get(help.getActiveSignature()).getLabel());
 	}
 
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {
