@@ -647,10 +647,10 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        var test = new String(\"blah\");\n");
-		buf.append("        extracted(test);\n");
+		buf.append("        getTest(test);\n");
 		buf.append("    }\n");
 		buf.append("\n");
-		buf.append("    private void extracted(String test) {\n");
+		buf.append("    private void getTest(String test) {\n");
 		buf.append("        test = test + test;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -927,6 +927,82 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("}\n");
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testExtractMethodInferNameNoVarSelected() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        int numArgs = /*[*/args == null ? 0 : args.length/*]*/;\n");
+		buf.append("        System.out.println(numArgs);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        int numArgs = getNumArgs(args);\n");
+		buf.append("        System.out.println(numArgs);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    private static int getNumArgs(String[] args) {\n");
+		buf.append("        return /*[*/args == null ? 0 : args.length/*]*/;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("}\n");
+
+		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testExtractMethodInferNameNoVarSelectedAssign() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        int numArgs;\n");
+		buf.append("        numArgs = /*[*/args == null ? 0 : args.length/*]*/;\n");
+		buf.append("        System.out.println(numArgs);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E {\n");
+		buf.append("    public static void main(String[] args) {\n");
+		buf.append("        int numArgs;\n");
+		buf.append("        numArgs = getNumArgs(args);\n");
+		buf.append("        System.out.println(numArgs);\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("    private static int getNumArgs(String[] args) {\n");
+		buf.append("        return /*[*/args == null ? 0 : args.length/*]*/;\n");
+		buf.append("    }\n");
+		buf.append("\n");
+		buf.append("}\n");
+
 		Expected e1 = new Expected("Extract to method", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 
 		assertCodeActions(cu, e1);

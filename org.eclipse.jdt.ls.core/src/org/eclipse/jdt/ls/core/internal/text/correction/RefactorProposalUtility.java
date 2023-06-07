@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -840,6 +841,16 @@ public class RefactorProposalUtility {
 		SelectionAnalyzer analyzer = new SelectionAnalyzer(Selection.createFromStartLength(context.getSelectionOffset(), context.getSelectionLength()), true);
 		cu.accept(analyzer);
 		List<ASTNode> varDeclStatements = Arrays.asList(analyzer.getSelectedNodes()).stream().filter(e -> e.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT).collect(Collectors.toList());
+		// Check for entire covering node for local variable
+		if (varDeclStatements.isEmpty() && coveringNode.getNodeType() == ASTNode.VARIABLE_DECLARATION_STATEMENT) {
+			varDeclStatements.add(coveringNode);
+		// Check for assignment statement for left hand side variable
+		} else if (coveringNode.getNodeType() == ASTNode.EXPRESSION_STATEMENT && ((ExpressionStatement) coveringNode).getExpression().getNodeType() == ASTNode.ASSIGNMENT) {
+			Expression leftHandSide = ((Assignment) ((ExpressionStatement) coveringNode).getExpression()).getLeftHandSide();
+			if (leftHandSide.getNodeType() == ASTNode.SIMPLE_NAME) {
+				return "get" + StringUtils.capitalize(((SimpleName) leftHandSide).getIdentifier());
+			}
+		}
 		if (!varDeclStatements.isEmpty()) {
 			VariableDeclarationStatement lastStatement = (VariableDeclarationStatement) varDeclStatements.get(varDeclStatements.size() - 1);
 			List<?> fragments = lastStatement.fragments();
