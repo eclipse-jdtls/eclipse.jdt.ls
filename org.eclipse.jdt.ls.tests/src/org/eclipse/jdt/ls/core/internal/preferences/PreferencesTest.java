@@ -15,7 +15,12 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Map;
+
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.junit.Test;
+
+import com.google.gson.internal.LinkedTreeMap;
 
 public class PreferencesTest {
 
@@ -48,4 +53,18 @@ public class PreferencesTest {
 		preferences.setStaticImportOnDemandThreshold(-1);
 		assertEquals(Preferences.IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT, preferences.getStaticImportOnDemandThreshold());
 	}
+
+	@Test
+	public void testLegacyCompletionGuessMethodArguments() {
+		Map<String, Object> config = new LinkedTreeMap<>();
+		Map<String, Object> inJava = new LinkedTreeMap<>();
+		config.put("java", inJava);
+		Map<String, Object> inCompletion = new LinkedTreeMap<>();
+		inJava.put("completion", inCompletion);
+		inCompletion.put("guessMethodArguments", Boolean.TRUE);
+
+		Preferences preferences = Preferences.createFrom(config);
+		assertEquals(CompletionGuessMethodArgumentsMode.INSERT_BEST_GUESSED_ARGUMENTS, preferences.getGuessMethodArgumentsMode());
+	}
+
 }

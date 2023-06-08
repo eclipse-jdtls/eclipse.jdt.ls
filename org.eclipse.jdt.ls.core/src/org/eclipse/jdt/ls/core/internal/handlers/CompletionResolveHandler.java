@@ -45,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalReplacementProvider;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContext;
@@ -179,7 +180,15 @@ public class CompletionResolveHandler {
 			return param;
 		}
 
-		// below code is for resolving documentation
+		// resolving documentation
+		// 1. get the required type proposal when the argument guessing is
+		// turned off and the proposal is a constructor.
+		if (manager.getPreferences().getGuessMethodArgumentsMode() == CompletionGuessMethodArgumentsMode.OFF) {
+			CompletionProposal requiredTypeProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
+			if (requiredTypeProposal != null) {
+				proposal = requiredTypeProposal;
+			}
+		}
 		IMember member = null;
 		if (proposal.getKind() == CompletionProposal.TYPE_REF) {
 			char[] signature = proposal.getSignature();

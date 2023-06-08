@@ -53,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -596,6 +597,16 @@ public class CompletionProposalReplacementProvider {
 	}
 
 	private void appendGuessingCompletion(StringBuilder buffer, CompletionProposal proposal) {
+		if (!client.isCompletionSnippetsSupported()) {
+			return;
+		}
+
+		CompletionGuessMethodArgumentsMode guessMethodArgumentsMode = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGuessMethodArgumentsMode();
+		if (guessMethodArgumentsMode == CompletionGuessMethodArgumentsMode.OFF) {
+			buffer.append(CURSOR_POSITION);
+			return;
+		}
+
 		char[][] parameterNames;
 		try {
 			parameterNames = proposal.findParameterNames(null);
@@ -606,40 +617,41 @@ public class CompletionProposalReplacementProvider {
 			proposal.setParameterNames(parameterNames);
 		}
 
-		int count= parameterNames.length;
+		int count = parameterNames.length;
 
-		if(client.isCompletionSnippetsSupported()){
-			String[] choices = null;
-			boolean guessMethodArguments = JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isGuessMethodArguments();
-			if (guessMethodArguments && (proposal.getKind() == CompletionProposal.METHOD_REF || proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION || proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER)) {
-				try {
-					choices = guessParameters(parameterNames, proposal);
-				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
+		String[] choices = null;
+		if (guessMethodArgumentsMode == CompletionGuessMethodArgumentsMode.INSERT_BEST_GUESSED_ARGUMENTS
+				&& (proposal.getKind() == CompletionProposal.METHOD_REF
+					|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
+					|| proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER)
+		) {
+			try {
+				choices = guessParameters(parameterNames, proposal);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
-			for (int i= 0; i < count; i++) {
-				if (i != 0) {
-					buffer.append(COMMA);
-					buffer.append(SPACE);
-				}
-				char[] argument;
-				if (choices != null) {
-					argument = choices[i].toCharArray();
-				} else {
-					argument = parameterNames[i];
-				}
-				if (client.isCompletionSnippetsSupported()) {
-					String replace = new String(argument);
-					replace = CompletionUtils.sanitizeCompletion(replace);
-					argument = replace.toCharArray();
-				}
-				buffer.append("${");
-				buffer.append(Integer.toString(i+1));
-				buffer.append(":");
-				buffer.append(argument);
-				buffer.append("}");
+		}
+		for (int i= 0; i < count; i++) {
+			if (i != 0) {
+				buffer.append(COMMA);
+				buffer.append(SPACE);
 			}
+			char[] argument;
+			if (choices != null) {
+				argument = choices[i].toCharArray();
+			} else {
+				argument = parameterNames[i];
+			}
+			if (client.isCompletionSnippetsSupported()) {
+				String replace = new String(argument);
+				replace = CompletionUtils.sanitizeCompletion(replace);
+				argument = replace.toCharArray();
+			}
+			buffer.append("${");
+			buffer.append(Integer.toString(i+1));
+			buffer.append(":");
+			buffer.append(argument);
+			buffer.append("}");
 		}
 	}
 

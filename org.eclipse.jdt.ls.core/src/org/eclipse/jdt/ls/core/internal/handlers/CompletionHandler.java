@@ -89,6 +89,8 @@ public class CompletionHandler{
 
 	};
 
+	// TODO: we can consider to cache more detailed context so that the information can also
+	// be used by features like inlay hint.
 	public static CompletionProposal selectedProposal;
 
 	private PreferenceManager manager;
@@ -170,7 +172,16 @@ public class CompletionHandler{
 			throw ExceptionFactory.newException("Cannot get completion responses.");
 		}
 
-		selectedProposal = completionResponse.getProposals().get(pId);
+		CompletionProposal proposal = completionResponse.getProposals().get(pId);
+
+		// clear the cache if failed to get the selected proposal.
+		if (proposal == null) {
+			selectedProposal = null;
+		} else if (proposal.getKind() == CompletionProposal.METHOD_REF
+				|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
+				|| proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER) {
+			selectedProposal = proposal;
+		}
 		CompletionItem item = completionResponse.getItems().get(pId);
 		if (item == null) {
 			throw ExceptionFactory.newException("Cannot get the completion item.");
