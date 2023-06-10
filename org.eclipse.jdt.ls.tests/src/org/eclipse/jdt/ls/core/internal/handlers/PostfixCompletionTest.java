@@ -109,6 +109,32 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void test_assert() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(Boolean identifier) {\n" +
+			"		identifier.assert" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "identifier.assert");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("assert", item.getLabel());
+		assertEquals(item.getInsertText(), "assert identifier;");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 19)), range);
+	}
+
+	@Test
 	public void test_cast() throws JavaModelException {
 		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
 		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
@@ -321,6 +347,32 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
 		Range range = item.getAdditionalTextEdits().get(0).getRange();
 		assertEquals(new Range(new Position(3, 2), new Position(3, 8)), range);
+	}
+
+	@Test
+	public void test_opt() throws JavaModelException {
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void testMethod(Object identifier) {\n" +
+			"		identifier.opt" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "identifier.opt");
+
+		assertNotNull(list);
+
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("opt", item.getLabel());
+		assertEquals(item.getInsertText(), "Optional.ofNullable(identifier)");
+		assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
+		Range range = item.getAdditionalTextEdits().get(0).getRange();
+		assertEquals(new Range(new Position(3, 2), new Position(3, 16)), range);
 	}
 
 	@Test
