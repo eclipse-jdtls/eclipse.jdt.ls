@@ -17,6 +17,7 @@ import org.eclipse.jface.text.templates.Template;
 public enum PostfixTemplate {
 
 	//@formatter:on
+	ASSERT(PostfixPreferences.ASSERT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.ASSERT_CONTENT, PostfixPreferences.ASSERT_DESCRIPTION),
 	CAST(PostfixPreferences.CAST_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.CAST_CONTENT, PostfixPreferences.CAST_DESCRIPTION),
 	IF(PostfixPreferences.IF_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.IF_CONTENT, PostfixPreferences.IF_DESCRIPTION),
 	ELSE(PostfixPreferences.ELSE_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.ELSE_CONTENT, PostfixPreferences.ELSE_DESCRIPTION),
@@ -29,6 +30,7 @@ public enum PostfixTemplate {
 	NULL(PostfixPreferences.NULL_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NULL_CONTENT, PostfixPreferences.NULL_DESCRIPTION),
 	NOT(PostfixPreferences.NOT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.NOT_CONTENT,
 			PostfixPreferences.NOT_DESCRIPTION),
+	OPT(PostfixPreferences.OPT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.OPT_CONTENT, PostfixPreferences.OPT_DESCRIPTION),
 	SYSOUT(PostfixPreferences.SYSOUT_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUT_CONTENT, PostfixPreferences.SYSOUT_DESCRIPTION),
 	SYSOUF(PostfixPreferences.SYSOUF_ID, JavaPostfixContextType.ID_ALL, PostfixPreferences.SYSOUF_CONTENT,
 			PostfixPreferences.SYSOUF_DESCRIPTION),
@@ -65,6 +67,7 @@ public enum PostfixTemplate {
 
 class PostfixPreferences {
 	// IDs
+	public static final String ASSERT_ID = "org.eclipse.jdt.postfixcompletion.assert";
 	public static final String CAST_ID = "org.eclipse.jdt.postfixcompletion.cast";
 	public static final String ELSE_ID = "org.eclipse.jdt.ls.postfixcompletion.else";
 	public static final String FOR_ID = "org.eclipse.jdt.postfixcompletion.for";
@@ -75,6 +78,7 @@ class PostfixPreferences {
 	public static final String NNULL_ID = "org.eclipse.jdt.postfixcompletion.nnull";
 	public static final String NULL_ID = "org.eclipse.jdt.postfixcompletion.null";
 	public static final String NOT_ID = "org.eclipse.jdt.postfixcompletion.not";
+	public static final String OPT_ID = "org.eclipse.jdt.postfixcompletion.opt";
 	public static final String SYSOUT_ID = "org.eclipse.jdt.postfixcompletion.sysout";
 	public static final String SYSOUTV_ID = "org.eclipse.jdt.postfixcompletion.sysoutv";
 	public static final String SYSOUF_ID = "org.eclipse.jdt.postfixcompletion.sysouf";
@@ -85,6 +89,7 @@ class PostfixPreferences {
 	public static final String WHILE_ID = "org.eclipse.jdt.postfixcompletion.while";
 
 	// Default Contents
+	public static final String ASSERT_CONTENT = "assert ${i:inner_expression(boolean,java.lang.Boolean)};";
 	public static final String CAST_CONTENT = "(($${1})${inner_expression})$${0}";
 	public static final String ELSE_CONTENT = "if (!${i:inner_expression(boolean)}) {\n" +
 		"\t$${0}\n" +
@@ -109,6 +114,7 @@ class PostfixPreferences {
 		"\t$${0}\n" +
 	"}";
 	public static final String NOT_CONTENT = "!${i:inner_expression(boolean)}${}";
+	public static final String OPT_CONTENT =  "Optional.ofNullable(${i:inner_expression(java.lang.Object)}${})";
 	public static final String SYSOUT_CONTENT = "System.out.println(${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String SYSOUTV_CONTENT = "System.out.println(\"${i:inner_expression(java.lang.Object)}${} = \" + ${i:inner_expression(java.lang.Object)}${});$${0}";
 	public static final String SYSOUF_CONTENT = "System.out.printf(\"\", ${i:inner_expression(java.lang.Object)}${});$${0}";
@@ -121,6 +127,7 @@ class PostfixPreferences {
 	"}";
 
 	// Descriptions
+	public static final String ASSERT_DESCRIPTION = "Creates an assert statement";
 	public static final String CAST_DESCRIPTION = "Casts the expression to a new type";
 	public static final String ELSE_DESCRIPTION = "Creates a negated if statement";
 	public static final String FOR_DESCRIPTION = "Creates a for statement";
@@ -131,6 +138,7 @@ class PostfixPreferences {
 	public static final String NNULL_DESCRIPTION = "Creates an if statement and checks if the expression does not resolve to null";
 	public static final String NULL_DESCRIPTION = "Creates an if statement which checks if expression resolves to null";
 	public static final String NOT_DESCRIPTION = "Negates the expression";
+	public static final String OPT_DESCRIPTION = "Creates an Optional.ofNullable(..) call";
 	public static final String SYSOUT_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
 	public static final String SYSOUTV_DESCRIPTION = "Sends the affected object to a System.out.println(..) call";
 	public static final String SYSOUF_DESCRIPTION = "Sends the affected object to a System.out.printf(..) call";
