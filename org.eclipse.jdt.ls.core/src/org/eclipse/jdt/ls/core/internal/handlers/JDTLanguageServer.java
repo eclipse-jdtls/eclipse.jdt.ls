@@ -98,6 +98,7 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.DeclarationParams;
 import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -345,6 +346,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		if (preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.DEFINITION_ID, Preferences.DEFINITION);
+		}
+		if (preferenceManager.getClientPreferences().isDeclarationDynamicRegistered()) {
+			registerCapability(Preferences.DECLARATION_ID, Preferences.DECLARATION);
 		}
 		if (preferenceManager.getClientPreferences().isTypeDefinitionDynamicRegistered()) {
 			registerCapability(Preferences.TYPEDEFINITION_ID, Preferences.TYPEDEFINITION);
@@ -662,6 +666,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		});
 	}
 
+	@Override
+	public CompletableFuture<Either<List<? extends Location>, List<? extends LocationLink>>> declaration(DeclarationParams position) {
+		debugTrace(">> document/declaration");
+		NavigateToDeclarationHandler handler = new NavigateToDeclarationHandler(this.preferenceManager);
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return Either.forLeft(handler.declaration(position, monitor));
+		});
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.TextDocumentService#typeDefinition(org.eclipse.lsp4j.TypeDefinitionParams)
 	 */
@@ -862,7 +876,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		documentLifeCycleHandler.didClose(params);
 	}
 
-	
 	@Override
 	public void validateDocument(ValidateDocumentParams params) {
 		logInfo(">> java/validateDocument");
