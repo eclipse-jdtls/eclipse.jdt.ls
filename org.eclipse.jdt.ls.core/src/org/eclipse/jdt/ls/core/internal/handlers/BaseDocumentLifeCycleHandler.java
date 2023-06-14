@@ -703,7 +703,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 					workspace.beginOperation(true);
 					build = file.getLocalManager().refresh(file, IResource.DEPTH_ZERO, true, monitor);
 				} catch (OperationCanceledException e) {
-					workspace.getWorkManager().operationCanceled();
 					throw e;
 				} finally {
 					monitor.done();
