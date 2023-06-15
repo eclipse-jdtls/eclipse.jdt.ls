@@ -47,6 +47,7 @@ Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jd
  org.eclipse.jdt.ls.core.internal.corext.util;x-internal:=true,
  org.eclipse.jdt.ls.core.internal.corrections;x-internal:=true,
  org.eclipse.jdt.ls.core.internal.corrections.proposals;x-internal:=true,
+ org.eclipse.jdt.ls.core.internal.decompiler;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.framework.protobuf;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.handlers;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.hover;x-friends:="org.eclipse.jdt.ls.tests",
@@ -62,6 +63,7 @@ Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jd
  org.eclipse.lsp4j.legacy.typeHierarchy;x-friends:="org.eclipse.jdt.ls.tests"
 Bundle-ClassPath: lib/jsoup-1.14.2.jar,
  lib/remark-1.2.0.jar,
+ lib/java-decompiler-engine-231.9011.34.jar,
  .
 Bundle-Vendor: %Bundle-Vendor
 Automatic-Module-Name: org.eclipse.jdt.ls.core

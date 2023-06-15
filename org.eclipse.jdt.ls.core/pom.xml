@@ -27,6 +27,11 @@
 							<artifactId>jsoup</artifactId>
 							<version>1.14.2</version>
 						</artifactItem>
+						<artifactItem>
+							<groupId>com.jetbrains.intellij.java</groupId>
+							<artifactId>java-decompiler-engine</artifactId>
+							<version>231.9011.34</version>
+						</artifactItem>
 					</artifactItems>
 				</configuration>
 			</plugin>
@@ -87,4 +92,10 @@
 			</plugin>
 		</plugins>
 	</build>
+	<repositories>
+		<repository>
+			<id>jetbrains-intellij</id>
+			<url>https://www.jetbrains.com/intellij-repository/releases/</url>
+		</repository>
+	</repositories>
 </project>

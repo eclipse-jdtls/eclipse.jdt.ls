@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.ls.core.internal.DecompilerResult;
 import org.eclipse.jdt.ls.core.internal.IContentProvider;
 import org.eclipse.jdt.ls.core.internal.IDecompiler;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -65,6 +66,13 @@ public class ContentProviderManager {
 		return getContent(classFile, classFile.getHandleIdentifier(), IDecompiler.class, monitor);
 	}
 
+	public DecompilerResult getSourceResult(IClassFile classFile, IProgressMonitor monitor) {
+		if (classFile == null) {
+			return null;
+		}
+		return getContentResult(classFile, classFile.getHandleIdentifier(), IDecompiler.class, monitor);
+	}
+
 	/**
 	 * Get text content for a given resource if possible
 	 *
@@ -82,10 +90,15 @@ public class ContentProviderManager {
 	}
 
 	private String getContent(Object source, String cacheKey, Class<? extends IContentProvider> providerType, IProgressMonitor monitor) {
+		DecompilerResult result = getContentResult(source, cacheKey, providerType, monitor);
+		return result == null ? EMPTY_CONTENT : result.getContent();
+	}
+
+	private DecompilerResult getContentResult(Object source, String cacheKey, Class<? extends IContentProvider> providerType, IProgressMonitor monitor) {
 		URI uri = source instanceof URI u ? u : null;
 		List<ContentProviderDescriptor> matches = findMatchingProviders(uri);
 		if (monitor.isCanceled()) {
-			return EMPTY_CONTENT;
+			return new DecompilerResult(EMPTY_CONTENT);
 		}
 
 		int previousPriority = -1;
@@ -97,7 +110,7 @@ public class ContentProviderManager {
 			}
 
 			if (monitor.isCanceled()) {
-				return EMPTY_CONTENT;
+				return new DecompilerResult(EMPTY_CONTENT);
 			}
 
 			if (previousPriority == match.priority) {
@@ -106,15 +119,16 @@ public class ContentProviderManager {
 			try {
 				contentProvider.setPreferences(preferenceManager.getPreferences());
 				String content = null;
+				DecompilerResult result = null;
 				if (uri != null) {
 					content = contentProvider.getContent(uri, monitor);
 				} else if (source instanceof IClassFile classFile) {
-					content = ((IDecompiler) contentProvider).getSource(classFile, monitor);
+					result = ((IDecompiler) contentProvider).getDecompiledSource(classFile, monitor);
 				}
 				if (monitor.isCanceled()) {
-					return EMPTY_CONTENT;
-				} else if (content != null) {
-					return content;
+					return new DecompilerResult(EMPTY_CONTENT);
+				} else if (content != null || (result != null && result.getContent() != null)) {
+					return result == null ? new DecompilerResult(content) : result;
 				}
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException("Error getting content via " + match.id, e);
@@ -123,7 +137,7 @@ public class ContentProviderManager {
 			previousPriority = match.priority;
 		}
 
-		return EMPTY_CONTENT;
+		return new DecompilerResult(EMPTY_CONTENT);
 	}
 
 	private synchronized Set<ContentProviderDescriptor> getDescriptors(List<String> preferredProviderIds) {

@@ -31,4 +31,57 @@ public interface IDecompiler extends IContentProvider {
 	 * @throws CoreException
 	 */
 	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
+
+	/**
+	 * Provide decompiled source code from a resource.
+	 *
+	 * @param classFile
+	 *            the class file to decompile
+	 * @param monitor
+	 *            monitor of the activity progress
+	 * @return text content or <code>null</code>
+	 * @throws CoreException
+	 */
+	default public DecompilerResult getDecompiledSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+		String source = getSource(classFile, monitor);
+		return source == null ? null : new DecompilerResult(source);
+	}
+
+	/**
+	 * Provides the line mappings from the original source to decompiled source.
+	 * Its format is as follows, in ascending order by original line.
+	 * - [i]: the original line
+	 * - [i+1]: the decompiled line
+	 *
+	 * @param classFile
+	 *             the class file to decompile
+	 * @param contents
+	 *             the decompiled contents
+	 * @param monitor
+	 *             the progress monitor
+	 * @return the original line mappings if existed or <code>null</code>
+	 * @throws CoreException
+	 */
+	default int[] getOriginalLineMappings(IClassFile classFile, String contents, IProgressMonitor monitor) throws CoreException {
+		return null;
+	}
+
+	/**
+	 * Provides the line mappings from the decompiled source to the original source.
+	 * Its format is as follows, in ascending order by decompiled line.
+	 * - [i]: the decompiled line
+	 * - [i+1]: the original line
+	 *
+	 * @param classFile
+	 *             the class file to decompile
+	 * @param contents
+	 *             the decompiled contents
+	 * @param monitor
+	 *             the progress monitor
+	 * @return the decompiled line mappings if existed or <code>null</code>
+	 * @throws CoreException
+	 */
+	default int[] getDecompiledLineMappings(IClassFile classFile, String contents, IProgressMonitor monitor) throws CoreException {
+		return null;
+	}
 }
