@@ -63,6 +63,7 @@ import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionMatchCaseMode;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
 import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
@@ -590,7 +591,7 @@ public class Preferences {
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
-	private boolean guessMethodArguments;
+	private CompletionGuessMethodArgumentsMode guessMethodArguments;
 
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
@@ -842,7 +843,7 @@ public class Preferences {
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
-		guessMethodArguments = false;
+		guessMethodArguments = CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES;
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
 		hashCodeEqualsTemplateUseInstanceof = false;
@@ -1030,8 +1031,15 @@ public class Preferences {
 		boolean selectionRangeEnabled = getBoolean(configuration, SELECTIONRANGE_ENABLED_KEY, true);
 		prefs.setSelectionRangeEnabled(selectionRangeEnabled);
 
-		boolean guessMethodArguments = getBoolean(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, false);
-		prefs.setGuessMethodArguments(guessMethodArguments);
+		Object guessMethodArguments = getValue(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY);
+		if (guessMethodArguments instanceof Boolean b) {
+			prefs.setGuessMethodArgumentsMode(b ? CompletionGuessMethodArgumentsMode.INSERT_BEST_GUESSED_ARGUMENTS :
+					CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES);
+		} else {
+			String guessMethodArgumentsMode = getString(configuration, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, null);
+			prefs.setGuessMethodArgumentsMode(CompletionGuessMethodArgumentsMode.fromString(guessMethodArgumentsMode,
+					CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES));
+		}
 
 		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, false);
 		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
@@ -1471,7 +1479,7 @@ public class Preferences {
 		return this;
 	}
 
-	public Preferences setGuessMethodArguments(boolean guessMethodArguments) {
+	public Preferences setGuessMethodArgumentsMode(CompletionGuessMethodArgumentsMode guessMethodArguments) {
 		this.guessMethodArguments = guessMethodArguments;
 		return this;
 	}
@@ -1790,7 +1798,7 @@ public class Preferences {
 		return selectionRangeEnabled;
 	}
 
-	public boolean isGuessMethodArguments() {
+	public CompletionGuessMethodArgumentsMode getGuessMethodArgumentsMode() {
 		return guessMethodArguments;
 	}
 

@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
+import java.util.Arrays;
+
 import org.eclipse.jdt.core.CompletionProposal;
 
 public class CompletionProposalUtils {
@@ -34,5 +36,30 @@ public class CompletionProposalUtils {
 		 * in static imports.
 		 */
 		return last == SEMICOLON || last == '.';
+	}
+
+	/**
+	 * Get required type completion proposal when the given proposal is a
+	 * constructor. <code>null</code> will returned if the given proposal is
+	 * not a constructor or no type completion proposal is available from the
+	 * required proposals.
+	 */
+	public static CompletionProposal getRequiredTypeProposal(CompletionProposal proposal) {
+		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION
+				&& proposal.getKind() != CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION
+				&& proposal.getKind() != CompletionProposal.ANONYMOUS_CLASS_DECLARATION) {
+			return null;
+		}
+
+		CompletionProposal requiredProposal = null;
+		CompletionProposal[] requiredProposals = proposal.getRequiredProposals();
+		if (requiredProposals != null) {
+			requiredProposal = Arrays.stream(requiredProposals)
+				.filter(p -> p.getKind() == CompletionProposal.TYPE_REF)
+				.findFirst()
+				.orElse(null);
+		}
+
+		return requiredProposal;
 	}
 }

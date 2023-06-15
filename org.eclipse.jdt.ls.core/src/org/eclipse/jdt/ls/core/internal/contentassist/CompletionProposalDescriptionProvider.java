@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionItem;
@@ -696,6 +697,15 @@ public class CompletionProposalDescriptionProvider {
 	 * @param item
 	 */
 	public void updateDescription(CompletionProposal proposal, CompletionItem item) {
+		// change the proposal to required type proposal when the
+		// argument guessing is turned off and the proposal is a constructor.
+		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGuessMethodArgumentsMode() ==
+				CompletionGuessMethodArgumentsMode.OFF) {
+			CompletionProposal requiredTypeProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
+			if (requiredTypeProposal != null) {
+				proposal = requiredTypeProposal;
+			}
+		}
 		switch (proposal.getKind()) {
 			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.METHOD_REF:
