@@ -25,7 +25,7 @@ import java.util.Arrays;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
-import org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider;
+import org.eclipse.jdt.ls.core.internal.DecompilerResult;
 import org.eclipse.jdt.ls.core.internal.FakeContentProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -219,6 +219,24 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		assertTrue("unexpected body content " + result, result.contains("public class BigDecimal extends Number implements Comparable"));
+	}
+
+	@Test
+	public void testDecompileLineMappings() throws Exception {
+		importProjects("eclipse/reference");
+		IProject project = WorkspaceHelper.getProject("reference");
+		URI sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "org.sample.Foo"));
+		IClassFile classFile = JDTUtils.resolveClassFile(sourcelessURI);
+		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fernflowerContentProvider"));
+
+		DecompilerResult result = provider.getSourceResult(classFile, monitor);
+		assertNotNull(result);
+		assertNotNull(result.getOriginalLineMappings());
+		assertEquals(6, result.getOriginalLineMappings().length);
+		assertEquals(11, result.getOriginalLineMappings()[0]);
+		assertEquals(12, result.getOriginalLineMappings()[1]);
+		assertNotNull(result.getDecompiledLineMappings());
+		assertEquals(6, result.getDecompiledLineMappings().length);
 	}
 
 	@Test
