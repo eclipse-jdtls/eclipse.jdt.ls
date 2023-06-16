@@ -30,6 +30,7 @@ import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.ProgressParams;
 import org.eclipse.lsp4j.WorkDoneProgressBegin;
+import org.eclipse.lsp4j.WorkDoneProgressCreateParams;
 import org.eclipse.lsp4j.WorkDoneProgressEnd;
 import org.eclipse.lsp4j.WorkDoneProgressNotification;
 import org.eclipse.lsp4j.WorkDoneProgressReport;
@@ -259,6 +260,7 @@ public class ProgressReporterManager extends ProgressProvider {
 			} else {
 				Either<String, Integer> id = Either.forLeft(progressId);
 				if (!sentBegin) {
+					client.createProgress(new WorkDoneProgressCreateParams(id));
 					var workDoneProgressBegin = new WorkDoneProgressBegin();
 					workDoneProgressBegin.setMessage(task);
 					workDoneProgressBegin.setTitle(subTaskName == null ? task : subTaskName);
@@ -270,6 +272,7 @@ public class ProgressReporterManager extends ProgressProvider {
 					var endNotification = new WorkDoneProgressEnd();
 					endNotification.setMessage(task);
 					notification = endNotification;
+					progressId = UUID.randomUUID().toString();
 					sentBegin = false;
 				} else {
 					var reportNotification = new WorkDoneProgressReport();
