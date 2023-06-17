@@ -27,6 +27,11 @@
 							<artifactId>jsoup</artifactId>
 							<version>1.14.2</version>
 						</artifactItem>
+						<artifactItem>
+							<groupId>com.google.googlejavaformat</groupId>
+							<artifactId>google-java-format</artifactId>
+							<version>1.13.0</version>
+						</artifactItem>
 					</artifactItems>
 				</configuration>
 			</plugin>
