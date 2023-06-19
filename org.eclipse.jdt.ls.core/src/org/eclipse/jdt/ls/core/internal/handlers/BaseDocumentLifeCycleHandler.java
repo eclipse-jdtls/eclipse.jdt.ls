@@ -426,7 +426,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 		try {
 			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
+				// We call clearReconciliation here in an attempt to prevent getAST calls on other threads
+				// from caching outdated AST after we just called disposeAST. See also:
+				// https://github.com/eclipse/eclipse.jdt.ls/issues/1918
+				// https://github.com/eclipse/eclipse.jdt.ls/pull/2714#discussion_r1234817900
+				sharedASTProvider.clearReconciliation();
 				sharedASTProvider.disposeAST();
+				sharedASTProvider.clearReconciliation();
 				CodeActionHandler.codeActionStore.clear();
 			}
 
