@@ -71,6 +71,7 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
@@ -363,7 +364,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 		IJavaProject javaProject = JavaCore.create(project);
 		configureJVMSettings(javaProject);
-
+		JobHelpers.waitForBuildJobs(JobHelpers.MAX_TIME_MILLIS);
 		//Add build output folder
 		if (StringUtils.isNotBlank(bin)) {
 			IFolder output = project.getFolder(bin);

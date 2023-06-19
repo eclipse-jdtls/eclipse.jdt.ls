@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -268,6 +269,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		projectsManager = null;
 		Platform.removeLogListener(logListener);
 		logListener = null;
+		Job.getJobManager().setProgressProvider(null);
 		try {
 			waitForBackgroundJobs();
 		} catch (Exception e) {
@@ -275,17 +277,19 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 		WorkspaceHelper.deleteAllProjects();
 		try {
+			waitForBackgroundJobs();
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		File workspaceDir = new File("target", "workingProjects");
+		try {
 			// https://github.com/eclipse/eclipse.jdt.ls/issues/996
-			FileUtils.forceDelete(getWorkingProjectDirectory());
+			FileUtils.forceDelete(workspaceDir);
 		} catch (IOException e) {
 			JavaLanguageServerPlugin.logException(e);
-			try {
-				getWorkingProjectDirectory().deleteOnExit();
-			} catch (IOException e1) {
-				JavaLanguageServerPlugin.logException(e1);
-			}
+			workspaceDir.deleteOnExit();
 		}
-		Job.getJobManager().setProgressProvider(null);
+		assertFalse(workspaceDir.exists());
 		try {
 			waitForBackgroundJobs();
 		} catch (Exception e) {
