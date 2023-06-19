@@ -83,8 +83,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	@Test
 	public void testSourceVersion() throws Exception {
 		String className = "javax.tools.Tool";
-		int line = 6;
-		int column = 57;
+		int line = 11;
+		int column = 12;
 		String uri = ClassFileUtil.getURI(project, className);
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler.definition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);

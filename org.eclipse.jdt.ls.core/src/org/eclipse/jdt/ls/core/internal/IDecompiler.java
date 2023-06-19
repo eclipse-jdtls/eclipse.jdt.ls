@@ -31,4 +31,19 @@ public interface IDecompiler extends IContentProvider {
 	 * @throws CoreException
 	 */
 	public String getSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
+
+	/**
+	 * Provide decompiled source code from a resource.
+	 *
+	 * @param classFile
+	 *            the class file to decompile
+	 * @param monitor
+	 *            monitor of the activity progress
+	 * @return text content or <code>null</code>
+	 * @throws CoreException
+	 */
+	default DecompilerResult getDecompiledSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+		String source = getSource(classFile, monitor);
+		return source == null ? null : new DecompilerResult(source);
+	}
 }

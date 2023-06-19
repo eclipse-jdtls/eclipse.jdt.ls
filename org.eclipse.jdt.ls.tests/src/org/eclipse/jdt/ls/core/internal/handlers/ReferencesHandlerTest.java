@@ -129,7 +129,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		URI uri = JDTUtils.toURI(JDTUtils.toUri(cf));
 		String fileURI = ResourceUtils.fixURI(uri);
 		ReferenceParams param = new ReferenceParams();
-		param.setPosition(new Position(7, 6));
+		param.setPosition(new Position(5, 6));
 		param.setContext(new ReferenceContext(false));
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<Location> references = handler.findReferences(param, monitor);

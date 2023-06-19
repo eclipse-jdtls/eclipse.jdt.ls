@@ -43,8 +43,8 @@
    <extension
          point="org.eclipse.jdt.ls.core.contentProvider">
       <contentProvider
-            class="org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider"
-            id="disassemblerContentProvider"
+            class="org.eclipse.jdt.ls.core.internal.decompiler.FernFlowerDecompiler"
+            id="fernflowerContentProvider"
             priority="2147483647"
             uriPattern=".+\.class.*">
       </contentProvider>

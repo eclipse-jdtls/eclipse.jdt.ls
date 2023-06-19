@@ -25,10 +25,11 @@ import java.util.Arrays;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
-import org.eclipse.jdt.ls.core.internal.DisassemblerContentProvider;
+import org.eclipse.jdt.ls.core.internal.DecompilerResult;
 import org.eclipse.jdt.ls.core.internal.FakeContentProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.decompiler.FernFlowerDecompiler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
@@ -132,7 +133,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		String result = provider.getContent(sourcelessURI, monitor);
 
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("Something bad happened here");
 	}
 
@@ -143,7 +144,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		String result = provider.getSource(sourcelessClassFile, monitor);
 
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("Something bad happened here");
 	}
 
@@ -151,7 +152,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDefaultOrder() throws Exception {
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("You have more than one content provider installed:");
 	}
 
@@ -159,7 +160,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDecompileDefaultOrder() throws Exception {
 		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("You have more than one content provider installed:");
 	}
 
@@ -187,7 +188,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("Unable to load IContentProvider class for placeholderContentProvider");
 	}
 
@@ -197,7 +198,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		expectLoggedError("Unable to load IDecompiler class for placeholderContentProvider");
 	}
 
@@ -207,7 +208,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 	}
 
 	@Test
@@ -216,8 +217,26 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(DisassemblerContentProvider.DISASSEMBLED_HEADER));
-		assertTrue("unexpected body content " + result, result.contains("public class BigDecimal extends java.lang.Number implements java.lang.Comparable {"));
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue("unexpected body content " + result, result.contains("public class BigDecimal extends Number implements Comparable"));
+	}
+
+	@Test
+	public void testDecompileLineMappings() throws Exception {
+		importProjects("eclipse/reference");
+		IProject project = WorkspaceHelper.getProject("reference");
+		URI sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "org.sample.Foo"));
+		IClassFile classFile = JDTUtils.resolveClassFile(sourcelessURI);
+		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fernflowerContentProvider"));
+
+		DecompilerResult result = provider.getSourceResult(classFile, monitor);
+		assertNotNull(result);
+		assertNotNull(result.getOriginalLineMappings());
+		assertEquals(6, result.getOriginalLineMappings().length);
+		assertEquals(11, result.getOriginalLineMappings()[0]);
+		assertEquals(12, result.getOriginalLineMappings()[1]);
+		assertNotNull(result.getDecompiledLineMappings());
+		assertEquals(6, result.getDecompiledLineMappings().length);
 	}
 
 	@Test
