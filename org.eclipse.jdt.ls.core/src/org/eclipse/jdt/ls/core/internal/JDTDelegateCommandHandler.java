@@ -37,6 +37,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.PasteEventParams;
 import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.SmartDetectionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.SmartDetectionParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -48,6 +50,7 @@ import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyItem;
 import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyParams;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
+
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler#executeCommand(java.lang.String, java.util.List, org.eclipse.core.runtime.IProgressMonitor)
@@ -169,6 +172,12 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					} catch (URISyntaxException e) {
 						return false;
 					}
+				case "java.action.smartSemicolonDetection":
+					if (!JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isSmartSemicolonDetection()) {
+						return null;
+					}
+					SmartDetectionParams smartDetectionParams = JSONUtility.toModel(arguments.get(0), SmartDetectionParams.class);
+					return new SmartDetectionHandler(smartDetectionParams).getLocation(monitor);
 				default:
 					break;
 			}

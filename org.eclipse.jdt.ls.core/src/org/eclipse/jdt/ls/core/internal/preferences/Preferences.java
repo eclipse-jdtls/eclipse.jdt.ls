@@ -86,6 +86,11 @@ public class Preferences {
 	 */
 	public static final String JAVA_HOME = "java.home";
 	/**
+	 * Preference key used to controls the "smart semicolon" detection
+	 */
+	public static final String JAVA_EDIT_SMARTSEMICOLON_DETECTION = "java.edit.smartSemicolonDetection";
+
+	/**
 	 * Preference key used to include getter, setter and builder/constructor when
 	 * finding references.
 	 */
@@ -613,6 +618,7 @@ public class Preferences {
 	private String codeGenerationInsertionLocation;
 	private List<String> preferredContentProviderIds;
 	private boolean includeAccessors;
+	private boolean smartSemicolonDetection;
 	private boolean includeDecompiledSources;
 	private boolean includeSourceMethodDeclarations;
 
@@ -877,6 +883,7 @@ public class Preferences {
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
 		includeAccessors = true;
+		smartSemicolonDetection = false;
 		includeDecompiledSources = true;
 		includeSourceMethodDeclarations = false;
 		insertSpaces = true;
@@ -1231,6 +1238,8 @@ public class Preferences {
 		prefs.setTypeCommentTemplate(typeComment);
 		boolean includeAccessors = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_ACCESSORS, true);
 		prefs.setIncludeAccessors(includeAccessors);
+		boolean smartSemicolonDetection = getBoolean(configuration, JAVA_EDIT_SMARTSEMICOLON_DETECTION, false);
+		prefs.setSmartSemicolonDetection(smartSemicolonDetection);
 		boolean includeDecompiledSources = getBoolean(configuration, JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES, true);
 		prefs.setIncludeDecompiledSources(includeDecompiledSources);
 		boolean includeSourceMethodDeclarations = getBoolean(configuration, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS, false);
@@ -2063,6 +2072,16 @@ public class Preferences {
 	public boolean isIncludeAccessors() {
 		return this.includeAccessors;
 	}
+
+	public Preferences setSmartSemicolonDetection(boolean smartSemicolonDetection) {
+		this.smartSemicolonDetection = smartSemicolonDetection;
+		return this;
+	}
+
+	public boolean isSmartSemicolonDetection() {
+		return this.smartSemicolonDetection;
+	}
+
 	public boolean isEclipseDownloadSources() {
 		return eclipseDownloadSources;
 	}
