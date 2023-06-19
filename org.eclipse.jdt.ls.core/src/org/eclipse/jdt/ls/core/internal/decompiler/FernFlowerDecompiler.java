@@ -64,11 +64,6 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 		return DecompilerType.FERNFLOWER;
 	}
 
-	@Override
-	protected boolean isDecompiledContents(IClassFile classFile, String contents) {
-		return contents != null && contents.startsWith(DECOMPILER_HEADER);
-	}
-
 	private DecompilerResult getContent(BytecodeProvider provider, IProgressMonitor monitor) throws CoreException {
 		Map<String, Object> decompilerOptions = new HashMap<>();
 		decompilerOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");

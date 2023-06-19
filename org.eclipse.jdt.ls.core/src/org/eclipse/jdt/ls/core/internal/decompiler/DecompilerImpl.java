@@ -47,15 +47,6 @@ public abstract class DecompilerImpl implements IDecompiler {
 		});
 	}
 
-	private static DecompilerResult getCachedResult(DecompilerType type, IClassFile classFile) {
-		Map<String, DecompilerResult> cache = decompilerCache.get(type);
-		if (cache != null) {
-			return cache.get(classFile.getHandleIdentifier());
-		}
-
-		return null;
-	}
-
 	@Override
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
 		Map<String, DecompilerResult> cache = getCache(getDecompilerType());
@@ -94,28 +85,7 @@ public abstract class DecompilerImpl implements IDecompiler {
 		});
 	}
 
-	@Override
-	public int[] getDecompiledLineMappings(IClassFile classFile, String contents, IProgressMonitor monitor) throws CoreException {
-		if (!isDecompiledContents(classFile, contents)) {
-			return null;
-		}
-
-		DecompilerResult result = getCachedResult(getDecompilerType(), classFile);
-		return result == null ? null : result.getDecompiledLineMappings();
-	}
-
-	@Override
-	public int[] getOriginalLineMappings(IClassFile classFile, String contents, IProgressMonitor monitor) throws CoreException {
-		if (!isDecompiledContents(classFile, contents)) {
-			return null;
-		}
-
-		DecompilerResult result = getCachedResult(getDecompilerType(), classFile);
-		return result == null ? null : result.getOriginalLineMappings();
-	}
-
 	protected abstract DecompilerResult decompileContent(URI uri, IProgressMonitor monitor) throws CoreException;
 	protected abstract DecompilerResult decompileContent(IClassFile classFile, IProgressMonitor monitor) throws CoreException;
 	protected abstract DecompilerType getDecompilerType();
-	protected abstract boolean isDecompiledContents(IClassFile classFile, String contents);
 }
