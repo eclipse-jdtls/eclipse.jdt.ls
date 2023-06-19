@@ -15,7 +15,7 @@ package org.eclipse.jdt.ls.core.internal.decompiler;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -27,11 +27,13 @@ import org.eclipse.jdt.ls.core.internal.IDecompiler;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public abstract class DecompilerImpl implements IDecompiler {
-	private static Map<DecompilerType, Map<String, DecompilerResult>> decompilerCache = new HashMap<>();
+	private static Map<DecompilerType, Map<String, DecompilerResult>> decompilerCache = 
+			Collections.synchronizedMap(new EnumMap<>(DecompilerType.class));
 	private static final int CACHE_SIZE = 100;
 
 	private static Map<String, DecompilerResult> getLRUCache(int maxEntries) {
 		Map<String, DecompilerResult> map = new LinkedHashMap<>(maxEntries + 1, .75F, true) {
+			@Override
 			public boolean removeEldestEntry(Map.Entry eldest) {
 				return size() > maxEntries;
 			}
@@ -39,9 +41,9 @@ public abstract class DecompilerImpl implements IDecompiler {
 		return Collections.synchronizedMap(map);
 	}
 
-	private static Map<String, DecompilerResult> getCache(DecompilerType type, int maxEntries) {
+	private static Map<String, DecompilerResult> getCache(DecompilerType type) {
 		return decompilerCache.computeIfAbsent(type, key -> {
-			return getLRUCache(maxEntries);
+			return getLRUCache(CACHE_SIZE);
 		});
 	}
 
@@ -56,7 +58,7 @@ public abstract class DecompilerImpl implements IDecompiler {
 
 	@Override
 	public String getContent(URI uri, IProgressMonitor monitor) throws CoreException {
-		Map<String, DecompilerResult> cache = getCache(getDecompilerType(), CACHE_SIZE);
+		Map<String, DecompilerResult> cache = getCache(getDecompilerType());
 		String cacheKey = uri.toString();
 		DecompilerResult result = cache.computeIfAbsent(cacheKey, (key) -> {
 			try {
@@ -79,7 +81,7 @@ public abstract class DecompilerImpl implements IDecompiler {
 
 	@Override
 	public DecompilerResult getDecompiledSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
-		Map<String, DecompilerResult> cache = getCache(getDecompilerType(), CACHE_SIZE);
+		Map<String, DecompilerResult> cache = getCache(getDecompilerType());
 		String cacheKey = classFile.getHandleIdentifier();
 		return cache.computeIfAbsent(cacheKey, (key) -> {
 			try {

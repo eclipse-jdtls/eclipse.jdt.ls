@@ -42,7 +42,7 @@ public interface IDecompiler extends IContentProvider {
 	 * @return text content or <code>null</code>
 	 * @throws CoreException
 	 */
-	default public DecompilerResult getDecompiledSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
+	default DecompilerResult getDecompiledSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
 		String source = getSource(classFile, monitor);
 		return source == null ? null : new DecompilerResult(source);
 	}

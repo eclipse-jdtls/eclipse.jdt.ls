@@ -70,7 +70,7 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 	}
 
 	private DecompilerResult getContent(BytecodeProvider provider, IProgressMonitor monitor) throws CoreException {
-		Map<String, Object> decompilerOptions = new HashMap<String, Object>();
+		Map<String, Object> decompilerOptions = new HashMap<>();
 		decompilerOptions.put(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR, "0");
 		decompilerOptions.put(IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1");
 		decompilerOptions.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
