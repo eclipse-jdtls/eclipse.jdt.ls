@@ -62,6 +62,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.Messages;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -272,18 +273,18 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/broken"))||p.getUri().endsWith("maven/broken/")))).findFirst();
+		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/broken"))||p.getUri().endsWith("maven/broken/")).findFirst();
 		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
-		assertEquals(diags.toString(), 3, diags.size());
-		assertTrue(diags.get(2).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+		assertEquals(diags.toString(), 2, diags.size());
+		assertTrue(diags.get(1).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
 		diags = pomDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
-		assertEquals(diags.toString(), 1, diags.size());
-		assertTrue(diags.get(0).getMessage().startsWith("Project build error: "));
+		assertEquals(diags.toString(), 3, diags.size());
+		assertTrue(diags.get(2).getMessage().startsWith("Project build error: "));
 	}
 
 	@Test
@@ -425,7 +426,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
-		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/salut"))||p.getUri().endsWith("maven/salut/")))).findFirst();
+		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/salut"))||p.getUri().endsWith("maven/salut/")).findFirst();
 		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		assertEquals(diags.toString(), 2, diags.size());
