@@ -223,4 +223,7 @@ public class JavaClientConnection {
 		}
 	}
 
+	public void telemetryEvent(Object object) {
+		client.telemetryEvent(object);
+	}
 }
