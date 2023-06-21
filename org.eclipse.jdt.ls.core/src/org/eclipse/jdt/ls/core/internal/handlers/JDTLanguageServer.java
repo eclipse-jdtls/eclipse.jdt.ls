@@ -239,8 +239,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public void connectClient(JavaLanguageClient client) {
 		super.connectClient(client);
-		progressReporterManager = new ProgressReporterManager(client, preferenceManager);
-		Job.getJobManager().setProgressProvider(progressReporterManager);
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
