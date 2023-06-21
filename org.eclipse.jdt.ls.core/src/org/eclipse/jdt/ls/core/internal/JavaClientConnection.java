@@ -224,6 +224,9 @@ public class JavaClientConnection {
 	}
 
 	public void telemetryEvent(Object object) {
-		client.telemetryEvent(object);
+		if (JavaLanguageServerPlugin.getPreferencesManager() != null
+			&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isTelemetryEnabled()) {
+			client.telemetryEvent(object);
+		}
 	}
 }
