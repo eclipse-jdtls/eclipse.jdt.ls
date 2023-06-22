@@ -28,8 +28,11 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
@@ -42,12 +45,23 @@ public class LanguageServerApplication implements IApplication {
 	private InputStream in;
 	private PrintStream out;
 	private PrintStream err;
+	private ProgressReporterManager progressReporterManager;
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
 		prepareWorkspace();
 		prepareStreams();
 		JavaLanguageServerPlugin.startLanguageServer(this);
+		if (JavaLanguageServerPlugin.getInstance().getProtocol() instanceof JDTLanguageServer server) {
+			progressReporterManager = server.getProgressReporterManager();
+			if (progressReporterManager != null) {
+				// Setting progressProvider is only allowed if the application is "owned" by the caller.
+				// see Javadoc for setProgressProvider.
+				// In case of JDT-LS integrated in Eclipse Workbench, the application is the workbench and this progressProvider
+				// must not be overridden. In case of the LanguageServerApplication, we own it, so we can set. 
+				Job.getJobManager().setProgressProvider(progressReporterManager);
+			}
+		}
 		synchronized (waitLock) {
 			while (!shutdown) {
 				try {
