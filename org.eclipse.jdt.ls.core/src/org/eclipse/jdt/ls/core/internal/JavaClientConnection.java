@@ -77,7 +77,7 @@ public class JavaClientConnection {
 	}
 
 	private final LogHandler logHandler;
-	final JavaLanguageClient client;
+	private final JavaLanguageClient client;
 
 	public JavaClientConnection(JavaLanguageClient client) {
 		this.client = client;
