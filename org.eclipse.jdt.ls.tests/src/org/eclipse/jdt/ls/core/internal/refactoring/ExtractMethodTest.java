@@ -446,7 +446,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 		//@formatter:on
 		Range range = new Range(new Position(4, 14), new Position(4, 32));
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(4, codeActions.size());
+		assertEquals(5, codeActions.size());
 		List<Either<Command, CodeAction>> extractMethod = codeActions.stream().filter((c) -> c.getRight().getTitle().equals("Extract to method")).collect(Collectors.toList());
 		Expected e1 = new Expected("Extract to method", expected, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		assertCodeActions(extractMethod, e1);
