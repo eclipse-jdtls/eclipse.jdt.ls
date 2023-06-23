@@ -88,7 +88,7 @@ public class Preferences {
 	/**
 	 * Preference key used to controls the "smart semicolon" detection
 	 */
-	public static final String JAVA_EDIT_SMARTSEMICOLON_DETECTION = "java.edit.smartSemicolonDetection";
+	public static final String JAVA_EDIT_SMARTSEMICOLON_DETECTION = "java.edit.smartSemicolonDetection.enabled";
 
 	/**
 	 * Preference key used to include getter, setter and builder/constructor when

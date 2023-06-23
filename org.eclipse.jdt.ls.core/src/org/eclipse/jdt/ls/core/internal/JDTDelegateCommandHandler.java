@@ -172,7 +172,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					} catch (URISyntaxException e) {
 						return false;
 					}
-				case "java.action.smartSemicolonDetection":
+				case "java.edit.smartSemicolonDetection":
 					if (!JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isSmartSemicolonDetection()) {
 						return null;
 					}

@@ -19,15 +19,19 @@ import java.util.Arrays;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.AbstractTextElement;
-import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.TextBlock;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.partition.FastJavaPartitionScanner;
+import org.eclipse.jdt.ls.core.internal.partition.FastJavaPartitioner;
+import org.eclipse.jdt.ls.core.internal.partition.FastPartitioner;
+import org.eclipse.jdt.ls.core.internal.partition.IJavaPartitions;
+import org.eclipse.jface.text.AbstractDocument;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -37,46 +41,16 @@ import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.lsp4j.Location;
 
 public class SmartDetectionHandler {
-	/**
-	 * The identifier of the Java partitioning.
-	 */
-	private static final String JAVA_PARTITIONING = "___java_partitioning"; //$NON-NLS-1$
-
-	/**
-	 * The identifier of the single-line (JLS2: EndOfLineComment) end comment
-	 * partition content type.
-	 */
-	private static final String JAVA_SINGLE_LINE_COMMENT = "__java_singleline_comment"; //$NON-NLS-1$
-
-	/**
-	 * The identifier multi-line (JLS2: TraditionalComment) comment partition
-	 * content type.
-	 */
-	private static final String JAVA_MULTI_LINE_COMMENT = "__java_multiline_comment"; //$NON-NLS-1$
-
-	/**
-	 * The identifier of the Javadoc (JLS2: DocumentationComment) partition content
-	 * type.
-	 */
-	private static final String JAVA_DOC = "__java_javadoc"; //$NON-NLS-1$
-
-	/**
-	 * The identifier of the Java string partition content type.
-	 */
-	private static final String JAVA_STRING = "__java_string"; //$NON-NLS-1$
-
-	/**
-	 * The identifier of the Java character partition content type.
-	 */
-	private static final String JAVA_CHARACTER = "__java_character"; //$NON-NLS-1$
 
 	private SmartDetectionParams params;
+	private String partitioning;
 
 	/**
 	 * @param params
 	 */
 	public SmartDetectionHandler(SmartDetectionParams params) {
 		this.params = params;
+		this.partitioning = IJavaPartitions.JAVA_PARTITIONING;
 	}
 
 	public Object getLocation(IProgressMonitor monitor) {
@@ -84,21 +58,19 @@ public class SmartDetectionHandler {
 			return null;
 		}
 		// 1: find concerned line / position in java code, location in statement
+		IDocument document = null;
 		try {
 			String uri = params.getUri();
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
-			IDocument document = JsonRpcHelpers.toDocument(unit.getBuffer());
+			if (unit == null) {
+				return null;
+			}
+			document = JsonRpcHelpers.toDocument(unit.getBuffer());
 			int offset = JsonRpcHelpers.toOffset(document, params.getPosition().getLine(), params.getPosition().getCharacter());
 			int pos = offset;
 			char fCharacter = ';';
 			IRegion line = document.getLineInformationOfOffset(pos);
-			ASTNode node = JDTUtils.getHoveredASTNode(unit, new Region(offset, 1));
-			if (node == null || node instanceof Comment || node instanceof StringLiteral || node instanceof TextBlock || node instanceof AbstractTextElement) {
-				return null;
-			}
-			if (node instanceof Block) {
-				// FIXME
-			}
+			installJavaStuff(document, unit.getJavaProject());
 			// 2: choose action based on findings (is for-Statement?)
 			// for now: compute the best position to insert the new character
 			int positionInLine = computeCharacterPosition(document, line, pos - line.getOffset(), fCharacter);
@@ -111,7 +83,7 @@ public class SmartDetectionHandler {
 			if (alreadyPresent(document, fCharacter, position)) {
 				return null;
 			}
-			node = JDTUtils.getHoveredASTNode(unit, new Region(position, 1));
+			ASTNode node = JDTUtils.getHoveredASTNode(unit, new Region(position, 1));
 			if (node instanceof Comment || node instanceof StringLiteral || node instanceof TextBlock) {
 				return null;
 			}
@@ -125,6 +97,10 @@ public class SmartDetectionHandler {
 			return new SmartDetectionParams(params.getUri(), location.getRange().getStart());
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e);
+		} finally {
+			if (document != null) {
+				TextUtilities.removeDocumentPartitioners(document);
+			}
 		}
 		return null;
 	}
@@ -141,8 +117,6 @@ public class SmartDetectionHandler {
 	 *            was typed
 	 * @param character
 	 *            the character to look for
-	 * @param partitioning
-	 *            the document partitioning
 	 * @return the position where <code>character</code> should be inserted /
 	 *         replaced
 	 */
@@ -151,7 +125,6 @@ public class SmartDetectionHandler {
 		if (text == null) {
 			return 0;
 		}
-		String partitioning = JAVA_PARTITIONING;
 		if (!isDefaultPartition(document, offset + line.getOffset(), partitioning)) {
 			return -1;
 		}
@@ -171,7 +144,7 @@ public class SmartDetectionHandler {
 						insertPos = offset;
 					}
 				}
-			} else if (insertPos > 0 && text.charAt(insertPos - 1) == '=') {
+			} else if (insertPos > 0 && (text.charAt(insertPos - 1) == '=' || text.charAt(insertPos - 1) == '.' || text.charAt(insertPos - 1) == '{')) {
 				return -1;
 			}
 		}
@@ -384,7 +357,7 @@ public class SmartDetectionHandler {
 	 *         <code>location</code>, <code>false</code> otherwise
 	 */
 	private boolean alreadyPresent(IDocument document, char ch, int position) {
-		int pos = firstNonWhitespaceForward(document, position, JAVA_PARTITIONING, document.getLength());
+		int pos = firstNonWhitespaceForward(document, position, partitioning, document.getLength());
 		try {
 			if (pos != -1 && document.getChar(pos) == ch) {
 				return true;
@@ -471,20 +444,20 @@ public class SmartDetectionHandler {
 	 */
 	private static int getValidPositionForPartition(IDocument doc, ITypedRegion partition, int maxOffset) {
 		final int INVALID = -1;
-		if (JAVA_DOC.equals(partition.getType())) {
+		if (IJavaPartitions.JAVA_DOC.equals(partition.getType())) {
 			return INVALID;
 		}
-		if (JAVA_MULTI_LINE_COMMENT.equals(partition.getType())) {
+		if (IJavaPartitions.JAVA_MULTI_LINE_COMMENT.equals(partition.getType())) {
 			return INVALID;
 		}
-		if (JAVA_SINGLE_LINE_COMMENT.equals(partition.getType())) {
+		if (IJavaPartitions.JAVA_SINGLE_LINE_COMMENT.equals(partition.getType())) {
 			return INVALID;
 		}
 		int endOffset = Math.min(maxOffset, partition.getOffset() + partition.getLength());
-		if (JAVA_CHARACTER.equals(partition.getType())) {
+		if (IJavaPartitions.JAVA_CHARACTER.equals(partition.getType())) {
 			return endOffset;
 		}
-		if (JAVA_STRING.equals(partition.getType())) {
+		if (IJavaPartitions.JAVA_STRING.equals(partition.getType())) {
 			return endOffset;
 		}
 		if (IDocument.DEFAULT_CONTENT_TYPE.equals(partition.getType())) {
@@ -500,6 +473,18 @@ public class SmartDetectionHandler {
 		}
 		// default: we don't know anything about the partition - assume valid
 		return endOffset;
+	}
+
+	private void installJavaStuff(IDocument document, IJavaProject project) {
+		String[] types = new String[] { IJavaPartitions.JAVA_DOC, IJavaPartitions.JAVA_MULTI_LINE_COMMENT, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT, IJavaPartitions.JAVA_STRING, IJavaPartitions.JAVA_CHARACTER,
+				IJavaPartitions.JAVA_MULTI_LINE_STRING, IDocument.DEFAULT_CONTENT_TYPE };
+		FastPartitioner partitioner = new FastJavaPartitioner(new FastJavaPartitionScanner(project), types);
+		partitioner.connect(document);
+		if (document instanceof AbstractDocument) {
+			((AbstractDocument) document).setDocumentPartitioner(partitioning, partitioner);
+		} else {
+			document.setDocumentPartitioner(partitioner);
+		}
 	}
 
 }
