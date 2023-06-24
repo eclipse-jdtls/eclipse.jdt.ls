@@ -115,6 +115,7 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		assertEquals("Additional edits count", 1, completionItem.getAdditionalTextEdits().size());
 		assertNotNull(completionItem.getAdditionalTextEdits().get(0));
 		assertEquals("Import", "import java.util.stream.Collectors;\n", completionItem.getAdditionalTextEdits().get(0).getNewText());
+		assertEquals("Completion Label", "toList()", completionItem.getLabel());
 	}
 
 	@Test

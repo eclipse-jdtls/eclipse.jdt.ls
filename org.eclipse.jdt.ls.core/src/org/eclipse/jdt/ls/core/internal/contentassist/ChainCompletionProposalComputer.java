@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -160,6 +162,8 @@ public class ChainCompletionProposalComputer {
 
 	private boolean findEntrypoints(List<ChainType> expectedTypes, IJavaProject project) {
 		entrypoints = new LinkedList<>();
+		Set<IJavaElement> processed = new HashSet<>();
+
 		for (CompletionProposal prop : coll.getProposals()) {
 			IJavaElement javaElement = resolveJavaElement(prop, cu.getJavaProject());
 			if (javaElement != null) {
@@ -168,17 +172,17 @@ public class ChainCompletionProposalComputer {
 					ChainElement ce = new ChainElement(e, false);
 					if (ce.getElementType() != null) {
 						entrypoints.add(ce);
+						processed.add(javaElement);
 					}
 				}
-			} else {
-				IJavaElement[] visibleElements = coll.getContext().getVisibleElements(null);
-				for (IJavaElement ve : visibleElements) {
-					if (matchesExpectedPrefix(ve) && !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), ve)) {
-						ChainElement ce = new ChainElement(ve, false);
-						if (ce.getElementType() != null) {
-							entrypoints.add(ce);
-						}
-					}
+			}
+		}
+		IJavaElement[] visibleElements = coll.getContext().getVisibleElements(null);
+		for (IJavaElement ve : visibleElements) {
+			if (!processed.contains(ve) && matchesExpectedPrefix(ve) && !ChainFinder.isFromExcludedType(Arrays.asList(excludedTypes), ve)) {
+				ChainElement ce = new ChainElement(ve, false);
+				if (ce.getElementType() != null) {
+					entrypoints.add(ce);
 				}
 			}
 		}
@@ -324,9 +328,19 @@ public class ChainCompletionProposalComputer {
 				break;
 			case METHOD:
 				final IMethod method = (IMethod) last.getElement();
-				item.setLabel(method.getElementName());
 				final String returnTypeSig = method.getReturnType();
-				details.setDescription(Signature.toQualifiedName(new String[] { Signature.getSignatureQualifier(returnTypeSig), Signature.getSignatureSimpleName(returnTypeSig) }));
+				final String signatureQualifier = Signature.getSignatureQualifier(returnTypeSig);
+				String[] signatureComps = null;
+				if (signatureQualifier != null && !signatureQualifier.isBlank()) {
+					signatureComps = new String[2];
+					signatureComps[0] = signatureQualifier;
+					signatureComps[1] = Signature.getSignatureSimpleName(returnTypeSig);
+				} else {
+					signatureComps = new String[1];
+					signatureComps[0] = Signature.getSignatureSimpleName(returnTypeSig);
+				}
+
+				details.setDescription(Signature.toQualifiedName(signatureComps));
 				lastDetails = "(%s)".formatted(Stream.of(method.getParameterNames()).collect(Collectors.joining(",")));
 				break;
 			default:
@@ -351,8 +365,9 @@ public class ChainCompletionProposalComputer {
 			}
 			receiversString.append(".");
 		}
-		details.setDetail(receiversString.append(item.getLabel()).append(lastDetails).toString());
+		details.setDetail(receiversString.append(last.getElement().getElementName()).append(lastDetails).toString());
 		item.setLabelDetails(details);
+		item.setLabel(last.getElement().getElementName().concat(lastDetails));
 	}
 
 	private static void appendVariableString(final ChainElement edge, final StringBuilder sb) {
