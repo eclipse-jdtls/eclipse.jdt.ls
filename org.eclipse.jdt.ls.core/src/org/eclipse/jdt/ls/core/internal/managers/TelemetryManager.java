@@ -21,12 +21,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -89,6 +94,9 @@ public class TelemetryManager {
 		int javaProjectCount = 0;
 		JsonArray buildToolNamesList = new JsonArray();
 
+		int projectErrors = 0;
+		int unresolvedImportErrors = 0;
+		boolean jdkMismatch = false;
 		for (IProject project : ProjectUtils.getAllProjects()) {
 			Optional<IBuildSupport> bs = this.projectsManager.getBuildSupport(project);
 			if (bs.isPresent() && !ProjectsManager.DEFAULT_PROJECT_NAME.equals(project.getName())) {
@@ -106,8 +114,35 @@ public class TelemetryManager {
 						sourceLevelMax = Float.parseFloat(sourceLevel);
 					}
 				}
+
+				try {
+					IMarker[] projectMarkers = project.findMarkers(null /* all markers */, true /* subtypes */, IResource.DEPTH_ZERO);
+					projectErrors += Stream.of(projectMarkers).filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).count();
+					IMarker[] allmarkers = project.findMarkers(null /* all markers */, true /* subtypes */, IResource.DEPTH_INFINITE);
+					unresolvedImportErrors += Stream.of(allmarkers).filter(m -> isUnresolvedImportError(m)).count();
+				} catch (CoreException e) {
+					// ignore
+				}
+
+				IJavaProject javaProject = ProjectUtils.getJavaProject(project);
+				if (javaProject != null) {
+					try {
+						IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
+						if (JavaRuntime.compareJavaVersions(vmInstall, sourceLevel) == -1) {
+							jdkMismatch = true;
+						}
+					} catch (CoreException e) {
+						// ignore
+					}
+					
+				}
 			}
 		}
+
+		properties.addProperty("project.projectErrorCount", Integer.toString(projectErrors));
+		properties.addProperty("project.unresolvedImportErrorCount", Integer.toString(unresolvedImportErrors));
+		properties.addProperty("project.autobuild", Boolean.toString(prefs.getPreferences().isAutobuildEnabled()));
+		properties.addProperty("project.jdkMismatch", Boolean.toString(jdkMismatch));
 
 		long projectInitElapsedTime, serviceReadyElapsedTime, buildFinishedElapsedTime;
 		projectInitElapsedTime = this.projectsInitializedTime - this.languageServerStartTime;
@@ -134,6 +169,11 @@ public class TelemetryManager {
 		properties.addProperty("dependency.size", Long.toString(librarySize));
 
 		telemetryEvent(JAVA_PROJECT_BUILD, properties);
+	}
+
+	private boolean isUnresolvedImportError(IMarker marker) {
+		return marker.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR
+			&& marker.getAttribute(IJavaModelMarker.ID, 0) == IProblem.ImportNotFound;
 	}
 
 	/**
