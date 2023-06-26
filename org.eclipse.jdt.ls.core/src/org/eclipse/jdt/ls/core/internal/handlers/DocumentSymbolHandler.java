@@ -18,6 +18,7 @@ import static org.eclipse.jdt.core.IJavaElement.COMPILATION_UNIT;
 import static org.eclipse.jdt.core.IJavaElement.FIELD;
 import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
+import static org.eclipse.jdt.core.IJavaElement.PACKAGE_FRAGMENT;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
 import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
@@ -36,14 +37,20 @@ import java.util.stream.Stream;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IParent;
+import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.ToolFactory;
+import org.eclipse.jdt.core.compiler.IScanner;
+import org.eclipse.jdt.core.compiler.ITerminalSymbols;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.internal.core.SourceMethod;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -65,6 +72,8 @@ public class DocumentSymbolHandler {
 	private static Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
 	private PreferenceManager preferenceManager;
+
+	private static IScanner fScanner;
 
 	public DocumentSymbolHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
@@ -147,7 +156,20 @@ public class DocumentSymbolHandler {
 
 	private List<DocumentSymbol> getHierarchicalOutline(ITypeRoot unit, IProgressMonitor monitor) {
 		try {
-			return Stream.of(filter(unit.getChildren())).map(child -> toDocumentSymbol(child, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
+			IJavaElement[] children = unit.getChildren();
+			Stream<IJavaElement> childrenStream = Stream.of(filter(children));
+			if (unit instanceof IClassFile) {
+				// Prepend Package element as the first child
+				childrenStream = Stream.concat(Stream.of(unit.getParent()), childrenStream);
+				ISourceRange sourceRange = unit.getSourceRange();
+				if (sourceRange != null) {
+					final int shift = sourceRange.getOffset();
+					IScanner scanner = getScanner();
+					scanner.setSource(unit.getSource().toCharArray());
+					scanner.resetTo(shift, shift + sourceRange.getLength());
+				}
+			}
+			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
 		} catch (OperationCanceledException e) {
 			logInfo("User abort while collecting the document symbols.");
 		} catch (JavaModelException e) {
@@ -160,9 +182,9 @@ public class DocumentSymbolHandler {
 		return emptyList();
 	}
 
-	private DocumentSymbol toDocumentSymbol(IJavaElement unit, IProgressMonitor monitor) {
+	private DocumentSymbol toDocumentSymbol(IJavaElement unit, ITypeRoot root, IProgressMonitor monitor) {
 		int type = unit.getElementType();
-		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT) {
+		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT && type != PACKAGE_FRAGMENT) {
 			return null;
 		}
 		if (unit instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
@@ -175,8 +197,28 @@ public class DocumentSymbolHandler {
 		try {
 			String name = getName(unit);
 			symbol.setName(name);
-			symbol.setRange(getRange(unit));
-			symbol.setSelectionRange(getSelectionRange(unit));
+			if (type == PACKAGE_FRAGMENT) {
+				IScanner scanner = getScanner();
+				int token = 0;
+				int packageStart = -1;
+				int packageEnd = -1;
+				while (token != ITerminalSymbols.TokenNameEOF) {
+					switch (token) {
+						case ITerminalSymbols.TokenNamepackage:
+							packageStart = scanner.getCurrentTokenStartPosition();
+							packageEnd = scanner.getCurrentTokenEndPosition();
+						default:
+							break;
+					}
+					token = getNextToken(scanner);
+				}
+				Range packageRange = JDTUtils.toRange(root, packageStart, packageEnd);
+				symbol.setRange(packageRange);
+				symbol.setSelectionRange(packageRange);
+			} else {
+				symbol.setRange(getRange(unit));
+				symbol.setSelectionRange(getSelectionRange(unit));
+			}
 			symbol.setKind(mapKind(unit));
 			if (JDTUtils.isDeprecated(unit)) {
 				if (preferenceManager.getClientPreferences().isSymbolTagSupported()) {
@@ -191,7 +233,7 @@ public class DocumentSymbolHandler {
 				//@formatter:off
 				IJavaElement[] children = filter(parent.getChildren());
 				symbol.setChildren(Stream.of(children)
-						.map(child -> toDocumentSymbol(child, monitor))
+						.map(child -> toDocumentSymbol(child, null, monitor))
 						.filter(Objects::nonNull)
 						.collect(Collectors.toList()));
 				//@formatter:off
@@ -310,9 +352,30 @@ public class DocumentSymbolHandler {
 				return SymbolKind.Method;
 			}
 		case IJavaElement.PACKAGE_DECLARATION:
+		case IJavaElement.PACKAGE_FRAGMENT:
 			return SymbolKind.Package;
 		}
 		return SymbolKind.String;
 	}
+
+		private static IScanner getScanner() {
+			if (fScanner == null) {
+				fScanner = ToolFactory.createScanner(true, false, false, true);
+			}
+			return fScanner;
+		}
+
+		private int getNextToken(IScanner scanner) {
+			int token = 0;
+			while (token == 0) {
+				try {
+					token = scanner.getNextToken();
+				} catch (InvalidInputException e) {
+					// ignore
+					// JavaLanguageServerPlugin.logException("Problem with folding range", e);
+				}
+			}
+			return token;
+		}
 
 }

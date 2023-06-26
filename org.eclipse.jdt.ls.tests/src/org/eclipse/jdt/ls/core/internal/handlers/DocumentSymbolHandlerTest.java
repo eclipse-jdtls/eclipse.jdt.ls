@@ -158,6 +158,14 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertHasHierarchicalSymbol("foo() : void", "MyInterface", SymbolKind.Method, symbols);
 		assertHasHierarchicalSymbol("MyClass", "Bar", SymbolKind.Class, symbols);
 		assertHasHierarchicalSymbol("bar() : void", "MyClass", SymbolKind.Method, symbols);
+		assertHasHierarchicalSymbol("org.sample", null, SymbolKind.Package, symbols);
+	}
+
+	@Test
+	public void testPackage_class() throws Exception {
+		String className = "org.apache.commons.lang3.text.WordUtils";
+		List<? extends DocumentSymbol> symbols = getHierarchicalSymbols(className);
+		assertHasHierarchicalSymbol("org.apache.commons.lang3.text", null, SymbolKind.Package, symbols);
 	}
 
 	@Test
@@ -254,13 +262,17 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	private void assertHasHierarchicalSymbol(String expectedType, String expectedParent, SymbolKind expectedKind, Collection<? extends DocumentSymbol> symbols) {
-		Optional<? extends DocumentSymbol> parent = asStream(symbols).filter(s -> expectedParent.equals(s.getName() + s.getDetail())).findFirst();
-		assertTrue("Cannot find parent with name: " + expectedParent, parent.isPresent());
-		Optional<? extends DocumentSymbol> symbol = asStream(symbols)
-															.filter(s -> expectedType.equals(s.getName() + s.getDetail()) && parent.get().getChildren().contains(s))
-															.findFirst();
+		Optional<? extends DocumentSymbol> symbol;
+		if (expectedParent != null) {
+			Optional<? extends DocumentSymbol> parent = asStream(symbols).filter(s -> expectedParent.equals(s.getName() + s.getDetail())).findFirst();
+			assertTrue("Cannot find parent with name: " + expectedParent, parent.isPresent());
+			symbol = asStream(symbols).filter(s -> expectedType.equals(s.getName() + s.getDetail()) && parent.get().getChildren().contains(s)).findFirst();
+		} else {
+			symbol = symbols.stream().filter(s -> expectedType.equals(s.getName())).findFirst();
+		}
 		assertTrue(expectedType + " (" + expectedParent + ")" + " is missing from " + symbols, symbol.isPresent());
 		assertKind(expectedKind, symbol.get());
+
 	}
 
 	private void assertKind(SymbolKind expectedKind, SymbolInformation symbol) {
