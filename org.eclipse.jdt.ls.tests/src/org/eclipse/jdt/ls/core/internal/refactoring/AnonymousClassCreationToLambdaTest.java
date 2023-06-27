@@ -426,7 +426,7 @@ public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 		buf.append("\n");
 		buf.append("public class Test {\n");
 		buf.append("    void foo(ArrayList<String> list) {\n");
-		buf.append("        list.removeIf(t -> t.isEmpty());\n");
+		buf.append("        list.removeIf(String::isEmpty);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e = new Expected("Convert to lambda expression", buf.toString());
