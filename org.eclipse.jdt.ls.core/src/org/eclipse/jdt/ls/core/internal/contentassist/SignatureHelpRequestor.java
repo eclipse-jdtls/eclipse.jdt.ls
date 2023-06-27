@@ -19,6 +19,7 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLow
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,7 @@ import com.google.common.util.concurrent.UncheckedTimeoutException;
 
 public final class SignatureHelpRequestor extends CompletionRequestor {
 
-	private List<CompletionProposal> proposals = new ArrayList<>();
+	private Map<String, CompletionProposal> proposals = new LinkedHashMap<>();
 	private List<CompletionProposal> typeProposals = new ArrayList<>();
 	private final ICompilationUnit unit;
 	private Map<SignatureInformation, CompletionProposal> infoProposals;
@@ -83,9 +84,8 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		SignatureHelp signatureHelp = new SignatureHelp();
 
 		List<SignatureInformation> infos = new ArrayList<>();
-		for (int i = 0; i < proposals.size(); i++) {
+		for (CompletionProposal proposal : proposals.values()) {
 			if (!monitor.isCanceled()) {
-				CompletionProposal proposal = proposals.get(i);
 				if (proposal.getKind() != CompletionProposal.METHOD_REF) {
 					typeProposals.add(proposal);
 					continue;
@@ -128,14 +128,14 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 					for (String typeName : this.declaringTypeNames) {
 						String declaringTypeSimpleName = Signature.getSimpleName(typeName);
 						if (Objects.equals(proposalTypeSimpleName, declaringTypeSimpleName)) {
-							proposals.add(proposal);
+							proposals.putIfAbsent(String.valueOf(proposal.getSignature()), proposal);
 							return;
 						}
 					}
 					return;
 				}
 			}
-			proposals.add(proposal);
+			proposals.putIfAbsent(String.valueOf(proposal.getSignature()), proposal);
 		}
 	}
 
