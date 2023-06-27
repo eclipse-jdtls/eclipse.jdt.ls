@@ -94,8 +94,8 @@ public class TelemetryManager {
 		int javaProjectCount = 0;
 		JsonArray buildToolNamesList = new JsonArray();
 
-		int projectErrors = 0;
-		int unresolvedImportErrors = 0;
+		long projectErrors = 0;
+		long unresolvedImportErrors = 0;
 		boolean jdkMismatch = false;
 		for (IProject project : ProjectUtils.getAllProjects()) {
 			Optional<IBuildSupport> bs = this.projectsManager.getBuildSupport(project);
@@ -139,8 +139,8 @@ public class TelemetryManager {
 			}
 		}
 
-		properties.addProperty("project.projectErrorCount", Integer.toString(projectErrors));
-		properties.addProperty("project.unresolvedImportErrorCount", Integer.toString(unresolvedImportErrors));
+		properties.addProperty("project.projectErrorCount", Long.toString(projectErrors));
+		properties.addProperty("project.unresolvedImportErrorCount", Long.toString(unresolvedImportErrors));
 		properties.addProperty("project.autobuild", Boolean.toString(prefs.getPreferences().isAutobuildEnabled()));
 		properties.addProperty("project.jdkMismatch", Boolean.toString(jdkMismatch));
 
