@@ -115,8 +115,10 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.JoinVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionAndMethodRefFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.SplitVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
 import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
@@ -223,6 +225,10 @@ public class QuickAssistProcessor {
 			if (!problemExists(locations, javaDocCommentProblems)) {
 				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
 			}
+
+			// Variable quick fixes
+			getSplitVariableProposal(context, coveringNode, resultingCollections);
+			getJoinVariableProposal(context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1835,4 +1841,33 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
+	private boolean getJoinVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+		if (resultingCollections != null) {
+			SplitVariableFixCore fix = SplitVariableFixCore.createSplitVariableFix(context.getASTRoot(), coveringNode);
+			if (fix != null) {
+				try {
+					resultingCollections.add(new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, fix.createChange(null), IProposalRelevance.SPLIT_VARIABLE_DECLARATION));
+					return true;
+				} catch (CoreException e) {
+					// ignore
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean getSplitVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+		if (resultingCollections != null) {
+			JoinVariableFixCore fix = JoinVariableFixCore.createJoinVariableFix(context.getASTRoot(), coveringNode);
+			if (fix != null) {
+				try {
+					resultingCollections.add(new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, fix.createChange(null), IProposalRelevance.JOIN_VARIABLE_DECLARATION));
+					return true;
+				} catch (CoreException e) {
+					// ignore
+				}
+			}
+		}
+		return false;
+	}
 }
