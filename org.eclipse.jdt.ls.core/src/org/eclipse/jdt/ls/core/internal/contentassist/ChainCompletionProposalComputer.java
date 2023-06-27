@@ -132,7 +132,7 @@ public class ChainCompletionProposalComputer {
 					// ignore
 				}
 			}, executor);
-			CompletableFuture<Void> future = CompletableFuture.allOf(mainChains, contextChains);
+			CompletableFuture<?> future = CompletableFuture.anyOf(mainChains, contextChains);
 
 			long timeout = Long.parseLong(JavaManipulation.getPreference("recommenders.chain.timeout", cu.getJavaProject()));
 			future.get(timeout, TimeUnit.SECONDS);
