@@ -43,7 +43,7 @@ public class LambdaExpressionCleanup implements ISimpleCleanUp {
 		if (unit == null) {
 			return null;
 		}
-		return LambdaExpressionsFixCore.createCleanUp(unit, true, false);
+		return LambdaExpressionsFixCore.createCleanUp(unit, true, false, false);
 	}
 
 	/* (non-Javadoc)
