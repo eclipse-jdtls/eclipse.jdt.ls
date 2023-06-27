@@ -128,7 +128,7 @@ public class TelemetryManager {
 				if (javaProject != null) {
 					try {
 						IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
-						if (JavaRuntime.compareJavaVersions(vmInstall, sourceLevel) == -1) {
+						if (JavaRuntime.compareJavaVersions(vmInstall, sourceLevel) < 0) {
 							jdkMismatch = true;
 						}
 					} catch (CoreException e) {
