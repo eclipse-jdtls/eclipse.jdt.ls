@@ -28,14 +28,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 import com.google.gson.JsonArray;
@@ -119,7 +118,7 @@ public class TelemetryManager {
 					IMarker[] projectMarkers = project.findMarkers(null /* all markers */, true /* subtypes */, IResource.DEPTH_ZERO);
 					projectErrors += Stream.of(projectMarkers).filter(m -> m.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR).count();
 					IMarker[] allmarkers = project.findMarkers(null /* all markers */, true /* subtypes */, IResource.DEPTH_INFINITE);
-					unresolvedImportErrors += Stream.of(allmarkers).filter(m -> isUnresolvedImportError(m)).count();
+					unresolvedImportErrors += Stream.of(allmarkers).filter(m -> ResourceUtils.isUnresolvedImportError(m)).count();
 				} catch (CoreException e) {
 					// ignore
 				}
@@ -169,11 +168,6 @@ public class TelemetryManager {
 		properties.addProperty("dependency.size", Long.toString(librarySize));
 
 		telemetryEvent(JAVA_PROJECT_BUILD, properties);
-	}
-
-	private boolean isUnresolvedImportError(IMarker marker) {
-		return marker.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR
-			&& marker.getAttribute(IJavaModelMarker.ID, 0) == IProblem.ImportNotFound;
 	}
 
 	/**

@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.compiler.IProblem;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
@@ -382,5 +383,10 @@ public final class ResourceUtils {
 		marker.setAttribute(IMarker.MESSAGE, message);
 		marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_WARNING);
 		return marker;
+	}
+
+	public static boolean isUnresolvedImportError(IMarker marker) {
+		return marker.getAttribute(IMarker.SEVERITY, 0) == IMarker.SEVERITY_ERROR
+			&& marker.getAttribute(IJavaModelMarker.ID, 0) == IProblem.ImportNotFound;
 	}
 }
