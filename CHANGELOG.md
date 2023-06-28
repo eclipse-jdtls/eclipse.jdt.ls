@@ -1,5 +1,27 @@
 # Change Log
 
+# [1.25.0 (June 29th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/115?closed=1)
+ * enhancement - Support for "Go to Declaration". See [#2684](https://github.com/eclipse/eclipse.jdt.ls/issues/2684).
+ * enhancement - Improve method argument guessing functionality. See [#2512](https://github.com/eclipse/eclipse.jdt.ls/issues/2512).
+ * enhancement - Add code action to clean up & simplify lambda expressions. See [#2489](https://github.com/eclipse/eclipse.jdt.ls/issues/2489).
+ * enhancement - Use FernFlower as the default decompiler. See [#2704](https://github.com/eclipse/eclipse.jdt.ls/pull/2704).
+ * enhancement - Attempt automatic JVM detection on startup. See [#2731](https://github.com/eclipse/eclipse.jdt.ls/pull/2731).
+ * enhancement - Support for chain completions. See [#2544](https://github.com/eclipse/eclipse.jdt.ls/pull/2544).
+ * enhancement - Make reasonable guess for method name when applying "Extract Method" refactoring. See [#2670](https://github.com/eclipse/eclipse.jdt.ls/pull/2670).
+ * enhancement - Add postfix completion for `sysouf`, `sysoutv`, `format`, `par`, `not`,`assert` & `optional` . See [#2691](https://github.com/eclipse/eclipse.jdt.ls/pull/2691), [#2697](https://github.com/eclipse/eclipse.jdt.ls/pull/2697).
+ * enhancement - Track errors, exceptions, and project import success rate on server side for reliability analysis. See [#2715](https://github.com/eclipse/eclipse.jdt.ls/pull/2715), [#2726](https://github.com/eclipse/eclipse.jdt.ls/pull/2726).
+ * bug fix - Display package name in document symbols outline for class files. See [#2617](https://github.com/eclipse/eclipse.jdt.ls/issues/2617).
+ * bug fix - Signature help should display the selected completion item. See [#2686](https://github.com/eclipse/eclipse.jdt.ls/pull/2686).
+ * bug fix - No completions on field initializer with `@Default` and `@Builder` Lombok annotations. See [#2669](https://github.com/eclipse/eclipse.jdt.ls/issues/2669).
+ * bug fix - Initiate progress reporting using the `window/workDoneProgress/create` request. See [#2377](https://github.com/eclipse/eclipse.jdt.ls/issues/2377).
+ * bug fix - Fix `IllegalArgumentException` within a try-catch block. See [#2689](https://github.com/eclipse/eclipse.jdt.ls/pull/2689).
+ * bug fix - Fix `pId` mismatch in completions. See [#2681](https://github.com/eclipse/eclipse.jdt.ls/pull/2681).
+ * bug fix - Fix syntax errors in `WorkspaceDiagnosticsHandlerTest`. See [#2716](https://github.com/eclipse/eclipse.jdt.ls/issues/2716).
+ * build - Update LSP4J to 0.21.0. See [#2712](https://github.com/eclipse/eclipse.jdt.ls/pull/2712).
+ * build - Bump tycho-version from 3.0.4 to 3.0.5. See [#2722](https://github.com/eclipse/eclipse.jdt.ls/pull/2722).
+ * build - Bump maven-clean-plugin from 3.2.0 to 3.3.1. See [#2718](https://github.com/eclipse/eclipse.jdt.ls/pull/2718).
+ * other - Set progress provider in language server application so clients may override behaviour. See [#2719](https://github.com/eclipse/eclipse.jdt.ls/pull/2719).
+
 # [1.24.0 (June 1st, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/114?closed=1)
  * performance - No need to run the reconcile operation in a workspace job. See [#2660](https://github.com/eclipse/eclipse.jdt.ls/pull/2660).
  * performance - Avoid blocking the pipeline while handling `refreshLocal` during document lifecycle events. See [#2659](https://github.com/eclipse/eclipse.jdt.ls/pull/2659).
