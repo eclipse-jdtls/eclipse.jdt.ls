@@ -36,6 +36,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.InsertTextFormat;
 import org.eclipse.lsp4j.InsertTextMode;
+import org.eclipse.lsp4j.Range;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,6 +77,51 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 	@After
 	public void tearDown() throws Exception {
 		javaClient.disconnect();
+	}
+
+	@Test
+	public void testFullyQualifiedTypeCompletion1() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"""
+			package org.sample;
+			public class Test {
+				java.util.List
+			}
+			"""
+		);
+
+		CompletionList list = requestCompletions(unit, "java.util.List");
+		assertNotNull(list);
+		CompletionItem item = list.getItems().get(0);
+		String filterText = item.getFilterText();
+		Range range = item.getTextEdit().getLeft().getRange();
+		int start = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
+		int end = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getEnd().getLine(), range.getEnd().getCharacter());
+		String replacedContent = unit.getBuffer().getText(start, end - start);
+		assertTrue(filterText.startsWith(replacedContent));
+	}
+
+	@Test
+	public void testFullyQualifiedTypeCompletion2() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+			"src/org/sample/Test.java",
+			"""
+			package org.sample;
+			import java.util.List
+			public class Test {}
+			"""
+		);
+
+		CompletionList list = requestCompletions(unit, "import java.util.List");
+		assertNotNull(list);
+		CompletionItem item = list.getItems().get(0);
+		String filterText = item.getFilterText();
+		Range range = item.getTextEdit().getLeft().getRange();
+		int start = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getStart().getLine(), range.getStart().getCharacter());
+		int end = JsonRpcHelpers.toOffset(unit.getBuffer(), range.getEnd().getLine(), range.getEnd().getCharacter());
+		String replacedContent = unit.getBuffer().getText(start, end - start);
+		assertTrue(filterText.startsWith(replacedContent));
 	}
 
 	@Test
