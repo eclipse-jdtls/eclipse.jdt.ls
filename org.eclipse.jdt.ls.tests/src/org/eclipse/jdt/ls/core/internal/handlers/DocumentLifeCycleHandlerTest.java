@@ -841,6 +841,30 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		DocumentMonitor documentMonitor = lifeCycleHandler.new DocumentMonitor(JDTUtils.toURI(cu));
 		documentMonitor.checkChanged();
 		changeDocumentFull(cu, content, 2);
+		assertChanged(documentMonitor);
+		closeDocument(cu);
+	}
+
+	@Test
+	public void testDocumentMonitorClosedDocument() throws Exception {
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment fooPackage = sourceFolder.createPackageFragment("foo", false, null);
+
+		String content = "package foo;\n";
+		ICompilationUnit cu = fooPackage.createCompilationUnit("Foo.java", content, false, null);
+
+		DocumentMonitor documentMonitorBeforeOpen = lifeCycleHandler.new DocumentMonitor(JDTUtils.toURI(cu));
+		openDocument(cu, content, 1);
+		changeDocumentFull(cu, content, 2);
+		assertChanged(documentMonitorBeforeOpen); // Version changed (null -> 2)
+		closeDocument(cu);
+
+		DocumentMonitor documentMonitorAfterClose = lifeCycleHandler.new DocumentMonitor(JDTUtils.toURI(cu));
+		documentMonitorAfterClose.checkChanged(); // Version not changed (null -> null)
+	}
+
+	private void assertChanged(DocumentMonitor documentMonitor) {
 		try {
 			documentMonitor.checkChanged();
 			fail("Should have thrown ResponseErrorException");
@@ -848,7 +872,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		catch (ResponseErrorException e) {
 			assertEquals(e.getResponseError().getCode(), -32801); // ContentModified error code
 		}
-		closeDocument(cu);
 	}
 
 	private File createTempFile(File parent, String fileName, String content) throws IOException {
