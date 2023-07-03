@@ -757,7 +757,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public class DocumentMonitor {
 
 		private final String uri;
-		private final int initialVersion;
+		private final Integer initialVersion;
 
 		public DocumentMonitor(String uri) {
 			this.uri = uri;
@@ -769,7 +769,14 @@ public abstract class BaseDocumentLifeCycleHandler {
 		 * of this monitor, {@code false} otherwise.
 		 */
 		public boolean hasChanged() {
-			return initialVersion != documentVersions.get(uri);
+			Integer currentVersion = documentVersions.get(uri);
+			// If the initial and current version is null, it would indicate that
+			// the document is not open. In such cases, the LSP spec still says:
+			// "a server's ability to fulfill requests is independent of whether
+			// a text document is open or closed". In order to service such
+			// requests, we have to assume that a closed document has not changed.
+			// See also: https://github.com/eclipse/eclipse.jdt.ls/discussions/2706
+			return !Objects.equals(initialVersion, currentVersion);
 		}
 
 		/**
