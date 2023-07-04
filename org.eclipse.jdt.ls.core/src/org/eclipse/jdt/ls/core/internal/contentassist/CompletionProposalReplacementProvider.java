@@ -45,6 +45,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
@@ -800,6 +801,12 @@ public class CompletionProposalReplacementProvider {
 				// with the corresponding type parameters to declared type
 
 				IType expectedType= (IType) expectedTypeBinding.getJavaElement();
+
+				if (proposal instanceof InternalCompletionProposal icp && !icp.isCompatibleProposal()) {
+					// the proposal is not compatible with the expected type
+					// -> do not add any type arguments
+					return new String[0];
+				}
 
 				IType[] path= TypeProposalUtils.computeInheritancePath(type, expectedType);
 				if (path == null) {

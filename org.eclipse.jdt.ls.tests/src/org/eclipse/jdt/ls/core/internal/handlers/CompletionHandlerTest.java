@@ -916,6 +916,30 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_constructor_innerClass() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/java/Foo.java",
+				"""
+				import java.util.List;
+				import java.util.ArrayList;
+				public class Foo {
+					public void test() {
+						List<String> a = new MyC
+					}
+					public class MyClass {
+						static class MyList<E> extends ArrayList<E> { }
+					}
+				}
+				"""
+		);
+		CompletionList list = requestCompletions(unit, "new MyC");
+		assertNotNull(list);
+		CompletionItem ci = list.getItems().stream().filter(item -> item.getLabel().equals("MyClass - java.Foo")).findFirst().orElse(null);
+		assertNotNull(ci);
+		assertEquals("java.Foo.MyClass", ci.getDetail());
+	}
+
 	private ClientPreferences mockClientPreferences(boolean supportCompletionSnippets, boolean supportSignatureHelp, boolean isCompletionListItemDefaultsSupport) {
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
 		Mockito.when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
