@@ -237,6 +237,21 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertFalse(method.isPresent());
 	}
 
+	@Test
+	public void testDecompiledSource() throws Exception {
+		importProjects("eclipse/reference");
+		IProject project = WorkspaceHelper.getProject("reference");
+		List<? extends DocumentSymbol> symbols = internalGetHierarchicalSymbols(project, monitor, "org.sample.Foo");
+		symbols.size();
+		assertEquals(2, symbols.size());
+		assertHasHierarchicalSymbol("org.sample", null, SymbolKind.Package, symbols);
+		assertHasHierarchicalSymbol("Foo", null, SymbolKind.Enum, symbols);
+		assertHasHierarchicalSymbol("FOO1", "Foo", SymbolKind.EnumMember, symbols);
+		assertHasHierarchicalSymbol("value", "Foo", SymbolKind.Field, symbols);
+		assertHasHierarchicalSymbol("getValue(): int", "Foo", SymbolKind.Method, symbols);
+		assertHasHierarchicalSymbol("Foo(int)", "Foo", SymbolKind.Constructor, symbols);
+	}
+
 	private List<? extends DocumentSymbol> internalGetHierarchicalSymbols(IProject project, IProgressMonitor monitor, String className)
 			throws JavaModelException, UnsupportedEncodingException, InterruptedException, ExecutionException {
 		String uri = ClassFileUtil.getURI(project, className);
