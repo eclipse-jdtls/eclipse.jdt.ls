@@ -248,7 +248,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertHasHierarchicalSymbol("Foo", null, SymbolKind.Enum, symbols);
 		assertHasHierarchicalSymbol("FOO1", "Foo", SymbolKind.EnumMember, symbols);
 		assertHasHierarchicalSymbol("value", "Foo", SymbolKind.Field, symbols);
-		assertHasHierarchicalSymbol("getValue(): int", "Foo", SymbolKind.Method, symbols);
+		assertHasHierarchicalSymbol("getValue() : int", "Foo", SymbolKind.Method, symbols);
 		assertHasHierarchicalSymbol("Foo(int)", "Foo", SymbolKind.Constructor, symbols);
 	}
 

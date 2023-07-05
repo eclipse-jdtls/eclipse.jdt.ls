@@ -508,7 +508,7 @@ public class DocumentSymbolHandler {
 			String memberName = node.getName().getIdentifier() + "()";
 			String typeName = node.getType().toString();
 			DocumentSymbol symbol = getDocumentSymbol(memberName, node, node.getName());
-			symbol.setDetail(": " + typeName);
+			symbol.setDetail(" : " + typeName);
 			addAsChildDocumentSymbol(node, symbol);
 			return super.visit(node);
 		}
@@ -559,7 +559,7 @@ public class DocumentSymbolHandler {
 				returnType = node.isConstructor() ? null : "void";
 			}
 			DocumentSymbol symbol = getDocumentSymbol(name.toString(), node, node.getName());
-			symbol.setDetail(returnType == null ? "" : ": " + returnType);
+			symbol.setDetail(returnType == null ? "" : " : " + returnType);
 			addAsChildDocumentSymbol(node, symbol);
 			return super.visit(node);
 		}
