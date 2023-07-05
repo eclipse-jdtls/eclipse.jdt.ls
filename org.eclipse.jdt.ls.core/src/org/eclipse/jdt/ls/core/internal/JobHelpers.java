@@ -230,6 +230,10 @@ public final class JobHelpers {
 		waitForJobs(BuildJobOffMatcher.INSTANCE, maxTimeMillis);
 	}
 
+	public static void waitForAutoBuildJobs(int maxTimeMillis) {
+		waitForJobs(AutoBuildJobMatcher.INSTANCE, maxTimeMillis);
+	}
+
 	public static void waitForProjectRegistryRefreshJob() {
 		waitForJobs(ProjectRegistryRefreshJobMatcher.INSTANCE, MAX_TIME_MILLIS);
 	}
@@ -280,6 +284,17 @@ public final class JobHelpers {
 		@Override
 		public boolean matches(Job job) {
 			return job.getClass().getName().matches("(.*\\.AutoBuildOff.*)");
+		}
+
+	}
+
+	static class AutoBuildJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new AutoBuildJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.getClass().getName().endsWith("AutoBuildJob");
 		}
 
 	}
