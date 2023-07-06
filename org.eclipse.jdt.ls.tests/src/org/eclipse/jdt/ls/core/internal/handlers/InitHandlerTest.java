@@ -346,7 +346,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = "file://" + resourceName;
 		File sourceFile = new Path(resourceName).toFile();
 		assertTrue(FileUtils.contentEquals(sourceFile, outputFile));
-		FileUtils.writeStringToFile(sourceFile, TEST_CONTENT);
+		Files.writeString(sourceFile.toPath(), TEST_CONTENT);
 		FileEvent fileEvent = new FileEvent(uri, FileChangeType.Changed);
 		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams();
 		params.getChanges().add(fileEvent);

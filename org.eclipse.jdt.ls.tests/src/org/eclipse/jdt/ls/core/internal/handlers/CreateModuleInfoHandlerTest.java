@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -23,9 +24,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.Test;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 
 public class CreateModuleInfoHandlerTest extends AbstractProjectsManagerBasedTest {
 
@@ -37,7 +35,7 @@ public class CreateModuleInfoHandlerTest extends AbstractProjectsManagerBasedTes
 		String moduleInfoUri = CreateModuleInfoHandler.createModuleInfo(project.getLocationURI().toString(), new NullProgressMonitor());
 
 		File file = ResourceUtils.toFile(new URI(moduleInfoUri));
-		String content = Files.toString(file, Charsets.UTF_8);
+		String content = Files.readString(file.toPath());
 		assertTrue(content.contains("exports com.example;"));
 		assertTrue(content.contains("requires xml.apis;"));
 	}

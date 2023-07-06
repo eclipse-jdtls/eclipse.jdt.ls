@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -351,7 +352,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				entry(IMarker.MESSAGE, "Non-JDT errors."),
 				entry(IMarker.SEVERITY, IMarker.SEVERITY_ERROR)));
 		// @formatter:off
-		String source = FileUtils.readFileToString(FileUtils.toFile(uri.toURL()));
+		String source = Files.readString(FileUtils.toFile(uri.toURL()).toPath());
 		openDocument(cu, source, 1);
 		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 		assertEquals(project, cu.getJavaProject().getProject());
@@ -559,7 +560,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		IProject project = WorkspaceHelper.getProject("hello");
 		URI uri = project.getFile("nopackage/Test2.java").getRawLocationURI();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-		String source = FileUtils.readFileToString(FileUtils.toFile(uri.toURL()));
+		String source = Files.readString(FileUtils.toFile(uri.toURL()).toPath());
 		openDocument(cu, source, 1);
 		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 		assertEquals(project, cu.getJavaProject().getProject());
@@ -696,7 +697,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		int length = source.length();
 		source = source.replace("org", "org.eclipse");
 		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, length));
-		FileUtils.writeStringToFile(file, source);
+		Files.writeString(file.toPath(), source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
@@ -725,7 +726,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		org.mkdir();
 		File file = new File(org, "Bar.java");
 		file.createNewFile();
-		FileUtils.writeStringToFile(file, barContent);
+		Files.writeString(file.toPath(), barContent);
 		ICompilationUnit bar = JDTUtils.resolveCompilationUnit(file.toURI());
 		bar.getResource().refreshLocal(IResource.DEPTH_ONE, null);
 		assertNotNull("Bar doesn't exist", javaProject.findType("org.Bar"));
@@ -734,7 +735,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		URI uri = file.toURI();
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
 		openDocument(unit, "", 1);
-		FileUtils.writeStringToFile(file, fooContent);
+		Files.writeString(file.toPath(), fooContent);
 		changeDocumentFull(unit, fooContent, 1);
 		saveDocument(unit);
 		closeDocument(unit);
@@ -766,7 +767,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		int length = source.length();
 		source = source.replace("org", "org.eclipse");
 		changeDocument(cu, source, 2, JDTUtils.toRange(cu, 0, length));
-		FileUtils.writeStringToFile(file, source);
+		Files.writeString(file.toPath(), source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
@@ -777,7 +778,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		length = source.length();
 		source = source.replace("org.eclipse", "org.eclipse.toto");
 		changeDocument(cu, source, 3, JDTUtils.toRange(cu, 0, length));
-		FileUtils.writeStringToFile(file, source);
+		Files.writeString(file.toPath(), source);
 		saveDocument(cu);
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
@@ -879,7 +880,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		File file = new File(parent, fileName);
 		file.deleteOnExit();
 		file.createNewFile();
-		FileUtils.writeStringToFile(file, content);
+		Files.writeString(file.toPath(), content);
 		return file;
 	}
 
