@@ -20,11 +20,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -455,7 +455,7 @@ public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 		File file = new File(projectRoot, "Bar.java");
 		file.createNewFile();
 		String contents = "public class Bar {\r\n}";
-		FileUtils.writeStringToFile(file, contents);
+		Files.writeString(file.toPath(), contents);
 		ICompilationUnit bar = JDTUtils.resolveCompilationUnit(file.toURI());
 		bar.getResource().refreshLocal(IResource.DEPTH_ONE, null);
 

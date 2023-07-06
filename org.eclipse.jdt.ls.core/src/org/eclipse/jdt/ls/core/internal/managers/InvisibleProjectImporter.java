@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -548,7 +547,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	public static String getPackageName(IPath javaFile, IPath workspaceRoot, IJavaProject javaProject, String[][] srcPrefixes) {
 		File nioFile = javaFile.toFile();
 		try {
-			String content = com.google.common.io.Files.toString(nioFile, StandardCharsets.UTF_8);
+			String content = Files.readString(nioFile.toPath());
 			if (StringUtils.isBlank(content)) {
 				File found = findNearbyNonEmptyFile(nioFile);
 				if (found == null) {

@@ -18,6 +18,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,8 +47,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-
-import com.google.common.io.Files;
 
 public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest {
 	private CoreASTProvider sharedASTProvider;
@@ -92,7 +91,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertTrue(lastModified > 0);
 		source = source.replace("world", "world2");
 		File javaFile = new File(projectFile, "src/org/sample/Foo.java");
-		FileUtils.writeStringToFile(javaFile, source);
+		Files.writeString(javaFile.toPath(), source);
 		String uri = JDTUtils.toURI(unit);
 		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).handleFileEvents(new FileEvent(uri, FileChangeType.Changed));
 		waitForBackgroundJobs();
@@ -119,7 +118,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		String newUri = oldUri.replace("mypack", "mynewpack");
 		File oldPack = mypack.getResource().getLocation().toFile();
 		File newPack = new File(oldPack.getParent(), "mynewpack");
-		Files.move(oldPack, newPack);
+		Files.move(oldPack.toPath(), newPack.toPath());
 		assertTrue(unit.isWorkingCopy());
 		new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler).handleFileEvents(
 			new FileEvent(newUri, FileChangeType.Created),

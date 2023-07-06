@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,9 +136,6 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 
 /**
  * General utilities for working with JDT APIs
@@ -298,7 +296,7 @@ public final class JDTUtils {
 		try {
 			File file = ResourceUtils.toFile(uri);
 			//FIXME need to determine actual charset from file
-			String content = Files.toString(file, Charsets.UTF_8);
+			String content = Files.readString(file.toPath());
 			if (content.isEmpty() && javaProject != null && ProjectsManager.DEFAULT_PROJECT_NAME.equals(javaProject.getProject().getName())) {
 				java.nio.file.Path path = Paths.get(uri);
 				java.nio.file.Path parent = path;
