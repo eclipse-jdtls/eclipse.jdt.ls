@@ -316,9 +316,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 
 		Range range = new Range(new Position(2, 0), new Position(3, 5));// range around foo()
-		DocumentRangeFormattingParams params = new DocumentRangeFormattingParams(range);
-		params.setTextDocument(textDocument);
-		params.setOptions(new FormattingOptions(3, true));// ident == 3 spaces
+		DocumentRangeFormattingParams params = new DocumentRangeFormattingParams(textDocument,new FormattingOptions(3, true), range); // ident == 3 spaces
 
 		List<? extends TextEdit> edits = server.rangeFormatting(params).get();
 		//@formatter:off
@@ -482,9 +480,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, false);// ident == tab
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 27), ";");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(3, 27), ";");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -520,9 +516,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 28), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(3, 28), "\n");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -557,9 +551,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(4, 0), "}");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options,new Position(4, 0), "}");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -594,9 +586,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(2, 33), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(2, 33), "\n");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -631,9 +621,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(4, 3), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options,  new Position(4, 3), "\n");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -669,9 +657,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(5, 3), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(5, 3), "\n");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -705,9 +691,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(2, 34), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(2, 34), "\n");
 
 		preferences.setJavaFormatOnTypeEnabled(true);
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
@@ -740,9 +724,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
 		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
 
-		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(new Position(3, 28), "\n");
-		params.setTextDocument(textDocument);
-		params.setOptions(options);
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(3, 28), "\n");
 		//Check it's disabled by default
 		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
 		assertNotNull(edits);
