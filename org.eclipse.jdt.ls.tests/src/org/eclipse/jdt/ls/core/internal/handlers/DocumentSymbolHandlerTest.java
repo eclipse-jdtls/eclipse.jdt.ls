@@ -242,7 +242,6 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		importProjects("eclipse/reference");
 		IProject project = WorkspaceHelper.getProject("reference");
 		List<? extends DocumentSymbol> symbols = internalGetHierarchicalSymbols(project, monitor, "org.sample.Foo");
-		symbols.size();
 		assertEquals(2, symbols.size());
 		assertHasHierarchicalSymbol("org.sample", null, SymbolKind.Package, symbols);
 		assertHasHierarchicalSymbol("Foo", null, SymbolKind.Enum, symbols);
