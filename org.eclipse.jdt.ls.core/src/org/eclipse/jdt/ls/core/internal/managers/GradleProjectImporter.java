@@ -241,6 +241,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 		for (IStatus status : compatibilityStatus.getChildren()) {
 			// only report first compatibility issue
+			JavaLanguageServerPlugin.log(new Status(IStatus.ERROR, status.getPlugin(), status.getMessage(), status.getException()));
 			GradleCompatibilityStatus gradleStatus = ((GradleCompatibilityStatus) status);
 			for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
 				if (URIUtil.sameURI(URI.create(JDTUtils.getFileURI(gradleProject)), URI.create(gradleStatus.getProjectUri()))) {
