@@ -46,7 +46,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.osgi.framework.Bundle;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -103,7 +102,7 @@ public class WrapperValidator {
 			if (versionFile.exists()) {
 				InputStreamReader reader = null;
 				try {
-					reader = new InputStreamReader(new FileInputStream(versionFile), Charsets.UTF_8);
+					reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8);
 					String json = CharStreams.toString(reader);
 					Gson gson = new GsonBuilder().create();
 					TypeToken<List<Map<String, String>>> typeToken = new TypeToken<>() {
