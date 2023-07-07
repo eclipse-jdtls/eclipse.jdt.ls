@@ -60,12 +60,11 @@ import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import com.google.common.collect.Sets;
 
 public class CompletionHandler{
 
 	public final static CompletionOptions getDefaultCompletionOptions(PreferenceManager preferenceManager) {
-		CompletionOptions completionOptions = new CompletionOptions(Boolean.TRUE, Arrays.asList(".", "@", "#", "*", " "));
+		CompletionOptions completionOptions = new CompletionOptions(Boolean.TRUE, List.of(".", "@", "#", "*", " "));
 		if (preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()) {
 			CompletionItemOptions completionItemOptions = new CompletionItemOptions();
 			completionItemOptions.setLabelDetailsSupport(Boolean.TRUE);
@@ -74,7 +73,7 @@ public class CompletionHandler{
 		return completionOptions;
 	}
 
-	private static final Set<String> UNSUPPORTED_RESOURCES = Sets.newHashSet("module-info.java", "package-info.java");
+	private static final Set<String> UNSUPPORTED_RESOURCES = Set.of("module-info.java", "package-info.java");
 
 	static final Comparator<CompletionItem> PROPOSAL_COMPARATOR = new Comparator<>() {
 

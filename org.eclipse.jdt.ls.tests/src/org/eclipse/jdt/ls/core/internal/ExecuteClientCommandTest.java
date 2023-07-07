@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -27,8 +28,6 @@ import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
-import com.google.common.collect.ImmutableList;
 
 public class ExecuteClientCommandTest {
 
@@ -39,14 +38,14 @@ public class ExecuteClientCommandTest {
 	public void testExecuteClientCommandNoArgs() throws Exception {
 		when(client.executeClientCommand(any())).thenAnswer(handler("send.it.back", params -> params.getArguments()));
 		Object response = javaClient.executeClientCommand("send.it.back");
-		assertEquals(ImmutableList.of(), response);
+		assertEquals(List.of(), response);
 	}
 
 	@Test
 	public void testExecuteClientCommandNoArgsAndLongEnoughTimeout() throws Exception {
 		when(client.executeClientCommand(any())).thenAnswer(handler("send.it.back", params -> params.getArguments()));
 		Object response = javaClient.executeClientCommand(Duration.ofDays(1), "send.it.back");
-		assertEquals(ImmutableList.of(), response);
+		assertEquals(List.of(), response);
 	}
 
 	@Test
@@ -80,17 +79,17 @@ public class ExecuteClientCommandTest {
 	@Test
 	public void testExecuteClientCommandSomeArgs() throws Exception {
 		when(client.executeClientCommand(any())).thenAnswer(handler("send.it.back", params -> params.getArguments()));
-		Object[] params = { "one", 2, ImmutableList.of(3) };
+		Object[] params = { "one", 2, List.of(3) };
 		Object response = javaClient.executeClientCommand("send.it.back", params);
-		assertEquals(ImmutableList.copyOf(params), response);
+		assertEquals(List.of(params), response);
 	}
 
 	@Test
 	public void testExecuteClientCommandSomeArgsAndLongEnoughTimeout() throws Exception {
 		when(client.executeClientCommand(any())).thenAnswer(handler("send.it.back", params -> params.getArguments()));
-		Object[] params = { "one", 2, ImmutableList.of(3) };
+		Object[] params = { "one", 2, List.of(3) };
 		Object response = javaClient.executeClientCommand(Duration.ofDays(1), "send.it.back", params);
-		assertEquals(ImmutableList.copyOf(params), response);
+		assertEquals(List.of(params), response);
 	}
 
 	@Test

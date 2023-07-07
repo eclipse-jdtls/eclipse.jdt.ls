@@ -19,6 +19,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -212,8 +213,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		waitForBackgroundJobs();
 
 		// if the metadata file stores both at project root & workspace, the file at project root wins.
-		String newContent = FileUtils.readFileToString(
-			project.getLocation().append(IJavaProject.CLASSPATH_FILE_NAME).toFile(), "UTF-8");
+		String newContent = Files.readString(project.getLocation().append(IJavaProject.CLASSPATH_FILE_NAME).toPath());
 		assertTrue(newContent.contains("StandardVMType/JavaSE-1.8"));
 	}
 }

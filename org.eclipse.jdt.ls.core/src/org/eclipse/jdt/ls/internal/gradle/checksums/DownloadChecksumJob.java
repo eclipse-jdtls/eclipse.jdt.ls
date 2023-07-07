@@ -18,6 +18,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
@@ -30,7 +31,6 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 
 /**
@@ -74,7 +74,7 @@ public class DownloadChecksumJob extends Job {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				continue;
 			}
-			try (AutoCloseable closer = (() -> connection.disconnect()); InputStreamReader reader = new InputStreamReader(connection.getInputStream(), Charsets.UTF_8);) {
+			try (AutoCloseable closer = (() -> connection.disconnect()); InputStreamReader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8);) {
 				String sha256 = CharStreams.toString(reader);
 				File sha256File = new File(WrapperValidator.getSha256CacheFile(), WrapperValidator.getFileName(urlStr));
 				write(sha256File, sha256);

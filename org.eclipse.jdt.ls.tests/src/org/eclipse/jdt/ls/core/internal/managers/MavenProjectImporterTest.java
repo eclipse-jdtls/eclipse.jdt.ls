@@ -56,8 +56,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.google.common.collect.ImmutableList;
-
 /**
  * @author Fred Bricon
  */
@@ -383,8 +381,8 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	// https://github.com/redhat-developer/vscode-java/issues/2712
 	@Test
 	public void testNullAnalysisDisabled() throws Exception {
-		this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-		this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+		this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+		this.preferenceManager.getPreferences().setNullableTypes(List.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
 		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 		try {
 			IProject project = importMavenProject("null-analysis");

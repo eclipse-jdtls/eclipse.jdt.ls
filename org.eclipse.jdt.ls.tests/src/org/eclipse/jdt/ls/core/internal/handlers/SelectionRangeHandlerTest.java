@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.ListIterator;
 
 import org.eclipse.core.resources.IProject;
@@ -29,8 +30,6 @@ import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.collect.Lists;
 
 public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
@@ -114,7 +113,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	private SelectionRange getSelectionRange(String className, Position position) throws CoreException {
 		SelectionRangeParams params = new SelectionRangeParams();
-		params.setPositions(Lists.newArrayList(position));
+		params.setPositions(List.of(position));
 		params.setTextDocument(new TextDocumentIdentifier(ClassFileUtil.getURI(project, className)));
 		return new SelectionRangeHandler().selectionRange(params, monitor).get(0);
 	}
