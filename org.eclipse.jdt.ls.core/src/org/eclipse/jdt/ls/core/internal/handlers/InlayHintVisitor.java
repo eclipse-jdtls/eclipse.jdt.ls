@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -43,8 +44,6 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.InlayHint;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import com.google.common.base.Objects;
 
 @SuppressWarnings("unchecked")
 class InlayHintVisitor extends ASTVisitor {
@@ -293,6 +292,6 @@ class InlayHintVisitor extends ASTVisitor {
 		}
 
 		String argName = ((SimpleName) argument).getIdentifier();
-		return Objects.equal(argName, paramName);
+		return Objects.equals(argName, paramName);
 	}
 }
