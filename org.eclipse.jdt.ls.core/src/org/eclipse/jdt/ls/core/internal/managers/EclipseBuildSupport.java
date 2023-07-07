@@ -31,12 +31,10 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
-import com.google.common.collect.Sets;
-
 public class EclipseBuildSupport implements IBuildSupport {
 
-	private Set<String> files = Sets.newHashSet(".classpath", ".project", ".factorypath");
-	private Set<String> folders = Sets.newHashSet(".settings");
+	private Set<String> files = Set.of(".classpath", ".project", ".factorypath");
+	private Set<String> folders = Set.of(".settings");
 
 	@Override
 	public boolean applies(IProject project) {

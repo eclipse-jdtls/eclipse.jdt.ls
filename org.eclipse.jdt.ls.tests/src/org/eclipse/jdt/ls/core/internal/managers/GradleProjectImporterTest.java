@@ -69,7 +69,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 
 /**
@@ -391,7 +390,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(build.getArguments().contains("--init-script"));
 
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
-					.setGradleArguments(ImmutableList.of("-Pproperty=value", "--stacktrace"));
+					.setGradleArguments(List.of("-Pproperty=value", "--stacktrace"));
 			build = GradleProjectImporter.getBuildConfiguration(rootPath);
 			assertEquals(4, build.getArguments().size());
 			assertTrue(build.getArguments().contains("-Pproperty=value"));
@@ -441,7 +440,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(build.getJvmArguments().isEmpty());
 
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences()
-					.setGradleJvmArguments(ImmutableList.of("-Djavax.net.ssl.trustStore=truststore.jks"));
+					.setGradleJvmArguments(List.of("-Djavax.net.ssl.trustStore=truststore.jks"));
 			build = GradleProjectImporter.getBuildConfiguration(rootPath);
 			assertEquals(1, build.getJvmArguments().size());
 			assertTrue(build.getJvmArguments().contains("-Djavax.net.ssl.trustStore=truststore.jks"));
@@ -478,7 +477,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		List<String> arguments = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleArguments();
 		try {
 			// force overrideWorkspace
-			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(ImmutableList.of("--stacktrace"));
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(List.of("--stacktrace"));
 			List<IProject> projects = importProjects("gradle/subprojects");
 			assertEquals(4, projects.size());//default + 3 gradle projects
 			IProject root = WorkspaceHelper.getProject("subprojects");
@@ -499,7 +498,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
 			configuration = getProjectConfiguration(project2);
 			assertFalse(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
-			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(ImmutableList.of("--stacktrace"));
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(List.of("--stacktrace"));
 			configuration = CorePlugin.configurationManager().loadProjectConfiguration(project1);
 			assertTrue(configuration.getBuildConfiguration().isOverrideWorkspaceSettings());
 			assertEquals(3, configuration.getBuildConfiguration().getArguments().size());

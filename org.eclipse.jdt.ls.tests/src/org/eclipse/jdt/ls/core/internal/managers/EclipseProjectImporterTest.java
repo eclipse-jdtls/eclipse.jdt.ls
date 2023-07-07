@@ -53,7 +53,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
 
 public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
 
@@ -252,8 +251,8 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testNullAnalysis() throws Exception {
-		this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("org.springframework.lang.NonNull", "javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-		this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("org.springframework.lang.Nullable", "org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+		this.preferenceManager.getPreferences().setNonnullTypes(List.of("org.springframework.lang.NonNull", "javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+		this.preferenceManager.getPreferences().setNullableTypes(List.of("org.springframework.lang.Nullable", "org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
 		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 		try {
 			String name = "testnullable2";

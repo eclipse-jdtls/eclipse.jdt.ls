@@ -35,16 +35,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import com.google.common.collect.ImmutableList;
-
 @RunWith(MockitoJUnitRunner.class)
 public class NullAnalysisTest extends AbstractGradleBasedTest {
 
 	@Test
 	public void testNullAnalysisWithJavax() throws Exception {
 		try {
-			this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-			this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
@@ -80,8 +78,8 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 	@Test
 	public void testMixedNullAnalysis() throws Exception {
 		try {
-			this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-			this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
@@ -116,8 +114,8 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 
 	@Test
 	public void testNullAnalysisDisabled() throws Exception {
-		this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-		this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+		this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+		this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
 		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 		IProject project = importGradleProject("null-analysis");
 		assertIsJavaProject(project);
@@ -133,8 +131,8 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 	@Test
 	public void testKeepExistingProjectOptions() throws Exception {
 		try {
-			this.preferenceManager.getPreferences().setNonnullTypes(ImmutableList.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-			this.preferenceManager.getPreferences().setNullableTypes(ImmutableList.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
 			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
