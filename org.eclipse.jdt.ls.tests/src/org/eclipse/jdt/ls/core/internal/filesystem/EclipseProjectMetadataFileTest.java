@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -97,5 +98,21 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		assertFalse(ProjectUtils.isJavaProject(project));
 		IFile bin = project.getFile("bin");
 		assertFalse(bin.getRawLocation().toFile().exists());
+	}
+
+	@Test
+	public void testDeleteNonMetadataClasspath() throws Exception {
+		String name = "classpath3";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertNotNull(project);
+		IFile dotClasspath = project.getFile(new Path("resources/.classpath"));
+		File file = FileUtil.toPath(dotClasspath.getLocationURI()).toFile();
+		assertTrue(file.exists());
+		file.delete();
+		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
+		waitForBackgroundJobs();
+		project = getProject(name);
+		assertTrue(ProjectUtils.isJavaProject(project));
 	}
 }

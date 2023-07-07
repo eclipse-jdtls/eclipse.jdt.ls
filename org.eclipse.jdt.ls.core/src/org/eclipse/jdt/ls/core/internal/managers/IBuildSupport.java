@@ -96,7 +96,8 @@ public interface IBuildSupport {
 		if (changeType == CHANGE_TYPE.DELETED) {
 			if (IJavaProject.CLASSPATH_FILE_NAME.equals(resource.getName())) {
 				IProject project = resource.getProject();
-				if (ProjectUtils.isJavaProject(project)) {
+				if (ProjectUtils.isJavaProject(project) && (resource.equals(project.getFile(IJavaProject.CLASSPATH_FILE_NAME))
+						|| resource.getProjectRelativePath().segmentCount() == 1)) {
 					ProjectUtils.removeJavaNatureAndBuilder(project, monitor);
 					update(project, true, monitor);
 				}
