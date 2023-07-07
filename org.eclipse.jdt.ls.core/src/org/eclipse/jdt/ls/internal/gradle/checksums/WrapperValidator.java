@@ -100,9 +100,7 @@ public class WrapperValidator {
 				JobHelpers.waitForLoadingGradleVersionJob();
 			}
 			if (versionFile.exists()) {
-				InputStreamReader reader = null;
-				try {
-					reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8);
+				try (InputStreamReader reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8);){
 					String json = CharStreams.toString(reader);
 					Gson gson = new GsonBuilder().create();
 					TypeToken<List<Map<String, String>>> typeToken = new TypeToken<>() {
@@ -161,12 +159,6 @@ public class WrapperValidator {
 					downloaded.set(true);
 				} catch (IOException | OperationCanceledException e) {
 					throw ExceptionFactory.newException(e);
-				} finally {
-					try {
-						Closeables.close(reader, false);
-					} catch (IOException e) {
-						// ignore
-					}
 				}
 			} else {
 				updateGradleVersionsFile();
