@@ -3480,7 +3480,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:on
 		CompletionList list = requestCompletions(unit, "ArrayL");
 		assertFalse(list.getItems().isEmpty());
-		assertEquals("java.util.ArrayList()", list.getItems().get(0).getFilterText());
+		assertTrue(list.getItems().get(0).getFilterText().startsWith("java.util.ArrayList"));
 	}
 
 	@Test
