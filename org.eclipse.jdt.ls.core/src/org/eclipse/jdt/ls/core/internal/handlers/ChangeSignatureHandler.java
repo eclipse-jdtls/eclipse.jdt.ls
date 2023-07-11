@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -107,12 +108,16 @@ public class ChangeSignatureHandler {
 					newParameterInfos.add(ParameterInfo.createInfoForAddedParameter(param.type, param.name, param.defaultValue));
 				}
 			}
-			parameterInfos.clear();
+
+			parameterInfos.removeIf(p -> newParameterInfos.contains(p));
+			parameterInfos.forEach(p -> p.markAsDeleted());
 			parameterInfos.addAll(newParameterInfos);
+
 			List<ExceptionInfo> exceptionInfos = processor.getExceptionInfos();
 			List<ExceptionInfo> newExceptionInfos = new ArrayList<>();
+			int index = 0;
 			for (MethodException exception : exceptions) {
-				if (exception.typeHandleIdentifier != null) {
+				if (exception.typeHandleIdentifier != null && (index >= exceptionInfos.size() || exceptionInfos.get(index).getFullyQualifiedName().equals(exception.type))) {
 					IJavaElement element = JavaCore.create(exception.typeHandleIdentifier);
 					if (element instanceof IType type) {
 						newExceptionInfos.add(ExceptionInfo.createInfoForAddedException(type));
@@ -173,9 +178,21 @@ public class ChangeSignatureHandler {
 						newExceptionInfos.add(ExceptionInfo.createInfoForAddedException(type));
 					}
 				}
+				index++;
 			}
-			exceptionInfos.clear();
-			exceptionInfos.addAll(newExceptionInfos);
+
+			exceptionInfos.stream().forEach(oldException -> {
+				if (newExceptionInfos.stream().filter(newException -> newException.getFullyQualifiedName().equals(oldException.getFullyQualifiedName())).collect(Collectors.toList()).isEmpty()) {
+					oldException.markAsDeleted();
+				}
+			});
+
+			newExceptionInfos.stream().forEach(newException -> {
+				if (exceptionInfos.stream().filter(oldException -> oldException.getFullyQualifiedName().equals(newException.getFullyQualifiedName())).collect(Collectors.toList()).isEmpty()) {
+					exceptionInfos.add(newException);
+				}
+			});
+
 			Refactoring refactoring = new ProcessorBasedRefactoring(processor);
 			refactoring.checkInitialConditions(new NullProgressMonitor());
 			status = refactoring.checkFinalConditions(new NullProgressMonitor());

@@ -157,4 +157,104 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		assertEquals(expected, unit.getSource());
 	}
+
+	@Test
+	public void testChangeSignatureRefactoringJavadocAddDelete() throws CoreException {
+		//@formatter:off
+		ICompilationUnit unit = fPackageP.createCompilationUnit("A.java", "package p;\r\n" +
+				"\r\n" +
+				"import java.io.IOException;\r\n" +
+				"\r\n" +
+				"public class A {\r\n" +
+				"	/**\r\n" +
+				"	 * @param input TODO\r\n" +
+				"	 * @throws IOException TODO\r\n" +
+				"	 *\r\n" +
+				"	 */\r\n" +
+				"	public void getName(String input) throws IOException {\r\n" +
+				"	}\r\n" +
+				"}"
+				, true, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "getName");
+		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		Either<Command, CodeAction> changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
+		Assert.assertNotNull(changeSignatureAction);
+		Command changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
+		Assert.assertNotNull(changeSignatureCommand);
+		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		List<Object> arguments = changeSignatureCommand.getArguments();
+		Assert.assertEquals(3, arguments.size());
+		Object arg1 = arguments.get(1);
+		assertEquals(true, arg1 instanceof CodeActionParams);
+		Object arg2 = arguments.get(2);
+		assertEquals(true, arg2 instanceof ChangeSignatureInfo);
+		ChangeSignatureInfo info = (ChangeSignatureInfo) arg2;
+		IJavaElement element = JavaCore.create(info.methodIdentifier);
+		assertEquals(true, element instanceof IMethod);
+		List<MethodParameter> parameters = List.of(info.parameters[0], new MethodParameter("String", "input1", "null", ParameterInfo.INDEX_FOR_ADDED));
+		List<MethodException> exceptions = List.of(info.exceptions[0], new MethodException("Exception", null));
+		Refactoring refactoring = ChangeSignatureHandler.getChangeSignatureRefactoring((CodeActionParams) arg1, (IMethod) element, false, "getName1", JdtFlags.VISIBILITY_STRING_PRIVATE, "String", parameters, exceptions);
+		Change change = refactoring.createChange(new NullProgressMonitor());
+		change.perform(new NullProgressMonitor());
+		//@formatter:off
+		String expected = "package p;\r\n" +
+						"\r\n" +
+						"import java.io.IOException;\r\n" +
+						"\r\n" +
+						"public class A {\r\n" +
+						"	/**\r\n" +
+						"	 * @param input TODO\r\n" +
+						"	 * @param input1 TODO\r\n" +
+						"	 * @return TODO\r\n" +
+						"	 * @throws IOException TODO\r\n" +
+						"	 * @throws Exception TODO\r\n" +
+						"	 *\r\n" +
+						"	 */\r\n" +
+						"	private String getName1(String input, String input1) throws IOException, Exception {\r\n" +
+						"	}\r\n" +
+						"}";
+		//@formatter:on
+		assertEquals(expected, unit.getSource());
+
+		ICompilationUnit unitTwo = fPackageP.createCompilationUnit("A.java", expected, true, null);
+		params = CodeActionUtil.constructCodeActionParams(unit, "getName");
+		codeActions = server.codeAction(params).join();
+		Assert.assertNotNull(codeActions);
+		changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
+		Assert.assertNotNull(changeSignatureAction);
+		changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
+		Assert.assertNotNull(changeSignatureCommand);
+		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		arguments = changeSignatureCommand.getArguments();
+		Assert.assertEquals(3, arguments.size());
+		arg1 = arguments.get(1);
+		assertEquals(true, arg1 instanceof CodeActionParams);
+		arg2 = arguments.get(2);
+		assertEquals(true, arg2 instanceof ChangeSignatureInfo);
+		info = (ChangeSignatureInfo) arg2;
+		element = JavaCore.create(info.methodIdentifier);
+		assertEquals(true, element instanceof IMethod);
+		parameters = List.of(info.parameters[1]);
+		exceptions = List.of(info.exceptions[1]);
+		refactoring = ChangeSignatureHandler.getChangeSignatureRefactoring((CodeActionParams) arg1, (IMethod) element, false, "getName1", JdtFlags.VISIBILITY_STRING_PRIVATE, "String", parameters, exceptions);
+		change = refactoring.createChange(new NullProgressMonitor());
+		change.perform(new NullProgressMonitor());
+		//@formatter:off
+				String expectedTwo = "package p;\r\n" +
+								"\r\n" +
+								"public class A {\r\n" +
+								"	/**\r\n" +
+								"	 * @param input1 TODO\r\n" +
+								"	 * @return TODO\r\n" +
+								"	 * @throws Exception TODO\r\n" +
+								"	 *\r\n" +
+								"	 */\r\n" +
+								"	private String getName1(String input1) throws Exception {\r\n" +
+								"	}\r\n" +
+								"}";
+				//@formatter:on
+		assertEquals(expectedTwo, unitTwo.getSource());
+	}
 }
