@@ -93,6 +93,15 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
+		// https://github.com/redhat-developer/vscode-java/issues/3184
+		// start the m2e and buildship plugin before calling JavaCore.setOptions
+		// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
+		startBundle(IMavenConstants.PLUGIN_ID);
+		long start = System.currentTimeMillis();
+		JobHelpers.waitForProjectRegistryRefreshJob();
+		JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
+		// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
+		startBundle(CorePlugin.PLUGIN_ID);
 		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
 
 		try {
@@ -218,13 +227,6 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
-		// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
-		startBundle(IMavenConstants.PLUGIN_ID);
-		long start = System.currentTimeMillis();
-		JobHelpers.waitForProjectRegistryRefreshJob();
-		JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
-		// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
-		startBundle(CorePlugin.PLUGIN_ID);
 		// https://github.com/redhat-developer/vscode-java/issues/2763
 		// When starting, Java LS turn off autobuild. See JavaLanguageServerPlugin.start(BundleContext).
 		// In this case Eclipse schedules the AutoBuildJobOff job. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=573595#c11
