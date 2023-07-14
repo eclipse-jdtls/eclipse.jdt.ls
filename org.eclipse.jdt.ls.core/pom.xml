@@ -51,6 +51,12 @@
 								import groovy.json.JsonSlurper
 								import groovy.json.JsonOutput
 
+								import java.net.http.HttpClient
+								import java.net.http.HttpRequest
+								import java.net.http.HttpResponse.BodyHandlers
+								import java.util.concurrent.CompletableFuture
+								import java.util.stream.Collectors;
+
 
 								def checksumsFile = new File(project.basedir.absolutePath, "gradle/checksums/checksums.json")
 								if (System.getProperty("eclipse.jdt.ls.skipGradleChecksums") != null &amp;&amp; checksumsFile.exists()) {
@@ -65,23 +71,49 @@
 								versionsFile.write(versionStr)
 								println "Wrote to ${versionsFile}"
 
-								def versions = new JsonSlurper().parseText(versionStr);
-								class Checksum { String wrapperChecksumUrl; String sha256 }
+								def versions = new JsonSlurper().parseText(versionStr)
 
-								def checksums = []
-								versions.each {
-									if (it.wrapperChecksumUrl) {
-										def sha256url = new URL(it.wrapperChecksumUrl)
-										try {
-											println "Fetching ${it.wrapperChecksumUrl}"
-											def sha256 = sha256url.text
-											def checksum = new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: sha256);
-											checksums.add(checksum)
-										} catch(Exception e) {
-											println e.message
-										}
-									}
+								class Checksum {
+									String wrapperChecksumUrl;
+									String sha256
 								}
+								HttpClient client = HttpClient.newHttpClient()
+								def futures = []
+								versions.each {
+									if (it.wrapperChecksumUrl == null) {
+										return
+									}
+									HttpRequest request = HttpRequest.newBuilder().uri(URI.create(it.wrapperChecksumUrl)).build()
+									futures.add(client.sendAsync(request, BodyHandlers.ofString()).thenApply { response ->
+										if (response.statusCode() == 301) {
+											String newUrl = response.headers().firstValue("location").orElse(null)
+											if (newUrl != null) {
+												HttpRequest newRequest = HttpRequest.newBuilder()
+														.uri(URI.create(newUrl))
+														.build()
+												try {
+													String sha256 = client.send(newRequest, BodyHandlers.ofString()).body()
+													return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: sha256)
+												} catch (IOException | InterruptedException e) {
+													return null
+												}
+											} else {
+												return null
+											}
+										} else {
+											// Return the body of the original response
+											return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: response.body())
+										}
+									})
+								}
+
+								def checksums = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+										.thenApply { v ->
+											futures.stream().map({ f ->
+												f.join()
+											}).collect(Collectors.toList())
+										}.get()
+
 								def json = JsonOutput.toJson(checksums)
 								checksumsFile.write(JsonOutput.prettyPrint(json))
 								println "Wrote to ${checksumsFile}"
