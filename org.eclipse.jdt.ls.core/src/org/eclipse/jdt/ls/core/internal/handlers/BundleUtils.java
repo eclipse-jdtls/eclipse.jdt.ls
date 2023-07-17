@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static java.lang.String.format;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -44,6 +46,7 @@ import org.osgi.framework.Version;
 import org.osgi.framework.namespace.IdentityNamespace;
 import org.osgi.framework.startlevel.BundleStartLevel;
 import org.osgi.framework.wiring.BundleCapability;
+import org.osgi.framework.wiring.BundleRevision;
 import org.osgi.framework.wiring.FrameworkWiring;
 import org.osgi.resource.Namespace;
 
@@ -267,6 +270,11 @@ public final class BundleUtils {
 				status.add(new Status(IStatus.ERROR, context.getBundle().getSymbolicName(), "Could not start: " + bundle.getSymbolicName() + '(' + bundle.getLocation() + ':' + bundle.getBundleId() + ')' + ". It's state is uninstalled."));
 				continue;
 			}
+			if ((bundle.adapt(BundleRevision.class).getTypes() & BundleRevision.TYPE_FRAGMENT) != 0) {
+				JavaLanguageServerPlugin.debugTrace(format("Fragment bundle '%s' (%s) cannot be started. Skipping.", bundle.getSymbolicName(), bundle.getLocation()));
+				continue;
+			}
+
 			if (bundle.getState() == Bundle.STARTING) {
 				continue;
 			}
