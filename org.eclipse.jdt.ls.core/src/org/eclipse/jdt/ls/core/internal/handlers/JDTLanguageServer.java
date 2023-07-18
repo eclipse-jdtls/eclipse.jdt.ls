@@ -298,6 +298,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
 					classpathUpdateHandler.addElementChangeListener();
+					SourceAttachUpdateHandler attachListener = new SourceAttachUpdateHandler(client);
+					attachListener.addElementChangeListener();
 					pm.registerWatchers();
 					debugTrace(">> watchers registered");
 

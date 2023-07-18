@@ -46,6 +46,7 @@ public class MavenSourceDownloader implements ISourceDownloader {
 
 	private static Cache<String, Boolean> downloadRequestsCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterWrite(1, TimeUnit.HOURS).build();
 	private static final int MAX_TIME_MILLIS = 3000;
+	private static Cache<IPackageFragmentRoot, Integer> downloadStateCache = CacheBuilder.newBuilder().maximumSize(100).build();
 
 	@Override
 	public void discoverSource(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
@@ -77,6 +78,7 @@ public class MavenSourceDownloader implements ISourceDownloader {
 							artifact = new MavenCentralIdentifier().identify(path, monitor);
 						}
 						if (artifact != null) {
+							downloadStateCache.put(fragment, DOWNLOAD_REQUESTED);
 							if (!ProjectUtils.isMavenProject(element.getJavaProject().getProject())) {
 								// see https://github.com/eclipse-m2e/m2e-core/commit/b547ecc358c990e182a5eaf8d36f121e43f4a8c9#diff-3967743078be6a24ba1e3ec28bfc22bdf2c88a740695411f6d20e2444fef042fR943
 								long lastModified;
@@ -104,6 +106,9 @@ public class MavenSourceDownloader implements ISourceDownloader {
 							BuildPathManager buildpathManager = (BuildPathManager) MavenJdtPlugin.getDefault().getBuildpathManager();
 							buildpathManager.scheduleDownload(fragment, artifact, true, true);
 							JobHelpers.waitForDownloadSourcesJobs(MAX_TIME_MILLIS);
+							if (downloadStateCache.getIfPresent(fragment) != null) {
+								downloadStateCache.put(fragment, DOWNLOAD_WAIT_JOB_DONE);
+							}
 						}
 					}
 					break;
@@ -112,4 +117,14 @@ public class MavenSourceDownloader implements ISourceDownloader {
 		}
 	}
 
+	@Override
+	public int getDownloadStatus(IPackageFragmentRoot root) {
+		return downloadStateCache.getIfPresent(root) == null ?
+			DOWNLOAD_NONE : downloadStateCache.getIfPresent(root);
+	}
+
+	@Override
+	public void clearDownloadStatus(IPackageFragmentRoot root) {
+		downloadStateCache.invalidate(root);
+	}
 }

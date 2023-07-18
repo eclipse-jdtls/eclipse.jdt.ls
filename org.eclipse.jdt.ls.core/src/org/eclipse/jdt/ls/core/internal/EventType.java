@@ -33,7 +33,12 @@ public enum EventType {
 	/**
 	 * Recommended to upgrade Gradle wrapper event.
 	 */
-	UpgradeGradleWrapper(400);
+	UpgradeGradleWrapper(400),
+
+	/**
+	 * Source attachments have been updated for some jar libraries.
+	 */
+	SourceInvalidated(500);
 
 	private final int value;
 
