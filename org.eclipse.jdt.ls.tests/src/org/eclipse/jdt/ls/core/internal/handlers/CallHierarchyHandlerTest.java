@@ -193,6 +193,35 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(jarUri.contains("WordUtils.class"));
 	}
 
+	@Test
+	public void incomingCalls_OnInterfaceMethod() throws Exception {
+		// Line 27 from `CallHierarchy`
+		//    public void <|>bar() {
+		String uri = getUriFromSrcProject("org.sample.CallHierarchyGH2771");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 3, 17);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "name()" + JavaElementLabels.DECL_STRING + "Opt<String>", Method, "org.sample.CallHierarchyGH2771", false, 3);
+
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+		assertNotNull(calls);
+		assertEquals(0, calls.size());
+	}
+
+	@Test
+	public void incomingCalls_OnInterfaceMethodReturnType() throws Exception {
+		// Line 27 from `CallHierarchy`
+		//    public void <|>bar() {
+		String uri = getUriFromSrcProject("org.sample.CallHierarchyGH2771");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 3, 6);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		assertItem(items.get(0), "Opt<T>", Class, "org.sample.CallHierarchyGH2771", false, 5);
+
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
+		assertNotNull(calls);
+		assertEquals(1, calls.size());
+	}
 	// @Test
 	// public void outgoing_recursive() throws Exception {
 	// 	// Line 60 from `CallHierarchy`
