@@ -1271,7 +1271,7 @@ public final class JDTUtils {
 		}
 	}
 
-	private static ASTNode getHoveredASTNode(ITypeRoot typeRoot, IRegion region) {
+	public static ASTNode getHoveredASTNode(ITypeRoot typeRoot, IRegion region) {
 		if (typeRoot == null || region == null) {
 			return null;
 		}

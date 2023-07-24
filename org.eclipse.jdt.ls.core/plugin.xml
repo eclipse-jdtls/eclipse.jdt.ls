@@ -124,6 +124,9 @@
             <command
                   id="java.decompile">
             </command>
+             <command
+                  id="java.edit.smartSemicolonDetection">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension
