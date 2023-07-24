@@ -51,11 +51,11 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
-import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 
@@ -180,8 +180,12 @@ public class WrapperValidator {
 				JsonElement jsonElement = JsonParser.parseReader(reader);
 				if (jsonElement instanceof JsonArray array) {
 					for (JsonElement json : array) {
-						String sha256 = json.getAsJsonObject().get("sha256").getAsString();
-						String wrapperChecksumUrl = json.getAsJsonObject().get("wrapperChecksumUrl").getAsString();
+						if (!json.isJsonObject()) {
+							continue;
+						}
+						JsonObject jsonObject = json.getAsJsonObject();
+						String sha256 = jsonObject.get("sha256").getAsString();
+						String wrapperChecksumUrl = jsonObject.get("wrapperChecksumUrl").getAsString();
 						if (sha256 != null) {
 							allowed.add(sha256);
 						}
