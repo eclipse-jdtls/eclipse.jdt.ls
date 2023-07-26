@@ -169,6 +169,8 @@ public class ProgressReporterManager extends ProgressProvider {
 		protected long lastReport = 0;
 		protected String progressId;
 		private boolean sentBegin = false;
+		// It was observed that some tasks were reporting duplicate end messages, so this ensures only one is sent to client
+		private boolean sentEnd = false;
 
 		public ProgressReporter() {
 			super(null);
@@ -257,7 +259,7 @@ public class ProgressReporterManager extends ProgressProvider {
 				}
 
 				client.sendProgressReport(progressReport);
-			} else {
+			} else if (preferenceManager.getClientPreferences().isWorkDoneProgressSupported() && !sentEnd) {
 				Either<String, Integer> id = Either.forLeft(progressId);
 				if (!sentBegin) {
 					client.createProgress(new WorkDoneProgressCreateParams(id));
@@ -274,9 +276,14 @@ public class ProgressReporterManager extends ProgressProvider {
 					notification = endNotification;
 					progressId = UUID.randomUUID().toString();
 					sentBegin = false;
+					sentEnd = true;
 				} else {
 					var reportNotification = new WorkDoneProgressReport();
-					reportNotification.setMessage(task);
+					if (task != null && subTaskName != null && !subTaskName.isEmpty() && task.equals(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS)) {
+						reportNotification.setMessage(task + SEPARATOR + subTaskName);
+					} else {
+						reportNotification.setMessage(task + SEPARATOR + formatMessage(task));
+					}
 					reportNotification.setPercentage((int)(((double) progress) / totalWork * 100.0));
 					notification = reportNotification;
 				}

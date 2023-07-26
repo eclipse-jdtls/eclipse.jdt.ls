@@ -110,6 +110,7 @@ public class ProgressReporterManagerTest {
 	@Test
 	public void testJobReporting_WithNotifyProgress() throws InterruptedException {
 		when(clientPreferences.isProgressReportSupported()).thenReturn(false);
+		when(clientPreferences.isWorkDoneProgressSupported()).thenReturn(true);
 		manager.setReportThrottle(275);
 		Job job = new Job("Test Job") {
 			@Override
