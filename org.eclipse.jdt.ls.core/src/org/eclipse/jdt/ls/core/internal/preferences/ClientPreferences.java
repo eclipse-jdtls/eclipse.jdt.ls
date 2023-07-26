@@ -181,6 +181,10 @@ public class ClientPreferences {
 		return v3supported && capabilities.getTextDocument().getSynchronization() != null && isTrue(capabilities.getTextDocument().getSynchronization().getWillSaveWaitUntil());
 	}
 
+	public boolean isWorkDoneProgressSupported() {
+		return v3supported && capabilities.getWindow().getWorkDoneProgress();
+	}
+
 	public boolean isWorkspaceApplyEditSupported() {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getApplyEdit());
 	}
@@ -188,6 +192,7 @@ public class ClientPreferences {
 	public boolean isProgressReportSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("progressReportProvider", "false").toString());
 	}
+
 
 	public boolean isClassFileContentSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("classFileContentsSupport", "false").toString());
