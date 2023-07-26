@@ -1,5 +1,29 @@
 # Change Log
 
+# [1.26.0 (July 27th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/116?closed=1)
+ * performance - Check completion proposal is compatible or not. See [#2733](https://github.com/eclipse/eclipse.jdt.ls/pull/2733).
+ * enhancement - Add support for smart semicolon insertion. See [#2710](https://github.com/eclipse/eclipse.jdt.ls/pull/2710).
+ * enhancement - Add code actions for Join/Split variable. See [#2732](https://github.com/eclipse/eclipse.jdt.ls/pull/2732).
+ * enhancement - Support outline view for decompiled source. See [#2742](https://github.com/eclipse/eclipse.jdt.ls/pull/2742).
+ * enhancement - Send a `SourceInvalidatedEvent` to client when source attachment is updated for jar libraries. See [#2764](https://github.com/eclipse/eclipse.jdt.ls/pull/2764).
+ * enhancement - Log error when Gradle and JDK versions are mismatched. See [#2749](https://github.com/eclipse/eclipse.jdt.ls/pull/2749).
+ * bug fix - Fix parameter and exception changes in method signature refactoring. See [#2754](https://github.com/eclipse/eclipse.jdt.ls/pull/2754).
+ * bug fix - Fix missing completion items for fully qualified name completion. See [#2736](https://github.com/eclipse/eclipse.jdt.ls/pull/2736).
+ * bug fix - Fix incorrect semantic highlighting due to out-of-date AST in use. See [#2709](https://github.com/eclipse/eclipse.jdt.ls/pull/2709).
+ * bug fix - Prevent caching outdated AST in `CoreASTProvider`. See [#2714](https://github.com/eclipse/eclipse.jdt.ls/pull/2714).
+ * bug fix - Call Hierarchy resolves wrong element under certain conditions. See [#2771](https://github.com/eclipse/eclipse.jdt.ls/issues/2771).
+ * bug fix - `NullPointerException` during code completion of a `var` reference. See [#2778](https://github.com/eclipse/eclipse.jdt.ls/pull/2778).
+ * bug fix - Do not delete the Java project nature removing a nested `.classpath` resource file. See [#2750](https://github.com/eclipse/eclipse.jdt.ls/pull/2750).
+ * bug fix - Unable to acquire the state change lock for the module 'buildship'. See [#2758](https://github.com/eclipse/eclipse.jdt.ls/pull/2758).
+ * bug fix - Do not attempt to start fragment bundles. See [#2762](https://github.com/eclipse/eclipse.jdt.ls/issues/2762).
+ * bug fix - `textDocument/semanticTokens/full` should not rely on completion of `textDocument/didOpen`. See [#1993](https://github.com/eclipse/eclipse.jdt.ls/issues/1993).
+ * build - Improve test stability by ensuring build job completes. See [#2711](https://github.com/eclipse/eclipse.jdt.ls/issues/2711).
+ * build - Make the checksum download task work in parallel. See [#2759](https://github.com/eclipse/eclipse.jdt.ls/pull/2759).
+ * build - Reduce Guava usage. See [#2751](https://github.com/eclipse/eclipse.jdt.ls/pull/2751).
+ * build - Update build to use Tycho 4.0. See [#2748](https://github.com/eclipse/eclipse.jdt.ls/pull/2748).
+ * build - Update XBase to 2023-06 version. See [#2766](https://github.com/eclipse/eclipse.jdt.ls/pull/2766).
+ * build - Fix deprecation warnings. See [#2747](https://github.com/eclipse/eclipse.jdt.ls/pull/2747).
+
 # [1.25.0 (June 29th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/115?closed=1)
  * enhancement - Support for "Go to Declaration". See [#2684](https://github.com/eclipse/eclipse.jdt.ls/issues/2684).
  * enhancement - Improve method argument guessing functionality. See [#2512](https://github.com/eclipse/eclipse.jdt.ls/issues/2512).
