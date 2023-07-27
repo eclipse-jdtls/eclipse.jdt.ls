@@ -164,34 +164,7 @@ public class CompletionProposalReplacementProvider {
 
 		setInsertReplaceRange(proposal, insertReplaceEdit);
 
-		if (preferences.isCompletionLazyResolveTextEditEnabled() && !isResolvingRequest) {
-			if (completionBuffer.isEmpty()) {
-				completionBuffer.append(getDefaultTextEditText(item));
-			}
-		} else {
-			switch (proposal.getKind()) {
-				case CompletionProposal.METHOD_DECLARATION:
-					appendMethodOverrideReplacement(completionBuffer, proposal);
-					break;
-				case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
-					if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
-						appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
-					} else {
-						appendReplacementString(completionBuffer, proposal);
-					}
-					break;
-				case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
-				case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
-					appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
-					break;
-				case CompletionProposal.LAMBDA_EXPRESSION:
-					appendLambdaExpressionReplacement(completionBuffer, proposal);
-					break;
-				default:
-					appendReplacementString(completionBuffer, proposal);
-					break;
-			}
-		}
+		String text = getTextEditText(proposal, item, completionBuffer, insertReplaceEdit);
 
 		//select insertTextFormat.
 		if (client.isCompletionSnippetsSupported()) {
@@ -203,7 +176,7 @@ public class CompletionProposalReplacementProvider {
 				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation)) {
 			item.setInsertTextMode(InsertTextMode.AdjustIndentation);
 		}
-		String text = completionBuffer.toString();
+
 		if (insertReplaceEdit.getReplace() == null || insertReplaceEdit.getInsert() == null) {
 			// fallback
 			item.setInsertText(text);
@@ -226,6 +199,57 @@ public class CompletionProposalReplacementProvider {
 				item.setAdditionalTextEdits(additionalTextEdits);
 			}
 		}
+	}
+
+	/**
+	 * Get the content of the text edit.
+	 */
+	private String getTextEditText(CompletionProposal proposal, CompletionItem item, StringBuilder completionBuffer, InsertReplaceEdit insertReplaceEdit) {
+		if (preferences.isCompletionLazyResolveTextEditEnabled() && !isResolvingRequest) {
+			if (!completionBuffer.isEmpty()) {
+				return completionBuffer.toString();
+			}
+			
+			String defaultText = getDefaultTextEditText(item);
+			int start = proposal.getReplaceStart();
+			int end = proposal.getReplaceEnd();
+			String toReplace;
+			try {
+				toReplace = compilationUnit.getBuffer().getText(start, end - start);
+				// in lazy resolve mode, early return when the text edit content starts
+				// with the replaced content. Otherwise, the filter text will mismatch the
+				// replaced content, causing the item disappear at client.
+				if (defaultText.startsWith(toReplace)) {
+					return defaultText;
+				}
+			} catch (IndexOutOfBoundsException | JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+
+		switch (proposal.getKind()) {
+			case CompletionProposal.METHOD_DECLARATION:
+				appendMethodOverrideReplacement(completionBuffer, proposal);
+				break;
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
+					appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
+				} else {
+					appendReplacementString(completionBuffer, proposal);
+				}
+				break;
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+				appendAnonymousClass(completionBuffer, proposal, insertReplaceEdit);
+				break;
+			case CompletionProposal.LAMBDA_EXPRESSION:
+				appendLambdaExpressionReplacement(completionBuffer, proposal);
+				break;
+			default:
+				appendReplacementString(completionBuffer, proposal);
+				break;
+		}
+		return completionBuffer.toString();
 	}
 
 	/**
