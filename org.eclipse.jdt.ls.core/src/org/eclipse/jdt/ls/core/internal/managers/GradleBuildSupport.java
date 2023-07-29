@@ -197,7 +197,7 @@ public class GradleBuildSupport implements IBuildSupport {
 				JavaLanguageServerPlugin.log(e);
 			}
 
-			List<String> compilerArgs = getCompilerArgs(apConfigurations);
+			List<Object> compilerArgs = getCompilerArgs(apConfigurations);
 			Map<String, String> newOptions = GradleUtils.parseProcessorOptions(compilerArgs);
 			Map<String, String> currentOptions = AptConfig.getRawProcessorOptions(javaProject);
 			if(!currentOptions.equals(newOptions)) {
@@ -399,8 +399,8 @@ public class GradleBuildSupport implements IBuildSupport {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static List<String> getCompilerArgs(Map<String, Object> apConfigurations) {
-		return apConfigurations.get("compilerArgs") instanceof List<?> l ? (List<String>) l : List.of();
+	private static List<Object> getCompilerArgs(Map<String, Object> apConfigurations) {
+		return apConfigurations.get("compilerArgs") instanceof List<?> l ? (List<Object>) l : List.of();
 	}
 
 	@SuppressWarnings("unchecked")

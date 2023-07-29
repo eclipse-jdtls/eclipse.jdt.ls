@@ -713,6 +713,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertNotNull(javaProject);
 		assertTrue(AptConfig.isEnabled(javaProject));
 		assertEquals("true", AptConfig.getRawProcessorOptions(javaProject).get("mapstruct.suppressGeneratorTimestamp"));
+		assertEquals("apt", AptConfig.getRawProcessorOptions(javaProject).get("test.arg"));
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {

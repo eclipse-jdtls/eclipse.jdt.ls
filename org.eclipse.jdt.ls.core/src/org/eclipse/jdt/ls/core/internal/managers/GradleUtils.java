@@ -239,15 +239,16 @@ public class GradleUtils {
 	/**
 	 * Copied from org.eclipse.m2e.apt.internal.utils.ProjectUtils
 	 */
-	public static Map<String, String> parseProcessorOptions(List<String> compilerArgs) {
+	public static Map<String, String> parseProcessorOptions(List<Object> compilerArgs) {
 		if((compilerArgs == null) || compilerArgs.isEmpty()) {
 			return Collections.emptyMap();
 		}
 		Map<String, String> options = new HashMap<>();
 	
-		for(String arg : compilerArgs) {
-			if(arg != null && arg.startsWith("-A")) {
-				parse(arg.substring(2), options);
+		for(Object arg : compilerArgs) {
+			String argString = String.valueOf(arg);
+			if (argString.startsWith("-A")) {
+				parse(argString.substring(2), options);
 			}
 		}
 		return options;
