@@ -19,6 +19,7 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.compilerArgs = [
-            '-Amapstruct.suppressGeneratorTimestamp=true'
+        "-Atest.arg=$project.name",
+        '-Amapstruct.suppressGeneratorTimestamp=true'
     ]
 }
