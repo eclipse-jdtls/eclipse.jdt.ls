@@ -46,6 +46,14 @@ public class JavaLsConfigurator extends ContextAwareBase implements Configurator
 			Logger httpLogger = lc.getLogger("org.apache.hc.client5.http");
 			httpLogger.setLevel(Level.INFO);
 			httpLogger.setAdditive(false);
+
+			Logger classFileLogger = lc.getLogger("aQute.bnd.osgi.Clazz");
+			classFileLogger.setLevel(Level.INFO);
+			classFileLogger.setAdditive(false);
+
+			Logger defMavenFilter = lc.getLogger("org.apache.maven.shared.filtering.DefaultMavenFileFilter");
+			defMavenFilter.setLevel(Level.INFO);
+			defMavenFilter.setAdditive(false);
 		}
 	}
 }
