@@ -114,21 +114,6 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>copy-config-win-arm</id>
-						<phase>package</phase>
-						<goals>
-							<goal>copy-resources</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/repository/config_win_arm</outputDirectory>
-							<resources>
-								<resource>
-									<directory>${basedir}/target/products/languageServer.product/win32/win32/aarch64/configuration</directory>
-								</resource>
-							</resources>
-						</configuration>
-					</execution>
-					<execution>
 						<id>copy-config-linux</id>
 						<phase>package</phase>
 						<goals>
