@@ -208,6 +208,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("string", "parameter", "declaration")
 
 			.assertNextToken("private", "modifier")
+			.assertNextToken("record", "modifier")
 			.assertNextToken("InnerRecord", "record", "private", "static", "readonly", "declaration")
 			.assertNextToken("String", "class", "public", "readonly")
 			.assertNextToken("string", "recordComponent", "declaration")
