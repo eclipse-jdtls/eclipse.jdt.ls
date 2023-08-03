@@ -159,7 +159,7 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>copy-config-mac-slim-arm</id>
+						<id>copy-config-mac-arm-slim</id>
 						<phase>package</phase>
 						<goals>
 							<goal>copy-resources</goal>
@@ -204,7 +204,7 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>copy-config-linux-slim-arm</id>
+						<id>copy-config-linux-arm-slim</id>
 						<phase>package</phase>
 						<goals>
 							<goal>copy-resources</goal>
