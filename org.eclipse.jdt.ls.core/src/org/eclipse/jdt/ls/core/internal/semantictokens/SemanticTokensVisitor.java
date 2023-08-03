@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.RecordDeclaration;
 import org.eclipse.jdt.core.dom.RequiresDirective;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
@@ -430,6 +431,20 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
 		acceptNodeList(node.arguments());
 		acceptNode(node.getAnonymousClassDeclaration());
+		return false;
+	}
+
+	@Override
+	public boolean visit(RecordDeclaration node) {
+		acceptNode(node.getJavadoc());
+		acceptNodeList(node.modifiers());
+		// Adds token for 'record' keyword. Token type 'MODIFIER' is used to provide the correct highlight colour.
+		addToken(node.getRestrictedIdentifierStartPosition(), 6, TokenType.MODIFIER, 0);
+		acceptNode(node.getName());
+		acceptNodeList(node.typeParameters());
+		acceptNodeList(node.recordComponents());
+		acceptNodeList(node.superInterfaceTypes());
+		acceptNodeList(node.bodyDeclarations());
 		return false;
 	}
 
