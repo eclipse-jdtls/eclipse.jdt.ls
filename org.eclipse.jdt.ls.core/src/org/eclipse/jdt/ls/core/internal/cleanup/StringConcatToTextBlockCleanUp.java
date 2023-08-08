@@ -26,17 +26,11 @@ import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
  */
 public class StringConcatToTextBlockCleanUp implements ISimpleCleanUp {
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
-	 */
 	@Override
 	public String getIdentifier() {
 		return "stringConcatToTextBlock";
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#createFix()
-	 */
 	@Override
 	public ICleanUpFixCore createFix(CleanUpContextCore context) throws CoreException {
 		CompilationUnit unit = context.getAST();
@@ -46,9 +40,6 @@ public class StringConcatToTextBlockCleanUp implements ISimpleCleanUp {
 		return StringConcatToTextBlockFixCore.createCleanUp(unit, false);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getRequiredCompilerMarkers()
-	 */
 	@Override
 	public List<String> getRequiredCompilerMarkers() {
 		return Collections.emptyList();

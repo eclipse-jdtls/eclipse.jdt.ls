@@ -28,25 +28,16 @@ public class AddOverrideAnnotationCleanUp implements ISimpleCleanUp {
 
 	private static final List<String> COMPILER_OPTS = Arrays.asList(JavaCore.COMPILER_PB_MISSING_OVERRIDE_ANNOTATION);
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
-	 */
 	@Override
 	public String getIdentifier() {
 		return "addOverride";
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#createMarkerBasedFix(org.eclipse.jdt.core.manipulation.CleanUpContextCore)
-	 */
 	@Override
 	public ICleanUpFixCore createFix(CleanUpContextCore context) {
 		return Java50FixCore.createCleanUp(context.getAST(), true, true, false, false);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getRequiredCompilerOptions()
-	 */
 	@Override
 	public List<String> getRequiredCompilerMarkers() {
 		return COMPILER_OPTS;

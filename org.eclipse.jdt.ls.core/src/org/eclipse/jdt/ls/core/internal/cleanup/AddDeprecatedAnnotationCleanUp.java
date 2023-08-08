@@ -28,25 +28,16 @@ public class AddDeprecatedAnnotationCleanUp implements ISimpleCleanUp {
 
 	private static final List<String> COMPILER_OPTS = Arrays.asList(JavaCore.COMPILER_PB_MISSING_DEPRECATED_ANNOTATION);
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
-	 */
 	@Override
 	public String getIdentifier() {
 		return "addDeprecated";
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#createMarkerBasedFix(org.eclipse.jdt.core.manipulation.CleanUpContextCore)
-	 */
 	@Override
 	public ICleanUpFixCore createFix(CleanUpContextCore context) {
 		return Java50FixCore.createCleanUp(context.getAST(), false, false, true, false);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getRequiredCompilerOptions()
-	 */
 	@Override
 	public List<String> getRequiredCompilerMarkers() {
 		return COMPILER_OPTS;
