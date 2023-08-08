@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
@@ -38,25 +39,23 @@ public class CleanUpRegistry {
 	private Map<String, ISimpleCleanUp> cleanUps;
 
 	public CleanUpRegistry() {
-		List<ISimpleCleanUp> cleanUpsList = new ArrayList<>();
-		cleanUpsList.add(new MemberAccessUsesThisCleanUp());
-		cleanUpsList.add(new StaticAccessUsesClassNameCleanUp());
-		cleanUpsList.add(new AddOverrideAnnotationCleanUp());
-		cleanUpsList.add(new AddDeprecatedAnnotationCleanUp());
-		cleanUpsList.add(new StringConcatToTextBlockCleanUp());
-		cleanUpsList.add(new InvertEqualsCleanUp());
-		cleanUpsList.add(new VariableDeclarationFixCleanup());
-		cleanUpsList.add(new SwitchExpressionCleanup());
-		cleanUpsList.add(new InstanceofPatternMatch());
-		cleanUpsList.add(new LambdaExpressionCleanup());
-		cleanUpsList.add(new TryWithResourceCleanUp());
-		cleanUpsList.add(new LambdaExpressionAndMethodRefCleanUp());
+		List<ISimpleCleanUp> cleanUpsList = List.of(
+			new MemberAccessUsesThisCleanUp(),
+			new StaticAccessUsesClassNameCleanUp(),
+			new AddOverrideAnnotationCleanUp(),
+			new AddDeprecatedAnnotationCleanUp(),
+			new StringConcatToTextBlockCleanUp(),
+			new InvertEqualsCleanUp(),
+			new VariableDeclarationFixCleanup(),
+			new SwitchExpressionCleanup(),
+			new InstanceofPatternMatch(),
+			new LambdaExpressionCleanup(),
+			new TryWithResourceCleanUp(),
+			new LambdaExpressionAndMethodRefCleanUp());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
-		cleanUpsList.forEach(cleanUp -> {
-			cleanUps.put(cleanUp.getIdentifier(), cleanUp);
-		});
+		cleanUpsList.forEach(cleanUp -> cleanUps.put(cleanUp.getIdentifier(), cleanUp));
 	}
 
 	/**
@@ -78,18 +77,14 @@ public class CleanUpRegistry {
 
 		List<ISimpleCleanUp> cleanUpsToRun = cleanUpEnabled.stream() //
 				.distinct() //
-				.map(cleanUpId -> {
-					return cleanUps.get(cleanUpId);
-				}).filter(cleanUpId -> cleanUpId != null) //
+				.map(cleanUpId -> cleanUps.get(cleanUpId)).filter(Objects::nonNull) //
 				.toList();
 		if (cleanUpsToRun.isEmpty()) {
 			return Collections.emptyList();
 		}
 
 		List<String> compilerOptsToEnable = cleanUpsToRun.stream() //
-				.flatMap(cleanUp -> {
-					return cleanUp.getRequiredCompilerMarkers().stream();
-				}) //
+				.flatMap(cleanUp -> cleanUp.getRequiredCompilerMarkers().stream()) //
 				.toList();
 
 		// enable required compiler markers that are currently ignored
