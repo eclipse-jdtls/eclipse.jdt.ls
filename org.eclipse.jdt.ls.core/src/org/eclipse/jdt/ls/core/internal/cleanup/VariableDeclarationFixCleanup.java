@@ -26,17 +26,11 @@ import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
  */
 public class VariableDeclarationFixCleanup implements ISimpleCleanUp {
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getIdentifier()
-	 */
 	@Override
 	public String getIdentifier() {
 		return "addFinalModifier";
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#createFix(org.eclipse.jdt.core.manipulation.CleanUpContextCore)
-	 */
 	@Override
 	public ICleanUpFixCore createFix(CleanUpContextCore context) throws CoreException {
 		CompilationUnit unit = context.getAST();
@@ -46,9 +40,6 @@ public class VariableDeclarationFixCleanup implements ISimpleCleanUp {
 		return VariableDeclarationFixCore.createCleanUp(unit, true, true, true);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.ls.core.internal.cleanup.ISimpleCleanUp#getRequiredCompilerMarkers()
-	 */
 	@Override
 	public List<String> getRequiredCompilerMarkers() {
 		return Collections.emptyList();
