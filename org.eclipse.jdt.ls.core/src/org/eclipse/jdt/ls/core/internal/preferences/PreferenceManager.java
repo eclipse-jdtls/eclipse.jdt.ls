@@ -108,6 +108,7 @@ public class PreferenceManager {
 		defEclipsePrefs.put("recommenders.chain.max_chains", "20");
 		defEclipsePrefs.put("recommenders.chain.timeout", "1");
 		defEclipsePrefs.put("recommenders.chain.ignore_types", ""); //$NON-NLS-1$
+		defEclipsePrefs.put("PREF_USE_IMPLEMENTORS", Boolean.TRUE.toString());
 
 		ContextTypeRegistry registry = new ContextTypeRegistry();
 		// Register standard context types from JDT
