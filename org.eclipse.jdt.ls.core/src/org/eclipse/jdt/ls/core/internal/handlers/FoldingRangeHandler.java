@@ -191,26 +191,42 @@ public class FoldingRangeHandler {
 
 		int start = shift;
 		int token = 0;
+		int prevTokenLine = 0;
 		Stack<Integer> leftParens = null;
-		int prevCaseLine = -1;
+		Stack<Integer> prevCaseLines = new Stack<>();
 		Map<Integer, Integer> candidates = new HashMap<>();
 		while (token != ITerminalSymbols.TokenNameEOF) {
 			start = scanner.getCurrentTokenStartPosition();
+			int currentLine = scanner.getLineNumber(start) - 1;
 			switch (token) {
 				case ITerminalSymbols.TokenNameLBRACE:
 					if (leftParens == null) {
 						// Start of method body
 						leftParens = new Stack<>();
 					} else {
-						int startLine = scanner.getLineNumber(start) - 1;
-						// Start & end overlap, adjust the previous one for visibility:
-						if (candidates.containsKey(startLine)) {
-							int originalStartLine = candidates.remove(startLine);
-							if (originalStartLine < startLine - 1) {
-								candidates.put(startLine - 1, originalStartLine);
+						// Start & end overlap (specifically in the case of
+						// try/catch and if/else if where the closing brace is on the same line as the following expression)
+						// Adjust the previous one for visibility:
+						List<Integer> keys = new ArrayList<>();
+						if (candidates.containsValue(currentLine)) {
+							for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {
+								if (entry.getValue() == currentLine) {
+									keys.add(entry.getKey());
+								}
+							}
+							for (Integer key : keys) {
+								candidates.remove(key);
+								if (key < currentLine - 1) {
+									candidates.put(key, currentLine - 1);
+								}
 							}
 						}
-						leftParens.push(startLine);
+						// For curly braces enclosing a case statement, begin the folding range on the line with the case statement
+						if (prevTokenLine != currentLine && prevTokenLine == prevCaseLines.peek()) {
+							leftParens.push(prevTokenLine);
+						} else {
+							leftParens.push(currentLine);
+						}
 					}
 					break;
 				case ITerminalSymbols.TokenNameRBRACE:
@@ -219,33 +235,43 @@ public class FoldingRangeHandler {
 						int endLine = scanner.getLineNumber(endPos) - 1;
 						int startLine = leftParens.pop();
 						if (startLine < endLine) {
-							candidates.put(endLine, startLine);
+							candidates.put(startLine, endLine);
 						}
 						// Assume the last switch case:
-						if (startLine < prevCaseLine) {
-							if (endLine - 1 > prevCaseLine) {
-								candidates.put(endLine - 1, prevCaseLine);
+						if (!prevCaseLines.isEmpty()) {
+							int prevCaseLine = prevCaseLines.peek();
+							if (startLine < prevCaseLine) {
+								if (endLine - 1 > prevCaseLine) {
+									candidates.put(prevCaseLine, endLine - 1);
+									prevCaseLines.pop();
+								}
 							}
-							prevCaseLine = -1;
 						}
 					}
 					break;
+				case ITerminalSymbols.TokenNameswitch:
+					prevCaseLines.push(-1);
+					break;
 				case ITerminalSymbols.TokenNamecase:
 				case ITerminalSymbols.TokenNamedefault:
-					int currentLine = scanner.getLineNumber(start) - 1;
-					if (prevCaseLine != -1 && currentLine - 1 >= prevCaseLine) {
-						candidates.put(scanner.getLineNumber(start) - 2, prevCaseLine);
+					if (!prevCaseLines.isEmpty()) {
+						int prevCaseLine = prevCaseLines.pop();
+						if (prevCaseLine != -1 && currentLine - 1 >= prevCaseLine) {
+							candidates.put(prevCaseLine, currentLine - 1);
+						}
+						prevCaseLine = currentLine;
+						prevCaseLines.push(prevCaseLine);
 					}
-					prevCaseLine = currentLine;
 					break;
 				default:
 					break;
 			}
+			prevTokenLine = currentLine;
 			token = getNextToken(scanner);
 		}
 
 		for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {
-			foldingRanges.add(new FoldingRange(entry.getValue(), entry.getKey()));
+			foldingRanges.add(new FoldingRange(entry.getKey(), entry.getValue()));
 		}
 	}
 }
