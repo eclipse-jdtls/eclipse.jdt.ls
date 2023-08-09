@@ -84,6 +84,21 @@
 						</configuration>
 					</execution>
 					<execution>
+						<id>copy-config-mac-arm</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_mac_arm</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/macosx/cocoa/aarch64/Eclipse.app/Contents/Eclipse/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
 						<id>copy-config-win</id>
 						<phase>package</phase>
 						<goals>
@@ -114,6 +129,21 @@
 						</configuration>
 					</execution>
 					<execution>
+						<id>copy-config-linux-arm</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_linux_arm</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/languageServer.product/linux/gtk/aarch64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
 						<id>copy-config-mac-slim</id>
 						<phase>package</phase>
 						<goals>
@@ -124,6 +154,21 @@
 							<resources>
 								<resource>
 									<directory>${basedir}/target/products/syntaxServer.product/macosx/cocoa/x86_64/Eclipse.app/Contents/Eclipse/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-mac-arm-slim</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_ss_mac_arm</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/syntaxServer.product/macosx/cocoa/aarch64/Eclipse.app/Contents/Eclipse/configuration</directory>
 								</resource>
 							</resources>
 						</configuration>
@@ -154,6 +199,21 @@
 							<resources>
 								<resource>
 									<directory>${basedir}/target/products/syntaxServer.product/linux/gtk/x86_64/configuration</directory>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-config-linux-arm-slim</id>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/repository/config_ss_linux_arm</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/target/products/syntaxServer.product/linux/gtk/aarch64/configuration</directory>
 								</resource>
 							</resources>
 						</configuration>

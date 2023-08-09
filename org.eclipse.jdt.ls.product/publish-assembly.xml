@@ -13,10 +13,14 @@
       <includes>
         <include>bin/**</include>
         <include>config_linux/**</include>
+        <include>config_linux_arm/**</include>
         <include>config_mac/**</include>
+        <include>config_mac_arm/**</include>
         <include>config_win/**</include>
         <include>config_ss_linux/**</include>
+        <include>config_ss_linux_arm/**</include>
         <include>config_ss_mac/**</include>
+        <include>config_ss_mac_arm/**</include>
         <include>config_ss_win/**</include>
         <include>features/**</include>
         <include>plugins/**</include>
