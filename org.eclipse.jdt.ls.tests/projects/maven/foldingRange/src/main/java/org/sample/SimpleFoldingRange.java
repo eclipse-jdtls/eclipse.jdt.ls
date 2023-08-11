@@ -21,5 +21,11 @@ public class SimpleFoldingRange {
         if (true) {
             System.out.println("True");
         }
-    }
+// this
+    } // shouldn't
+// fold
 }
+
+// multiple
+// single-line
+// comments

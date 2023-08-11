@@ -53,13 +53,14 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testTypes() throws Exception {
 		String className = "org.sample.SimpleFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 7);
+		assertTrue(foldingRanges.size() == 8);
 		assertHasFoldingRange(2, 3, FoldingRangeKind.Imports, foldingRanges);
 		assertHasFoldingRange(5, 7, FoldingRangeKind.Comment, foldingRanges);
-		assertHasFoldingRange(8, 24, null, foldingRanges);
+		assertHasFoldingRange(8, 26, null, foldingRanges);
 		assertHasFoldingRange(10, 14, FoldingRangeKind.Comment, foldingRanges);
-		assertHasFoldingRange(19, 23, null, foldingRanges);
+		assertHasFoldingRange(19, 24, null, foldingRanges);
 		assertHasFoldingRange(20, 22, null, foldingRanges);
+		assertHasFoldingRange(28, 30, FoldingRangeKind.Comment, foldingRanges);
 	}
 
 	@Test
