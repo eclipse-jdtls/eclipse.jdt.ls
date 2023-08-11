@@ -77,15 +77,16 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 	@Test
 	public void testNoCleanUp() throws Exception {
 
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A implements Runnable {\n" + //
-				"    public void run() {} \n" + //
-				"    /**\n" + //
-				"     * @deprecated\n" + //
-				"     */\n" + //
-				"    public void destroy() {} \n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A implements Runnable {
+			    public void run() {}\s
+			    /**
+			     * @deprecated
+			     */
+			    public void destroy() {}\s
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -98,15 +99,16 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, monitor);
 
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A implements Runnable {\n" + //
-				"    public void run() {} \n" + //
-				"    /**\n" + //
-				"     * @deprecated\n" + //
-				"     */\n" + //
-				"    public void destroy() {} \n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A implements Runnable {
+			    public void run() {}\s
+			    /**
+			     * @deprecated
+			     */
+			    public void destroy() {}\s
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -128,15 +130,16 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 	@Test
 	public void testDeprecatedCleanUp() throws Exception {
 
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A implements Runnable {\n" + //
-				"    public void run() {} \n" + //
-				"    /**\n" + //
-				"     * @deprecated\n" + //
-				"     */\n" + //
-				"    public void destroy() {} \n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A implements Runnable {
+			    public void run() {}\s
+			    /**
+			     * @deprecated
+			     */
+			    public void destroy() {}\s
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -157,14 +160,15 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testUseThisCleanUp() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A {\n" + //
-				"    private int value;\n" + //
-				"    public int getValue() {\n" + //
-				"        return value;\n" + //
-				"    }\n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A {
+			    private int value;
+			    public int getValue() {
+			        return value;
+			    }
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -183,14 +187,15 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testUseClassNameCleanUp1() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A {\n" + //
-				"    private static final int VALUE = 10;\n" + //
-				"    public int getValue() {\n" + //
-				"        return VALUE;\n" + //
-				"    }\n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A {
+			    private static final int VALUE = 10;
+			    public int getValue() {
+			        return VALUE;
+			    }
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -209,29 +214,31 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testUseClassNameCleanUp2() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"import static java.lang.System.out;\n" + //
-				"public class A {\n" + //
-				"    private static final int VALUE = 10;\n" + //
-				"    public int getValue() {\n" + //
-				"        out.println(\"moo\");\n" + //
-				"        return A.VALUE;\n" + //
-				"    }\n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			import static java.lang.System.out;
+			public class A {
+			    private static final int VALUE = 10;
+			    public int getValue() {
+			        out.println("moo");
+			        return A.VALUE;
+			    }
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
-		String expected = "" + //
-				"package test1;\n" + //
-				"import static java.lang.System.out;\n" + //
-				"public class A {\n" + //
-				"    private static final int VALUE = 10;\n" + //
-				"    public int getValue() {\n" + //
-				"        System.out.println(\"moo\");\n" + //
-				"        return A.VALUE;\n" + //
-				"    }\n" + //
-				"}\n";
+		String expected = """
+			package test1;
+			import static java.lang.System.out;
+			public class A {
+			    private static final int VALUE = 10;
+			    public int getValue() {
+			        System.out.println("moo");
+			        return A.VALUE;
+			    }
+			}
+			""";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyStaticMembers"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
@@ -239,30 +246,32 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testAccessCleanUpsDontInterfere() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A {\n" + //
-				"    private static final int NUMBER = 10;\n" + //
-				"    private static final int value;\n" + //
-				"    public int getValue() {\n" + //
-				"        return this.value;\n" + //
-				"    }\n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A {
+			    private static final int NUMBER = 10;
+			    private static final int value;
+			    public int getValue() {
+			        return this.value;
+			    }
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyStaticMembers", "qualifyMembers"), monitor);
 		assertEquals(0, textEdits.size());
 
-		contents = "" + //
-				"package test1;\n" + //
-				"public class A {\n" + //
-				"    private static final int NUMBER = 10;\n" + //
-				"    private static final int value;\n" + //
-				"    public int getValue() {\n" + //
-				"        return A.NUMBER;\n" + //
-				"    }\n" + //
-				"}\n";
+		contents = """
+			package test1;
+			public class A {
+			    private static final int NUMBER = 10;
+			    private static final int value;
+			    public int getValue() {
+			        return A.NUMBER;
+			    }
+			}
+			""";
 		unit = pack1.createCompilationUnit("A.java", contents, true, monitor);
 
 		textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("qualifyStaticMembers", "qualifyMembers"), monitor);
@@ -271,13 +280,14 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testInvertEqualsCleanUp() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"public class A {\n" + //
-				"    String message;\n" + //
-				"    boolean result1 = message.equals(\"text\");\n" + //
-				"    boolean result2 = message.equalsIgnoreCase(\"text\")" + //
-				"}\n";
+		String contents = """
+			package test1;
+			public class A {
+			    String message;
+			    boolean result1 = message.equals("text");
+			    boolean result2 = message.equalsIgnoreCase("text")\
+			}
+			""";
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
@@ -294,169 +304,177 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testAddFinalModifiersWherePossible() throws Exception {
-		String contents = "package test1;\n" //
-				+ "\n" //
-				+ "public class AddModifier {\n" //
-				+ "\n" //
-				+ "private String label1;\n" //
-				+ "protected String label2;\n" //
-				+ "public String label3;\n" //
-				+ "private String label4 = \"\";\n" //
-				+ "protected String label5 = \"\";\n" //
-				+ "public String label6 = \"\";\n" //
-				+ "private final String label7 = \"\";\n" //
-				+ "\n" //
-				+ "public void test(String foo) {\n" //
-				+ "    String label8, label9 = \"\";\n" //
-				+ "    String label10;\n" //
-				+ "    String label11 = \"\";\n" //
-				+ "    final String label12 = \"\";\n" //
-				+ "	}\n" //
-				+ "}";
+		String contents = """
+			package test1;
+
+			public class AddModifier {
+
+			private String label1;
+			protected String label2;
+			public String label3;
+			private String label4 = "";
+			protected String label5 = "";
+			public String label6 = "";
+			private final String label7 = "";
+
+			public void test(String foo) {
+			    String label8, label9 = "";
+			    String label10;
+			    String label11 = "";
+			    final String label12 = "";
+				}
+			}""";
 
 		ICompilationUnit unit = pack1.createCompilationUnit("AddModifier.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("addFinalModifier"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
-		String expected = "package test1;\n" //
-				+ "\n" //
-				+ "public class AddModifier {\n" //
-				+ "\n" //
-				+ "private String label1;\n" //
-				+ "protected String label2;\n" //
-				+ "public String label3;\n" //
-				+ "private final String label4 = \"\";\n" //
-				+ "protected String label5 = \"\";\n" //
-				+ "public String label6 = \"\";\n" //
-				+ "private final String label7 = \"\";\n" //
-				+ "\n" //
-				+ "public void test(final String foo) {\n" //
-				+ "    final String label8, label9 = \"\";\n" //
-				+ "    final String label10;\n" //
-				+ "    final String label11 = \"\";\n" //
-				+ "    final String label12 = \"\";\n" //
-				+ "	}\n" //
-				+ "}";
+		String expected = """
+			package test1;
+
+			public class AddModifier {
+
+			private String label1;
+			protected String label2;
+			public String label3;
+			private final String label4 = "";
+			protected String label5 = "";
+			public String label6 = "";
+			private final String label7 = "";
+
+			public void test(final String foo) {
+			    final String label8, label9 = "";
+			    final String label10;
+			    final String label11 = "";
+			    final String label12 = "";
+				}
+			}""";
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testConvertToSwitchExpression() throws Exception {
-		String contents = "package test1;\n" //
-				+ "\n" //
-				+ "public class SwitchExpression {\n" //
-				+ "    public void test() {\n" //
-				+ "        Day day2 = Day.THURSDAY;\n" //
-				+ "        String message2;\n" //
-				+ "        switch (day2) {\n" //
-				+ "            case SATURDAY:\n" //
-				+ "            case SUNDAY:\n" //
-				+ "                message2 = \"Weekend!\";\n" //
-				+ "                break;\n" //
-				+ "            case MONDAY:\n" //
-				+ "            case TUESDAY:\n" //
-				+ "            case WEDNESDAY:\n" //
-				+ "            case THURSDAY:\n" //
-				+ "            case FRIDAY:\n" //
-				+ "                message2 = \"Weekday\";\n" //
-				+ "                break;\n" //
-				+ "            default:\n" //
-				+ "                message2 = \"???\";\n" //
-				+ "        }\n" //
-				+ "    }\n" //
-				+ "\n" //
-				+ "    public enum Day {\n" //
-				+ "        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY\n" //
-				+ "    };\n" //
-				+ "}";
+		String contents = """
+			package test1;
+
+			public class SwitchExpression {
+			    public void test() {
+			        Day day2 = Day.THURSDAY;
+			        String message2;
+			        switch (day2) {
+			            case SATURDAY:
+			            case SUNDAY:
+			                message2 = "Weekend!";
+			                break;
+			            case MONDAY:
+			            case TUESDAY:
+			            case WEDNESDAY:
+			            case THURSDAY:
+			            case FRIDAY:
+			                message2 = "Weekday";
+			                break;
+			            default:
+			                message2 = "???";
+			        }
+			    }
+
+			    public enum Day {
+			        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+			    };
+			}""";
 
 		ICompilationUnit unit = pack1.createCompilationUnit("SwitchExpression.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("switchExpression"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
-		String expected = "package test1;\n" //
-				+ "\n" //
-				+ "public class SwitchExpression {\n" //
-				+ "    public void test() {\n" //
-				+ "        Day day2 = Day.THURSDAY;\n" //
-				+ "        String message2 = switch (day2) {\n" //
-				+ "        case SATURDAY, SUNDAY -> \"Weekend!\";\n" //
-				+ "        case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> \"Weekday\";\n" //
-				+ "        default -> \"???\";\n" //
-				+ "        };\n" //
-				+ "    }\n" //
-				+ "\n" //
-				+ "    public enum Day {\n" //
-				+ "        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY\n" //
-				+ "    };\n" //
-				+ "}";
+		String expected = """
+			package test1;
+
+			public class SwitchExpression {
+			    public void test() {
+			        Day day2 = Day.THURSDAY;
+			        String message2 = switch (day2) {
+			        case SATURDAY, SUNDAY -> "Weekend!";
+			        case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> "Weekday";
+			        default -> "???";
+			        };
+			    }
+
+			    public enum Day {
+			        MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+			    };
+			}""";
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testPatternMatchInstanceof() throws Exception {
-		String contents = "package test1;\n" //
-				+ "\n" //
-				+ "public class InstanceofPatternMatch {\n" //
-				+ "	public void test() {\n" //
-				+ "		Object str = new String(\"test\");\n" //
-				+ "		if (str instanceof String) {\n" //
-				+ "			String real = (String) str;\n" //
-				+ "			System.out.println(real.substring(0));\n" //
-				+ "		}\n" //
-				+ "	}\n" //
-				+ "}";
+		String contents = """
+			package test1;
+
+			public class InstanceofPatternMatch {
+				public void test() {
+					Object str = new String("test");
+					if (str instanceof String) {
+						String real = (String) str;
+						System.out.println(real.substring(0));
+					}
+				}
+			}""";
 
 		ICompilationUnit unit = pack1.createCompilationUnit("InstanceofPatternMatch.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("instanceofPatternMatch"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
-		String expected = "package test1;\n" //
-				+ "\n" //
-				+ "public class InstanceofPatternMatch {\n" //
-				+ "	public void test() {\n" //
-				+ "		Object str = new String(\"test\");\n" //
-				+ "		if (str instanceof String real) {\n" //
-				+ "			System.out.println(real.substring(0));\n" //
-				+ "		}\n" //
-				+ "	}\n" //
-				+ "}";
+		String expected = """
+			package test1;
+
+			public class InstanceofPatternMatch {
+				public void test() {
+					Object str = new String("test");
+					if (str instanceof String real) {
+						System.out.println(real.substring(0));
+					}
+				}
+			}""";
 
 		assertEquals(expected, actual);
 	}
 
 	@Test
 	public void testLambdaExpression() throws Exception {
-		String contents = "package test1;\n" //
-				+ "\n" //
-				+ "import java.util.function.IntConsumer;\n" //
-				+ "\n" //
-				+ "public class LambdaExpression {\n" //
-				+ "    public void test() {\n" //
-				+ "        IntConsumer c = new IntConsumer() {\n" //
-				+ "            @Override\n" //
-				+ "            public void accept(int value) {\n" //
-				+ "                System.out.println(value);\n" //
-				+ "	           }\n" //
-				+ "        };\n" //
-				+ "    }\n" //
-				+ "}";
+		String contents = """
+			package test1;
+
+			import java.util.function.IntConsumer;
+
+			public class LambdaExpression {
+			    public void test() {
+			        IntConsumer c = new IntConsumer() {
+			            @Override
+			            public void accept(int value) {
+			                System.out.println(value);
+				           }
+			        };
+			    }
+			}""";
 
 		ICompilationUnit unit = pack1.createCompilationUnit("LambdaExpression.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("lambdaExpressionFromAnonymousClass"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
-		String expected = "package test1;\n" //
-				+ "\n" //
-				+ "import java.util.function.IntConsumer;\n" //
-				+ "\n" //
-				+ "public class LambdaExpression {\n" //
-				+ "    public void test() {\n" //
-				+ "        IntConsumer c = value -> System.out.println(value);\n" //
-				+ "    }\n" //
-				+ "}";
+		String expected = """
+			package test1;
+
+			import java.util.function.IntConsumer;
+
+			public class LambdaExpression {
+			    public void test() {
+			        IntConsumer c = value -> System.out.println(value);
+			    }
+			}""";
 
 		assertEquals(expected, actual);
 	}
@@ -524,36 +542,38 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testTryWithResourceCleanUp() throws Exception {
-		String contents = "" + //
-				"package test1;\n" + //
-				"import java.io.FileInputStream;\n" + //
-				"import java.io.IOException;\n" + //
-				"public class A {\n" + //
-				"    public void test() {\n" + //
-				"        final FileInputStream inputStream = new FileInputStream(\"out.txt\");\n" + //
-				"        try {\n" + //
-				"            System.out.println(inputStream.read());\n" + //
-				"        } finally {\n" + //
-				"            inputStream.close();\n" + //
-				"        }\n" + //
-				"    }\n" + //
-				"}\n";
+		String contents = """
+			package test1;
+			import java.io.FileInputStream;
+			import java.io.IOException;
+			public class A {
+			    public void test() {
+			        final FileInputStream inputStream = new FileInputStream("out.txt");
+			        try {
+			            System.out.println(inputStream.read());
+			        } finally {
+			            inputStream.close();
+			        }
+			    }
+			}
+			""";
 
 		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
 		String uri = unit.getUnderlyingResource().getLocationURI().toString();
 
-		String expected = "" + //
-				"package test1;\n" + //
-				"import java.io.FileInputStream;\n" + //
-				"import java.io.IOException;\n" + //
-				"public class A {\n" + //
-				"    public void test() {\n" + //
-				"        final FileInputStream inputStream = new FileInputStream(\"out.txt\");\n" + //
-				"        try (inputStream) {\n" + //
-				"            System.out.println(inputStream.read());\n" + //
-				"        }\n" + //
-				"    }\n" + //
-				"}\n";
+		String expected = """
+			package test1;
+			import java.io.FileInputStream;
+			import java.io.IOException;
+			public class A {
+			    public void test() {
+			        final FileInputStream inputStream = new FileInputStream("out.txt");
+			        try (inputStream) {
+			            System.out.println(inputStream.read());
+			        }
+			    }
+			}
+			""";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("tryWithResource"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
