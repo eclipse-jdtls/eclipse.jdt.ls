@@ -143,7 +143,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 																				CompletionItemKind.Variable,
 																				CompletionItemKind.Method,
 																				CompletionItemKind.Text,
-																				CompletionItemKind.Snippet);
+																				CompletionItemKind.Snippet,
+																				CompletionItemKind.Property,
+																				CompletionItemKind.Struct
+																				);
 	// @formatter:on
 
 	/**
@@ -456,6 +459,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				return CompletionItemKind.Interface;
 			} else if (Flags.isEnum(flags)) {
 				return CompletionItemKind.Enum;
+			} else if (Flags.isRecord(flags)) {
+				return CompletionItemKind.Struct;
 			}
 			return CompletionItemKind.Class;
 		case CompletionProposal.FIELD_IMPORT:
@@ -491,6 +496,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return CompletionItemKind.Method;
 			//text
 		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+			return CompletionItemKind.Property;
 		case CompletionProposal.JAVADOC_BLOCK_TAG:
 		case CompletionProposal.JAVADOC_FIELD_REF:
 		case CompletionProposal.JAVADOC_INLINE_TAG:
