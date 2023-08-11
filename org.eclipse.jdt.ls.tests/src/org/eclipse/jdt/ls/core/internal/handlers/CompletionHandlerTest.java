@@ -3178,10 +3178,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		assertEquals(1, list.getItems().size());
 		ci = list.getItems().get(0);
-		assertEquals(CompletionItemKind.Text, ci.getKind());
+		assertEquals(CompletionItemKind.Property, ci.getKind());
 		assertEquals("someMethod : String", ci.getLabel());
 		resolvedItem = server.resolveCompletionItem(ci).join();
-		assertEquals(CompletionItemKind.Text, resolvedItem.getKind());
+		assertEquals(CompletionItemKind.Property, resolvedItem.getKind());
 		documentation = resolvedItem.getDocumentation().getLeft();
 		assertEquals("Default: \"test\"", documentation);
 	}
@@ -3834,6 +3834,52 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} finally {
 			unit.discardWorkingCopy();
 			proj.delete(true, monitor);
+		}
+	}
+
+
+	@Test
+	public void testCompletion_record() throws Exception{
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				public class Foo() {
+
+					static record MyRecordKind(int i){}
+
+					private MyRecordKin
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "private MyRecordKin");
+
+		assertNotNull(list);
+		assertFalse(list.getItems().isEmpty());
+		CompletionItem item = list.getItems().get(0);
+		assertEquals(CompletionItemKind.Struct, item.getKind());
+		assertEquals("MyRecordKind", item.getInsertText());
+	}
+
+	@Test
+	public void testCompletion_annotationParam() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@Deprecated()
+				public class Foo() {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "@Deprecated(");
+
+		assertNotNull(list);
+		assertFalse(list.getItems().isEmpty());
+		for (CompletionItem item : list.getItems()) {
+			assertEquals(CompletionItemKind.Property, item.getKind());
 		}
 	}
 
