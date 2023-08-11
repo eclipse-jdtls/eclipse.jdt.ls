@@ -92,17 +92,22 @@ public class FoldingRangeHandler {
 			scanner.resetTo(shift, shift + range.getLength());
 
 			int start = shift;
+			int startLine = -1;
 			int token = 0;
 			int classFileImportStart = -1;
 			int classFileImportEnd = -1;
+			int singleLineCommentStart = -1;
+			int singleLineCommentEnd = -1;
+			int prevTokenLine = -1;
 			Stack<Integer> regionStarts = new Stack<>();
 			while (token != ITerminalSymbols.TokenNameEOF) {
 				start = scanner.getCurrentTokenStartPosition();
+				startLine = scanner.getLineNumber(start);
 				switch (token) {
 					case ITerminalSymbols.TokenNameCOMMENT_JAVADOC:
 					case ITerminalSymbols.TokenNameCOMMENT_BLOCK:
 						int end = scanner.getCurrentTokenEndPosition();
-						FoldingRange commentFoldingRange = new FoldingRange(scanner.getLineNumber(start) - 1, scanner.getLineNumber(end) - 1);
+						FoldingRange commentFoldingRange = new FoldingRange(startLine - 1, scanner.getLineNumber(end) - 1);
 						commentFoldingRange.setKind(FoldingRangeKind.Comment);
 						foldingRanges.add(commentFoldingRange);
 						break;
@@ -116,6 +121,14 @@ public class FoldingRangeHandler {
 								regionFolding.setKind(FoldingRangeKind.Region);
 								foldingRanges.add(regionFolding);
 							}
+						} else if (prevTokenLine == startLine) {
+							addCommentRangeIfSuitable(foldingRanges, singleLineCommentStart, singleLineCommentEnd);
+						} else if (startLine == singleLineCommentEnd + 1) {
+							singleLineCommentEnd = startLine;
+						} else {
+							addCommentRangeIfSuitable(foldingRanges, singleLineCommentStart, singleLineCommentEnd);
+							singleLineCommentStart = startLine;
+							singleLineCommentEnd = startLine;
 						}
 						break;
 					case ITerminalSymbols.TokenNameimport:
@@ -125,6 +138,7 @@ public class FoldingRangeHandler {
 					default:
 						break;
 				}
+				prevTokenLine = startLine;
 				token = getNextToken(scanner);
 			}
 			if (unit.getElementType() == IJavaElement.CLASS_FILE && classFileImportStart != -1) {
@@ -132,6 +146,7 @@ public class FoldingRangeHandler {
 				importFoldingRange.setKind(FoldingRangeKind.Imports);
 				foldingRanges.add(importFoldingRange);
 			}
+			addCommentRangeIfSuitable(foldingRanges, singleLineCommentStart, singleLineCommentEnd);
 			computeTypeRootRanges(foldingRanges, unit, scanner);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem with folding range for " + unit.getPath().toPortableString(), e);
@@ -246,6 +261,14 @@ public class FoldingRangeHandler {
 
 		for (Map.Entry<Integer, Integer> entry : candidates.entrySet()) {
 			foldingRanges.add(new FoldingRange(entry.getValue(), entry.getKey()));
+		}
+	}
+
+	private void addCommentRangeIfSuitable(List<FoldingRange> foldingRanges, int start, int end) {
+		if (end > start) {
+			FoldingRange singleLineCommentFoldingRange = new FoldingRange(start - 1, end - 1);
+			singleLineCommentFoldingRange.setKind(FoldingRangeKind.Comment);
+			foldingRanges.add(singleLineCommentFoldingRange);
 		}
 	}
 }
