@@ -37,6 +37,8 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType.CodeTemplateVariableResolver;
+import org.eclipse.jdt.internal.core.manipulation.JavaManipulationMessages;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
@@ -111,9 +113,14 @@ public class PreferenceManager {
 		// Register standard context types from JDT
 		CodeTemplateContextType.registerContextTypes(registry);
 		// Register additional context types
-		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE));
-		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE));
-		registry.addContextType(new CodeTemplateContextType(CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE));
+		for (String contextTypeId : List.of(
+				CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE,
+				CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
+				CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE)) {
+			CodeTemplateContextType contextType = new CodeTemplateContextType(contextTypeId);
+			contextType.addResolver(new CodeTemplateVariableResolver(CodeTemplateContextType.FILE_COMMENT, JavaManipulationMessages.CodeTemplateContextType_variable_description_filecomment));
+			registry.addContextType(contextType);
+		}
 
 		// These should be upstreamed into CodeTemplateContextType & GlobalVariables
 		TemplateContextType tmp = registry.getContextType(CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE);

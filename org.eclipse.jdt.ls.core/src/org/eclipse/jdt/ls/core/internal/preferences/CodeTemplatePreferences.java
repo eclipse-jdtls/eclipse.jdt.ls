@@ -119,7 +119,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for new type
 	 */
-	public static final String CODETEMPLATE_NEWTYPE_DEFAULT = "${filecomment}\n${package_declaration}\n\n${typecomment}\n${type_declaration}";
+	public static final String CODETEMPLATE_NEWTYPE_DEFAULT = "${filecomment}${package_declaration}\n\n${typecomment}\n${type_declaration}";
 	/**
 	 * Default value for field comments
 	 */
@@ -193,28 +193,28 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for class snippet body content
 	 */
-	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${package_header}class ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_CLASSSNIPPET_DEFAULT = "${filecomment}${package_header}class ${type_name} {\n\n\t${cursor}\n}";
 
 	/**
 	 * Default value for public class snippet body content
 	 */
-	public static final String CODETEMPLATE_CLASSSNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_CLASSSNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for interface snippet body content
 	 */
-	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${package_header}interface ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_INTERFACESNIPPET_DEFAULT = "${filecomment}${package_header}interface ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for public interface snippet body content
 	 */
-	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for record snippet body content
 	 */
-	public static final String CODETEMPLATE_RECORDSNIPPET_DEFAULT = "${package_header}record ${type_name}(${cursor}) {\n}";
+	public static final String CODETEMPLATE_RECORDSNIPPET_DEFAULT = "${filecomment}${package_header}record ${type_name}(${cursor}) {\n}";
 	/**
 	 * Default value for public record snippet body content
 	 */
-	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${package_header}/**\n * ${type_name}\n */\npublic record ${type_name}(${cursor}) {\n}";
+	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic record ${type_name}(${cursor}) {\n}";
 
 	public static class Month extends SimpleTemplateVariableResolver {
 		public Month() {
