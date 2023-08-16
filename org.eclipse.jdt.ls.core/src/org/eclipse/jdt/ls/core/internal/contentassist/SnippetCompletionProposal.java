@@ -38,6 +38,7 @@ import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.Initializer;
+import org.eclipse.jdt.core.manipulation.CodeGeneration;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
 import org.eclipse.jdt.internal.codeassist.complete.CompletionOnFieldType;
@@ -46,6 +47,7 @@ import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameRefere
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContext;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
@@ -578,6 +580,8 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), scc.getRecommendedLineSeprator());
 
+		String fileComment = cu.getTypes().length == 0 ? CodeGeneration.getFileComment(cu, StubUtility.getLineDelimiterUsed(cu.getJavaProject())) : null;
+		context.setVariable(CodeTemplateContextType.FILE_COMMENT, fileComment != null ? fileComment + "\n" : "");
 		context.setVariable(PACKAGEHEADER, scc.getPackageHeader());
 		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
 		List<IType> types = Arrays.asList(cu.getAllTypes());
