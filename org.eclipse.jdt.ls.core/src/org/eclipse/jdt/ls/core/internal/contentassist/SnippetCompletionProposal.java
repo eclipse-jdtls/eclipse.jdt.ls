@@ -289,29 +289,60 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			return Collections.emptyList();
 		}
 		int tokenLocation = completionContext.getTokenLocation();
-		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
-		if (contextType == null) {
-			return Collections.emptyList();
-		}
+		JavaContextType contextType = null;
+		JavaContextType contextTypeAll = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_ALL);
 		ICompilationUnit cu = scc.getCompilationUnit();
 		IDocument document = new Document(cu.getSource());
-		DocumentTemplateContext javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+		DocumentTemplateContext javaContext;
+		DocumentTemplateContext javaContextAll;
 		Template[] templates = null;
+		Template[] templatesAll = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaContextType.ID_ALL);
 		if ((tokenLocation & CompletionContext.TL_STATEMENT_START) != 0) {
+			contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
+			if (contextType != null) {
+				javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+			} else {
+				javaContext = null;
+			}
 			templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaContextType.ID_STATEMENTS);
+			if (contextTypeAll != null) {
+				javaContextAll = contextTypeAll.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+			} else {
+				javaContextAll = null;
+			}
+		} else if ((tokenLocation & CompletionContext.TL_MEMBER_START) != 0) {
+			contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_MEMBERS);
+			if (contextType != null) {
+				javaContext = contextType.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+			} else {
+				javaContext = null;
+			}
+			templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaContextType.ID_MEMBERS);
+			if (contextTypeAll != null) {
+				javaContextAll = contextTypeAll.createContext(document, completionContext.getOffset(), completionToken.length, cu);
+			} else {
+				javaContextAll = null;
+			}
 		} else {
-			// We only support statement templates for now.
+			javaContext = null;
+			javaContextAll = null;
 		}
 
-		if (templates == null || templates.length == 0) {
+		if ((javaContext == null && javaContextAll == null) || (templates == null && templatesAll == null) || templates.length == 0) {
 			return Collections.emptyList();
 		}
 
 		String uri = JDTUtils.toURI(cu);
 		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t)).toArray(Template[]::new);
+		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t)).toArray(Template[]::new);
 		List<CompletionProposal> proposals = new ArrayList<>();
-		for (int i = 0; i < availableTemplates.length; i++) {
-			Template template = availableTemplates[i];
+		for (int i = 0; i < availableTemplates.length + availableTemplatesAll.length; i++) {
+			Template template;
+			if (i < availableTemplates.length) {
+				template = availableTemplates[i];
+			} else {
+				template = availableTemplatesAll[i - availableTemplates.length];
+			}
 			final CompletionItem item = new CompletionItem();
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
@@ -378,7 +409,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	}
 
 	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {
-		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(JavaContextType.ID_STATEMENTS);
+		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(template.getContextTypeId());
 		char[] completionToken = completionContext.getToken();
 		if (contextType == null || completionToken == null) {
 			return null;

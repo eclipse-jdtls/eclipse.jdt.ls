@@ -29,12 +29,21 @@ public enum CodeSnippetTemplate {
 	IFELSE(TemplatePreferences.IFELSE_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFELSE_CONTENT, TemplatePreferences.IFELSE_DESCRIPTION),
 	IFNULL(TemplatePreferences.IFNULL_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFNULL_CONTENT, TemplatePreferences.IFNULL_DESCRIPTION),
 	IFNOTNULL(TemplatePreferences.IFNOTNULL_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IFNOTNULL_CONTENT, TemplatePreferences.IFNOTNULL_DESCRIPTION),
-	
+	SWITCH(TemplatePreferences.SWITCH_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SWITCH_CONTENT, TemplatePreferences.SWITCH_DESCRIPTION),
+	TRY_CATCH(TemplatePreferences.TRYCATCH_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.TRYCATCH_CONTENT, TemplatePreferences.TRYCATCH_DESCRIPTION),
+	TRY_RESOURCES(TemplatePreferences.TRYRESOURCES_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.TRYRESOURCES_CONTENT, TemplatePreferences.TRYRESOURCES_DESCRIPTION),
+	CTOR(TemplatePreferences.CTOR_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.CTOR_CONTENT, TemplatePreferences.CTOR_DESCRIPTION),
+	METHOD(TemplatePreferences.METHOD_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.METHOD_CONTENT, TemplatePreferences.METHOD_DESCRIPTION),
+	FIELD(TemplatePreferences.FIELD_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.FIELD_CONTENT, TemplatePreferences.FIELD_DESCRIPTION),
+	MAIN(TemplatePreferences.MAIN_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
+	NEW(TemplatePreferences.NEW_ID, JavaContextType.ID_ALL, TemplatePreferences.NEW_CONTENT, TemplatePreferences.NEW_DESCRIPTION),
+
 	// the following snippets are the same as above but with different alias, since users may not easily find them if they come from different IDEs.
 	SOUT(TemplatePreferences.SOUT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION),
 	SERR(TemplatePreferences.SERR_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSERR_CONTENT, TemplatePreferences.SYSERR_DESCRIPTION),
 	SOUTM(TemplatePreferences.SOUTM_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSTRACE_CONTENT, TemplatePreferences.SYSTRACE_DESCRIPTION),
-	ITER(TemplatePreferences.ITER_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.FOREACH_CONTENT, TemplatePreferences.FOREACH_DESCRIPTION);
+	ITER(TemplatePreferences.ITER_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.FOREACH_CONTENT, TemplatePreferences.FOREACH_DESCRIPTION),
+	PSVM(TemplatePreferences.PSVM_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION);
 	//@formatter:on
 
 	private final String templateId;
@@ -75,6 +84,15 @@ class TemplatePreferences {
 	public static final String IFELSE_ID = "org.eclipse.jdt.ls.templates.ifelse";
 	public static final String IFNULL_ID = "org.eclipse.jdt.ls.templates.ifnull";
 	public static final String IFNOTNULL_ID = "org.eclipse.jdt.ls.templates.ifnotnull";
+	public static final String SWITCH_ID = "org.eclipse.jdt.ls.templates.switch";
+	public static final String TRYCATCH_ID = "org.eclipse.jdt.ls.templates.trycatch";
+	public static final String TRYRESOURCES_ID = "org.eclipse.jdt.ls.templates.tryresources";
+	public static final String MAIN_ID = "org.eclipse.jdt.ls.templates.main";
+	public static final String PSVM_ID = "org.eclipse.jdt.ls.templates.psvm";
+	public static final String CTOR_ID = "org.eclipse.jdt.ls.templates.ctor";
+	public static final String METHOD_ID = "org.eclipse.jdt.ls.templates.method";
+	public static final String NEW_ID = "org.eclipse.jdt.ls.templates.new";
+	public static final String FIELD_ID = "org.eclipse.jdt.ls.templates.field";
 
 	// DefaultContents
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
@@ -88,6 +106,14 @@ class TemplatePreferences {
 	public static final String IFELSE_CONTENT = "if ($${1:${condition:var(boolean)}}) {\n" + "\t$${2}\n" + "} else {\n" + "\t$${0}\n" + "}";
 	public static final String IFNULL_CONTENT = "if ($${1:${name:var}} == null) {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "}";
 	public static final String IFNOTNULL_CONTENT = "if ($${1:${name:var}} != null) {\n" + "\t$$TM_SELECTED_TEXT$${0}\n" + "}";
+	public static final String SWITCH_CONTENT = "switch ($${1:${key:var}}) {\n" + "\tcase $${2:value}:\n" + "\t\t$${0}\n" + "\t\tbreak;\n\n" + "\tdefault:\n" + "\t\tbreak;\n" + "}";
+	public static final String TRYCATCH_CONTENT = "try {\n" + "\t$$TM_SELECTED_TEXT$${1}\n" + "} catch ($${2:Exception} $${3:e}) {\n" + "\t$${0}// TODO: handle exception\n" + "}";
+	public static final String TRYRESOURCES_CONTENT = "try ($${1}) {\n" + "\t$$TM_SELECTED_TEXT$${2}\n" + "} catch ($${3:Exception} $${4:e}) {\n" + "\t$${0}// TODO: handle exception\n" + "}";
+	public static final String MAIN_CONTENT = "public static void main(String[] args) {\n" + "\t$${0}\n" + "}";
+	public static final String CTOR_CONTENT = "$${1|public,protected,private|} $${2:$$TM_FILENAME_BASE}($${3}) {\n" + "\t$${4:super();}$${0}\n" + "}";
+	public static final String METHOD_CONTENT = "$${1|public,protected,private|}$${2| , static |}$${3:void} $${4:name}($${5}) {\n" + "\t$${0}\n" + "}";
+	public static final String NEW_CONTENT = "$${1:Object} $${2:foo} = new $${1}($${3});\n" + "$${0}";
+	public static final String FIELD_CONTENT = "$${1|public,protected,private|} $${2:String} $${3:name};";
 
 	// Descriptions
 	public static final String SYSOUT_DESCRIPTION = "print to standard out";
@@ -101,4 +127,12 @@ class TemplatePreferences {
 	public static final String IFELSE_DESCRIPTION = "if-else statement";
 	public static final String IFNULL_DESCRIPTION = "if statement checking for null";
 	public static final String IFNOTNULL_DESCRIPTION = "if statement checking for not null";
+	public static final String SWITCH_DESCRIPTION = "switch statement";
+	public static final String TRYCATCH_DESCRIPTION = "try/catch block";
+	public static final String TRYRESOURCES_DESCRIPTION = "try/catch block with resources";
+	public static final String MAIN_DESCRIPTION = "public static main method";
+	public static final String CTOR_DESCRIPTION = "constructor";
+	public static final String METHOD_DESCRIPTION = "method";
+	public static final String NEW_DESCRIPTION = "create new object";
+	public static final String FIELD_DESCRIPTION = "field";
 }
