@@ -25,9 +25,17 @@ import org.eclipse.text.templates.ContextTypeRegistry;
 public class JavaContextTypeRegistry extends ContextTypeRegistry {
 
 	public JavaContextTypeRegistry() {
-		JavaContextType contextType = new JavaContextType();
-		contextType.initializeContextTypeResolvers();
-		addContextType(contextType);
+		JavaContextType contextTypeStatements = new JavaContextType(JavaContextType.ID_STATEMENTS);
+		contextTypeStatements.initializeContextTypeResolvers();
+		addContextType(contextTypeStatements);
+
+		JavaContextType contextTypeMembers = new JavaContextType(JavaContextType.ID_MEMBERS);
+		contextTypeMembers.initializeContextTypeResolvers();
+		addContextType(contextTypeMembers);
+
+		JavaContextType contextTypeAll = new JavaContextType(JavaContextType.ID_ALL);
+		contextTypeAll.initializeContextTypeResolvers();
+		addContextType(contextTypeAll);
 
 		JavaPostfixContextType postfixContextType = new JavaPostfixContextType();
 		postfixContextType.initializeContextTypeResolvers();

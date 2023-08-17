@@ -1348,7 +1348,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 
 		assertNotNull(list);
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		List<CompletionItem> items = list.getItems().stream().filter(item -> item.getSortText() != null).collect(Collectors.toCollection(ArrayList::new));
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
@@ -1473,7 +1473,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{\n");
 
 		assertNotNull(list);
-		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		List<CompletionItem> items = list.getItems().stream().filter(item -> item.getSortText() != null).collect(Collectors.toCollection(ArrayList::new));
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 

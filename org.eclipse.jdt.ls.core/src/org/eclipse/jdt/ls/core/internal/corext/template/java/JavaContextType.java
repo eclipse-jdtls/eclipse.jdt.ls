@@ -50,9 +50,9 @@ public class JavaContextType extends AbstractJavaContextTypeCore {
 	 */
 	public static final String ID_MODULE = "module"; //$NON-NLS-1$
 
-	public JavaContextType() {
-		setId(ID_STATEMENTS);
-		setName(ID_STATEMENTS);
+	public JavaContextType(String contextType) {
+		setId(contextType);
+		setName(contextType);
 	}
 
 	@Override
