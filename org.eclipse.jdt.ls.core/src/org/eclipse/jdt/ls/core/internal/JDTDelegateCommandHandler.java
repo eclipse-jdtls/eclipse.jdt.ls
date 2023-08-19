@@ -51,7 +51,6 @@ import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyParams;
 
 public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler#executeCommand(java.lang.String, java.util.List, org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -76,7 +75,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.edit.stringFormatting":
 					FormatterHandler handler = new FormatterHandler(JavaLanguageServerPlugin.getPreferencesManager());
 					return handler.stringFormatting((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), Map.class), Integer.parseInt((String) arguments.get(2)), monitor);
-				case "java.edit.handlePasteEvent":
+				case JAVA_EDIT_HANDLE_PASTE_EVENT:
 					return PasteEventHandler.handlePasteEvent(JSONUtility.toLsp4jModel(arguments.get(0), PasteEventParams.class), monitor);
 				case "java.project.resolveSourceAttachment":
 					return SourceAttachmentCommand.resolveSourceAttachment(arguments, monitor);
@@ -172,7 +171,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					} catch (URISyntaxException e) {
 						return false;
 					}
-				case "java.edit.smartSemicolonDetection":
+				case JAVA_EDIT_SMART_SEMICOLON_DETECTION:
 					if (!JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isSmartSemicolonDetection()) {
 						return null;
 					}
