@@ -41,6 +41,7 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
@@ -186,6 +187,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 */
 	private ServiceStatus status;
 	private TelemetryManager telemetryManager;
+	private Object codeActionLock = new Object();
 
 	private Job shutdownJob = new Job("Shutdown...") {
 
@@ -595,9 +597,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		debugTrace(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
-		return computeAsync((monitor) -> {
-			return commandHandler.executeCommand(params, monitor);
-		});
+		// see https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2799
+		// Handle the paste event synchronously in the main thread
+		if (IDelegateCommandHandler.JAVA_EDIT_HANDLE_PASTE_EVENT.equals(params.getCommand()) || IDelegateCommandHandler.JAVA_EDIT_SMART_SEMICOLON_DETECTION.equals(params.getCommand())) {
+			Object result = commandHandler.executeCommand(params, new NullProgressMonitor());
+			return CompletableFuture.completedFuture(result);
+		} else {
+			return computeAsync((monitor) -> {
+				return commandHandler.executeCommand(params, monitor);
+			});
+		}
 	}
 
 	/* (non-Javadoc)
@@ -741,7 +750,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		CodeActionHandler handler = new CodeActionHandler(this.preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
-			return handler.getCodeActionCommands(params, monitor);
+			// see https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2799
+			// Optimize the performance of the code actions
+			synchronized (codeActionLock) {
+				return handler.getCodeActionCommands(params, monitor);
+			}
 		});
 	}
 

@@ -24,6 +24,15 @@ import org.eclipse.core.runtime.IProgressMonitor;
  */
 public interface IDelegateCommandHandler {
 	/**
+	 * the command ID for paste event
+	 */
+	String JAVA_EDIT_HANDLE_PASTE_EVENT = "java.edit.handlePasteEvent";
+	/**
+	 * the command ID for smart semicolon detection
+	 */
+	String JAVA_EDIT_SMART_SEMICOLON_DETECTION = "java.edit.smartSemicolonDetection";
+
+	/**
 	 * Language server to execute commands. One handler can handle multiple
 	 * commands.
 	 *
