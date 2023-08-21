@@ -30,5 +30,7 @@ public class Constructors {
 			this("bar", 0);
 		}
 	}
+	
+	public interface TestInterface{}
 
 }
