@@ -16,6 +16,11 @@ package org.eclipse.jdt.ls.core.internal.semantictokens;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.ToolFactory;
+import org.eclipse.jdt.core.compiler.IScanner;
+import org.eclipse.jdt.core.compiler.ITerminalSymbols;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
@@ -45,13 +50,16 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeLiteral;
+import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
 	private List<SemanticToken> tokens;
+	private static IScanner fScanner;
 
 	public SemanticTokensVisitor(CompilationUnit cu) {
 		super(true);
@@ -446,6 +454,68 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		acceptNodeList(node.superInterfaceTypes());
 		acceptNodeList(node.bodyDeclarations());
 		return false;
+	}
+
+	@Override
+	public boolean visit(TypeDeclaration node) {
+		acceptNode(node.getJavadoc());
+		acceptNodeList(node.modifiers());
+
+		// Using a scanner here to retrieve the class/interface keyword as there is no nice way to do so using ASTNodes
+		int typeKeywordStart = -1;
+		int typeKeywordEnd = -1;
+		try {
+			String contents = this.cu.getTypeRoot().getSource();
+			final int shift = node.getStartPosition();
+			IScanner scanner = getScanner();
+			scanner.setSource(contents.toCharArray());
+			scanner.resetTo(shift, shift + node.getLength());
+			int token = 0;
+			while (token != ITerminalSymbols.TokenNameEOF && typeKeywordStart == -1) {
+				switch (token) {
+					case ITerminalSymbols.TokenNameinterface:
+					case ITerminalSymbols.TokenNameclass:
+						typeKeywordStart = scanner.getCurrentTokenStartPosition();
+						typeKeywordEnd = scanner.getCurrentTokenEndPosition();
+					default:
+						break;
+				}
+				token = getNextToken(scanner);
+			}
+		} catch (JavaModelException e) {
+			// ignore
+		}
+		if (typeKeywordStart != -1) {
+			addToken(typeKeywordStart, typeKeywordEnd - typeKeywordStart + 1, TokenType.MODIFIER, 0);
+		}
+		acceptNode(node.getName());
+		acceptNodeList(node.typeParameters());
+		acceptNode(node.getSuperclassType());
+		acceptNodeList(node.superInterfaceTypes());
+		acceptNodeList(node.bodyDeclarations());
+		if (DOMASTUtil.isFeatureSupportedinAST(cu.getAST(), Modifier.SEALED)) {
+			acceptNodeList(node.permittedTypes());
+		}
+		return false;
+	}
+
+	private static IScanner getScanner() {
+		if (fScanner == null) {
+			fScanner = ToolFactory.createScanner(true, false, false, true);
+		}
+		return fScanner;
+	}
+
+	private int getNextToken(IScanner scanner) {
+		int token = 0;
+		while (token == 0) {
+			try {
+				token = scanner.getNextToken();
+			} catch (InvalidInputException e) {
+				// ignore
+			}
+		}
+		return token;
 	}
 
 	/**
