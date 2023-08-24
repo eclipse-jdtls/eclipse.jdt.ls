@@ -199,6 +199,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (!applies(monitor)) {
 			return;
 		}
+		// run just once at the first project, assuming that all projects are using the same gradle version.
+		inferGradleJavaHome(directories.iterator().next(), monitor);
 		int projectSize = directories.size();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize + 1);
 		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
@@ -289,6 +291,33 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
 
 		subMonitor.done();
+	}
+
+	private void inferGradleJavaHome(Path projectFolder, IProgressMonitor monitor) {
+		if (StringUtils.isNotBlank(getPreferences().getGradleJavaHome())) {
+			return;
+		}
+
+		File javaHome = getJavaHome(getPreferences());
+		String javaVersion;
+		if (javaHome == null) {
+			javaVersion = System.getProperty("java.version");
+		} else {
+			StandardVMType type = new StandardVMType();
+			javaVersion = type.readReleaseVersion(javaHome);
+		}
+		if (StringUtils.isBlank(javaVersion)) {
+			// return if failed to get java version.
+			return;
+		}
+		GradleVersion gradleVersion = GradleUtils.getGradleVersion(projectFolder, monitor);
+		if (GradleUtils.isIncompatible(gradleVersion, javaVersion)) {
+			String highestJavaVersion = GradleUtils.getHighestSupportedJava(gradleVersion);
+			File javaHomeFile = GradleUtils.getJdkToLaunchDaemon(highestJavaVersion);
+			if (javaHomeFile != null) {
+				getPreferences().setGradleJavaHome(javaHomeFile.getAbsolutePath());
+			}
+		}
 	}
 
 	private IStatus importDir(Path projectFolder, IProgressMonitor monitor) {
@@ -438,11 +467,18 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	public static BuildConfiguration getBuildConfiguration(Path rootFolder) {
+		return getBuildConfiguration(rootFolder, false);
+	}
+
+	public static BuildConfiguration getBuildConfiguration(Path rootFolder, boolean noDaemon) {
 		GradleDistribution distribution = getGradleDistribution(rootFolder);
 		Preferences preferences = getPreferences();
 		File javaHome = getJavaHome(preferences);
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = new ArrayList<>();
+		if (noDaemon) {
+			gradleArguments.add("--no-daemon");
+		}
 		gradleArguments.addAll(getGradleInitScriptArgs());
 		gradleArguments.addAll(preferences.getGradleArguments());
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();
