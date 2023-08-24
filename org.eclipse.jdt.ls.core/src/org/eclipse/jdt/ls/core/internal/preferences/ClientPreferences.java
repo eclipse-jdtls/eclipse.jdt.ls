@@ -364,6 +364,10 @@ public class ClientPreferences {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCallHierarchy());
 	}
 
+	public boolean isTypeHierarchyDynamicRegistrationSupported() {
+		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getTypeHierarchy());
+	}
+
 	public boolean isResolveCodeActionSupported() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCodeAction() != null
