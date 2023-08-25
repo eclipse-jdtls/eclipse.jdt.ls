@@ -199,13 +199,13 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (!applies(monitor)) {
 			return;
 		}
-		// run just once at the first project, assuming that all projects are using the same gradle version.
-		inferGradleJavaHome(directories.iterator().next(), monitor);
 		int projectSize = directories.size();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize + 1);
 		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
 		subMonitor.worked(1);
+		// run just once at the first project, assuming that all projects are using the same gradle version.
+		inferGradleJavaHome(directories.iterator().next(), monitor);
 		MultiStatus compatibilityStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Compatibility issue occurs when importing Gradle projects", null);
 		MultiStatus gradleUpgradeWrapperStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Gradle upgrade wrapper", null);
 		for (Path directory : directories) {
