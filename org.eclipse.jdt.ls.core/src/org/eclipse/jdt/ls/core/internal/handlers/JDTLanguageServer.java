@@ -656,7 +656,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					JavaModelManager.getIndexManager().waitForIndex(true, null);
 				}
 			}
-			return computeAsync((monitor) -> {
+			return computeAsyncWithClientProgress((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
 			});
 		}
