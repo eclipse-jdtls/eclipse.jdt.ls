@@ -65,6 +65,7 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -79,6 +80,12 @@ import com.google.common.io.Files;
 public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	private static final String GRADLE1_PATTERN = "**/gradle1";
+	private String gradleJavaHome;
+
+	@Before
+	public void setUp() {
+		gradleJavaHome = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJavaHome();
+	}
 
 	@Test
 	public void importSimpleGradleProject() throws Exception {
@@ -94,6 +101,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+		JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleJavaHome(gradleJavaHome);
 	}
 
 	@Test

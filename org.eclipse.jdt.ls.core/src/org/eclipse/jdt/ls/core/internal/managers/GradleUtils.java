@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StreamCorruptedException;
+import java.lang.Runtime.Version;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,8 +29,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
@@ -39,14 +43,21 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.launching.StandardVMType;
+import org.eclipse.jdt.launching.AbstractVMInstall;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.GradleEnvironment;
 
 public class GradleUtils {
 
-	public static String MAX_SUPPORTED_JAVA = JavaCore.VERSION_17;
 	// see https://github.com/gradle/gradle/pull/17397
 	public static String INVALID_TYPE_FIXED_VERSION = "7.2";
 	// see https://github.com/gradle/gradle/issues/890
@@ -54,11 +65,6 @@ public class GradleUtils {
 	public static String JPMS_SUPPORTED_VERSION = "7.0.1";
 
 	private static final String MESSAGE_DIGEST_ALGORITHM = "SHA-256";
-
-	/**
-	 * A pattern to parse annotation processing arguments.
-	 */
-	private static final Pattern OPTION_PATTERN = Pattern.compile("-A([^ \\t\"']+)");
 
 	public static boolean isIncompatible(GradleVersion gradleVersion, String javaVersion) {
 		if (gradleVersion == null || javaVersion == null || javaVersion.isEmpty()) {
@@ -72,7 +78,13 @@ public class GradleUtils {
 		GradleVersion baseVersion = gradleVersion.getBaseVersion();
 		try {
 			// https://docs.gradle.org/current/userguide/compatibility.html
-			if (baseVersion.compareTo(GradleVersion.version("7.3")) >= 0) {
+			if (baseVersion.compareTo(GradleVersion.version("8.3")) >= 0) {
+				return JavaCore.VERSION_20;
+			} else if (baseVersion.compareTo(GradleVersion.version("7.6")) >= 0) {
+				return JavaCore.VERSION_19;
+			} else if (baseVersion.compareTo(GradleVersion.version("7.5")) >= 0) {
+				return JavaCore.VERSION_18;
+			} else if (baseVersion.compareTo(GradleVersion.version("7.3")) >= 0) {
 				return JavaCore.VERSION_17;
 			} else if (baseVersion.compareTo(GradleVersion.version("7.0")) >= 0) {
 				return JavaCore.VERSION_16;
@@ -91,10 +103,10 @@ public class GradleUtils {
 			} else if (baseVersion.compareTo(GradleVersion.version("4.3")) >= 0) {
 				return JavaCore.VERSION_9;
 			}
-			return JavaCore.VERSION_1_8;
 		} catch (IllegalArgumentException e) {
-			return MAX_SUPPORTED_JAVA;
+			// ignore
 		}
+		return JavaCore.VERSION_1_8;
 	}
 
 	public static boolean hasGradleInvalidTypeCodeException(IStatus status, Path projectFolder, IProgressMonitor monitor) {
@@ -123,7 +135,7 @@ public class GradleUtils {
 
 	public static GradleVersion getGradleVersion(Path projectFolder, IProgressMonitor monitor) {
 		try {
-			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(projectFolder);
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(projectFolder, true);
 			GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(build);
 			BuildEnvironment environment = gradleBuild.withConnection(connection -> connection.getModel(BuildEnvironment.class), monitor);
 			GradleEnvironment gradleEnvironment = environment.getGradle();
@@ -292,5 +304,76 @@ public class GradleUtils {
 				break;
 			}
 		}
+	}
+
+	/**
+	 * Find the latest JDK but equal or lower than the {@code highestJavaVersion}.
+	 */
+	public static File getJdkToLaunchDaemon(String highestJavaVersion) {
+		if (StringUtils.isBlank(highestJavaVersion)) {
+			return null;
+		}
+
+		Map<String, File> jdks = getAllVmInstalls();;
+		Entry<String, File> selected = null;
+		for (Entry<String, File> jdk : jdks.entrySet()) {
+			String javaVersion = jdk.getKey();
+			if (Version.parse(javaVersion).compareTo(Version.parse(highestJavaVersion)) <= 0
+					&& (selected == null || Version.parse(selected.getKey()).compareTo(Version.parse(javaVersion)) < 0)) {
+				selected = jdk;
+			}
+		}
+
+		return selected == null ? null : selected.getValue();
+	}
+
+	/**
+	 * Get all the available JDK installations in the Eclipse VM registry. If multiple installations
+	 * are found for the same major version, the first found one is return.
+	 *
+	 * The results are returned as map, where key is the major version and value is the file instance of
+	 * the installation.
+	 */
+	private static Map<String, File> getAllVmInstalls() {
+		List<IVMInstall> vmList = Stream.of(JavaRuntime.getVMInstallTypes())
+						.map(IVMInstallType::getVMInstalls)
+						.flatMap(Arrays::stream)
+						.toList();
+		Map<String, File> vmInstalls = new HashMap<>();
+		for (IVMInstall vmInstall : vmList) {
+			if (vmInstall instanceof AbstractVMInstall vm) {
+				String javaVersion = getMajorJavaVersion(vm.getJavaVersion());
+				if (StringUtils.isBlank(javaVersion) || vm.getInstallLocation() == null) {
+					continue;
+				}
+
+				vmInstalls.putIfAbsent(javaVersion, vm.getInstallLocation());
+			}
+		}
+
+		Preferences preferences = JavaLanguageServerPlugin.getPreferencesManager().getPreferences();
+		Set<RuntimeEnvironment> runtimes = preferences.getRuntimes();
+		for (RuntimeEnvironment runtime : runtimes) {
+			if (StringUtils.isBlank(runtime.getPath())) {
+				continue;
+			}
+			File javaHome = new File(runtime.getPath());
+			if (vmInstalls.containsValue(javaHome)) {
+				continue;
+			}
+
+			String javaVersion = new StandardVMType().readReleaseVersion(javaHome);
+			if (StringUtils.isNotBlank(javaVersion)) {
+				// the user preference should have higher priority and replace
+				// the existing one if the major version is the same.
+				vmInstalls.put(getMajorJavaVersion(javaVersion), javaHome);
+			}
+		}
+
+		return vmInstalls;
+	}
+
+	public static String getMajorJavaVersion(String version) {
+		return CompilerOptions.versionFromJdkLevel(CompilerOptions.versionToJdkLevel(version));
 	}
 }
