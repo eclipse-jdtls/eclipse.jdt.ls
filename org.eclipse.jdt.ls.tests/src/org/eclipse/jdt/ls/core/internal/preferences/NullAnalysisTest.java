@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
@@ -66,6 +67,9 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 			assertNotNull(marker);
 			assertTrue(marker.getResource() instanceof IFile);
 			assertEquals("TestJavax.java", ((IFile) marker3.getResource()).getFullPath().lastSegment());
+			// See https://github.com/redhat-developer/vscode-java/issues/3255
+			IMarker marker4 = getWarningMarker(project, "Potential null pointer access: The field obj is specified as @Nullable");
+			assertNull(marker4);
 			assertNoErrors(project);
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());

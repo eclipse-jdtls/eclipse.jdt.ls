@@ -9,6 +9,9 @@ import javax.annotation.Nullable;
  */
 public class TestJavax {
 
+	@Nullable
+	private String obj;
+
 	@Nullable public String nullable() {
 		return "";
 	}
@@ -38,5 +41,10 @@ public class TestJavax {
 	// case 4: Assign an Nullable variable to an Nonnull variable
 	void testList(@Nullable List<String> nullableList) {
 		@Nonnull List<String> list2 = nullableList;
+	}
+
+	// case 5: check non-null before using return value of Nullable methods (should not give warning)
+	void testNoWarning() {
+		if (obj != null) obj.length();
 	}
 }
