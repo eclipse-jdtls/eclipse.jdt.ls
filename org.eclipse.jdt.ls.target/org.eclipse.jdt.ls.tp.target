@@ -3,11 +3,6 @@
 <target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="113">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
-            <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
-            <repository location="https://download.eclipse.org/tools/orbit/R-builds/R20200529191137/repository"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
             <repository location="https://download.eclipse.org/buildship/updates/e423/snapshots/3.x/3.1.7.v20221108-1729-s/"/>
         </location>
@@ -29,6 +24,7 @@
             <unit id="org.eclipse.jdt.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
+            <unit id="org.apache.commons.commons-io" version="0.0.0"/>
             <repository location="https://download.eclipse.org/eclipse/updates/4.29-I-builds/I20230806-1800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
@@ -39,6 +35,16 @@
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.21.0/"/>
            <unit id="org.eclipse.lsp4j" version="0.0.0"/>
         </location>
+		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+					<version>3.8.1</version>
+					<type>jar</type>
+				</dependency>
+			</dependencies>
+		</location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
 </target>
