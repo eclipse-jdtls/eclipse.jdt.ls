@@ -30,7 +30,7 @@ public class JavaLsConfigurator extends ContextAwareBase implements Configurator
 	}
 
 	@Override
-	public void configure(LoggerContext lc) {
+	public ExecutionStatus configure(LoggerContext lc) {
 		addInfo("Setting up default configuration.");
 		boolean isDebug = Boolean.getBoolean("jdt.ls.debug");
 		if (isDebug) {
@@ -55,5 +55,6 @@ public class JavaLsConfigurator extends ContextAwareBase implements Configurator
 			defMavenFilter.setLevel(Level.INFO);
 			defMavenFilter.setAdditive(false);
 		}
+		return ExecutionStatus.INVOKE_NEXT_IF_ANY;
 	}
 }
