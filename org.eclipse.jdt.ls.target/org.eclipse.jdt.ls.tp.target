@@ -3,7 +3,6 @@
 <target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="113">
     <locations>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
             <unit id="org.apache.commons.lang3" version="3.1.0.v201403281430"/>
             <repository location="https://download.eclipse.org/tools/orbit/R-builds/R20200529191137/repository"/>
         </location>
