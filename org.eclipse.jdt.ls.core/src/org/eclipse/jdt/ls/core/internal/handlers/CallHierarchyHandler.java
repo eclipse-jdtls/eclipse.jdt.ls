@@ -184,6 +184,7 @@ public class CallHierarchyHandler {
 		SubMonitor sub = SubMonitor.convert(monitor, 2);
 		IMember candidate = getCallHierarchyElement(uri, line, character, false, sub.split(1));
 		if (candidate == null) {
+			sub.done();
 			return null;
 		}
 
@@ -194,7 +195,12 @@ public class CallHierarchyHandler {
 		if (wrapper == null || !wrapper.canHaveChildren()) {
 			return null;
 		}
-		MethodWrapper[] calls = wrapper.getCalls(sub.split(1));
+		IProgressMonitor callMonitor = sub.split(1);
+		MethodWrapper[] calls = wrapper.getCalls(callMonitor);
+		// MethodWrapper does not report progress when called on a cached value
+		// This can result in failing to report progress completion when a set of calls are cached
+		callMonitor.done();
+
 		if (calls == null) {
 			return null;
 		}
@@ -235,6 +241,7 @@ public class CallHierarchyHandler {
 		SubMonitor sub = SubMonitor.convert(monitor, 2);
 		IMember candidate = getCallHierarchyElement(uri, line, character, false, sub.split(1));
 		if (candidate == null) {
+			sub.done();
 			return null;
 		}
 
@@ -244,8 +251,12 @@ public class CallHierarchyHandler {
 		if (wrapper == null) {
 			return null;
 		}
+		IProgressMonitor callMonitor = sub.split(1);
+		MethodWrapper[] calls = wrapper.getCalls(callMonitor);
+		// MethodWrapper does not report progress when called on a cached value
+		// This can result in failing to report progress completion when a set of calls are cached
+		callMonitor.done();
 
-		MethodWrapper[] calls = wrapper.getCalls(sub.split(1));
 		if (calls == null) {
 			return null;
 		}
