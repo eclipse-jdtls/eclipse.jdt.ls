@@ -16,7 +16,10 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.m2e.jdt.MavenJdtPlugin;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -27,12 +30,16 @@ import org.osgi.framework.BundleContext;
 public class JavaLanguageServerTestPlugin implements BundleActivator {
 
 	public static final String PLUGIN_ID = "org.eclipse.jdt.ls.tests";
+	// see org.eclipse.m2e.jdt.MavenJdtPlugin.PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS
+	private static final String PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS = "lookupJVMInToolchains"; //$NON-NLS-1$
 
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(MavenJdtPlugin.PLUGIN_ID);
+		prefs.put(PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS, Boolean.FALSE.toString());
 		TestVMType.setTestJREAsDefault("17");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();

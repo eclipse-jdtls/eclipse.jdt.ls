@@ -65,6 +65,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -296,6 +297,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 			JavaLanguageServerPlugin.logException(e);
 		}
 		ResourcesPlugin.getWorkspace().save(true/*full save*/, null/*no progress*/);
+		CoreASTProvider.getInstance().disposeAST();
 	}
 
 	protected void assertIsJavaProject(IProject project) {
