@@ -29,6 +29,6 @@ public class GradleUtilsTest {
 	@Test
 	public void testGetMajorJavaVersion() {
 		File javaHome = GradleUtils.getJdkToLaunchDaemon("10");
-		assertTrue(javaHome.getAbsolutePath().contains("fakejdk" + File.separator + "10"));
+		assertTrue("javaHome=" + javaHome.getAbsolutePath(), javaHome.getAbsolutePath().contains("fakejdk" + File.separator + "10"));
 	}
 }
