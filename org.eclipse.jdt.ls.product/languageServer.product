@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Java Language Server" uid="languageServer.product" id="org.eclipse.jdt.ls.core.product" application="org.eclipse.jdt.ls.core.id1" version="1.0.0" useFeatures="false" includeLaunchers="true">
+<product name="Java Language Server" uid="languageServer.product" id="org.eclipse.jdt.ls.core.product" application="org.eclipse.jdt.ls.core.id1" version="1.0.0" useFeatures="false" includeLaunchers="true" autoIncludeRequirements="true">
 
    <configIni use="default">
    </configIni>
@@ -23,6 +23,7 @@
    <plugins>
       <plugin id="ch.qos.logback.classic"/>
       <plugin id="ch.qos.logback.core"/>
+      <plugin id="jakarta.servlet-api" version="5.0.0"/>
       <plugin id="org.apache.commons.codec"/>
       <plugin id="org.apache.felix.scr"/>
       <plugin id="org.eclipse.ant.core"/>
@@ -68,6 +69,8 @@
    </plugins>
 
    <configurations>
+      <plugin id="ch.qos.logback.classic" autoStart="true" startLevel="2" />
+      <plugin id="org.apache.aries.spifly.dynamic.bundle" autoStart="true" startLevel="2" />
       <plugin id="org.apache.felix.scr" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
