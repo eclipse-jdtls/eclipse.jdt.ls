@@ -207,18 +207,18 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 	}
 
 	@Test
-	public void testPasteChineseCharactersIntoStringBlock() throws CoreException {
+	public void testPasteChineseCharactersIntoStringLiteral() throws CoreException {
 		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
-				"package test;\n" + //
-						"public class A {\n" + //
-						"\tprivate String hello = \"\";\n" + //
+				"package test;\n" +
+						"public class A {\n" +
+						"\tprivate String hello = \"\";\n" +
 						"}\n",
 				false, monitor);
 
-		var params = new PasteEventParams( //
-				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30), //
-				"你好", //
-				null, //
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 25, 2, 25),
+				"你好",
+				null,
 				new FormattingOptions(4, false));
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
@@ -228,24 +228,24 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 	}
 
 	@Test
-	public void testPasteUnicodeCharactersIntoStringBlock() throws CoreException {
+	public void testPasteUnicodeCharactersIntoStringLiteral() throws CoreException {
 		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
-				"package test;\n" + //
-						"public class A {\n" + //
-						"\tprivate String hello = \"\";\n" + //
+				"package test;\n" +
+						"public class A {\n" +
+						"\tprivate String hello = \"\";\n" +
 						"}\n",
 				false, monitor);
 
-		var params = new PasteEventParams( //
-				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30), //
-				"\u4F60\u597D", //
-				null, //
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 25, 2, 25),
+				"\\u4F60\\u597D",
+				null,
 				new FormattingOptions(4, false));
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
 		Assert.assertNotNull(actual);
-		Assert.assertEquals("\u4F60\u597D", actual.getInsertText());
+		Assert.assertEquals("\\\\u4F60\\\\u597D", actual.getInsertText());
 	}
 
 	private static Location createLocation(String uri, int startLine, int startChar, int endLine, int endChar) {
