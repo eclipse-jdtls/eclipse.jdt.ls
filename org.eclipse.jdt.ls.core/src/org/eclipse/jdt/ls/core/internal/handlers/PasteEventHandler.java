@@ -20,7 +20,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
+import org.apache.commons.lang3.text.translate.EntityArrays;
+import org.apache.commons.lang3.text.translate.LookupTranslator;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -56,6 +58,19 @@ import org.eclipse.text.edits.TextEdit;
  * workspace edits to apply.
  */
 public class PasteEventHandler {
+
+	/**
+	 * This is a variant of {@link org.apache.commons.lang3.StringEscapeUtils#ESCAPE_JAVA},
+	 * and doesn't escape unicode characters unnecessarily.
+	 */
+	public static final CharSequenceTranslator ESCAPE_JAVA =
+		new LookupTranslator(
+            new String[][] {
+              {"\"", "\\\""},
+              {"\\", "\\\\"},
+          }).with(
+            new LookupTranslator(EntityArrays.JAVA_CTRL_CHARS_ESCAPE())
+          );
 
 	/**
 	 * Represents the paste event context.
@@ -247,9 +262,9 @@ public class PasteEventHandler {
 
 		// Get EOL
 		String eol = getEol(text);
-		String newText = StringEscapeUtils.escapeJava(params.getText()).replaceAll("((?:\\\\r)?\\\\n)", "$1\" + //" + eol + leadingIndentation + "\"");
+		String escaped = ESCAPE_JAVA.translate(params.getText());
+		String newText = escaped.replaceAll("((?:\\\\r)?\\\\n)", "$1\" + //" + eol + leadingIndentation + "\"");
 		return new DocumentPasteEdit(newText);
-
 	}
 
 	public static DocumentPasteEdit getMissingImportsWorkspaceEdit(PasteEventParams params, ICompilationUnit cu, IProgressMonitor monitor) throws CoreException {
