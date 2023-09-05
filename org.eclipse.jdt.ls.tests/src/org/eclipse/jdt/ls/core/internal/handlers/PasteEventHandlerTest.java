@@ -56,7 +56,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 24, 2, 24), //
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -76,7 +76,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 24, 2, 24), //
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24), //
 				"aaa\r\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -96,7 +96,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 24, 2, 24), //
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -116,7 +116,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 23, 2, 23), //
+				createLocation(JDTUtils.toUri(unit), 2, 23, 2, 23), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -136,7 +136,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 29, 2, 29), //
+				createLocation(JDTUtils.toUri(unit), 2, 29, 2, 29), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -156,7 +156,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 24, 2, 24), //
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -176,7 +176,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 28, 2, 28), //
+				createLocation(JDTUtils.toUri(unit), 2, 28, 2, 28), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -196,7 +196,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 				false, monitor);
 
 		var params = new PasteEventParams( //
-				l(JDTUtils.toUri(unit), 2, 30, 2, 30), //
+				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30), //
 				"aaa\naaa", //
 				null, //
 				new FormattingOptions(4, false));
@@ -206,7 +206,49 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 		Assert.assertEquals(null, actual);
 	}
 
-	private static Location l(String uri, int startLine, int startChar, int endLine, int endChar) {
+	@Test
+	public void testPasteChineseCharactersIntoStringBlock() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
+				"package test;\n" + //
+						"public class A {\n" + //
+						"\tprivate String hello = \"\";\n" + //
+						"}\n",
+				false, monitor);
+
+		var params = new PasteEventParams( //
+				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30), //
+				"你好", //
+				null, //
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		Assert.assertNotNull(actual);
+		Assert.assertEquals("你好", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteUnicodeCharactersIntoStringBlock() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
+				"package test;\n" + //
+						"public class A {\n" + //
+						"\tprivate String hello = \"\";\n" + //
+						"}\n",
+				false, monitor);
+
+		var params = new PasteEventParams( //
+				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30), //
+				"\u4F60\u597D", //
+				null, //
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		Assert.assertNotNull(actual);
+		Assert.assertEquals("\u4F60\u597D", actual.getInsertText());
+	}
+
+	private static Location createLocation(String uri, int startLine, int startChar, int endLine, int endChar) {
 		Position start = new Position(startLine, startChar);
 		Position end = new Position(endLine, endChar);
 		Range range = new Range(start, end);
