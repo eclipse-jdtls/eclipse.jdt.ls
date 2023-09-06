@@ -55,6 +55,6 @@ public class JavaLsConfigurator extends ContextAwareBase implements Configurator
 			defMavenFilter.setLevel(Level.INFO);
 			defMavenFilter.setAdditive(false);
 		}
-		return ExecutionStatus.INVOKE_NEXT_IF_ANY;
+		return ExecutionStatus.DO_NOT_INVOKE_NEXT_IF_ANY;
 	}
 }
