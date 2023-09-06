@@ -22,6 +22,7 @@ import java.util.List;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -50,6 +51,9 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
 		defaultProject = linkFilesToDefaultProject("singlefile/Single.java").getProject();
+		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, monitor);
+		Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_BUILD, monitor);
+		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, monitor);
 	}
 
 	@Test

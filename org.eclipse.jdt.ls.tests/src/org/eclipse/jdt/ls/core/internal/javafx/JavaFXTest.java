@@ -18,14 +18,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.launching.IVMInstall;
-import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -40,6 +42,7 @@ import org.junit.Test;
 
 public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 
+	private static final String VERSION_1_8 = "1.8";
 	private static final String JAVA8FX_HOME = "java8fx.home";
 	private static final String JAVA_SE_8 = "JavaSE-1.8";
 	private static final String JAVA_SE_17 = "JavaSE-17";
@@ -71,13 +74,8 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 			// Delete JavaFX runtime, project should fail to compile
 			IVMInstall vm = JVMConfigurator.findVM(new File(jdkFXHome), null);
 			vm.getVMInstallType().disposeVMInstall(vm.getId());
-			TestVMType.setTestJREAsDefault("1.8");
-			IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(TestVMType.VMTYPE_ID);
-			IVMInstall jvm8 = vmInstallType.findVMInstall("1.8");
-			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
-			if (environment != null) {
-				environment.setDefaultVM(jvm8);
-			}
+			TestVMType.setTestJREAsDefault(VERSION_1_8);
+			JDTUtils.setCompatibleVMs(VERSION_1_8);
 			JobHelpers.waitForJobsToComplete();
 			List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
 			assertNotEquals(0, errors.size());
@@ -92,22 +90,25 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	@Override
 	@After
-	public void cleanJdkfxHome() throws Exception {
+	public void cleanUp() throws Exception {
+		super.cleanUp();
 		String jdkFXHome = System.getProperty(JAVA8FX_HOME);
 		if (jdkFXHome != null && !jdkFXHome.isBlank()) {
 			IVMInstall vm = JVMConfigurator.findVM(new File(jdkFXHome), null);
 			if (vm != null) {
 				vm.getVMInstallType().disposeVMInstall(vm.getId());
 			}
-			IVMInstallType vmInstallType = JavaRuntime.getVMInstallType(TestVMType.VMTYPE_ID);
-			IVMInstall jvm8 = vmInstallType.findVMInstall("1.8");
-			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
-			if (environment != null) {
-				environment.setDefaultVM(jvm8);
-			}
 		}
 		TestVMType.setTestJREAsDefault("17");
+		JDTUtils.setCompatibleVMs(VERSION_1_8);
+		// Copied from org.eclipse.jdt.core.tests.model.ClasspathInitializerTests.tearDown()
+		// Cleanup caches
+		JavaModelManager manager = JavaModelManager.getJavaModelManager();
+		manager.containers = new HashMap<>(5);
+		manager.variables = new HashMap<>(5);
+		JobHelpers.waitForJobsToComplete();
 	}
 
 	private Preferences createJavaFXRuntimePrefs(String path) {
