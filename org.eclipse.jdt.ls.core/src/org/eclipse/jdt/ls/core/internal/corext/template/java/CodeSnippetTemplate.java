@@ -110,7 +110,7 @@ class TemplatePreferences {
 	public static final String TRYCATCH_CONTENT = "try {\n" + "\t$$TM_SELECTED_TEXT$${1}\n" + "} catch ($${2:Exception} $${3:e}) {\n" + "\t$${0}// TODO: handle exception\n" + "}";
 	public static final String TRYRESOURCES_CONTENT = "try ($${1}) {\n" + "\t$$TM_SELECTED_TEXT$${2}\n" + "} catch ($${3:Exception} $${4:e}) {\n" + "\t$${0}// TODO: handle exception\n" + "}";
 	public static final String MAIN_CONTENT = "public static void main(String[] args) {\n" + "\t$${0}\n" + "}";
-	public static final String CTOR_CONTENT = "$${1|public,protected,private|} $${2:$$TM_FILENAME_BASE}($${3}) {\n" + "\t$${4:super();}$${0}\n" + "}";
+	public static final String CTOR_CONTENT = "$${1|public,protected,private|} ${enclosing_simple_type}($${2}) {\n" + "\t$${3:super();}$${0}\n" + "}";
 	public static final String METHOD_CONTENT = "$${1|public,protected,private|}$${2| , static |}$${3:void} $${4:name}($${5}) {\n" + "\t$${0}\n" + "}";
 	public static final String NEW_CONTENT = "$${1:Object} $${2:foo} = new $${1}($${3});\n" + "$${0}";
 	public static final String FIELD_CONTENT = "$${1|public,protected,private|} $${2:String} $${3:name};";
