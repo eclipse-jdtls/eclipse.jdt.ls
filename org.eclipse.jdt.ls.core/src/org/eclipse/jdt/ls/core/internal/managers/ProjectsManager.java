@@ -20,11 +20,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -447,6 +449,14 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	}
 
 	@Override
+	public Job updateProjects(Collection<IProject> projects, boolean force) {
+		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating project configurations...");
+		UpdateProjectsWorkspaceJob job = new UpdateProjectsWorkspaceJob(projects, force);
+		job.schedule();
+		return job;
+	}
+
+	@Override
 	public Optional<IBuildSupport> getBuildSupport(IProject project) {
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}
@@ -632,4 +642,100 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
+	class UpdateProjectsWorkspaceJob extends WorkspaceJob {
+
+		private final Collection<IProject> projects;
+		private final boolean force;
+
+		public UpdateProjectsWorkspaceJob(Collection<IProject> projects, boolean force) {
+			super("Updating project configurations");
+			this.projects = projects;
+			this.force = force;
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return IConstants.UPDATE_PROJECT_FAMILY.equals(family) || IConstants.JOBS_FAMILY.equals(family);
+		}
+
+		@Override
+		public IStatus runInWorkspace(IProgressMonitor monitor) {
+			long start = System.currentTimeMillis();
+			MultiStatus status = new MultiStatus(IConstants.PLUGIN_ID, 0, "Update project configurations");
+			for (Entry<String, Map<IBuildSupport, IProject>> entry : groupByBuildToolName(projects).entrySet()) {
+				Map<IBuildSupport, IProject> projectsWithBuildSupport = entry.getValue();
+				String buildToolName = entry.getKey();
+				if (!Objects.equals(buildToolName, "UnknownBuildTool")) {
+					IStatus onWillUpdateStatus = onWillConfigurationUpdate(
+							projectsWithBuildSupport.keySet().iterator().next(),
+							projectsWithBuildSupport.values(), monitor);
+					if (!onWillUpdateStatus.isOK()) {
+						status.add(onWillUpdateStatus);
+						// if onWillUpdate() failed, skip updating the projects.
+						continue;
+					}
+				}
+				for (Entry<IBuildSupport, IProject> projectWithBuildSupportEntry : projectsWithBuildSupport.entrySet()) {
+					if (monitor.isCanceled()) {
+						return Status.CANCEL_STATUS;
+					}
+					updateProject(projectWithBuildSupportEntry, force, status, monitor);
+				}
+			}
+
+			onDidConfigurationUpdated(status, monitor);
+			long elapsed = System.currentTimeMillis() - start;
+			JavaLanguageServerPlugin.logInfo("Projects updated in " + elapsed + " ms");
+			return status;
+		}
+
+		private Map<String, Map<IBuildSupport, IProject>> groupByBuildToolName(Collection<IProject> projects) {
+			Map<String, Map<IBuildSupport, IProject>> groupByBuildToolName = new HashMap<>();
+			for (IProject project : projects) {
+				Optional<IBuildSupport> buildSupport = getBuildSupport(project);
+				if (buildSupport.isPresent()) {
+					IBuildSupport bs = buildSupport.get();
+					String buildToolName = bs.buildToolName();
+					groupByBuildToolName.computeIfAbsent(buildToolName, k -> new HashMap<>()).put(bs, project);
+				}
+			}
+			return groupByBuildToolName;
+		}
+
+		private IStatus onWillConfigurationUpdate(IBuildSupport buildSupport, Collection<IProject> projects,
+				IProgressMonitor monitor) {
+			try {
+				buildSupport.onWillUpdate(projects, monitor);
+				return Status.OK_STATUS;
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+				return StatusFactory.newErrorStatus("Failed to prepare update from " + buildSupport.buildToolName(), e);
+			}
+		}
+
+		private void updateProject(Entry<IBuildSupport, IProject> projectWithBuildSupportEntry, boolean force,
+				MultiStatus status, IProgressMonitor monitor) {
+			IBuildSupport buildSupport = projectWithBuildSupportEntry.getKey();
+			IProject project = projectWithBuildSupportEntry.getValue();
+			try {
+				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+				buildSupport.update(project, force, monitor);
+				project.deleteMarkers(BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ONE);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+				status.add(StatusFactory.newErrorStatus("Error updating " + project.getName(), e));
+			}
+		}
+
+		private void onDidConfigurationUpdated(MultiStatus status, IProgressMonitor monitor) {
+			try {
+				registerWatchers(true);
+				updateEncoding(monitor);
+				reportProjectsStatus();
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+				status.add(StatusFactory.newErrorStatus("Error updating encoding", e));
+			}
+		}
+	}
 }
