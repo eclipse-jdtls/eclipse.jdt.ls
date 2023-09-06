@@ -13,9 +13,15 @@
 
 package org.eclipse.jdt.ls.core.internal.corext.template.java;
 
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.corext.template.java.AbstractJavaContextTypeCore;
+import org.eclipse.jdt.internal.corext.template.java.CompilationUnitContext;
 import org.eclipse.jdt.internal.corext.template.java.IJavaContext;
+import org.eclipse.jdt.internal.corext.template.java.JavaTemplateMessages;
 import org.eclipse.jdt.internal.corext.template.java.VarResolver;
+import org.eclipse.jface.text.templates.TemplateContext;
 import org.eclipse.jface.text.templates.TemplateVariableResolver;
 
 /**
@@ -75,10 +81,44 @@ public class JavaContextType extends AbstractJavaContextTypeCore {
 		// TODO: Some of the resolvers are defined in org.eclipse.jdt.ui/plugin.xml, now we have to add them manually.
 		// See: https://github.com/eclipse-jdt/eclipse.jdt.ui/blob/dc995e7a0069e1eca58b19a4bc365032c50b0201/org.eclipse.jdt.ui/plugin.xml#L5674-L5752
 		addResolver("var", new VarResolver());
+		addResolver(new SimpleType());
 	}
 
 	public synchronized void addResolver(String type, TemplateVariableResolver resolver) {
 		resolver.setType(type);
 		addResolver(resolver);
 	}
+
+	// Copied from org.eclipse.jdt.internal.corext.template.java.CompilationUnitContextType.EnclosingJavaElement
+	protected static class EnclosingJavaElement extends TemplateVariableResolver {
+		protected final int fElementType;
+
+		public EnclosingJavaElement(String name, String description, int elementType) {
+			super(name, description);
+			fElementType = elementType;
+		}
+
+		@Override
+		protected String resolve(TemplateContext context) {
+			IJavaElement element = ((CompilationUnitContext) context).findEnclosingElement(fElementType);
+			if (element instanceof IType) {
+				// Flag was changed to permit non-qualified types
+				return JavaElementLabelsCore.getElementLabel(element, 0);
+			}
+			return (element == null) ? null : element.getElementName();
+		}
+
+		@Override
+		protected boolean isUnambiguous(TemplateContext context) {
+			return resolve(context) != null;
+		}
+	}
+
+	// Copied from org.eclipse.jdt.internal.corext.template.java.CompilationUnitContextType.Type
+	protected static class SimpleType extends EnclosingJavaElement {
+		public SimpleType() {
+			super("enclosing_simple_type", JavaTemplateMessages.CompilationUnitContextType_variable_description_enclosing_type, IJavaElement.TYPE);
+		}
+	}
 }
+

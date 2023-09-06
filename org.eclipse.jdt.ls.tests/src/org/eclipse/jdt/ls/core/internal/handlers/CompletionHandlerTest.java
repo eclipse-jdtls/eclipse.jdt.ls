@@ -1283,6 +1283,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_ctor() throws JavaModelException {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public class MainClass {\n"
+				+ "}" +
+				"class AnotherClass {\n"
+				+ "ctor\n"
+				+ "}"
+			);
+			//@formatter:on
+		CompletionList list = requestCompletions(unit, "ctor");
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem item = items.get(0);
+		assertEquals("ctor", item.getLabel());
+		String newText = item.getTextEdit().getLeft().getNewText();
+		assertEquals("${1|public,protected,private|} AnotherClass(${2}) {\n" + "\t${3:super();}${0}\n" + "}", newText);
+	}
+
+	@Test
 	public void testSnippet_interface() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
 		CompletionList list = requestCompletions(unit, "");
