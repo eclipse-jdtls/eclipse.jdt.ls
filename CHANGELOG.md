@@ -1,5 +1,32 @@
 # Change Log
 
+# [1.27.0 (September 12th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/117?closed=1)
+ * performance - Stale code actions should be cancellable and paste actions should have higher priority. See [#2799](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2799).
+ * enhancement - Introduce new snippet templates with appropriate context. See [#2800](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2800).
+ * enhancement - Add folding range for multiple single-line comments. See [#2797](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2797).
+ * enhancement - Use a more appropriate completion item image for annotation attributes and records. See [#2796](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2796).
+ * enhancement - Add support for LSP-standard type hierarchy. See [#2769](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2769), [#2814](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2814).
+ * enhancement - Select suitable JDK to launch Gradle. See [#2812](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2812).
+ * bug fix - Call hierarchy should always report the end of its progress. See [#2827](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2827).
+ * bug fix - Fix multiline semantic highlighting for `class`, `interface` & `record` declarations. See [#2807](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2807), [#2789](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2789).
+ * bug fix - The type declaration snippets should generate file headers. See [#2813](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2813).
+ * bug fix - Fix folding ranges for nested switch statements. See [#2794](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2794).
+ * bug fix - Fix "java.lang.VerifyError: Operand stack overflow". See [#2790](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2790).
+ * bug fix - Record methods are not recognized under certain conditions. See [#2788](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2788).
+ * bug fix - Fix compiler arguments parsing failure in Gradle build support. See [#2781](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2781).
+ * bug fix - Add check for `workDoneProgress` client capability. See [#2776](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2776).
+ * bug fix - Filter out excessive logging of classfile parsing from m2e in "debug mode". See [#2785](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2785).
+ * bug fix - Don't escape unicode characters when pasting string literals. See [#2834](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2834).
+ * bug fix - Enable by default syntactic null analysis for fields. See [#2822](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2822).
+ * build - Support python wrapper for Windows. See [#2808](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2808).
+ * build - Fix Java LS tests. See [#2829](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2829), [#2737](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2737).
+ * build - Use upstream Apache commons instead of Orbit ones. See [#2826](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2826).
+ * build - Update m2e to 2.4.0. See [#2825](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2825), [#2831](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2831), [#2837](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2837).
+ * build - Support native builds of arm/aarch64. See [#2784](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2784).
+ * build - Update Tycho from 4.0.0 to 4.0.2. See [#2786](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2786), [#2804](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2804).
+ * build - Convert CleanUpTest to use Java Text Blocks. See [#2795](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2795).
+ * build - Modernization and reduce unnecessary comments in cleanups package. See [#2791](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2791).
+
 # [1.26.0 (July 27th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/116?closed=1)
  * performance - Check completion proposal is compatible or not. See [#2733](https://github.com/eclipse/eclipse.jdt.ls/pull/2733).
  * enhancement - Add support for smart semicolon insertion. See [#2710](https://github.com/eclipse/eclipse.jdt.ls/pull/2710).
