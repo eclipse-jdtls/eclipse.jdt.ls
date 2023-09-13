@@ -158,6 +158,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			} catch (CoreException e) {
 				// if a rootPath import failed, keep importing the next rootPath
 				importStatusCollection.add(e.getStatus());
+				JavaLanguageServerPlugin.logException("Failed to import projects", e);
 			}
 		}
 		if (!importStatusCollection.isOK()) {
@@ -180,6 +181,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			} catch (CoreException e) {
 				// if a rootPath import failed, keep importing the next rootPath
 				importStatusCollection.add(e.getStatus());
+				JavaLanguageServerPlugin.logException("Failed to import projects", e);
 			}
 		}
 		if (!importStatusCollection.isOK()) {
