@@ -28,6 +28,7 @@ import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -92,7 +93,7 @@ public class CompletionInsertReplaceCapabilityTest extends AbstractCompilationUn
 	private void mockClient() {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(true);
+		Mockito.lenient().when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(true);
 		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
 	}
 }

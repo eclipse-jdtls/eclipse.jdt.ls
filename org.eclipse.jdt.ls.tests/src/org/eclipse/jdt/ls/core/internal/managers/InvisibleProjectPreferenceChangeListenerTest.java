@@ -193,7 +193,7 @@ public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisi
 		JavaLanguageClient client = mock(JavaLanguageClient.class);
 		ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
 		pm.setConnection(client);
-		doNothing().when(client).showMessage(any(MessageParams.class));
+		Mockito.lenient().doNothing().when(client).showMessage(any(MessageParams.class));
 		copyAndImportFolder("singlefile/simple", "src/App.java");
 
 		List<IPath> rootPaths = new ArrayList<>(preferenceManager.getPreferences().getRootPaths());

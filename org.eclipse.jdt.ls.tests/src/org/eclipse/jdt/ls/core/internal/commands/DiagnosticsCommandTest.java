@@ -76,9 +76,9 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 	private Preferences mockPreferences() {
 		Preferences mockPreferences = Mockito.mock(Preferences.class);
 		Mockito.when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
-		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
+		Mockito.lenient().when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
 		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
-		when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
 		return mockPreferences;
 	}
 
