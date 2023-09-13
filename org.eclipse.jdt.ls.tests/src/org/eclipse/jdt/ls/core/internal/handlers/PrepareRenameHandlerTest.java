@@ -38,6 +38,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,8 +57,8 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		this.clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(false);
 		Preferences p = mock(Preferences.class);
-		when(preferenceManager.getPreferences()).thenReturn(p);
-		when(p.isRenameEnabled()).thenReturn(true);
+		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(p);
+		Mockito.lenient().when(p.isRenameEnabled()).thenReturn(true);
 		handler = new PrepareRenameHandler(preferenceManager);
 	}
 
@@ -160,7 +161,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testRenameTypeWithResourceChanges() throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
@@ -276,7 +277,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test(expected = ResponseErrorException.class)
 	public void testRenamePackage() throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = sourceFolder.createPackageFragment("parent.test2", false, null);
@@ -312,7 +313,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test(expected = ResponseErrorException.class)
 	public void testRenameMiddleOfPackage() throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
 
@@ -358,7 +359,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test(expected = ResponseErrorException.class)
 	public void testRenameImportDeclaration() throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
 
@@ -379,7 +380,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	private void testRenameClassFile(String type) throws JavaModelException, BadLocationException {
-		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
 
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
 

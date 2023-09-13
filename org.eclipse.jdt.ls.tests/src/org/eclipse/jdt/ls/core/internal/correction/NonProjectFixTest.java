@@ -83,14 +83,14 @@ public class NonProjectFixTest extends AbstractProjectsManagerBasedTest {
 
 	private Preferences mockPreferences() {
 		Preferences mockPreferences = Mockito.mock(Preferences.class);
-		Mockito.when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
-		Mockito.when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
+		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
+		Mockito.lenient().when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
 		when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
 		return mockPreferences;
 	}
 
-	private List<Either<Command, CodeAction>> getCodeActions(ICompilationUnit cu, IProblem problem) throws JavaModelException {		
+	private List<Either<Command, CodeAction>> getCodeActions(ICompilationUnit cu, IProblem problem) throws JavaModelException {
 		CodeActionParams parms = new CodeActionParams();
 		Range range = JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 
@@ -139,7 +139,7 @@ public class NonProjectFixTest extends AbstractProjectsManagerBasedTest {
 			assertEquals(3, action.getCommand().getArguments().size());
 			assertEquals("thisFile", action.getCommand().getArguments().get(1));
 			assertEquals(false, action.getCommand().getArguments().get(2));
-	
+
 			action = actions.get(1).getRight();
 			assertEquals(CodeActionKind.QuickFix, action.getKind());
 			assertEquals(ActionMessages.ReportAllErrorsForAnyNonProjectFile, action.getCommand().getTitle());
@@ -212,7 +212,7 @@ public class NonProjectFixTest extends AbstractProjectsManagerBasedTest {
 			assertEquals(3, action.getCommand().getArguments().size());
 			assertEquals("thisFile", action.getCommand().getArguments().get(1));
 			assertEquals(true, action.getCommand().getArguments().get(2));
-	
+
 			action = actions.get(1).getRight();
 			assertEquals(CodeActionKind.QuickFix, action.getKind());
 			assertEquals(ActionMessages.ReportSyntaxErrorsForAnyNonProjectFile, action.getCommand().getTitle());
