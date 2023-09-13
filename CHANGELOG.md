@@ -1,5 +1,9 @@
 # Change Log
 
+# [1.27.1 (September 14th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/118?closed=1)
+ * bug fix - Log errors from project importer. See [#2843](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2843).
+ * build - Update target platform to 4.29 Release build. See [#2848](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2848).
+
 # [1.27.0 (September 12th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/117?closed=1)
  * performance - Stale code actions should be cancellable and paste actions should have higher priority. See [#2799](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2799).
  * enhancement - Introduce new snippet templates with appropriate context. See [#2800](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2800).
