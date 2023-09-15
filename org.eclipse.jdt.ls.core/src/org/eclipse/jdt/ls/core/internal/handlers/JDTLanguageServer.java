@@ -254,6 +254,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		this.workspaceEventHandler = new WorkspaceEventsHandler(pm, this.client, this.documentLifeCycleHandler);
 		this.telemetryManager.setLanguageClient(client);
 		this.telemetryManager.setPreferenceManager(preferenceManager);
+		this.telemetryManager.setProjectseManager(pm);
 	}
 
 	// For testing purpose

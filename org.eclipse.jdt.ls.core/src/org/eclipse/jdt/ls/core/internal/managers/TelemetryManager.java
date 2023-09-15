@@ -68,13 +68,16 @@ public class TelemetryManager {
 		this.prefs = prefs;
 	}
 
+	public void setProjectseManager(ProjectsManager projectsManager) {
+		this.projectsManager = projectsManager;
+	}
+
 	public void onLanguageServerStart(long timeMillis, boolean firstTimeInitialization) {
 		this.languageServerStartTime = timeMillis;
 		this.firstTimeInitialization = firstTimeInitialization;
 	}
 
-	public void onProjectsInitialized(ProjectsManager projectsManager, long timeMillis) {
-		this.projectsManager = projectsManager;
+	public void onProjectsInitialized(long timeMillis) {
 		this.projectsInitializedTime = timeMillis;
 	}
 
@@ -133,7 +136,7 @@ public class TelemetryManager {
 					} catch (CoreException e) {
 						// ignore
 					}
-					
+
 				}
 			}
 		}
