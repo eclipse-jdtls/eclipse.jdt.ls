@@ -130,7 +130,7 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
@@ -573,7 +573,7 @@ public class ExtractTempRefactoring extends Refactoring {
 		final BodyDeclaration decl = ASTNodes.getParent(fSelectedExpression.getAssociatedExpression(), BodyDeclaration.class);
 		if (decl instanceof MethodDeclaration) {
 			final IMethodBinding method = ((MethodDeclaration) decl).resolveBinding();
-			final String label = method != null ? BindingLabelProviderCore.getBindingLabel(method, JavaElementLabels.ALL_FULLY_QUALIFIED) : BasicElementLabels.getJavaElementName('{' + JavaElementLabels.ELLIPSIS_STRING + '}');
+			final String label = method != null ? BindingLabelProviderCore.getBindingLabel(method, JavaElementLabelsCore.ALL_FULLY_QUALIFIED) : BasicElementLabels.getJavaElementName('{' + JavaElementLabelsCore.ELLIPSIS_STRING + '}');
 			comment.addSetting(Messages.format(RefactoringCoreMessages.ExtractTempRefactoring_destination_pattern, label));
 		}
 		comment.addSetting(Messages.format(RefactoringCoreMessages.ExtractTempRefactoring_expression_pattern, BasicElementLabels.getJavaCodeString(expression)));

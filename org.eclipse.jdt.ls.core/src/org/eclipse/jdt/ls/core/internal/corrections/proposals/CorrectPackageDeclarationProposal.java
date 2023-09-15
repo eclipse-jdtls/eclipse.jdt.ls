@@ -26,7 +26,7 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.text.edits.DeleteEdit;
@@ -79,11 +79,11 @@ public class CorrectPackageDeclarationProposal extends CUCorrectionProposal {
 				return Messages.format(CorrectionMessages.CorrectPackageDeclarationProposal_remove_description, BasicElementLabels.getJavaElementName(decls[0].getElementName()));
 			}
 			if (!parentPack.isDefaultPackage() && decls.length == 0) {
-				return (Messages.format(CorrectionMessages.CorrectPackageDeclarationProposal_add_description,  JavaElementLabels.getElementLabel(parentPack, JavaElementLabels.ALL_DEFAULT)));
+				return (Messages.format(CorrectionMessages.CorrectPackageDeclarationProposal_add_description,  JavaElementLabelsCore.getElementLabel(parentPack, JavaElementLabelsCore.ALL_DEFAULT)));
 			}
 		} catch(JavaModelException e) {
 			JavaLanguageServerPlugin.log(e);
 		}
-		return (Messages.format(CorrectionMessages.CorrectPackageDeclarationProposal_change_description, JavaElementLabels.getElementLabel(parentPack, JavaElementLabels.ALL_DEFAULT)));
+		return (Messages.format(CorrectionMessages.CorrectPackageDeclarationProposal_change_description, JavaElementLabelsCore.getElementLabel(parentPack, JavaElementLabelsCore.ALL_DEFAULT)));
 	}
 }

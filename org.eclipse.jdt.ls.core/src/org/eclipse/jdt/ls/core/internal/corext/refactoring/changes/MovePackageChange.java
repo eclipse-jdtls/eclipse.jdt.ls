@@ -21,7 +21,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public class MovePackageChange extends PackageReorgChange {
@@ -38,8 +38,8 @@ public class MovePackageChange extends PackageReorgChange {
 
 	@Override
 	public String getName() {
-		String packageName= JavaElementLabels.getElementLabel(getPackage(), JavaElementLabels.ALL_DEFAULT);
-		String destinationName= JavaElementLabels.getElementLabel(getDestination(), JavaElementLabels.ALL_DEFAULT);
+		String packageName= JavaElementLabelsCore.getElementLabel(getPackage(), JavaElementLabelsCore.ALL_DEFAULT);
+		String destinationName= JavaElementLabelsCore.getElementLabel(getDestination(), JavaElementLabelsCore.ALL_DEFAULT);
 		return Messages.format(RefactoringCoreMessages.MovePackageChange_move, new String[] {packageName, destinationName });
 	}
 }

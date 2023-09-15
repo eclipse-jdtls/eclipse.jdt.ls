@@ -139,7 +139,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.util.QualifiedNameFin
 import org.eclipse.jdt.ls.core.internal.corext.util.Changes;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementResourceMapping;
 import org.eclipse.jdt.ls.core.internal.corext.util.QualifiedNameSearchResult;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.ChangeDescriptor;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
@@ -3636,7 +3636,7 @@ public final class ReorgPolicyFactory {
 			if (destination == null) {
 				destination= getResourceDestination();
 			}
-			return JavaElementLabels.getTextLabel(destination, JavaElementLabels.ALL_FULLY_QUALIFIED);
+			return JavaElementLabelsCore.getTextLabel(destination, JavaElementLabelsCore.ALL_FULLY_QUALIFIED);
 		}
 
 		protected abstract String getHeaderPatternSingular();
@@ -4114,7 +4114,7 @@ public final class ReorgPolicyFactory {
 			final IProject resource= getSingleProject();
 			final String project= resource != null ? resource.getName() : null;
 			final String header= length == 1 ? Messages.format(getHeaderPatternSingular(), new String[] {
-					JavaElementLabels.getTextLabel(fJavaElements[0].getElementName(), JavaElementLabels.ALL_FULLY_QUALIFIED), getDestinationLabel() }) : Messages.format(getHeaderPatternPlural(),
+					JavaElementLabelsCore.getTextLabel(fJavaElements[0].getElementName(), JavaElementLabelsCore.ALL_FULLY_QUALIFIED), getDestinationLabel() }) : Messages.format(getHeaderPatternPlural(),
 					new String[] { String.valueOf(length), getDestinationLabel() });
 			int flags= JavaRefactoringDescriptor.JAR_REFACTORING | JavaRefactoringDescriptor.JAR_MIGRATION | RefactoringDescriptor.STRUCTURAL_CHANGE | RefactoringDescriptor.MULTI_CHANGE;
 			final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(project, this, header);

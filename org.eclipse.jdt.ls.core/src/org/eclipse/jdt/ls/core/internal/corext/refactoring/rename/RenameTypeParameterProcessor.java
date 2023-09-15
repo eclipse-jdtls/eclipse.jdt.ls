@@ -57,7 +57,7 @@ import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -273,7 +273,7 @@ public class RenameTypeParameterProcessor extends JavaRenameProcessor implements
 					project= javaProject.getElementName();
 				}
 				String description= Messages.format(RefactoringCoreMessages.RenameTypeParameterProcessor_descriptor_description_short, BasicElementLabels.getJavaElementName(fTypeParameter.getElementName()));
-				String header= Messages.format(RefactoringCoreMessages.RenameTypeParameterProcessor_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fTypeParameter.getElementName()), JavaElementLabels.getElementLabel(fTypeParameter.getDeclaringMember(), JavaElementLabels.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(getNewElementName())});
+				String header= Messages.format(RefactoringCoreMessages.RenameTypeParameterProcessor_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fTypeParameter.getElementName()), JavaElementLabelsCore.getElementLabel(fTypeParameter.getDeclaringMember(), JavaElementLabelsCore.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(getNewElementName())});
 				String comment= new JDTRefactoringDescriptorComment(project, this, header).asString();
 				RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_TYPE_PARAMETER);
 				descriptor.setProject(project);

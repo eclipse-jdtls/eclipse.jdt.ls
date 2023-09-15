@@ -27,7 +27,7 @@ import org.eclipse.jdt.core.ISourceManipulation;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.NullChange;
 import org.eclipse.ltk.internal.core.refactoring.resource.UndoDeleteResourceChange;
@@ -64,7 +64,7 @@ public class DeleteSourceManipulationChange extends AbstractDeleteChange {
 	@Override
 	public String getName() {
 		IJavaElement javaElement= getJavaElement(getSourceManipulation());
-		return Messages.format(RefactoringCoreMessages.DeleteSourceManipulationChange_0, JavaElementLabels.getElementLabel(javaElement, JavaElementLabels.ALL_DEFAULT));
+		return Messages.format(RefactoringCoreMessages.DeleteSourceManipulationChange_0, JavaElementLabelsCore.getElementLabel(javaElement, JavaElementLabelsCore.ALL_DEFAULT));
 	}
 
 	/*

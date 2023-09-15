@@ -13,9 +13,9 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.core.resources.IResource.DEPTH_ONE;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ROOT_VARIABLE;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.ALL_DEFAULT;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.M_APP_RETURNTYPE;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.ROOT_VARIABLE;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +109,8 @@ import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelComposerCore;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.internal.core.util.Util;
@@ -124,8 +126,6 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabelComposer;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -148,6 +148,17 @@ public final class JDTUtils {
 	public static final String PERIOD = ".";
 	public static final String SRC = "src";
 	private static final String JDT_SCHEME = "jdt";
+	private static final long LABEL_FLAGS=
+			JavaElementLabelsCore.ALL_FULLY_QUALIFIED
+			| JavaElementLabelsCore.M_PRE_RETURNTYPE
+			| JavaElementLabelsCore.M_PARAMETER_ANNOTATIONS
+			| JavaElementLabelsCore.M_PARAMETER_TYPES
+			| JavaElementLabelsCore.M_PARAMETER_NAMES
+			| JavaElementLabelsCore.M_EXCEPTIONS
+			| JavaElementLabelsCore.F_PRE_TYPE_SIGNATURE
+			| JavaElementLabelsCore.M_PRE_TYPE_PARAMETERS
+			| JavaElementLabelsCore.T_TYPE_PARAMETERS
+			| JavaElementLabelsCore.USE_RESOLVED;
 	//Code generators known to cause problems
 	private static Set<String> SILENCED_CODEGENS = Collections.singleton("lombok");
 
@@ -340,13 +351,13 @@ public final class JDTUtils {
 	 * Returns with the human readable name of the element. For types with type
 	 * arguments, it is {@code Comparable<T>} instead of {@code Comparable}. First,
 	 * this method tries to retrieve the
-	 * {@link JavaElementLabels#getElementLabel(IJavaElement, long) label} of the
+	 * {@link JavaElementLabelsCore#getElementLabel(IJavaElement, long) label} of the
 	 * element, then falls back to {@link IJavaElement#getElementName() element
 	 * name}. Returns {@code null} if the argument does not have a name.
 	 */
 	public static String getName(IJavaElement element) {
 		Assert.isNotNull(element, "element");
-		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
+		String name = JavaElementLabelsCore.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
 		return name == null ? element.getElementName() : name;
 	}
 
@@ -1393,8 +1404,8 @@ public final class JDTUtils {
 
 		} else if (defaultValue != null) {
 			IAnnotation parentAnnotation = (IAnnotation) method.getAncestor(IJavaElement.ANNOTATION);
-			StringBuilder buf = new StringBuilder();
-			new JavaElementLabelComposer(buf).appendAnnotationValue(parentAnnotation, defaultValue, valueKind, JavaElementLabels.LABEL_FLAGS);
+			StringBuffer buf = new StringBuffer();
+			new JavaElementLabelComposerCore(buf).appendAnnotationValue(parentAnnotation, defaultValue, valueKind, LABEL_FLAGS);
 			return buf.toString();
 		}
 
@@ -1437,7 +1448,7 @@ public final class JDTUtils {
 			buf.append('{');
 			for (int i = 0; i < values.length; i++) {
 				if (i > 0) {
-					buf.append(JavaElementLabels.COMMA_STRING);
+					buf.append(JavaElementLabelsCore.COMMA_STRING);
 				}
 				addValue(buf, values[i], addLinks);
 			}
@@ -1467,7 +1478,7 @@ public final class JDTUtils {
 			buf.append('(');
 			for (int j = 0; j < mvPairs.length; j++) {
 				if (j > 0) {
-					buf.append(JavaElementLabels.COMMA_STRING);
+					buf.append(JavaElementLabelsCore.COMMA_STRING);
 				}
 				IMemberValuePairBinding mvPair = mvPairs[j];
 				if (addLinks) {

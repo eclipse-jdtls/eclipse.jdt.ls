@@ -26,7 +26,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 
 /**
  * JDT-UI-internal helper methods to find AST nodes or bindings.
@@ -43,7 +43,7 @@ public class ASTResolving extends org.eclipse.jdt.internal.core.manipulation.dom
 		buf.append(name).append('(');
 		for (int i= 0; i < params.length; i++) {
 			if (i > 0) {
-				buf.append(JavaElementLabels.COMMA_STRING);
+				buf.append(JavaElementLabelsCore.COMMA_STRING);
 			}
 			if (isVarArgs && i == params.length - 1) {
 				buf.append(getTypeSignature(params[i].getElementType()));

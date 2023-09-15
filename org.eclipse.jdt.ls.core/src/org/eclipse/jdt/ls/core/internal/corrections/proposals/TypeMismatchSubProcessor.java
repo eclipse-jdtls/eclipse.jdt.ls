@@ -67,7 +67,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
@@ -286,7 +286,7 @@ public class TypeMismatchSubProcessor {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		String label;
-		String castType= BindingLabelProviderCore.getBindingLabel(castTypeBinding, JavaElementLabels.ALL_DEFAULT);
+		String castType= BindingLabelProviderCore.getBindingLabel(castTypeBinding, JavaElementLabelsCore.ALL_DEFAULT);
 		if (nodeToCast.getNodeType() == ASTNode.CAST_EXPRESSION) {
 			label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changecast_description, castType);
 		} else {

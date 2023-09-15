@@ -91,7 +91,7 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringContribution;
@@ -661,8 +661,8 @@ public class IntroduceParameterRefactoring extends Refactoring implements IDeleg
 		final String description= Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_descriptor_description_short, BasicElementLabels.getJavaElementName(fChangeSignatureProcessor.getMethod().getElementName()));
 		final String header= Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fParameter.getNewName()), signature, BasicElementLabels.getJavaCodeString(ASTNodes.asString(fSelectedExpression))});
 		final JDTRefactoringDescriptorComment comment= new JDTRefactoringDescriptorComment(extended.getProject(), this, header);
-		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_original_pattern, JavaElementLabels.getTextLabel(fChangeSignatureProcessor.getMethod(),
-				JavaElementLabels.ALL_FULLY_QUALIFIED)));
+		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_original_pattern, JavaElementLabelsCore.getTextLabel(fChangeSignatureProcessor.getMethod(),
+				JavaElementLabelsCore.ALL_FULLY_QUALIFIED)));
 		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_expression_pattern, BasicElementLabels.getJavaCodeString(ASTNodes.asString(fSelectedExpression))));
 		comment.addSetting(Messages.format(RefactoringCoreMessages.IntroduceParameterRefactoring_parameter_pattern, BasicElementLabels.getJavaElementName(getAddedParameterInfo().getNewName())));
 		return RefactoringSignatureDescriptorFactory.createIntroduceParameterDescriptor(extended.getProject(), description, comment.asString(), arguments, extended.getFlags());

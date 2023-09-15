@@ -22,7 +22,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.INewNameQuery;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public class CopyPackageChange extends PackageReorgChange {
@@ -39,8 +39,8 @@ public class CopyPackageChange extends PackageReorgChange {
 
 	@Override
 	public String getName() {
-		String packageName= JavaElementLabels.getElementLabel(getPackage(), JavaElementLabels.ALL_DEFAULT);
-		String destinationName= JavaElementLabels.getElementLabel(getDestination(), JavaElementLabels.ALL_DEFAULT);
+		String packageName= JavaElementLabelsCore.getElementLabel(getPackage(), JavaElementLabelsCore.ALL_DEFAULT);
+		String destinationName= JavaElementLabelsCore.getElementLabel(getDestination(), JavaElementLabelsCore.ALL_DEFAULT);
 		return Messages.format(RefactoringCoreMessages.CopyPackageChange_copy, new String[]{ packageName, destinationName});
 	}
 }

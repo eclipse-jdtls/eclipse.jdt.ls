@@ -53,7 +53,7 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 
 
 public class ReorgUtils {
@@ -192,7 +192,7 @@ public class ReorgUtils {
 
 	public static String getName(IJavaElement element) throws JavaModelException {
 		String pattern= createNamePattern(element);
-		String arg= JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
+		String arg= JavaElementLabelsCore.getElementLabel(element, JavaElementLabelsCore.ALL_DEFAULT);
 		return Messages.format(pattern, arg);
 	}
 

@@ -97,7 +97,7 @@ import org.eclipse.jdt.internal.corext.refactoring.util.CodeAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaStatusContext;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
@@ -659,7 +659,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 				StringBuilder affectedLocals = new StringBuilder();
 				for (int i = 0; i < localReads.size(); i++) {
 					IVariableBinding binding = localReads.get(i);
-					String bindingName = BindingLabelProviderCore.getBindingLabel(binding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS | JavaElementLabels.F_PRE_TYPE_SIGNATURE);
+					String bindingName = BindingLabelProviderCore.getBindingLabel(binding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS | JavaElementLabelsCore.F_PRE_TYPE_SIGNATURE);
 					affectedLocals.append(bindingName);
 					if (i != localReads.size() - 1) {
 						affectedLocals.append('\n');
