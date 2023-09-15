@@ -104,6 +104,7 @@ import org.eclipse.jdt.internal.corext.refactoring.JDTRefactoringDescriptorComme
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringArguments;
 import org.eclipse.jdt.internal.corext.refactoring.JavaRefactoringDescriptorUtil;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ASTNodeDeleteUtil;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.CreateTargetExecutionLog;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQueries;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.ICreateTargetQuery;
@@ -3959,7 +3960,7 @@ public final class ReorgPolicyFactory {
 				BodyDeclaration decl= ASTNodeSearchUtil.getBodyDeclarationNode(member, sourceCuNode);
 				if (decl != null) {
 					ImportRewriteContext context= new ContextSensitiveImportRewriteContext(destinationContainer, targetRewriter.getImportRewrite());
-					ImportRewriteUtil.addImports(targetRewriter, context, decl, new HashMap<Name, String>(), new HashMap<Name, String>(), false);
+					ImportRewriteUtil.addImports(targetRewriter, context, decl, new HashMap<>(), new HashMap<>(), false);
 				}
 			}
 		}
