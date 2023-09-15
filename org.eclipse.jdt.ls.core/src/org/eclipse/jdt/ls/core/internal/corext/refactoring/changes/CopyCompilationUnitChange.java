@@ -20,9 +20,9 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.INewNameQuery;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public class CopyCompilationUnitChange extends CompilationUnitReorgChange {

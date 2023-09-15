@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;

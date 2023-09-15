@@ -28,7 +28,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.internal.corext.dom.Selection;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 public class LocalTypeAnalyzer extends ASTVisitor {

@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationStateChange;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.ASTNodeDeleteUtil;
@@ -43,7 +44,6 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewr
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringFileBuffers;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.ClasspathChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DeletePackageFragmentRootChange;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.DeleteSourceManipulationChange;

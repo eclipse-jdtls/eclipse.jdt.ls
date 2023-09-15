@@ -22,9 +22,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.AbstractJavaElementRenameChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.ltk.core.refactoring.Change;
 
 public final class RenameCompilationUnitChange extends AbstractJavaElementRenameChange {
