@@ -34,7 +34,7 @@ import org.eclipse.jdt.internal.corext.refactoring.reorg.IConfirmQuery;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgQueries;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 
 class OverwriteHelper {
 	private Object fDestination;
@@ -112,7 +112,7 @@ class OverwriteHelper {
 			IPackageFragmentRoot root= fRoots[i];
 			if (canOverwrite(root)) {
 				if (root.getResource() instanceof IContainer) {
-					if (!skip(JavaElementLabels.getElementLabel(root, JavaElementLabels.ALL_DEFAULT), skipQuery)) {
+					if (!skip(JavaElementLabelsCore.getElementLabel(root, JavaElementLabelsCore.ALL_DEFAULT), skipQuery)) {
 						toNotOverwrite.add(root);
 					}
 				} else {
@@ -243,7 +243,7 @@ class OverwriteHelper {
 	}
 
 	private static boolean overwrite(IJavaElement element, IConfirmQuery overwriteQuery){
-		return overwrite(JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT), overwriteQuery);
+		return overwrite(JavaElementLabelsCore.getElementLabel(element, JavaElementLabelsCore.ALL_DEFAULT), overwriteQuery);
 	}
 
 	private static boolean overwrite(String name, IConfirmQuery overwriteQuery){

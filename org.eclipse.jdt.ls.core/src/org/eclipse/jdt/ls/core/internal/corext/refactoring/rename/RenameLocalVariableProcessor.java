@@ -59,7 +59,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.RefactoringChangeDescriptor;
@@ -312,8 +312,8 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 		RefactoringStatus result= Checks.checkFieldName(newName, fCu);
 		if (! Checks.startsWithLowerCase(newName)) {
 			if (fIsComposite) {
-				final String nameOfParent= JavaElementLabels.getElementLabel(fLocalVariable.getParent(), JavaElementLabels.ALL_DEFAULT);
-				final String nameOfType= JavaElementLabels.getElementLabel(fLocalVariable.getAncestor(IJavaElement.TYPE), JavaElementLabels.ALL_DEFAULT);
+				final String nameOfParent= JavaElementLabelsCore.getElementLabel(fLocalVariable.getParent(), JavaElementLabelsCore.ALL_DEFAULT);
+				final String nameOfType= JavaElementLabelsCore.getElementLabel(fLocalVariable.getAncestor(IJavaElement.TYPE), JavaElementLabelsCore.ALL_DEFAULT);
 				result.addWarning(Messages.format(RefactoringCoreMessages.RenameTempRefactoring_lowercase2, new String[] { BasicElementLabels.getJavaElementName(newName), nameOfParent, nameOfType }));
 			} else {
 				result.addWarning(RefactoringCoreMessages.RenameTempRefactoring_lowercase);
@@ -398,7 +398,7 @@ public class RenameLocalVariableProcessor extends JavaRenameProcessor implements
 		if (javaProject != null) {
 			project= javaProject.getElementName();
 		}
-		final String header= Messages.format(RefactoringCoreMessages.RenameLocalVariableProcessor_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fCurrentName), JavaElementLabels.getElementLabel(fLocalVariable.getParent(), JavaElementLabels.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(fNewName)});
+		final String header= Messages.format(RefactoringCoreMessages.RenameLocalVariableProcessor_descriptor_description, new String[] { BasicElementLabels.getJavaElementName(fCurrentName), JavaElementLabelsCore.getElementLabel(fLocalVariable.getParent(), JavaElementLabelsCore.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(fNewName)});
 		final String description= Messages.format(RefactoringCoreMessages.RenameLocalVariableProcessor_descriptor_description_short, BasicElementLabels.getJavaElementName(fCurrentName));
 		final String comment= new JDTRefactoringDescriptorComment(project, this, header).asString();
 		final RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_LOCAL_VARIABLE);

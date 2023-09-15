@@ -25,7 +25,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.INewNameQuery;
 import org.eclipse.jdt.ls.core.internal.corext.util.JavaElementResourceMapping;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.participants.ReorgExecutionLog;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
@@ -105,7 +105,7 @@ public abstract class CompilationUnitReorgChange extends ResourceChange {
 	}
 
 	static String getPackageName(IPackageFragment pack) {
-		return JavaElementLabels.getElementLabel(pack, JavaElementLabels.ALL_DEFAULT);
+		return JavaElementLabelsCore.getElementLabel(pack, JavaElementLabelsCore.ALL_DEFAULT);
 	}
 
 	private void markAsExecuted(ICompilationUnit unit, ResourceMapping mapping) {

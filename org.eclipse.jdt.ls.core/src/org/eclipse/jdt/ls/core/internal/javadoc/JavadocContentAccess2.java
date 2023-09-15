@@ -96,7 +96,7 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 
 /**
  * Helper to get the content of a Javadoc comment as HTML.
@@ -673,13 +673,13 @@ public class JavadocContentAccess2 {
 		//				IMethod overridden = iter.next();
 		//				buf.append(createMethodInTypeLinks(overridden));
 		//				if (iter.hasNext()) {
-		//					buf.append(JavaElementLabels.COMMA_STRING);
+		//					buf.append(JavaElementLabelsCore.COMMA_STRING);
 		//				}
 		//			}
 		//		}
 		//		if (superClassMethod[0] != null) {
 		//			if (hasSuperInterfaceMethods) {
-		//				buf.append(JavaElementLabels.COMMA_STRING);
+		//				buf.append(JavaElementLabelsCore.COMMA_STRING);
 		//			}
 		//			buf.append("<b>"); //$NON-NLS-1$
 		//			buf.append(JavaDoc2HTMLTextReader_overrides_section);
@@ -707,7 +707,7 @@ public class JavadocContentAccess2 {
 
 		}
 		buf.append("'>"); //$NON-NLS-1$
-		//JavaElementLabels.getElementLabel(member, 0, buf);
+		//JavaElementLabelsCore.getElementLabel(member, 0, buf);
 		buf.append("</a>"); //$NON-NLS-1$
 		return buf;
 	}
@@ -1924,7 +1924,7 @@ public class JavadocContentAccess2 {
 				fBuf.append(BlOCK_TAG_ENTRY_START);
 				handleLink(Collections.singletonList(fJavadoc.getAST().newSimpleName(name)));
 				if (description != null) {
-					fBuf.append(JavaElementLabels.CONCAT_STRING);
+					fBuf.append(JavaElementLabelsCore.CONCAT_STRING);
 					fBuf.append(description);
 				}
 				fBuf.append(BlOCK_TAG_ENTRY_END);
@@ -1940,7 +1940,7 @@ public class JavadocContentAccess2 {
 		if (size > 0) {
 			handleLink(fragments.subList(0, 1));
 			if (size > 1) {
-				fBuf.append(JavaElementLabels.CONCAT_STRING);
+				fBuf.append(JavaElementLabelsCore.CONCAT_STRING);
 				handleContentElements(fragments.subList(1, size));
 			}
 		}

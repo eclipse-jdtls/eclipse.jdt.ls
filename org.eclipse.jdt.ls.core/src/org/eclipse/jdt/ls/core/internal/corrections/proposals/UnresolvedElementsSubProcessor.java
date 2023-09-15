@@ -106,7 +106,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.SwapDescription;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -747,7 +747,7 @@ public class UnresolvedElementsSubProcessor {
 
 	static CUCorrectionProposal createTypeRefChangeFullProposal(ICompilationUnit cu, ITypeBinding binding, ASTNode node, int relevance) {
 		ASTRewrite rewrite= ASTRewrite.create(node.getAST());
-		String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_change_full_type_description, BindingLabelProviderCore.getBindingLabel(binding, JavaElementLabels.ALL_DEFAULT));
+		String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_change_full_type_description, BindingLabelProviderCore.getBindingLabel(binding, JavaElementLabelsCore.ALL_DEFAULT));
 
 		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, relevance);
 
@@ -1459,7 +1459,7 @@ public class UnresolvedElementsSubProcessor {
 				}
 				if (castFixType != null) {
 					ASTRewriteCorrectionProposal proposal= TypeMismatchSubProcessor.createCastProposal(context, castFixType, nodeToCast, IProposalRelevance.CAST_ARGUMENT_1);
-					String castTypeName= BindingLabelProviderCore.getBindingLabel(castFixType, JavaElementLabels.ALL_DEFAULT);
+					String castTypeName= BindingLabelProviderCore.getBindingLabel(castFixType, JavaElementLabelsCore.ALL_DEFAULT);
 					String[] arg= new String[] { getArgumentName(arguments, idx), castTypeName};
 					proposal.setDisplayName(Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_addargumentcast_description, arg));
 					proposals.add(proposal);

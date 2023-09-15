@@ -85,7 +85,7 @@ import org.eclipse.jdt.internal.corext.util.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.util.CollectionsUtil;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
@@ -233,7 +233,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		return status;
 	}
 	private String getDeclaringTypeLabel() {
-		return JavaElementLabels.getElementLabel(fMethod.getDeclaringType(), JavaElementLabels.ALL_DEFAULT);
+		return JavaElementLabelsCore.getElementLabel(fMethod.getDeclaringType(), JavaElementLabelsCore.ALL_DEFAULT);
 	}
 
 	@Override
@@ -782,7 +782,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 				JavaLanguageServerPlugin.logException(exception);
 			}
 			final String description= Messages.format(RefactoringCoreMessages.RenameMethodProcessor_descriptor_description_short, BasicElementLabels.getJavaElementName(fMethod.getElementName()));
-			final String header= Messages.format(RefactoringCoreMessages.RenameMethodProcessor_descriptor_description, new String[] { JavaElementLabels.getTextLabel(fMethod, JavaElementLabels.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(getNewElementName())});
+			final String header= Messages.format(RefactoringCoreMessages.RenameMethodProcessor_descriptor_description, new String[] { JavaElementLabelsCore.getTextLabel(fMethod, JavaElementLabelsCore.ALL_FULLY_QUALIFIED), BasicElementLabels.getJavaElementName(getNewElementName())});
 			final String comment= new JDTRefactoringDescriptorComment(project, this, header).asString();
 			final RenameJavaElementDescriptor descriptor= RefactoringSignatureDescriptorFactory.createRenameJavaElementDescriptor(IJavaRefactorings.RENAME_METHOD);
 			descriptor.setProject(project);

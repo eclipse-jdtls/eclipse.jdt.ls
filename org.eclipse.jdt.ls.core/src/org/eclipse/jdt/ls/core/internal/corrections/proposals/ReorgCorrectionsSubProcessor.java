@@ -45,7 +45,7 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilati
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
@@ -134,7 +134,7 @@ public class ReorgCorrectionsSubProcessor {
 			if (newPack.isDefaultPackage()) {
 				label= Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_default_description, BasicElementLabels.getFileName(cu));
 			} else {
-				String packageLabel= JavaElementLabels.getElementLabel(newPack, JavaElementLabels.ALL_DEFAULT);
+				String packageLabel= JavaElementLabelsCore.getElementLabel(newPack, JavaElementLabelsCore.ALL_DEFAULT);
 				label= Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_description, new Object[] { BasicElementLabels.getFileName(cu), packageLabel });
 			}
 

@@ -62,7 +62,7 @@ import org.eclipse.jdt.internal.corext.fix.TypeParametersFixCore.InsertTypeArgum
 import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
@@ -112,7 +112,7 @@ public class TypeChangeCorrectionProposal extends ASTRewriteCorrectionProposal {
 		if (isNewTypeVar) {
 			typeName= VAR_TYPE;
 		} else {
-			typeName= BindingLabelProviderCore.getBindingLabel(fNewType, JavaElementLabels.ALL_DEFAULT);
+			typeName= BindingLabelProviderCore.getBindingLabel(fNewType, JavaElementLabelsCore.ALL_DEFAULT);
 		}
 		if (binding.getKind() == IBinding.VARIABLE) {
 			IVariableBinding varBinding= (IVariableBinding) binding;

@@ -37,7 +37,7 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.AbstractJavaElementRenameChange;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.NullChange;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
@@ -206,7 +206,7 @@ public final class RenamePackageChange extends AbstractJavaElementRenameChange {
 		ICompilationUnit[] units= pack.getCompilationUnits();
 		pm.beginTask("", units.length); //$NON-NLS-1$
 		for (int i= 0; i < units.length; i++) {
-			pm.subTask(Messages.format(RefactoringCoreMessages.RenamePackageChange_checking_change, JavaElementLabels.getElementLabel(pack, JavaElementLabels.ALL_DEFAULT)));
+			pm.subTask(Messages.format(RefactoringCoreMessages.RenamePackageChange_checking_change, JavaElementLabelsCore.getElementLabel(pack, JavaElementLabelsCore.ALL_DEFAULT)));
 			checkIfModifiable(result, units[i].getResource(), VALIDATE_NOT_READ_ONLY | VALIDATE_NOT_DIRTY);
 			pm.worked(1);
 		}

@@ -20,11 +20,11 @@ import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_FRAGMENT;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.ALL_DEFAULT;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.M_APP_RETURNTYPE;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.ROOT_VARIABLE;
 import static org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType.FULL_RANGE;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ALL_DEFAULT;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.M_APP_RETURNTYPE;
-import static org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels.ROOT_VARIABLE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,11 +74,11 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.internal.core.SourceMethod;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.DecompilerResult;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.hover.JavaElementLabels;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.DocumentSymbol;
@@ -155,7 +155,7 @@ public class DocumentSymbolHandler {
 			Location location = JDTUtils.toLocation(element);
 			if (location != null) {
 				SymbolInformation si = new SymbolInformation();
-				String name = JavaElementLabels.getElementLabel(element, JavaElementLabels.ALL_DEFAULT);
+				String name = JavaElementLabelsCore.getElementLabel(element, JavaElementLabelsCore.ALL_DEFAULT);
 				si.setName(name == null ? element.getElementName() : name);
 				si.setKind(mapKind(element));
 				if (JDTUtils.isDeprecated(element)) {
@@ -273,7 +273,7 @@ public class DocumentSymbolHandler {
 	}
 
 	private String getName(IJavaElement element) {
-		String name = JavaElementLabels.getElementLabel(element, ALL_DEFAULT);
+		String name = JavaElementLabelsCore.getElementLabel(element, ALL_DEFAULT);
 		return name == null ? element.getElementName() : name;
 	}
 
@@ -288,7 +288,7 @@ public class DocumentSymbolHandler {
 	}
 
 	private String getDetail(IJavaElement element, String name) {
-		String nameWithDetails = JavaElementLabels.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
+		String nameWithDetails = JavaElementLabelsCore.getElementLabel(element, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE);
 		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
 			return nameWithDetails.substring(name.length());
 		}
