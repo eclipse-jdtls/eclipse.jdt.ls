@@ -67,6 +67,7 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.ExceptionInfo;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
@@ -77,7 +78,6 @@ import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
@@ -931,7 +931,7 @@ public class RefactorProposalUtility {
 					}
 					ChangeSignatureInfo info = new ChangeSignatureInfo(method.getHandleIdentifier(), JdtFlags.getVisibilityString(processor.getVisibility()), processor.getReturnTypeString(), method.getElementName(),
 							parameters.toArray(MethodParameter[]::new), exceptions.toArray(MethodException[]::new));
-					String label = Messages.format(RefactoringCoreMessages.ChangeSignatureRefactoring_change_signature_for, new String[] { method.getElementName() });
+					String label = Messages.format(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ChangeSignatureRefactoring_change_signature_for, new String[] { method.getElementName() });
 					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE, cu, IProposalRelevance.CHANGE_METHOD_SIGNATURE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 							Arrays.asList(RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND, params, info));
 				}

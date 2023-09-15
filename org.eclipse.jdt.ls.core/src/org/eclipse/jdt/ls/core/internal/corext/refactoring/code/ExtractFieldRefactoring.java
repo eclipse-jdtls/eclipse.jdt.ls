@@ -105,6 +105,7 @@ import org.eclipse.jdt.internal.corext.dom.fragments.IExpressionFragment;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.refactoring.Checks;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.internal.corext.refactoring.code.CodeRefactoringUtil;
 import org.eclipse.jdt.internal.corext.refactoring.structure.CompilationUnitRewrite;
@@ -114,7 +115,6 @@ import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ASTResolving;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -196,7 +196,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 
 	@Override
 	public String getName() {
-		return RefactoringCoreMessages.ExtractFieldRefactoring_name;
+		return org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_name;
 	}
 
 	public int getVisibility() {
@@ -272,7 +272,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 			pm.worked(1);
 
 			if (getMethodDeclaration() == null) {
-				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractFieldRefactoring_cannot_extract);
+				return RefactoringStatus.createFatalErrorStatus(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_cannot_extract);
 			}
 			pm.worked(1);
 
@@ -318,7 +318,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 			// Check the conditions for extracting an expression to field.
 			ASTNode declaringType = getEnclosingTypeDeclaration();
 			if (declaringType instanceof TypeDeclaration && ((TypeDeclaration) declaringType).isInterface()) {
-				return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractFieldRefactoring_interface_methods);
+				return RefactoringStatus.createFatalErrorStatus(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_interface_methods);
 			}
 			pm.worked(1);
 
@@ -353,7 +353,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 	@Override
 	public Change createChange(IProgressMonitor pm) throws CoreException, OperationCanceledException {
 		try {
-			pm.beginTask(RefactoringCoreMessages.ExtractFieldRefactoring_creating_change, 1);
+			pm.beginTask(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_creating_change, 1);
 
 			try {
 				if (fInitializeIn == INITIALIZE_IN_METHOD) {
@@ -368,7 +368,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 				JavaLanguageServerPlugin.logException("Problem with extract temp filed ", exception);
 			}
 
-			return fCURewrite.createChange(RefactoringCoreMessages.ExtractFieldRefactoring_name, true, new SubProgressMonitor(pm, 1));
+			return fCURewrite.createChange(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_name, true, new SubProgressMonitor(pm, 1));
 		} finally {
 			pm.done();
 		}
@@ -563,7 +563,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 		resultingType.accept(analyzer);
 		boolean usesLocalTypes = !analyzer.getUsageOfEnclosingNodes().isEmpty();
 		if (usesLocalTypes) {
-			return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.ExtractFieldRefactoring_uses_type_declared_locally);
+			return RefactoringStatus.createFatalErrorStatus(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_uses_type_declared_locally);
 		}
 		return null;
 	}
@@ -688,7 +688,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 		ASTNode target = selectedFragment.getAssociatedNode();
 		ASTRewrite rewrite = fCURewrite.getASTRewrite();
 		AST ast = fCURewrite.getAST();
-		TextEditGroup groupDescription = fCURewrite.createGroupDescription(RefactoringCoreMessages.ExtractFieldRefactoring_initialize_field);
+		TextEditGroup groupDescription = fCURewrite.createGroupDescription(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_initialize_field);
 		ASTNode parent = target.getParent();
 		StructuralPropertyDescriptor locationInParent = target.getLocationInParent();
 		if (isStandaloneExpression()) {
@@ -1017,7 +1017,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 	private void addReplaceExpressionWithField() throws JavaModelException {
 		ASTRewrite rewrite = fCURewrite.getASTRewrite();
 		AST ast = fCURewrite.getAST();
-		TextEditGroup groupDescription = fCURewrite.createGroupDescription(RefactoringCoreMessages.ExtractFieldRefactoring_initialize_field);
+		TextEditGroup groupDescription = fCURewrite.createGroupDescription(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ExtractFieldRefactoring_initialize_field);
 
 		IExpressionFragment selectedFragment = getSelectedExpression();
 		Expression selectedExpression = selectedFragment.getAssociatedExpression();
