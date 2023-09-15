@@ -261,7 +261,7 @@ final public class InitHandler extends BaseInitHandler {
 					projectsManager.configureFilters(monitor);
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");
 					connection.sendStatus(ServiceStatus.Started, "Ready");
-					telemetryManager.onProjectsInitialized(projectsManager, System.currentTimeMillis());
+					telemetryManager.onProjectsInitialized(System.currentTimeMillis());
 				} catch (OperationCanceledException e) {
 					connection.sendStatus(ServiceStatus.Error, "Initialization has been cancelled.");
 					return Status.CANCEL_STATUS;
