@@ -39,6 +39,11 @@ Features
 * Extensibility
 
 
+Requirements
+------------
+
+The language server requires a runtime environment of **Java 17** (at a minimum) to run. This should either be set in the `JAVA_HOME` environment variable, or on the user's path.
+
 Installation
 ------------
 
@@ -47,7 +52,7 @@ There are several options to install eclipse.jdt.ls:
 - Download and extract a milestone build from [http://download.eclipse.org/jdtls/milestones/](http://download.eclipse.org/jdtls/milestones/?d)
 - Download and extract a snapshot build from [http://download.eclipse.org/jdtls/snapshots/](http://download.eclipse.org/jdtls/snapshots/?d)
 - Under some Linux distributions you can use the package manager. Search the package repositories for `jdtls` or `eclipse.jdt.ls`.
-- Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/11 ./mvnw clean verify`. Optionally append `-DskipTests=true` to by-pass the tests. This command builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
+- Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/17 ./mvnw clean verify`. Optionally append `-DskipTests=true` to by-pass the tests. This command builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
 
 Some editors or editor extensions bundle eclipse.jdt.ls or contain logic to install it. If that is the case, you only need to install the editor extension. For example for Visual Studio Code you can install the [Extension Pack for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack) and it will take care of the rest.
 
