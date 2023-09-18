@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IFile;
@@ -39,6 +40,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -1003,6 +1005,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list.getItemDefaults().getEditRange());
 		assertEquals(InsertTextFormat.Snippet, list.getItemDefaults().getInsertTextFormat());
 		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
+		assertNotNull(list.getItemDefaults().getData());
+		Map<String, Object> data = (Map)list.getItemDefaults().getData();
+		Set<Integer> completionKinds = (Set)data.get("completionKinds");
+		assertNotNull(completionKinds);
+		assertTrue(completionKinds.contains(CompletionProposal.FIELD_REF));
 
 		assertEquals(1, list.getItems().size());
 		CompletionItem item = list.getItems().get(0);

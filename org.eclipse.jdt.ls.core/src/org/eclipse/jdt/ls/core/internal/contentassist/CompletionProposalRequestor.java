@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Assert;
@@ -78,6 +79,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
+	/**
+	 * The possible completion kinds requested by the completion engine:
+	 * - {@link CompletionProposal#FIELD_REF}
+	 * - {@link CompletionProposal#METHOD_REF}
+	 * - {@link CompletionProposal#TYPE_REF}
+	 * - {@link CompletionProposal#VARIABLE_DECLARATION}
+	 * - etc.
+	 */
+	private Set<Integer> completionKinds = new TreeSet<>();
 
 	static class ProposalComparator implements Comparator<CompletionProposal> {
 
@@ -126,6 +136,14 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 	public CompletionItemDefaults getCompletionItemDefaults() {
+		if (!completionKinds.isEmpty()) {
+			if (itemDefaults.getData() == null) {
+				itemDefaults.setData(new HashMap<>());
+			}
+			if (itemDefaults.getData() instanceof Map map) {
+				map.put("completionKinds", completionKinds);
+			}
+		}
 		return itemDefaults;
 	}
 	// Update SUPPORTED_KINDS when mapKind changes
@@ -642,6 +660,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	@Override
 	public boolean isIgnored(char[] fullTypeName) {
 		return fullTypeName != null && TypeFilter.isFiltered(fullTypeName);
+	}
+
+	@Override
+	public boolean isIgnored(int completionProposalKind) {
+		completionKinds.add(completionProposalKind);
+		return super.isIgnored(completionProposalKind);
 	}
 
 	/**
