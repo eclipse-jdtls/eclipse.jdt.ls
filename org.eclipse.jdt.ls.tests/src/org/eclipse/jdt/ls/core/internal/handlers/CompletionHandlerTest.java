@@ -1398,6 +1398,47 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_interface_method() throws JavaModelException {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public interface Test {\n"
+				+ "method\n"
+				+ "}"
+			);
+			//@formatter:on
+		CompletionList list = requestCompletions(unit, "method");
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		CompletionItem itemOne = items.get(6);
+		CompletionItem itemTwo = items.get(7);
+		assertEquals("method", itemOne.getLabel());
+		assertEquals("static_method", itemTwo.getLabel());
+		String methodText = itemOne.getTextEdit().getLeft().getNewText();
+		String staticMethodText = itemTwo.getTextEdit().getLeft().getNewText();
+		assertEquals("${1|public,private|} ${2:void} ${3:name}(${4});", methodText);
+		assertEquals("${1|public,private|} static ${2:void} ${3:name}(${4}) {\n" + "\t${0}\n" + "}", staticMethodText);
+	}
+
+	@Test
+	public void testSnippet_interface_no_ctor() throws JavaModelException {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public interface Test {\n"
+				+ "ctor\n"
+				+ "}"
+			);
+			//@formatter:on
+		CompletionList list = requestCompletions(unit, "ctor");
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse("No ctor snippet should be available", items.stream().anyMatch(i -> "ctor".equals(i.getLabel())));
+	}
+
+	@Test
 	public void testSnippet_class() throws JavaModelException {
 		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
 		CompletionList list = requestCompletions(unit, "");
@@ -1511,6 +1552,23 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		String te = item.getInsertText();
 		assertNotNull(te);
 		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic class ${1:InnerTest_1} {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_class_no_static_method() throws JavaModelException {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+				"src/org/sample/Test.java",
+				"package org.sample;\n" +
+				"public class Test {\n"
+				+ "static_method\n"
+				+ "}"
+			);
+			//@formatter:on
+		CompletionList list = requestCompletions(unit, "static_method");
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse("No static_method snippet should be available", items.stream().anyMatch(i -> "static_method".equals(i.getLabel())));
 	}
 
 	@Test

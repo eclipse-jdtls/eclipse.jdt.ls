@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageDeclaration;
@@ -55,6 +56,7 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.CompletionUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.template.java.CodeSnippetTemplate;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextType;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContextType;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposalComputer;
@@ -86,6 +88,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
 	private static final String RECORD_KEYWORD = "record";
+	private static final String INTERFACE_METHOD_SNIPPET = "$${1|public,private|} $${2:void} $${3:name}($${4});";
 
 	private static String PACKAGEHEADER = "package_header";
 	private static String CURSOR = "cursor";
@@ -336,6 +339,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t)).toArray(Template[]::new);
 		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t)).toArray(Template[]::new);
 		List<CompletionProposal> proposals = new ArrayList<>();
+		int indexReduction = 0;
 		for (int i = 0; i < availableTemplates.length + availableTemplatesAll.length; i++) {
 			Template template;
 			if (i < availableTemplates.length) {
@@ -343,6 +347,21 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			} else {
 				template = availableTemplatesAll[i - availableTemplates.length];
 			}
+
+			IJavaElement enclosingElement = completionContext.getEnclosingElement();
+			if (enclosingElement.getElementType() == IJavaElement.TYPE && ((IType) enclosingElement).isInterface()) {
+				if (CodeSnippetTemplate.METHOD.name().toLowerCase().equals(template.getName())) {
+					Template newTemplate = new Template(template.getName(), template.getDescription(), template.getContextTypeId(), INTERFACE_METHOD_SNIPPET, false);
+					template = newTemplate;
+				} else if (CodeSnippetTemplate.CTOR.name().toLowerCase().equals(template.getName())) {
+					indexReduction++;
+					continue;
+				}
+			} else if (CodeSnippetTemplate.STATIC_METHOD.name().toLowerCase().equals(template.getName())) {
+				indexReduction++;
+				continue;
+			}
+
 			final CompletionItem item = new CompletionItem();
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
@@ -378,7 +397,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			data.put(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, String.valueOf(i));
 			item.setData(data);
 
-			proposals.add(i, new SnippetCompletionProposal(template));
+			proposals.add(i - indexReduction, new SnippetCompletionProposal(template));
 			res.add(item);
 		}
 

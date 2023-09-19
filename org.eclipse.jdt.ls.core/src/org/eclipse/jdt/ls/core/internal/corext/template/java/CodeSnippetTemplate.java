@@ -34,6 +34,7 @@ public enum CodeSnippetTemplate {
 	TRY_RESOURCES(TemplatePreferences.TRYRESOURCES_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.TRYRESOURCES_CONTENT, TemplatePreferences.TRYRESOURCES_DESCRIPTION),
 	CTOR(TemplatePreferences.CTOR_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.CTOR_CONTENT, TemplatePreferences.CTOR_DESCRIPTION),
 	METHOD(TemplatePreferences.METHOD_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.METHOD_CONTENT, TemplatePreferences.METHOD_DESCRIPTION),
+	STATIC_METHOD(TemplatePreferences.STATICMETHOD_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.STATIC_METHOD_CONTENT, TemplatePreferences.STATIC_METHOD_DESCRIPTION),
 	FIELD(TemplatePreferences.FIELD_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.FIELD_CONTENT, TemplatePreferences.FIELD_DESCRIPTION),
 	MAIN(TemplatePreferences.MAIN_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
 	NEW(TemplatePreferences.NEW_ID, JavaContextType.ID_ALL, TemplatePreferences.NEW_CONTENT, TemplatePreferences.NEW_DESCRIPTION),
@@ -91,6 +92,7 @@ class TemplatePreferences {
 	public static final String PSVM_ID = "org.eclipse.jdt.ls.templates.psvm";
 	public static final String CTOR_ID = "org.eclipse.jdt.ls.templates.ctor";
 	public static final String METHOD_ID = "org.eclipse.jdt.ls.templates.method";
+	public static final String STATICMETHOD_ID = "org.eclipse.jdt.ls.templates.staticmethod";
 	public static final String NEW_ID = "org.eclipse.jdt.ls.templates.new";
 	public static final String FIELD_ID = "org.eclipse.jdt.ls.templates.field";
 
@@ -112,6 +114,7 @@ class TemplatePreferences {
 	public static final String MAIN_CONTENT = "public static void main(String[] args) {\n" + "\t$${0}\n" + "}";
 	public static final String CTOR_CONTENT = "$${1|public,protected,private|} ${enclosing_simple_type}($${2}) {\n" + "\t$${3:super();}$${0}\n" + "}";
 	public static final String METHOD_CONTENT = "$${1|public,protected,private|}$${2| , static |}$${3:void} $${4:name}($${5}) {\n" + "\t$${0}\n" + "}";
+	public static final String STATIC_METHOD_CONTENT = "$${1|public,private|} static $${2:void} $${3:name}($${4}) {\n" + "\t$${0}\n" + "}";
 	public static final String NEW_CONTENT = "$${1:Object} $${2:foo} = new $${1}($${3});\n" + "$${0}";
 	public static final String FIELD_CONTENT = "$${1|public,protected,private|} $${2:String} $${3:name};";
 
@@ -133,6 +136,7 @@ class TemplatePreferences {
 	public static final String MAIN_DESCRIPTION = "public static main method";
 	public static final String CTOR_DESCRIPTION = "constructor";
 	public static final String METHOD_DESCRIPTION = "method";
+	public static final String STATIC_METHOD_DESCRIPTION = "static method";
 	public static final String NEW_DESCRIPTION = "create new object";
 	public static final String FIELD_DESCRIPTION = "field";
 }
