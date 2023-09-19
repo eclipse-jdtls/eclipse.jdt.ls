@@ -95,6 +95,7 @@ public class TelemetryManager {
 		float sourceLevelMin = 0, sourceLevelMax = 0;
 		int javaProjectCount = 0;
 		JsonArray buildToolNamesList = new JsonArray();
+		JsonArray buildFileNamesList = new JsonArray();
 
 		long projectErrors = 0;
 		long unresolvedImportErrors = 0;
@@ -138,6 +139,20 @@ public class TelemetryManager {
 					}
 
 				}
+
+				// Only report Gradle projects for now
+				if (ProjectUtils.isGradleProject(project)) {
+					String buildFileName = null;
+					if (project.getFile(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR).exists()) {
+						buildFileName = GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR;
+					} else if (project.getFile(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR).exists()) {
+						buildFileName = GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR;
+					}
+					if (buildFileName != null && !buildFileNamesList.contains(new JsonPrimitive(buildFileName))) {
+						buildFileNamesList.add(buildFileName);
+					}
+				}
+
 			}
 		}
 
@@ -152,6 +167,9 @@ public class TelemetryManager {
 		buildFinishedElapsedTime = buildFinishedTime - this.languageServerStartTime;
 
 		properties.add("buildToolNames", buildToolNamesList);
+		if (!buildFileNamesList.isEmpty()) {
+			properties.add("buildFileNames", buildFileNamesList);
+		}
 		properties.addProperty("javaProjectCount", javaProjectCount);
 		if (sourceLevelMin != 0) {
 			properties.addProperty("compiler.source.min", Float.toString(sourceLevelMin));
