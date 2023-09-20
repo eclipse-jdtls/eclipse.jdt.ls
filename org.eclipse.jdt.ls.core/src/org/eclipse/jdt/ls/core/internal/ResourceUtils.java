@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -221,6 +222,11 @@ public final class ResourceUtils {
 	public static IPath canonicalFilePathFromURI(String uriStr) {
 		URI uri = URI.create(uriStr);
 		if ("file".equals(uri.getScheme())) {
+			try {
+				uri = new URI(uri.getScheme(), null, uri.getPath(), null, null);
+			} catch (URISyntaxException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
 			return FileUtil.canonicalPath(Path.fromOSString(Paths.get(uri).toString()));
 		}
 		return null;
