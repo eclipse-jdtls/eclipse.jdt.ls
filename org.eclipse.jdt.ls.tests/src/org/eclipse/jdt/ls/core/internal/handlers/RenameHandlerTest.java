@@ -594,6 +594,25 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
+	// https://github.com/redhat-developer/vscode-java/issues/3203
+	@Test
+	public void testLombokSingular() throws Exception {
+		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
+		importProjects("maven/mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		IFile file = project.getFile("src/main/java/org/sample/Test2.java");
+		assertTrue(file.exists());
+		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
+		Position pos = new Position(9, 18);
+		String source = cu.getSource();
+		String expected = source.replace("singulars", "singulars2");
+		WorkspaceEdit edit = getRenameEdit(cu, pos, "singulars2");
+		assertNotNull(edit);
+		assertEquals(1, edit.getChanges().size());
+		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
+	}
+
+	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
 	// https://github.com/redhat-developer/vscode-java/issues/2805
 	@Test
 	public void testRenameMethodLombok() throws Exception {

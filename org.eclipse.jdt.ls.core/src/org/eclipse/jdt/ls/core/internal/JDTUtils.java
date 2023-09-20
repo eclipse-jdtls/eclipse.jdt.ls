@@ -109,6 +109,7 @@ import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.core.NamedMember;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelComposerCore;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
@@ -1003,7 +1004,18 @@ public final class JDTUtils {
 			return null;
 		}
 		if (offset > -1) {
-			return unit.codeSelect(offset, 0);
+			IJavaElement[] elements = unit.codeSelect(offset, 0);
+			// a workaround for https://github.com/redhat-developer/vscode-java/issues/3203
+			if (elements == null || elements.length == 0) {
+				IJavaElement element = unit.getElementAt(offset);
+				if (element instanceof NamedMember namedMember) {
+					ISourceRange range = namedMember.getNameRange();
+					if (range.getOffset() <= offset && (range.getOffset() + range.getLength()) >= offset) {
+						return new IJavaElement[] { element };
+					}
+				}
+			}
+			return elements;
 		}
 		return null;
 	}
