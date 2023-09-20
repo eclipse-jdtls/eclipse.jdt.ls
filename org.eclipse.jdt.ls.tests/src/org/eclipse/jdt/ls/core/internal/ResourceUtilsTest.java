@@ -60,4 +60,11 @@ public class ResourceUtilsTest {
 		assertNotNull(commonPath);
 		assertEquals("/work/src/org/eclipse", commonPath.toPortableString());
 	}
+
+	@Test
+	public void testURIWithQuery() {
+		String uriStr = "file:///home/user/vscode?windowId=_blank";
+		IPath path = ResourceUtils.canonicalFilePathFromURI(uriStr);
+		assertEquals("/home/user/vscode", path.toString());
+	}
 }
