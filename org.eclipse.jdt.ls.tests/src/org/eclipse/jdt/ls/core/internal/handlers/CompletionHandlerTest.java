@@ -3912,6 +3912,29 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	@Test
+	public void testCompletion_order() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"public class Test {",
+				"	public void test(String x){}",
+				"	public void test(String x, int y){}",
+				"	public void test(String x, int y, boolean z){}",
+				"	public static void main(String[] args) {",
+				"		  Test obj = new Test();",
+				"		  obj.test",
+				"	}",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "obj.test");
+		assertFalse(list.getItems().isEmpty());
+		assertTrue(list.getItems().get(0).getFilterText().startsWith("test(String x)"));
+		assertTrue(list.getItems().get(1).getFilterText().startsWith("test(String x, int y)"));
+		assertTrue(list.getItems().get(2).getFilterText().startsWith("test(String x, int y, boolean z)"));
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}
