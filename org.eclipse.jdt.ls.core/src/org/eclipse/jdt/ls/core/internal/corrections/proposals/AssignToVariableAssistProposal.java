@@ -67,6 +67,8 @@ import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 
 /**
@@ -255,12 +257,17 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 			return null;
 		}
 
-		IJavaProject project= getCompilationUnit().getJavaProject();
+		ICompilationUnit compilationUnit = getCompilationUnit();
+		IJavaProject project= compilationUnit.getJavaProject();
 		boolean isAnonymous= newTypeDecl.getNodeType() == ASTNode.ANONYMOUS_CLASS_DECLARATION;
 		boolean isStatic= Modifier.isStatic(bodyDecl.getModifiers()) && !isAnonymous;
 		int modifiers= Modifier.PRIVATE;
 		if (isStatic) {
 			modifiers |= Modifier.STATIC;
+		}
+		Preferences prefs = PreferenceManager.getPrefs(compilationUnit.getResource());
+		if (isParamToField && prefs.getCodeGenerationNewFieldsFinal()) {
+			modifiers |= Modifier.FINAL;
 		}
 
 		VariableDeclarationFragment newDeclFrag= addFieldDeclaration(rewrite, newTypeDecl, modifiers, expression, nodeToAssign, typeBinding, index);
