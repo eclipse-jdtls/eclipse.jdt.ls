@@ -120,6 +120,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				}
 				res = p2Length - p1Length;
 			}
+			if (res == 0) {
+				int paramCount1 = Signature.getParameterCount(p1.getSignature());
+				int paramCount2 = Signature.getParameterCount(p2.getSignature());
+
+				res = paramCount1 - paramCount2;
+			}
 			return res;
 		}
 
@@ -413,7 +419,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if ($.getTextEdit() != null) {
 			String newText = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getNewText() : $.getTextEdit().getRight().getNewText();
 			Range range = $.getTextEdit().isLeft() ? $.getTextEdit().getLeft().getRange() : ($.getTextEdit().getRight().getInsert() != null ? $.getTextEdit().getRight().getInsert() : $.getTextEdit().getRight().getReplace());
-			if (range != null && newText != null) {
+			boolean labelDetailsEnabled = preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport();
+			String filterText = "";
+			if (labelDetailsEnabled && $.getKind() == CompletionItemKind.Method) {
+				filterText = CompletionProposalDescriptionProvider.createMethodProposalDescription(proposal).toString();
+			} else if (labelDetailsEnabled && $.getKind() == CompletionItemKind.Constructor && $.getLabelDetails() != null) {
+				filterText = newText.concat($.getLabelDetails().getDetail());
+			}
+			if (range != null && !filterText.isEmpty()) {
+				$.setFilterText(filterText);
+			} else if (range != null && newText != null) {
 				$.setFilterText(newText);
 			}
 			// See https://github.com/eclipse/eclipse.jdt.ls/issues/2387
