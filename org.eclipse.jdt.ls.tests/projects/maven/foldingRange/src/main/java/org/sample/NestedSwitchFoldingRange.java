@@ -2,6 +2,13 @@ package org.sample;
 
 public class NestedSwitchFoldingRange {
     
+	void testNoException()
+	{
+		if (true)
+		{
+		}
+	}
+
     void foo(){
 
         int x = 1;

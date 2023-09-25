@@ -237,7 +237,7 @@ public class FoldingRangeHandler {
 							}
 						}
 						// For curly braces enclosing a case statement, begin the folding range on the line with the case statement
-						if (prevTokenLine != currentLine && prevTokenLine == prevCaseLines.peek()) {
+						if (prevTokenLine != currentLine && !prevCaseLines.isEmpty() && prevTokenLine == prevCaseLines.peek()) {
 							leftParens.push(prevTokenLine);
 						} else {
 							leftParens.push(currentLine);

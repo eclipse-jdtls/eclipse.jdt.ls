@@ -128,19 +128,29 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testNestedSwitchFoldingRanges() throws Exception {
 		String className = "org.sample.NestedSwitchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 8);
-		assertHasFoldingRange(2, 25, null, foldingRanges);
-		assertHasFoldingRange(4, 24, null, foldingRanges);
+		assertTrue(foldingRanges.size() == 10);
+		assertHasFoldingRange(2, 33, null, foldingRanges);
+		assertHasFoldingRange(12, 32, null, foldingRanges);
 
 		// First switch statement
-		assertHasFoldingRange(9, 23, null, foldingRanges);
-		assertHasFoldingRange(10, 18, null, foldingRanges);
-		assertHasFoldingRange(19, 22, null, foldingRanges);
+		assertHasFoldingRange(17, 31, null, foldingRanges);
+		assertHasFoldingRange(18, 26, null, foldingRanges);
+		assertHasFoldingRange(27, 30, null, foldingRanges);
 
 		// Nested switch statement:
-		assertHasFoldingRange(12, 17, null, foldingRanges);
-		assertHasFoldingRange(13, 14, null, foldingRanges);
-		assertHasFoldingRange(15, 16, null, foldingRanges);
+		assertHasFoldingRange(20, 25, null, foldingRanges);
+		assertHasFoldingRange(21, 22, null, foldingRanges);
+		assertHasFoldingRange(23, 24, null, foldingRanges);
+	}
+
+	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2865
+	@Test
+	public void testCurlyBracesOwnLine() throws Exception {
+		String className = "org.sample.NestedSwitchFoldingRange";
+		List<FoldingRange> foldingRanges = getFoldingRanges(className);
+		assertTrue(foldingRanges.size() == 10);
+		assertHasFoldingRange(4, 10, null, foldingRanges);
+		assertHasFoldingRange(7, 9, null, foldingRanges);
 	}
 
 	@Test
