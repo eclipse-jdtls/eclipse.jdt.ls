@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.PatternMatchingForInstanceofFixCore;
 
 /**
@@ -27,8 +28,8 @@ import org.eclipse.jdt.internal.corext.fix.PatternMatchingForInstanceofFixCore;
 public class InstanceofPatternMatch implements ISimpleCleanUp {
 
 	@Override
-	public String getIdentifier() {
-		return "instanceofPatternMatch";
+	public List<String> getIdentifiers() {
+		return List.of("instanceofPatternMatch", CleanUpConstants.USE_PATTERN_MATCHING_FOR_INSTANCEOF);
 	}
 
 	@Override

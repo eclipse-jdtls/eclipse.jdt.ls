@@ -74,7 +74,7 @@ import com.google.common.base.Throwables;
 
 public class JavaLanguageServerPlugin extends Plugin {
 
-	private static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
+	public static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
 	public static final String MANUAL = "Manual";
 	public static final String DIRECT = "Direct";
 	public static final String NATIVE = "Native";

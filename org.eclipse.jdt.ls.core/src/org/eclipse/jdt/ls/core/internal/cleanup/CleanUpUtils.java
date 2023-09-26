@@ -76,7 +76,7 @@ public class CleanUpUtils {
 			TextEdit jdtEdit = cleanUpChange.getEdit();
 			return jdtEdit;
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logError(String.format("Failed to create text edit for clean up %s", cleanUp.getIdentifier()));
+			JavaLanguageServerPlugin.logError(String.format("Failed to create text edit for clean up %s", cleanUp.getIdentifiers().iterator().next()));
 		}
 		return null;
 	}

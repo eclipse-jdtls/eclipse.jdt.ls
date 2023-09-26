@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -25,11 +26,11 @@ import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 public interface ISimpleCleanUp {
 
 	/**
-	 * Returns the unique identifier for this clean up.
+	 * Returns the possible identifiers for this clean up.
 	 *
-	 * @return the unique identifier for this clean up
+	 * @return the identifiers for this clean up
 	 */
-	String getIdentifier();
+	Collection<String> getIdentifiers();
 
 	/**
 	 * Returns the cleanup fix for the given source file.

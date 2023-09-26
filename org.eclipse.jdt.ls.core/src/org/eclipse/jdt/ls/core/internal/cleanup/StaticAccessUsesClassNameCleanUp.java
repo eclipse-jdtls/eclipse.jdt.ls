@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,8 +29,8 @@ import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 public class StaticAccessUsesClassNameCleanUp implements ISimpleCleanUp {
 
 	@Override
-	public String getIdentifier() {
-		return "qualifyStaticMembers";
+	public Collection<String> getIdentifiers() {
+		return List.of("qualifyStaticMembers");
 	}
 
 	@Override

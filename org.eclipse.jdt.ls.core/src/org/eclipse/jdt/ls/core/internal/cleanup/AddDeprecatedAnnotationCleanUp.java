@@ -13,11 +13,13 @@
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.Java50FixCore;
 
 /**
@@ -29,8 +31,8 @@ public class AddDeprecatedAnnotationCleanUp implements ISimpleCleanUp {
 	private static final List<String> COMPILER_OPTS = Arrays.asList(JavaCore.COMPILER_PB_MISSING_DEPRECATED_ANNOTATION);
 
 	@Override
-	public String getIdentifier() {
-		return "addDeprecated";
+	public Collection<String> getIdentifiers() {
+		return List.of("addDeprecated", CleanUpConstants.ADD_MISSING_ANNOTATIONS_DEPRECATED);
 	}
 
 	@Override
