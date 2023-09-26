@@ -268,7 +268,21 @@ public final class JDTUtils {
 
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
-			return null;
+			String fileName = path.getFileName().toString();
+			if (fileName.endsWith(".java") || fileName.endsWith(".class")) {
+				fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+			}
+			WorkingCopyOwner owner = new WorkingCopyOwner() {
+				@Override
+				public IBuffer createBuffer(ICompilationUnit workingCopy) {
+					return new DocumentAdapter(workingCopy, path);
+				}
+ 			};
+ 			try {
+ 				return owner.newWorkingCopy(fileName, new IClasspathEntry[] { JavaRuntime.getDefaultJREContainerEntry() }, monitor);
+ 			} catch (JavaModelException e) {
+				return null;
+			}
 		}
 		IJavaProject javaProject = JavaCore.create(project);
 
@@ -971,7 +985,20 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String toURI(ICompilationUnit cu) {
-		return getFileURI(cu.getResource());
+		if (cu.getResource() != null) {
+			String uri = getFileURI(cu.getResource());
+			if (uri != null) {
+				return uri;
+			}
+		}
+		try {
+			if (cu.getBuffer() instanceof DocumentAdapter adapter) {
+				return adapter.filePath.toFile().toURI().toString();
+			}
+		} catch (JavaModelException ex) {
+			JavaLanguageServerPlugin.logException(ex);
+		} 
+		return null;
 	}
 
 	/**

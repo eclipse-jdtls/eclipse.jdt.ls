@@ -20,7 +20,9 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +35,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -254,6 +257,10 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	private List<? extends DocumentSymbol> internalGetHierarchicalSymbols(IProject project, IProgressMonitor monitor, String className)
 			throws JavaModelException, UnsupportedEncodingException, InterruptedException, ExecutionException {
 		String uri = ClassFileUtil.getURI(project, className);
+		return getHierarchicalDocumentSymbols(uri, monitor);
+	}
+
+	private List<? extends DocumentSymbol> getHierarchicalDocumentSymbols(String uri, IProgressMonitor monitor) {
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		DocumentSymbolParams params = new DocumentSymbolParams();
 		params.setTextDocument(identifier);
@@ -357,5 +364,28 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		return position != null && position.getLine() >= 0 && position.getCharacter() >= 0;
 	}
 
+	@Test
+	public void testDocumentSymbolsOnPlainFile() throws Exception {
+		String previous = System.getProperty("GENERATES_METADATA_FILES_AT_PROJECT_ROOT");
+		File f = File.createTempFile("testDocumentSymbolsOnPlainFile", ".java");
+		Files.writeString(f.toPath(), """
+			public class SomeClass {
+				int someField;
+			}
+			""");
+		try {
+			cleanUp(); // reset LS so the GENERATES_METADATA_FILES_AT_PROJECT_ROOT takes effect
+			List<? extends DocumentSymbol> symbols = getHierarchicalDocumentSymbols(f.toURI().toString(), new NullProgressMonitor());
+			DocumentSymbol classSymbol = symbols.get(0);
+			assertEquals("someField", classSymbol.getChildren().get(0).getName());
+		} finally {
+			f.delete();
+			if (previous == null) {
+				System.clearProperty("GENERATES_METADATA_FILES_AT_PROJECT_ROOT");
+			} else {
+				System.setProperty("GENERATES_METADATA_FILES_AT_PROJECT_ROOT", previous);
+			}
+		}
+	}
 
 }
