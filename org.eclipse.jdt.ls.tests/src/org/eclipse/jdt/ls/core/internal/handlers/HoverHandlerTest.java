@@ -300,6 +300,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		// then
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(1).getLeft();//
+		result = ResourceUtils.dos2Unix(result);
 		String expected = "This method comes from Foo\n" + "\n" + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
 		assertEquals("Unexpected hover ", expected, result);
 	}

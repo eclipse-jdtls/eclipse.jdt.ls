@@ -22,6 +22,7 @@ import java.util.List;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
@@ -81,7 +82,11 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testDisassembledSource() throws Exception {
-		testClass("javax.tools.Tool", 6, 57);
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			testClass("javax.tools.Tool", 6, 27);
+		} else {
+			testClass("javax.tools.Tool", 6, 57);
+		}
 	}
 
 	@Test

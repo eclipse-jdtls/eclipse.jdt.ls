@@ -220,6 +220,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			}
 			String actionContent = evaluateCodeActionCommand(action);
 			actionContent = ResourceUtils.dos2Unix(actionContent);
+			content = ResourceUtils.dos2Unix(content);
 			assertEquals(title + " has the wrong content ", content, actionContent);
 		}
 	}

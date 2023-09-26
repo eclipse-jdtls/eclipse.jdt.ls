@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -124,7 +127,19 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
         String[] actualReferencedLibraryPaths = (String[]) options.get(ProjectCommand.REFERENCED_LIBRARIES);
         String expectedReferencedLibraryPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("lib").getFile("mylib.jar").getLocation().toOSString();
         assertTrue(actualReferencedLibraryPaths.length == 1);
-        assertEquals(expectedReferencedLibraryPath, actualReferencedLibraryPaths[0]);
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			IPath expected = new Path(expectedReferencedLibraryPath);
+			IPath actual = new Path(actualReferencedLibraryPaths[0]);
+			if (expected.getDevice() != null) {
+				expected = expected.setDevice(expected.getDevice().toLowerCase());
+			}
+			if (actual.getDevice() != null) {
+				actual = actual.setDevice(actual.getDevice().toLowerCase());
+			}
+			assertTrue(expected.equals(actual));
+		} else {
+			assertEquals(expectedReferencedLibraryPath, actualReferencedLibraryPaths[0]);
+		}
     }
 
     @Test
