@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -402,13 +403,16 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		File targetLinkFolder = new File(tempDirectory, "simple-gradle");
 		File targetFile = copyFiles("gradle/simple-gradle", true);
 		try {
-
-			Files.createSymbolicLink(Paths.get(targetLinkFolder.getPath()), Paths.get(targetFile.getAbsolutePath()));
-
+			try {
+				Files.createSymbolicLink(Paths.get(targetLinkFolder.getAbsolutePath()), Paths.get(targetFile.getAbsolutePath()));
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e);
+				return;
+			}
 			projectsManager.initializeProjects(Arrays.asList(Path.fromOSString(targetLinkFolder.getAbsolutePath())), null);
 			newEmptyProject();
 			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("simple-gradle");
-			String location = project.getLocation().toString();
+			String location = project.getRawLocation().toString();
 			if (Platform.OS_WIN32.equals(Platform.getOS())) {
 				assertEquals(Path.fromOSString(targetLinkFolder.getAbsolutePath()).toString(), location);
 			} else {

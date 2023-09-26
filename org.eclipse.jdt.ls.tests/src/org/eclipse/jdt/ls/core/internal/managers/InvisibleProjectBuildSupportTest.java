@@ -34,6 +34,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
@@ -244,9 +245,15 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 	@Test
 	public void testVariableReferenceLibraries() throws Exception {
 		ReferencedLibraries libraries = new ReferencedLibraries();
-		libraries.getInclude().add("~/lib/foo.jar");
-		libraries.getExclude().add("~/lib/bar.jar");
-		libraries.getSources().put("~/library/bar.jar", "~/library/sources/bar-src.jar");
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			libraries.getInclude().add("~\\lib\\foo.jar");
+			libraries.getExclude().add("~\\lib\\bar.jar");
+			libraries.getSources().put("~\\library\\bar.jar", "~\\library\\sources/bar-src.jar");
+		} else {
+			libraries.getInclude().add("~/lib/foo.jar");
+			libraries.getExclude().add("~/lib/bar.jar");
+			libraries.getSources().put("~/library/bar.jar", "~/library/sources/bar-src.jar");
+		}
 		assertTrue(libraries.getInclude().iterator().next().startsWith(System.getProperty("user.home")));
 		assertTrue(libraries.getExclude().iterator().next().startsWith(System.getProperty("user.home")));
 		libraries.getSources().forEach((k, v) -> {

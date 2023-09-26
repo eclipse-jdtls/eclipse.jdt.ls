@@ -20,7 +20,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} ${lombokArgs}</argLine>
+						<argLine>${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
 						<runOrder>random</runOrder>
 						<providerProperties>
 							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
