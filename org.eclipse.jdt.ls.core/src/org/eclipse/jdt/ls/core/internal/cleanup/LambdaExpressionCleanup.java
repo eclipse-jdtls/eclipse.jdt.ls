@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 
 /**
@@ -27,8 +29,8 @@ import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 public class LambdaExpressionCleanup implements ISimpleCleanUp {
 
 	@Override
-	public String getIdentifier() {
-		return "lambdaExpressionFromAnonymousClass";
+	public Collection<String> getIdentifiers() {
+		return List.of("lambdaExpressionFromAnonymousClass", CleanUpConstants.USE_LAMBDA);
 	}
 
 	@Override

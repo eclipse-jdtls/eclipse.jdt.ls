@@ -13,13 +13,15 @@
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -27,6 +29,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 
@@ -55,7 +58,10 @@ public class CleanUpRegistry {
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
-		cleanUpsList.forEach(cleanUp -> cleanUps.put(cleanUp.getIdentifier(), cleanUp));
+		cleanUpsList.forEach(cleanUp ->
+			cleanUp.getIdentifiers().forEach(id ->
+				cleanUps.put(id, cleanUp)
+		));
 	}
 
 	/**
@@ -72,13 +78,21 @@ public class CleanUpRegistry {
 	 *         according to the clean ups that are enabled
 	 */
 	public List<TextEdit> getEditsForAllActiveCleanUps(TextDocumentIdentifier textDocumentId, List<String> cleanUpEnabled, IProgressMonitor monitor) {
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(textDocumentId.getUri());
+		if (unit == null) {
+			return List.of();
+		}
+		IJavaProject javaProject = unit.getJavaProject();
 
-		IJavaProject javaProject = JDTUtils.resolveCompilationUnit(textDocumentId.getUri()).getJavaProject();
-
-		List<ISimpleCleanUp> cleanUpsToRun = cleanUpEnabled.stream() //
-				.distinct() //
-				.map(cleanUpId -> cleanUps.get(cleanUpId)).filter(Objects::nonNull) //
-				.toList();
+		Collection<ISimpleCleanUp> cleanUpsToRun = new LinkedHashSet<>(cleanUpEnabled.size());
+		for (String cleanUpId : cleanUpEnabled) {
+			ISimpleCleanUp cleanUp = cleanUps.get(cleanUpId);
+			if (cleanUp != null) {
+				cleanUpsToRun.add(cleanUp);
+			} else {
+				JavaLanguageServerPlugin.log(Status.warning("Not found cleanup id: " + cleanUpId));
+			}
+		}
 		if (cleanUpsToRun.isEmpty()) {
 			return Collections.emptyList();
 		}

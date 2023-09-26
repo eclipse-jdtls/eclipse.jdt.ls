@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.InvertEqualsFixCore;
 
 /**
@@ -28,8 +29,8 @@ import org.eclipse.jdt.internal.corext.fix.InvertEqualsFixCore;
 public class InvertEqualsCleanUp implements ISimpleCleanUp {
 
 	@Override
-	public String getIdentifier() {
-		return "invertEquals";
+	public List<String> getIdentifiers() {
+		return List.of("invertEquals", CleanUpConstants.INVERT_EQUALS);
 	}
 
 	@Override
