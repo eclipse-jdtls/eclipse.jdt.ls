@@ -129,18 +129,18 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		String className = "org.sample.NestedSwitchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		assertTrue(foldingRanges.size() == 10);
-		assertHasFoldingRange(2, 33, null, foldingRanges);
-		assertHasFoldingRange(12, 32, null, foldingRanges);
+		assertHasFoldingRange(2, 32, null, foldingRanges);
+		assertHasFoldingRange(11, 31, null, foldingRanges);
 
 		// First switch statement
-		assertHasFoldingRange(17, 31, null, foldingRanges);
-		assertHasFoldingRange(18, 26, null, foldingRanges);
-		assertHasFoldingRange(27, 30, null, foldingRanges);
+		assertHasFoldingRange(16, 30, null, foldingRanges);
+		assertHasFoldingRange(17, 25, null, foldingRanges);
+		assertHasFoldingRange(26, 29, null, foldingRanges);
 
 		// Nested switch statement:
-		assertHasFoldingRange(20, 25, null, foldingRanges);
-		assertHasFoldingRange(21, 22, null, foldingRanges);
-		assertHasFoldingRange(23, 24, null, foldingRanges);
+		assertHasFoldingRange(19, 24, null, foldingRanges);
+		assertHasFoldingRange(20, 21, null, foldingRanges);
+		assertHasFoldingRange(22, 23, null, foldingRanges);
 	}
 
 	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2865
@@ -149,8 +149,8 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 		String className = "org.sample.NestedSwitchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
 		assertTrue(foldingRanges.size() == 10);
-		assertHasFoldingRange(4, 10, null, foldingRanges);
-		assertHasFoldingRange(7, 9, null, foldingRanges);
+		assertHasFoldingRange(4, 9, null, foldingRanges);
+		assertHasFoldingRange(7, 8, null, foldingRanges);
 	}
 
 	@Test
