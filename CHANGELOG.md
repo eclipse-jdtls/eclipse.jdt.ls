@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.28.0 (September 28th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/119?closed=1)
+ * enhancement - Update current method snippet and add `static_method` snippet for interface. See [#2862](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2862).
+ * enhancement - Improve the constructor snippet for additional classes in a file. See [#2841](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2841).
+ * enhancement - Return outline/documentSymbols even for `.java` files that are not in a Java project. See [#2809](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2809).
+ * enhancement - Store the completion kinds requested by completion operation. See [#2857](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2857).
+ * enhancement - Report whether the project has Kotlin Gradle files. See [#2859](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2859).
+ * bug fix - Fix `EmptyStackException` in `textDocument/foldingRange`. See [#2865](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2865).
+ * bug fix - Fix renaming of attribute with `@Singular` annotation. See [#2828](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2828).
+ * bug fix - Fix `URI` with query parameter. See [#2861](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2861).
+ * bug fix - Fix an error thrown during "Initialize workspace". See [#2842](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2842).
+ * bug fix - Fix potential NPE in `JDTUtils.getClassFile()`. See [#2873](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2873).
+ * bug fix - Mention in `README.md` the minimum required JRE (17) to run language server. See [#2858](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2858).
+ * build - Remove more `o.e.jdt.ls.internal.corext` classes and use from `jdt.core.manipulation`. See [#2854](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2854).
+ * build - Handle `null` entries in `gradle/checksums.json`. See [#2775](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2775).
+
 # [1.27.1 (September 14th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/118?closed=1)
  * bug fix - Log errors from project importer. See [#2843](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2843).
  * build - Update target platform to 4.29 Release build. See [#2848](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2848).
