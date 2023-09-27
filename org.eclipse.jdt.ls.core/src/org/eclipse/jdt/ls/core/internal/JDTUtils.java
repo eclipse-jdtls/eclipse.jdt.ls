@@ -489,7 +489,9 @@ public final class JDTUtils {
 			if (primaryType != null) {
 				String fqn = primaryType.getFullyQualifiedName();
 				IType type = unit.getJavaProject().findType(fqn);
-				return type.getClassFile();
+				if (type != null) {
+					return type.getClassFile();
+				}
 			}
 		}
 		return null;
