@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemOptions;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
@@ -86,6 +88,15 @@ public class CompletionHandler{
 
 		private String getSortText(CompletionItem ci) {
 			return StringUtils.defaultString(ci.getSortText(), DEFAULT_SORT_TEXT);
+		}
+
+	};
+
+	static final Comparator<CompletionItem> LABEL_COMPARATOR = new Comparator<>() {
+
+		@Override
+		public int compare(CompletionItem o1, CompletionItem o2) {
+			return o1.getLabel().compareTo(o2.getLabel());
 		}
 
 	};
@@ -288,6 +299,29 @@ public class CompletionHandler{
 					monitor.setCanceled(true);
 				}
 			}
+		}
+		// When at least one snippet has the same label as a keyword, we raise the relevance of all matching snippets above that keyword
+		List<CompletionItem> tempProposals = proposals.stream().filter(prop -> prop.getKind() == CompletionItemKind.Keyword || prop.getKind() == CompletionItemKind.Snippet).collect(Collectors.toList());
+		tempProposals.sort(LABEL_COMPARATOR);
+		int newSortText = SortTextHelper.CEILING;
+		for (int i = 0; i < tempProposals.size() - 1; i++) {
+			CompletionItem currentItem = tempProposals.get(i);
+			CompletionItem nextItem = tempProposals.get(i + 1);
+			if (currentItem.getLabel().equals(nextItem.getLabel())) {
+				int tempSortText;
+				if (currentItem.getKind() == CompletionItemKind.Keyword) {
+					tempSortText = Integer.parseInt(currentItem.getSortText()) - 1;
+				} else {
+					tempSortText = Integer.parseInt(nextItem.getSortText()) - 1;
+				}
+				if (tempSortText < newSortText) {
+					newSortText = tempSortText;
+				}
+			}
+		}
+		if (newSortText != -1) {
+			String finalSortText = Integer.toString(newSortText);
+			tempProposals.stream().filter(prop -> prop.getKind() == CompletionItemKind.Snippet).forEach(p -> p.setSortText(finalSortText));
 		}
 		proposals.sort(PROPOSAL_COMPARATOR);
 		CompletionList list = new CompletionList(proposals);
