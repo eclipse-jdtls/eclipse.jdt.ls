@@ -417,7 +417,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		assertNotNull(list);
 
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		CompletionItem item = items.get(1);
+		CompletionItem item = items.get(0);
 		assertEquals("while", item.getLabel());
 		assertNull(item.getLabelDetails().getDetail());
 		assertEquals("while statement", item.getLabelDetails().getDescription());
@@ -595,7 +595,7 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		assertEquals(InsertTextMode.AdjustIndentation, list.getItemDefaults().getInsertTextMode());
 
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		CompletionItem item = items.get(1);
+		CompletionItem item = items.get(0);
 		assertEquals("while", item.getLabel());
 		String insertText = item.getTextEditText();
 		assertEquals("while (${1:condition:var(boolean)}) {\n\t$TM_SELECTED_TEXT${0}\n}", insertText);
