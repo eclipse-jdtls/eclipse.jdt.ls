@@ -72,6 +72,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
@@ -997,5 +998,30 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 	private int getCacheSize() {
 		return (sharedASTProvider.getCachedAST() != null) ? 1 : 0;
+	}
+
+	@Test
+	public void testDiagnosticsOnExternalFileWithInternalProject() throws Exception {
+		Mockito.lenient().when(clientPreferences.skipProjectConfiguration()).thenReturn(true);
+		preferences.setValidateAllOpenBuffersOnChanges(true);
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		Path filePath = Files.createTempDirectory("testDiagnosticsOnExternalFileWithInternalProject").resolve("A.java");
+		try {
+			String content = "error public class A { }";
+			Files.writeString(filePath, content); 
+			lifeCycleHandler.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(filePath.toUri().toString(), "java", 0, content)));
+			List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
+			assertFalse("No diagnostics sent on open", diagnosticReports.isEmpty());
+			List<Diagnostic> diagnostics = diagnosticReports.get(0).getDiagnostics();
+			assertTrue("First diagnostics not sent", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("error on token \"error\"")));
+			lifeCycleHandler.didChange(new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(filePath.toUri().toString(), 0), List.of(new TextDocumentContentChangeEvent(new Range(new Position(0, 0), new Position(0, 0)), "another"))));
+			diagnosticReports = getClientRequests("publishDiagnostics");
+			assertEquals("No diagnostics sent on change", 2, diagnosticReports.size());
+			diagnostics = diagnosticReports.get(1).getDiagnostics();
+			assertTrue("diagnostics not updated upon edit", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("error on token \"anothererror\"")));
+		} finally {
+			Files.delete(filePath);
+			Files.delete(filePath.getParent());
+		}
 	}
 }

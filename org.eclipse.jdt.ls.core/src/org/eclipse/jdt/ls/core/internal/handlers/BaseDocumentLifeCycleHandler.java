@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -267,9 +268,12 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
 		}
-		List<ICompilationUnit> validateCopy =
-			preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()
-				? Arrays.asList(JavaCore.getWorkingCopies(null)) : new ArrayList<>(toValidate);
+		Set<ICompilationUnit> validateCopy = new LinkedHashSet<>(toValidate);
+		// LinkedHashSet ensures explicitly requested CUs to validate are processed first
+		// as they're likely to be the one user is editing at the moment.
+		if (preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) {
+			toValidate.addAll(Arrays.asList(JavaCore.getWorkingCopies(null)));
+		}
 		if (validateCopy.isEmpty()) {
 			return Status.OK_STATUS;
 		}
@@ -381,8 +385,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
 							elementInfo.addChild(unit);
 						}
-					} else { // File not exists
-						return unit;
 					}
 				} catch (CoreException e) {
 					// ignored
