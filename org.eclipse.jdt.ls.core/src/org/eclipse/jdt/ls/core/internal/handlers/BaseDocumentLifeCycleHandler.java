@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -266,9 +267,12 @@ public abstract class BaseDocumentLifeCycleHandler {
 		if (monitor.isCanceled()) {
 			return Status.CANCEL_STATUS;
 		}
-		List<ICompilationUnit> validateCopy =
-			preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()
-				? Arrays.asList(JavaCore.getWorkingCopies(null)) : new ArrayList<>(toValidate);
+		Set<ICompilationUnit> validateCopy = new LinkedHashSet<>(toValidate);
+		// LinkedHashSet ensures explicitly requested CUs to validate are processed first
+		// as they're likely to be the one user is editing at the moment.
+		if (preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) {
+			toValidate.addAll(Arrays.asList(JavaCore.getWorkingCopies(null)));
+		}
 		if (validateCopy.isEmpty()) {
 			return Status.OK_STATUS;
 		}
@@ -334,12 +338,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			handleOpen(params);
 		} else { // Open an unmanaged file, use a workspace runnable to mount it to default project or invisible project.
 			try {
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleOpen(params);
-					}
-				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+				ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor -> handleOpen(params), null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document open ", e);
 			}
@@ -360,12 +359,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			// some refactorings may be applied by the way, wrap those in a WorkspaceRunnable
 			try {
 				JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleSaved(params);
-					}
-				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+				ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor -> handleSaved(params), null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document save ", e);
 			}
@@ -390,8 +384,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 							OpenableElementInfo elementInfo = (OpenableElementInfo) pkg.getElementInfo();
 							elementInfo.addChild(unit);
 						}
-					} else { // File not exists
-						return unit;
 					}
 				} catch (CoreException e) {
 					// ignored
