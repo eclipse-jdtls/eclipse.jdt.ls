@@ -20,6 +20,8 @@ import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
 import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.filebuffers.LocationKind;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourceAttributes;
@@ -31,7 +33,6 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IBufferChangedListener;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -126,8 +127,9 @@ public class DocumentAdapter implements IBuffer, IDocumentListener {
 
 		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
 		try {
-			manager.connect(filePath, LocationKind.LOCATION, null);
-			fTextFileBuffer= manager.getTextFileBuffer(filePath, LocationKind.LOCATION);
+			IFileStore store = EFS.getStore(path.toUri());
+			manager.connectFileStore(store, null);
+			fTextFileBuffer= manager.getFileStoreTextFileBuffer(store);
 			if (fTextFileBuffer != null) {
 				fDocument = fTextFileBuffer.getDocument();
 			}
