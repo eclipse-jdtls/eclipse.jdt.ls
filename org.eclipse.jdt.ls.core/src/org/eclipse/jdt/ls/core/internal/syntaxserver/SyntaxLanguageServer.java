@@ -90,6 +90,7 @@ import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -461,6 +462,12 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	public CompletableFuture<List<? extends DocumentHighlight>> documentHighlight(DocumentHighlightParams position) {
 		logInfo(">> document/documentHighlight");
 		return computeAsync((monitor) -> DocumentHighlightHandler.documentHighlight(position, monitor));
+	}
+
+	@Override
+	public void setTrace(SetTraceParams params) {
+		// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2891
+		// FIXME: implement the behavior of this method.
 	}
 
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
