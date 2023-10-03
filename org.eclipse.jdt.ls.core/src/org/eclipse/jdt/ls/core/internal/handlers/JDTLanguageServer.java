@@ -141,6 +141,7 @@ import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensParams;
+import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -1197,6 +1198,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return computeAsync(monitor -> typeHierarchyHandler.getSubtypeItems(params, monitor));
 	}
 
+	@Override
+	public NotebookDocumentService getNotebookDocumentService() {
+		return null;
+	}
+
+	@Override
+	public void setTrace(SetTraceParams params) {
+		// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2891
+		// FIXME: implement the behavior of this method.
+	}
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync((cc) -> {
 			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
@@ -1208,11 +1219,4 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.lsp4j.services.LanguageServer#getNotebookDocumentService()
-	 */
-	@Override
-	public NotebookDocumentService getNotebookDocumentService() {
-		return null;
-	}
 }
