@@ -120,7 +120,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				}
 				res = p2Length - p1Length;
 			}
-			if (res == 0) {
+			CompletionItemKind p1Kind = mapKind(p1);
+			CompletionItemKind p2Kind = mapKind(p2);
+			if (res == 0 && (p1Kind == CompletionItemKind.Method || p1Kind == CompletionItemKind.Constructor) 
+						&& (p2Kind == CompletionItemKind.Method || p2Kind == CompletionItemKind.Constructor)) {
 				int paramCount1 = Signature.getParameterCount(p1.getSignature());
 				int paramCount2 = Signature.getParameterCount(p2.getSignature());
 
@@ -478,7 +481,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		);
 	}
 
-	private CompletionItemKind mapKind(final CompletionProposal proposal) {
+	private static CompletionItemKind mapKind(final CompletionProposal proposal) {
 		//When a new CompletionItemKind is added, don't forget to update SUPPORTED_KINDS
 		int kind = proposal.getKind();
 		int flags = proposal.getFlags();
