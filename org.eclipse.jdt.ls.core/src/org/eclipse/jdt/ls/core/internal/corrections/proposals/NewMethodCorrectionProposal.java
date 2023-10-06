@@ -194,7 +194,7 @@ public class NewMethodCorrectionProposal extends AbstractMethodCorrectionProposa
 				if (parent instanceof ExpressionStatement) {
 					newTypeNode= ast.newPrimitiveType(PrimitiveType.VOID);
 				} else {
-					newTypeNode = org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.guessTypeForReference(ast, node);
+					newTypeNode = ASTResolving.guessTypeForReference(ast, node);
 					if (newTypeNode == null) {
 						newTypeNode= ast.newSimpleType(ast.newSimpleName("Object")); //$NON-NLS-1$
 					}

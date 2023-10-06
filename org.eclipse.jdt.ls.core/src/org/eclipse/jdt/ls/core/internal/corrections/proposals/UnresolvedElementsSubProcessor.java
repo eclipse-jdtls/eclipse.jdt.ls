@@ -84,6 +84,7 @@ import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.TypeKinds;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
@@ -94,6 +95,7 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -106,7 +108,6 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignat
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.SwapDescription;
-import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -350,7 +351,7 @@ public class UnresolvedElementsSubProcessor {
 		String label;
 		if (senderDeclBinding.isEnum() && !isWriteAccess) {
 			label = Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createenum_description,
-					new Object[] { nameLabel, org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(senderDeclBinding) });
+					new Object[] { nameLabel, ASTResolving.getTypeSignature(senderDeclBinding) });
 			proposals.add(new NewVariableCorrectionProposal(label, targetCU, NewVariableCorrectionProposal.ENUM_CONST,
 					simpleName, senderDeclBinding, 10));
 		} else {
@@ -360,7 +361,7 @@ public class UnresolvedElementsSubProcessor {
 				} else {
 					label = Messages.format(
 							CorrectionMessages.UnresolvedElementsSubProcessor_createfield_other_description,
-							new Object[] { nameLabel, org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(senderDeclBinding) });
+							new Object[] { nameLabel, ASTResolving.getTypeSignature(senderDeclBinding) });
 				}
 				int fieldRelevance= StubUtility.hasFieldName(targetCU.getJavaProject(), name) ? IProposalRelevance.CREATE_FIELD_PREFIX_OR_SUFFIX_MATCH : IProposalRelevance.CREATE_FIELD;
 				proposals.add(new NewVariableCorrectionProposal(label, targetCU, NewVariableCorrectionProposal.FIELD,
@@ -373,7 +374,7 @@ public class UnresolvedElementsSubProcessor {
 				} else {
 					label = Messages.format(
 							CorrectionMessages.UnresolvedElementsSubProcessor_createconst_other_description,
-							new Object[] { nameLabel, org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(senderDeclBinding) });
+							new Object[] { nameLabel, ASTResolving.getTypeSignature(senderDeclBinding) });
 				}
 				int constRelevance= StubUtility.hasConstantName(targetCU.getJavaProject(), name) ? IProposalRelevance.CREATE_CONSTANT_PREFIX_OR_SUFFIX_MATCH : IProposalRelevance.CREATE_CONSTANT;
 				proposals.add(new NewVariableCorrectionProposal(label, targetCU,
@@ -488,7 +489,7 @@ public class UnresolvedElementsSubProcessor {
 							ASTRewrite rewrite= ASTRewrite.create(ast);
 							String label = Messages.format(
 									CorrectionMessages.UnresolvedElementsSubProcessor_changetomethod_description,
-									org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(curr));
+									ASTResolving.getMethodSignature(curr));
 							ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
 									IProposalRelevance.CHANGE_TO_METHOD);
 							newProposals.add(proposal);
@@ -1032,7 +1033,7 @@ public class UnresolvedElementsSubProcessor {
 				String label;
 				ITypeBinding[] parameterTypes= getParameterTypes(arguments);
 				if (parameterTypes != null) {
-					String sig = org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodName, parameterTypes, false);
+					String sig = ASTResolving.getMethodSignature(methodName, parameterTypes, false);
 					boolean is1d8OrHigher= JavaModelUtil.is1d8OrHigher(targetCU.getJavaProject());
 
 					boolean isSenderBindingInterface= senderDeclBinding.isInterface();
@@ -1055,7 +1056,7 @@ public class UnresolvedElementsSubProcessor {
 							if (!senderDeclBinding.isAnonymous()) {
 								if (is1d8OrHigher || !isSenderBindingInterface) {
 									String[] args = new String[] { sig,
-											org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(senderDeclBinding) };
+											ASTResolving.getTypeSignature(senderDeclBinding) };
 									label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createmethod_other_description, args);
 									proposals.add(new NewMethodCorrectionProposal(label, targetCU, invocationNode,
 											arguments, senderDeclBinding, IProposalRelevance.CREATE_METHOD));
@@ -1217,7 +1218,7 @@ public class UnresolvedElementsSubProcessor {
 
 		// add arguments
 		{
-			String[] arg = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodBinding) };
+			String[] arg = new String[] { ASTResolving.getMethodSignature(methodBinding) };
 			String label;
 			if (diff == 1) {
 				label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_addargument_description, arg);
@@ -1245,7 +1246,7 @@ public class UnresolvedElementsSubProcessor {
 				changeDesc[idx]= new RemoveDescription();
 				changedTypes[i]= declParameterTypes[idx];
 			}
-			String[] arg = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodDecl), getTypeNames(changedTypes) };
+			String[] arg = new String[] { ASTResolving.getMethodSignature(methodDecl), getTypeNames(changedTypes) };
 			String label;
 			if (methodDecl.isConstructor()) {
 				if (diff == 1) {
@@ -1273,7 +1274,7 @@ public class UnresolvedElementsSubProcessor {
 			if (i > 0) {
 				buf.append(", "); //$NON-NLS-1$
 			}
-			buf.append(org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(types[i]));
+			buf.append(ASTResolving.getTypeSignature(types[i]));
 		}
 		return BasicElementLabels.getJavaElementName(buf.toString());
 	}
@@ -1322,7 +1323,7 @@ public class UnresolvedElementsSubProcessor {
 			for (int i= diff - 1; i >= 0; i--) {
 				rewrite.remove(arguments.get(indexSkipped[i]), null);
 			}
-			String[] arg = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodRef) };
+			String[] arg = new String[] { ASTResolving.getMethodSignature(methodRef) };
 			String label;
 			if (diff == 1) {
 				label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_removeargument_description, arg);
@@ -1367,7 +1368,7 @@ public class UnresolvedElementsSubProcessor {
 				changeDesc[idx]= new InsertDescription(newType, name);
 				changeTypes[i]= newType;
 			}
-			String[] arg = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodDecl), getTypeNames(changeTypes) };
+			String[] arg = new String[] { ASTResolving.getMethodSignature(methodDecl), getTypeNames(changeTypes) };
 			String label;
 			if (methodDecl.isConstructor()) {
 				if (diff == 1) {
@@ -1499,7 +1500,7 @@ public class UnresolvedElementsSubProcessor {
 						ITypeBinding[] declParamTypes= methodDecl.getParameterTypes();
 
 						ITypeBinding[] swappedTypes= new ITypeBinding[] { declParamTypes[idx1], declParamTypes[idx2] };
-						String[] args = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodDecl),
+						String[] args = new String[] { ASTResolving.getMethodSignature(methodDecl),
 								getTypeNames(swappedTypes) };
 						String label;
 						if (methodDecl.isConstructor()) {
@@ -1531,8 +1532,7 @@ public class UnresolvedElementsSubProcessor {
 						newParamTypes[i]= changeDesc[i] == null ? declParamTypes[i] : ((EditDescription) changeDesc[i]).type;
 					}
 					boolean isVarArgs= methodDecl.isVarargs() && newParamTypes.length > 0 && newParamTypes[newParamTypes.length - 1].isArray();
-					String[] args = new String[] { org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodDecl),
-							org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(methodDecl.getName(), newParamTypes, isVarArgs) };
+					String[] args = new String[] { ASTResolving.getMethodSignature(methodDecl), ASTResolving.getMethodSignature(methodDecl.getName(), newParamTypes, isVarArgs) };
 					String label;
 					if (methodDecl.isConstructor()) {
 						label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_changeparamsignature_constr_description, args);
@@ -1624,7 +1624,7 @@ public class UnresolvedElementsSubProcessor {
 		ASTRewrite rewrite= ASTRewrite.create(invocationNode.getAST());
 
 		String label = Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_changetoouter_description,
-				org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(currType));
+				ASTResolving.getTypeSignature(currType));
 		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(),
 				rewrite, IProposalRelevance.QUALIFY_WITH_ENCLOSING_TYPE);
 
@@ -1707,7 +1707,7 @@ public class UnresolvedElementsSubProcessor {
 			ICompilationUnit targetCU= ASTResolving.findCompilationUnitForBinding(cu, astRoot, targetDecl);
 			if (targetCU != null) {
 				String[] args = new String[] {
-						org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getMethodSignature(org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.getTypeSignature(targetDecl), getParameterTypes(arguments), false) };
+						ASTResolving.getMethodSignature(ASTResolving.getTypeSignature(targetDecl), getParameterTypes(arguments), false) };
 				String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_createconstructor_description, args);
 				proposals.add(new NewMethodCorrectionProposal(label, targetCU, selectedNode, arguments, targetDecl,
 						IProposalRelevance.CREATE_CONSTRUCTOR));

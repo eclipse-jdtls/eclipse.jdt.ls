@@ -448,7 +448,7 @@ public class NewVariableCorrectionProposal extends ASTRewriteCorrectionProposal 
 			return imports.addImport(binding, ast, importRewriteContext, location);
 		}
 		// no binding, find type AST node instead -> ABC a= x-> use 'ABC' as is
-		Type type = org.eclipse.jdt.ls.core.internal.corrections.ASTResolving.guessTypeForReference(ast, fOriginalNode);
+		Type type = ASTResolving.guessTypeForReference(ast, fOriginalNode);
 		if (type != null) {
 			return type;
 		}
