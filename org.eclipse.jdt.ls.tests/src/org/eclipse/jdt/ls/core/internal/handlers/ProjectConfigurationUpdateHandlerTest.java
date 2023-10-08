@@ -38,18 +38,18 @@ public class ProjectConfigurationUpdateHandlerTest extends AbstractProjectsManag
 	public void testUpdateConfiguration() throws Exception {
 		importProjects("maven/multimodule");
 		ProjectsManager pm = mock(ProjectsManager.class);
-		when(pm.updateProject(any(IProject.class), anyBoolean())).thenReturn(null);
+		when(pm.updateProjects(any(), anyBoolean())).thenReturn(null);
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
 		IProject project = WorkspaceHelper.getProject("multimodule");
 		handler.updateConfiguration(new TextDocumentIdentifier(project.getLocationURI().toString()));
-		verify(pm, times(1)).updateProject(any(IProject.class), eq(true));
+		verify(pm, times(1)).updateProjects(any(), eq(true));
 	}
 
 	@Test
 	public void testUpdateConfigurations() throws Exception {
 		importProjects("maven/multimodule");
 		ProjectsManager pm = mock(ProjectsManager.class);
-		when(pm.updateProject(any(IProject.class), anyBoolean())).thenReturn(null);
+		when(pm.updateProjects(any(), anyBoolean())).thenReturn(null);
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
 		List<TextDocumentIdentifier> list = new ArrayList<>();
 		IProject project = WorkspaceHelper.getProject("module1");
@@ -60,6 +60,6 @@ public class ProjectConfigurationUpdateHandlerTest extends AbstractProjectsManag
 		ProjectConfigurationsUpdateParam param = new ProjectConfigurationsUpdateParam(list);
 
 		handler.updateConfigurations(param.getIdentifiers());
-		verify(pm, times(2)).updateProject(any(IProject.class), eq(true));
+		verify(pm, times(1)).updateProjects(any(), eq(true));
 	}
 }

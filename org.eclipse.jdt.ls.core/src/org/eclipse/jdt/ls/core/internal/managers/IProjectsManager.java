@@ -48,6 +48,11 @@ public interface IProjectsManager {
 	Job updateProject(IProject project, boolean force);
 
 	/**
+	 * Update a set of project configurations.
+	 */
+	Job updateProjects(Collection<IProject> projects, boolean force);
+
+	/**
 	 * Check whether the resource is a build file.
 	 */
 	boolean isBuildFile(IResource resource);

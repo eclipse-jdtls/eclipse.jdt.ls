@@ -41,12 +41,9 @@ public class ProjectConfigurationUpdateHandler {
 	 */
 	public void updateConfigurations(List<TextDocumentIdentifier> identifiers) {
 		Collection<IProject> projects = ProjectUtils.getProjectsFromDocumentIdentifiers(identifiers);
-
-		for (IProject project : projects) {
-			// most likely the handler is invoked intentionally by the user, that's why
-			// we force the update despite no changes of in build descriptor being made
-			projectManager.updateProject(project, true);
-		}
+		// most likely the handler is invoked intentionally by the user, that's why
+		// we force the update despite no changes of in build descriptor being made
+		projectManager.updateProjects(projects, true);
 	}
 
 	public void updateConfiguration(TextDocumentIdentifier param) {
