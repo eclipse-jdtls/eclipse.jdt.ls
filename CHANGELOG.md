@@ -222,7 +222,7 @@
  * bug fix - Organize imports removes static imports under some conditions. See [#2396](https://github.com/eclipse/eclipse.jdt.ls/pull/2396).
  * bug fix - Fix completion issue occuring when invocation spans multiple lines. See [#2387](https://github.com/eclipse/eclipse.jdt.ls/issues/2387).
  * bug fix - Fix scope calculation for "Surround with try/catch" refactoring. See [#2380](https://github.com/eclipse/eclipse.jdt.ls/pull/2380).
- * bug fix - Fix NPE occuring when completion item is selected. See [#2376](https://github.com/eclipse/eclipse.jdt.ls/issues/2376).
+ * bug fix - Fix NPE occurring when completion item is selected. See [#2376](https://github.com/eclipse/eclipse.jdt.ls/issues/2376).
  * bug fix - Log user friendly error if client does not support `_java.reloadBundles.command`. See [#2370](https://github.com/eclipse/eclipse.jdt.ls/pull/2370).
  * bug fix - Postfix completion should not be available when editing Javadoc. See [#2367](https://github.com/eclipse/eclipse.jdt.ls/issues/2367).
  * bug fix - Update m2e to latest version in order to ensure classpath resources persist. See [#2390](https://github.com/eclipse/eclipse.jdt.ls/pull/2390).
@@ -264,7 +264,7 @@
  * enhancement - Add quick fixes for problems relating to sealed classes. See [#2265](https://github.com/eclipse/eclipse.jdt.ls/pull/2265).
  * bug fix - Signature help not working correctly for parameterized types. See [#2293](https://github.com/eclipse/eclipse.jdt.ls/pull/2293).
  * bug fix - Avoid NPE for null analysis when updating classpath. See [#2268](https://github.com/eclipse/eclipse.jdt.ls/issues/2268).
- * bug fix - Check the digest of the initializiation scripts for security and to prevent duplicates. See [#2254](https://github.com/eclipse/eclipse.jdt.ls/pull/2254).
+ * bug fix - Check the digest of the initialization scripts for security and to prevent duplicates. See [#2254](https://github.com/eclipse/eclipse.jdt.ls/pull/2254).
  * bug fix - Support `includeDeclaration` in `textDocument/references`. See [#2148](https://github.com/eclipse/eclipse.jdt.ls/issues/2148).
  * bug fix - Provide folding for import regions in `.class` files. See [#2281](https://github.com/eclipse/eclipse.jdt.ls/pull/2281).
  * bug fix - Deadlock when using JDK 17 with Maven Java project. See [#2256](https://github.com/eclipse/eclipse.jdt.ls/pull/2256).
@@ -348,7 +348,7 @@
  * other - Fix random failures for the test InlayHintHandlerTest.testVarargs2. See [#2104](https://github.com/eclipse/eclipse.jdt.ls/issues/2104).
 
 # [1.12.0 (June 1st, 2022)](https://github.com/eclipse/eclipse.jdt.ls/milestone/102?closed=1)
- * enhancment - Support separate "Generate Getters" and "Generate Setters". See [#2086](https://github.com/eclipse/eclipse.jdt.ls/pull/2086).
+ * enhancement - Support separate "Generate Getters" and "Generate Setters". See [#2086](https://github.com/eclipse/eclipse.jdt.ls/pull/2086).
  * enhancement - Show quick fixes for generating accessors in field declarations. See [#2092](https://github.com/eclipse/eclipse.jdt.ls/pull/2092).
  * enhancement - Add support for workspace symbols with qualified names. See [#2084](https://github.com/eclipse/eclipse.jdt.ls/issues/2084).
  * enhancement - Show field type when generating accessors. See [#2093](https://github.com/eclipse/eclipse.jdt.ls/pull/2093).
@@ -554,7 +554,7 @@
  * bug fix - Update formatter profile options before applying. See [#1675](https://github.com/eclipse/eclipse.jdt.ls/pull/1675).
  * bug fix - v0.70 broke workspace/DidChangeConfiguration. See [#1685](https://github.com/eclipse/eclipse.jdt.ls/issues/1685).
  * bug fix - Correct minor typo in exception message. See [#1687](https://github.com/eclipse/eclipse.jdt.ls/pull/1687).
- * bug fix - Fall back to default value when import threashold is non-positive. See [#1715](https://github.com/eclipse/eclipse.jdt.ls/pull/1715).
+ * bug fix - Fall back to default value when import threshold is non-positive. See [#1715](https://github.com/eclipse/eclipse.jdt.ls/pull/1715).
  * bug fix - Invisible project forgets source paths on classpath update. See [#1647](https://github.com/eclipse/eclipse.jdt.ls/issues/1647).
  * bug fix - Fix javadoc in 'java.configuration.runtimes' settings. See [#1683](https://github.com/eclipse/eclipse.jdt.ls/pull/1683).
  * build - Update Target Platform to 2021-03 Release. See [#1691](https://github.com/eclipse/eclipse.jdt.ls/pull/1691).
