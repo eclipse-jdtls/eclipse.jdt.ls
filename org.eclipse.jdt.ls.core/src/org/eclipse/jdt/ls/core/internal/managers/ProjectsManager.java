@@ -477,7 +477,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return false;
 	}
 
-	private Stream<IBuildSupport> buildSupports() {
+	protected Stream<IBuildSupport> buildSupports() {
 		return Stream.of(new EclipseBuildSupport());
 	}
 
@@ -662,24 +662,21 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		public IStatus runInWorkspace(IProgressMonitor monitor) {
 			long start = System.currentTimeMillis();
 			MultiStatus status = new MultiStatus(IConstants.PLUGIN_ID, 0, "Update project configurations");
-			for (Entry<String, Map<IBuildSupport, IProject>> entry : groupByBuildToolName(projects).entrySet()) {
-				Map<IBuildSupport, IProject> projectsWithBuildSupport = entry.getValue();
-				String buildToolName = entry.getKey();
-				if (!Objects.equals(buildToolName, "UnknownBuildTool")) {
-					IStatus onWillUpdateStatus = onWillConfigurationUpdate(
-							projectsWithBuildSupport.keySet().iterator().next(),
-							projectsWithBuildSupport.values(), monitor);
-					if (!onWillUpdateStatus.isOK()) {
-						status.add(onWillUpdateStatus);
-						// if onWillUpdate() failed, skip updating the projects.
-						continue;
-					}
+			for (Entry<IBuildSupport, List<IProject>> entry : groupByBuildSupport(projects).entrySet()) {
+				IStatus onWillUpdateStatus = onWillConfigurationUpdate(entry.getKey(),
+						entry.getValue(), monitor);
+				
+				// if onWillUpdate() failed, skip updating the projects.
+				if (!onWillUpdateStatus.isOK()) {
+					status.add(onWillUpdateStatus);
+					continue;
 				}
-				for (Entry<IBuildSupport, IProject> projectWithBuildSupportEntry : projectsWithBuildSupport.entrySet()) {
+
+				for (IProject project : entry.getValue()) {
 					if (monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					updateProject(projectWithBuildSupportEntry, force, status, monitor);
+					updateProject(entry.getKey(), project, force, status, monitor);
 				}
 			}
 
@@ -689,17 +686,18 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			return status;
 		}
 
-		private Map<String, Map<IBuildSupport, IProject>> groupByBuildToolName(Collection<IProject> projects) {
-			Map<String, Map<IBuildSupport, IProject>> groupByBuildToolName = new HashMap<>();
+		private Map<IBuildSupport, List<IProject>> groupByBuildSupport(Collection<IProject> projects) {
+			Map<IBuildSupport, List<IProject>> groupByBuildSupport = new HashMap<>();
+			List<IBuildSupport> buildSupports = buildSupports().toList();
 			for (IProject project : projects) {
-				Optional<IBuildSupport> buildSupport = getBuildSupport(project);
+				Optional<IBuildSupport> buildSupport = buildSupports.stream()
+						.filter(bs -> bs.applies(project)).findFirst();
 				if (buildSupport.isPresent()) {
 					IBuildSupport bs = buildSupport.get();
-					String buildToolName = bs.buildToolName();
-					groupByBuildToolName.computeIfAbsent(buildToolName, k -> new HashMap<>()).put(bs, project);
+					groupByBuildSupport.computeIfAbsent(bs, k -> new ArrayList<>()).add(project);
 				}
 			}
-			return groupByBuildToolName;
+			return groupByBuildSupport;
 		}
 
 		private IStatus onWillConfigurationUpdate(IBuildSupport buildSupport, Collection<IProject> projects,
@@ -713,10 +711,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			}
 		}
 
-		private void updateProject(Entry<IBuildSupport, IProject> projectWithBuildSupportEntry, boolean force,
+		private void updateProject(IBuildSupport buildSupport, IProject project, boolean force,
 				MultiStatus status, IProgressMonitor monitor) {
-			IBuildSupport buildSupport = projectWithBuildSupportEntry.getKey();
-			IProject project = projectWithBuildSupportEntry.getValue();
 			try {
 				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 				buildSupport.update(project, force, monitor);

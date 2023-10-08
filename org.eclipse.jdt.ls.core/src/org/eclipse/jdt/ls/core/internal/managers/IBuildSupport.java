@@ -46,7 +46,6 @@ public interface IBuildSupport {
 
 	/**
 	 * Implementors can put preparation work into this method. This method will be invoked before {@code update(...)}.
-	 * All build supports named with 'UnknownBuildTool' will be skipped. See: {@link #buildToolName()}.
 	 */
 	default void onWillUpdate(Collection<IProject> projects, IProgressMonitor monitor) throws CoreException {
 		// do nothing
