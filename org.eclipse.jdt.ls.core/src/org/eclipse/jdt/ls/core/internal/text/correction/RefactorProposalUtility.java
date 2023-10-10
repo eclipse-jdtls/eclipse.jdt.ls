@@ -797,7 +797,7 @@ public class RefactorProposalUtility {
 					continue;
 				}
 				ExtractMethodRefactoring refactoring = new ExtractMethodRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength(), formattingOptions);
-				if (refactoring.checkInferConditions(new NullProgressMonitor()).isOK()) {
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
 				}
 				parent = parent.getParent();
