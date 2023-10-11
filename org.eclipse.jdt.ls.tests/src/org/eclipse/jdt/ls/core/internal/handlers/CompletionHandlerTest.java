@@ -3707,6 +3707,25 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 	}
 
+	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2884
+	@Test
+	public void testCompletion_MatchCaseFirstLetterForMethodOverride() throws Exception {
+		preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.FIRSTLETTER);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"public class Test {",
+				"	public void testMethod(){}",
+				"}",
+				"class TestOverride extends Test{",
+				"	t",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "t");
+		assertFalse(list.getItems().isEmpty());
+		assertTrue(list.getItems().get(1).getLabel().startsWith("testMethod"));
+	}
+
 	// https://github.com/eclipse/eclipse.jdt.ls/issues/2376
 	@Test
 	public void testCompletion_selectSnippetItem() throws Exception {

@@ -713,6 +713,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		if (proposal.getKind() == CompletionProposal.TYPE_REF) {
 			String simpleTypeName = SignatureUtil.getSimpleTypeName(proposal);
 			firstCharOfCompletion = simpleTypeName.charAt(0);
+		} else if (proposal.getKind() == CompletionProposal.METHOD_DECLARATION) {
+			firstCharOfCompletion = proposal.getName()[0];
 		} else {
 			firstCharOfCompletion = proposal.getCompletion()[0];
 		}
