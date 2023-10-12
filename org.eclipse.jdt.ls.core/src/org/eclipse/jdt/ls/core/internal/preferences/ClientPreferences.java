@@ -285,6 +285,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("gradleChecksumWrapperPromptSupport", "false").toString());
 	}
 
+	public boolean isExecuteClientCommandSupport() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("executeClientCommandSupport", "false").toString());
+	}
+
 	/**
 	 * The command which will be triggered when the completion item is selected. Different clients can have different
 	 * command ids. The command id is set in the 'onCompletionItemSelectedCommand' field of the extended client capabilities.
