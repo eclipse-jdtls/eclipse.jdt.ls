@@ -432,23 +432,25 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	 * Ask client to check if any bundles need to be synchronized.
 	 */
 	private void synchronizeBundles() {
-		try {
-			Object commandResult = JavaLanguageServerPlugin.getInstance()
-				.getClientConnection().executeClientCommand("_java.reloadBundles.command");
-			if (commandResult instanceof List<?> list) {
-				List<String> bundlesToRefresh = (List<String>) commandResult;
-				if (bundlesToRefresh.size() > 0) {
-					BundleUtils.loadBundles(bundlesToRefresh);
+		if (preferenceManager.getClientPreferences().isExecuteClientCommandSupport()) {
+			try {
+				Object commandResult = JavaLanguageServerPlugin.getInstance()
+					.getClientConnection().executeClientCommand("_java.reloadBundles.command");
+				if (commandResult instanceof List<?> list) {
+					List<String> bundlesToRefresh = (List<String>) commandResult;
+					if (bundlesToRefresh.size() > 0) {
+						BundleUtils.loadBundles(bundlesToRefresh);
+					}
+				} else if (commandResult instanceof Map<?, ?> m) {
+					String message = (String) m.get("message");
+					JavaLanguageServerPlugin.logError(message);
+				} else {
+					JavaLanguageServerPlugin.logError(
+						"Unexpected result from executeClientCommand: " + commandResult);
 				}
-			} else if (commandResult instanceof Map<?, ?> m) {
-				String message = (String) m.get("message");
-				JavaLanguageServerPlugin.logError(message);
-			} else {
-				JavaLanguageServerPlugin.logError(
-					"Unexpected result from executeClientCommand: " + commandResult);
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e);
 			}
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException(e);
 		}
 	}
 

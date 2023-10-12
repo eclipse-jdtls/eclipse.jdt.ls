@@ -209,7 +209,7 @@ public class CompletionHandler{
 	private void triggerSignatureHelp() {
 		if (manager.getPreferences().isSignatureHelpEnabled()) {
 			String onSelectedCommand = manager.getClientPreferences().getCompletionItemCommand();
-			if (!onSelectedCommand.isEmpty()) {
+			if (!onSelectedCommand.isEmpty() && manager.getClientPreferences().isExecuteClientCommandSupport()) {
 				JavaLanguageServerPlugin.getInstance().getClientConnection()
 						.executeClientCommand(onSelectedCommand);
 			}

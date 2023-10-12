@@ -119,7 +119,9 @@ public final class OrganizeImportsHandler {
 
 	public static Function<ImportSelection[], ImportCandidate[]> getChooseImportsFunction(String documentUri, boolean restoreExistingImports) {
 		return (selections) -> {
-			Object commandResult = JavaLanguageServerPlugin.getInstance().getClientConnection().executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, documentUri, selections, restoreExistingImports);
+			Object commandResult = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isExecuteClientCommandSupport()
+					? JavaLanguageServerPlugin.getInstance().getClientConnection().executeClientCommand(CLIENT_COMMAND_ID_CHOOSEIMPORTS, documentUri, selections, restoreExistingImports)
+					: null;
 			String json = commandResult == null ? null : new Gson().toJson(commandResult);
 			return JSONUtility.toModel(json, ImportCandidate[].class);
 		};
