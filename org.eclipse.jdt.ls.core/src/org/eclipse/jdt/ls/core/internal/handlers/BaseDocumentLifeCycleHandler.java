@@ -63,6 +63,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -334,12 +335,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			handleOpen(params);
 		} else { // Open an unmanaged file, use a workspace runnable to mount it to default project or invisible project.
 			try {
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleOpen(params);
-					}
-				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+				ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor -> handleOpen(params), null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document open ", e);
 			}
@@ -360,12 +356,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			// some refactorings may be applied by the way, wrap those in a WorkspaceRunnable
 			try {
 				JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-				ResourcesPlugin.getWorkspace().run(new IWorkspaceRunnable() {
-					@Override
-					public void run(IProgressMonitor monitor) throws CoreException {
-						handleSaved(params);
-					}
-				}, null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+				ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor -> handleSaved(params), null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document save ", e);
 			}
@@ -398,6 +389,8 @@ public abstract class BaseDocumentLifeCycleHandler {
 				}
 			}
 
+			// Update the static imports of current file as the favorite static members.
+			CompletionProposalUtils.addStaticImportsAsFavoriteImports(unit);
 			//			DiagnosticsHandler problemRequestor = new DiagnosticsHandler(connection, unit.getResource(), reportOnlySyntaxErrors);
 			unit.becomeWorkingCopy(new NullProgressMonitor());
 			IBuffer buffer = unit.getBuffer();

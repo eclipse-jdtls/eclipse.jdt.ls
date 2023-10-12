@@ -14,8 +14,13 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.jdt.core.CompletionProposal;
+import org.eclipse.jdt.core.Flags;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 
 public class CompletionProposalUtils {
 
@@ -61,5 +66,31 @@ public class CompletionProposalUtils {
 		}
 
 		return requiredProposal;
+	}
+
+	public static void addStaticImportsAsFavoriteImports(ICompilationUnit unit) {
+		try {
+			List<String> staticImports = Arrays.stream(unit.getImports())
+				.filter(t -> {
+					try {
+						return Flags.isStatic(t.getFlags());
+					} catch (JavaModelException e) {
+						// ignore
+					}
+					return false;})
+				.map(t -> t.getElementName())
+				.map(t -> {
+					int lastDot = t.lastIndexOf(".");
+					if (lastDot > -1) {
+						return t.substring(0, lastDot) + ".*";
+					}
+					return t;
+				}).toList();
+			if (!staticImports.isEmpty()) {
+				Preferences.DISCOVERED_STATIC_IMPORTS.addAll(staticImports);
+			}
+		} catch (JavaModelException e) {
+			// ignore
+		}
 	}
 }

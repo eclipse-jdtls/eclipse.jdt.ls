@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -559,6 +560,9 @@ public class Preferences {
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
 	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 	public static final String INLAY_HINT_ID = UUID.randomUUID().toString();
+
+	public static final Set<String> DISCOVERED_STATIC_IMPORTS = new LinkedHashSet<>();
+
 	private static final String GRADLE_OFFLINE_MODE = "gradle.offline.mode";
 	private static final int DEFAULT_TAB_SIZE = 4;
 
@@ -1610,7 +1614,9 @@ public class Preferences {
 	}
 
 	public String[] getJavaCompletionFavoriteMembers() {
-		return javaCompletionFavoriteMembers.toArray(new String[0]);
+		Set<String> favorites = new LinkedHashSet<>(javaCompletionFavoriteMembers);
+		favorites.addAll(DISCOVERED_STATIC_IMPORTS);
+		return favorites.toArray(new String[0]);
 	}
 
 	public String getJavaHome() {
