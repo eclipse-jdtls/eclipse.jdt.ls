@@ -18,11 +18,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.ls.core.internal.DiagnosticsState;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeAction;
@@ -42,7 +42,7 @@ public class NonProjectFixProcessor {
 		this.nonProjectDiagnosticsState = JavaLanguageServerPlugin.getNonProjectDiagnosticsState();
 	}
 
-	public List<Either<Command, CodeAction>> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) {
+	public List<Either<Command, CodeAction>> getCorrections(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}

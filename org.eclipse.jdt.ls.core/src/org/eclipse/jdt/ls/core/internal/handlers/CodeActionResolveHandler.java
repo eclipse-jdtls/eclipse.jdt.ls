@@ -17,10 +17,10 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -39,13 +39,13 @@ public class CodeActionResolveHandler {
 
 		int proposalId = Integer.parseInt(data.get(DATA_FIELD_PROPOSAL_ID));
 		long requestId = Long.parseLong(data.get(DATA_FIELD_REQUEST_ID));
-		ResponseStore.ResponseItem<Either<ChangeCorrectionProposal, CodeActionProposal>> response = CodeActionHandler.codeActionStore.get(requestId);
+		ResponseStore.ResponseItem<Either<ChangeCorrectionProposalCore, CodeActionProposal>> response = CodeActionHandler.codeActionStore.get(requestId);
 		if (response == null || response.getProposals().size() <= proposalId) {
 			throw new IllegalStateException("Invalid codeAction proposal");
 		}
 
 		try {
-			Either<ChangeCorrectionProposal, CodeActionProposal> proposal = response.getProposals().get(proposalId);
+			Either<ChangeCorrectionProposalCore, CodeActionProposal> proposal = response.getProposals().get(proposalId);
 			WorkspaceEdit edit = proposal.isLeft() ? ChangeUtil.convertToWorkspaceEdit(proposal.getLeft().getChange())
 				: proposal.getRight().resolveEdit(monitor);
 			if (ChangeUtil.hasChanges(edit)) {

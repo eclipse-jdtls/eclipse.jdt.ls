@@ -16,9 +16,9 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 
-public class CUCorrectionCommandProposal extends CUCorrectionProposal {
+public class CUCorrectionCommandProposal extends CUCorrectionProposalCore {
 
 	private String command;
 	private List<Object> commandArguments;
@@ -29,8 +29,8 @@ public class CUCorrectionCommandProposal extends CUCorrectionProposal {
 	 * @param cu
 	 * @param relevance
 	 */
-	public CUCorrectionCommandProposal(String name, String kind, ICompilationUnit cu, int relevance, String command, List<Object> commandArguments) {
-		super(name, kind, cu, null, relevance);
+	public CUCorrectionCommandProposal(String name, ICompilationUnit cu, int relevance, String command, List<Object> commandArguments) {
+		super(name, cu, null, relevance);
 		this.command = command;
 		this.commandArguments = commandArguments;
 	}

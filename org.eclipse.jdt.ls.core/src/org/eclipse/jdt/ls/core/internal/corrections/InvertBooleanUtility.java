@@ -66,14 +66,15 @@ import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecke
 import org.eclipse.jdt.internal.core.manipulation.dom.OperatorPrecedence;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 
@@ -83,7 +84,7 @@ import org.eclipse.lsp4j.CodeActionParams;
 public class InvertBooleanUtility {
 	public static final String INVERT_VARIABLE_COMMAND = "invertVariable";
 
-	public static ChangeCorrectionProposal getInvertVariableProposal(CodeActionParams params, IInvocationContext context, ASTNode covering, boolean returnAsCommand) {
+	public static ProposalKindWrapper getInvertVariableProposal(CodeActionParams params, IInvocationContextCore context, ASTNode covering, boolean returnAsCommand) {
 		// cursor should be placed on variable name
 		if (!(covering instanceof SimpleName)) {
 			return null;
@@ -108,8 +109,9 @@ public class InvertBooleanUtility {
 
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_inverseBooleanVariable;
 		if (returnAsCommand) {
-			return new CUCorrectionCommandProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), IProposalRelevance.INVERSE_BOOLEAN_VARIABLE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+			CUCorrectionCommandProposal p = new CUCorrectionCommandProposal(label, context.getCompilationUnit(), IProposalRelevance.INVERSE_BOOLEAN_VARIABLE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 					Arrays.asList(INVERT_VARIABLE_COMMAND, params));
+			return CodeActionHandler.wrap(p, CodeActionKind.Refactor);
 		}
 
 		final AST ast = covering.getAST();
@@ -120,7 +122,7 @@ public class InvertBooleanUtility {
 		final ASTRewrite rewrite = ASTRewrite.create(ast);
 		// create proposal
 		final String KEY_NAME = "name"; //$NON-NLS-1$
-		final LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_BOOLEAN_VARIABLE);
+		final LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_BOOLEAN_VARIABLE);
 		// prepare new variable identifier
 		final String oldIdentifier = coveringName.getIdentifier();
 		final String notString = Messages.format(CorrectionMessages.AdvancedQuickAssistProcessor_negatedVariableName, ""); //$NON-NLS-1$
@@ -227,16 +229,16 @@ public class InvertBooleanUtility {
 			}
 		}
 
-		return proposal;
+		return CodeActionHandler.wrap(proposal, CodeActionKind.Refactor);
 	}
 
-	public static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {
+	public static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, covering);
 		return getInverseConditionProposals(params, context, covering, coveredNodes, proposals);
 
 	}
 
-	private static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ChangeCorrectionProposal> proposals) {
+	private static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -287,8 +289,8 @@ public class InvertBooleanUtility {
 
 		// add correction proposal
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_inverseConditions_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_CONDITIONS);
-		proposals.add(proposal);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.INVERSE_CONDITIONS);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
@@ -489,7 +491,7 @@ public class InvertBooleanUtility {
 		return prefixExpression;
 	}
 
-	public static boolean getSplitAndConditionProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	public static boolean getSplitAndConditionProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		Operator andOperator = InfixExpression.Operator.CONDITIONAL_AND;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {
@@ -554,12 +556,12 @@ public class InvertBooleanUtility {
 
 		// add correction proposal
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_splitAndCondition_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_AND_CONDITION);
-		resultingCollections.add(proposal);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_AND_CONDITION);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		return true;
 	}
 
-	public static boolean getSplitOrConditionProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	public static boolean getSplitOrConditionProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		Operator orOperator = InfixExpression.Operator.CONDITIONAL_OR;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {
@@ -619,8 +621,8 @@ public class InvertBooleanUtility {
 
 		// add correction proposal
 		String label = CorrectionMessages.AdvancedQuickAssistProcessor_splitOrCondition_description;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_OR_CONDITION);
-		resultingCollections.add(proposal);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.SPLIT_OR_CONDITION);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		return true;
 	}
 

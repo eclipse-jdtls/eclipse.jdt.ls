@@ -32,6 +32,8 @@ import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
@@ -42,18 +44,22 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.MoveCompilationUnitCh
 import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CorrectMainTypeNameProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CorrectPackageDeclarationProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
 public class ReorgCorrectionsSubProcessor {
 
-	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) {
+	public static void getWrongTypeNameProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 		boolean isLinked = cu.getResource().isLinked();
 
@@ -96,7 +102,9 @@ public class ReorgCorrectionsSubProcessor {
 		}
 
 		if (!JavaConventions.validateJavaTypeName(newTypeName, sourceLevel, compliance).matches(IStatus.ERROR)) {
-			proposals.add(new CorrectMainTypeNameProposal(cu, context, currTypeName, newTypeName, IProposalRelevance.RENAME_TYPE));
+			String title = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renametype_description, BasicElementLabels.getJavaElementName(newTypeName));
+			CorrectMainTypeNameProposalCore p = new CorrectMainTypeNameProposalCore(title, cu, null, context, currTypeName, newTypeName, IProposalRelevance.RENAME_TYPE);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 
 		if (!hasOtherPublicTypeBefore && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
@@ -107,19 +115,20 @@ public class ReorgCorrectionsSubProcessor {
 
 				// rename CU
 				String label = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renamecu_description, BasicElementLabels.getResourceName(newCUName));
-				proposals.add(new ChangeCorrectionProposal(label, CodeActionKind.QuickFix, change, IProposalRelevance.RENAME_CU));
+				ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, change, IProposalRelevance.RENAME_CU);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 
 	}
 
-	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void getWrongPackageDeclNameProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		// correct package declaration
 		int relevance= cu.getPackageDeclarations().length == 0 ? IProposalRelevance.MISSING_PACKAGE_DECLARATION : IProposalRelevance.CORRECT_PACKAGE_DECLARATION; // bug 38357
-		proposals.add(new CorrectPackageDeclarationProposal(cu, problem, relevance));
+		proposals.add(CodeActionHandler.wrap(new CorrectPackageDeclarationProposalCore(cu, problem, relevance), CodeActionKind.QuickFix));
 
 		// move to package
 		IPackageDeclaration[] packDecls= cu.getPackageDeclarations();
@@ -139,19 +148,20 @@ public class ReorgCorrectionsSubProcessor {
 				label= Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_movecu_description, new Object[] { BasicElementLabels.getFileName(cu), packageLabel });
 			}
 
-			proposals.add(new ChangeCorrectionProposal(label, CodeActionKind.QuickFix, new MoveCompilationUnitChange(cu, newPack), IProposalRelevance.MOVE_CU_TO_PACKAGE));
+			ChangeCorrectionProposalCore p = new ChangeCorrectionProposalCore(label, new MoveCompilationUnitChange(cu, newPack), IProposalRelevance.MOVE_CU_TO_PACKAGE);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 	}
 
-	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void removeImportStatementProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		IProposableFix fix = UnusedCodeFixCore.createRemoveUnusedImportFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(),
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(),
 						change, IProposalRelevance.REMOVE_UNUSED_IMPORT);
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
@@ -159,9 +169,9 @@ public class ReorgCorrectionsSubProcessor {
 		ICleanUpFixCore removeAllUnusedImportsFix = UnusedCodeFixCore.createCleanUp(context.getASTRoot(), false, false, false, false, false, true, false, false);
 		if (removeAllUnusedImportsFix != null) {
 			CompilationUnitChange change = removeAllUnusedImportsFix.createChange(null);
-			CUCorrectionProposal proposal = new CUCorrectionProposal(CorrectionMessages.ReorgCorrectionsSubProcessor_remove_all_unused_imports, CodeActionKind.QuickFix, change.getCompilationUnit(),
+			CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(CorrectionMessages.ReorgCorrectionsSubProcessor_remove_all_unused_imports, change.getCompilationUnit(),
 				change, IProposalRelevance.REMOVE_UNUSED_IMPORT);
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 	}
 }

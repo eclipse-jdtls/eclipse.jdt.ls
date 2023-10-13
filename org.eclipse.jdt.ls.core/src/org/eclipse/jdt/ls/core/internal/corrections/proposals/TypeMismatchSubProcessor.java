@@ -61,14 +61,22 @@ import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRe
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CastCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.ChangeDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.InsertDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.RemoveDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ImplementInterfaceProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
@@ -77,8 +85,8 @@ public class TypeMismatchSubProcessor {
 	private TypeMismatchSubProcessor() {
 	}
 
-	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void addTypeMismatchProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) throws CoreException {
 
 		ICompilationUnit cu= context.getCompilationUnit();
 
@@ -167,7 +175,7 @@ public class TypeMismatchSubProcessor {
 				ASTRewrite rewrite= ASTRewrite.create(ast);
 
 				String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changereturntype_description, BasicElementLabels.getJavaElementName(currBinding.getName()));
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
+				ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, cu, rewrite,
 						IProposalRelevance.CHANGE_METHOD_RETURN_TYPE);
 
 				ImportRewrite imports= proposal.createImportRewrite(astRoot);
@@ -176,7 +184,7 @@ public class TypeMismatchSubProcessor {
 				Type newReturnType= imports.addImport(currBinding, ast, importRewriteContext, TypeLocation.RETURN_TYPE);
 				rewrite.replace(methodDeclaration.getReturnType2(), newReturnType, null);
 
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 
@@ -203,8 +211,8 @@ public class TypeMismatchSubProcessor {
 			expression.setOperator(InfixExpression.Operator.NOT_EQUALS);
 			rewrite.replace(nodeToCast, expression, null);
 
-			proposals.add(new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite,
-					IProposalRelevance.INSERT_NULL_CHECK));
+			ASTRewriteCorrectionProposalCore p = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.INSERT_NULL_CHECK);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 
 	}
@@ -225,9 +233,9 @@ public class TypeMismatchSubProcessor {
 		}
 	}
 
-	public static void addChangeSenderTypeProposals(IInvocationContext context, Expression nodeToCast,
+	public static void addChangeSenderTypeProposals(IInvocationContextCore context, Expression nodeToCast,
 			ITypeBinding castTypeBinding, boolean isAssignedNode, int relevance,
-			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
+			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		IBinding callerBinding= Bindings.resolveExpressionBinding(nodeToCast, false);
 
 		ICompilationUnit cu= context.getCompilationUnit();
@@ -267,7 +275,8 @@ public class TypeMismatchSubProcessor {
 			targetCu= ASTResolving.findCompilationUnitForBinding(cu, astRoot, declaringType);
 		}
 		if (targetCu != null && ASTResolving.isUseableTypeInContext(castTypeBinding, callerBindingDecl, false)) {
-			proposals.add(new TypeChangeCorrectionProposal(targetCu, callerBindingDecl, astRoot, castTypeBinding, isAssignedNode, relevance));
+			TypeChangeCorrectionProposalCore p = new TypeChangeCorrectionProposalCore(targetCu, callerBindingDecl, astRoot, castTypeBinding, isAssignedNode, relevance);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 
 		// add interface to resulting type
@@ -277,13 +286,14 @@ public class TypeMismatchSubProcessor {
 				ITypeBinding typeDecl= nodeType.getTypeDeclaration();
 				ICompilationUnit nodeCu= ASTResolving.findCompilationUnitForBinding(cu, astRoot, typeDecl);
 				if (nodeCu != null && ASTResolving.isUseableTypeInContext(castTypeBinding, typeDecl, true)) {
-					proposals.add(new ImplementInterfaceProposal(nodeCu, typeDecl, astRoot, castTypeBinding, relevance - 1));
+					ImplementInterfaceProposalCore p = new ImplementInterfaceProposalCore(nodeCu, typeDecl, astRoot, castTypeBinding, relevance - 1);
+					proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 				}
 			}
 		}
 	}
 
-	public static ASTRewriteCorrectionProposal createCastProposal(IInvocationContext context, ITypeBinding castTypeBinding, Expression nodeToCast, int relevance) {
+	public static ProposalKindWrapper createCastProposal(IInvocationContextCore context, ITypeBinding castTypeBinding, Expression nodeToCast, int relevance) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		String label;
@@ -293,11 +303,12 @@ public class TypeMismatchSubProcessor {
 		} else {
 			label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_addcast_description, castType);
 		}
-		return new CastCorrectionProposal(label, cu, nodeToCast, castTypeBinding, relevance);
+		CastCorrectionProposalCore p = new CastCorrectionProposalCore(label, cu, nodeToCast, castTypeBinding, relevance);
+		return CodeActionHandler.wrap(p, CodeActionKind.QuickFix);
 	}
 
-	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
+	public static void addIncompatibleReturnTypeProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (selectedNode == null) {
@@ -325,8 +336,8 @@ public class TypeMismatchSubProcessor {
 		if (! JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {
 			overriddenReturnType= overriddenReturnType.getErasure();
 		}
-		proposals.add(new TypeChangeCorrectionProposal(cu, methodDecl, astRoot, overriddenReturnType, false, IProposalRelevance.CHANGE_RETURN_TYPE));
-
+		TypeChangeCorrectionProposalCore p = new TypeChangeCorrectionProposalCore(cu, methodDecl, astRoot, overriddenReturnType, false, IProposalRelevance.CHANGE_RETURN_TYPE);
+		proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		ICompilationUnit targetCu= cu;
 
 		IMethodBinding overriddenDecl= overridden.getMethodDeclaration();
@@ -335,19 +346,19 @@ public class TypeMismatchSubProcessor {
 		if (overridenDeclType.isFromSource()) {
 			targetCu= ASTResolving.findCompilationUnitForBinding(cu, astRoot, overridenDeclType);
 			if (targetCu != null && ASTResolving.isUseableTypeInContext(returnType, overriddenDecl, false)) {
-				TypeChangeCorrectionProposal proposal= new TypeChangeCorrectionProposal(targetCu, overriddenDecl, astRoot, returnType, false, IProposalRelevance.CHANGE_RETURN_TYPE_OF_OVERRIDDEN);
+				TypeChangeCorrectionProposalCore proposal = new TypeChangeCorrectionProposalCore(targetCu, overriddenDecl, astRoot, returnType, false, IProposalRelevance.CHANGE_RETURN_TYPE_OF_OVERRIDDEN);
 				if (overridenDeclType.isInterface()) {
 					proposal.setDisplayName(Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changereturnofimplemented_description, BasicElementLabels.getJavaElementName(overriddenDecl.getName())));
 				} else {
 					proposal.setDisplayName(Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changereturnofoverridden_description, BasicElementLabels.getJavaElementName(overriddenDecl.getName())));
 				}
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 			}
 		}
 	}
 
-	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
+	public static void addIncompatibleThrowsProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof MethodDeclaration)) {
@@ -383,8 +394,8 @@ public class TypeMismatchSubProcessor {
 				return;
 			}
 			String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_removeexceptions_description, BasicElementLabels.getJavaElementName(methodDeclBinding.getName()));
-			proposals.add(new ChangeMethodSignatureProposal(label, cu, astRoot, methodDeclBinding, null, changes,
-					IProposalRelevance.REMOVE_EXCEPTIONS));
+			ChangeMethodSignatureProposalCore p = new ChangeMethodSignatureProposalCore(label, cu, astRoot, methodDeclBinding, null, changes, IProposalRelevance.REMOVE_EXCEPTIONS);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 
 		ITypeBinding declaringType= overridden.getDeclaringClass();
@@ -401,8 +412,8 @@ public class TypeMismatchSubProcessor {
 			IMethodBinding overriddenDecl= overridden.getMethodDeclaration();
 			String[] args= {  BasicElementLabels.getJavaElementName(declaringType.getName()), BasicElementLabels.getJavaElementName(overridden.getName()) };
 			String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_addexceptions_description, args);
-			proposals.add(new ChangeMethodSignatureProposal(label, targetCu, astRoot, overriddenDecl, null, changes,
-					IProposalRelevance.ADD_EXCEPTIONS));
+			ChangeMethodSignatureProposalCore p = new ChangeMethodSignatureProposalCore(label, targetCu, astRoot, overriddenDecl, null, changes, IProposalRelevance.ADD_EXCEPTIONS);
+			proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 		}
 	}
 
@@ -415,8 +426,8 @@ public class TypeMismatchSubProcessor {
 		return false;
 	}
 
-	public static void addTypeMismatchInForEachProposals(IInvocationContext context, IProblemLocationCore problem,
-			Collection<ChangeCorrectionProposal> proposals) {
+	public static void addTypeMismatchInForEachProposals(IInvocationContextCore context, IProblemLocationCore problem,
+			Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (selectedNode == null || selectedNode.getLocationInParent() != EnhancedForStatement.EXPRESSION_PROPERTY) {
@@ -464,23 +475,22 @@ public class TypeMismatchSubProcessor {
 				int relevance= StubUtility.hasLocalVariableName(cu.getJavaProject(), name) ? 10 : 7;
 				String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_create_loop_variable_description, BasicElementLabels.getJavaElementName(name));
 
-				proposals.add(new NewVariableCorrectionProposal(label, cu, NewVariableCorrectionProposal.LOCAL,
-						simpleName, null, relevance));
+				NewVariableCorrectionProposalCore p = new NewVariableCorrectionProposalCore(label, cu, NewVariableCorrectionProposalCore.LOCAL, simpleName, null, relevance);
+				proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
 				return;
 			}
 		}
 
 		String label= Messages.format(CorrectionMessages.TypeMismatchSubProcessor_incompatible_for_each_type_description, new String[] { BasicElementLabels.getJavaElementName(parameter.getName().getIdentifier()), BindingLabelProviderCore.getBindingLabel(expectedBinding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS) });
 		ASTRewrite rewrite= ASTRewrite.create(ast);
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite,
-				IProposalRelevance.INCOMPATIBLE_FOREACH_TYPE);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.INCOMPATIBLE_FOREACH_TYPE);
 
 		ImportRewrite importRewrite= proposal.createImportRewrite(astRoot);
 		ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(ASTResolving.findParentBodyDeclaration(selectedNode), importRewrite);
 		Type newType= importRewrite.addImport(expectedBinding, ast, importRewriteContext, TypeLocation.LOCAL_VARIABLE);
 		rewrite.replace(parameter.getType(), newType, null);
 
-		proposals.add(proposal);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
 

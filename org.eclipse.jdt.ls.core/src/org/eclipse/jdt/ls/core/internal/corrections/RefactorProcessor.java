@@ -67,6 +67,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.manipulation.CleanUpRequirementsCore;
@@ -92,16 +93,15 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ASTRewriteRemoveImportsCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteRemoveImportsCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.FixCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
@@ -124,10 +124,10 @@ public class RefactorProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<ChangeCorrectionProposal> getProposals(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getProposals(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
-			ArrayList<ChangeCorrectionProposal> proposals = new ArrayList<>();
+			ArrayList<ProposalKindWrapper> proposals = new ArrayList<>();
 
 			InvertBooleanUtility.getInverseConditionProposals(params, context, coveringNode, proposals);
 			getInverseLocalVariableProposals(params, context, coveringNode, proposals);
@@ -163,23 +163,24 @@ public class RefactorProcessor {
 		return Collections.emptyList();
 	}
 
-	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) throws CoreException {
+	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ProposalKindWrapper> resultingCollections) throws CoreException {
 		if (resultingCollections == null) {
 			return false;
 		}
-		CUCorrectionProposal proposal = RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params, context, coveringNode, this.preferenceManager.getClientPreferences().isAdvancedIntroduceParameterRefactoringSupported(), locations);
+		ProposalKindWrapper proposal = RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params, context, coveringNode, this.preferenceManager.getClientPreferences().isAdvancedIntroduceParameterRefactoringSupported(),
+				locations);
 		if (proposal != null) {
 			return resultingCollections.add(proposal);
 		}
 		return false;
 	}
 
-	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> proposals) {
+	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
 
-		ChangeCorrectionProposal proposal = null;
+		ProposalKindWrapper proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
 			proposal = InvertBooleanUtility.getInvertVariableProposal(params, context, covering, true /*returnAsCommand*/);
 		} else {
@@ -194,13 +195,13 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
 
 		if (this.preferenceManager.getClientPreferences().isMoveRefactoringSupported()) {
-			List<CUCorrectionProposal> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context);
+			List<ProposalKindWrapper> newProposals = RefactorProposalUtility.getMoveRefactoringProposals(params, context);
 			if (newProposals != null && !newProposals.isEmpty()) {
 				resultingCollections.addAll(newProposals);
 				return true;
@@ -233,12 +234,12 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
 
-		List<CUCorrectionProposal> newProposals = null;
+		List<ProposalKindWrapper> newProposals = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
 			newProposals = RefactorProposalUtility.getExtractVariableCommandProposals(params, context, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractVariableInferSelectionSupported());
 		} else {
@@ -253,10 +254,10 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getAssignToVariableProposals(IInvocationContext context, ASTNode node, IProblemLocationCore[] locations, Collection<ChangeCorrectionProposal> resultingCollections, CodeActionParams params) {
+	private boolean getAssignToVariableProposals(IInvocationContextCore context, ASTNode node, IProblemLocationCore[] locations, Collection<ProposalKindWrapper> resultingCollections, CodeActionParams params) {
 		try {
 			Map formatterOptions = null;
-			CUCorrectionProposal proposal = RefactorProposalUtility.getAssignVariableProposal(params, context, locations != null && locations.length != 0, formatterOptions,
+			ProposalKindWrapper proposal = RefactorProposalUtility.getAssignVariableProposal(params, context, locations != null && locations.length != 0, formatterOptions,
 					this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), locations);
 			if (proposal != null) {
 				resultingCollections.add(proposal);
@@ -272,12 +273,12 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
 
-		CUCorrectionProposal proposal = null;
+		ProposalKindWrapper proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
 			proposal = RefactorProposalUtility.getExtractMethodCommandProposal(params, context, coveringNode, problemsAtLocation, this.preferenceManager.getClientPreferences().isExtractMethodInferSelectionSupported());
 		} else {
@@ -292,12 +293,13 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
 
-		CUCorrectionProposal proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(), this.preferenceManager.getClientPreferences().isExtractFieldInferSelectionSupported());
+		ProposalKindWrapper proposal = RefactorProposalUtility.getGenericExtractFieldProposal(params, context, problemsAtLocation, null, null, this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported(),
+				this.preferenceManager.getClientPreferences().isExtractFieldInferSelectionSupported());
 
 		if (proposal == null) {
 			return false;
@@ -308,7 +310,7 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private boolean getInlineProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -337,8 +339,8 @@ public class RefactorProcessor {
 							create.run(new NullProgressMonitor());
 							String label = ActionMessages.InlineConstantRefactoringAction_label;
 							int relevance = IProposalRelevance.INLINE_LOCAL;
-							ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
-							resultingCollections.add(proposal);
+							ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, create.getChange(), relevance);
+							resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
 							return true;
 						}
 					}
@@ -364,8 +366,8 @@ public class RefactorProcessor {
 					if (status && refactoring.getReferences().length > 0) {
 						String label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
-						RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.RefactorInline, context.getCompilationUnit(), refactoring, relevance);
-						resultingCollections.add(proposal);
+						RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, context.getCompilationUnit(), refactoring, relevance);
+						resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
 						return true;
 					}
 				}
@@ -379,8 +381,8 @@ public class RefactorProcessor {
 						create.run(new NullProgressMonitor());
 						String label = ActionMessages.InlineMethodRefactoringAction_label;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
-						ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(label, CodeActionKind.RefactorInline, create.getChange(), relevance);
-						resultingCollections.add(proposal);
+						ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, create.getChange(), relevance);
+						resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
 						return true;
 					}
 				}
@@ -393,12 +395,12 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
 
-		RefactoringCorrectionProposal proposal = null;
+		ProposalKindWrapper proposal = null;
 		if (this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
 			proposal = getConvertAnonymousToNestedProposal(params, context, node, true /*returnAsCommand*/);
 		} else {
@@ -413,7 +415,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	public static RefactoringCorrectionProposal getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContext context, final ASTNode node, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContextCore context, final ASTNode node, boolean returnAsCommand) throws CoreException {
 		String label = CorrectionMessages.QuickAssistProcessor_convert_anonym_to_nested;
 		ClassInstanceCreation cic = getClassInstanceCreation(node);
 		if (cic == null) {
@@ -430,8 +432,9 @@ public class RefactorProcessor {
 		}
 
 		if (returnAsCommand) {
-			return new RefactoringCorrectionCommandProposal(label, CodeActionKind.Refactor, context.getCompilationUnit(), IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+			RefactoringCorrectionCommandProposal p1 = new RefactoringCorrectionCommandProposal(label, context.getCompilationUnit(), IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 					Arrays.asList(CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND, params));
+			return CodeActionHandler.wrap(p1, CodeActionKind.Refactor);
 		}
 
 		String extTypeName = ASTNodes.getTypeName(cic.getType());
@@ -454,9 +457,9 @@ public class RefactorProcessor {
 		refactoring.setLinkedProposalModel(linkedProposalModel);
 
 		final ICompilationUnit cu = context.getCompilationUnit();
-		RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.Refactor, cu, refactoring, IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED);
+		RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.CONVERT_ANONYMOUS_TO_NESTED);
 		proposal.setLinkedProposalModel(linkedProposalModel);
-		return proposal;
+		return CodeActionHandler.wrap(proposal, CodeActionKind.Refactor);
 	}
 
 	private static ClassInstanceCreation getClassInstanceCreation(ASTNode node) {
@@ -474,7 +477,7 @@ public class RefactorProcessor {
 		}
 	}
 
-	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		ClassInstanceCreation cic = getClassInstanceCreation(covering);
 		if (cic == null) {
 			return false;
@@ -492,12 +495,12 @@ public class RefactorProcessor {
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context, CodeActionKind.Refactor);
-		resultingCollections.add(proposal);
+		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
-	private static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}
@@ -520,12 +523,12 @@ public class RefactorProcessor {
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
 		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context, CodeActionKind.Refactor);
-		resultingCollections.add(proposal);
+		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
-	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
+	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -578,9 +581,8 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		TypeChangeCorrectionProposal proposal = new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, false, IProposalRelevance.CHANGE_VARIABLE);
-		proposal.setKind(CodeActionKind.Refactor);
-		proposals.add(proposal);
+		TypeChangeCorrectionProposalCore proposal = new TypeChangeCorrectionProposalCore(context.getCompilationUnit(), varBinding, astRoot, typeBinding, false, IProposalRelevance.CHANGE_VARIABLE);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
@@ -604,7 +606,7 @@ public class RefactorProcessor {
 		return name;
 	}
 
-	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
+	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -701,9 +703,8 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		TypeChangeCorrectionProposal proposal = new TypeChangeCorrectionProposal(context.getCompilationUnit(), varBinding, astRoot, typeBinding, IProposalRelevance.CHANGE_VARIABLE);
-		proposal.setKind(CodeActionKind.Refactor);
-		proposals.add(proposal);
+		TypeChangeCorrectionProposalCore proposal = new TypeChangeCorrectionProposalCore(context.getCompilationUnit(), varBinding, astRoot, typeBinding, IProposalRelevance.CHANGE_VARIABLE);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
@@ -720,7 +721,7 @@ public class RefactorProcessor {
 	 * @return {@code true} if the operation could or has been performed,
 	 *         {@code false otherwise}
 	 */
-	private static boolean getAddStaticImportProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> proposals) {
+	private static boolean getAddStaticImportProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		if (!(node instanceof SimpleName)) {
 			return false;
 		}
@@ -848,16 +849,18 @@ public class RefactorProcessor {
 				importRewrite.addStaticImport(binding);
 			}
 
-			ASTRewriteRemoveImportsCorrectionProposal proposal= new ASTRewriteRemoveImportsCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, CodeActionKind.Refactor, context.getCompilationUnit(), astRewrite,
+			ASTRewriteRemoveImportsCorrectionProposalCore proposal = new ASTRewriteRemoveImportsCorrectionProposalCore(CorrectionMessages.QuickAssistProcessor_convert_to_static_import, context.getCompilationUnit(), astRewrite,
 					IProposalRelevance.ADD_STATIC_IMPORT);
 			proposal.setImportRewrite(importRewrite);
 			proposal.setImportRemover(remover);
-			proposals.add(proposal);
-			ASTRewriteRemoveImportsCorrectionProposal proposalReplaceAllOccurrences= new ASTRewriteRemoveImportsCorrectionProposal(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all, CodeActionKind.Refactor, context.getCompilationUnit(), astRewriteReplaceAllOccurrences,
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
+
+			ASTRewriteRemoveImportsCorrectionProposalCore proposalReplaceAllOccurrences = new ASTRewriteRemoveImportsCorrectionProposalCore(CorrectionMessages.QuickAssistProcessor_convert_to_static_import_replace_all,
+					context.getCompilationUnit(), astRewriteReplaceAllOccurrences,
 					IProposalRelevance.ADD_STATIC_IMPORT);
 			proposalReplaceAllOccurrences.setImportRewrite(importRewrite);
 			proposalReplaceAllOccurrences.setImportRemover(removerAllOccurences);
-			proposals.add(proposalReplaceAllOccurrences);
+			proposals.add(CodeActionHandler.wrap(proposalReplaceAllOccurrences, CodeActionKind.Refactor));
 		} catch (IllegalArgumentException e) {
 			// Wrong use of ASTRewrite or ImportRewrite API, see bug 541586
 			JavaLanguageServerPlugin.logException("Failed to get static import proposal", e);
@@ -890,7 +893,7 @@ public class RefactorProcessor {
 		return false;
 	}
 
-	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getConvertForLoopProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		ForStatement forStatement = getEnclosingForStatementHeader(node);
 		if (forStatement == null) {
 			return false;
@@ -960,8 +963,8 @@ public class RefactorProcessor {
 				return buf.toString();
 			}
 		};
-		FixCorrectionProposal proposal = new FixCorrectionProposal(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context, CodeActionKind.Refactor);
-		resultingCollections.add(proposal);
+		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, cleanUp, IProposalRelevance.CONVERT_FOR_LOOP_TO_ENHANCED, context);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
 	}
 
@@ -990,7 +993,7 @@ public class RefactorProcessor {
 		return null;
 	}
 
-	private boolean getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+	private boolean getExtractInterfaceProposal(CodeActionParams params, IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -999,7 +1002,7 @@ public class RefactorProcessor {
 			return false;
 		}
 
-		ChangeCorrectionProposal proposal = RefactorProposalUtility.getExtractInterfaceProposal(params, context);
+		ProposalKindWrapper proposal = RefactorProposalUtility.getExtractInterfaceProposal(params, context);
 
 		if (proposal == null) {
 			return false;
@@ -1009,12 +1012,12 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getChangeSignatureProposal(CodeActionParams params, IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+	private boolean getChangeSignatureProposal(CodeActionParams params, IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
 
-		ChangeCorrectionProposal proposal = RefactorProposalUtility.getChangeSignatureProposal(params, context);
+		ProposalKindWrapper proposal = RefactorProposalUtility.getChangeSignatureProposal(params, context);
 
 		if (proposal == null) {
 			return false;

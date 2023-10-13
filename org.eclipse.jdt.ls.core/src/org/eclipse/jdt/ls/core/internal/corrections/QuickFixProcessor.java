@@ -37,20 +37,22 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GradleCompatibilityProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.LocalCorrectionsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReorgCorrectionsSubProcessor;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -75,11 +77,11 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public List<ChangeCorrectionProposal> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getCorrections(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
-		ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
+		ArrayList<ProposalKindWrapper> resultingCollections = new ArrayList<>();
 		Set<Integer> handledProblems = new HashSet<>(locations.length);
 		for (int i = 0; i < locations.length; i++) {
 			IProblemLocationCore curr = locations[i];
@@ -107,7 +109,7 @@ public class QuickFixProcessor {
 		return handledProblems.add(problemId);
 	}
 
-	private void process(CodeActionParams params, IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private void process(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
@@ -117,8 +119,9 @@ public class QuickFixProcessor {
 				String quoteLabel = CorrectionMessages.JavaCorrectionProcessor_addquote_description;
 				int pos = moveBack(problem.getOffset() + problem.getLength(), problem.getOffset(), "\n\r", //$NON-NLS-1$
 						context.getCompilationUnit());
-				proposals.add(new ReplaceCorrectionProposal(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", //$NON-NLS-1$
-						IProposalRelevance.ADD_QUOTE));
+				ChangeCorrectionProposalCore prop = new ReplaceCorrectionProposalCore(quoteLabel, context.getCompilationUnit(), pos, 0, "\"", //$NON-NLS-1$
+						IProposalRelevance.ADD_QUOTE);
+				proposals.add(CodeActionHandler.wrap(prop, CodeActionKind.QuickFix));
 				break;
 			case IProblem.UnusedImport:
 			case IProblem.DuplicateImport:
@@ -683,16 +686,17 @@ public class QuickFixProcessor {
 		// problem, proposals);
 	}
 
-	public void addAddAllMissingImportsProposal(IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+	public void addAddAllMissingImportsProposal(IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals.size() == 0) {
 			return;
 		}
-		Optional<Integer> minRelevance = proposals.stream().filter(AddImportCorrectionProposal.class::isInstance).map((proposal) -> proposal.getRelevance()).min(Comparator.naturalOrder());
+
+		Optional<Integer> minRelevance = proposals.stream().filter(w -> w.getProposal() instanceof AddImportCorrectionProposal).map((w) -> w.getProposal().getRelevance()).min(Comparator.naturalOrder());
 		if (minRelevance.isPresent()) {
-			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, CodeActionKind.QuickFix, context.getCompilationUnit(),
+			CUCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, context.getCompilationUnit(),
 					minRelevance.get() - 1, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
 			if (proposal != null) {
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 	}

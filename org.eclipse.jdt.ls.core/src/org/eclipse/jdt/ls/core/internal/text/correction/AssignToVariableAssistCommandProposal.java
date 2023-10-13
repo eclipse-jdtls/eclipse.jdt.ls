@@ -17,15 +17,15 @@ import java.util.List;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 
-public class AssignToVariableAssistCommandProposal extends AssignToVariableAssistProposal {
+public class AssignToVariableAssistCommandProposal extends AssignToVariableAssistProposalCore {
 
 	private String command;
 	private List<Object> commandArguments;
 
-	public AssignToVariableAssistCommandProposal(ICompilationUnit cu, String kind, int variableKind, ExpressionStatement node, ITypeBinding typeBinding, int relevance, String command, List<Object> commandArguments) {
-		super(cu, kind, variableKind, node, typeBinding, relevance);
+	public AssignToVariableAssistCommandProposal(ICompilationUnit cu, int variableKind, ExpressionStatement node, ITypeBinding typeBinding, int relevance, String command, List<Object> commandArguments) {
+		super(cu, variableKind, node, typeBinding, relevance);
 		this.command = command;
 		this.commandArguments = commandArguments;
 	}

@@ -43,6 +43,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CodeGeneration;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
@@ -53,7 +54,6 @@ import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.text.edits.InsertEdit;
@@ -66,7 +66,7 @@ import org.eclipse.text.edits.TextEdit;
  * @see UnresolvedElementsSubProcessor#addNewTypeProposals(ICompilationUnit,
  *      Name, int, int, Collection)
  */
-public class NewCUProposal extends ChangeCorrectionProposal {
+public class NewCUProposal extends ChangeCorrectionProposalCore {
 
 	public static final int K_CLASS = 1;
 	public static final int K_INTERFACE = 2;
@@ -94,7 +94,7 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 	 *            the relevance of this proposal
 	 */
 	public NewCUProposal(ICompilationUnit cu, Name node, int typeKind, IJavaElement typeContainer, int relevance) {
-		super("", CodeActionKind.QuickFix, null, relevance); //$NON-NLS-1$
+		super("", null, relevance); //$NON-NLS-1$
 
 		fCompilationUnit = cu;
 		fNode = node;

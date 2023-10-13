@@ -34,22 +34,24 @@ import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewAnnotationMemberProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewAnnotationMemberProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewCUProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewMethodCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewVariableCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.AssignToVariableAssistCommandProposal;
@@ -74,7 +76,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 public class CodeActionHandler {
-	public static final ResponseStore<Either<ChangeCorrectionProposal, CodeActionProposal>> codeActionStore
+	public static final ResponseStore<Either<ChangeCorrectionProposalCore, CodeActionProposal>> codeActionStore
 		= new ResponseStore<>(ForkJoinPool.commonPool().getParallelism());
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
@@ -93,6 +95,10 @@ public class CodeActionHandler {
 		this.quickAssistProcessor = new QuickAssistProcessor(preferenceManager);
 		this.refactorProcessor = new RefactorProcessor(preferenceManager);
 		this.nonProjectFixProcessor = new NonProjectFixProcessor(preferenceManager);
+	}
+
+	public static ProposalKindWrapper wrap(ChangeCorrectionProposalCore proposal, String kind) {
+		return new ProposalKindWrapper(proposal, kind);
 	}
 
 	public List<Either<Command, CodeAction>> getCodeActionCommands(CodeActionParams params, IProgressMonitor monitor) {
@@ -135,7 +141,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 
-		InnovationContext context = getContext(unit, astRoot, params.getRange());
+		IInvocationContextCore context = getContext(unit, astRoot, params.getRange());
 		List<Diagnostic> diagnostics = params.getContext().getDiagnostics().stream().filter((d) -> {
 			return JavaLanguageServerPlugin.SERVER_SOURCE_ID.equals(d.getSource());
 		}).collect(Collectors.toList());
@@ -158,14 +164,14 @@ public class CodeActionHandler {
 		}
 
 		List<Either<Command, CodeAction>> codeActions = new ArrayList<>();
-		List<ChangeCorrectionProposal> proposals = new ArrayList<>();
+		List<ProposalKindWrapper> proposals = new ArrayList<>();
 		ChangeCorrectionProposalComparator comparator = new ChangeCorrectionProposalComparator();
 		if (containsKind(codeActionKinds, CodeActionKind.QuickFix)) {
 			try {
 				codeActions.addAll(nonProjectFixProcessor.getCorrections(params, context, locations));
-				List<ChangeCorrectionProposal> quickfixProposals = this.quickFixProcessor.getCorrections(params, context, locations);
+				List<ProposalKindWrapper> quickfixProposals = this.quickFixProcessor.getCorrections(params, context, locations);
 				this.quickFixProcessor.addAddAllMissingImportsProposal(context, quickfixProposals);
-				Set<ChangeCorrectionProposal> quickSet = new TreeSet<>(comparator);
+				Set<ProposalKindWrapper> quickSet = new TreeSet<>(comparator);
 				quickSet.addAll(quickfixProposals);
 				proposals.addAll(quickSet);
 			} catch (CoreException e) {
@@ -178,7 +184,7 @@ public class CodeActionHandler {
 
 		if (containsKind(codeActionKinds, CodeActionKind.Refactor)) {
 			try {
-				List<ChangeCorrectionProposal> refactorProposals = this.refactorProcessor.getProposals(params, context, locations);
+				List<ProposalKindWrapper> refactorProposals = this.refactorProcessor.getProposals(params, context, locations);
 				refactorProposals.sort(comparator);
 				proposals.addAll(refactorProposals);
 			} catch (CoreException e) {
@@ -190,7 +196,7 @@ public class CodeActionHandler {
 		}
 		if (containsKind(codeActionKinds, JavaCodeActionKind.QUICK_ASSIST)) {
 			try {
-				List<ChangeCorrectionProposal> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
+				List<ProposalKindWrapper> quickassistProposals = this.quickAssistProcessor.getAssists(params, context, locations);
 				quickassistProposals.sort(comparator);
 				proposals.addAll(quickassistProposals);
 			} catch (CoreException e) {
@@ -201,7 +207,7 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 		try {
-			for (ChangeCorrectionProposal proposal : proposals) {
+			for (ProposalKindWrapper proposal : proposals) {
 				Optional<Either<Command, CodeAction>> codeActionFromProposal = getCodeActionFromProposal(params.getTextDocument().getUri(), proposal, params.getContext());
 				if (codeActionFromProposal.isPresent() && !codeActions.contains(codeActionFromProposal.get())) {
 					codeActions.add(codeActionFromProposal.get());
@@ -226,15 +232,15 @@ public class CodeActionHandler {
 	}
 
 	private void populateDataFields(List<Either<Command, CodeAction>> codeActions) {
-		ResponseStore.ResponseItem<Either<ChangeCorrectionProposal, CodeActionProposal>> response = codeActionStore.createResponse();
-		List<Either<ChangeCorrectionProposal, CodeActionProposal>> proposals = new ArrayList<>();
+		ResponseStore.ResponseItem<Either<ChangeCorrectionProposalCore, CodeActionProposal>> response = codeActionStore.createResponse();
+		List<Either<ChangeCorrectionProposalCore, CodeActionProposal>> proposals = new ArrayList<>();
 		codeActions.forEach(action -> {
 			if (action.isRight()) {
-				Either<ChangeCorrectionProposal, CodeActionProposal> proposal = null;
+				Either<ChangeCorrectionProposalCore, CodeActionProposal> proposal = null;
 				Object originalData = action.getRight().getData();
 				if (originalData instanceof CodeActionData codeActionData) {
 					Object originalProposal = codeActionData.getProposal();
-					if (originalProposal instanceof ChangeCorrectionProposal changeCorrectionProposal) {
+					if (originalProposal instanceof ChangeCorrectionProposalCore changeCorrectionProposal) {
 						proposal = Either.forLeft(changeCorrectionProposal);
 					} else if (originalProposal instanceof CodeActionProposal codeActionProposal) {
 						proposal = Either.forRight(codeActionProposal);
@@ -260,7 +266,8 @@ public class CodeActionHandler {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(String uri, ChangeCorrectionProposal proposal, CodeActionContext context) throws CoreException {
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(String uri, ProposalKindWrapper pk, CodeActionContext context) throws CoreException {
+		ChangeCorrectionProposalCore proposal = pk.getProposal();
 		String name = proposal.getName();
 
 		Command command = null;
@@ -280,16 +287,15 @@ public class CodeActionHandler {
 			}
 		}
 
-		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
+		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
 			// TODO: Should set WorkspaceEdit directly instead of Command
 			CodeAction codeAction = new CodeAction(name);
-			codeAction.setKind(proposal.getKind());
+			codeAction.setKind(pk.getKind());
 			if (command == null) { // lazy resolve the edit.
 				if (!preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) {
 					if (proposal instanceof NewCUProposal
-						|| proposal instanceof NewMethodCorrectionProposal
-						|| proposal instanceof NewAnnotationMemberProposal
-						|| proposal instanceof NewVariableCorrectionProposal
+							|| proposal instanceof NewMethodCorrectionProposalCore || proposal instanceof NewAnnotationMemberProposalCore
+							|| proposal instanceof NewVariableCorrectionProposalCore
 					) {
 						codeAction.setCommand(new Command("refresh Diagnostics", "java.project.refreshDiagnostics", Arrays.asList(
 							uri, "thisFile", false, true
@@ -303,7 +309,7 @@ public class CodeActionHandler {
 				codeAction.setCommand(command);
 				codeAction.setData(new CodeActionData(null, -proposal.getRelevance()));
 			}
-			if (proposal.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
+			if (pk.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
 				codeAction.setDiagnostics(context.getDiagnostics());
 			}
 			return Optional.of(Either.forRight(codeAction));
@@ -356,7 +362,7 @@ public class CodeActionHandler {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 	}
 
-	public static InnovationContext getContext(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
+	public static IInvocationContextCore getContext(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
 		int start = DiagnosticsHelper.getStartOffset(unit, range);
 		int end = DiagnosticsHelper.getEndOffset(unit, range);
 		InnovationContext context = new InnovationContext(unit, start, end - start);
@@ -364,23 +370,23 @@ public class CodeActionHandler {
 		return context;
 	}
 
-	private static class ChangeCorrectionProposalComparator implements Comparator<ChangeCorrectionProposal> {
+	private static class ChangeCorrectionProposalComparator implements Comparator<ProposalKindWrapper> {
 
 		@Override
-		public int compare(ChangeCorrectionProposal p1, ChangeCorrectionProposal p2) {
+		public int compare(ProposalKindWrapper p1, ProposalKindWrapper p2) {
 			String k1 = p1.getKind();
 			String k2 = p2.getKind();
 			if (!StringUtils.isBlank(k1) && !StringUtils.isBlank(k2) && !k1.equals(k2)) {
 				return k1.compareTo(k2);
 			}
 
-			int r1 = p1.getRelevance();
-			int r2 = p2.getRelevance();
+			int r1 = p1.getProposal().getRelevance();
+			int r2 = p2.getProposal().getRelevance();
 			int relevanceDif = r2 - r1;
 			if (relevanceDif != 0) {
 				return relevanceDif;
 			}
-			return p1.getName().compareToIgnoreCase(p2.getName());
+			return p1.getProposal().getName().compareToIgnoreCase(p2.getProposal().getName());
 		}
 
 	}

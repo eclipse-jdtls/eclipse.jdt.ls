@@ -99,6 +99,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
@@ -125,20 +126,21 @@ import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.jface.text.link.LinkedPositionGroup;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -168,11 +170,11 @@ public class QuickAssistProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<ChangeCorrectionProposal> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getAssists(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			// ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
-			ArrayList<ChangeCorrectionProposal> resultingCollections = new ArrayList<>();
+			ArrayList<ProposalKindWrapper> resultingCollections = new ArrayList<>();
 
 			// quick assists that show up also if there is an error/warning
 			//			getRenameLocalProposals(context, coveringNode, locations, resultingCollections);
@@ -234,7 +236,7 @@ public class QuickAssistProcessor {
 		return Collections.emptyList();
 	}
 
-	private static boolean getExtractMethodFromLambdaProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private static boolean getExtractMethodFromLambdaProposal(IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			return false;
 		}
@@ -257,15 +259,15 @@ public class QuickAssistProcessor {
 
 			// Image image= JavaPluginImages.get(JavaPluginImages.IMG_MISC_PUBLIC);
 			int relevance = problemsAtLocation ? IProposalRelevance.EXTRACT_METHOD_ERROR : IProposalRelevance.EXTRACT_LAMBDA_BODY_TO_METHOD;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, cu, extractMethodRefactoring, relevance/*, image*/);
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractMethodRefactoring, relevance/*, image*/);
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 			return true;
 		}
 		return false;
 	}
 
-	private static boolean getConvertLambdaExpressionAndMethodRefCleanUpProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	private static boolean getConvertLambdaExpressionAndMethodRefCleanUpProposal(IInvocationContextCore context, ASTNode coveringNode, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			return false;
 		}
@@ -282,8 +284,8 @@ public class QuickAssistProcessor {
 		// add correction proposal
 		try {
 			CompilationUnitChange change = fix.createChange(null);
-			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.LAMBDA_EXPRESSION_AND_METHOD_REF_CLEANUP);
-			proposals.add(proposal);
+			ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(fix.getDisplayString(), change, IProposalRelevance.LAMBDA_EXPRESSION_AND_METHOD_REF_CLEANUP);
+			proposals.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 			return true;
 		} catch (CoreException e) {
 			// ignore
@@ -291,7 +293,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getAssignParamToFieldProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -328,19 +330,20 @@ public class QuickAssistProcessor {
 					ASTNode fieldDeclFrag = root.findDeclaringNode(curr);
 					if (fieldDeclFrag instanceof VariableDeclarationFragment fragment) {
 						if (fragment.getInitializer() == null) {
-							resultingCollections.add(new AssignToVariableAssistProposal(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD));
+							AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD);
+							resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 						}
 					}
 				}
 			}
 		}
 
-		AssignToVariableAssistProposal fieldProposal = new AssignToVariableAssistProposal(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD);
-		resultingCollections.add(fieldProposal);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD);
+		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
 
-	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -368,12 +371,12 @@ public class QuickAssistProcessor {
 			return true;
 		}
 
-		AssignToVariableAssistProposal fieldProposal = new AssignToVariableAssistProposal(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS);
-		resultingCollections.add(fieldProposal);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS);
+		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
 
-	public static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
+	public static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContextCore context, ASTNode coveringNode) {
 		final ArrayList<ASTNode> coveredNodes = new ArrayList<>();
 		final int selectionBegin = context.getSelectionOffset();
 		final int selectionEnd = selectionBegin + context.getSelectionLength();
@@ -729,7 +732,7 @@ public class QuickAssistProcessor {
 		return blockBody;
 	}
 
-	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	public static boolean getCatchClauseToThrowsProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}
@@ -773,8 +776,8 @@ public class QuickAssistProcessor {
 				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
 				addExceptionToThrows(ast, methodDeclaration, rewrite, selectedMultiCatchType);
 				String label = CorrectionMessages.QuickAssistProcessor_exceptiontothrows_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_EXCEPTION_WITH_THROWS);
-				resultingCollections.add(proposal);
+				ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_EXCEPTION_WITH_THROWS);
+				resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} else {
 				removeCatchBlock(rewrite, catchClause);
 				if (type.isUnionType()) {
@@ -790,8 +793,8 @@ public class QuickAssistProcessor {
 					addExceptionToThrows(ast, methodDeclaration, rewrite, type);
 				}
 				String label = CorrectionMessages.QuickAssistProcessor_catchclausetothrows_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_CATCH_CLAUSE_WITH_THROWS);
-				resultingCollections.add(proposal);
+				ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REPLACE_CATCH_CLAUSE_WITH_THROWS);
+				resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 		{ // for initializers or method declarations
@@ -799,13 +802,13 @@ public class QuickAssistProcessor {
 			if (selectedMultiCatchType != null) {
 				removeException(rewrite, (UnionType) type, selectedMultiCatchType);
 				String label = CorrectionMessages.QuickAssistProcessor_removeexception_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_EXCEPTION);
-				resultingCollections.add(proposal);
+				ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_EXCEPTION);
+				resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} else {
 				removeCatchBlock(rewrite, catchClause);
 				String label = CorrectionMessages.QuickAssistProcessor_removecatchclause_description;
-				ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_CATCH_CLAUSE);
-				resultingCollections.add(proposal);
+				ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_CATCH_CLAUSE);
+				resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 
@@ -873,7 +876,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getConvertMethodReferenceToLambdaProposal(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) throws JavaModelException {
+	private static boolean getConvertMethodReferenceToLambdaProposal(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) throws JavaModelException {
 		MethodReference methodReference;
 		if (covering instanceof MethodReference ref) {
 			methodReference = ref;
@@ -899,16 +902,16 @@ public class QuickAssistProcessor {
 
 		// add proposal
 		String label = CorrectionMessages.QuickAssistProcessor_convert_to_lambda_expression;
-		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_METHOD_REFERENCE_TO_LAMBDA);
+		LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_METHOD_REFERENCE_TO_LAMBDA);
 		proposal.setLinkedProposalModel(linkedProposalModel);
 		proposal.setEndPosition(rewrite.track(lambda));
-		resultingCollections.add(proposal);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
 
-	private static boolean getConvertLambdaToMethodReferenceProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getConvertLambdaToMethodReferenceProposal(IInvocationContextCore context, ASTNode coveringNode, Collection<ProposalKindWrapper> resultingCollections) {
 		// Don't calculate if lambda expression clean up quick assist exists
-		if (!resultingCollections.stream().filter(proposal -> proposal.getName().equals(FixMessages.LambdaExpressionAndMethodRefFix_clean_up_expression_msg)).collect(Collectors.toList()).isEmpty()) {
+		if (!resultingCollections.stream().filter(wrapper -> wrapper.getProposal().getName().equals(FixMessages.LambdaExpressionAndMethodRefFix_clean_up_expression_msg)).collect(Collectors.toList()).isEmpty()) {
 			return false;
 		}
 		LambdaExpression lambda;
@@ -1130,11 +1133,11 @@ public class QuickAssistProcessor {
 
 		// add correction proposal
 		String label = CorrectionMessages.QuickAssistProcessor_convert_to_method_reference;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, JavaCodeActionKind.QUICK_ASSIST, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_TO_METHOD_REFERENCE);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.CONVERT_TO_METHOD_REFERENCE);
 		if (importRewrite != null) {
 			proposal.setImportRewrite(importRewrite);
 		}
-		resultingCollections.add(proposal);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
 
@@ -1327,7 +1330,7 @@ public class QuickAssistProcessor {
 		return newBlock;
 	}
 
-	public static boolean getAddMethodDeclaration(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+	public static boolean getAddMethodDeclaration(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		CompilationUnit astRoot = context.getASTRoot();
 		ExpressionMethodReference methodReferenceNode = covering instanceof ExpressionMethodReference expressionMethodReference ? expressionMethodReference : ASTNodes.getParent(covering, ExpressionMethodReference.class);
 		if (methodReferenceNode == null) {
@@ -1352,7 +1355,7 @@ public class QuickAssistProcessor {
 
 		String label = Messages.format(CorrectionMessages.AddUnimplementedMethodReferenceOperation_AddMissingMethod_group,
 				new String[] { methodReferenceNode.getName().getIdentifier(), typeDeclaration.getName().getIdentifier() });
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.ADD_INFERRED_LAMBDA_PARAMETER_TYPES);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.ADD_INFERRED_LAMBDA_PARAMETER_TYPES);
 		// ImportRewrite importRewrite= proposal.createImportRewrite(context.getASTRoot());
 		ImportRewrite importRewrite = StubUtility.createImportRewrite(astRoot, true);
 
@@ -1409,7 +1412,7 @@ public class QuickAssistProcessor {
 			listRewrite.insertLast(newMethodDeclaration, null);
 
 			// add proposal
-			resultingCollections.add(proposal);
+			resultingCollections.add(CodeActionHandler.wrap(proposal,  CodeActionKind.QuickFix));
 			return true;
 		}
 
@@ -1504,11 +1507,11 @@ public class QuickAssistProcessor {
 		listRewrite.insertLast(newMethodDeclaration, null);
 
 		// add proposal
-		resultingCollections.add(proposal);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		return true;
 	}
 
-	public static boolean getTryWithResourceProposals(IProblemLocationCore[] locations, IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {
+	public static boolean getTryWithResourceProposals(IProblemLocationCore[] locations, IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		final List<Integer> exceptionProblems = Arrays.asList(IProblem.UnclosedCloseable, IProblem.UnclosedCloseable, IProblem.PotentiallyUnclosedCloseable, IProblem.UnhandledException);
 		if (problemExists(locations, exceptionProblems)) {
 			return false;
@@ -1527,7 +1530,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ChangeCorrectionProposal> resultingCollections) throws IllegalArgumentException, CoreException {
+	public static boolean getTryWithResourceProposals(IInvocationContextCore context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		if (!JavaModelUtil.is1d8OrHigher(context.getCompilationUnit().getJavaProject())) {
 			return false;
 		}
@@ -1674,7 +1677,7 @@ public class QuickAssistProcessor {
 		}
 
 		String label = CorrectionMessages.QuickAssistProcessor_convert_to_try_with_resource;
-		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
+		LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
 
 		ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
 		ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(node, imports);
@@ -1761,11 +1764,11 @@ public class QuickAssistProcessor {
 			}
 		}
 
-		resultingCollections.add(proposal);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		return true;
 	}
 
-	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getConvertToSwitchExpressionProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (covering instanceof Block block) {
 			List<Statement> statements = block.statements();
 			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
@@ -1798,8 +1801,8 @@ public class QuickAssistProcessor {
 		// add correction proposal
 		try {
 			CompilationUnitChange change = fix.createChange(null);
-			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.CONVERT_TO_SWITCH_EXPRESSION);
-			resultingCollections.add(proposal);
+			ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(fix.getDisplayString(), change, IProposalRelevance.CONVERT_TO_SWITCH_EXPRESSION);
+			resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 		} catch (CoreException e) {
 			// continue
 		}
@@ -1807,7 +1810,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getStringConcatToTextBlockProposal(IInvocationContext context, ASTNode node, Collection<ChangeCorrectionProposal> resultingCollections) {
+	private static boolean getStringConcatToTextBlockProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -1832,8 +1835,8 @@ public class QuickAssistProcessor {
 		// add correction proposal
 		try {
 			CompilationUnitChange change = fix.createChange(null);
-			ChangeCorrectionProposal proposal = new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, change, IProposalRelevance.CONVERT_TO_TEXT_BLOCK);
-			resultingCollections.add(proposal);
+			ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(fix.getDisplayString(), change, IProposalRelevance.CONVERT_TO_TEXT_BLOCK);
+			resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 			return true;
 		} catch (CoreException e) {
 			// ignore
@@ -1841,12 +1844,13 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getJoinVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+	private boolean getJoinVariableProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			SplitVariableFixCore fix = SplitVariableFixCore.createSplitVariableFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
 				try {
-					resultingCollections.add(new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, fix.createChange(null), IProposalRelevance.SPLIT_VARIABLE_DECLARATION));
+					ChangeCorrectionProposalCore p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.SPLIT_VARIABLE_DECLARATION);
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 					return true;
 				} catch (CoreException e) {
 					// ignore
@@ -1856,12 +1860,13 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getSplitVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+	private boolean getSplitVariableProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			JoinVariableFixCore fix = JoinVariableFixCore.createJoinVariableFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
 				try {
-					resultingCollections.add(new ChangeCorrectionProposal(fix.getDisplayString(), JavaCodeActionKind.QUICK_ASSIST, fix.createChange(null), IProposalRelevance.JOIN_VARIABLE_DECLARATION));
+					ChangeCorrectionProposalCore p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.JOIN_VARIABLE_DECLARATION);
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 					return true;
 				} catch (CoreException e) {
 					// ignore
