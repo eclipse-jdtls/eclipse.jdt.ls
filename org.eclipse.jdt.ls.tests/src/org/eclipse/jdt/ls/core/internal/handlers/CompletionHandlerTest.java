@@ -129,6 +129,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setCompletionLazyResolveTextEditEnabled(false);
+		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
 	}
 
 	@After
