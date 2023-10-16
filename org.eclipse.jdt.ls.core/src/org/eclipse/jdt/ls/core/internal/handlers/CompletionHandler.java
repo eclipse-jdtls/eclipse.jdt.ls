@@ -46,6 +46,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.contentassist.ChainCompletionProposalComputer;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
+import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
@@ -241,6 +242,7 @@ public class CompletionHandler{
 			}
 		}
 
+		CompletionProposalUtils.addStaticImportsAsFavoriteImports(unit);
 		List<CompletionItem> proposals = new ArrayList<>();
 
 		final int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), params.getPosition().getLine(), params.getPosition().getCharacter());

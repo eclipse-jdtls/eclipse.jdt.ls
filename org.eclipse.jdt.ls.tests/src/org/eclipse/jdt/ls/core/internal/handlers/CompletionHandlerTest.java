@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,6 +129,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setCompletionLazyResolveTextEditEnabled(false);
+		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
 	}
 
 	@After
@@ -3207,6 +3209,33 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			CompletionList list = requestCompletions(unit, "java.util.");
 			assertNotNull(list);
 		} finally {
+			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
+		}
+	}
+
+	@Test
+	public void testCompletion_autoAddStaticImportAsFavoriteImport() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", """
+				package org.sample;
+				import static java.util.Arrays.sort;
+				public class Test {
+					public static void main(String[] args) {
+						asList
+					}
+				}""");
+		String[] oldFavorites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
+		Set<String> oldStaticImports = new LinkedHashSet<>(Preferences.DISCOVERED_STATIC_IMPORTS);
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList("org.junit.Assert.*"));
+			Preferences.DISCOVERED_STATIC_IMPORTS.clear();
+			CompletionList list = requestCompletions(unit, "asList");
+			assertNotNull(list);
+			assertFalse(list.getItems().isEmpty());
+			CompletionItem item = list.getItems().stream().filter(i -> i.getDetail() != null && i.getDetail().startsWith("java.util.Arrays.asList(")).collect(Collectors.toList()).get(0);
+			assertNotNull(item);
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(oldFavorites));
+			Preferences.DISCOVERED_STATIC_IMPORTS.addAll(oldStaticImports);
 			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
 		}
 	}

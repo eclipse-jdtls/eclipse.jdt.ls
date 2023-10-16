@@ -13,6 +13,7 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.junit.After;
@@ -54,6 +55,7 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setChainCompletionEnabled(true);
+		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
 	}
 
 	@After
