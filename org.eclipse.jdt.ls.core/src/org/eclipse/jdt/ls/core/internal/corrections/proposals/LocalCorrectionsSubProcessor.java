@@ -95,6 +95,7 @@ import org.eclipse.jdt.internal.corext.fix.MissingAnnotationAttributesFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
+import org.eclipse.jdt.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
@@ -113,7 +114,6 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionPro
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;

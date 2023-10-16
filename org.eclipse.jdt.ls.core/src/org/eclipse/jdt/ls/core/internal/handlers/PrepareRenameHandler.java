@@ -25,9 +25,9 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
 import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Range;
@@ -97,7 +97,7 @@ public class PrepareRenameHandler {
 			IBinding resolvedBinding = name.resolveBinding();
 			IJavaElement element = resolvedBinding != null ? resolvedBinding.getJavaElement() : null;
 			try {
-				if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT || !RefactoringAvailabilityTester.isRenameElementAvailable(element)) {
+				if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT || !RefactoringAvailabilityTesterCore.isRenameElementAvailable(element)) {
 					return true;
 				}
 			} catch (CoreException e) {

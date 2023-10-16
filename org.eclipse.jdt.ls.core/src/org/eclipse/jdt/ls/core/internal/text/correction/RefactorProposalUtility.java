@@ -84,7 +84,6 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
@@ -215,7 +214,7 @@ public class RefactorProposalUtility {
 	private static boolean isMoveMethodAvailable(MethodDeclaration declaration) throws JavaModelException {
 		IMethodBinding methodBinding = declaration.resolveBinding();
 		IMethod method = methodBinding == null ? null : (IMethod) methodBinding.getJavaElement();
-		return method != null && RefactoringAvailabilityTester.isMoveMethodAvailable(method);
+		return method != null && RefactoringAvailabilityTesterCore.isMoveMethodAvailable(method);
 	}
 
 	private static boolean isMoveStaticMemberAvailable(ASTNode declaration) throws JavaModelException {
@@ -242,7 +241,7 @@ public class RefactorProposalUtility {
 	private static boolean isMoveInnerAvailable(AbstractTypeDeclaration declaration) throws JavaModelException {
 		ITypeBinding type = declaration.resolveBinding();
 		if (type != null) {
-			return RefactoringAvailabilityTester.isMoveInnerAvailable((IType) type.getJavaElement());
+			return RefactoringAvailabilityTesterCore.isMoveInnerAvailable((IType) type.getJavaElement());
 		}
 
 		return false;
@@ -926,7 +925,7 @@ public class RefactorProposalUtility {
 		try {
 			CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
 			ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(type, settings);
-			if (RefactoringAvailabilityTester.isExtractInterfaceAvailable(type) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			if (RefactoringAvailabilityTesterCore.isExtractInterfaceAvailable(type) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 				CUCorrectionCommandProposal p = new CUCorrectionCommandProposal(CorrectionMessages.RefactorProcessor_extract_interface, cu, IProposalRelevance.EXTRACT_INTERFACE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 						Arrays.asList(RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND, params));
 				return CodeActionHandler.wrap(p,  JavaCodeActionKind.REFACTOR_EXTRACT_INTERFACE);
@@ -954,7 +953,7 @@ public class RefactorProposalUtility {
 		if (element instanceof IMethod method) {
 			try {
 				ChangeSignatureProcessor processor = new ChangeSignatureProcessor(method);
-				if (RefactoringAvailabilityTester.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				if (RefactoringAvailabilityTesterCore.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 					List<MethodParameter> parameters = new ArrayList<>();
 					for (ParameterInfo info : processor.getParameterInfos()) {
 						parameters.add(new MethodParameter(info.getOldTypeName(), info.getOldName(), info.getDefaultValue() == null ? "null" : info.getDefaultValue(), info.getOldIndex()));

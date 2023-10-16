@@ -88,6 +88,7 @@ import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactorin
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
+import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
@@ -1027,7 +1028,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getSurroundWithTryCatchProposal(IInvocationContext context, Collection<ChangeCorrectionProposal> proposals) {
+	private boolean getSurroundWithTryCatchProposal(IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -1071,10 +1072,9 @@ public class RefactorProcessor {
 			refactoring.setLeaveDirty(true);
 
 			String label = CorrectionMessages.LocalCorrectionsSubProcessor_surroundwith_trycatch_description;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.Refactor, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
 			proposal.setLinkedProposalModel(refactoring.getLinkedProposalModel());
-
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 			return true;
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.log(e);

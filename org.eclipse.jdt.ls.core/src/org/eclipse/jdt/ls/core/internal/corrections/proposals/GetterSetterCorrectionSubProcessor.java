@@ -46,6 +46,7 @@ import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
@@ -53,7 +54,6 @@ import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -226,7 +226,7 @@ public class GetterSetterCorrectionSubProcessor {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField field) {
 				try {
-					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
+					if (RefactoringAvailabilityTesterCore.isSelfEncapsulateAvailable(field)) {
 						return CodeActionHandler.wrap(new SelfEncapsulateFieldProposal(relevance, field), CodeActionKind.Refactor);
 					}
 				} catch (JavaModelException e) {
@@ -310,7 +310,7 @@ public class GetterSetterCorrectionSubProcessor {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField field) {
 				try {
-					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
+					if (RefactoringAvailabilityTesterCore.isSelfEncapsulateAvailable(field)) {
 						return CodeActionHandler.wrap(new SelfEncapsulateFieldProposal(relevance, field), CodeActionKind.Refactor);
 					}
 				} catch (JavaModelException e) {
