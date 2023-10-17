@@ -3744,7 +3744,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:off
 				"package org.sample",
 				"public class Test {",
-				"	public void testMethod(){}",
+				"	public void testMethod(int a, int b){}",
+				"	public void testMethod(int b){}",
 				"}",
 				"class TestOverride extends Test{",
 				"	t",
@@ -3752,7 +3753,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:on
 		CompletionList list = requestCompletions(unit, "t");
 		assertFalse(list.getItems().isEmpty());
-		assertTrue(list.getItems().get(1).getLabel().startsWith("testMethod"));
+		assertTrue(list.getItems().get(0).getLabel().startsWith("testMethod(int b"));
+		assertTrue(list.getItems().get(1).getLabel().startsWith("testMethod(int a"));
 	}
 
 	// https://github.com/eclipse/eclipse.jdt.ls/issues/2376

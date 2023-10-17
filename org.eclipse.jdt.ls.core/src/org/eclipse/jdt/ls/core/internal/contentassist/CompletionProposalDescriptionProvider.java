@@ -82,6 +82,7 @@ public class CompletionProposalDescriptionProvider {
 			case CompletionProposal.METHOD_NAME_REFERENCE:
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.METHOD_DECLARATION:
 
 				// method name
 				description.append(proposal.getName());
