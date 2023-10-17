@@ -234,6 +234,15 @@ public class BasicFileDetectorTest {
 		}
 	}
 
+	@Test
+	public void testScanNotFoundDirectory() throws Exception {
+		File notFoundDirectory = new File(System.getProperty("java.io.tmpdir"), "foo_bar_not_found_" +
+			+ new Random().nextInt(10000));
+		BasicFileDetector detector = new BasicFileDetector(notFoundDirectory.toPath(), "buildfile");
+		Collection<Path> dirs = detector.scan(null);
+		assertEquals("Found " + dirs, 0, dirs.size()); // No uncaught exception occurs
+	}
+
 	@SafeVarargs
 	private final <E> List<E> list(E... elements) {
 		return new ArrayList<>(Arrays.asList(elements));

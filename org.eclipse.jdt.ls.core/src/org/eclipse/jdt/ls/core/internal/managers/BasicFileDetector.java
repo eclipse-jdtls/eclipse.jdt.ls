@@ -17,12 +17,15 @@ import static java.nio.file.FileVisitResult.SKIP_SUBTREE;
 import static java.nio.file.FileVisitResult.TERMINATE;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.FileSystemLoopException;
 import java.nio.file.FileSystems;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
@@ -168,6 +171,12 @@ public class BasicFileDetector {
 			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
 				Objects.requireNonNull(file);
 				if (exc instanceof FileSystemLoopException) {
+					return CONTINUE;
+				} else if (exc instanceof NoSuchFileException || exc instanceof AccessDeniedException
+					|| exc instanceof FileSystemException) {
+					// Permission or file not found issue is more likely a user error,
+					// we should skip it and continue.
+					JavaLanguageServerPlugin.logInfo("Scan the file failed: " + exc.toString());
 					return CONTINUE;
 				} else {
 					throw exc;
