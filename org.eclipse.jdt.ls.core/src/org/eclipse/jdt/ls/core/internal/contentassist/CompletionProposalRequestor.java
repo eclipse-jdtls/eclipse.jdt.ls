@@ -104,8 +104,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				res = p1.getKind() - p2.getKind();
 			}
 			if (res == 0) {
-				char[] completion1 = getCompletion(p1);
-				char[] completion2 = getCompletion(p2);
+				char[] completion1 = p1.getKind() == CompletionProposal.METHOD_DECLARATION ? p1.getName() : getCompletion(p1);
+				char[] completion2 = p2.getKind() == CompletionProposal.METHOD_DECLARATION ? p2.getName() : getCompletion(p2);
 
 				int p1Length = completion1.length;
 				int p2Length = completion2.length;
@@ -122,7 +122,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			}
 			CompletionItemKind p1Kind = mapKind(p1);
 			CompletionItemKind p2Kind = mapKind(p2);
-			if (res == 0 && (p1Kind == CompletionItemKind.Method || p1Kind == CompletionItemKind.Constructor) 
+			if (res == 0 && (p1Kind == CompletionItemKind.Method || p1Kind == CompletionItemKind.Constructor)
 						&& (p2Kind == CompletionItemKind.Method || p2Kind == CompletionItemKind.Constructor)) {
 				int paramCount1 = Signature.getParameterCount(p1.getSignature());
 				int paramCount2 = Signature.getParameterCount(p2.getSignature());
