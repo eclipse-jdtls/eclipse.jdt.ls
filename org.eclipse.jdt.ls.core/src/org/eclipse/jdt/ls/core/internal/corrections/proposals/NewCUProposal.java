@@ -359,6 +359,10 @@ public class NewCUProposal extends ChangeCorrectionProposal {
 
 	private String constructCUContent(ICompilationUnit cu, String typeContent, String lineDelimiter) throws CoreException {
 		String fileComment = CodeGeneration.getFileComment(cu, lineDelimiter);
+		// Ensure separation after (optional) file comment
+		if (fileComment != null && !fileComment.isEmpty()) {
+			fileComment += lineDelimiter;
+		}
 		String typeComment = CodeGeneration.getTypeComment(cu, cu.getElementName(), lineDelimiter);
 		IPackageFragment pack = (IPackageFragment) cu.getParent();
 		String content = CodeGeneration.getCompilationUnitContent(cu, fileComment, typeComment, typeContent, lineDelimiter);
