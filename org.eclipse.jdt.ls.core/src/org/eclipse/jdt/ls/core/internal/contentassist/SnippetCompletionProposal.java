@@ -190,11 +190,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			return completionContext;
 		}
 
-		String getPackageHeader() throws JavaModelException {
+		String getPackageHeader(String lineDelimiter) throws JavaModelException {
 			if (packageHeader == null) {
 				IPackageDeclaration[] packageDeclarations = cu.getPackageDeclarations();
 				String packageName = cu.getParent().getElementName();
-				packageHeader = ((packageName != null && !packageName.isEmpty()) && (packageDeclarations == null || packageDeclarations.length == 0)) ? "package " + packageName + ";\n\n" : "";
+				packageHeader = ((packageName != null && !packageName.isEmpty()) && (packageDeclarations == null || packageDeclarations.length == 0)) ? "package " + packageName + ";" + lineDelimiter + lineDelimiter : "";
 			}
 			return packageHeader;
 		}
@@ -630,9 +630,10 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), scc.getRecommendedLineSeprator());
 
-		String fileComment = cu.getTypes().length == 0 ? CodeGeneration.getFileComment(cu, StubUtility.getLineDelimiterUsed(cu.getJavaProject())) : null;
-		context.setVariable(CodeTemplateContextType.FILE_COMMENT, fileComment != null ? fileComment + "\n" : "");
-		context.setVariable(PACKAGEHEADER, scc.getPackageHeader());
+		String lineDelimiter = StubUtility.getLineDelimiterUsed(cu.getJavaProject());
+		String fileComment = cu.getTypes().length == 0 ? CodeGeneration.getFileComment(cu, lineDelimiter) : null;
+		context.setVariable(CodeTemplateContextType.FILE_COMMENT, fileComment != null ? fileComment + lineDelimiter : "");
+		context.setVariable(PACKAGEHEADER, scc.getPackageHeader(lineDelimiter));
 		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
 		List<IType> types = Arrays.asList(cu.getAllTypes());
 		int postfix = 0;
