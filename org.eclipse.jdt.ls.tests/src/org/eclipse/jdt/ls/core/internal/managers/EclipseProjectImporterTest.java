@@ -281,6 +281,18 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		}
 	}
 
+	@Test
+	public void DoNotDuplicateImportProject() throws Exception {
+		String name = "hello";
+		importProjects("eclipse/"+name);
+		IProject project = getProject(name );
+		assertIsJavaProject(project);
+		EclipseProjectImporter importer = new EclipseProjectImporter();
+		importer.initialize(project.getLocation().toFile());
+		boolean hasUnimportedProjects = importer.applies(new NullProgressMonitor());
+		assertFalse(hasUnimportedProjects);
+	}
+
 	@After
 	public void after() {
 		importer = null;

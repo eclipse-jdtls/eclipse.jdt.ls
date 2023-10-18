@@ -148,7 +148,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			for (IProject project : ProjectUtils.getAllProjects()) {
 				if (!ProjectUtils.isGradleProject(project)) {
 					String path = project.getLocation().toOSString();
-					gradleDetector.addExclusions(path);
+					gradleDetector.addExclusions(path.replace("\\", "\\\\"));
 				}
 			}
 			directories = gradleDetector.scan(monitor);
@@ -552,15 +552,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			if (persistentFile.exists()) {
 				long modified = persistentFile.lastModified();
 				if (projectDir.exists()) {
-					File[] files = projectDir.listFiles(new FilenameFilter() {
-
-						@Override
-						public boolean accept(File dir, String name) {
-							if (name != null && GradleBuildSupport.GRADLE_FILE_EXT.matcher(name).matches()) {
-								return new File(dir, name).lastModified() > modified;
-							}
-							return false;
+					File[] files = projectDir.listFiles((FilenameFilter) (dir, name) -> {
+						if (name != null && GradleBuildSupport.GRADLE_FILE_EXT.matcher(name).matches()) {
+							return new File(dir, name).lastModified() > modified;
 						}
+						return false;
 					});
 					shouldSynchronize = files != null && files.length > 0;
 				}

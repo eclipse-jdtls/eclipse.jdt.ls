@@ -566,6 +566,23 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void avoidImportDuplicatedProjects2() throws Exception {
+		try {
+			this.preferences.setImportGradleEnabled(false);
+			importProjects("multi-buildtools");
+			IProject project = getProject("multi-build-tools");
+			assertIsJavaProject(project);
+			GradleProjectImporter importer = new GradleProjectImporter();
+			importer.initialize(project.getLocation().toFile());
+
+			this.preferences.setImportGradleEnabled(true);
+			assertFalse(importer.applies(null));
+		} finally {
+			this.preferences.setImportGradleEnabled(true);
+		}
+	}
+
+	@Test
 	public void testProtoBufSupport() throws Exception {
 		try {
 			this.preferences.setProtobufSupportEnabled(true);
