@@ -176,7 +176,7 @@ public class BasicFileDetector {
 					|| exc instanceof FileSystemException) {
 					// Permission or file not found issue is more likely a user error,
 					// we should skip it and continue.
-					JavaLanguageServerPlugin.logInfo("Scan the file failed: " + exc.toString());
+					JavaLanguageServerPlugin.logInfo("Scan of file failed: " + exc.toString());
 					return CONTINUE;
 				} else {
 					throw exc;
