@@ -470,6 +470,12 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		if (monitor == null) {
 			monitor = new NullProgressMonitor();
 		}
+		ICompilationUnit cu = scc.getCompilationUnit();
+		try {
+			cu.makeConsistent(monitor);
+		} catch (JavaModelException e) {
+			// ignore
+		}
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
