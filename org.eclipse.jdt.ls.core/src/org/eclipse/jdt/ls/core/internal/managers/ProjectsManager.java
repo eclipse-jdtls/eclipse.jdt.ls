@@ -173,17 +173,23 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
-			try {
-				for (IProjectImporter importer : importers()) {
-					importer.initialize(rootFolder);
-					if (importer.applies(projectConfigurations, subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
+			Map<String, List<IPath>> configurationsByFileName = projectConfigurations.stream()
+					.filter(rootPath::isPrefixOf)
+					.collect(Collectors.groupingBy(IPath::lastSegment));
+			for (List<IPath> configurations : configurationsByFileName.values()) {
+				try {
+					for (IProjectImporter importer : importers()) {
+						importer.initialize(rootFolder);
+						if (importer.applies(configurations, subMonitor.split(1))) {
+							importer.importToWorkspace(subMonitor.split(70));
+							break;
+						}
 					}
+				} catch (CoreException e) {
+					// if one type of the project import failed, keep importing the next type
+					importStatusCollection.add(e.getStatus());
+					JavaLanguageServerPlugin.logException("Failed to import projects", e);
 				}
-			} catch (CoreException e) {
-				// if a rootPath import failed, keep importing the next rootPath
-				importStatusCollection.add(e.getStatus());
-				JavaLanguageServerPlugin.logException("Failed to import projects", e);
 			}
 		}
 		if (!importStatusCollection.isOK()) {

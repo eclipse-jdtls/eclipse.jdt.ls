@@ -231,13 +231,14 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testImportMavenSubModule() throws IOException, OperationCanceledException, CoreException {
-		Path projectDir = copyFiles("maven/multimodule", true).toPath();
+		File projectDir = copyFiles("maven/multimodule", true);
+		Path projectDirPath = projectDir.toPath();
 		Collection<IPath> configurationPaths = new ArrayList<>();
-		Path subModuleConfiguration = projectDir.resolve("module1/pom.xml");
+		Path subModuleConfiguration = projectDirPath.resolve("module1/pom.xml");
 		IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
 		configurationPaths.add(filePath);
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"module1",
@@ -252,13 +253,14 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testImportMixedProjects() throws IOException, OperationCanceledException, CoreException {
-		Path projectDir = copyFiles("mixed", true).toPath();
+		File projectDir = copyFiles("mixed", true);
+		Path projectDirPath = projectDir.toPath();
 		Collection<IPath> configurationPaths = new ArrayList<>();
-		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("hello/.project").toUri().toString()));
-		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
-		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDirPath.resolve("hello/.project").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDirPath.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDirPath.resolve("salut/pom.xml").toUri().toString()));
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"jdt.ls-java-project",
@@ -274,12 +276,13 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testImportMixedProjectsPartially() throws IOException, OperationCanceledException, CoreException {
-		Path projectDir = copyFiles("mixed", true).toPath();
+		File projectDir = copyFiles("mixed", true);
+		Path projectDirPath = projectDir.toPath();
 		Collection<IPath> configurationPaths = new ArrayList<>();
-		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("simple-gradle/build.gradle").toUri().toString()));
-		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDir.resolve("salut/pom.xml").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDirPath.resolve("simple-gradle/build.gradle").toUri().toString()));
+		configurationPaths.add(ResourceUtils.canonicalFilePathFromURI(projectDirPath.resolve("salut/pom.xml").toUri().toString()));
 		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
-		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), monitor);
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"jdt.ls-java-project",
