@@ -197,6 +197,26 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testInvalidResourceFilters() throws Exception {
+		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
+		try {
+			String name = "salut";
+			importProjects("maven/" + name);
+			IProject project = getProject(name);
+			assertIsJavaProject(project);
+			List<String> pref = Arrays.asList("**/node_modules/**", "node_modules", "\\.git");
+			assertEquals(3, pref.size());
+			preferenceManager.getPreferences().setResourceFilters(pref);
+			projectsManager.configureFilters(new NullProgressMonitor());
+			waitForJobsToComplete();
+			List<String> filters = preferenceManager.getPreferences().getResourceFilters();
+			assertEquals(2, filters.size());
+		} finally {
+			preferenceManager.getPreferences().setResourceFilters(resourceFilters);
+		}
+	}
+
+	@Test
 	public void dontFilterGitLikePackages() throws Exception {
 		//See https://github.com/eclipse/eclipse.jdt.ls/issues/2244
 		String name = "gitfilter";
