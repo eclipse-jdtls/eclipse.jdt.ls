@@ -99,7 +99,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			for (IProject project : ProjectUtils.getAllProjects()) {
 				if (!ProjectUtils.isMavenProject(project)) {
 					String path = project.getLocation().toOSString();
-					mavenDetector.addExclusions(path);
+					mavenDetector.addExclusions(path.replace("\\", "\\\\"));
 				}
 			}
 			directories = mavenDetector.scan(monitor);

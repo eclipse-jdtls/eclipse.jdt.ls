@@ -378,6 +378,23 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		}
 	}
 
+	@Test
+	public void avoidImportDuplicatedProjects2() throws Exception {
+		try {
+			this.preferences.setImportMavenEnabled(false);
+			importProjects("multi-buildtools");
+			IProject project = WorkspaceHelper.getProject("multi-buildtools");
+			assertIsJavaProject(project);
+			MavenProjectImporter importer = new MavenProjectImporter();
+			importer.initialize(project.getLocation().toFile());
+
+			this.preferences.setImportMavenEnabled(true);
+			assertFalse(importer.applies(null));
+		} finally {
+			this.preferences.setImportMavenEnabled(true);
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/2712
 	@Test
 	public void testNullAnalysisDisabled() throws Exception {

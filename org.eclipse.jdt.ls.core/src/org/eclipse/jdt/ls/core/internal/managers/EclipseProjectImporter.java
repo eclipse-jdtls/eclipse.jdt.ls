@@ -48,7 +48,15 @@ public class EclipseProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/bin");//default Eclipse build dir
 			for (IProject project : ProjectUtils.getAllProjects(false)) {
 				File projectFile = project.getLocation().toFile();
-				eclipseDetector.addExclusions(projectFile.getAbsolutePath());
+				/**
+				 * The exclusion pattern will be used as a regular expression
+				 * that matches the files or folders to be excluded. On Windows,
+				 * the path separator (\) is a special character in regular
+				 * expressions, so it needs to be escaped with another backslash (\)
+				 * to be treated literally. For example, to exclude the folder
+				 * C:\Users\Hello, the exclusion pattern should be C:\\Users\\Hello.
+				 */
+				eclipseDetector.addExclusions(projectFile.getAbsolutePath().replace("\\", "\\\\"));
 			}
 			directories = eclipseDetector.scan(monitor);
 		}
