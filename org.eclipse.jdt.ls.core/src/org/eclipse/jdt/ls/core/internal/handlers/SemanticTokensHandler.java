@@ -81,6 +81,9 @@ public class SemanticTokensHandler {
 	 */
 	private static CompilationUnit getAst(ITypeRoot typeRoot, IProgressMonitor monitor) {
 		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
+		if (root == null) {
+			return null;
+		}
 		IJavaElement element = root.getJavaElement();
 		if (element instanceof ICompilationUnit cu) {
 			try {
