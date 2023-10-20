@@ -3831,6 +3831,28 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_printSnippet() throws JavaModelException {
+		preferenceManager.getPreferences().setCompletionLazyResolveTextEditEnabled(false);
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"""
+		public class Foo {
+			void f() {
+				prin
+			}
+		};
+		""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "prin");
+		assertNotNull(list);
+		assertEquals(4, list.getItems().size());
+		CompletionItem item = list.getItems().get(3);
+		assertEquals("print", item.getLabel());
+		assertEquals(new Range(new Position(2, 2), new Position(2, 6)), item.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
+	}
+
+	@Test
 	public void testCompletion_forNonPrimitiveArrayTypeReceivers() throws Exception {
 		ICompilationUnit unit = getWorkingCopy("src/java/Arr.java", """
 				public class Arr {

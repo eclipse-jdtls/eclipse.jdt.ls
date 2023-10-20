@@ -44,7 +44,8 @@ public enum CodeSnippetTemplate {
 	SERR(TemplatePreferences.SERR_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSERR_CONTENT, TemplatePreferences.SYSERR_DESCRIPTION),
 	SOUTM(TemplatePreferences.SOUTM_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSTRACE_CONTENT, TemplatePreferences.SYSTRACE_DESCRIPTION),
 	ITER(TemplatePreferences.ITER_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.FOREACH_CONTENT, TemplatePreferences.FOREACH_DESCRIPTION),
-	PSVM(TemplatePreferences.PSVM_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION);
+	PSVM(TemplatePreferences.PSVM_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
+	PRINT(TemplatePreferences.PRINT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION);
 	//@formatter:on
 
 	private final String templateId;
@@ -95,6 +96,7 @@ class TemplatePreferences {
 	public static final String STATICMETHOD_ID = "org.eclipse.jdt.ls.templates.staticmethod";
 	public static final String NEW_ID = "org.eclipse.jdt.ls.templates.new";
 	public static final String FIELD_ID = "org.eclipse.jdt.ls.templates.field";
+	public static final String PRINT_ID = "org.eclipse.jdt.ls.templates.print";
 
 	// DefaultContents
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
