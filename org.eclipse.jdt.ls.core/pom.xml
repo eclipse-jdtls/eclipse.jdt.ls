@@ -55,6 +55,7 @@
 								import groovy.json.JsonOutput
 
 								import java.net.http.HttpClient
+								import java.net.http.HttpClient.Redirect
 								import java.net.http.HttpRequest
 								import java.net.http.HttpResponse.BodyHandlers
 								import java.util.concurrent.CompletableFuture
@@ -83,33 +84,17 @@
 									String sha256
 								}
 								ExecutorService executor = Executors.newCachedThreadPool()
-								HttpClient client = HttpClient.newBuilder().executor(executor).build()
+								HttpClient client = HttpClient.newBuilder().executor(executor).followRedirects(Redirect.NORMAL).build()
 								def futures = []
 								versions.each {
-									if (it.wrapperChecksumUrl == null) {
+                                    boolean isNonRelease = it.nightly || it.snapshot || (it.rcFor != "") || it.broken
+									if (it.wrapperChecksumUrl == null || (System.getProperty("eclipse.jdt.ls.onlyGradleReleases") &amp;&amp; isNonRelease)) {
 										return
 									}
 									HttpRequest request = HttpRequest.newBuilder().uri(URI.create(it.wrapperChecksumUrl)).build()
 									futures.add(client.sendAsync(request, BodyHandlers.ofString()).thenApplyAsync({ response ->
-										if (response.statusCode() == 301) {
-											String newUrl = response.headers().firstValue("location").orElse(null)
-											if (newUrl != null) {
-												HttpRequest newRequest = HttpRequest.newBuilder()
-														.uri(URI.create(newUrl))
-														.build()
-												try {
-													String sha256 = client.send(newRequest, BodyHandlers.ofString()).body()
-													return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: sha256)
-												} catch (IOException | InterruptedException e) {
-													return null
-												}
-											} else {
-												return null
-											}
-										} else {
-											// Return the body of the original response
-											return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: response.body())
-										}
+										// Return the body of the original response
+										return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: response.body())
 									}, executor))
 								}
 
