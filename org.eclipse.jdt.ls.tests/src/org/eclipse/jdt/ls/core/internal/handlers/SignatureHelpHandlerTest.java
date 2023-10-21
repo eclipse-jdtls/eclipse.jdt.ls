@@ -40,6 +40,8 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequesto
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
+import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SignatureInformation;
@@ -96,17 +98,20 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
-		buf.append("   /** This is a method */\n");
+		buf.append("   /** This is a method\n");
+		buf.append("    * @param s documentation */\n");
 		buf.append("   public int foo(String s) { }\n");
 		buf.append("   public int bar(String s) { this.foo() }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
-		SignatureHelp help = getSignatureHelp(cu, 4, 39);
+		SignatureHelp help = getSignatureHelp(cu, 5, 39);
 		assertNotNull(help);
 		assertEquals(1, help.getSignatures().size());
-		assertEquals("foo(String s) : int", help.getSignatures().get(help.getActiveSignature()).getLabel());
-		assertTrue(help.getSignatures().get(help.getActiveSignature()).getDocumentation().getLeft().length() > 0);
+		SignatureInformation activeSignature = help.getSignatures().get(help.getActiveSignature());
+		assertEquals("foo(String s) : int", activeSignature.getLabel());
+		assertNull(activeSignature.getDocumentation());
+		assertEquals("documentation", activeSignature.getParameters().get(0).getDocumentation().getRight().getValue());
 		assertEquals((Integer) 0, help.getActiveParameter());
 	}
 
@@ -370,8 +375,10 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(2, help.getSignatures().size());
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("add(String e) : boolean"));
-		String documentation = signature.getDocumentation().getLeft();
-		assertEquals(" Test ", documentation);
+		assertNull(signature.getDocumentation());
+		ParameterInformation paramInfo = signature.getParameters().get(0);
+		assertEquals(MarkupKind.MARKDOWN, paramInfo.getDocumentation().getRight().getKind());
+		assertEquals("test", paramInfo.getDocumentation().getRight().getValue());
 	}
 
 	@Test
@@ -1137,15 +1144,19 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		buf.append("public class E {\n");
 		buf.append("	/**\n");
 		buf.append("	 * This is an API.\n");
+		buf.append("	 * @param s documentation\n");
 		buf.append("	 */\n");
 		buf.append("	public void foo(String s) {\n");
 		buf.append("		 foo(null)\n");
 		buf.append("	}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		SignatureHelp help = getSignatureHelp(cu, 6, 7);
+		SignatureHelp help = getSignatureHelp(cu, 7, 7);
 		assertNotNull(help);
-		assertNull(help.getSignatures().get(help.getActiveSignature()).getDocumentation());
+		SignatureInformation activeSignature = help.getSignatures().get(help.getActiveSignature());
+		assertNull(activeSignature.getDocumentation());
+		ParameterInformation paramInfo = activeSignature.getParameters().get(0);
+		assertNull(paramInfo.getDocumentation());
 	}
 
 	@Test
@@ -1157,16 +1168,21 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		buf.append("public class E {\n");
 		buf.append("	/**\n");
 		buf.append("	 * This is an API.\n");
+		buf.append("	 * @param s docs for s\n");
 		buf.append("	 */\n");
 		buf.append("	public void foo(String s) {\n");
 		buf.append("		 foo(null)\n");
 		buf.append("	}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		SignatureHelp help = getSignatureHelp(cu, 6, 7);
+		SignatureHelp help = getSignatureHelp(cu, 7, 7);
 		assertNotNull(help);
-		Either<String, MarkupContent> documentation = help.getSignatures().get(help.getActiveSignature()).getDocumentation();
-		assertEquals("This is an API.", documentation.getLeft().trim());
+		SignatureInformation active = help.getSignatures().get(help.getActiveSignature());
+		Either<String, MarkupContent> documentation = active.getDocumentation();
+		assertNull(documentation);
+		ParameterInformation parameterInformation = active.getParameters().get(0);
+		assertEquals(MarkupKind.MARKDOWN, parameterInformation.getDocumentation().getRight().getKind());
+		assertEquals("docs for s", parameterInformation.getDocumentation().getRight().getValue());
 	}
 
 	@Test
@@ -1177,20 +1193,25 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		buf.append("package test1;\n");
 		buf.append("public class E {\n");
 		buf.append("	public void foo() {\n");
-		buf.append("		new V<String>();\n");
+		buf.append("		new V<String>(null);\n");
 		buf.append("	}\n");
 		buf.append("}\n");
 		buf.append("class V<T> {\n");
-		buf.append("	/** hi */\n");
-		buf.append("	public V() {}\n");
-		buf.append("	private V(String a) {}\n");
+		buf.append("	/** hi\n");
+		buf.append("	 * @param a documentation */\n");
+		buf.append("	public V(String a) {}\n");
+		buf.append("	private V(String a, String b) {}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 3, 16);
 		assertNotNull(help);
 		assertEquals(1, help.getSignatures().size());
-		Either<String, MarkupContent> documentation = help.getSignatures().get(help.getActiveSignature()).getDocumentation();
-		assertEquals("hi", documentation.getLeft().trim());
+		SignatureInformation active = help.getSignatures().get(help.getActiveSignature());
+		Either<String, MarkupContent> documentation = active.getDocumentation();
+		assertNull(documentation);
+		ParameterInformation parameterInformation = active.getParameters().get(0);
+		assertEquals(MarkupKind.MARKDOWN, parameterInformation.getDocumentation().getRight().getKind());
+		assertEquals("documentation", parameterInformation.getDocumentation().getRight().getValue());
 	}
 
 	@Test
