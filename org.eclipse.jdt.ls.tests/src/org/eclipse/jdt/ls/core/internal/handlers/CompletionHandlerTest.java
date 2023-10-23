@@ -3705,7 +3705,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			CompletionList list = requestCompletions(unit, "		i");
 			assertFalse(list.getItems().isEmpty());
 			boolean hasUpperCase = list.getItems().stream()
-				.anyMatch(t -> Character.isUpperCase(t.getLabel().charAt(0)));
+				.anyMatch(t -> t.getKind() != CompletionItemKind.Snippet && Character.isUpperCase(t.getLabel().charAt(0)));
 			assertFalse(hasUpperCase);
 		} finally {
 			preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.OFF);
@@ -3831,7 +3831,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	public void testCompletion_printSnippet() throws JavaModelException {
+	public void testCompletion_printSnippets() throws JavaModelException {
 		preferenceManager.getPreferences().setCompletionLazyResolveTextEditEnabled(false);
 		ICompilationUnit unit = getWorkingCopy(
 		//@formatter:off
@@ -3846,10 +3846,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "prin");
 		assertNotNull(list);
-		assertEquals(4, list.getItems().size());
-		CompletionItem item = list.getItems().get(3);
-		assertEquals("print", item.getLabel());
-		assertEquals(new Range(new Position(2, 2), new Position(2, 6)), item.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
+		CompletionItem outItem = list.getItems().get(3);
+		CompletionItem errItem = list.getItems().get(4);
+		assertEquals("System.out.println()", outItem.getLabel());
+		assertEquals("System.err.println()", errItem.getLabel());
+		assertEquals(new Range(new Position(2, 2), new Position(2, 6)), outItem.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
+		assertEquals(new Range(new Position(2, 2), new Position(2, 6)), errItem.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
 	}
 
 	@Test
