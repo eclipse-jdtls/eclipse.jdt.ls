@@ -16,6 +16,9 @@ package org.eclipse.jdt.ls.core.internal.semantictokens;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IScanner;
@@ -58,12 +61,13 @@ import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
+	private final IScanner scanner;
 	private List<SemanticToken> tokens;
-	private static IScanner fScanner;
 
 	public SemanticTokensVisitor(CompilationUnit cu) {
 		super(true);
 		this.cu = cu;
+		this.scanner = createScanner(cu);
 		this.tokens = new ArrayList<>();
 	}
 
@@ -460,34 +464,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	public boolean visit(TypeDeclaration node) {
 		acceptNode(node.getJavadoc());
 		acceptNodeList(node.modifiers());
-
-		// Using a scanner here to retrieve the class/interface keyword as there is no nice way to do so using ASTNodes
-		int typeKeywordStart = -1;
-		int typeKeywordEnd = -1;
-		try {
-			String contents = this.cu.getTypeRoot().getSource();
-			final int shift = node.getStartPosition();
-			IScanner scanner = getScanner();
-			scanner.setSource(contents.toCharArray());
-			scanner.resetTo(shift, shift + node.getLength());
-			int token = 0;
-			while (token != ITerminalSymbols.TokenNameEOF && typeKeywordStart == -1) {
-				switch (token) {
-					case ITerminalSymbols.TokenNameinterface:
-					case ITerminalSymbols.TokenNameclass:
-						typeKeywordStart = scanner.getCurrentTokenStartPosition();
-						typeKeywordEnd = scanner.getCurrentTokenEndPosition();
-					default:
-						break;
-				}
-				token = getNextToken(scanner);
+		tokenizeGapBeforeTypeDeclarationName(node, (scannerToken, tokenOffset, tokenLength) -> {
+			switch (scannerToken) {
+				case ITerminalSymbols.TokenNameclass:
+				case ITerminalSymbols.TokenNameinterface:
+					addToken(tokenOffset, tokenLength, TokenType.MODIFIER, 0);
+					break; // "class" or "interface" keyword tokens
+				default:
+					break; // ignore other tokens
 			}
-		} catch (JavaModelException e) {
-			// ignore
-		}
-		if (typeKeywordStart != -1) {
-			addToken(typeKeywordStart, typeKeywordEnd - typeKeywordStart + 1, TokenType.MODIFIER, 0);
-		}
+		});
 		acceptNode(node.getName());
 		acceptNodeList(node.typeParameters());
 		acceptNode(node.getSuperclassType());
@@ -499,23 +485,114 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		return false;
 	}
 
-	private static IScanner getScanner() {
-		if (fScanner == null) {
-			fScanner = ToolFactory.createScanner(true, false, false, true);
+	/**
+	 * Tries to create an {@link IScanner} for the source of the given compilation unit.
+	 *
+	 * @param cu the compilation unit
+	 * @return the scanner, or {@code null} if not available
+	 */
+	private IScanner createScanner(CompilationUnit cu) {
+		final ITypeRoot typeRoot = cu.getTypeRoot();
+		if (typeRoot == null) {
+			return null;
 		}
-		return fScanner;
+		final IJavaProject javaProject = typeRoot.getJavaProject();
+		if (javaProject == null) {
+			return null;
+		}
+		final String source;
+		try {
+			source = typeRoot.getSource();
+		} catch (JavaModelException e) {
+			return null;
+		}
+		if (source == null) {
+			return null;
+		}
+
+		final String sourceLevel = javaProject.getOption(JavaCore.COMPILER_SOURCE, true);
+		final String complianceLevel = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+		final boolean enablePreview = JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+
+		final IScanner scanner = ToolFactory.createScanner(false, false, false, sourceLevel, complianceLevel, enablePreview);
+		scanner.setSource(source.toCharArray());
+		return scanner;
 	}
 
-	private int getNextToken(IScanner scanner) {
-		int token = 0;
-		while (token == 0) {
+	private int getNextValidToken(IScanner scanner) {
+		while (true) {
 			try {
-				token = scanner.getNextToken();
+				return scanner.getNextToken();
 			} catch (InvalidInputException e) {
 				// ignore
 			}
 		}
-		return token;
+	}
+
+	/**
+	 * Visitor for {@link IScanner} tokens.
+	 */
+	@FunctionalInterface
+	private interface ScannerTokenVisitor {
+		/**
+		 * Visits the given scanner token.
+		 *
+		 * @param scannerToken the scanner token ID, see {@link ITerminalSymbols}
+		 * @param tokenOffset the document offset of the scanner token
+		 * @param tokenLength the length of the scanner token
+		 */
+		public void visit(int scannerToken, int tokenOffset, int tokenLength);
+	}
+
+	/**
+	 * Uses an {@link IScanner} (if available) to tokenize a source range in the document,
+	 * and visits the scanner tokens in order of occurrence in the source range.
+	 *
+	 * <p>
+	 *     <strong>NOTE:</strong> If semantic tokens are added by the visitor, the scan range MUST NOT intersect
+	 *     with any other range where semantic tokens can appear, in order to avoid overlapping semantic tokens.
+	 * </p>
+	 *
+	 * @param startPosition the (inclusive) start position of the scan range
+	 * @param endPosition the (exclusive) end position of the scan range
+	 * @param tokenVisitor the visitor to use for scanner tokens
+	 */
+	private void tokenizeWithScanner(int startPosition, int endPosition, ScannerTokenVisitor tokenVisitor) {
+		if (scanner == null) {
+			return;
+		}
+		scanner.resetTo(startPosition, endPosition - 1); // -1 because resetTo wants inclusive endPosition
+		for (int token = getNextValidToken(scanner); token != ITerminalSymbols.TokenNameEOF; token = getNextValidToken(scanner)) {
+			int tokenOffset = scanner.getCurrentTokenStartPosition();
+			int tokenLength = scanner.getCurrentTokenEndPosition() - tokenOffset + 1; // +1 because getCurrentTokenEndPosition is inclusive
+			tokenVisitor.visit(token, tokenOffset, tokenLength);
+		}
+	}
+
+	/**
+	 * Uses an {@link IScanner} (if available) to tokenize the gap in the AST just before {@link TypeDeclaration#getName()},
+	 * and visits the scanner tokens in order of occurrence in the source range.
+	 *
+	 * <p>
+	 *     <strong>NOTE:</strong> If semantic tokens are added by the visitor, the scan range MUST NOT intersect
+	 *     with any other range where semantic tokens can appear, in order to avoid overlapping semantic tokens.
+	 * </p>
+	 *
+	 * @param typeDeclaration the type declaration node
+	 * @param tokenVisitor the visitor to use for scanner tokens
+	 */
+	private void tokenizeGapBeforeTypeDeclarationName(TypeDeclaration typeDeclaration, ScannerTokenVisitor tokenVisitor) {
+		// Try potentially nonexistent start positions, closest first
+		int gapBeforeNameStart = getEndPosition(typeDeclaration.modifiers());
+		if (gapBeforeNameStart == -1) {
+			gapBeforeNameStart = getEndPosition(typeDeclaration.getJavadoc());
+		}
+		// Fallback to closest known start position
+		if (gapBeforeNameStart == -1) {
+			gapBeforeNameStart = typeDeclaration.getStartPosition();
+		}
+		int gapBeforeNameEnd = typeDeclaration.getName().getStartPosition();
+		tokenizeWithScanner(gapBeforeNameStart, gapBeforeNameEnd, tokenVisitor);
 	}
 
 	/**
@@ -584,6 +661,40 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	private void acceptNode(ASTNode node) {
 		if (node != null) {
 			node.accept(this);
+		}
+	}
+
+	/**
+	 * Gets the (exclusive) document end position of the given list of AST nodes.
+	 *
+	 * <p>
+	 *     The caller is responsible for making sure that the element type
+	 *     of the given list is {@link ASTNode}.
+	 * </p>
+	 *
+	 * @param nodeList the list of AST nodes (may be {@code null})
+	 * @return the end position, or {@code -1} if unknown
+	 */
+	private int getEndPosition(List<?> nodeList) {
+		if (nodeList != null && !nodeList.isEmpty()) {
+			ASTNode lastNode = (ASTNode) nodeList.get(nodeList.size() - 1);
+			return lastNode.getStartPosition() + lastNode.getLength();
+		} else {
+			return -1;
+		}
+	}
+
+	/**
+	 * Gets the (exclusive) document end position of the given AST node.
+	 *
+	 * @param node the AST node (may be {@code null})
+	 * @return the end position, or {@code -1} if unknown
+	 */
+	private int getEndPosition(ASTNode node) {
+		if (node != null) {
+			return node.getStartPosition() + node.getLength();
+		} else {
+			return -1;
 		}
 	}
 

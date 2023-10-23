@@ -258,29 +258,44 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Types() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "record", "typeParameter", "keyword")
+		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "record", "typeParameter", "keyword", "modifier")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("class", "modifier")
 			.assertNextToken("Types", "class", "public", "declaration")
+
+			.assertNextToken("public", "modifier")
 			.assertNextToken("String", "class", "public", "readonly")
 
+			.assertNextToken("protected", "modifier")
+			.assertNextToken("final", "modifier")
 			.assertNextToken("Class", "class", "public", "readonly", "generic")
 			.assertNextToken("String", "class", "public", "readonly")
 			.assertNextToken("class", "keyword")
 
-			.assertNextToken("SomeClass", "class", "generic")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("SomeClass", "class", "public", "generic")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
-			.assertNextToken("SomeClass", "class", "generic", "typeArgument")
+			.assertNextToken("SomeClass", "class", "public", "generic", "typeArgument")
 			.assertNextToken("String", "class", "public", "readonly", "typeArgument")
 			.assertNextToken("Integer", "class", "public", "readonly", "typeArgument")
 
-			.assertNextToken("SomeClass", "class", "generic", "declaration")
+			.assertNextToken("SomeAnnotation", "annotation", "static")
+			.assertNextToken("Types", "class", "public")
+			.assertNextToken("class", "keyword")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("class", "modifier")
+			.assertNextToken("SomeClass", "class", "public", "generic", "declaration")
 			.assertNextToken("T1", "typeParameter", "declaration")
 			.assertNextToken("T2", "typeParameter", "declaration")
 			.assertNextToken("T1", "typeParameter")
 			.assertNextToken("T2", "typeParameter")
 
+			.assertNextToken("interface", "modifier")
 			.assertNextToken("SomeInterface", "interface", "static", "declaration")
 			.assertNextToken("SomeEnum", "enum", "static", "readonly", "declaration")
 			.assertNextToken("SomeAnnotation", "annotation", "static", "declaration")
+			.assertNextToken("Class", "class", "public", "readonly", "generic")
+			.assertNextToken("record", "modifier")
 			.assertNextToken("SomeRecord", "record", "static", "readonly", "declaration")
 		.endAssertion();
 	}

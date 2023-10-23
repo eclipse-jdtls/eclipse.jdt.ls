@@ -10,13 +10,20 @@ public class Types {
 
 	public SomeClass<String, SomeClass<String, Integer>> someClass;
 
-	class SomeClass<T1, T2> {
+	/**
+	 * class
+	 */
+	@SomeAnnotation(Types.class)
+	// class
+	public class SomeClass<T1, T2> {
 		T1 t1;
 		T2 t2;
 	}
 	interface SomeInterface {}
 	enum SomeEnum {}
-	@interface SomeAnnotation {}
+	@interface SomeAnnotation {
+		Class<?> value();
+	}
 	record SomeRecord() {}
 
 }
