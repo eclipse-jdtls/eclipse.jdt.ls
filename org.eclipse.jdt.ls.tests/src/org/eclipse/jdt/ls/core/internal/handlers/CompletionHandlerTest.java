@@ -1383,7 +1383,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(14);
+		CompletionItem item = items.get(15);
 		assertEquals("interface", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic interface ${1:InnerTest_1} {\n\n\t${0}\n}", te);
@@ -1549,7 +1549,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(items.isEmpty());
 		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
 
-		CompletionItem item = items.get(13);
+		CompletionItem item = items.get(14);
 		assertEquals("class", item.getLabel());
 		String te = item.getInsertText();
 		assertNotNull(te);
@@ -3850,6 +3850,26 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem item = list.getItems().get(3);
 		assertEquals("print", item.getLabel());
 		assertEquals(new Range(new Position(2, 2), new Position(2, 6)), item.getTextEdit().map(TextEdit::getRange, InsertReplaceEdit::getReplace));
+	}
+
+	@Test
+	public void testCompletion_publicmainSnippet() throws JavaModelException {
+		preferenceManager.getPreferences().setCompletionLazyResolveTextEditEnabled(false);
+		preferenceManager.getPreferences().setCompletionMatchCaseMode(CompletionMatchCaseMode.FIRSTLETTER);
+		ICompilationUnit unit = getWorkingCopy(
+		//@formatter:off
+		"src/java/Foo.java",
+		"""
+		class Foo {
+			public
+		};
+		""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "public");
+		assertNotNull(list);
+		assertEquals(2, list.getItems().size());
+		CompletionItem item = list.getItems().get(1);
+		assertEquals("public static void main(String[] args)", item.getLabel());
 	}
 
 	@Test

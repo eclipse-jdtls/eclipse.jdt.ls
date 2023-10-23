@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.corext.template.java;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jface.text.templates.Template;
 
 public enum CodeSnippetTemplate {
@@ -45,13 +46,16 @@ public enum CodeSnippetTemplate {
 	SOUTM(TemplatePreferences.SOUTM_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSTRACE_CONTENT, TemplatePreferences.SYSTRACE_DESCRIPTION),
 	ITER(TemplatePreferences.ITER_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.FOREACH_CONTENT, TemplatePreferences.FOREACH_DESCRIPTION),
 	PSVM(TemplatePreferences.PSVM_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
-	PRINT(TemplatePreferences.PRINT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION);
+	PRINT(TemplatePreferences.PRINT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION),
+	PUBLIC_MAIN(TemplatePreferences.PUBLIC_MAIN_ID, "public static void main(String[] args)", JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION);
+
 	//@formatter:on
 
 	private final String templateId;
 	private final String contextType;
 	private final String defaultContent;
 	private final String description;
+	private String displayName = null;
 
 	private CodeSnippetTemplate(String templatesId, String contextType, String defaultContent, String description) {
 		this.templateId = templatesId;
@@ -60,8 +64,14 @@ public enum CodeSnippetTemplate {
 		this.description = description;
 	}
 
+	private CodeSnippetTemplate(String templatesId, String displayName, String contextType, String defaultContent, String description) {
+		this(templatesId, contextType, defaultContent, description);
+		this.displayName = displayName;
+	}
+
 	public Template createTemplate() {
-		return new Template(this.name().toLowerCase(), this.description, this.contextType, this.defaultContent, false);
+		return new Template(StringUtils.isNotBlank(this.displayName) ? this.displayName : this.name().toLowerCase(),
+			this.description, this.contextType, this.defaultContent, false);
 	}
 
 	public String getId() {
@@ -97,6 +107,7 @@ class TemplatePreferences {
 	public static final String NEW_ID = "org.eclipse.jdt.ls.templates.new";
 	public static final String FIELD_ID = "org.eclipse.jdt.ls.templates.field";
 	public static final String PRINT_ID = "org.eclipse.jdt.ls.templates.print";
+	public static final String PUBLIC_MAIN_ID = "org.eclipse.jdt.ls.templates.publicmain";
 
 	// DefaultContents
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
