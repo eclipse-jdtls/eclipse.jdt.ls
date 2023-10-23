@@ -70,12 +70,15 @@ public enum CodeSnippetTemplate {
 	}
 
 	public Template createTemplate() {
-		return new Template(StringUtils.isNotBlank(this.displayName) ? this.displayName : this.name().toLowerCase(),
-			this.description, this.contextType, this.defaultContent, false);
+		return new Template(this.getDisplayName(), this.description, this.contextType, this.defaultContent, false);
 	}
 
 	public String getId() {
 		return this.templateId;
+	}
+
+	public String getDisplayName() {
+		return StringUtils.isNotBlank(this.displayName) ? this.displayName : this.name().toLowerCase();
 	}
 }
 

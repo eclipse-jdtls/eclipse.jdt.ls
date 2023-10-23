@@ -35,7 +35,7 @@ public class JavaLanguageServerTemplateStoreTest {
 		for (CodeSnippetTemplate snippet : snippets) {
 			TemplatePersistenceData templateData = store.getTemplateData(snippet.getId());
 			assertNotNull(templateData);
-			assertEquals(templateData.getTemplate().getName(), snippet.name().toLowerCase());
+			assertEquals(templateData.getTemplate().getName(), snippet.getDisplayName());
 		}
 		
 		for (PostfixTemplate postfix : postfixes) {
