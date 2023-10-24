@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.CoreException;
@@ -1335,7 +1337,19 @@ public class Preferences {
 	}
 
 	public Preferences setResourceFilters(List<String> resourceFilters) {
-		this.resourceFilters = resourceFilters == null ? new ArrayList<>() : resourceFilters;
+		if (resourceFilters != null) {
+			this.resourceFilters = resourceFilters.stream().filter((resource) -> {
+				try {
+					Pattern.compile(resource);
+					return true;
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logInfo("Invalid preference: " + Preferences.JAVA_RESOURCE_FILTERS + "=" + resource);
+					return false;
+				}
+			}).collect(Collectors.toList());
+		} else {
+			this.resourceFilters = Collections.emptyList();
+		}
 		return this;
 	}
 
