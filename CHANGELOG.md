@@ -1,5 +1,31 @@
 # Change Log
 
+# [1.29.0 (October 26th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/120?closed=1)
+ * enhancement - Support named pipes for client/server communication. See [#2922](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2922).
+ * enhancement - Add new alias `public static void main(String[] args)` for public main method. See [#2919](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2919).
+ * enhancement - Add aliases for `sysout`/`syserr` snippets that will see more usage. See [#2927](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2927).
+ * enhancement - Add "Surround with try/catch" code action. See [#2727](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2727).
+ * enhancement - Automatically add the existing static imports in code as favorite static members. See [#2903](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2903).
+ * enhancement - Move snippet suggestions above matching keywords in completion list. See [#2892](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2892).
+ * enhancement - Improve support for external files. See [#2885](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2885), [#2886](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2886).
+ * enhancement - Support reading JDT UI project preferences (if available) to configure cleanups. See [#2870](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2870).
+ * enhancement - Add new API `onWillUpdate()` to `IBuildSupport`. See [#2836](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2836).
+ * bug fix - Completion returns no results for method declarations when `matchCase` set to `FIRSTLETTER`. See [#2884](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2884).
+ * bug fix - Allow filtering methods by parameter names, and order by number of parameters. See [#2907](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2907), [#2705](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2705).
+ * bug fix - `UnsupportedOperationException` at `org.eclipse.lsp4j.services.LanguageServer.setTrace()`. See [#2891](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2891).
+ * bug fix - Reconcile AST node to provide accurate type definition snippets. See [#2912](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2912).
+ * bug fix - `BasicFileDetector` should handle inaccessible directories gracefully during project import. See [#2855](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2855).
+ * bug fix - `o.e.core.internal.resources.ResourceException`: Invalid project description. See [#2845](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2845).
+ * bug fix - Ensure client supports `workspace/executeClientCommand` prior to invoking. See [#2633](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2633).
+ * bug fix - Ensure line delimiter exists after the file header template. See [#2906](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2906).
+ * bug fix - Error when parsing resource filter. See [#2910](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2910).
+ * bug fix - NPE in `SemanticTokensHandler`. See [#2876](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2876).
+ * bug fix - NPE in cleanup action handler. See [#2879](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2879).
+ * bug fix - Fix tests on Windows. See [#2868](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2868).
+ * bug fix - Fix some typos in `CHANGELOG.md`. See [#2899](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2899).
+ * build - Update to latest Xtext and LSP4J. See [#2895](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2895).
+ * build - Bump tycho-version from 4.0.2 to 4.0.3. See [#2888](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2888).
+
 # [1.28.0 (September 28th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/119?closed=1)
  * enhancement - Update current method snippet and add `static_method` snippet for interface. See [#2862](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2862).
  * enhancement - Improve the constructor snippet for additional classes in a file. See [#2841](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2841).
