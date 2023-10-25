@@ -426,7 +426,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			String filterText = "";
 			if (labelDetailsEnabled && $.getKind() == CompletionItemKind.Method) {
 				filterText = CompletionProposalDescriptionProvider.createMethodProposalDescription(proposal).toString();
-			} else if (labelDetailsEnabled && $.getKind() == CompletionItemKind.Constructor && $.getLabelDetails() != null) {
+			} else if (labelDetailsEnabled && $.getKind() == CompletionItemKind.Constructor && $.getLabelDetails() != null && $.getLabelDetails().getDetail() != null) {
 				filterText = newText.concat($.getLabelDetails().getDetail());
 			}
 			if (range != null && !filterText.isEmpty()) {
