@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.codeassist.CompletionEngine;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -396,6 +397,13 @@ public class CompletionProposalDescriptionProvider {
 				}
 			} catch (Exception e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		} else {
+			// if this is a chain completion proposal, we need to set the filter text to the method name instead of the full completion text.
+			var chainName = methodProposal.getName();
+			var index = CharOperation.lastIndexOf('.', chainName);
+			if(index > -1) {
+				item.setFilterText(String.valueOf(CharOperation.subarray(chainName, index + 1, chainName.length)));
 			}
 		}
 	}
