@@ -288,15 +288,16 @@ public class CompletionHandler{
 					} else {
 						ModelBasedCompletionEngine.codeComplete(unit, offset, collector, DefaultWorkingCopyOwner.PRIMARY, subMonitor);
 					}
+					// chain completions are added into collector while computing, so we need me compute before adding completion items to proposals.
+					if (manager.getPreferences().isChainCompletionEnabled() && params.getContext().getTriggerKind() != CompletionTriggerKind.TriggerCharacter) {
+						ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector, this.isSnippetStringSupported());
+						chain.computeCompletionProposals();
+					}
 					proposals.addAll(collector.getCompletionItems());
 					if (isSnippetStringSupported() && !UNSUPPORTED_RESOURCES.contains(unit.getResource().getName())) {
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector, subMonitor));
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
-					if (manager.getPreferences().isChainCompletionEnabled() && params.getContext().getTriggerKind() != CompletionTriggerKind.TriggerCharacter) {
-						ChainCompletionProposalComputer chain = new ChainCompletionProposalComputer(unit, collector, this.isSnippetStringSupported());
-						proposals.addAll(chain.computeCompletionProposals());
-					}
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
