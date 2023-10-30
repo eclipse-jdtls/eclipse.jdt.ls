@@ -182,7 +182,9 @@ public class ClientPreferences {
 	}
 
 	public boolean isWorkDoneProgressSupported() {
-		return v3supported && capabilities.getWindow().getWorkDoneProgress();
+		return v3supported && capabilities.getWindow() != null
+				&& capabilities.getWindow().getWorkDoneProgress() != null
+				&& capabilities.getWindow().getWorkDoneProgress();
 	}
 
 	public boolean isWorkspaceApplyEditSupported() {
