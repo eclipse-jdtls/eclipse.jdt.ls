@@ -128,7 +128,7 @@ public class CompletionResolveHandler {
 					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
 						param.setDocumentation(SnippetUtils.beautifyDocument(content));
 					}
-	
+
 					if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
 						SnippetCompletionProposal.setTextEdit(ctx, unit, param, content);
 					}
@@ -156,7 +156,7 @@ public class CompletionResolveHandler {
 						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, range, template);
 					}
 				}
-	
+
 				param.setData(null);
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -207,7 +207,12 @@ public class CompletionResolveHandler {
 		} else {
 			char[] declarationSignature = proposal.getDeclarationSignature();
 			if (declarationSignature != null) {
-				String typeName = stripSignatureToFQN(String.valueOf(declarationSignature));
+				String typeName = String.valueOf(declarationSignature);
+				try {
+					typeName = stripSignatureToFQN(typeName);
+				} catch (IllegalArgumentException e) {
+					// simple names / dot-based package names
+				}
 				try {
 					IType type = unit.getJavaProject().findType(typeName);
 					if (type != null && proposal.getName() != null) {
