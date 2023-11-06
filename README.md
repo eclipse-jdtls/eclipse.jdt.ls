@@ -144,6 +144,7 @@ This repository only contains the server implementation. Here are some known cli
 * [coc-java](https://github.com/neoclide/coc-java) : an extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 * [MS Paint IDE](https://github.com/MSPaintIDE/MSPaintIDE) : an IDE for programming in MS Paint
 * [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls) : an extension for Neovim
+* [multilspy from monitors4codegen](https://github.com/microsoft/monitors4codegen#4-multilspy) : A language-agnostic LSP client in Python, with a library interface. Intended to be used to build applications around language servers
 
 Continuous Integration Builds
 -----------------------------
