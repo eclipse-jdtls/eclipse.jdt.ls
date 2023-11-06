@@ -68,8 +68,10 @@ public class SaveActionHandler {
 		}
 
 		LinkedHashSet<String> cleanUpIds = new LinkedHashSet<>();
-		cleanUpIds.addAll(preferences.getCleanUpActionsOnSave());
-		cleanUpIds.addAll(getCleanupsFromJDTUIPreferences(jdtUiPreferences));
+		List<String> lspCleanups = preferences.getCleanUpActionsOnSave();
+		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
+
+		cleanUpIds.addAll((lspCleanups != null && !lspCleanups.isEmpty()) ? lspCleanups : jdtSettingCleanups);
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		return edit;
