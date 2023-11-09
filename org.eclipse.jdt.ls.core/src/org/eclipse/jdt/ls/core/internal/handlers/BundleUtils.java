@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.osgi.container.ModuleContainer;
 import org.eclipse.osgi.util.ManifestElement;
@@ -106,7 +107,7 @@ public final class BundleUtils {
 		MultiStatus status = new MultiStatus(context.getBundle().getSymbolicName(), IStatus.OK, "Load bundle list", null);
 		Set<Bundle> bundlesToStart = new HashSet<>();
 		Set<Bundle> toRefresh = new HashSet<>();
-		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
+		FrameworkWiring frameworkWiring = getFrameworkWiring();
 		for (String bundleLocation : bundleLocations) {
 			try {
 				if (StringUtils.isEmpty(bundleLocation)) {
@@ -205,10 +206,29 @@ public final class BundleUtils {
 	 * @throws BundleException
 	 */
 	private static void uninstallBundle(Set<Bundle> bundlesToStart, Set<Bundle> toRefresh, Bundle bundle) throws BundleException {
-		bundle.uninstall();
-		JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
-		toRefresh.add(bundle);
-		bundlesToStart.remove(bundle);
+		if (selfExcludedFromDependencyClosure(bundle)) {
+			bundle.uninstall();
+			JavaLanguageServerPlugin.logInfo("Uninstalled " + bundle.getLocation());
+			toRefresh.add(bundle);
+			bundlesToStart.remove(bundle);
+		}
+	}
+
+	private static boolean selfExcludedFromDependencyClosure(Bundle bundle) throws BundleException {
+		Collection<Bundle> bundles = getFrameworkWiring().getDependencyClosure(Collections.singletonList(bundle));
+		for (Bundle b : bundles) {
+			if (IConstants.PLUGIN_ID.equals(b.getSymbolicName())) {
+				JavaLanguageServerPlugin.logError("Cannot refresh bundle " + b.getSymbolicName() + " because its dependency closure includes the " + IConstants.PLUGIN_ID + " bundle.");
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static FrameworkWiring getFrameworkWiring() {
+		BundleContext context = JavaLanguageServerPlugin.getBundleContext();
+		FrameworkWiring frameworkWiring = context.getBundle(0).adapt(FrameworkWiring.class);
+		return frameworkWiring;
 	}
 
 	private static Bundle[] getBundles(String symbolicName, FrameworkWiring fwkWiring) {
