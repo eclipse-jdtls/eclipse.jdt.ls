@@ -127,6 +127,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			.replaceAll("\n", System.lineSeparator());
 	//@formatter:on
 
+	/**
+	 * A flag whether this importer is activated by manual selection mode.
+	 */
+	private boolean manualSelection = false;
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.managers.IProjectImporter#applies(org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -158,6 +163,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	@Override
 	public boolean applies(Collection<IPath> buildFiles, IProgressMonitor monitor) {
+		manualSelection = true;
 		if (!getPreferences().isImportGradleEnabled()) {
 			return false;
 		}
@@ -167,7 +173,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			SETTINGS_GRADLE_DESCRIPTOR,
 			BUILD_GRADLE_KTS_DESCRIPTOR,
 			SETTINGS_GRADLE_KTS_DESCRIPTOR
-		), false /*includeNested*/);
+		), true /*includeNested*/);
 		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
@@ -199,16 +205,20 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (!applies(monitor)) {
 			return;
 		}
-		int projectSize = directories.size();
+		List<Path> directoriesToImport = new ArrayList<>(this.directories);
+		if (manualSelection) {
+			directoriesToImport = eliminateNestedPaths(directoriesToImport);
+		}
+		int projectSize = directoriesToImport.size();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, projectSize + 1);
 		subMonitor.setTaskName(IMPORTING_GRADLE_PROJECTS);
 		JavaLanguageServerPlugin.logInfo(IMPORTING_GRADLE_PROJECTS);
 		subMonitor.worked(1);
 		// run just once at the first project, assuming that all projects are using the same gradle version.
-		inferGradleJavaHome(directories.iterator().next(), monitor);
+		inferGradleJavaHome(directoriesToImport.iterator().next(), monitor);
 		MultiStatus compatibilityStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Compatibility issue occurs when importing Gradle projects", null);
 		MultiStatus gradleUpgradeWrapperStatus = new MultiStatus(IConstants.PLUGIN_ID, -1, "Gradle upgrade wrapper", null);
-		for (Path directory : directories) {
+		for (Path directory : directoriesToImport) {
 			IStatus importStatus = importDir(directory, subMonitor.newChild(1));
 			if (isFailedStatus(importStatus) && importStatus instanceof GradleCompatibilityStatus) {
 				compatibilityStatus.add(importStatus);
