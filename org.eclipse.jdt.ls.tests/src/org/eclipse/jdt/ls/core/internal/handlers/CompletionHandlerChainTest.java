@@ -357,4 +357,22 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		var expected = new Position(loc[0], loc[1] - "empty".length());
 		assertEquals("Completion TextEdit Range", expected, completionItem.getTextEdit().getLeft().getRange().getStart());
 	}
+
+	@Test
+	public void testChainCompletionsOnVariableWithToken() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"""
+						import java.util.Collection;
+						public class Foo {
+						    public static void main(String[] args) {
+								Collection<String> names = emptyL
+						    }
+						}
+						""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "names = emptyL");
+		assertTrue("all start with token", list.getItems().stream().allMatch(i -> i.getLabel().matches(".*\\.emptyList()")));
+	}
 }

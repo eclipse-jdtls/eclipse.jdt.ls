@@ -53,7 +53,6 @@ import org.eclipse.jdt.internal.ui.text.Chain;
 import org.eclipse.jdt.internal.ui.text.ChainElement;
 import org.eclipse.jdt.internal.ui.text.ChainElement.ElementType;
 import org.eclipse.jdt.internal.ui.text.ChainElementAnalyzer;
-import org.eclipse.jdt.internal.ui.text.ChainFinder;
 import org.eclipse.jdt.internal.ui.text.ChainType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.TextEdit;
@@ -98,9 +97,10 @@ public class ChainCompletionProposalComputer {
 
 		final IType invocationType = cu.findPrimaryType();
 
+		final String token = coll.getContext().getToken() != null ? String.valueOf(coll.getContext().getToken()) : null;
 		final List<ChainType> expectedTypes = resolveBindingsForExpectedTypes(cu.getJavaProject(), coll.getContext());
-		final ChainFinder mainFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
-		final ChainFinder contextFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType);
+		final ChainFinder mainFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType, token);
+		final ChainFinder contextFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType, token);
 		final ExecutorService executor = Executors.newFixedThreadPool(2);
 		try {
 			CompletableFuture<Void> mainChains = CompletableFuture.runAsync(() -> {
