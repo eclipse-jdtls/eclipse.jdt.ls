@@ -352,7 +352,7 @@ public class TypeMismatchSubProcessor {
 				} else {
 					proposal.setDisplayName(Messages.format(CorrectionMessages.TypeMismatchSubProcessor_changereturnofoverridden_description, BasicElementLabels.getJavaElementName(overriddenDecl.getName())));
 				}
-				proposals.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 	}

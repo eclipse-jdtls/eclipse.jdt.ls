@@ -507,7 +507,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
-		buf.append("     * @throws IOException\n");
+		buf.append("     * @throws IOException \n");
 		buf.append("     */\n");
 		buf.append("    public void foo() throws IOException {\n");
 		buf.append("        goo().substring(2);\n");
@@ -574,7 +574,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
 		buf.append("     * @throws ParseException Parsing failed\n");
-		buf.append("     * @throws IOException\n");
+		buf.append("     * @throws IOException \n");
 		buf.append("     */\n");
 		buf.append("    public void foo() throws ParseException, IOException {\n");
 		buf.append("        goo().substring(2);\n");
@@ -599,6 +599,9 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        try {\n");
 		buf.append("            goo().substring(2);\n");
 		buf.append("        } catch (IOException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
+		buf.append("        } catch (ParseException e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");
 		buf.append("        }\n");
@@ -646,8 +649,8 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * Not much to say here.\n");
-		buf.append("     * @throws InterruptedIOException\n");
-		buf.append("     * @throws FileNotFoundException\n");
+		buf.append("     * @throws InterruptedIOException \n");
+		buf.append("     * @throws FileNotFoundException \n");
 		buf.append("     */\n");
 		buf.append("    public void foo() throws FileNotFoundException, InterruptedIOException {\n");
 		buf.append("        goo(1).bar();\n");
@@ -877,13 +880,12 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
-		buf.append("import java.net.SocketException;\n");
 		buf.append("public class E {\n");
 		buf.append("    public void goo() throws IOException {\n");
 		buf.append("        return;\n");
 		buf.append("    }\n");
 		buf.append("    /**\n");
-		buf.append("     * @throws IOException\n");
+		buf.append("     * @throws IOException \n");
 		buf.append("     * @since 3.0\n");
 		buf.append("     */\n");
 		buf.append("    public void foo() throws IOException {\n");
@@ -1465,7 +1467,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void m1() throws IOException {\n");
 		buf.append("        try {\n");
 		buf.append("            m2();\n");
-		buf.append("        } catch (ParseException | MyException e) {\n");
+		buf.append("        } catch (IOException | ParseException | MyException e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");
 		buf.append("        }\n");
@@ -1483,6 +1485,9 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void m1() throws IOException {\n");
 		buf.append("        try {\n");
 		buf.append("            m2();\n");
+		buf.append("        } catch (IOException e) {\n");
+		buf.append("            // TODO Auto-generated catch block\n");
+		buf.append("            e.printStackTrace();\n");
 		buf.append("        } catch (ParseException e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");

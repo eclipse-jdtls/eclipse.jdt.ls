@@ -73,6 +73,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -80,6 +81,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("class D {\n");
@@ -131,6 +133,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -138,6 +141,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("class D {\n");
@@ -190,6 +194,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -197,6 +202,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("class D {\n");
@@ -249,6 +255,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -256,6 +263,7 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("class D {\n");
@@ -402,12 +410,14 @@ public class GetterSetterQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getT() {\n");
 		buf.append("        return t;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("    /**\n");
 		buf.append("     * @param t the t to set\n");
 		buf.append("     */\n");
 		buf.append("    public void setT(int t) {\n");
 		buf.append("        this.t = t;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("class B {\n");

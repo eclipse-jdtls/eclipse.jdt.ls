@@ -72,7 +72,7 @@ import org.eclipse.text.edits.TextEdit;
  * Utility methods for converting Refactoring changes.
  *
  * @author Valeriy Svydenko
- *	
+ *
  */
 public class ChangeUtil {
 
@@ -162,10 +162,10 @@ public class ChangeUtil {
 			convertRenamePackcageChange(edit, renamePackageChange, annotationId);
 		} else if (resourceChange instanceof MoveCompilationUnitChange moveCUChange) {
 			convertMoveCompilationUnitChange(edit, moveCUChange, annotationId);
-		} else if (resourceChange instanceof CreateFileChange createFileChange) {
-			convertCreateFileChange(edit, createFileChange);
 		} else if (resourceChange instanceof CreateCompilationUnitChange createCUChange) {
 			convertCreateCompilationUnitChange(edit, createCUChange, annotationId);
+		} else if (resourceChange instanceof CreateFileChange createFileChange) {
+			convertCreateFileChange(edit, createFileChange);
 		}
 	}
 

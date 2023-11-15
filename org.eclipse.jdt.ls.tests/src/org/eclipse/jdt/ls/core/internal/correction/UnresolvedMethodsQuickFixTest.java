@@ -25,6 +25,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -41,6 +43,10 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		options.put(JavaCore.COMPILER_PB_INDIRECT_STATIC_ACCESS, JavaCore.ERROR);
 
 		fJProject1.setOptions(options);
+
+		StubUtility.setCodeTemplate(CodeTemplateContextType.CATCHBLOCK_ID, "", null);
+		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, "", null);
+		StubUtility.setCodeTemplate(CodeTemplateContextType.METHODSTUB_ID, "", null);
 
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src"));
 	}
@@ -2631,9 +2637,9 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("\n");
 		buf.append("public class X {\n");
 		buf.append("    /**\n");
-		buf.append("     * @param emptySet\n");
+		buf.append("     * @param emptySet \n");
 		buf.append("     * @param i The int value\n");
-		buf.append("     * @param k\n");
+		buf.append("     * @param k \n");
 		buf.append("     */\n");
 		buf.append("    public void xoo(Set emptySet, int i, int k) {\n");
 		buf.append("       int j= 0;\n");
@@ -2916,7 +2922,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    /**\n");
 		buf.append("     * My favourite constructor.\n");
-		buf.append("     * @param vector\n");
+		buf.append("     * @param vector \n");
 		buf.append("     */\n");
 		buf.append("    public E(Vector vector) {\n");
 		buf.append("    }\n");
