@@ -60,6 +60,7 @@ import org.eclipse.jdt.internal.core.OpenableElementInfo;
 import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
@@ -68,6 +69,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryEvent;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -113,6 +115,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private Set<ICompilationUnit> toReconcile = new HashSet<>();
 	private Set<ICompilationUnit> toValidate = ConcurrentHashMap.newKeySet();
 	private Map<String, Integer> documentVersions = new HashMap<>();
+	private Map<String, Integer> lastSyncedDocumentLengths = new ConcurrentHashMap<>();
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
 	protected final PreferenceManager preferenceManager;
@@ -328,12 +331,14 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		documentVersions.remove(params.getTextDocument().getUri());
+		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
 		handleClosed(params);
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		documentVersions.put(uri, params.getTextDocument().getVersion());
+		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
 		IFile resource = JDTUtils.findFile(uri);
 		if (resource != null) { // Open a managed file from the existing projects.
 			handleOpen(params);
@@ -352,6 +357,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
+		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
 		IFile file = JDTUtils.findFile(params.getTextDocument().getUri());
 		if (file != null && !Objects.equals(ProjectsManager.getDefaultProject(), file.getProject())) {
 			// no need for a workspace runnable, change is trivial
@@ -432,6 +438,22 @@ public abstract class BaseDocumentLifeCycleHandler {
 			}
 
 			if (!preferenceManager.getClientPreferences().skipTextEventPropagation()) {
+				int currentBufferLength = unit.getBuffer().getLength();
+				if (lastSyncedDocumentLengths.containsKey(uri) && lastSyncedDocumentLengths.get(uri) != currentBufferLength) {
+					/**
+					 * The didChange handler is the only owner that has the responsibility
+					 * of synchronizing the client changes with the buffer. If the last
+					 * synchronized document length in the didChange handler does not
+					 * match the current buffer length, this indicates that the document
+					 * buffer has been modified by an unexpected program and has become
+					 * inconsistent with the client document.
+					 */
+					JavaClientConnection connection = JavaLanguageServerPlugin.getInstance().getClientConnection();
+					if (connection != null) {
+						connection.telemetryEvent(new TelemetryEvent("java.ls.error.documentOutOfSync", null));
+					}
+					JavaLanguageServerPlugin.logInfo("Editor contents out-of-sync for unit: " + unit.getElementName());
+				}
 				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
 
@@ -460,6 +482,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					}
 					edit.apply(document, TextEdit.NONE);
 				}
+				lastSyncedDocumentLengths.put(uri, unit.getBuffer().getLength());
 			}
 			triggerValidation(unit);
 		} catch (JavaModelException | MalformedTreeException | BadLocationException e) {
