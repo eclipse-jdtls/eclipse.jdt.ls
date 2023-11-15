@@ -359,20 +359,41 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 	}
 
 	@Test
-	public void testChainCompletionsOnVariableWithToken() throws Exception {
+	public void testChainCompletionsOnVariableWithTokenMatchingEdge() throws Exception {
 		//@formatter:off
 			ICompilationUnit unit = getWorkingCopy(
 					"src/java/Foo.java",
 					"""
-						import java.util.Collection;
+						import java.util.List;
 						public class Foo {
 						    public static void main(String[] args) {
-								Collection<String> names = emptyL
+								List<String> names = emptyL
 						    }
 						}
 						""");
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "names = emptyL");
-		assertTrue("all start with token", list.getItems().stream().allMatch(i -> i.getLabel().matches(".*\\.emptyList()")));
+		assertEquals(2, list.getItems().size());
+		assertTrue("emptyList", list.getItems().stream().anyMatch(i -> i.getLabel().matches(".*\\.emptyList().*")));
+		assertTrue("EMPTY_LIST", list.getItems().stream().anyMatch(i -> i.getLabel().matches(".*\\.EMPTY_LIST.*")));
+	}
+
+	@Test
+	public void testChainCompletionsOnVariableWithTokenMatchingStart() throws Exception {
+		//@formatter:off
+			ICompilationUnit unit = getWorkingCopy(
+					"src/java/Foo.java",
+					"""
+						import java.util.List;
+						public class Foo {
+						    public static void main(String[] args) {
+								List<String> names = Coll
+						    }
+						}
+						""");
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "names = Coll");
+		assertTrue(list.getItems().size() > 0);
+		assertTrue("All Collections.*", list.getItems().stream().anyMatch(i -> i.getLabel().matches("Collections\\..*")));
 	}
 }
