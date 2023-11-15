@@ -60,7 +60,6 @@ import org.eclipse.jdt.internal.core.OpenableElementInfo;
 import org.eclipse.jdt.internal.core.PackageFragment;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.MovingAverage;
@@ -69,7 +68,6 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.managers.TelemetryEvent;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -448,11 +446,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 					 * buffer has been modified by an unexpected program and has become
 					 * inconsistent with the client document.
 					 */
-					JavaClientConnection connection = JavaLanguageServerPlugin.getInstance().getClientConnection();
-					if (connection != null) {
-						connection.telemetryEvent(new TelemetryEvent("java.ls.error.documentOutOfSync", null));
-					}
-					JavaLanguageServerPlugin.logInfo("Editor contents out-of-sync for unit: " + unit.getElementName());
+					JavaLanguageServerPlugin.logError("Document on language server is out-of-sync: " + unit.getElementName());
 				}
 				List<TextDocumentContentChangeEvent> contentChanges = params.getContentChanges();
 				for (TextDocumentContentChangeEvent changeEvent : contentChanges) {
