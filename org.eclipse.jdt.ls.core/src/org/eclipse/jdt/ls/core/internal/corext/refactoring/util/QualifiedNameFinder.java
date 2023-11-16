@@ -35,13 +35,13 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.changes.TextChangeCompatibility;
 import org.eclipse.jdt.ls.core.internal.corext.util.PatternConstructor;
 import org.eclipse.jdt.ls.core.internal.corext.util.QualifiedNameSearchResult;
-import org.eclipse.jdt.ls.core.internal.search.text.TextSearchEngine;
-import org.eclipse.jdt.ls.core.internal.search.text.TextSearchMatchAccess;
-import org.eclipse.jdt.ls.core.internal.search.text.TextSearchRequestor;
-import org.eclipse.jdt.ls.core.internal.search.text.TextSearchScope;
 import org.eclipse.ltk.core.refactoring.GroupCategory;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.ltk.core.refactoring.TextChange;
+import org.eclipse.search.core.text.TextSearchEngine;
+import org.eclipse.search.core.text.TextSearchMatchAccess;
+import org.eclipse.search.core.text.TextSearchRequestor;
+import org.eclipse.search.core.text.TextSearchScope;
 import org.eclipse.text.edits.ReplaceEdit;
 
 public class QualifiedNameFinder {
