@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat Inc. and others.
+ * Copyright (c) 2021, 2023 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -15,12 +15,11 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.junit.Test;
-
-import com.google.gson.internal.LinkedTreeMap;
 
 public class PreferencesTest {
 
@@ -56,10 +55,10 @@ public class PreferencesTest {
 
 	@Test
 	public void testLegacyCompletionGuessMethodArguments() {
-		Map<String, Object> config = new LinkedTreeMap<>();
-		Map<String, Object> inJava = new LinkedTreeMap<>();
+		Map<String, Object> config = new HashMap<>();
+		Map<String, Object> inJava = new HashMap<>();
 		config.put("java", inJava);
-		Map<String, Object> inCompletion = new LinkedTreeMap<>();
+		Map<String, Object> inCompletion = new HashMap<>();
 		inJava.put("completion", inCompletion);
 		inCompletion.put("guessMethodArguments", Boolean.TRUE);
 
