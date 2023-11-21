@@ -16,10 +16,6 @@
             <repository location="https://download.eclipse.org/technology/m2e/releases/2.4.0/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.apache.commons.codec" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.29/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.core.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
@@ -45,6 +41,12 @@
 				    <groupId>org.apache.commons</groupId>
 				    <artifactId>commons-lang3</artifactId>
 				    <version>3.8.1</version>
+				    <type>jar</type>
+			    </dependency>
+			    <dependency>
+				    <groupId>commons-codec</groupId>
+				    <artifactId>commons-codec</artifactId>
+				    <version>1.16.0</version>
 				    <type>jar</type>
 			    </dependency>
 		    </dependencies>
