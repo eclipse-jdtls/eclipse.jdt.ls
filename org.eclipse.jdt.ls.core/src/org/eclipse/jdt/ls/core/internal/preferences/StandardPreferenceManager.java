@@ -12,6 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,6 +25,7 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -34,6 +37,7 @@ import org.eclipse.m2e.apt.preferences.PreferencesConstants;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
+import org.eclipse.m2e.core.internal.embedder.MavenProperties;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
@@ -51,6 +55,7 @@ public class StandardPreferenceManager extends PreferenceManager {
 	private static final String JAVALS_PROFILE = "javals.profile";
 	public static final String M2E_DISABLE_TEST_CLASSPATH_FLAG = "m2e.disableTestClasspathFlag";
 	private static final String M2E_APT_ID = MavenJdtAptPlugin.PLUGIN_ID;
+	public static final String MAVEN_MULTI_MODULE_PROJECT_DIRECTORY = "maven.multiModuleProjectDirectory";
 	private IMavenConfiguration mavenConfig;
 
 	public StandardPreferenceManager() {
@@ -102,24 +107,52 @@ public class StandardPreferenceManager extends PreferenceManager {
 		try {
 			Settings mavenSettings = MavenPlugin.getMaven().getSettings();
 			boolean oldDisableTest = false;
+			String multiModuleProjectDirectory = null;
+			String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
 			List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
 			for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
 				if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
 					if (TRUE.equals(settingsProfile.getProperties().get(M2E_DISABLE_TEST_CLASSPATH_FLAG))) {
 						oldDisableTest = true;
+					}
+					if (systemMmpd != null) {
+						Object mmpd = settingsProfile.getProperties().get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+						if (mmpd instanceof String s) {
+							multiModuleProjectDirectory = s;
+						}
+					}
+					if (oldDisableTest && multiModuleProjectDirectory != null) {
 						break;
 					}
 				}
 			}
-			if (oldDisableTest != preferences.isMavenDisableTestClasspathFlag()) {
+			if ((systemMmpd == null && multiModuleProjectDirectory == null) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag())) {
 				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
-				if (preferences.isMavenDisableTestClasspathFlag()) {
+				if (preferences.isMavenDisableTestClasspathFlag() || ((systemMmpd == null && multiModuleProjectDirectory == null))) {
 					Profile profile = new Profile();
 					profile.setId(JAVALS_PROFILE);
 					Activation activation = new Activation();
 					activation.setActiveByDefault(true);
 					profile.setActivation(activation);
 					profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
+					if (preferences.getRootPaths() != null) {
+						for (IPath path : preferences.getRootPaths()) {
+							File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
+							if (f != null) {
+								try {
+									multiModuleProjectDirectory = f.getCanonicalPath();
+								} catch (IOException e) {
+									multiModuleProjectDirectory = f.getAbsolutePath();
+								}
+								break;
+							}
+						}
+					}
+					if (multiModuleProjectDirectory != null) {
+						profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+					} else {
+						profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+					}
 					mavenSettings.addProfile(profile);
 				}
 				for (IProject project : ProjectUtils.getAllProjects()) {
