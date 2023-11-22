@@ -61,15 +61,34 @@
 			    </dependency>
 		    </dependencies>
 	    </location>
-	    <location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" label="Logging" missingManifest="generate" type="Maven">
+	    <location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" label="3rd party" missingManifest="generate" type="Maven">
 		    <dependencies>
+			    <dependency>
+				    <groupId>com.vladsch.flexmark</groupId>
+				    <artifactId>flexmark-html2md-converter</artifactId>
+				    <version>0.64.8</version>
+				    <type>jar</type>
+			    </dependency>
 			    <dependency>
 				    <groupId>jakarta.servlet</groupId>
 				    <artifactId>jakarta.servlet-api</artifactId>
 				    <version>6.1.0</version>
 				    <type>jar</type>
 			    </dependency>
+			    <dependency>
+				    <groupId>org.apache.commons</groupId>
+				    <artifactId>commons-text</artifactId>
+				    <version>1.10.0</version>
+				    <type>jar</type>
+			    </dependency>
+			    <dependency>
+				    <groupId>org.jsoup</groupId>
+				    <artifactId>jsoup</artifactId>
+				    <version>1.19.1</version>
+				    <type>jar</type>
+			    </dependency>
 		    </dependencies>
+		    <exclude>org.jsoup:jsoup:1.15.4</exclude>
 	    </location>
     </locations>
     <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-25"/>

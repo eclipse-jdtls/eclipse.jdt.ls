@@ -52,6 +52,7 @@
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
+      <plugin id="org.jsoup"/>
    </plugins>
 
    <configurations>
