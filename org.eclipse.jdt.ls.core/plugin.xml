@@ -110,6 +110,9 @@
                   id="java.project.resolveWorkspaceSymbol">
             </command>
             <command
+                  id="java.project.updateJdk">
+            </command>
+            <command
                   id="java.protobuf.generateSources">
             </command>
             <command
@@ -126,6 +129,9 @@
             </command>
              <command
                   id="java.edit.smartSemicolonDetection">
+            </command>
+            <command
+                  id="java.vm.getAllInstalls">
             </command>
       </delegateCommandHandler>
    </extension>

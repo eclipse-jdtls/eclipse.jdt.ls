@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2022 Microsoft Corporation and others.
+ * Copyright (c) 2017-2023 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -29,6 +29,7 @@ import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand;
 import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
+import org.eclipse.jdt.ls.core.internal.commands.VmCommand;
 import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
@@ -134,16 +135,23 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					params.setPosition(textParams.getPosition());
 					TypeHierarchyItem typeHierarchyItem = typeHierarchyCommand.typeHierarchy(params, monitor);
 					return typeHierarchyItem;
-				case "java.project.upgradeGradle":
+				case "java.project.upgradeGradle": {
 					String projectUri = (String) arguments.get(0);
 					String gradleVersion = arguments.size() > 1 ? (String) arguments.get(1) : null;
 					if (gradleVersion == null) {
 						gradleVersion = GradleVersion.current().getVersion();
 					}
 					return GradleProjectImporter.upgradeGradleVersion(projectUri, gradleVersion, monitor);
+				}
 				case "java.project.resolveWorkspaceSymbol":
 					SymbolInformation si = JSONUtility.toModel(arguments.get(0), SymbolInformation.class);
 					return ProjectCommand.resolveWorkspaceSymbol(si);
+				case "java.project.updateJdk": {
+					String projectUri = (String) arguments.get(0);
+					String jdkPath = (String) arguments.get(1);
+					ProjectCommand.updateProjectJdk(projectUri, jdkPath, monitor);
+					return null;
+				}
 				case "java.protobuf.generateSources":
 					ProtobufSupport.generateProtobufSources((ArrayList<String>) arguments.get(0), monitor);
 					return null;
@@ -177,6 +185,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					}
 					SmartDetectionParams smartDetectionParams = JSONUtility.toModel(arguments.get(0), SmartDetectionParams.class);
 					return new SmartDetectionHandler(smartDetectionParams).getLocation(monitor);
+				case VmCommand.GET_ALL_INSTALL_COMMAND_ID:
+					return VmCommand.getAllVmInstalls();
 				default:
 					break;
 			}

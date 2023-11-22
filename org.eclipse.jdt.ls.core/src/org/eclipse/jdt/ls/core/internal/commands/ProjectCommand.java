@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Microsoft Corporation and others.
+ * Copyright (c) 2020-2023 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
@@ -53,6 +54,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.core.ClasspathEntry;
 import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaLaunchDelegate;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.IConstants;
@@ -76,17 +78,19 @@ public class ProjectCommand {
 	 * Gets the project settings.
 	 *
 	 * @param uri
-	 *                        Uri of the source/class file that needs to be queried.
+	 *        Uri of the source/class file that needs to be queried.
 	 * @param settingKeys
-	 *                        the settings we want to query, for example:
-	 *                        ["org.eclipse.jdt.core.compiler.compliance",
-	 *                        "org.eclipse.jdt.core.compiler.source"].
-	 *                        Besides the options defined in JavaCore, the following keys can also be used:
-	 *                        - "org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project
-	 *                        - "org.eclipse.jdt.ls.core.sourcePaths": Get the source root paths of the given Java project
-	 *                        - "org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
-	 *                                                                may not be equal to the output path of each source root.
-	 *                        - "org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project
+	 *        the settings we want to query, for example:
+	 *        ["org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source"].
+	 *        <p>
+	 *        Besides the options defined in JavaCore, the following keys can also be used:
+	 *        <ul>
+	 *          <li>"org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project.</li>
+	 *          <li>"org.eclipse.jdt.ls.core.sourcePaths": Get the source root paths of the given Java project.</li>
+	 *          <li>"org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
+	 *              may not be equal to the output path of each source root.</li>
+	 *          <li>"org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project.</li>
+	 *        </ul>
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
 	 * @throws CoreException
@@ -347,5 +351,48 @@ public class ProjectCommand {
 		si.setKind(request.getKind());
 
 		return si;
+	}
+
+	public static void updateProjectJdk(String projectUri, String jdkPath, IProgressMonitor monitor) throws CoreException, URISyntaxException {
+		IJavaProject javaProject = getJavaProjectFromUri(projectUri);
+		IClasspathEntry[] originalClasspathEntries = javaProject.getRawClasspath();
+		IClasspathAttribute[] extraAttributes = null;
+		List<IClasspathEntry> newClasspathEntries = new ArrayList<>();
+		for (IClasspathEntry entry : originalClasspathEntries) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
+					entry.getPath().toString().startsWith("org.eclipse.jdt.launching.JRE_CONTAINER")) {
+				extraAttributes = entry.getExtraAttributes();
+			} else {
+				newClasspathEntries.add(entry);
+			}
+		}
+
+		IVMInstall vmInstall = getVmInstallByPath(jdkPath);
+		if (vmInstall == null) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to find an existing JDK or register a new one."));
+		}
+		newClasspathEntries.add(JavaCore.newContainerEntry(
+				JavaRuntime.newJREContainerPath(vmInstall),
+				ClasspathEntry.NO_ACCESS_RULES,
+				extraAttributes,
+				false /*isExported*/
+		));
+		javaProject.setRawClasspath(newClasspathEntries.toArray(IClasspathEntry[]::new), monitor);
+	}
+
+	private static IVMInstall getVmInstallByPath(String path) {
+		java.nio.file.Path vmPath = new Path(path).toPath();
+		IVMInstallType[] vmInstallTypes = JavaRuntime.getVMInstallTypes();
+		for (IVMInstallType vmInstallType : vmInstallTypes) {
+			IVMInstall[] vmInstalls = vmInstallType.getVMInstalls();
+			for (IVMInstall vmInstall : vmInstalls) {
+				if (vmInstall.getInstallLocation().toPath().normalize().compareTo(vmPath) == 0) {
+					return vmInstall;
+				}
+			}
+		}
+
+		// TODO: register a new VM Install if it's valid Java home.
+		return null;
 	}
 }
