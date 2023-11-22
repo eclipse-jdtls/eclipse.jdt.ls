@@ -23,10 +23,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,11 +174,14 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
+			Set<IPath> buildFiles = projectConfigurations.stream()
+					.filter(rootPath::isPrefixOf).collect(Collectors.toSet());
 			try {
 				for (IProjectImporter importer : importers()) {
 					importer.initialize(rootFolder);
-					if (importer.applies(projectConfigurations, subMonitor.split(1))) {
+					if (importer.applies(buildFiles, subMonitor.split(1))) {
 						importer.importToWorkspace(subMonitor.split(70));
+						buildFiles = removeImportedConfigurations(buildFiles, importer);
 					}
 				}
 			} catch (CoreException e) {
@@ -189,6 +193,18 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		if (!importStatusCollection.isOK()) {
 			throw new CoreException(importStatusCollection);
 		}
+	}
+
+	private Set<IPath> removeImportedConfigurations(Set<IPath> configurations, IProjectImporter importer) {
+		return configurations.stream()
+			.filter(config -> {
+				try {
+					return !importer.isResolved(config.toFile());
+				} catch (OperationCanceledException | CoreException e) {
+					return true;
+				}
+			})
+			.collect(Collectors.toSet());
 	}
 
 	public void importProjects(IProgressMonitor monitor) {

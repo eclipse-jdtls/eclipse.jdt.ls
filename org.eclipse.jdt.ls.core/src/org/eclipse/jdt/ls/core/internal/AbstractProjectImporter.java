@@ -45,8 +45,20 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 	public abstract boolean applies(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	@Override
-	public boolean isResolved(File folder) throws OperationCanceledException, CoreException {
-		return directories != null && directories.contains(folder.toPath());
+	public boolean isResolved(File file) throws OperationCanceledException, CoreException {
+		if (directories == null) {
+			return false;
+		}
+		// if input is a directory (usually the root folder),
+		// check if the importer has imported it.
+		if (file.isDirectory()) {
+			return directories.contains(file.toPath());
+		}
+
+		// if the input is a file, check if the parent directory is imported.
+		return directories.stream().anyMatch((directory) -> {
+			return file.toPath().getParent().equals(directory);
+		});
 	};
 
 	@Override
@@ -82,6 +94,10 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 			return filteredPaths;
 		}
 
+		return eliminateNestedPaths(filteredPaths);
+	}
+
+	protected List<Path> eliminateNestedPaths(List<Path> filteredPaths) {
 		Path parentDir = null;
 		List<Path> result = new LinkedList<>();
 		for (Path path : filteredPaths) {
@@ -95,7 +111,6 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 				parentDir = path;
 			}
 		}
-
 		return result;
 	}
 }
