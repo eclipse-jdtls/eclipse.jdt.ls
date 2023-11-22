@@ -14,6 +14,8 @@ on:
 
 jobs:
   call-license-check:
+    permissions:
+      pull-requests: write
     uses: eclipse/dash-licenses/.github/workflows/mavenLicenseCheck.yml@master
     with:
       projectId: eclipse.jdt.ls
