@@ -65,21 +65,21 @@ import org.junit.Test;
  */
 public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	private static String HOVER_TEMPLATE =
-			"{\n" +
-					"    \"id\": \"1\",\n" +
-					"    \"method\": \"textDocument/hover\",\n" +
-					"    \"params\": {\n" +
-					"        \"textDocument\": {\n" +
-					"            \"uri\": \"${file}\"\n" +
-					"        },\n" +
-					"        \"position\": {\n" +
-					"            \"line\": ${line},\n" +
-					"            \"character\": ${char}\n" +
-					"        }\n" +
-					"    },\n" +
-					"    \"jsonrpc\": \"2.0\"\n" +
-					"}";
+	private static String HOVER_TEMPLATE = """
+			{
+			    "id": "1",
+			    "method": "textDocument/hover",
+			    "params": {
+			        "textDocument": {
+			            "uri": "${file}"
+			        },
+			        "position": {
+			            "line": ${line},
+			            "character": ${char}
+			        }
+			    },
+			    "jsonrpc": "2.0"
+			}""";
 
 	private HoverHandler handler;
 
@@ -231,9 +231,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	public static String createHoverRequest(URI file, int line, int kar) {
 		String fileURI = ResourceUtils.fixURI(file);
-		return HOVER_TEMPLATE.replace("${file}", fileURI)
-				.replace("${line}", String.valueOf(line))
-				.replace("${char}", String.valueOf(kar));
+		return HOVER_TEMPLATE.replace("${file}", fileURI).replace("${line}", String.valueOf(line)).replace("${char}", String.valueOf(kar));
 	}
 
 	@Test
@@ -301,8 +299,14 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(1).getLeft();//
 		result = ResourceUtils.dos2Unix(result);
-		String t1 = "**Overrides:** foo(...) in Foo\n\n";
-		String expected = "This method comes from Foo\n" + "\n" + t1 + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
+		// @formatter:off
+		String expected = """
+				This method comes from Foo\s\s
+				**Overrides:** foo(...) in Foo
+
+				* **Parameters:**
+				  * **input** an input String""";
+		// @formatter:on
 		assertEquals("Unexpected hover ", expected, result);
 	}
 
@@ -393,7 +397,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
 		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
-		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or return ShortCollections"));
+		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or\nreturn ShortCollections"));
 		assertTrue("Unexpected hover :\n" + content, content.contains("**Author:**"));
 	}
 
@@ -474,32 +478,26 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//@formatter:off
 		String expectedJavadoc =
-				"This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)\n" +
-				"\n" +
-				" \\*  \\*\\*Parameters:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\*\\*someString\\*\\* the string to enter\n" +
-				" \\*  \\*\\*Returns:\\*\\*\n" +
-				"    \n" +
-				"     \\*  String\n" +
-				" \\*  \\*\\*Throws:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\[IOException\\]\\(jdt:/.*\\)\n" +
-				" \\*  \\*\\*Since:\\*\\*\n" +
-				"    \n" +
-				"     \\*  0.0.1\n" +
-				" \\*  \\*\\*Version:\\*\\*\n" +
-				"    \n" +
-				"     \\*  0.0.1\n" +
-				" \\*  \\*\\*Author:\\*\\*\n" +
-				"    \n" +
-				"     \\*  jpinkney\n" +
-				" \\*  \\*\\*See Also:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)\n" +
-				" \\*  \\*\\*API Note:\\*\\*\n" +
-				"    \n" +
-				"     \\*  This is a note";
+				"""
+			This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)
+
+			\\* \\*\\*Parameters:\\*\\*
+			  \\* \\*\\*someString\\*\\* the string to enter
+			\\* \\*\\*Returns:\\*\\*
+			  \\* String
+			\\* \\*\\*Throws:\\*\\*
+			  \\* \\[IOException\\]\\(jdt:/.*\\)
+			\\* \\*\\*Since:\\*\\*
+			  \\* 0.0.1
+			\\* \\*\\*Version:\\*\\*
+			  \\* 0.0.1
+			\\* \\*\\*Author:\\*\\*
+			  \\* jpinkney
+			\\* \\*\\*See Also:\\*\\*
+			  \\* \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)
+			\\* \\*\\*API Note:\\*\\*
+			  \\* This is a note""";
+
 
 		//@formatter:on
 		assertMatches(expectedJavadoc, ResourceUtils.dos2Unix(content));
@@ -522,46 +520,55 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
 		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
-		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
+		assertMatches("This link doesnt work \\[LinkToSomethingNotFound\\]\\(\\)", content);
 	}
 
 	@Test
 	public void testHoverJavadocWithExtraTags() throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		//@formatter:off
-		buf.append("package test1;\n");
-		buf.append("/**\n" +
-				" * Some text.\n" +
-				" *\n" +
-				" * @uses java.sql.Driver\n" +
-				" *\n" +
-				" * @moduleGraph\n" +
-				" * @since 9\n" +
-				" */\n");
-		buf.append("public class Meh {}\n");
+		String content = """
+				package test1;
+				/**
+				 * Some text.
+				 *
+				 * @uses java.sql.Driver
+				 *
+				 * @moduleGraph
+				 * @since 9
+				 */
+				public class Meh {}
+				""";
 		//@formatter:on
-		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", buf.toString(), false, null);
+		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", content, false, null);
 		Hover hover = getHover(cu, 9, 15);
 		assertNotNull(hover);
 		assertEquals(2, hover.getContents().getLeft().size());
 
 		//@formatter:off
-		String expectedJavadoc = "Some text.\n" +
-				"\n" +
-				" *  **Since:**\n" +
-				"    \n" +
-				"     *  9\n" +
-				" *  **Uses:**\n" +
-				"    \n" +
-				"     *  java.sql.Driver\n" +
-				" *  **@moduleGraph**";
+		String expectedJavadoc = """
+			Some text.
+
+			* **Since:**
+			  * 9
+			* **Uses:**
+			  * java.sql.Driver
+			* **@moduleGraph**""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals("Unexpected hover ", expectedJavadoc, actual);
 	}
 
+	/**
+	 * A simple program.
+	 * {@snippet :
+	 * class HelloWorld {
+	 * 	public static void main(String... args) {
+	 * 		System.out.println("Hello World!");      // @highlight substring="println"
+	 * 	}
+	 * }
+	 * }
+	 */
 	@Test
 	public void testHoverJavadocSnippet() throws Exception {
 		String name = "java18";
@@ -572,19 +579,21 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		//@formatter:off
-		buf.append("package test1;\n"
-				+ "/**\n"
-				+ " * A simple program.\n"
-				+ " * {@snippet :\n"
-				+ " * class HelloWorld {\n"
-				+ " *     public static void main(String... args) {\n"
-				+ " *         System.out.println(\"Hello World!\");      // @highlight substring=\"println\"\n"
-				+ " *     }\n"
-				+ " * }\n"
-				+ " * }\n"
-				+ " */\n"
-				+ "public class Test {\n"
-				+ "}\n");
+		buf.append("""
+			package test1;
+			/**
+			 * A simple program.
+			 * {@snippet :
+			 * class HelloWorld {
+			 *     public static void main(String... args) {
+			 *         System.out.println("Hello World!");      // @highlight substring="println"
+			 *     }
+			 * }
+			 * }
+			 */
+			public class Test {
+			}
+			""");
 		//@formatter:on
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 11, 15);
@@ -592,14 +601,15 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, hover.getContents().getLeft().size());
 
 		//@formatter:off
-		String expectedJavadoc = "A simple program.  \n"
-				+ "  \n"
-				+ "&nbsp;class HelloWorld {  \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) {  \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**(\"Hello World!\");        \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}  \n"
-				+ "&nbsp;}  \n"
-				+ "  \n";
+		String expectedJavadoc = """
+			A simple program.
+
+			&nbsp;class HelloWorld {
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) {
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**("Hello World!");
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+			&nbsp;}
+			""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
@@ -706,7 +716,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testNoLinkWhenClassContentUnsupported() throws Exception {
 		initPreferenceManager(false);
-		testClassContentSupport("Uses WordUtils");
+		testClassContentSupport("Uses \\[WordUtils\\]\\(\\)");
 	}
 
 	@Test
