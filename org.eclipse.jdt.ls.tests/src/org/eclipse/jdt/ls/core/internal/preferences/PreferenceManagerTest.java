@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -22,13 +23,18 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.Settings;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaCore;
@@ -236,6 +242,46 @@ public class PreferenceManagerTest {
 			assertFalse(preferenceManager.getPreferences().isMavenDisableTestClasspathFlag());
 			assertFalse(getDisableTestFlag());
 		}
+	}
+
+	@Test
+	public void testMavenMultipleModuleProjectDirectory() throws Exception {
+		try {
+			PreferenceManager.initialize();
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertNull(getMultipleModuleProjectDirectory());
+			preferences = new Preferences();
+			Collection<IPath> rootPaths = new ArrayList<>();
+			File dir = new File("target", "workingProjects");
+			dir = new File(dir, "test");
+			File dotMvn = new File(dir, ".mvn");
+			FileUtils.forceMkdir(dotMvn);
+			IPath rootPath = new org.eclipse.core.runtime.Path(dir.getAbsolutePath());
+			rootPaths.add(rootPath);
+			preferences.setRootPaths(rootPaths);
+			preferenceManager.update(preferences);
+			assertEquals(dir.getAbsolutePath(), getMultipleModuleProjectDirectory());
+		} finally {
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertNull(getMultipleModuleProjectDirectory());
+		}
+	}
+
+	private String getMultipleModuleProjectDirectory() throws CoreException {
+		Settings mavenSettings = MavenPlugin.getMaven().getSettings();
+		String multipleModuleProjectDirectory = null;
+		List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
+		for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
+			if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
+				if (settingsProfile.getProperties().get(StandardPreferenceManager.MAVEN_MULTI_MODULE_PROJECT_DIRECTORY) instanceof String s) {
+					multipleModuleProjectDirectory = s;
+					break;
+				}
+			}
+		}
+		return multipleModuleProjectDirectory;
 	}
 
 	private boolean getDisableTestFlag() throws CoreException {
