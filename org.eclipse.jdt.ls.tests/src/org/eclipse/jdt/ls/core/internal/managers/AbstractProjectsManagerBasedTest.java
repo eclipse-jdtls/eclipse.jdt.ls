@@ -104,6 +104,8 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	private PreferenceManager oldPreferenceManager;
 
+	private ClientPreferences clientPreferences;
+
 	protected Preferences preferences;
 
 	protected SimpleLogListener logListener;
@@ -137,6 +139,9 @@ public abstract class AbstractProjectsManagerBasedTest {
 		initPreferences(preferences);
 		if (preferenceManager == null) {
 			preferenceManager = mock(StandardPreferenceManager.class);
+		}
+		if (clientPreferences == null) {
+			clientPreferences = mock(ClientPreferences.class);
 		}
 		initPreferenceManager(true);
 
@@ -176,7 +181,6 @@ public abstract class AbstractProjectsManagerBasedTest {
 		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(preferences);
 		Mockito.lenient().when(preferenceManager.getPreferences(any())).thenReturn(preferences);
 		Mockito.lenient().when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(supportClassFileContents);
-		ClientPreferences clientPreferences = mock(ClientPreferences.class);
 		Mockito.lenient().when(clientPreferences.isProgressReportSupported()).thenReturn(true);
 		Mockito.lenient().when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(anyString())).thenReturn(true);

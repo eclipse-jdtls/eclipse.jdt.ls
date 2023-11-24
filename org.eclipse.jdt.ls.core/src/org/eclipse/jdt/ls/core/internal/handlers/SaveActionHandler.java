@@ -62,8 +62,9 @@ public class SaveActionHandler {
 
 		Preferences preferences = preferenceManager.getPreferences();
 		IEclipsePreferences jdtUiPreferences = getJdtUiProjectPreferences(documentUri);
+		boolean canUseInternalSettings = preferenceManager.getClientPreferences().canUseInternalSettings();
 		if (preferences.isJavaSaveActionsOrganizeImportsEnabled() ||
-			(jdtUiPreferences != null && jdtUiPreferences.getBoolean("sp_" + CleanUpConstants.ORGANIZE_IMPORTS, false))) {
+				(canUseInternalSettings && jdtUiPreferences != null && jdtUiPreferences.getBoolean("sp_" + CleanUpConstants.ORGANIZE_IMPORTS, false))) {
 			edit.addAll(handleSaveActionOrganizeImports(documentUri, monitor));
 		}
 
@@ -71,7 +72,7 @@ public class SaveActionHandler {
 		List<String> lspCleanups = preferences.getCleanUpActionsOnSave();
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
-		cleanUpIds.addAll((lspCleanups != null && !lspCleanups.isEmpty()) ? lspCleanups : jdtSettingCleanups);
+		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		return edit;

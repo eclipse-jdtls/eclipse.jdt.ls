@@ -18,20 +18,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -43,8 +50,6 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private SaveActionHandler handler;
 
-	private PreferenceManager preferenceManager;
-
 	private IProgressMonitor monitor;
 
 	@Override
@@ -52,10 +57,8 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
-		preferenceManager = mock(PreferenceManager.class);
-		Preferences preferences = mock(Preferences.class);
-		when(preferences.isJavaSaveActionsOrganizeImportsEnabled()).thenReturn(Boolean.TRUE);
-		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		preferences.setJavaSaveActionAutoOrganizeImportsEnabled(true);
+		when(preferenceManager.getClientPreferences().canUseInternalSettings()).thenReturn(Boolean.FALSE);
 		monitor = mock(IProgressMonitor.class);
 		when(monitor.isCanceled()).thenReturn(false);
 		handler = new SaveActionHandler(preferenceManager);
@@ -135,6 +138,55 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} finally {
 			preferences.setFormatterUrl(formatterUrl);
 		}
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/3370
+	@Test
+	public void testNoConflictBetweenLSPAndJDTUI() throws Exception {
+		// invertEquals enabled via. LSP settings
+		preferences.setCleanUpActionsOnSave(Arrays.asList("invertEquals"));
+		// addFinalModifier enabled via. cleanup.make_variable_declarations_final
+		IFile jdtCorePrefs = project.getFile(Path.fromOSString(".settings/org.eclipse.jdt.ui.prefs"));
+		Files.writeString(jdtCorePrefs.getLocation().toPath(), """
+				editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
+				sp_cleanup.make_variable_declarations_final=true""");
+
+		String contents = "package test1;\n"
+				+ "public class NoConflictWithLSP {\n"
+				+ "    public void test() {\n"
+				+ "        String MESSAGE = \"This is a message.\";\n"
+				+ "        if (MESSAGE.equals(\"message\"))\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "";
+
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot fSourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src/"));
+		project.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+
+		IPackageFragment pack = fSourceFolder.createPackageFragment("test1", false, monitor);
+		ICompilationUnit unit = pack.createCompilationUnit("NoConflictWithLSP.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		WillSaveTextDocumentParams params = new WillSaveTextDocumentParams();
+		TextDocumentIdentifier document = new TextDocumentIdentifier();
+		document.setUri(uri);
+		params.setTextDocument(document);
+
+		List<TextEdit> result = handler.willSaveWaitUntil(params, monitor);
+		String actual = TextEditUtil.apply(unit, result);
+		String expected = "package test1;\n"
+				+ "public class NoConflictWithLSP {\n"
+				+ "    public void test() {\n"
+				+ "        String MESSAGE = \"This is a message.\";\n"
+				+ "        if (\"message\".equals(MESSAGE))\n"
+				+ "        }\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "";
+
+		assertEquals(expected, actual);
 	}
 
 }
