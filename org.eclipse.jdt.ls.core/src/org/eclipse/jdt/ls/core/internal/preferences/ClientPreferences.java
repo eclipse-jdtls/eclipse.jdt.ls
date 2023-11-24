@@ -299,6 +299,10 @@ public class ClientPreferences {
 		return String.valueOf(extendedClientCapabilities.getOrDefault("onCompletionItemSelectedCommand", ""));
 	}
 
+	public boolean canUseInternalSettings() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("canUseInternalSettings", "false").toString());
+	}
+
 	public boolean isSupportsCompletionDocumentationMarkdown() {
 		//@formatter:off
 		return v3supported && capabilities.getTextDocument().getCompletion() != null

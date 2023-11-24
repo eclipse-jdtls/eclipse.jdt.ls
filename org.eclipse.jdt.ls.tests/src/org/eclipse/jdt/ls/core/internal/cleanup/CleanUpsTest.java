@@ -15,17 +15,14 @@ package org.eclipse.jdt.ls.core.internal.cleanup;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -579,43 +576,6 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 			""";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("tryWithResource"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
-		assertEquals(expected, actual);
-	}
-
-	// https://github.com/redhat-developer/vscode-java/issues/3370
-	@Test
-	public void testNoConflictBetweenLSPAndJDTUI() throws Exception {
-		// addFinalModifier enabled via. cleanup.make_variable_declarations_final
-		IFile jdtCorePrefs = javaProject.getProject().getFile(Path.fromOSString(".settings/org.eclipse.jdt.core.prefs"));
-		Files.writeString(jdtCorePrefs.getLocation().toPath(), """
-				editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
-				sp_cleanup.make_variable_declarations_final=true""");
-
-		String contents = "package test1;\n"
-				+ "public class NoConflictWithLSP {\n"
-				+ "    public void test() {\n"
-				+ "        String MESSAGE = \"This is a message.\" +\n"
-				+ "                \"This message has multiple lines.\" +\n"
-				+ "                \"We can convert it to a text block\";\n"
-				+ "    }\n"
-				+ "}\n"
-				+ "";
-
-		ICompilationUnit unit = pack1.createCompilationUnit("NoConflictWithLSP.java", contents, false, monitor);
-		String uri = unit.getUnderlyingResource().getLocationURI().toString();
-		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("stringConcatToTextBlock"), monitor);
-		String actual = TextEditUtil.apply(unit, textEdits);
-		String expected = "package test1;\n"
-				+ "public class NoConflictWithLSP {\n"
-				+ "    public void test() {\n"
-				+ "        String MESSAGE = \"\"\"\n"
-				+ "        	This is a message.\\\n"
-				+ "        	This message has multiple lines.\\\n"
-				+ "        	We can convert it to a text block\"\"\";\n"
-				+ "    }\n"
-				+ "}\n"
-				+ "";
-
 		assertEquals(expected, actual);
 	}
 

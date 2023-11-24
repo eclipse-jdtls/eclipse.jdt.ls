@@ -1287,7 +1287,7 @@ public class Preferences {
 	 * @param enabledCleanUps
 	 *            the new list of enabled clean ups
 	 */
-	private void setCleanUpActionsOnSave(List<String> enabledCleanUps) {
+	public void setCleanUpActionsOnSave(List<String> enabledCleanUps) {
 		this.cleanUpActionsOnSave = enabledCleanUps;
 	}
 
