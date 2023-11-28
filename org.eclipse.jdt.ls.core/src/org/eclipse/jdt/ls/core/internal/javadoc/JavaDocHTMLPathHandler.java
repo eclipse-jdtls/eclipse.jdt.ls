@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.dom.TextElement;
+import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavaDocLocations;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 
@@ -131,7 +132,7 @@ public class JavaDocHTMLPathHandler {
 
 			ZipEntry currentZipEntry = null;
 
-			URL javadocJarBaseLocationURL = JavaDocLocations.getJavadocBaseLocation(internalJarFragment); //Absolute location of javadoc jar (not class or source jar)
+			URL javadocJarBaseLocationURL = CoreJavaDocLocations.getJavadocBaseLocation(internalJarFragment); //Absolute location of javadoc jar (not class or source jar)
 			//Attempt to get file from javadoc jar
 			if (javadocJarBaseLocationURL != null) {
 				URI javadocJarBaseLocationURI = javadocJarBaseLocationURL.toURI();

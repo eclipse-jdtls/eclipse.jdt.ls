@@ -301,7 +301,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(1).getLeft();//
 		result = ResourceUtils.dos2Unix(result);
-		String expected = "This method comes from Foo\n" + "\n" + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
+		String t1 = "**Overrides:** foo(...) in Foo\n\n";
+		String expected = "This method comes from Foo\n" + "\n" + t1 + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
 		assertEquals("Unexpected hover ", expected, result);
 	}
 
@@ -551,7 +552,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				" *  **Since:**\n" +
 				"    \n" +
 				"     *  9\n" +
-				" *  **@uses**\n" +
+				" *  **Uses:**\n" +
 				"    \n" +
 				"     *  java.sql.Driver\n" +
 				" *  **@moduleGraph**";

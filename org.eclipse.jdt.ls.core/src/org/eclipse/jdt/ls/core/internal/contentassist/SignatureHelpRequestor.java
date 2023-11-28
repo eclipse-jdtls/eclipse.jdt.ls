@@ -44,7 +44,7 @@ import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.SignatureHelpUtils;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
+import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ParameterInformation;
@@ -231,7 +231,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 							String javadoc = null;
 							try {
 								javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-									Reader reader = JavadocContentAccess.getPlainTextContentReader(method);
+									Reader reader = JavadocContentAccess2.getPlainTextContentReader(method);
 									return reader == null ? null : CharStreams.toString(reader);
 								}, 500, TimeUnit.MILLISECONDS);
 							} catch (UncheckedTimeoutException tooSlow) {
