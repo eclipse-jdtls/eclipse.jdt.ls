@@ -1,5 +1,28 @@
 # Change Log
 
+# [1.30.0 (November 30th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/121?closed=1)
+ * enhancement - Provide support for Java 21. See [#2863](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2863).
+ * enhancement - Import projects by configurations. See [#2913](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2913).
+ * enhancement - Support add/remove of imported projects. See [#2972](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2972).
+ * enhancement - Add capability to list all VM installs and update project JDK. See [#2977](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2977).
+ * enhancement - Add `maven.multiModuleProjectDirectory` property. See [#2976](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2976).
+ * bug fix - Cleanups & Organize Imports should only react to internal project preferences with `canUseInternalSettings`. See [#2975](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2975).
+ * bug fix - Avoid refreshing bundles whose dependency closure includes JDT-LS. See [#2951](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2951).
+ * bug fix - Wrongly encoded semantic tokens around `class` keyword. See [#2920](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2920).
+ * bug fix - `IllegalArgumentException` on `completionItem/resolve` of package declaration. See [#2924](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2924).
+ * bug fix - Handle NPE in `getWorkDoneProgress()` when client does not support progress. See [#2936](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2936).
+ * bug fix - Add trace to understand the probability of document out-of-sync. See [#2954](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2954).
+ * build - Remove duplicates of `org.eclipse.search` classes. See [#2960](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2960).
+ * build - Update buildship to 3.1.8. See [#2974](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2974).
+ * build - Update commons-codec to 1.16.0. See [#2970](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2970).
+ * build - Bump Tycho version from 4.0.3 to 4.0.4. See [#2949](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2949).
+ * build - Update maven-build-plugins. See [#2956](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2956), [#2953](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2953), [#2931](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2931).
+ * build - Stop including `o.e.core.net.win32.x86_64` fragments in products. See [#2964](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2964).
+ * build - Stop using Gson internal `LinkedTreeMap` in tests. See [#2965](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2965).
+ * build - Enable license checking for 3rd party dependencies. See [#2966](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2966), [#2973](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2973).
+ * build - Fix build warnings due to `tycho-target-platform-configuration` no longer having resolver configuration. See [#2958](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2958).
+ * documentation - Add Language Server Client, multilspy, to `README.md`. See [#2943](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2943).
+
 # [1.29.0 (October 26th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/120?closed=1)
  * enhancement - Support named pipes for client/server communication. See [#2922](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2922).
  * enhancement - Add new alias `public static void main(String[] args)` for public main method. See [#2919](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2919).
