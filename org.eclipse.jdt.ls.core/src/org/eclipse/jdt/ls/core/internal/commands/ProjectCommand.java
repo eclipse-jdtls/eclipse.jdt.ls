@@ -371,7 +371,7 @@ public class ProjectCommand {
 		IVMInstall vmInstall = getVmInstallByPath(jdkPath);
 		if (vmInstall == null) {
 			JavaLanguageServerPlugin.log(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The select JDK path is not valid."));
-			return new JdkUpdateResult(false, "The select JDK path is not valid.");
+			return new JdkUpdateResult(false, "The selected JDK path is not valid.");
 		}
 		newClasspathEntries.add(JavaCore.newContainerEntry(
 				JavaRuntime.newJREContainerPath(vmInstall),
