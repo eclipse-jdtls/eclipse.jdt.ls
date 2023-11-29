@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -222,15 +223,29 @@ public class ProjectCommand {
 	}
 
 	public static List<URI> getAllJavaProjects() {
-		List<URI> javaProjects = new LinkedList<>();
-		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
-			javaProjects.add(ProjectUtils.getProjectRealFolder(javaProject.getProject()).toFile().toURI());
+		return getProjectUris(Arrays.stream(ProjectUtils.getJavaProjects())
+				.map(IJavaProject::getProject).toArray(IProject[]::new));
+	}
+
+	public static List<URI> getAllProjects() {
+		return getProjectUris(ProjectUtils.getAllProjects());
+	}
+
+	private static List<URI> getProjectUris(IProject[] projects) {
+		List<URI> projectUris = new LinkedList<>();
+		for (IProject project : projects) {
+			projectUris.add(ProjectUtils.getProjectRealFolder(project).toFile().toURI());
 		}
-		return javaProjects;
+		return projectUris;
 	}
 
 	public static void importProject(IProgressMonitor monitor) {
 		JavaLanguageServerPlugin.getProjectsManager().importProjects(monitor);
+	}
+
+	public static void changeImportedProjects(Collection<String> toUpdate, Collection<String> toImport,
+			Collection<String> toDelete, IProgressMonitor monitor) {
+		JavaLanguageServerPlugin.getProjectsManager().changeImportedProjects(toUpdate, toImport, toDelete, monitor);
 	}
 
 	private static IPath[] listTestSourcePaths(IJavaProject project) throws JavaModelException {
@@ -317,6 +332,10 @@ public class ProjectCommand {
 			this.classpaths = classpaths;
 			this.modulepaths = modulepaths;
 		}
+	}
+
+	public static class GetAllProjectOptions {
+		public boolean includeNonJava;
 	}
 
 	public static SymbolInformation resolveWorkspaceSymbol(SymbolInformation request) {

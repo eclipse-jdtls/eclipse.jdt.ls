@@ -252,6 +252,50 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testChangeImportedMavenSubModule() throws Exception {
+		File projectDir = copyFiles("maven/multimodule", true);
+		Path projectDirPath = projectDir.toPath();
+		Collection<IPath> configurationPaths = new ArrayList<>();
+		Path subModuleConfiguration = projectDirPath.resolve("module1/pom.xml");
+		IPath filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
+		configurationPaths.add(filePath);
+		subModuleConfiguration = projectDirPath.resolve("module2/pom.xml");
+		filePath = ResourceUtils.canonicalFilePathFromURI(subModuleConfiguration.toUri().toString());
+		configurationPaths.add(filePath);
+		preferenceManager.getPreferences().setProjectConfigurations(configurationPaths);
+		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
+		IProject[] allProjects = ProjectUtils.getAllProjects();
+		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
+			"module1",
+			"childmodule",
+			"module2",
+			"jdt.ls-java-project"
+		));
+		assertEquals(4, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
+		}
+
+		Path newBuildFile = projectDirPath.resolve("module3/pom.xml");
+		List<String> toImport = Collections.singletonList(newBuildFile.toUri().toString());
+		IProject projectToRemove = WorkspaceHelper.getProject("module2");
+		List<String> toDelete = Collections.singletonList(projectToRemove.getLocationURI().toString());
+		projectsManager.changeImportedProjects(toImport, Collections.emptyList(), toDelete, monitor);
+		waitForBackgroundJobs();
+		allProjects = ProjectUtils.getAllProjects();
+		expectedProjects = new HashSet<>(Arrays.asList(
+			"module1",
+			"childmodule",
+			"module3",
+			"jdt.ls-java-project"
+		));
+		assertEquals(4, allProjects.length);
+		for (IProject project : allProjects) {
+			assertTrue(expectedProjects.contains(project.getName()));
+		}
+	}
+
+	@Test
 	public void testImportMixedProjects() throws IOException, OperationCanceledException, CoreException {
 		File projectDir = copyFiles("mixed", true);
 		Path projectDirPath = projectDir.toPath();
