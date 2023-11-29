@@ -20,7 +20,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,6 +38,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.resources.CharsetManager;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.FileInfoMatcherDescription;
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
@@ -73,6 +78,7 @@ import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -83,6 +89,7 @@ import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseInitHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
 
@@ -229,6 +236,42 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				return Status.OK_STATUS;
 			}
 		};
+		job.setRule(getWorkspaceRoot());
+		job.schedule();
+	}
+
+	public void changeImportedProjects(Collection<String> toImport, Collection<String> toUpdate,
+			Collection<String> toDelete, IProgressMonitor monitor) {
+		Set<IPath> filesToImport = new HashSet<>();
+		for (String uri : toImport) {
+			filesToImport.add(ResourceUtils.canonicalFilePathFromURI(uri));
+		}
+
+		Set<IProject> projectsToUpdate = new HashSet<>();
+		for (String uri : toUpdate) {
+			IContainer folder = JDTUtils.findFolder(uri);
+			if (folder == null) {
+				continue;
+			}
+			IProject project = folder.getProject();
+			if (project != null) {
+				projectsToUpdate.add(project);
+			}
+		}
+
+		Set<IProject> projectsToDelete = new HashSet<>();
+		for (String uri : toDelete) {
+			IContainer folder = JDTUtils.findFolder(uri);
+			if (folder == null) {
+				continue;
+			}
+			IProject project = folder.getProject();
+			if (project != null) {
+				projectsToDelete.add(project);
+			}
+		}
+
+		WorkspaceJob job = new ImportProjectsFromSelectionJob(filesToImport, projectsToUpdate, projectsToDelete);
 		job.setRule(getWorkspaceRoot());
 		job.schedule();
 	}
@@ -747,6 +790,89 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 				status.add(StatusFactory.newErrorStatus("Error updating encoding", e));
+			}
+		}
+	}
+
+	private final class ImportProjectsFromSelectionJob extends WorkspaceJob {
+		private final Set<IPath> filesToImport;
+		private final Set<IProject> projectsToUpdate;
+		private final Set<IProject> projectsToDelete;
+
+		private ImportProjectsFromSelectionJob(Set<IPath> filesToImport, Set<IProject> projectsToUpdate, Set<IProject> projectsToDelete) {
+			super("Applying the selected build files...");
+			this.filesToImport = filesToImport;
+			this.projectsToUpdate = projectsToUpdate;
+			this.projectsToDelete = projectsToDelete;
+		}
+
+		@Override
+		public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+			try {
+				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
+				deleteProjects(subMonitor);
+				importProjects(subMonitor);
+				updateProjects(projectsToUpdate, true);
+				return Status.OK_STATUS;
+			} catch (OperationCanceledException e) {
+				return Status.CANCEL_STATUS;
+			} catch (CoreException e) {
+				return new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Applying the selected build files failed.", e);
+			}
+		}
+
+		private void importProjects(SubMonitor subMonitor) throws CoreException {
+			importProjectsFromConfigurationFiles(
+					preferenceManager.getPreferences().getRootPaths(),
+					filesToImport,
+					subMonitor.split(70)
+			);
+			List<URI> projectUris = filesToImport.stream()
+					.map(path -> {
+						IFile file = JDTUtils.findFile(path.toFile().toURI().toString());
+						return file == null ? null : file.getProject();
+					})
+					.filter(Objects::nonNull)
+					.map(project -> ProjectUtils.getProjectRealFolder(project).toFile().toURI())
+					.collect(Collectors.toList());
+			if (!projectUris.isEmpty()) {
+				EventNotification notification = new EventNotification().withType(EventType.ProjectsImported).withData(projectUris);
+				client.sendEventNotification(notification);
+			}
+		}
+
+		private void deleteProjects(SubMonitor subMonitor) throws CoreException {
+			List<URI> projectUris = new LinkedList<>();
+			for (IProject project : projectsToDelete) {
+				clearDiagnostics(project);
+				// once the project is deleted, the project.getLocationURI() will return null, so we
+				// store the uri before deleting happens.
+				projectUris.add(ProjectUtils.getProjectRealFolder(project).toFile().toURI());
+				project.delete(false /*deleteContent*/, false /*force*/, subMonitor.split(1));
+			}
+			if (!projectUris.isEmpty()) {
+				EventNotification notification = new EventNotification().withType(EventType.ProjectsDeleted).withData(projectUris);
+				client.sendEventNotification(notification);
+			}
+		}
+
+		private void clearDiagnostics(IProject project) throws CoreException {
+			IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
+			Set<String> uris = new HashSet<>();
+			for (IMarker marker : markers) {
+				URI locationURI = marker.getResource().getLocationURI();
+				if (locationURI != null) {
+					String uriString = locationURI.toString();
+					if (new File(locationURI).isDirectory() && Platform.OS_WIN32.equals(Platform.getOS()) &&
+							!uriString.endsWith("/")) {
+						uriString += "/";
+					}
+					uris.add(uriString);
+				}
+			}
+			for (String uri : uris) {
+				PublishDiagnosticsParams diagnostics = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList());
+				client.publishDiagnostics(diagnostics);
 			}
 		}
 	}

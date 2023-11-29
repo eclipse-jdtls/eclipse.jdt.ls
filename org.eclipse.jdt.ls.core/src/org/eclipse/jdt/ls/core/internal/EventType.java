@@ -25,6 +25,8 @@ public enum EventType {
 	 */
 	ProjectsImported(200),
 
+	ProjectsDeleted(210),
+
 	/**
 	 * Incompatible issue between Gradle and Jdk event.
 	 */
