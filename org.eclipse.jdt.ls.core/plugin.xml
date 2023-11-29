@@ -136,6 +136,9 @@
             <command
                   id="java.vm.getAllInstalls">
             </command>
+             <command
+                  id="java.project.resolveText">
+            </command>
       </delegateCommandHandler>
    </extension>
    <extension

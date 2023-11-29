@@ -197,6 +197,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return new SmartDetectionHandler(smartDetectionParams).getLocation(monitor);
 				case VmCommand.GET_ALL_INSTALL_COMMAND_ID:
 					return VmCommand.getAllVmInstalls();
+				case "java.project.resolveText":
+					return PasteEventHandler.handleFilePasteEvent((String) arguments.get(0), (String) arguments.get(1), monitor);
 				default:
 					break;
 			}

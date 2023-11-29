@@ -12,12 +12,17 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
@@ -30,8 +35,12 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.dom.AST;
@@ -39,12 +48,15 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Location;
@@ -334,6 +346,75 @@ public class PasteEventHandler {
 		return text.contains("\r\n") ? "\r\n" : "\n";
 	}
 
+	public static String handleFilePasteEvent(String path, String content, IProgressMonitor monitor) throws JavaModelException {
+		String desiredPath = "";
+		final ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
+		parser.setResolveBindings(false);
+		parser.setKind(ASTParser.K_COMPILATION_UNIT);
+		parser.setBindingsRecovery(false);
+		parser.setIgnoreMethodBodies(true);
+		Map<String, String> javaOptions = JavaCore.getOptions();
+		parser.setCompilerOptions(javaOptions);
+		parser.setSource(content.toCharArray());
+		CompilationUnit root = (CompilationUnit) parser.createAST(monitor);
+		// Check for package, import, and/or type declaration to determine if java file
+		if (root != null && (root.getPackage() != null || !root.imports().isEmpty() || !root.types().isEmpty())) {
+			if (root.getPackage() != null) {
+				String packageName = root.getPackage().getName().getFullyQualifiedName();
+				desiredPath = searchForMatchingPackage(packageName, path);
+			} else {
+				desiredPath = path;
+			}
+
+			String possibleFileName = "Untitled";
+			if (!root.types().isEmpty()) {
+				possibleFileName = ((TypeDeclaration) root.types().get(0)).getName().getIdentifier();
+			}
+			if (Files.exists(Paths.get(desiredPath, possibleFileName + ".java"))) {
+				int counter = 1;
+				while (Files.exists(Paths.get(desiredPath, possibleFileName + Integer.toString(counter) + ".java"))) {
+					counter++;
+				}
+				return Paths.get(desiredPath, possibleFileName + Integer.toString(counter) + ".java").toString();
+			}
+			return Paths.get(desiredPath, possibleFileName + ".java").toString();
+		} else {
+			return null;
+		}
+	}
+
+	private static String searchForMatchingPackage(String packageName, String path) throws JavaModelException {
+		String pathRoot = path;
+		String desiredPath = "";
+		String partialPathAddition = "";
+		IJavaProject[] projects = ProjectUtils.getJavaProjects();
+		for (int i = 0; i < projects.length; i++) {
+			if (!ProjectsManager.DEFAULT_PROJECT_NAME.equals(projects[i].getElementName())) {
+				IPackageFragment[] packages = projects[i].getPackageFragments();
+				for (int j = 0; j < packages.length; j++) {
+					if (packages[j].getKind() == IPackageFragmentRoot.K_SOURCE && !packages[j].isDefaultPackage()) {
+						pathRoot = packages[j].getParent().getResource().getLocation().toOSString();
+						String name = packages[j].getElementName();
+						if (name.equals(packageName)) {
+							return packages[j].getResource().getLocation().toOSString();
+						} else if (packageName.startsWith(name) && packageName.substring(0, name.length() + 1).endsWith(".")) {
+							String tempPath = packages[j].getResource().getLocation().toOSString();
+							if (tempPath.length() > desiredPath.length()) {
+								desiredPath = tempPath;
+								partialPathAddition = packageName.substring(name.length()).replaceAll("\\.", Matcher.quoteReplacement(File.separator));
+							}
+						}
+					}
+				}
+			}
+		}
+		if (!partialPathAddition.isEmpty()) {
+			return Paths.get(desiredPath, partialPathAddition).toString();
+		} else {
+			packageName = packageName.replaceAll("\\.", Matcher.quoteReplacement(File.separator));
+			return Paths.get(pathRoot, packageName).toString();
+		}
+	}
 }
 
 final class StringRangeFinder extends ASTVisitor {
