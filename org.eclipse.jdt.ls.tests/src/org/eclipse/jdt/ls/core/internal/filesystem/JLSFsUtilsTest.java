@@ -16,23 +16,24 @@ package org.eclipse.jdt.ls.core.internal.filesystem;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.junit.Test;
 
 public class JLSFsUtilsTest {
 	@Test
 	public void testGeneratesMetadataFilesAtProjectRoot() {
-		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, "true");
-		assertTrue(JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		System.setProperty(ProjectsManager.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, "true");
+		assertTrue(ProjectsManager.generatesMetadataFilesAtProjectRoot());
 	}
 
 	@Test
 	public void testNotGeneratesMetadataFilesAtProjectRoot() {
-		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, "false");
-		assertFalse(JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		System.setProperty(ProjectsManager.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, "false");
+		assertFalse(ProjectsManager.generatesMetadataFilesAtProjectRoot());
 	}
 
 	@Test
 	public void testGeneratesMetadataFilesAtProjectRootWhenNotSet() {
-		assertTrue(JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+		assertTrue(ProjectsManager.generatesMetadataFilesAtProjectRoot());
 	}
 }

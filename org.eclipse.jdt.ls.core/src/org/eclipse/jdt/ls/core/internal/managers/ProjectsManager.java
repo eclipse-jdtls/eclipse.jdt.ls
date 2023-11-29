@@ -17,10 +17,12 @@ import static org.eclipse.jdt.ls.core.internal.JVMConfigurator.configureJVMSetti
 
 import java.io.File;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -146,6 +148,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
+		IProject[] alreadyExistingProjects = ProjectsManager.getWorkspaceRoot().getProjects();
+		Instant importSessionStart = Instant.now();
 		for (IPath rootPath : rootPaths) {
 			File rootFolder = rootPath.toFile();
 			try {
@@ -162,6 +166,18 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				// if a rootPath import failed, keep importing the next rootPath
 				importStatusCollection.add(e.getStatus());
 				JavaLanguageServerPlugin.logException("Failed to import projects", e);
+			}
+		}
+		if (!generatesMetadataFilesAtProjectRoot()) {
+			Set<IProject> newProjects = new HashSet<>(Arrays.asList(getWorkspaceRoot().getProjects()));
+			newProjects.removeAll(Arrays.asList(alreadyExistingProjects));
+			for (IProject project : newProjects) {
+				try {
+					LinkResourceUtil.linkMetadataResourcesIfNewer(project, importSessionStart);
+				} catch (CoreException e) {
+					importStatusCollection.add(e.getStatus());
+					JavaLanguageServerPlugin.logException("Failed to import projects", e);
+				}
 			}
 		}
 		if (!importStatusCollection.isOK()) {
@@ -365,10 +381,29 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return createJavaProject(project, null, "src", "bin", monitor);
 	}
 
+	/*
+	 * ⚠ These value is duplicated in ProjectsManager as both bundles must remain independent,
+	 * but the same dir should be used for .project or .settings/.classpath.
+	 * So when updating one, think about updating the other.
+	 */
+	public static final String GENERATES_METADATA_FILES_AT_PROJECT_ROOT = "java.import.generatesMetadataFilesAtProjectRoot";
+
+	/**
+	 * Check whether the metadata files needs to be generated at project root.
+	 */
+	public static boolean generatesMetadataFilesAtProjectRoot() {
+		String property = System.getProperty(GENERATES_METADATA_FILES_AT_PROJECT_ROOT);
+		if (property == null) {
+			return true;
+		}
+		return Boolean.parseBoolean(property);
+	}
+
 	public static IProject createJavaProject(IProject project, IPath projectLocation, String src, String bin, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		if (project.exists()) {
 			return project;
 		}
+		Instant creationRequestInstant = Instant.now();
 		JavaLanguageServerPlugin.logInfo("Creating the Java project " + project.getName());
 		//Create project
 		IProjectDescription description = ResourcesPlugin.getWorkspace().newProjectDescription(project.getName());
@@ -416,6 +451,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		//Add JVM to project class path
 		javaProject.setRawClasspath(classpaths.toArray(new IClasspathEntry[0]), monitor);
 
+		if (!generatesMetadataFilesAtProjectRoot()) {
+			LinkResourceUtil.linkMetadataResourcesIfNewer(project, creationRequestInstant);
+		}
+
 		JavaLanguageServerPlugin.logInfo("Finished creating the Java project " + project.getName());
 		return project;
 	}
@@ -450,6 +489,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					updateEncoding(monitor);
 					project.deleteMarkers(BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ONE);
 					long elapsed = System.currentTimeMillis() - start;
+					replaceLinkedMetadataWithLocal(project);
 					JavaLanguageServerPlugin.logInfo("Updated " + projectName + " in " + elapsed + " ms");
 				} catch (Exception e) {
 					String msg = "Error updating " + projectName;
@@ -655,6 +695,13 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "WARNING");
 		} else {
 			JavaLanguageServerPlugin.sendStatus(ServiceStatus.ProjectStatus, "OK");
+		}
+	}
+	
+	private void replaceLinkedMetadataWithLocal(IProject p) throws CoreException {
+		if (new File(p.getLocation().toFile(), IJavaProject.CLASSPATH_FILE_NAME).exists() &&
+			p.getFile(IJavaProject.CLASSPATH_FILE_NAME).isLinked()) {
+			p.getFile(IJavaProject.CLASSPATH_FILE_NAME).delete(false, false, null);
 		}
 	}
 

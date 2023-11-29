@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -21,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.FileUtil;
@@ -32,7 +34,9 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +56,12 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 
 	@Before
 	public void setUp() {
-		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
+		System.setProperty(ProjectsManager.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
+	}
+
+	@After
+	public void checkNoError() {
+		assertEquals(List.of(), logListener.getErrors());
 	}
 
 	@Test
@@ -67,16 +76,15 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		IPath projectDescriptionPath = FileUtil.toPath(projectDescription.getLocationURI());
 		assertTrue(projectDescriptionPath.toFile().exists());
 		assertTrue(project.getLocation().isPrefixOf(projectDescriptionPath));
+		assertTrue(new File(project.getLocation().toFile(), IProjectDescription.DESCRIPTION_FILE_NAME).exists());
 
 		IFile classpath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		IPath classpathPath = FileUtil.toPath(classpath.getLocationURI());
+		IPath classpathPath = classpath.getLocation();
 		assertTrue(classpathPath.toFile().exists());
 		assertTrue(project.getLocation().isPrefixOf(classpathPath));
 
 		IFile preferencesFile = project.getFile(EclipsePreferences.DEFAULT_PREFERENCES_DIRNAME);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
-		IPath preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
+		IPath preferencesPath = preferencesFile.getLocation();
 		assertTrue(preferencesPath.toFile().exists());
 		assertTrue(project.getLocation().isPrefixOf(preferencesPath));
 	}
@@ -87,9 +95,8 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertNotNull(project);
-		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
-		File file = FileUtil.toPath(dotClasspath.getLocationURI()).toFile();
+		File file = dotClasspath.getLocation().toFile();
 		assertTrue(file.exists());
 		file.delete();
 		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
