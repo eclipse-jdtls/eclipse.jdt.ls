@@ -980,7 +980,7 @@ public class UnresolvedElementsSubProcessor {
 			AST ast= root.getAST();
 
 			String name= node.getIdentifier();
-			String[] staticImports= SimilarElementsRequestor.getStaticImportFavorites(context.getCompilationUnit(), name, isMethod, favourites);
+			String[] staticImports= JavaModelUtil.getStaticImportFavorites(context.getCompilationUnit(), name, isMethod, favourites);
 			for (int i= 0; i < staticImports.length; i++) {
 				String curr= staticImports[i];
 
