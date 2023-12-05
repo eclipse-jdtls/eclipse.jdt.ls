@@ -93,7 +93,7 @@ public class StandardPreferenceManager extends PreferenceManager {
 				preferences.setMavenUserSettings(oldMavenSettings);
 			}
 		}
-
+		boolean updateMavenProjects = false;
 		String newMavenGlobalSettings = preferences.getMavenGlobalSettings();
 		String oldMavenGlobalSettings = getMavenConfiguration().getGlobalSettingsFile();
 		if (!Objects.equals(newMavenGlobalSettings, oldMavenGlobalSettings)) {
@@ -107,58 +107,58 @@ public class StandardPreferenceManager extends PreferenceManager {
 		try {
 			Settings mavenSettings = MavenPlugin.getMaven().getSettings();
 			boolean oldDisableTest = false;
-			String multiModuleProjectDirectory = null;
 			String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+			String oldMultiModuleProjectDirectory = systemMmpd;
 			List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
 			for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
 				if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
 					if (TRUE.equals(settingsProfile.getProperties().get(M2E_DISABLE_TEST_CLASSPATH_FLAG))) {
 						oldDisableTest = true;
 					}
-					if (systemMmpd != null) {
+					if (systemMmpd == null) {
 						Object mmpd = settingsProfile.getProperties().get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
 						if (mmpd instanceof String s) {
-							multiModuleProjectDirectory = s;
+							oldMultiModuleProjectDirectory = s;
 						}
 					}
-					if (oldDisableTest && multiModuleProjectDirectory != null) {
+					if (oldDisableTest && oldMultiModuleProjectDirectory != null) {
 						break;
 					}
 				}
 			}
-			if ((systemMmpd == null && multiModuleProjectDirectory == null) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag())) {
+			String multiModuleProjectDirectory = systemMmpd;
+			if (multiModuleProjectDirectory == null) {
+				if (preferences.getRootPaths() != null) {
+					for (IPath path : preferences.getRootPaths()) {
+						File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
+						if (f != null) {
+							try {
+								multiModuleProjectDirectory = f.getCanonicalPath();
+							} catch (IOException e) {
+								multiModuleProjectDirectory = f.getAbsolutePath();
+							}
+							break;
+						}
+					}
+				}
+			}
+			if (!Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag())) {
 				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
-				if (preferences.isMavenDisableTestClasspathFlag() || ((systemMmpd == null && multiModuleProjectDirectory == null))) {
+				if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
 					Profile profile = new Profile();
 					profile.setId(JAVALS_PROFILE);
 					Activation activation = new Activation();
 					activation.setActiveByDefault(true);
 					profile.setActivation(activation);
 					profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
-					if (preferences.getRootPaths() != null) {
-						for (IPath path : preferences.getRootPaths()) {
-							File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
-							if (f != null) {
-								try {
-									multiModuleProjectDirectory = f.getCanonicalPath();
-								} catch (IOException e) {
-									multiModuleProjectDirectory = f.getAbsolutePath();
-								}
-								break;
-							}
-						}
-					}
 					if (multiModuleProjectDirectory != null) {
 						profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
 					} else {
 						profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
 					}
 					mavenSettings.addProfile(profile);
-				}
-				for (IProject project : ProjectUtils.getAllProjects()) {
-					if (ProjectUtils.isMavenProject(project)) {
-						JavaLanguageServerPlugin.getProjectsManager().updateProject(project, true);
-					}
+					mavenSettings.addActiveProfile(profile.getId());
+					updateMavenProjects = true;
 				}
 			}
 		} catch (CoreException e) {
@@ -166,7 +166,6 @@ public class StandardPreferenceManager extends PreferenceManager {
 		}
 		String newMavenNotCoveredExecutionSeverity = preferences.getMavenNotCoveredPluginExecutionSeverity();
 		String oldMavenNotCoveredExecutionSeverity = getMavenConfiguration().getNotCoveredMojoExecutionSeverity();
-		boolean updateMavenProjects = false;
 		if (!Objects.equals(newMavenNotCoveredExecutionSeverity, oldMavenNotCoveredExecutionSeverity)) {
 			try {
 				((MavenConfigurationImpl) getMavenConfiguration()).setNotCoveredMojoExecutionSeverity(newMavenNotCoveredExecutionSeverity);
