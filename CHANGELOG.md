@@ -1,5 +1,12 @@
 # Change Log
 
+# [1.30.1 (December 7th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/122?closed=1)
+ * performance - Avoid unnecessary (Maven) project updates. See [#2987](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2987).
+ * bug fix - Out of sync editor content may report false compilation errors. See [#2955](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2955).
+ * bug fix - No completion suggestions for package references when `matchCase` is set to `firstLetter`. See [#2925](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2925).
+ * build - Update target platform to Eclipse 4.30 release. [#2990](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2990).
+ * build - Bump org.codehaus.mojo:build-helper-maven-plugin from 3.4.0 to 3.5.0. See [#2988](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2988).
+
 # [1.30.0 (November 30th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/121?closed=1)
  * enhancement - Provide support for Java 21. See [#2863](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2863).
  * enhancement - Import projects by configurations. See [#2913](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2913).
