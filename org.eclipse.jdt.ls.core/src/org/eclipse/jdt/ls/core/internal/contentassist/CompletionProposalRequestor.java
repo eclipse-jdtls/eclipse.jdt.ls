@@ -722,6 +722,11 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			firstCharOfCompletion = proposal.getCompletion()[0];
 		}
 
+		// Workaround for https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2925
+		if (proposal.getKind() == CompletionProposal.PACKAGE_REF || proposal.getKind() == CompletionProposal.MODULE_REF) {
+			return Character.isUpperCase(this.context.getToken()[0]) == Character.isUpperCase(firstCharOfCompletion);
+		}
+
 		return this.context.getToken()[0] == firstCharOfCompletion;
 	}
 
