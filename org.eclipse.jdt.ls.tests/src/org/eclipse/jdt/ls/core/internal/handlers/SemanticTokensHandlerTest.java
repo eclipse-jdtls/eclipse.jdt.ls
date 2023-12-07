@@ -219,9 +219,41 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("integer", "recordComponent", "declaration")
 			.assertNextToken("protected", "modifier")
 			.assertNextToken("InnerRecord", "record", "protected", "constructor", "declaration")
+
 			.assertNextToken("public", "modifier")
 			.assertNextToken("interface", "modifier")
 			.assertNextToken("TestInterface", "interface", "public", "static", "declaration")
+
+			.assertNextToken("class", "modifier")
+			.assertNextToken("TestClass", "class", "declaration")
+			.assertNextToken("implements", "modifier")
+			.assertNextToken("TestInterface", "interface", "public", "static")
+
+			.assertNextToken("class", "modifier")
+			.assertNextToken("TestExtends", "class", "declaration")
+			.assertNextToken("extends", "modifier")
+			.assertNextToken("TestClass", "class")
+
+			.assertNextToken("class", "modifier")
+			.assertNextToken("TestCombo", "class", "declaration")
+			.assertNextToken("extends", "modifier")
+			.assertNextToken("TestClass", "class")
+			.assertNextToken("implements", "modifier")
+			.assertNextToken("TestInterface", "interface", "public", "static")
+
+			.assertNextToken("sealed", "modifier")
+			.assertNextToken("interface", "modifier")
+			.assertNextToken("TestSealedInterface", "interface", "sealed", "static", "declaration")
+			.assertNextToken("permits", "modifier")
+			.assertNextToken("TestPermits", "class", "readonly")
+
+			.assertNextToken("final", "modifier")
+			.assertNextToken("class", "modifier")
+			.assertNextToken("TestPermits", "class", "readonly", "declaration")
+			.assertNextToken("implements", "modifier")
+			.assertNextToken("TestSealedInterface", "interface", "sealed", "static")
+
+
 		.endAssertion();
 	}
 

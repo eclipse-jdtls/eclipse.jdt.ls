@@ -464,24 +464,33 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	public boolean visit(TypeDeclaration node) {
 		acceptNode(node.getJavadoc());
 		acceptNodeList(node.modifiers());
-		tokenizeGapBeforeTypeDeclarationName(node, (scannerToken, tokenOffset, tokenLength) -> {
+		tokenizeGapBeforeAndAfterTypeDeclarationName(node, (scannerToken, tokenOffset, tokenLength) -> {
 			switch (scannerToken) {
 				case ITerminalSymbols.TokenNameclass:
 				case ITerminalSymbols.TokenNameinterface:
 					addToken(tokenOffset, tokenLength, TokenType.MODIFIER, 0);
+					acceptNode(node.getName());
+					acceptNodeList(node.typeParameters());
 					break; // "class" or "interface" keyword tokens
+				case ITerminalSymbols.TokenNameextends:
+					addToken(tokenOffset, tokenLength, TokenType.MODIFIER, 0);
+					acceptNode(node.getSuperclassType());
+					break; // "extends" keyword token
+				case ITerminalSymbols.TokenNameimplements:
+					addToken(tokenOffset, tokenLength, TokenType.MODIFIER, 0);
+					acceptNodeList(node.superInterfaceTypes());
+					break; // "implements" keyword token
 				default:
 					break; // ignore other tokens
 			}
 		});
-		acceptNode(node.getName());
-		acceptNodeList(node.typeParameters());
-		acceptNode(node.getSuperclassType());
-		acceptNodeList(node.superInterfaceTypes());
-		acceptNodeList(node.bodyDeclarations());
 		if (DOMASTUtil.isFeatureSupportedinAST(cu.getAST(), Modifier.SEALED)) {
+			if (node.getRestrictedIdentifierStartPosition() != -1) {
+				addToken(node.getRestrictedIdentifierStartPosition(), 7, TokenType.MODIFIER, 0);
+			}
 			acceptNodeList(node.permittedTypes());
 		}
+		acceptNodeList(node.bodyDeclarations());
 		return false;
 	}
 
@@ -570,8 +579,10 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	}
 
 	/**
-	 * Uses an {@link IScanner} (if available) to tokenize the gap in the AST just before {@link TypeDeclaration#getName()},
-	 * and visits the scanner tokens in order of occurrence in the source range.
+	 * Uses an {@link IScanner} (if available) to tokenize the gap in the AST just before and after {@link TypeDeclaration#getName()},
+	 * and visits the scanner tokens in order of occurrence in the source range. For example, the following would be tokenized as seen between the square brackets:
+	 * <br><br>
+	 * <code>public[ class FooBar extends Foo implements ]Bar</code>
 	 *
 	 * <p>
 	 *     <strong>NOTE:</strong> If semantic tokens are added by the visitor, the scan range MUST NOT intersect
@@ -581,7 +592,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 * @param typeDeclaration the type declaration node
 	 * @param tokenVisitor the visitor to use for scanner tokens
 	 */
-	private void tokenizeGapBeforeTypeDeclarationName(TypeDeclaration typeDeclaration, ScannerTokenVisitor tokenVisitor) {
+	private void tokenizeGapBeforeAndAfterTypeDeclarationName(TypeDeclaration typeDeclaration, ScannerTokenVisitor tokenVisitor) {
 		// Try potentially nonexistent start positions, closest first
 		int gapBeforeNameStart = getEndPosition(typeDeclaration.modifiers());
 		if (gapBeforeNameStart == -1) {
@@ -591,7 +602,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		if (gapBeforeNameStart == -1) {
 			gapBeforeNameStart = typeDeclaration.getStartPosition();
 		}
-		int gapBeforeNameEnd = typeDeclaration.getName().getStartPosition();
+		// Try potentially nonexistent end positions, farthest first
+		int gapBeforeNameEnd = !typeDeclaration.superInterfaceTypes().isEmpty() ? ((ASTNode) (typeDeclaration.superInterfaceTypes().get(0))).getStartPosition() : -1;
+		if (gapBeforeNameEnd == -1) {
+			gapBeforeNameEnd = typeDeclaration.getSuperclassType() != null ? typeDeclaration.getSuperclassType().getStartPosition() : -1;
+		}
+		if (gapBeforeNameEnd == -1) {
+			gapBeforeNameEnd = typeDeclaration.getName().getStartPosition();
+		}
 		tokenizeWithScanner(gapBeforeNameStart, gapBeforeNameEnd, tokenVisitor);
 	}
 

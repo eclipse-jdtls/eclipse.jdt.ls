@@ -32,5 +32,9 @@ public class Constructors {
 	}
 	
 	public interface TestInterface{}
-
+	class TestClass implements TestInterface{}
+	class TestExtends extends TestClass{}
+	class TestCombo extends TestClass implements TestInterface{}
+	sealed interface TestSealedInterface permits TestPermits{}
+	final class TestPermits implements TestSealedInterface{}
 }
