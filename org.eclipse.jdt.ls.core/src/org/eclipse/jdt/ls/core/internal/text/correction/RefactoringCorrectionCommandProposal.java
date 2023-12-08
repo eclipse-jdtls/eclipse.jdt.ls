@@ -15,9 +15,9 @@ package org.eclipse.jdt.ls.core.internal.text.correction;
 import java.util.List;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 
-public class RefactoringCorrectionCommandProposal extends RefactoringCorrectionProposal {
+public class RefactoringCorrectionCommandProposal extends RefactoringCorrectionProposalCore {
 
 	private String command;
 	private List<Object> commandArguments;
@@ -28,8 +28,8 @@ public class RefactoringCorrectionCommandProposal extends RefactoringCorrectionP
 	 * @param cu
 	 * @param relevance
 	 */
-	public RefactoringCorrectionCommandProposal(String name, String kind, ICompilationUnit cu, int relevance, String command, List<Object> commandArguments) {
-		super(name, kind, cu, null, relevance);
+	public RefactoringCorrectionCommandProposal(String name, ICompilationUnit cu, int relevance, String command, List<Object> commandArguments) {
+		super(name, cu, null, relevance);
 		this.command = command;
 		this.commandArguments = commandArguments;
 	}

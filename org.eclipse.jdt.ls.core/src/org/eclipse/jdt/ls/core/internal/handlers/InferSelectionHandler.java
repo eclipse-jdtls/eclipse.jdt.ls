@@ -22,11 +22,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractConstantRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
@@ -42,7 +42,7 @@ public class InferSelectionHandler {
 		int start = DiagnosticsHelper.getStartOffset(unit, params.context.getRange());
 		int end = DiagnosticsHelper.getEndOffset(unit, params.context.getRange());
 		InnovationContext context = new InnovationContext(unit, start, end - start);
-		List<SelectionInfo> selectionCandidates = new ArrayList<SelectionInfo>();
+		List<SelectionInfo> selectionCandidates = new ArrayList<>();
 		ASTNode parent = context.getCoveringNode();
 		try {
 			if (RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(params.command)) {

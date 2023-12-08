@@ -77,6 +77,7 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
@@ -94,32 +95,40 @@ import org.eclipse.jdt.internal.corext.fix.MissingAnnotationAttributesFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
+import org.eclipse.jdt.internal.corext.refactoring.surround.ExceptionAnalyzer;
+import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.util.NoCommentSourceRangeComputer;
 import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.ChangeDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.InsertDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.RemoveDescription;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.ExceptionAnalyzer;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.ChangeDescription;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.InsertDescription;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeMethodSignatureProposal.RemoveDescription;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class LocalCorrectionsSubProcessor {
 
 	private static final String ADD_STATIC_ACCESS_ID = "org.eclipse.jdt.ui.correction.changeToStatic"; //$NON-NLS-1$
 
-	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void addUncaughtExceptionProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		ICompilationUnit cu = context.getCompilationUnit();
 
 		CompilationUnit astRoot = context.getASTRoot();
@@ -152,9 +161,9 @@ public class LocalCorrectionsSubProcessor {
 		refactoring.setLeaveDirty(true);
 		if (refactoring.checkActivationBasics(astRoot).isOK()) {
 			String label = CorrectionMessages.LocalCorrectionsSubProcessor_surroundwith_trycatch_description;
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.QuickFix, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_CATCH);
 			proposal.setLinkedProposalModel(refactoring.getLinkedProposalModel());
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 
 		if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
@@ -166,9 +175,9 @@ public class LocalCorrectionsSubProcessor {
 			refactoring.setLeaveDirty(true);
 			if (refactoring.checkActivationBasics(astRoot).isOK()) {
 				String label = CorrectionMessages.LocalCorrectionsSubProcessor_surroundwith_trymulticatch_description;
-				RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, CodeActionKind.QuickFix, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_MULTICATCH);
+				RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_MULTICATCH);
 				proposal.setLinkedProposalModel(refactoring.getLinkedProposalModel());
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 
@@ -198,7 +207,7 @@ public class LocalCorrectionsSubProcessor {
 				ASTRewrite rewrite = ASTRewrite.create(surroundingTry.getAST());
 
 				String label = CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalcatch_description;
-				LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_CATCH);
+				LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_CATCH);
 
 				ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
 				ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
@@ -229,7 +238,7 @@ public class LocalCorrectionsSubProcessor {
 					proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
 					addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
 				}
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 
 			if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
@@ -240,7 +249,7 @@ public class LocalCorrectionsSubProcessor {
 					String label = filteredExceptions.size() > 1 ? CorrectionMessages.LocalCorrectionsSubProcessor_addexceptionstoexistingcatch_description
 							: CorrectionMessages.LocalCorrectionsSubProcessor_addexceptiontoexistingcatch_description;
 					ASTRewrite rewrite = ASTRewrite.create(ast);
-					LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH);
+					LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH);
 					ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
 					ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
 
@@ -273,13 +282,13 @@ public class LocalCorrectionsSubProcessor {
 						}
 						rewrite.replace(type, newUnionType, null);
 					}
-					proposals.add(proposal);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 				} else if (catchClauses != null && catchClauses.size() == 0) {
 					List<ITypeBinding> filteredExceptions = SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
 					if (filteredExceptions.size() > 1) {
 						String label = CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalmulticatch_description;
 						ASTRewrite rewrite = ASTRewrite.create(ast);
-						LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_MULTI_CATCH);
+						LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_MULTI_CATCH);
 						ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
 						ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
 
@@ -315,7 +324,7 @@ public class LocalCorrectionsSubProcessor {
 						}
 						ListRewrite listRewrite = rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
 						listRewrite.insertFirst(newCatchClause, null);
-						proposals.add(proposal);
+						proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 					}
 				}
 			}
@@ -369,16 +378,16 @@ public class LocalCorrectionsSubProcessor {
 
 				String label = CorrectionMessages.LocalCorrectionsSubProcessor_addthrows_description;
 
-				ChangeMethodSignatureProposal proposal = new ChangeMethodSignatureProposal(label, cu, astRoot, binding, null, desc, IProposalRelevance.ADD_THROWS_DECLARATION);
+				ChangeMethodSignatureProposalCore proposal = new ChangeMethodSignatureProposalCore(label, cu, astRoot, binding, null, desc, IProposalRelevance.ADD_THROWS_DECLARATION);
 				for (int i = 0; i < uncaughtExceptions.length; i++) {
 					addExceptionTypeLinkProposals(proposal, uncaughtExceptions[i], proposal.getExceptionTypeGroupId(i + nExistingExceptions));
 				}
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 	}
 
-	private static void addExceptionTypeLinkProposals(LinkedCorrectionProposal proposal, ITypeBinding exc, String key) {
+	private static void addExceptionTypeLinkProposals(LinkedCorrectionProposalCore proposal, ITypeBinding exc, String key) {
 		// all super classes except Object
 		while (exc != null && !"java.lang.Object".equals(exc.getQualifiedName())) { //$NON-NLS-1$
 			proposal.addLinkedPositionProposal(key, exc);
@@ -398,7 +407,7 @@ public class LocalCorrectionsSubProcessor {
 		return false;
 	}
 
-	public static void addUnreachableCatchProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addUnreachableCatchProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode == null) {
 			return;
@@ -407,29 +416,29 @@ public class LocalCorrectionsSubProcessor {
 		QuickAssistProcessor.getCatchClauseToThrowsProposals(context, selectedNode, proposals);
 	}
 
-	public static void addUnimplementedMethodsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addUnimplementedMethodsProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		IProposableFix fix = UnimplementedCodeFixCore.createAddUnimplementedMethodsFix(context.getASTRoot(), problem);
 
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(), change, IProposalRelevance.ADD_UNIMPLEMENTED_METHODS);
-				proposals.add(proposal);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.ADD_UNIMPLEMENTED_METHODS);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
 		}
 	}
 
-	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addUnusedMemberProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		int problemId = problem.getProblemId();
 
 		UnusedCodeFixCore fix = UnusedCodeFixCore.createUnusedMemberFix(context.getASTRoot(), problem, false);
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
-				proposals.add(proposal);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
@@ -440,8 +449,8 @@ public class LocalCorrectionsSubProcessor {
 			if (fix != null) {
 				try {
 					CompilationUnitChange change = fix.createChange(null);
-					CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
-					proposals.add(proposal);
+					CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.log(e);
 				}
@@ -454,8 +463,8 @@ public class LocalCorrectionsSubProcessor {
 			if (fix != null) {
 				try {
 					CompilationUnitChange change = fix.createChange(null);
-					CUCorrectionProposal proposal = new CUCorrectionProposal(change.getName(), CodeActionKind.QuickFix, change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
-					proposals.add(proposal);
+					CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.log(e);
 				}
@@ -463,7 +472,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getUnreachableCodeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void getUnreachableCodeProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit root = context.getASTRoot();
 		ASTNode selectedNode = problem.getCoveringNode(root);
 		if (selectedNode == null) {
@@ -569,7 +578,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	private static void addRemoveProposal(IInvocationContext context, ASTNode selectedNode, Collection<ChangeCorrectionProposal> proposals) {
+	private static void addRemoveProposal(IInvocationContextCore context, ASTNode selectedNode, Collection<ProposalKindWrapper> proposals) {
 		ASTRewrite rewrite = ASTRewrite.create(selectedNode.getAST());
 		rewrite.remove(selectedNode, null);
 
@@ -577,11 +586,11 @@ public class LocalCorrectionsSubProcessor {
 		addRemoveProposal(context, rewrite, label, proposals);
 	}
 
-	private static void addRemoveIncludingConditionProposal(IInvocationContext context, ASTNode toRemove, ASTNode replacement, Collection<ChangeCorrectionProposal> proposals) {
+	private static void addRemoveIncludingConditionProposal(IInvocationContextCore context, ASTNode toRemove, ASTNode replacement, Collection<ProposalKindWrapper> proposals) {
 		String label = CorrectionMessages.LocalCorrectionsSubProcessor_removeunreachablecode_including_condition_description;
 		AST ast = toRemove.getAST();
 		ASTRewrite rewrite = ASTRewrite.create(ast);
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_UNREACHABLE_CODE_INCLUDING_CONDITION);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_UNREACHABLE_CODE_INCLUDING_CONDITION);
 
 		if (replacement == null || replacement instanceof EmptyStatement || replacement instanceof Block && ((Block) replacement).statements().size() == 0) {
 			if (ASTNodes.isControlStatementBody(toRemove.getLocationInParent())) {
@@ -623,15 +632,15 @@ public class LocalCorrectionsSubProcessor {
 			rewrite.replace(toRemove, moveTarget, null);
 		}
 
-		proposals.add(proposal);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
-	private static void addRemoveProposal(IInvocationContext context, ASTRewrite rewrite, String label, Collection<ChangeCorrectionProposal> proposals) {
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, 10);
-		proposals.add(proposal);
+	private static void addRemoveProposal(IInvocationContextCore context, ASTRewrite rewrite, String label, Collection<ProposalKindWrapper> proposals) {
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, 10);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
-	public static void addConstructorFromSuperclassProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void addConstructorFromSuperclassProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode == null) {
 			return;
@@ -657,35 +666,36 @@ public class LocalCorrectionsSubProcessor {
 		for (int i = 0; i < methods.length; i++) {
 			IMethodBinding curr = methods[i];
 			if (curr.isConstructor() && !Modifier.isPrivate(curr.getModifiers())) {
-				proposals.add(new ConstructorFromSuperclassProposal(cu, typeDeclaration, curr, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS));
+				ConstructorFromSuperclassProposalCore proposal = new ConstructorFromSuperclassProposalCore(cu, typeDeclaration, curr, IProposalRelevance.ADD_CONSTRUCTOR_FROM_SUPER_CLASS);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 	}
 
 
-	public static void addUnnecessaryCastProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addUnnecessaryCastProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		IProposableFix fix = UnusedCodeFixCore.createRemoveUnusedCastFix(context.getASTRoot(), problem);
 		if (fix != null) {
 			Map<String, String> options = new Hashtable<>();
 			options.put(CleanUpConstants.REMOVE_UNNECESSARY_CASTS, CleanUpOptionsCore.TRUE);
-			FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new UnnecessaryCodeCleanUpCore(options), IProposalRelevance.REMOVE_UNUSED_CAST, context);
-			proposals.add(proposal);
+			FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new UnnecessaryCodeCleanUpCore(options), IProposalRelevance.REMOVE_UNUSED_CAST, context);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 	}
 
 	/*
 	 * Fix instance accesses and indirect (static) accesses to static fields/methods
 	 */
-	public static void addCorrectAccessToStaticProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws CoreException {
+	public static void addCorrectAccessToStaticProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		IProposableFix fix = CodeStyleFixCore.createIndirectAccessToStaticFix(context.getASTRoot(), problem);
 		if (fix != null) {
 
 			Map<String, String> options = new HashMap<>();
 			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS, CleanUpOptionsCore.TRUE);
 			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS, CleanUpOptionsCore.TRUE);
-			FixCorrectionProposal proposal = new FixCorrectionProposal(fix, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_INDIRECT_ACCESS_TO_STATIC, context);
+			FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_INDIRECT_ACCESS_TO_STATIC, context);
 			//proposal.setCommandId(ADD_STATIC_ACCESS_ID);
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			return;
 		}
 
@@ -695,9 +705,9 @@ public class LocalCorrectionsSubProcessor {
 			Map<String, String> options = new HashMap<>();
 			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS, CleanUpOptionsCore.TRUE);
 			options.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_INSTANCE_ACCESS, CleanUpOptionsCore.TRUE);
-			FixCorrectionProposal proposal = new FixCorrectionProposal(fix1, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_DECLARING_TYPE, context, CodeActionKind.QuickFix);
+			FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix1, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_DECLARING_TYPE, context);
 			//proposal.setCommandId(ADD_STATIC_ACCESS_ID);
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 
 			if (fixes.length > 1) {
 				Map<String, String> options1 = new HashMap<>();
@@ -705,14 +715,14 @@ public class LocalCorrectionsSubProcessor {
 				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_SUBTYPE_ACCESS, CleanUpOptionsCore.TRUE);
 				options1.put(CleanUpConstants.MEMBER_ACCESSES_STATIC_QUALIFY_WITH_DECLARING_CLASS_INSTANCE_ACCESS, CleanUpOptionsCore.TRUE);
 				IProposableFix fix2 = fixes[1];
-				proposal = new FixCorrectionProposal(fix2, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE, context, CodeActionKind.QuickFix);
-				proposals.add(proposal);
+				proposal = new FixCorrectionProposalCore(fix2, new CodeStyleCleanUpCore(options), IProposalRelevance.CREATE_NON_STATIC_ACCESS_USING_INSTANCE_TYPE, context);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 		}
 		ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_STATIC, IProposalRelevance.REMOVE_STATIC_MODIFIER);
 	}
 
-	public static void addRedundantSuperInterfaceProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addRedundantSuperInterfaceProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (!(selectedNode instanceof Name)) {
 			return;
@@ -721,13 +731,13 @@ public class LocalCorrectionsSubProcessor {
 		ASTRewrite rewrite = ASTRewrite.create(node.getAST());
 		rewrite.remove(node, null);
 		String label = CorrectionMessages.LocalCorrectionsSubProcessor_remove_redundant_superinterface;
-		ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_REDUNDANT_SUPER_INTERFACE);
-		proposals.add(proposal);
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.REMOVE_REDUNDANT_SUPER_INTERFACE);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
-	public static void getMissingEnumConstantCaseProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
-		for (ChangeCorrectionProposal proposal : proposals) {
-			if (CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description.equals(proposal.getName())) {
+	public static void getMissingEnumConstantCaseProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+		for (ProposalKindWrapper proposal : proposals) {
+			if (CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description.equals(proposal.getProposal().getName())) {
 				return;
 			}
 		}
@@ -803,7 +813,7 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	@SuppressWarnings("deprecation")
-	public static void createMissingCaseProposals(IInvocationContext context, ASTNode parent, ArrayList<String> enumConstNames, Collection<ChangeCorrectionProposal> proposals) {
+	public static void createMissingCaseProposals(IInvocationContextCore context, ASTNode parent, ArrayList<String> enumConstNames, Collection<ProposalKindWrapper> proposals) {
 		List<Statement> statements;
 		Expression expression;
 		if (parent instanceof SwitchStatement switchStatement) {
@@ -844,7 +854,7 @@ public class LocalCorrectionsSubProcessor {
 			}
 
 			String label = CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description;
-			LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_CASE_STATEMENTS);
+			LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_CASE_STATEMENTS);
 
 			for (int i = 0; i < enumConstNames.size(); i++) {
 				SwitchCase newSwitchCase = ast.newSwitchCase();
@@ -907,7 +917,7 @@ public class LocalCorrectionsSubProcessor {
 					listRewrite.insertAt(ast.newBreakStatement(), defaultIndex, null);
 				}
 			}
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 		if (!hasDefault) {
 			createMissingDefaultProposal(context, parent, proposals);
@@ -929,7 +939,7 @@ public class LocalCorrectionsSubProcessor {
 		return newThrowStatement;
 	}
 
-	public static void addMissingDefaultCaseProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addMissingDefaultCaseProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode instanceof Expression) {
 			StructuralPropertyDescriptor locationInParent = selectedNode.getLocationInParent();
@@ -954,7 +964,7 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	@SuppressWarnings("deprecation")
-	private static void createMissingDefaultProposal(IInvocationContext context, ASTNode parent, Collection<ChangeCorrectionProposal> proposals) {
+	private static void createMissingDefaultProposal(IInvocationContextCore context, ASTNode parent, Collection<ProposalKindWrapper> proposals) {
 		List<Statement> statements;
 		Expression expression;
 		if (parent instanceof SwitchStatement switchStatement) {
@@ -975,7 +985,7 @@ public class LocalCorrectionsSubProcessor {
 			listRewrite = astRewrite.getListRewrite(parent, SwitchExpression.STATEMENTS_PROPERTY);
 		}
 		String label = CorrectionMessages.LocalCorrectionsSubProcessor_add_default_case_description;
-		LinkedCorrectionProposal proposal = new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_DEFAULT_CASE);
+		LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, context.getCompilationUnit(), astRewrite, IProposalRelevance.ADD_MISSING_DEFAULT_CASE);
 
 		SwitchCase newSwitchCase = ast.newSwitchCase();
 		listRewrite.insertLast(newSwitchCase, null);
@@ -1001,7 +1011,7 @@ public class LocalCorrectionsSubProcessor {
 			listRewrite.insertLast(ast.newBreakStatement(), null);
 		}
 
-		proposals.add(proposal);
+		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
 	private static ThrowStatement getThrowForUnexpectedDefault(Expression switchExpression, AST ast, ASTRewrite astRewrite) {
@@ -1019,7 +1029,7 @@ public class LocalCorrectionsSubProcessor {
 		return newThrowStatement;
 	}
 
-	public static void addCasesOmittedProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addCasesOmittedProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode instanceof Expression && selectedNode.getLocationInParent() == SwitchStatement.EXPRESSION_PROPERTY) {
 			AST ast = selectedNode.getAST();
@@ -1036,15 +1046,15 @@ public class LocalCorrectionsSubProcessor {
 					listRewrite.insertBefore(casesOmittedComment, statement, null);
 
 					String label = CorrectionMessages.LocalCorrectionsSubProcessor_insert_cases_omitted;
-					ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), rewrite, IProposalRelevance.INSERT_CASES_OMITTED);
-					proposals.add(proposal);
+					ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.getCompilationUnit(), rewrite, IProposalRelevance.INSERT_CASES_OMITTED);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 					break;
 				}
 			}
 		}
 	}
 
-	public static void getTryWithResourceProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void getTryWithResourceProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode coveringNode = problem.getCoveringNode(context.getASTRoot());
 		if (coveringNode != null) {
 			try {
@@ -1056,7 +1066,7 @@ public class LocalCorrectionsSubProcessor {
 		}
 	}
 
-	public static void addTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addTypeAsPermittedSubTypeProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		SealedClassFixCore fix = SealedClassFixCore.addTypeAsPermittedSubTypeProposal(context.getASTRoot(), problem);
 		if (fix != null) {
 			String label = fix.getDisplayString();
@@ -1067,15 +1077,15 @@ public class LocalCorrectionsSubProcessor {
 				ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 				IType sealedType = SealedClassFixCore.getSealedType(selectedNode);
 				ICompilationUnit unit = SealedClassFixCore.getCompilationUnitForSealedType(sealedType);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
-				proposals.add(proposal);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(label, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				// do nothing
 			}
 		}
 	}
 
-	public static void addSealedAsDirectSuperTypeProposal(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addSealedAsDirectSuperTypeProposal(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		SealedClassFixCore fix = SealedClassFixCore.addSealedAsDirectSuperTypeProposal(context.getASTRoot(), problem);
 		if (fix != null) {
 			String label = fix.getDisplayString();
@@ -1086,23 +1096,23 @@ public class LocalCorrectionsSubProcessor {
 				ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 				IType permittedType = SealedClassFixCore.getPermittedType(selectedNode);
 				ICompilationUnit unit = permittedType.getCompilationUnit();
-				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
-				proposals.add(proposal);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(label, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				// do nothing
 			}
 		}
 	}
 
-	public static void addValueForAnnotationProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addValueForAnnotationProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		MissingAnnotationAttributesFixCore fix = MissingAnnotationAttributesFixCore.addMissingAnnotationAttributesProposal(context.getASTRoot(), problem);
 		if (fix != null) {
 			String label = fix.getDisplayString();
 			CompilationUnitChange change;
 			try {
 				change = fix.createChange(null);
-				CUCorrectionProposal proposal = new CUCorrectionProposal(label, CodeActionKind.QuickFix, context.getCompilationUnit(), change, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
-				proposals.add(proposal);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(label, context.getCompilationUnit(), change, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			} catch (CoreException e) {
 				// do nothing
 			}

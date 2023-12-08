@@ -16,17 +16,17 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 
 
-public class AddImportCorrectionProposal extends ASTRewriteCorrectionProposal {
+public class AddImportCorrectionProposal extends ASTRewriteCorrectionProposalCore {
 
 	private final String fTypeName;
 	private final String fQualifierName;
 
 	public AddImportCorrectionProposal(String name, ICompilationUnit cu, int relevance, String qualifierName,
 			String typeName, SimpleName node) {
-		super(name, CodeActionKind.QuickFix, cu, ASTRewrite.create(node.getAST()), relevance);
+		super(name, cu, ASTRewrite.create(node.getAST()), relevance);
 		fTypeName= typeName;
 		fQualifierName= qualifierName;
 	}

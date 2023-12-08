@@ -1236,7 +1236,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
+		buf.append("\n");
 		buf.append("public class E implements IBase {\n");
 		buf.append("    public String[] getValues() {\n");
 		buf.append("        return null;\n");
@@ -1284,7 +1284,6 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
-		buf.append("import java.text.ParseException;\n");
 		buf.append("public class E extends Base {\n");
 		buf.append("    public String[] getValues() throws EOFException {\n");
 		buf.append("        return null;\n");
@@ -1347,7 +1346,6 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.io.EOFException;\n");
-		buf.append("import java.text.ParseException;\n");
 		buf.append("public class E extends Base {\n");
 		buf.append("    /**\n");
 		buf.append("     * @param i The parameter\n");
@@ -1371,7 +1369,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     *                  More about the parameter\n");
 		buf.append("     * @return The returned argument\n");
 		buf.append("     * @throws IOException IO problems\n");
-		buf.append("     * @throws ParseException\n");
+		buf.append("     * @throws ParseException \n");
 		buf.append("     * @since 3.0\n");
 		buf.append("     */\n");
 		buf.append("    String[] getValues(int i) throws IOException, ParseException {\n");
@@ -1405,7 +1403,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
-		buf.append("import java.io.IOException;\n");
+		buf.append("\n");
 		buf.append("public class E implements IBase<String> {\n");
 		buf.append("    public String[] getValues() {\n");
 		buf.append("        return null;\n");

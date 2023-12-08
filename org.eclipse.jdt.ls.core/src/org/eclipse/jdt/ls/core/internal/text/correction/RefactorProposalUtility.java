@@ -68,30 +68,29 @@ import org.eclipse.jdt.internal.corext.refactoring.ExceptionInfo;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractConstantRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.ExtractTempRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractMethodRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractTempRefactoring;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.AssignToVariableAssistProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.RefactoringCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodException;
 import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodParameter;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -115,7 +114,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_TYPE_COMMAND = "moveType";
 	public static final String INTRODUCE_PARAMETER_COMMAND = "introduceParameter";
 
-	public static List<CUCorrectionProposal> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
+	public static List<ProposalKindWrapper> getMoveRefactoringProposals(CodeActionParams params, IInvocationContextCore context) {
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
 		List<String> kindOfActions = params.getContext().getOnly();
 		boolean alwaysShowMove = kindOfActions != null && kindOfActions.contains(CodeActionKind.Refactor);
@@ -147,25 +146,27 @@ public class RefactorProposalUtility {
 
 						// move inner type.
 						if (moveTypeInfo.isMoveAvaiable()) {
-							return Collections.singletonList(
-								new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-								Arrays.asList(MOVE_TYPE_COMMAND, params, moveTypeInfo)));
+							CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_TYPE_COMMAND, params, moveTypeInfo));
+							return Collections.singletonList(CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_MOVE));
 						}
 
 						// move ICompilationUnit.
-						return Collections.singletonList((new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
-								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)))));
+						CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+								Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)));
+						return Collections.singletonList(CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_MOVE));
 					} else if (JdtFlags.isStatic((BodyDeclaration) node)) {
 						// move static member.
 						if (isMoveStaticMemberAvailable(node)) {
-							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveMemberInfo(displayName, memberType, enclosingTypeName, projectName))));
+							CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
+									Arrays.asList(MOVE_STATIC_MEMBER_COMMAND, params, new MoveMemberInfo(displayName, memberType, enclosingTypeName, projectName)));
+							return Collections.singletonList(CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_MOVE));
 						}
 					} else if (node instanceof MethodDeclaration methodDecl) {
 						// move instance method.
 						if (isMoveMethodAvailable(methodDecl)) {
-							return Collections.singletonList(new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, APPLY_REFACTORING_COMMAND_ID,
-									Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveMemberInfo(displayName))));
+							CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(MOVE_INSTANCE_METHOD_COMMAND, params, new MoveMemberInfo(displayName)));
+							return Collections.singletonList(CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_MOVE));
 						}
 					}
 				}
@@ -174,8 +175,13 @@ public class RefactorProposalUtility {
 			}
 			return Collections.emptyList();
 		}
-		return alwaysShowMove ? Collections.singletonList((new CUCorrectionCommandProposal(ActionMessages.MoveRefactoringAction_label, JavaCodeActionKind.REFACTOR_MOVE, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
-				Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri))))) : Collections.emptyList();
+		if( alwaysShowMove ) {
+			CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(ActionMessages.MoveRefactoringAction_label, cu, relevance, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+					Arrays.asList(MOVE_FILE_COMMAND, params, new MoveFileInfo(uri)));
+			return Collections.singletonList(CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_MOVE));
+		}
+
+		return Collections.emptyList();
 
 	}
 
@@ -208,7 +214,7 @@ public class RefactorProposalUtility {
 	private static boolean isMoveMethodAvailable(MethodDeclaration declaration) throws JavaModelException {
 		IMethodBinding methodBinding = declaration.resolveBinding();
 		IMethod method = methodBinding == null ? null : (IMethod) methodBinding.getJavaElement();
-		return method != null && RefactoringAvailabilityTester.isMoveMethodAvailable(method);
+		return method != null && RefactoringAvailabilityTesterCore.isMoveMethodAvailable(method);
 	}
 
 	private static boolean isMoveStaticMemberAvailable(ASTNode declaration) throws JavaModelException {
@@ -235,7 +241,7 @@ public class RefactorProposalUtility {
 	private static boolean isMoveInnerAvailable(AbstractTypeDeclaration declaration) throws JavaModelException {
 		ITypeBinding type = declaration.resolveBinding();
 		if (type != null) {
-			return RefactoringAvailabilityTester.isMoveInnerAvailable((IType) type.getJavaElement());
+			return RefactoringAvailabilityTesterCore.isMoveInnerAvailable((IType) type.getJavaElement());
 		}
 
 		return false;
@@ -274,29 +280,29 @@ public class RefactorProposalUtility {
 		return type == null ? null : type.getQualifiedName();
 	}
 
-	public static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, false, inferSelectionSupport);
 	}
 
-	public static List<CUCorrectionProposal> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static List<ProposalKindWrapper> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, true, inferSelectionSupport);
 	}
 
-	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, false, inferSelectionSupport);
 	}
 
-	public static CUCorrectionProposal getExtractMethodCommandProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static ProposalKindWrapper getExtractMethodCommandProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, true, inferSelectionSupport);
 	}
 
-	private static List<CUCorrectionProposal> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
 		}
 
-		List<CUCorrectionProposal> proposals = new ArrayList<>();
-		CUCorrectionProposal proposal = getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, null, returnAsCommand, inferSelectionSupport);
+		List<ProposalKindWrapper> proposals = new ArrayList<>();
+		ProposalKindWrapper proposal = getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, null, returnAsCommand, inferSelectionSupport);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
@@ -314,7 +320,7 @@ public class RefactorProposalUtility {
 		return proposals;
 	}
 
-	private static boolean supportsExtractVariable(IInvocationContext context) {
+	private static boolean supportsExtractVariable(IInvocationContextCore context) {
 		ASTNode node = context.getCoveredNode();
 		if (!(node instanceof Expression)) {
 			if (context.getSelectionLength() != 0) {
@@ -336,11 +342,12 @@ public class RefactorProposalUtility {
 		return true;
 	}
 
-	public static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static CUCorrectionProposal getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+			boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
 		int relevance;
@@ -360,7 +367,8 @@ public class RefactorProposalUtility {
 				}
 				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
 				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
+					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
+					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 				}
 				parent = parent.getParent();
 			}
@@ -369,14 +377,15 @@ public class RefactorProposalUtility {
 		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 			}
 
 			extractTempRefactoring.setReplaceAllOccurrences(true);
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractTempRefactoring.setLinkedProposalModel(linkedProposalModel);
 			extractTempRefactoring.setCheckResultForCompileProblems(false);
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoring, relevance) {
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractTempRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -384,17 +393,18 @@ public class RefactorProposalUtility {
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 		}
 
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static CUCorrectionProposal getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
+			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
 		int relevance;
@@ -414,7 +424,8 @@ public class RefactorProposalUtility {
 				}
 				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
 				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
+					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
+					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 				}
 				parent = parent.getParent();
 			}
@@ -424,13 +435,14 @@ public class RefactorProposalUtility {
 		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
 		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 			}
 
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractTempRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
 			extractTempRefactoringSelectedOnly.setCheckResultForCompileProblems(false);
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE, cu, extractTempRefactoringSelectedOnly, relevance) {
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractTempRefactoringSelectedOnly, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractTempRefactoring etr = (ExtractTempRefactoring) refactoring;
@@ -438,7 +450,7 @@ public class RefactorProposalUtility {
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
 		}
 
 		return null;
@@ -455,7 +467,7 @@ public class RefactorProposalUtility {
 		return false;
 	}
 
-	public static CUCorrectionProposal getAssignVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+	public static ProposalKindWrapper getAssignVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
 			IProblemLocationCore[] locations)
 			throws CoreException {
 		ASTNode node = context.getCoveringNode();
@@ -486,14 +498,17 @@ public class RefactorProposalUtility {
 			relevance = IProposalRelevance.EXTRACT_LOCAL;
 		}
 		if (returnAsCommand) {
-			return new AssignToVariableAssistCommandProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, AssignToVariableAssistProposal.LOCAL, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
+			AssignToVariableAssistCommandProposal p = new AssignToVariableAssistCommandProposal(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance,
+					APPLY_REFACTORING_COMMAND_ID,
 					Arrays.asList(ASSIGN_VARIABLE_COMMAND, params));
+			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		} else {
-			return new AssignToVariableAssistProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE, AssignToVariableAssistProposal.LOCAL, expressionStatement, typeBinding, relevance);
+			AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance);
+			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		}
 	}
 
-	public static CUCorrectionProposal getAssignFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+	public static ProposalKindWrapper getAssignFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
 			IProblemLocationCore[] locations) throws CoreException {
 		ASTNode node = context.getCoveringNode();
 		Statement statement = ASTResolving.findParentStatement(node);
@@ -525,10 +540,12 @@ public class RefactorProposalUtility {
 				relevance = IProposalRelevance.EXTRACT_LOCAL;
 			}
 			if (returnAsCommand) {
-				return new AssignToVariableAssistCommandProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, AssignToVariableAssistProposal.FIELD, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
+				AssignToVariableAssistCommandProposal proposal = new AssignToVariableAssistCommandProposal(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance, APPLY_REFACTORING_COMMAND_ID,
 						Arrays.asList(ASSIGN_FIELD_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			} else {
-				return new AssignToVariableAssistProposal(cu, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD, AssignToVariableAssistProposal.FIELD, expressionStatement, typeBinding, relevance);
+				AssignToVariableAssistProposalCore proposal = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance);
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			}
 		}
 		return null;
@@ -538,9 +555,10 @@ public class RefactorProposalUtility {
 	 * Merge the "Extract to Field" and "Convert Local Variable to Field" to a
 	 * generic "Extract to Field".
 	 */
-	public static CUCorrectionProposal getGenericExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand, boolean inferSelectionSupport)
+	public static ProposalKindWrapper getGenericExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
+			boolean inferSelectionSupport)
 			throws CoreException {
-		CUCorrectionProposal proposal = getConvertVariableToFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
+		ProposalKindWrapper proposal = getConvertVariableToFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
 		if (proposal != null) {
 			return proposal;
 		}
@@ -548,11 +566,13 @@ public class RefactorProposalUtility {
 		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, inferSelectionSupport);
 	}
 
-	public static CUCorrectionProposal getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+			throws CoreException {
 		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, false);
 	}
 
-	private static CUCorrectionProposal getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
+			boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
 		}
@@ -581,7 +601,8 @@ public class RefactorProposalUtility {
 					}
 					List<String> scopes = getInitializeScopes(refactoring);
 					if (!scopes.isEmpty()) {
-						return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params));
+						CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params));
+						return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD);
 					}
 				}
 				parent = parent.getParent();
@@ -597,11 +618,12 @@ public class RefactorProposalUtility {
 			}
 			if (returnAsCommand) {
 				List<String> scopes = getInitializeScopes(extractFieldRefactoringSelectedOnly);
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD);
 			}
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractFieldRefactoringSelectedOnly.setLinkedProposalModel(linkedProposalModel);
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, cu, extractFieldRefactoringSelectedOnly, relevance) {
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractFieldRefactoringSelectedOnly, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractFieldRefactoring etr = (ExtractFieldRefactoring) refactoring;
@@ -609,7 +631,7 @@ public class RefactorProposalUtility {
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD);
 		}
 
 		return null;
@@ -631,11 +653,12 @@ public class RefactorProposalUtility {
 		return scopes;
 	}
 
-	public static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static CUCorrectionProposal getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
+			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
 		int relevance;
@@ -655,7 +678,8 @@ public class RefactorProposalUtility {
 				}
 				ExtractConstantRefactoring refactoring = new ExtractConstantRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
 				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
+					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
+					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT);
 				}
 				parent = parent.getParent();
 			}
@@ -664,13 +688,14 @@ public class RefactorProposalUtility {
 		ExtractConstantRefactoring extractConstRefactoring = new ExtractConstantRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		if (extractConstRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_CONSTANT_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT);
 			}
 
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractConstRefactoring.setLinkedProposalModel(linkedProposalModel);
 			extractConstRefactoring.setCheckResultForCompileProblems(false);
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT, cu, extractConstRefactoring, relevance) {
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractConstRefactoring, relevance) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					ExtractConstantRefactoring etr = (ExtractConstantRefactoring) refactoring;
@@ -678,13 +703,13 @@ public class RefactorProposalUtility {
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT);
 		}
 
 		return null;
 	}
 
-	public static CUCorrectionProposal getConvertVariableToFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+	public static ProposalKindWrapper getConvertVariableToFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
 			throws CoreException {
 		ASTNode node = context.getCoveredNode();
 		if (!(node instanceof SimpleName)) {
@@ -735,14 +760,15 @@ public class RefactorProposalUtility {
 				if (refactoring.canEnableSettingDeclareInConstructors()) {
 					scopes.add(InitializeScope.CLASS_CONSTRUCTORS.getName());
 				}
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, context.getCompilationUnit(), IProposalRelevance.CONVERT_LOCAL_TO_FIELD, APPLY_REFACTORING_COMMAND_ID,
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, context.getCompilationUnit(), IProposalRelevance.CONVERT_LOCAL_TO_FIELD, APPLY_REFACTORING_COMMAND_ID,
 						Arrays.asList(CONVERT_VARIABLE_TO_FIELD_COMMAND, params, new ExtractFieldInfo(scopes)));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD);
 			}
 
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			refactoring.setLinkedProposalModel(linkedProposalModel);
 
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD, context.getCompilationUnit(), refactoring, IProposalRelevance.CONVERT_LOCAL_TO_FIELD) {
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, context.getCompilationUnit(), refactoring, IProposalRelevance.CONVERT_LOCAL_TO_FIELD) {
 				@Override
 				protected void init(Refactoring refactoring) throws CoreException {
 					PromoteTempToFieldRefactoring etr = (PromoteTempToFieldRefactoring) refactoring;
@@ -753,17 +779,19 @@ public class RefactorProposalUtility {
 				}
 			};
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_FIELD);
 		}
 
 		return null;
 	}
 
-	public static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand)
+			throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formattingOptions, returnAsCommand, false);
 	}
 
-	private static CUCorrectionProposal getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand,
+			boolean inferSelectionSupport) throws CoreException {
 		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
 			return null;
 		}
@@ -797,28 +825,30 @@ public class RefactorProposalUtility {
 					continue;
 				}
 				ExtractMethodRefactoring refactoring = new ExtractMethodRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength(), formattingOptions);
-				if (refactoring.checkInferConditions(new NullProgressMonitor()).isOK()) {
-					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
+				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
+					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 				}
 				parent = parent.getParent();
 			}
 			return null;
 		} else if (extractMethodRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_METHOD_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 			}
 
 			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 			extractMethodRefactoring.setLinkedProposalModel(linkedProposalModel);
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD, cu, extractMethodRefactoring, relevance);
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, extractMethodRefactoring, relevance);
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
 		}
 
 		return null;
 	}
 
-	private static String proposeMethodNameHeuristic(IInvocationContext context, ASTNode coveringNode) {
+	private static String proposeMethodNameHeuristic(IInvocationContextCore context, ASTNode coveringNode) {
 
 		int selStart = context.getSelectionOffset();
 		int selEnd = context.getSelectionOffset() + context.getSelectionLength();
@@ -862,7 +892,7 @@ public class RefactorProposalUtility {
 		return "extracted";
 	}
 
-	public static CUCorrectionProposal getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocationCore[] problemLocations)
+	public static ProposalKindWrapper getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocationCore[] problemLocations)
 			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
@@ -873,16 +903,17 @@ public class RefactorProposalUtility {
 			String label = RefactoringCoreMessages.IntroduceParameterRefactoring_name + "...";
 			int relevance = (problemLocations != null && problemLocations.length > 0) ? IProposalRelevance.EXTRACT_CONSTANT_ERROR : IProposalRelevance.EXTRACT_CONSTANT;
 			if (returnAsCommand) {
-				return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(INTRODUCE_PARAMETER_COMMAND, params));
+				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(INTRODUCE_PARAMETER_COMMAND, params));
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER);
 			}
-			RefactoringCorrectionProposal proposal = new RefactoringCorrectionProposal(label, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER, cu, introduceParameterRefactoring, relevance);
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, introduceParameterRefactoring, relevance);
 			proposal.setLinkedProposalModel(linkedProposalModel);
-			return proposal;
+			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER);
 		}
 		return null;
 	}
 
-	public static ChangeCorrectionProposal getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context) {
+	public static ProposalKindWrapper getExtractInterfaceProposal(CodeActionParams params, IInvocationContextCore context) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;
@@ -894,8 +925,10 @@ public class RefactorProposalUtility {
 		try {
 			CodeGenerationSettings settings = PreferenceManager.getCodeGenerationSettings(cu);
 			ExtractInterfaceProcessor processor = new ExtractInterfaceProcessor(type, settings);
-			if (RefactoringAvailabilityTester.isExtractInterfaceAvailable(type) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-				return new CUCorrectionCommandProposal(CorrectionMessages.RefactorProcessor_extract_interface, JavaCodeActionKind.REFACTOR_EXTRACT_INTERFACE, cu, IProposalRelevance.EXTRACT_INTERFACE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, Arrays.asList(RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND, params));
+			if (RefactoringAvailabilityTesterCore.isExtractInterfaceAvailable(type) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				CUCorrectionCommandProposal p = new CUCorrectionCommandProposal(CorrectionMessages.RefactorProcessor_extract_interface, cu, IProposalRelevance.EXTRACT_INTERFACE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+						Arrays.asList(RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND, params));
+				return CodeActionHandler.wrap(p,  JavaCodeActionKind.REFACTOR_EXTRACT_INTERFACE);
 			}
 		} catch (CoreException e) {
 			// Do nothing
@@ -903,7 +936,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ChangeCorrectionProposal getChangeSignatureProposal(CodeActionParams params, IInvocationContext context) {
+	public static ProposalKindWrapper getChangeSignatureProposal(CodeActionParams params, IInvocationContextCore context) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;
@@ -920,7 +953,7 @@ public class RefactorProposalUtility {
 		if (element instanceof IMethod method) {
 			try {
 				ChangeSignatureProcessor processor = new ChangeSignatureProcessor(method);
-				if (RefactoringAvailabilityTester.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				if (RefactoringAvailabilityTesterCore.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 					List<MethodParameter> parameters = new ArrayList<>();
 					for (ParameterInfo info : processor.getParameterInfos()) {
 						parameters.add(new MethodParameter(info.getOldTypeName(), info.getOldName(), info.getDefaultValue() == null ? "null" : info.getDefaultValue(), info.getOldIndex()));
@@ -932,8 +965,9 @@ public class RefactorProposalUtility {
 					ChangeSignatureInfo info = new ChangeSignatureInfo(method.getHandleIdentifier(), JdtFlags.getVisibilityString(processor.getVisibility()), processor.getReturnTypeString(), method.getElementName(),
 							parameters.toArray(MethodParameter[]::new), exceptions.toArray(MethodException[]::new));
 					String label = Messages.format(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ChangeSignatureRefactoring_change_signature_for, new String[] { method.getElementName() });
-					return new CUCorrectionCommandProposal(label, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE, cu, IProposalRelevance.CHANGE_METHOD_SIGNATURE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
+					CUCorrectionCommandProposal p1 = new CUCorrectionCommandProposal(label, cu, IProposalRelevance.CHANGE_METHOD_SIGNATURE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
 							Arrays.asList(RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND, params, info));
+					return CodeActionHandler.wrap(p1, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
 				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e);

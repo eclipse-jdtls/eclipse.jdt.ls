@@ -218,56 +218,56 @@ public class ExtractVariableTest extends AbstractSelectionTest {
 
 		assertCodeActions(cu, e1, e2, e3);
 	}
-
-	@Test
-	public void testExtractVariableLongName() throws Exception {
-		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("class A{\n");
-		buf.append("	void m(int i){\n");
-		buf.append("		String x= /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
-		buf.append("	}\n");
-		buf.append("}\n");
-
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("class A{\n");
-		buf.append("	void m(int i){\n");
-		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
-		buf.append("        String x= /*]*/string/*[*/;\n");
-		buf.append("	}\n");
-		buf.append("}\n");
-
-		Expected e1 = new Expected("Extract to local variable (replace all occurrences)", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("class A{\n");
-		buf.append("	void m(int i){\n");
-		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
-		buf.append("        String x= /*]*/string/*[*/;\n");
-		buf.append("	}\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Extract to local variable", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("class A{\n");
-		buf.append("	private static final String THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED = /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
-		buf.append("\n");
-		buf.append("    void m(int i){\n");
-		buf.append("		String x= THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED;\n");
-		buf.append("	}\n");
-		buf.append("}\n");
-
-		Expected e3 = new Expected("Extract to constant", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT);
-
-		assertCodeActions(cu, e1, e2, e3);
-	}
+	// // We no longer truncate long names, and instead trust the JDT implementation
+	//	@Test
+	//	public void testExtractVariableLongName() throws Exception {
+	//		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+	//
+	//		StringBuilder buf = new StringBuilder();
+	//		buf.append("package test1;\n");
+	//		buf.append("class A{\n");
+	//		buf.append("	void m(int i){\n");
+	//		buf.append("		String x= /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
+	//		buf.append("	}\n");
+	//		buf.append("}\n");
+	//
+	//		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+	//
+	//		buf = new StringBuilder();
+	//		buf.append("package test1;\n");
+	//		buf.append("class A{\n");
+	//		buf.append("	void m(int i){\n");
+	//		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
+	//		buf.append("        String x= /*]*/string/*[*/;\n");
+	//		buf.append("	}\n");
+	//		buf.append("}\n");
+	//
+	//		Expected e1 = new Expected("Extract to local variable (replace all occurrences)", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
+	//
+	//		buf = new StringBuilder();
+	//		buf.append("package test1;\n");
+	//		buf.append("class A{\n");
+	//		buf.append("	void m(int i){\n");
+	//		buf.append("		String string = \"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\";\n");
+	//		buf.append("        String x= /*]*/string/*[*/;\n");
+	//		buf.append("	}\n");
+	//		buf.append("}\n");
+	//		Expected e2 = new Expected("Extract to local variable", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
+	//
+	//		buf = new StringBuilder();
+	//		buf.append("package test1;\n");
+	//		buf.append("class A{\n");
+	//		buf.append("	private static final String THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED = /*]*/\"This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.This is a long name need be truncated.\"/*[*/;\n");
+	//		buf.append("\n");
+	//		buf.append("    void m(int i){\n");
+	//		buf.append("		String x= THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED_BE_TRUNCATED_THIS_IS_A_LONG_NAME_NEED;\n");
+	//		buf.append("	}\n");
+	//		buf.append("}\n");
+	//
+	//		Expected e3 = new Expected("Extract to constant", buf.toString(), JavaCodeActionKind.REFACTOR_EXTRACT_CONSTANT);
+	//
+	//		assertCodeActions(cu, e1, e2, e3);
+	//	}
 
 	@Test
 	public void testExtractVariableFailed() throws Exception {

@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.search.TypeNameMatch;
@@ -39,7 +40,6 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CodeActionParams;
@@ -127,7 +127,7 @@ public final class OrganizeImportsHandler {
 		};
 	}
 
-	public static CUCorrectionProposal getOrganizeImportsProposal(String label, String kind, ICompilationUnit cu, int relevance, CompilationUnit astRoot, boolean supportsChooseImports, boolean restoreExistingImports) {
+	public static CUCorrectionProposalCore getOrganizeImportsProposal(String label, ICompilationUnit cu, int relevance, CompilationUnit astRoot, boolean supportsChooseImports, boolean restoreExistingImports) {
 		IResource resource = cu.getResource();
 		if (resource == null) {
 			return null;
@@ -136,9 +136,9 @@ public final class OrganizeImportsHandler {
 		if (uri == null) {
 			return null;
 		}
-		return new CUCorrectionProposal(label, kind, cu, null, relevance) {
+		return new CUCorrectionProposalCore(label, cu, null, relevance) {
 			@Override
-			protected void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
+			public void addEdits(IDocument document, TextEdit editRoot) throws CoreException {
 				TextEdit edit = OrganizeImportsHandler.organizeImports(cu, supportsChooseImports ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, new NullProgressMonitor());
 				if (edit != null) {
 					editRoot.addChild(edit);

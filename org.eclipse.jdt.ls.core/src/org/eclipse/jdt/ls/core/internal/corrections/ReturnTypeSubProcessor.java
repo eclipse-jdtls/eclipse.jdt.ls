@@ -42,23 +42,25 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingReturnTypeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingReturnTypeInLambdaCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ASTRewriteCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.LinkedCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.MissingReturnTypeCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.MissingReturnTypeInLambdaCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.ReplaceCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 
@@ -117,7 +119,7 @@ public class ReturnTypeSubProcessor {
 
 	}
 
-	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addVoidMethodReturnsProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -144,7 +146,7 @@ public class ReturnTypeSubProcessor {
 				ASTRewrite rewrite= ASTRewrite.create(ast);
 
 				String label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_voidmethodreturns_description, BindingLabelProviderCore.getBindingLabel(binding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS));
-				LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.VOID_METHOD_RETURNS);
+				LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.VOID_METHOD_RETURNS);
 				ImportRewrite imports= proposal.createImportRewrite(astRoot);
 				ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(methodDeclaration, imports);
 				Type newReturnType= imports.addImport(binding, ast, importRewriteContext, TypeLocation.RETURN_TYPE);
@@ -173,20 +175,20 @@ public class ReturnTypeSubProcessor {
 					proposal.addLinkedPosition(rewrite.track(commentStart), false, "comment_start"); //$NON-NLS-1$
 
 				}
-				proposals.add(proposal);
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 			ASTRewrite rewrite= ASTRewrite.create(decl.getAST());
 			rewrite.remove(returnStatement.getExpression(), null);
 
 			String label= CorrectionMessages.ReturnTypeSubProcessor_removereturn_description;
-			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.CHANGE_TO_RETURN);
-			proposals.add(proposal);
+			ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.CHANGE_TO_RETURN);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 	}
 
 
 
-	public static void addMissingReturnTypeProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addMissingReturnTypeProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -213,7 +215,7 @@ public class ReturnTypeSubProcessor {
 			ASTRewrite rewrite= ASTRewrite.create(ast);
 
 			String label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_missingreturntype_description, BindingLabelProviderCore.getBindingLabel(typeBinding, BindingLabelProviderCore.DEFAULT_TEXTFLAGS));
-			LinkedCorrectionProposal proposal= new LinkedCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.MISSING_RETURN_TYPE);
+			LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.MISSING_RETURN_TYPE);
 
 			ImportRewrite imports= proposal.createImportRewrite(astRoot);
 			ImportRewriteContext importRewriteContext= new ContextSensitiveImportRewriteContext(decl, imports);
@@ -241,8 +243,7 @@ public class ReturnTypeSubProcessor {
 					proposal.addLinkedPositionProposal(key, bindings[i]);
 				}
 			}
-
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 
 			// change to constructor
 			ASTNode parentType= ASTResolving.findParentType(decl);
@@ -252,13 +253,14 @@ public class ReturnTypeSubProcessor {
 					String constructorName = parentTypeDecl.getName().getIdentifier();
 					ASTNode nameNode= methodDeclaration.getName();
 					label= Messages.format(CorrectionMessages.ReturnTypeSubProcessor_wrongconstructorname_description, BasicElementLabels.getJavaElementName(constructorName));
-					proposals.add(new ReplaceCorrectionProposal(label, cu, nameNode.getStartPosition(), nameNode.getLength(), constructorName, IProposalRelevance.CHANGE_TO_CONSTRUCTOR));
+					ReplaceCorrectionProposalCore p2 = (new ReplaceCorrectionProposalCore(label, cu, nameNode.getStartPosition(), nameNode.getLength(), constructorName, IProposalRelevance.CHANGE_TO_CONSTRUCTOR));
+					proposals.add(CodeActionHandler.wrap(p2, CodeActionKind.QuickFix));
 				}
 			}
 		}
 	}
 
-	public static void addMissingReturnStatementProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void addMissingReturnStatementProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -268,9 +270,9 @@ public class ReturnTypeSubProcessor {
 		ReturnStatement existingStatement = selectedNode instanceof ReturnStatement returnStatement ? returnStatement : null;
 		// Lambda Expression can be in a MethodDeclaration or a Field Declaration
 		if (selectedNode instanceof LambdaExpression lambda) {
-			MissingReturnTypeInLambdaCorrectionProposal proposal = new MissingReturnTypeInLambdaCorrectionProposal(cu, lambda, existingStatement,
+			MissingReturnTypeInLambdaCorrectionProposalCore proposal = new MissingReturnTypeInLambdaCorrectionProposalCore(cu, lambda, existingStatement,
 					IProposalRelevance.MISSING_RETURN_TYPE);
-			proposals.add(proposal);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		} else {
 			BodyDeclaration decl= ASTResolving.findParentBodyDeclaration(selectedNode);
 			if (decl instanceof MethodDeclaration methodDecl) {
@@ -278,7 +280,8 @@ public class ReturnTypeSubProcessor {
 				if (block == null) {
 					return;
 				}
-				proposals.add(new MissingReturnTypeCorrectionProposal(cu, methodDecl, existingStatement, IProposalRelevance.MISSING_RETURN_TYPE));
+				ChangeCorrectionProposalCore p1 = new MissingReturnTypeCorrectionProposalCore(cu, methodDecl, existingStatement, IProposalRelevance.MISSING_RETURN_TYPE);
+				proposals.add(CodeActionHandler.wrap(p1, CodeActionKind.QuickFix));
 
 				Type returnType= methodDecl.getReturnType2();
 				if (returnType != null && !"void".equals(ASTNodes.asString(returnType))) { //$NON-NLS-1$
@@ -294,14 +297,14 @@ public class ReturnTypeSubProcessor {
 					}
 
 					String label= CorrectionMessages.ReturnTypeSubProcessor_changetovoid_description;
-					ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, cu, rewrite, IProposalRelevance.CHANGE_RETURN_TYPE_TO_VOID);
-					proposals.add(proposal);
+					ASTRewriteCorrectionProposalCore proposal= new ASTRewriteCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.CHANGE_RETURN_TYPE_TO_VOID);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 				}
 			}
 		}
 	}
 
-	public static void addMethodReturnsVoidProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) throws JavaModelException {
+	public static void addMethodReturnsVoidProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof ReturnStatement)) {

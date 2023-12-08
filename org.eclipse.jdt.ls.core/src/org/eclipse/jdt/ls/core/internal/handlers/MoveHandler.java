@@ -63,6 +63,10 @@ import org.eclipse.jdt.internal.corext.refactoring.reorg.IConfirmQuery;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgDestination;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgPolicy.IMovePolicy;
 import org.eclipse.jdt.internal.corext.refactoring.reorg.IReorgQueries;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.JavaMoveProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ReorgDestinationFactory;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ReorgPolicyFactory;
+import org.eclipse.jdt.internal.corext.refactoring.reorg.ReorgUtilsCore;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInnerToTopRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveInstanceMethodProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.MoveStaticMembersProcessor;
@@ -73,10 +77,6 @@ import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.JavaMoveProcessor;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgDestinationFactory;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgPolicyFactory;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.reorg.ReorgUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
@@ -345,8 +345,8 @@ public class MoveHandler {
 
 		SubMonitor submonitor = SubMonitor.convert(monitor, "Moving File...", 100);
 		try {
-			IResource[] resources = ReorgUtils.getResources(elements);
-			IJavaElement[] javaElements = ReorgUtils.getJavaElements(elements);
+			IResource[] resources = ReorgUtilsCore.getResources(elements);
+			IJavaElement[] javaElements = ReorgUtilsCore.getJavaElements(elements);
 			IContainer[] targetContainers = ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(targetURI);
 			if (targetContainers == null || targetContainers.length == 0) {
 				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the target folder '" + targetUri + "' in the workspace.");

@@ -17,8 +17,9 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 
-public class InnovationContext implements IInvocationContext {
+public class InnovationContext implements IInvocationContextCore {
 
 	private final ICompilationUnit fCompilationUnit;
 	private CompilationUnit fASTRoot;

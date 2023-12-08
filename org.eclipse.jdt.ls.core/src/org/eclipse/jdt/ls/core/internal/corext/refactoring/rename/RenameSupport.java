@@ -14,6 +14,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -26,10 +27,24 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
+import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
+import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
+import org.eclipse.jdt.internal.corext.refactoring.rename.JavaRenameProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.rename.MethodChecks;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameCompilationUnitProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameEnumConstProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameFieldProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameLocalVariableProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameNonVirtualMethodProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenamePackageProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameTypeParameterProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameTypeProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.rename.RenameVirtualMethodProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.INameUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
+import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.RenameRefactoring;
@@ -276,7 +291,17 @@ public class RenameSupport {
 	 * the {@link RenameSupport}.
 	 */
 	public static RenameSupport create(IType type, String newName, int flags) throws CoreException {
-		JavaRenameProcessor processor = new RenameTypeProcessor(type);
+		JavaRenameProcessor processor = new RenameTypeProcessor(type) {
+			@Override
+			protected void createChangeForRenamedCUStandardResource(IType type, TextChangeManager changeManager, IResource resource, DynamicValidationRefactoringChange result) throws CoreException {
+				addTypeDeclarationUpdate(changeManager);
+				addConstructorRenames(changeManager);
+				result.addAll(changeManager.getAllChanges());
+				String renamedCUName = JavaModelUtil.getRenamedCUName(type.getCompilationUnit(), getNewElementName());
+				result.add(new RenameCompilationUnitChange(type.getCompilationUnit(), renamedCUName));
+			}
+
+		};
 		return new RenameSupport(processor, newName, flags);
 	}
 
@@ -295,7 +320,14 @@ public class RenameSupport {
 	public static RenameSupport create(IMethod method, String newName, int flags) throws CoreException {
 		JavaRenameProcessor processor;
 		if (MethodChecks.isVirtual(method)) {
-			processor= new RenameVirtualMethodProcessor(method);
+			processor = new RenameVirtualMethodProcessor(method) {
+				@Override
+				protected void initializeWithTopMostImplementation(IMethod topmost) {
+					String newName = getNewElementName();
+					initialize(topmost);
+					setNewElementName(newName);
+				}
+			};
 		} else {
 			processor= new RenameNonVirtualMethodProcessor(method);
 		}

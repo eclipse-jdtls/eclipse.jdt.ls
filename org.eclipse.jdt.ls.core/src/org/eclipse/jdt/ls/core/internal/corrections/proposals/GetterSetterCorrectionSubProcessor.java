@@ -40,20 +40,25 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
+import org.eclipse.jdt.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringAvailabilityTester;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.sef.SelfEncapsulateFieldRefactoring;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Change;
 
@@ -77,10 +82,10 @@ public class GetterSetterCorrectionSubProcessor {
 		}
 	}
 
-	public static class SelfEncapsulateFieldProposal extends ChangeCorrectionProposal { // public for tests
+	public static class SelfEncapsulateFieldProposal extends ChangeCorrectionProposalCore { // public for tests
 
 		public SelfEncapsulateFieldProposal(int relevance, IField field) {
-			super(getDescription(field), CodeActionKind.Refactor, getRefactoringChange(field), relevance);
+			super(getDescription(field), getRefactoringChange(field), relevance);
 		}
 
 		public static Change getRefactoringChange(IField field) {
@@ -128,7 +133,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            the resulting proposals
 	 * @return <code>true</code> if the quick assist is applicable at this offset
 	 */
-	public static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ChangeCorrectionProposal> resultingCollections) {
+	public static boolean addGetterSetterProposal(IInvocationContextCore context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (locations != null) {
 			for (int i = 0; i < locations.length; i++) {
 				int problemId = locations[i].getProblemId();
@@ -143,11 +148,11 @@ public class GetterSetterCorrectionSubProcessor {
 		return addGetterSetterProposal(context, coveringNode, resultingCollections, IProposalRelevance.GETTER_SETTER_QUICK_ASSIST);
 	}
 
-	public static void addGetterSetterProposal(IInvocationContext context, IProblemLocationCore location, Collection<ChangeCorrectionProposal> proposals, int relevance) {
+	public static void addGetterSetterProposal(IInvocationContextCore context, IProblemLocationCore location, Collection<ProposalKindWrapper> proposals, int relevance) {
 		addGetterSetterProposal(context, location.getCoveringNode(context.getASTRoot()), proposals, relevance);
 	}
 
-	private static boolean addGetterSetterProposal(IInvocationContext context, ASTNode coveringNode, Collection<ChangeCorrectionProposal> proposals, int relevance) {
+	private static boolean addGetterSetterProposal(IInvocationContextCore context, ASTNode coveringNode, Collection<ProposalKindWrapper> proposals, int relevance) {
 		if (!(coveringNode instanceof SimpleName)) {
 			return false;
 		}
@@ -166,14 +171,14 @@ public class GetterSetterCorrectionSubProcessor {
 			return true;
 		}
 
-		ChangeCorrectionProposal proposal = getProposal(context.getCompilationUnit(), sn, variableBinding, relevance);
+		ProposalKindWrapper proposal = getProposal(context.getCompilationUnit(), sn, variableBinding, relevance);
 		if (proposal != null) {
 			proposals.add(proposal);
 		}
 		return true;
 	}
 
-	private static ChangeCorrectionProposal getProposal(ICompilationUnit cu, SimpleName sn, IVariableBinding variableBinding, int relevance) {
+	private static ProposalKindWrapper getProposal(ICompilationUnit cu, SimpleName sn, IVariableBinding variableBinding, int relevance) {
 		Expression accessNode = sn;
 		Expression qualifier = null;
 		boolean useSuper = false;
@@ -208,21 +213,21 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            relevance of this proposal
 	 * @return the proposal if available or null
 	 */
-	private static ChangeCorrectionProposal addGetterProposal(ProposalParameter context, int relevance) {
+	private static ProposalKindWrapper addGetterProposal(ProposalParameter context, int relevance) {
 		IMethodBinding method = findGetter(context);
 		if (method != null) {
 			Expression mi = createMethodInvocation(context, method, null);
 			context.astRewrite.replace(context.accessNode, mi, null);
 
 			String label = Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_replacewithgetter_description, BasicElementLabels.getJavaCodeString(ASTNodes.asString(context.accessNode)));
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.compilationUnit, context.astRewrite, relevance);
-			return proposal;
+			ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.compilationUnit, context.astRewrite, relevance);
+			return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField field) {
 				try {
-					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
-						return new SelfEncapsulateFieldProposal(relevance, field);
+					if (RefactoringAvailabilityTesterCore.isSelfEncapsulateAvailable(field)) {
+						return CodeActionHandler.wrap(new SelfEncapsulateFieldProposal(relevance, field), CodeActionKind.Refactor);
 					}
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.log(e);
@@ -281,7 +286,7 @@ public class GetterSetterCorrectionSubProcessor {
 	 *            relevance of this proposal
 	 * @return the proposal if available or null
 	 */
-	private static ChangeCorrectionProposal addSetterProposal(ProposalParameter context, int relevance) {
+	private static ProposalKindWrapper addSetterProposal(ProposalParameter context, int relevance) {
 		boolean isBoolean = isBoolean(context);
 		String setterName = GetterSetterUtil.getSetterName(context.variableBinding, context.compilationUnit.getJavaProject(), null, isBoolean);
 		ITypeBinding declaringType = context.variableBinding.getDeclaringClass();
@@ -299,14 +304,14 @@ public class GetterSetterCorrectionSubProcessor {
 			context.astRewrite.replace(context.accessNode.getParent(), mi, null);
 
 			String label = Messages.format(CorrectionMessages.GetterSetterCorrectionSubProcessor_replacewithsetter_description, BasicElementLabels.getJavaCodeString(ASTNodes.asString(context.accessNode)));
-			ASTRewriteCorrectionProposal proposal = new ASTRewriteCorrectionProposal(label, CodeActionKind.QuickFix, context.compilationUnit, context.astRewrite, relevance);
-			return proposal;
+			ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, context.compilationUnit, context.astRewrite, relevance);
+			return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 		} else {
 			IJavaElement element = context.variableBinding.getJavaElement();
 			if (element instanceof IField field) {
 				try {
-					if (RefactoringAvailabilityTester.isSelfEncapsulateAvailable(field)) {
-						return new SelfEncapsulateFieldProposal(relevance, field);
+					if (RefactoringAvailabilityTesterCore.isSelfEncapsulateAvailable(field)) {
+						return CodeActionHandler.wrap(new SelfEncapsulateFieldProposal(relevance, field), CodeActionKind.Refactor);
 					}
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.log(e);

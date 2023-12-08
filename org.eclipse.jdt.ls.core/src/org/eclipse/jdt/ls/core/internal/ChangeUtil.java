@@ -41,13 +41,13 @@ import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.changes.CreateCompilationUnitChange;
+import org.eclipse.jdt.internal.corext.refactoring.changes.MoveCompilationUnitChange;
+import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
+import org.eclipse.jdt.internal.corext.refactoring.changes.RenamePackageChange;
+import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.MoveCompilationUnitChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenameCompilationUnitChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.changes.RenamePackageChange;
-import org.eclipse.jdt.ls.core.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.lsp4j.AnnotatedTextEdit;
 import org.eclipse.lsp4j.CreateFile;
 import org.eclipse.lsp4j.CreateFileOptions;
@@ -162,10 +162,10 @@ public class ChangeUtil {
 			convertRenamePackcageChange(edit, renamePackageChange, annotationId);
 		} else if (resourceChange instanceof MoveCompilationUnitChange moveCUChange) {
 			convertMoveCompilationUnitChange(edit, moveCUChange, annotationId);
-		} else if (resourceChange instanceof CreateFileChange createFileChange) {
-			convertCreateFileChange(edit, createFileChange);
 		} else if (resourceChange instanceof CreateCompilationUnitChange createCUChange) {
 			convertCreateCompilationUnitChange(edit, createCUChange, annotationId);
+		} else if (resourceChange instanceof CreateFileChange createFileChange) {
+			convertCreateFileChange(edit, createFileChange);
 		}
 	}
 

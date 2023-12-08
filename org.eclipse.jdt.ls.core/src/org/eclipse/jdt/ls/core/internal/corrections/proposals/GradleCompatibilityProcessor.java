@@ -28,13 +28,16 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
+import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.jdt.ls.core.internal.corrections.IInvocationContext;
+import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.managers.GradleUtils;
 import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -44,7 +47,7 @@ public class GradleCompatibilityProcessor {
 	private static String UPGRADE_GRADLE_COMMAND_ADVANCED = "java.project.upgradeGradle.command";
 	private static String UPGRADE_GRADLE_COMMAND = "java.project.upgradeGradle";
 
-	public static void getGradleCompatibilityProposals(IInvocationContext context, IProblemLocationCore problem, Collection<ChangeCorrectionProposal> proposals) {
+	public static void getGradleCompatibilityProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
 		IJavaProject javaProject = context.getCompilationUnit().getJavaProject();
 		if (javaProject == null) {
 			return;
@@ -95,7 +98,7 @@ public class GradleCompatibilityProcessor {
 	 * @param proposals
 	 *                      the current proposals
 	 */
-	private static void addProposalForNonModulerProject(ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
+	private static void addProposalForNonModulerProject(ClasspathResult result, IInvocationContextCore context, URI uri, Collection<ProposalKindWrapper> proposals) {
 		if (result.modulepaths.length > 0) {
 			addProposal(context, uri, proposals);
 		}
@@ -119,7 +122,7 @@ public class GradleCompatibilityProcessor {
 	 * @param proposals
 	 *                        the current proposals
 	 */
-	private static void addProposalForModulerProject(IJavaProject javaProject, ClasspathResult result, IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
+	private static void addProposalForModulerProject(IJavaProject javaProject, ClasspathResult result, IInvocationContextCore context, URI uri, Collection<ProposalKindWrapper> proposals) {
 		for (String classpath : result.classpaths) {
 			try {
 				IPackageFragmentRoot packageFragmentRoot = javaProject.findPackageFragmentRoot(new Path(classpath));
@@ -141,9 +144,10 @@ public class GradleCompatibilityProcessor {
 		}
 	}
 
-	private static void addProposal(IInvocationContext context, URI uri, Collection<ChangeCorrectionProposal> proposals) {
-		proposals.add(new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, CodeActionKind.QuickFix, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH,
-				JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedUpgradeGradleSupport() ? UPGRADE_GRADLE_COMMAND_ADVANCED : UPGRADE_GRADLE_COMMAND,
-				Arrays.asList(uri.toString(), GradleUtils.JPMS_SUPPORTED_VERSION)));
+	private static void addProposal(IInvocationContextCore context, URI uri, Collection<ProposalKindWrapper> proposals) {
+		String cmdId = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedUpgradeGradleSupport() ? UPGRADE_GRADLE_COMMAND_ADVANCED : UPGRADE_GRADLE_COMMAND;
+		CUCorrectionCommandProposal c = new CUCorrectionCommandProposal(CorrectionMessages.NotAccessibleType_upgrade_Gradle_label, context.getCompilationUnit(), IProposalRelevance.CONFIGURE_BUILD_PATH,
+				cmdId, Arrays.asList(uri.toString(), GradleUtils.JPMS_SUPPORTED_VERSION));
+		proposals.add(CodeActionHandler.wrap(c, CodeActionKind.QuickFix));
 	}
 }

@@ -33,6 +33,8 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -40,10 +42,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.CUCorrectionProposal;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
-import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.text.edits.TextEdit;
@@ -172,7 +171,8 @@ public class OrganizeImportsCommand {
 	public void organizeImportsInCompilationUnit(ICompilationUnit unit, WorkspaceEdit rootEdit) {
 		try {
 			InnovationContext context = new InnovationContext(unit, 0, unit.getBuffer().getLength() - 1);
-			CUCorrectionProposal proposal = OrganizeImportsHandler.getOrganizeImportsProposal("OrganizeImports", CodeActionKind.SourceOrganizeImports, unit, IProposalRelevance.ORGANIZE_IMPORTS, context.getASTRoot(), false, false);
+			// kind: CodeActionKind.SourceOrganizeImports,
+			CUCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal("OrganizeImports", unit, IProposalRelevance.ORGANIZE_IMPORTS, context.getASTRoot(), false, false);
 			if (proposal != null) {
 				addWorkspaceEdit(unit, proposal, rootEdit);
 			}
@@ -233,7 +233,7 @@ public class OrganizeImportsCommand {
 		}
 	}
 
-	private void addWorkspaceEdit(ICompilationUnit cu, CUCorrectionProposal proposal, WorkspaceEdit rootEdit) throws CoreException {
+	private void addWorkspaceEdit(ICompilationUnit cu, CUCorrectionProposalCore proposal, WorkspaceEdit rootEdit) throws CoreException {
 		TextChange textChange = proposal.getTextChange();
 		TextEdit edit = textChange.getEdit();
 		TextEditConverter converter = new TextEditConverter(cu, edit);

@@ -575,6 +575,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -582,6 +583,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("public class E {\n");
@@ -680,6 +682,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
 		buf.append("    /**\n");
@@ -687,6 +690,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
+		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		buf.append("public class E extends C {\n");
