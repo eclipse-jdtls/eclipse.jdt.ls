@@ -338,7 +338,7 @@ public class ClientPreferences {
 	}
 
 	/**
-	 * {@code true} if the client has explicitly set the
+	 * {@code true} if the client has listed {@code kind} in
 	 * {@code textDocument.codeAction.codeActionLiteralSupport.codeActionKind.valueSet}
 	 * value. Otherwise, {@code false}.
 	 */

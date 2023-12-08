@@ -632,8 +632,7 @@ public class SourceAssistProcessor {
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(proposal.getKind())) {
 				CodeAction codeAction = new CodeAction(actionMessage);
 				codeAction.setKind(proposal.getKind());
-				codeAction.setCommand(command);
-				codeAction.setData(new CodeActionData(null, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY));
+				codeAction.setEdit(edit);
 				codeAction.setDiagnostics(Collections.EMPTY_LIST);
 				return Optional.of(Either.forRight(codeAction));
 			} else {
