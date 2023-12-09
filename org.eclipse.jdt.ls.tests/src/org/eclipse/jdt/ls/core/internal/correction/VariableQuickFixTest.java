@@ -96,4 +96,34 @@ public class VariableQuickFixTest extends AbstractSelectionTest {
 		Expected e1 = new Expected("Join variable declaration", expected, JavaCodeActionKind.QUICK_ASSIST);
 		assertCodeActions(codeActions, e1);
 	}
+
+	@Test
+	public void testInvertEqualsExpectVariablesSwapped() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class E {
+				    public void foo() {
+						String name1 = "John";
+						String name2 = "Doe";
+						if (name1.equals(name2)) {
+						}
+				    }
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class E {
+				    public void foo() {
+						String name1 = "John";
+						String name2 = "Doe";
+						if (name2.equals(name1)) {
+						}
+				    }
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "name1.equals(name2)"));
+		Expected e1 = new Expected("Invert equals", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
 }

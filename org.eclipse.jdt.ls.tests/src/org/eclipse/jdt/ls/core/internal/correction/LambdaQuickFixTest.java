@@ -19,6 +19,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -115,6 +117,252 @@ public class LambdaQuickFixTest extends AbstractSelectionTest {
 		Range range = new Range(new Position(7, 16), new Position(7, 16));
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
 		Expected e1 = new Expected("Clean up lambda expression", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testAddInferredLambdaParameterTypesExpectTypes() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (String a, String b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "(a, b)"));
+		Expected e1 = new Expected("Add inferred lambda parameter types", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testAddVarLambdaParameterTypesExpectVarKeyword() throws Exception {
+		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		JavaCore.setComplianceOptions("11", options);
+		fJProject1.setOptions(options);
+
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (var a, var b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "(a, b)"));
+		Expected e1 = new Expected("Add 'var' lambda parameter types", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testRemoveVarOrInferredLambdaParameterTypesExpectNoType() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (String a, String b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "(String a, String b) ->"));
+		Expected e1 = new Expected("Remove lambda parameter types", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testRemoveVarOrInferredLambdaParameterTypesExpectNoVarKeyword() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (var a, var b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+				    public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+				    }
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "(var a, var b) ->"));
+		Expected e1 = new Expected("Remove lambda parameter types", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testChangeLambdaBodyToBlockExpectBlock() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+					public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+					}
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+					public void foo() {
+						Func f = (a, b) -> {
+				            System.out.println(a + b);
+				        };
+					}
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "->"));
+		Expected e1 = new Expected("Change body expression to block", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testChangeLambdaBodyToExpressionExpectExpression() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+					public void foo() {
+						Func f = (a, b) -> {
+							System.out.println(a + b);
+						};
+					}
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+					public void foo() {
+						Func f = (a, b) -> System.out.println(a + b);
+					}
+
+					public interface Func {
+						void foo(String a, String b);
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "->"));
+		Expected e1 = new Expected("Change body block to expression", expected, JavaCodeActionKind.QUICK_ASSIST);
+		assertCodeActions(codeActions, e1);
+	}
+
+	@Test
+	public void testConvertLambdaToMethodReferenceExpectMethodRef() throws Exception {
+		setOnly(JavaCodeActionKind.QUICK_ASSIST);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String contents = """
+				package test1;
+				public class L {
+					public void foo() {
+						this.consume(a -> a.print());
+					}
+
+					public void consume(Func f) {
+					}
+
+					public interface Func {
+						void foo(Obj a);
+					}
+
+					public class Obj {
+						public void print() {}
+					}
+				}""";
+		ICompilationUnit cu = pack1.createCompilationUnit("L.java", contents, false, null);
+		String expected = """
+				package test1;
+				public class L {
+					public void foo() {
+						this.consume(Obj::print);
+					}
+
+					public void consume(Func f) {
+					}
+
+					public interface Func {
+						void foo(Obj a);
+					}
+
+					public class Obj {
+						public void print() {}
+					}
+				}""";
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "->"));
+		Expected e1 = new Expected("Convert to method reference", expected, JavaCodeActionKind.QUICK_ASSIST);
 		assertCodeActions(codeActions, e1);
 	}
 }
