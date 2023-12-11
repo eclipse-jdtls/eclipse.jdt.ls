@@ -695,6 +695,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return true;
 		}
 
+		if (this.context.getToken() == null || proposal.getCompletion() == null) {
+			return true;
+		}
+
 		if (this.context.getToken().length == 0 || proposal.getCompletion().length == 0) {
 			return true;
 		}
