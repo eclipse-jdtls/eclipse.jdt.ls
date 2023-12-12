@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.resources.IContainer;
@@ -108,6 +110,27 @@ public class JLSFsUtils {
         }
 
         return true;
+    }
+
+    /**
+     * Check whether the given location is excluded
+     * @param location file location.
+     * @return whether the given location is excluded.
+     */
+    public static boolean isExcluded(IPath path) {
+        if (path != null && JDTLSFilesystemActivator.getResourcePatterns() != null) {
+            for (String segment : path.segments()) {
+                for (Pattern pattern : JDTLSFilesystemActivator.getResourcePatterns()) {
+                    Matcher m = pattern.matcher(segment);
+                    if (m.matches()) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**

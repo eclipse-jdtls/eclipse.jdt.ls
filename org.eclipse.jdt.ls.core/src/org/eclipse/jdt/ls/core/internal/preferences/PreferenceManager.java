@@ -227,6 +227,10 @@ public class PreferenceManager {
 		Hashtable<String, String> options = JavaCore.getOptions();
 		preferences.updateTabSizeInsertSpaces(options);
 		JavaCore.setOptions(options);
+		List<String> resourceFilters = preferences.getResourceFilters();
+		IEclipsePreferences eclipsePreferences = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		// add the resourceFilters preference; the org.eclipse.jdt.ls.filesystem plugin uses it
+		eclipsePreferences.put(Preferences.JAVA_RESOURCE_FILTERS, String.join("::", resourceFilters));
 		// TODO serialize preferences
 	}
 
