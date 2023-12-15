@@ -25,7 +25,7 @@
             <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
             <unit id="org.apache.commons.commons-io" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.31-I-builds/I20231211-1800/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.31-I-builds/I20231214-1800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
@@ -38,15 +38,15 @@
 	    <location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
 		    <dependencies>
 			    <dependency>
-				    <groupId>org.apache.commons</groupId>
-				    <artifactId>commons-lang3</artifactId>
-				    <version>3.14.0</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
 				    <groupId>commons-codec</groupId>
 				    <artifactId>commons-codec</artifactId>
 				    <version>1.16.0</version>
+				    <type>jar</type>
+			    </dependency>
+			    <dependency>
+				    <groupId>org.apache.commons</groupId>
+				    <artifactId>commons-lang3</artifactId>
+				    <version>3.14.0</version>
 				    <type>jar</type>
 			    </dependency>
 		    </dependencies>

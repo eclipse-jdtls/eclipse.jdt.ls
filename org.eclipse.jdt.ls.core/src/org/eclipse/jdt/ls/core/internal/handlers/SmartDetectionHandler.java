@@ -25,12 +25,11 @@ import org.eclipse.jdt.core.dom.Comment;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.TextBlock;
+import org.eclipse.jdt.internal.ui.text.FastJavaPartitioner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.partition.FastJavaPartitionScanner;
-import org.eclipse.jdt.ls.core.internal.partition.FastJavaPartitioner;
-import org.eclipse.jdt.ls.core.internal.partition.FastPartitioner;
-import org.eclipse.jdt.ls.core.internal.partition.IJavaPartitions;
+import org.eclipse.jdt.ui.text.IJavaPartitions;
 import org.eclipse.jface.text.AbstractDocument;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -38,6 +37,7 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.jface.text.rules.FastPartitioner;
 import org.eclipse.lsp4j.Location;
 
 public class SmartDetectionHandler {
