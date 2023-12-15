@@ -51,7 +51,6 @@ import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContext;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Region;
@@ -265,7 +264,7 @@ public class CompletionResolveHandler {
 					if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 						reader = JavadocContentAccess2.getMarkdownContentReader(curMember);
 					} else {
-						reader = JavadocContentAccess.getPlainTextContentReader(curMember);
+						reader = JavadocContentAccess2.getPlainTextContentReader(curMember);
 					}
 					return reader == null? null:CharStreams.toString(reader);
 				}, 500, TimeUnit.MILLISECONDS);

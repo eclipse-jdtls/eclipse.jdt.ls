@@ -122,12 +122,12 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
+import org.eclipse.jdt.internal.ui.viewsupport.CoreJavaElementLinks;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -999,7 +999,7 @@ public final class JDTUtils {
 			}
 		} catch (JavaModelException ex) {
 			JavaLanguageServerPlugin.logException(ex);
-		} 
+		}
 		return null;
 	}
 
@@ -1460,7 +1460,7 @@ public final class JDTUtils {
 			if (type == null || !addLinks) {
 				buf.append(typeBinding.getName());
 			} else {
-				String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, type);
+				String uri = CoreJavaElementLinks.createURI(CoreJavaElementLinks.JAVADOC_SCHEME, type);
 				String name = type.getElementName();
 				addLink(buf, uri, name);
 			}
@@ -1471,7 +1471,7 @@ public final class JDTUtils {
 			if (variable == null || !addLinks) {
 				buf.append(variableBinding.getName());
 			} else {
-				String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, variable);
+				String uri = CoreJavaElementLinks.createURI(CoreJavaElementLinks.JAVADOC_SCHEME, variable);
 				String name = variable.getElementName();
 				addLink(buf, uri, name);
 			}
@@ -1501,7 +1501,7 @@ public final class JDTUtils {
 	}
 
 	private static StringBuilder addLink(StringBuilder buf, String uri, String label) {
-		return buf.append(JavaElementLinks.createLink(uri, label));
+		return buf.append(CoreJavaElementLinks.createLink(uri, label));
 	}
 
 	private static void addAnnotation(StringBuilder buf, IAnnotationBinding annotation, boolean addLinks) throws URISyntaxException {
@@ -1510,7 +1510,7 @@ public final class JDTUtils {
 		if (javaElement == null || !addLinks) {
 			buf.append(annotation.getName());
 		} else {
-			String uri = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, javaElement);
+			String uri = CoreJavaElementLinks.createURI(CoreJavaElementLinks.JAVADOC_SCHEME, javaElement);
 			addLink(buf, uri, annotation.getName());
 		}
 
@@ -1523,7 +1523,7 @@ public final class JDTUtils {
 				}
 				IMemberValuePairBinding mvPair = mvPairs[j];
 				if (addLinks) {
-					String memberURI = JavaElementLinks.createURI(JavaElementLinks.JAVADOC_SCHEME, mvPair.getMethodBinding().getJavaElement());
+					String memberURI = CoreJavaElementLinks.createURI(CoreJavaElementLinks.JAVADOC_SCHEME, mvPair.getMethodBinding().getJavaElement());
 					addLink(buf, memberURI, mvPair.getName());
 				} else {
 					buf.append(mvPair.getName());

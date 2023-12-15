@@ -46,9 +46,8 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
-import org.eclipse.jdt.ls.core.internal.javadoc.JavaDocSnippetStringEvaluator;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -164,13 +163,13 @@ public class HoverInfoProvider {
 	}
 
 	private String fixSnippet(String value) {
-		if (value.contains(JavaDocSnippetStringEvaluator.SNIPPET)) {
+		if (value.contains(JavadocContentAccess2.SNIPPET)) {
 			StringBuilder builder = new StringBuilder();
 			value.lines().forEach((line) -> {
-				if (line.contains(JavaDocSnippetStringEvaluator.SNIPPET)) {
+				if (line.contains(JavadocContentAccess2.SNIPPET)) {
 					line = line.stripLeading();
-					if (line.startsWith(JavaDocSnippetStringEvaluator.SNIPPET)) {
-						line = line.replaceFirst(JavaDocSnippetStringEvaluator.SNIPPET, "");
+					if (line.startsWith(JavadocContentAccess2.SNIPPET)) {
+						line = line.replaceFirst(JavadocContentAccess2.SNIPPET, "");
 						line = replaceLeadingSpaces(line);
 					}
 				}

@@ -156,7 +156,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			changeDocument(unit, source, 4);
 			CompletionList list = server.completion(position).join().getRight();
 			CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
-			assertEquals("Test ", resolved.getDocumentation().getLeft());
+			assertEquals("Test", resolved.getDocumentation().getLeft());
 		} finally {
 			unit.discardWorkingCopy();
 			if (joinOnCompletion == null) {
