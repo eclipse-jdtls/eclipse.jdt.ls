@@ -1722,7 +1722,7 @@ public final class JDTUtils {
 		}
 		List<Location> locations = new ArrayList<>();
 		if (contents != null && !contents.isBlank()) {
-			ICompilationUnit workingCopy = workingCopy = getWorkingCopy(classFile, contents, monitor);
+			ICompilationUnit workingCopy = getWorkingCopy(classFile, contents, monitor);
 			try {
 				final ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 				parser.setResolveBindings(true);
