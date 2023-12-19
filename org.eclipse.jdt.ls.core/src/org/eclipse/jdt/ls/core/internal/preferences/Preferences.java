@@ -501,6 +501,7 @@ public class Preferences {
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
+	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT = "java.compile.nullAnalysis.nonnullbydefault";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
 
 	/**
@@ -571,6 +572,7 @@ public class Preferences {
 	// <typeName, subString of classpath>
 	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<>();
 	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<>();
+	private static Map<String, List<String>> nonnullbydefaultClasspathStorage = new HashMap<>();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -668,6 +670,7 @@ public class Preferences {
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
 	private List<String> nullableTypes;
+	private List<String> nonnullbydefaultTypes;
 	private FeatureStatus nullAnalysisMode;
 	private List<String> cleanUpActionsOnSave;
 	private boolean extractInterfaceReplaceEnabled;
@@ -901,6 +904,7 @@ public class Preferences {
 		avoidVolatileChanges = true;
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
+		nonnullbydefaultTypes = new ArrayList<>();
 		nullAnalysisMode = FeatureStatus.disabled;
 		cleanUpActionsOnSave = new ArrayList<>();
 		extractInterfaceReplaceEnabled = false;
@@ -913,15 +917,19 @@ public class Preferences {
 		// should support Maven style and Gradle style classpath
 		nonnullClasspathStorage.put("javax.annotation.Nonnull", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
 		nullableClasspathStorage.put("javax.annotation.Nullable", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
+		nonnullbydefaultClasspathStorage.put("javax.annotation.ParametersAreNonnullByDefault", getClasspathSubStringFromArtifact("com.google.code.findbugs:jsr305"));
 
 		nonnullClasspathStorage.put("org.eclipse.jdt.annotation.NonNull", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
 		nullableClasspathStorage.put("org.eclipse.jdt.annotation.Nullable", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
+		nonnullbydefaultClasspathStorage.put("org.eclipse.jdt.annotation.NonNullByDefault", getClasspathSubStringFromArtifact("org.eclipse.jdt:org.eclipse.jdt.annotation"));
 
 		nonnullClasspathStorage.put("org.springframework.lang.NonNull", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
 		nullableClasspathStorage.put("org.springframework.lang.Nullable", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
+		nonnullbydefaultClasspathStorage.put("org.springframework.lang.NonNullApi", getClasspathSubStringFromArtifact("org.springframework:spring-core"));
 
 		nonnullClasspathStorage.put("io.micrometer.core.lang.NonNull", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
 		nullableClasspathStorage.put("io.micrometer.core.lang.Nullable", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
+		nonnullbydefaultClasspathStorage.put("io.micrometer.core.lang.NonNullApi", getClasspathSubStringFromArtifact("io.micrometer:micrometer-core"));
 
 		nonnullClasspathStorage.put("org.jetbrains.annotations.NotNull", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
 		nullableClasspathStorage.put("org.jetbrains.annotations.Nullable", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
@@ -1266,6 +1274,8 @@ public class Preferences {
 		prefs.setNonnullTypes(nonnullTypes);
 		List<String> nullableTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NULLABLE, Collections.emptyList());
 		prefs.setNullableTypes(nullableTypes);
+		List<String> nonullbydefaultTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT, Collections.emptyList());
+		prefs.setNonnullbydefaultTypes(nonullbydefaultTypes);
 		String nullAnalysisMode = getString(configuration, JAVA_COMPILE_NULLANALYSIS_MODE, null);
 		prefs.setNullAnalysisMode(FeatureStatus.fromString(nullAnalysisMode, FeatureStatus.disabled));
 		List<String> cleanupActionsOnSave = getList(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE, Collections.emptyList());
@@ -2244,6 +2254,14 @@ public class Preferences {
 		this.nullableTypes = nullableTypes;
 	}
 
+	public List<String> getNonnullbydefaultTypes() {
+		return this.nonnullbydefaultTypes;
+	}
+
+	public void setNonnullbydefaultTypes(List<String> nonnullbydefaultTypes) {
+		this.nonnullbydefaultTypes = nonnullbydefaultTypes;
+	}
+
 	public void setNullAnalysisMode(FeatureStatus nullAnalysisMode) {
 		this.nullAnalysisMode = nullAnalysisMode;
 	}
@@ -2325,9 +2343,14 @@ public class Preferences {
 		if (enabled) {
 			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType);
+			String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage);
+			if (nonnullbydefaultTypes == null && nonnullType != null && nullableType != null) {
+				// there is not NonNullByDefault in org.jetbrains:annotations
+				nonnullbydefaultTypes = "org.eclipse.jdt.annotation.NonNullByDefault";
+			}
+			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType, nonnullbydefaultTypes);
 		} else {
-			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(null, null);
+			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(null, null, null);
 		}
 		boolean shouldUpdate = !projectNullAnalysisOptions.entrySet().stream().allMatch(e -> e.getValue().equals(projectInheritOptions.get(e.getKey())));
 		if (shouldUpdate) {
@@ -2344,7 +2367,7 @@ public class Preferences {
 	}
 
 	private boolean hasAnnotationNullAnalysisTypes() {
-		if (this.nonnullTypes.isEmpty() && this.nullableTypes.isEmpty()) {
+		if (this.nonnullTypes.isEmpty() && this.nullableTypes.isEmpty() && this.nonnullbydefaultTypes.isEmpty()) {
 			return false;
 		}
 		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
@@ -2353,7 +2376,8 @@ public class Preferences {
 			}
 			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-			if (nonnullType != null || nullableType != null) {
+			String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage);
+			if (nonnullType != null || nullableType != null || nonnullbydefaultTypes != null) {
 				return true;
 			}
 		}
@@ -2425,14 +2449,15 @@ public class Preferences {
 	 * @param nullableType the given nullable type
 	 * @return the map contains the null analysis options, if both given types are null, will return default null analysis options
 	 */
-	private Map<String, String> generateProjectNullAnalysisOptions(String nonnullType, String nullableType) {
+	private Map<String, String> generateProjectNullAnalysisOptions(String nonnullType, String nullableType, String nonnullbydefaultType) {
 		Map<String, String> options = new HashMap<>();
-		if (nonnullType == null && nullableType == null) {
+		if (nonnullType == null && nullableType == null && nonnullbydefaultType == null) {
 			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "disabled");
 			// set default values
 			Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
 			options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME));
 			options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME));
+			options.put(JavaCore.COMPILER_NONNULL_BY_DEFAULT_ANNOTATION_NAME, defaultOptions.get(JavaCore.COMPILER_NONNULL_BY_DEFAULT_ANNOTATION_NAME));
 			options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_NULL_REFERENCE));
 			options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, defaultOptions.get(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE));
 			options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION));
@@ -2442,10 +2467,12 @@ public class Preferences {
 			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "enabled");
 			options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, nonnullType != null ? nonnullType : "");
 			options.put(JavaCore.COMPILER_NULLABLE_ANNOTATION_NAME, nullableType != null ? nullableType : "");
+			options.put(JavaCore.COMPILER_NONNULL_BY_DEFAULT_ANNOTATION_NAME, nonnullbydefaultType != null ? nonnullbydefaultType : "");
 			options.put(JavaCore.COMPILER_PB_NULL_REFERENCE, "warning");
 			options.put(JavaCore.COMPILER_PB_POTENTIAL_NULL_REFERENCE, "warning");
 			options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, "warning");
 			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
+			options.put(JavaCore.COMPILER_PB_MISSING_NONNULL_BY_DEFAULT_ANNOTATION, "ignore");
 			options.put(JavaCore.COMPILER_PB_SYNTACTIC_NULL_ANALYSIS_FOR_FIELDS, JavaCore.ENABLED);
 		}
 		return options;

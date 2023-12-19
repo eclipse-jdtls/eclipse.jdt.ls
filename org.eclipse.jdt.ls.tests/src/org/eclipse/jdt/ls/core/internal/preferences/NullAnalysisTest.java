@@ -17,12 +17,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -44,6 +47,7 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		try {
 			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
 			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
@@ -74,6 +78,7 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 		}
@@ -84,6 +89,7 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		try {
 			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
 			this.preferenceManager.getPreferences().setNullableTypes(List.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
@@ -111,6 +117,7 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 		}
@@ -118,18 +125,26 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 
 	@Test
 	public void testNullAnalysisDisabled() throws Exception {
-		this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
-		this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
-		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
-		IProject project = importGradleProject("null-analysis");
-		assertIsJavaProject(project);
-		if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
-			BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
-			buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+		try {
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
+			IProject project = importGradleProject("null-analysis");
+			assertIsJavaProject(project);
+			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
+				BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
+				buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+			}
+			List<IMarker> warningMarkers = ResourceUtils.getWarningMarkers(project);
+			assertEquals(3, warningMarkers.size());
+			assertNoErrors(project);
+		} finally {
+			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 		}
-		List<IMarker> warningMarkers = ResourceUtils.getWarningMarkers(project);
-		assertEquals(3, warningMarkers.size());
-		assertNoErrors(project);
 	}
 
 	@Test
@@ -137,6 +152,8 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		try {
 			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
 			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
+
 			IProject project = importGradleProject("null-analysis");
 			assertIsJavaProject(project);
 			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
@@ -152,6 +169,50 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		}
+	}
+
+	@Test
+	public void testNonnullbyDefault() throws Exception {
+		try {
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
+			IProject project = importGradleProject("null-analysis");
+			assertIsJavaProject(project);
+			BuildWorkspaceHandler buildWorkspaceHandler = new BuildWorkspaceHandler(JavaLanguageServerPlugin.getProjectsManager());
+			if (this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions()) {
+				buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+			}
+			Map<String, String> options = JavaCore.create(project).getOptions(true);
+			assertEquals(options.get(JavaCore.COMPILER_NONNULL_BY_DEFAULT_ANNOTATION_NAME), "org.eclipse.jdt.annotation.NonNullByDefault");
+			IFile file = project.getFile("/src/main/java/org/sample/Test.java");
+			assertTrue(file.exists());
+			IMarker[] markers = file.findMarkers(null, true, IResource.DEPTH_INFINITE);
+			assertEquals(1, markers.length);
+			IMarker marker = getWarningMarker(project, "The @Nonnull field count may not have been initialized");
+			assertNotNull(marker);
+			IFile packageInfo = project.getFile("/src/main/java/org/sample/package-info.java");
+			assertTrue(packageInfo.exists());
+			String contents = """
+					package org.sample;
+					""";
+			ByteArrayInputStream newContent = new ByteArrayInputStream(contents.getBytes("UTF-8")); //$NON-NLS-1$
+			packageInfo.setContents(newContent, IResource.FORCE, new NullProgressMonitor());
+			buildWorkspaceHandler.buildWorkspace(true, new NullProgressMonitor());
+			markers = file.findMarkers(null, true, IResource.DEPTH_INFINITE);
+			assertEquals(0, markers.length);
+			marker = getWarningMarker(project, "The @Nonnull field count may not have been initialized");
+			assertNull(marker);
+			assertNoErrors(project);
+		} finally {
+			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 		}
 	}

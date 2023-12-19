@@ -411,6 +411,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	public void testNullAnalysisDisabled() throws Exception {
 		this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
 		this.preferenceManager.getPreferences().setNullableTypes(List.of("org.eclipse.jdt.annotation.Nullable", "javax.annotation.Nonnull"));
+		this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
 		this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
 		try {
 			IProject project = importMavenProject("null-analysis");
@@ -425,6 +426,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		} finally {
 			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 		}
