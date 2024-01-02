@@ -97,6 +97,8 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	private static final java.lang.String REFERENCE_PREFIX = "reference:";
 
+	private static final String GENERATES_METADATA_FILES_AT_PROJECT_ROOT = "java.import.generatesMetadataFilesAtProjectRoot";
+
 	protected IProgressMonitor monitor;
 	protected StandardProjectsManager projectsManager;
 	@Mock
@@ -302,6 +304,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 		ResourcesPlugin.getWorkspace().save(true/*full save*/, null/*no progress*/);
 		CoreASTProvider.getInstance().disposeAST();
+		System.clearProperty(GENERATES_METADATA_FILES_AT_PROJECT_ROOT);
 	}
 
 	protected void assertIsJavaProject(IProject project) {

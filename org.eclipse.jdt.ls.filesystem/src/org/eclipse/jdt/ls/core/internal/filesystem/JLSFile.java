@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.filesystem.local.LocalFile;
+import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -50,6 +51,9 @@ public class JLSFile extends LocalFile {
         }
 
         IPath filePath = new Path(this.filePath);
+        if (JLSFsUtils.isExcluded(filePath)) {
+            return childNames;
+        }
         String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(filePath);
         if (projectName == null) {
             return childNames;
@@ -69,7 +73,7 @@ public class JLSFile extends LocalFile {
     @Override
     public IFileStore getChild(String name) {
         IPath path = new Path(this.filePath).append(name);
-        if (JLSFsUtils.shouldStoreInMetadataArea(path)) {
+        if (JLSFsUtils.shouldStoreInMetadataArea(path) && !JLSFsUtils.isExcluded(path)) {
             IPath containerPath = JLSFsUtils.getContainerPath(path);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
             if (projectName == null) {
@@ -87,7 +91,7 @@ public class JLSFile extends LocalFile {
     @Override
     public IFileStore getFileStore(IPath path) {
         IPath fullPath = new Path(this.filePath).append(path);
-        if (JLSFsUtils.shouldStoreInMetadataArea(fullPath)) {
+        if (JLSFsUtils.shouldStoreInMetadataArea(fullPath) && !JLSFsUtils.isExcluded(fullPath)) {
             IPath containerPath = JLSFsUtils.getContainerPath(fullPath);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
             if (projectName == null) {

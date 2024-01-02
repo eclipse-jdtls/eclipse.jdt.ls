@@ -16,6 +16,9 @@ package org.eclipse.jdt.ls.core.internal.filesystem;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.junit.After;
 import org.junit.Test;
 
 public class JLSFsUtilsTest {
@@ -34,5 +37,16 @@ public class JLSFsUtilsTest {
 	@Test
 	public void testGeneratesMetadataFilesAtProjectRootWhenNotSet() {
 		assertTrue(JLSFsUtils.generatesMetadataFilesAtProjectRoot());
+	}
+
+	@Test
+	public void testExcluded() {
+		IPath path = new Path("/project/node_modules");
+		assertTrue(JLSFsUtils.isExcluded(path));
+	}
+
+	@After
+	public void cleanUp() throws Exception {
+		System.clearProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT);
 	}
 }
