@@ -516,8 +516,9 @@ public class Preferences {
 	/**
 	 * Preference key for list of cleanups to run on save
 	 */
-	public static final String JAVA_CLEANUPS_ACTIONS_ON_SAVE = "java.cleanup.actionsOnSave";
-
+	public static final String JAVA_CLEANUPS_ACTIONS = "java.cleanup.actions";
+	public static final String JAVA_CLEANUPS_ACTIONS_ON_SAVE_DEPRECATED = "java.cleanup.actionsOnSave";
+	public static final String JAVA_CLEANUPS_ACTIONS_ON_SAVE_CLEANUP = "java.saveActions.cleanup";
 	public static final String JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE = "java.refactoring.extract.interface.replace";
 
 	/**
@@ -682,7 +683,8 @@ public class Preferences {
 	private List<String> nullableTypes;
 	private List<String> nonnullbydefaultTypes;
 	private FeatureStatus nullAnalysisMode;
-	private List<String> cleanUpActionsOnSave;
+	private List<String> cleanUpActions;
+	private boolean cleanUpActionsOnSaveEnabled;
 	private boolean extractInterfaceReplaceEnabled;
 	private boolean telemetryEnabled;
 	private boolean validateAllOpenBuffersOnChanges;
@@ -916,7 +918,8 @@ public class Preferences {
 		nullableTypes = new ArrayList<>();
 		nonnullbydefaultTypes = new ArrayList<>();
 		nullAnalysisMode = FeatureStatus.disabled;
-		cleanUpActionsOnSave = new ArrayList<>();
+		cleanUpActions = new ArrayList<>();
+		cleanUpActionsOnSaveEnabled = false;
 		extractInterfaceReplaceEnabled = false;
 		telemetryEnabled = false;
 		validateAllOpenBuffersOnChanges = true;
@@ -1291,8 +1294,14 @@ public class Preferences {
 		prefs.setNonnullbydefaultTypes(nonullbydefaultTypes);
 		String nullAnalysisMode = getString(configuration, JAVA_COMPILE_NULLANALYSIS_MODE, null);
 		prefs.setNullAnalysisMode(FeatureStatus.fromString(nullAnalysisMode, FeatureStatus.disabled));
-		List<String> cleanupActionsOnSave = getList(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE, Collections.emptyList());
-		prefs.setCleanUpActionsOnSave(cleanupActionsOnSave);
+		List<String> cleanupActionsTemp = getList(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE_DEPRECATED, Collections.emptyList());
+		List<String> cleanupActions = getList(configuration, JAVA_CLEANUPS_ACTIONS, Collections.emptyList());
+		if(cleanupActions.isEmpty() && !cleanupActionsTemp.isEmpty()) {
+			cleanupActions = cleanupActionsTemp;
+		}
+		prefs.setCleanUpActions(cleanupActions);
+		boolean cleanUpActionsOnSaveEnabled = getBoolean(configuration, JAVA_CLEANUPS_ACTIONS_ON_SAVE_CLEANUP, false);
+		prefs.setCleanUpActionsOnSaveEnabled(cleanUpActionsOnSaveEnabled);
 		boolean extractInterfaceReplaceEnabled = getBoolean(configuration, JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE, false);
 		prefs.setExtractInterfaceReplaceEnabled(extractInterfaceReplaceEnabled);
 		boolean telemetryEnabled = getBoolean(configuration, JAVA_TELEMETRY_ENABLED_KEY, false);
@@ -1310,8 +1319,12 @@ public class Preferences {
 	 * @param enabledCleanUps
 	 *            the new list of enabled clean ups
 	 */
-	public void setCleanUpActionsOnSave(List<String> enabledCleanUps) {
-		this.cleanUpActionsOnSave = enabledCleanUps;
+	public void setCleanUpActions(List<String> enabledCleanUps) {
+		this.cleanUpActions = enabledCleanUps;
+	}
+
+	public void setCleanUpActionsOnSaveEnabled(boolean cleanup) {
+		this.cleanUpActionsOnSaveEnabled = cleanup;
 	}
 
 	public Preferences setJavaHome(String javaHome) {
@@ -2321,8 +2334,12 @@ public class Preferences {
 	 *
 	 * @return the list of enabled clean ups
 	 */
-	public List<String> getCleanUpActionsOnSave() {
-		return this.cleanUpActionsOnSave;
+	public List<String> getCleanUpActions() {
+		return this.cleanUpActions;
+	}
+
+	public boolean getCleanUpActionsOnSaveEnabled() {
+		return this.cleanUpActionsOnSaveEnabled;
 	}
 
 	/**

@@ -144,7 +144,8 @@ public class SaveActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testNoConflictBetweenLSPAndJDTUI() throws Exception {
 		// invertEquals enabled via. LSP settings
-		preferences.setCleanUpActionsOnSave(Arrays.asList("invertEquals"));
+		preferences.setCleanUpActions(Arrays.asList("invertEquals"));
+		preferences.setCleanUpActionsOnSaveEnabled(true);
 		// addFinalModifier enabled via. cleanup.make_variable_declarations_final
 		IFile jdtCorePrefs = project.getFile(Path.fromOSString(".settings/org.eclipse.jdt.ui.prefs"));
 		Files.writeString(jdtCorePrefs.getLocation().toPath(), """

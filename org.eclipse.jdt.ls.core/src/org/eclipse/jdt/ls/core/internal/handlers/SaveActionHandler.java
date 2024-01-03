@@ -16,8 +16,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
@@ -34,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.cleanup.CleanUpRegistry;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -69,13 +72,42 @@ public class SaveActionHandler {
 		}
 
 		LinkedHashSet<String> cleanUpIds = new LinkedHashSet<>();
-		List<String> lspCleanups = preferences.getCleanUpActionsOnSave();
+
+		List<String> lspCleanups = Collections.emptyList();
+		if (preferences.getCleanUpActionsOnSaveEnabled()) {
+			lspCleanups = preferences.getCleanUpActions();
+		}
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		return edit;
+	}
+
+	public WorkspaceEdit performManualCleanupActions(TextDocumentIdentifier doc, IProgressMonitor monitor) {
+		List<TextEdit> edit = new ArrayList<>();
+
+		if (monitor.isCanceled()) {
+			return null;
+		}
+
+		String documentUri = doc.getUri();
+		Preferences preferences = preferenceManager.getPreferences();
+		IEclipsePreferences jdtUiPreferences = getJdtUiProjectPreferences(documentUri);
+		boolean canUseInternalSettings = preferenceManager.getClientPreferences().canUseInternalSettings();
+		LinkedHashSet<String> cleanUpIds = new LinkedHashSet<>();
+
+		List<String> lspCleanups = preferences.getCleanUpActions();
+		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
+
+		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
+		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(doc, new ArrayList<>(cleanUpIds), monitor);
+		edit.addAll(cleanUpEdits);
+		Map<String, List<TextEdit>> editMap = new HashMap<>();
+		editMap.put(doc.getUri(), edit);
+		WorkspaceEdit finalEdit = new WorkspaceEdit(editMap);
+		return finalEdit;
 	}
 
 	private Collection<String> getCleanupsFromJDTUIPreferences(IEclipsePreferences jdtUIPrefs) {

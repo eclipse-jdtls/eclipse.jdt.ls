@@ -100,6 +100,9 @@ public interface JavaProtocolExtensions {
 	CompletableFuture<WorkspaceEdit> organizeImports(CodeActionParams params);
 
 	@JsonRequest
+	CompletableFuture<WorkspaceEdit> cleanup(TextDocumentIdentifier documentUri);
+
+	@JsonRequest
 	CompletableFuture<CheckToStringResponse> checkToStringStatus(CodeActionParams params);
 
 	@JsonRequest
