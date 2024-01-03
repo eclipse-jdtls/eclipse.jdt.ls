@@ -1080,6 +1080,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 	@Override
+	public CompletableFuture<WorkspaceEdit> cleanup(TextDocumentIdentifier doc) {
+		debugTrace(">> java/cleanup");
+		SaveActionHandler handler = new SaveActionHandler(preferenceManager);
+		return computeAsync((monitor) -> handler.performManualCleanupActions(doc, monitor));
+	}
+
+	@Override
 	public CompletableFuture<AccessorField[]> resolveUnimplementedAccessors(AccessorCodeActionParams params) {
 		debugTrace(">> java/resolveUnimplementedAccessors");
 		return computeAsync((monitor) -> GenerateAccessorsHandler.getUnimplementedAccessors(params));
