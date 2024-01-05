@@ -68,9 +68,9 @@ public class WrapperValidator {
 
 	public static final String GRADLE_CHECKSUMS = "/gradle/checksums/checksums.json";
 	public static final String GRADLE_VERSIONS = "/gradle/checksums/versions.json";
+	public static final String GRADLE_WRAPPER_JAR = "gradle/wrapper/gradle-wrapper.jar";
 	private static final int QUEUE_LENGTH = 20;
 	private static final String WRAPPER_CHECKSUM_URL = "wrapperChecksumUrl";
-	private static final String GRADLE_WRAPPER_JAR = "gradle/wrapper/gradle-wrapper.jar";
 
 	private static Set<String> allowed = new HashSet<>();
 	private static Set<String> disallowed = new HashSet<>();
