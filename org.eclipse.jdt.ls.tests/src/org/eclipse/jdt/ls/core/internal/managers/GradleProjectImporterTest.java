@@ -741,6 +741,13 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertEquals("apt", AptConfig.getRawProcessorOptions(javaProject).get("test.arg"));
 	}
 
+	@Test
+	public void testGetGradleDistribution() {
+		File projectRoot = new File(getSourceProjectDirectory(), "gradle/no-gradlew");
+		GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(projectRoot.toPath());
+		assertTrue(distribution instanceof WrapperGradleDistribution);
+	}
+
 	private ProjectConfiguration getProjectConfiguration(IProject project) {
 		org.eclipse.buildship.core.internal.configuration.BuildConfiguration buildConfig = CorePlugin.configurationManager().loadBuildConfiguration(project.getLocation().toFile());
 		return CorePlugin.configurationManager().createProjectConfiguration(buildConfig, project.getLocation().toFile());
