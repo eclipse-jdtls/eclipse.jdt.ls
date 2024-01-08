@@ -117,6 +117,9 @@ import org.eclipse.jdt.internal.corext.fix.AddVarLambdaParameterTypesFixCore;
 import org.eclipse.jdt.internal.corext.fix.ChangeLambdaBodyToBlockFixCore;
 import org.eclipse.jdt.internal.corext.fix.ChangeLambdaBodyToExpressionFixCore;
 import org.eclipse.jdt.internal.corext.fix.ConvertLambdaToMethodReferenceFixCore;
+import org.eclipse.jdt.internal.corext.fix.ConvertToMessageFormatFixCore;
+import org.eclipse.jdt.internal.corext.fix.ConvertToStringBufferFixCore;
+import org.eclipse.jdt.internal.corext.fix.ConvertToStringFormatFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.InvertEqualsExpressionFixCore;
 import org.eclipse.jdt.internal.corext.fix.JoinVariableFixCore;
@@ -224,7 +227,9 @@ public class QuickAssistProcessor {
 				//				}
 				//				getConvertEnhancedForLoopProposal(context, coveringNode, resultingCollections);
 				//				getRemoveBlockProposals(context, coveringNode, resultingCollections);
-				//				getConvertStringConcatenationProposals(context, resultingCollections);
+			getConvertToMessageFormatProposal(context, coveringNode, resultingCollections);
+			getConvertToStringBufferProposal(context, coveringNode, resultingCollections);
+			getConvertToStringFormatProposal(context, coveringNode, resultingCollections);
 				//				getMissingCaseStatementProposals(context, coveringNode, resultingCollections);
 			getStringConcatToTextBlockProposal(context, coveringNode, resultingCollections);
 			// }
@@ -1756,6 +1761,54 @@ public class QuickAssistProcessor {
 			if (fix != null) {
 				try {
 					var p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.LAMBDA_EXPRESSION_AND_METHOD_REF_CLEANUP);
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
+					return true;
+				} catch (CoreException e) {
+					// ignore
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean getConvertToMessageFormatProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+		if (resultingCollections != null) {
+			var fix = ConvertToMessageFormatFixCore.createConvertToMessageFormatFix(context.getASTRoot(), coveringNode);
+			if (fix != null) {
+				try {
+					var p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.CONVERT_TO_MESSAGE_FORMAT);
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
+					return true;
+				} catch (CoreException e) {
+					// ignore
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean getConvertToStringBufferProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+		if (resultingCollections != null) {
+			var fix = ConvertToStringBufferFixCore.createConvertToStringBufferFix(context.getASTRoot(), coveringNode);
+			if (fix != null) {
+				try {
+					var p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.CONVERT_TO_STRING_BUFFER);
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
+					return true;
+				} catch (CoreException e) {
+					// ignore
+				}
+			}
+		}
+		return false;
+	}
+
+	private boolean getConvertToStringFormatProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+		if (resultingCollections != null) {
+			var fix = ConvertToStringFormatFixCore.createConvertToStringFormatFix(context.getASTRoot(), coveringNode);
+			if (fix != null) {
+				try {
+					var p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.CONVERT_TO_MESSAGE_FORMAT);
 					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 					return true;
 				} catch (CoreException e) {
