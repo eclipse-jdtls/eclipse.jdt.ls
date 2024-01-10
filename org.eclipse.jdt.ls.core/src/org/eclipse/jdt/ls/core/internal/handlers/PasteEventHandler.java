@@ -284,20 +284,20 @@ public class PasteEventHandler {
 		String originalDocumentUri = params.getCopiedDocumentUri();
 		String insertText = params.getText();
 		if (params.getLocation().getUri().equals(originalDocumentUri)) {
-			return new DocumentPasteEdit(insertText);
+			return null;
 		}
 		IType primaryType = cu.findPrimaryType();
 		if (primaryType == null) {
-			return new DocumentPasteEdit(insertText);
+			return null;
 		}
 		ISourceRange sourceRange = primaryType.getSourceRange();
 		if (sourceRange == null) {
-			return new DocumentPasteEdit(insertText);
+			return null;
 		}
 		int offset = JsonRpcHelpers.toOffset(cu, range.getStart().getLine(), range.getStart().getCharacter());
 		int length = JsonRpcHelpers.toOffset(cu, range.getEnd().getLine(), range.getEnd().getCharacter()) - offset;
 		if (offset <= sourceRange.getOffset() || offset + length >= sourceRange.getOffset() + sourceRange.getLength()) {
-			return new DocumentPasteEdit(insertText);
+			return null;
 		}
 		Function<ImportSelection[], ImportCandidate[]> chooseFunc = null;
 		ICompilationUnit tempUnit = RenameAnalyzeUtil.createNewWorkingCopy(cu, new TextChangeManager(true), new WorkingCopyOwner() {
