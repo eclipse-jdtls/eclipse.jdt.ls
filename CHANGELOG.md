@@ -1,5 +1,25 @@
 # Change Log
 
+# [1.31.0 (January 11th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/123?closed=1)
+ * performance - Ensure initial import of projects respect resource filter settings. See [#2999](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2999).
+ * performance - Improve the performance of "Organize Imports" when "favorite static imports" are involved. See [#2994](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2994).
+ * enhancement - Add String Templates (Java 21) preview support. See [#2994](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2994).
+ * enhancement - Add quick assists for converting string concatenations to `StringBuilder`, `StringBuffer`, `String.format(..)`, `MessageFormat`. See [#3007](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3007).
+ * enhancement - Add quick assists for inverting `equals` comparison & handling of lambda expressions. See [#2996](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2996).
+ * enhancement - Support "non-null" assertions by default using null analysis. See [#3003](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3003).
+ * enhancement - Introduce delegate command for Java file paste functionality. See [#2981](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2981).
+ * bug fix - Fix multiline semantic highlighting for `implements`, `extends`, and `permits` keywords. See [#2995](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2995).
+ * bug fix - Use wrapper distribution when `gradle-wrapper.properties` exists. See [#3012](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3012).
+ * bug fix - Fix false positive parameter mismatch error. See [#2992](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2992).
+ * bug fix - Avoid returning `DocumentPasteEdit` when pasted content is unchanged. See [#3016](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3016).
+ * bug fix - Guard against `null` completion context and insertion text. See [#2997](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2997).
+ * bug fix - The assignment to variable `workingCopy` has no effect. See [#3002](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3002).
+ * bug fix - Add static registration for `textDocument/declaration`. See [#3017](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3017).
+ * bug fix - Filter excessive logging of artifact download from m2e in "debug mode". See [#3011](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3011).
+ * build - Update target platform to 2023-12 state. See [#2998](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2998).
+ * build - Update Maven wrapper to 3.9.6. See [#2998](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3015).
+ * debt - Delete large number of files/API now accessible through `org.eclipse.jdt.core.manipulation`. See [#2946](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2946), [#2986](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2986), [#3000](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3000).
+
 # [1.30.1 (December 7th, 2023)](https://github.com/eclipse/eclipse.jdt.ls/milestone/122?closed=1)
  * performance - Avoid unnecessary (Maven) project updates. See [#2987](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2987).
  * bug fix - Out of sync editor content may report false compilation errors. See [#2955](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2955).
