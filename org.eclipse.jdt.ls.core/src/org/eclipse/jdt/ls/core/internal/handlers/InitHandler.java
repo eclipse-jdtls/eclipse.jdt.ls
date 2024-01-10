@@ -169,6 +169,9 @@ final public class InitHandler extends BaseInitHandler {
 		if (!preferenceManager.getClientPreferences().isDefinitionDynamicRegistered()) {
 			capabilities.setDefinitionProvider(Boolean.TRUE);
 		}
+		if (!preferenceManager.getClientPreferences().isDeclarationDynamicRegistered()) {
+			capabilities.setDeclarationProvider(Boolean.TRUE);
+		}
 		if (!preferenceManager.getClientPreferences().isTypeDefinitionDynamicRegistered()) {
 			capabilities.setTypeDefinitionProvider(Boolean.TRUE);
 		}
