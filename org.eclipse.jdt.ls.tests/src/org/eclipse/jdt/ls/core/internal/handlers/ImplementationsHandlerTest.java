@@ -74,11 +74,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
 		assertNotNull("findImplementations should not return null", implementations);
 		assertEquals(2, implementations.size());
-		Location foo2 = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo2.getUri(), foo2.getUri().contains("org/sample/Foo2.java"));
+
+		Location foo2 = implementations.stream().filter(i -> i.getUri().contains("org/sample/Foo2.java")).findFirst().get();
 		assertEquals(JDTUtils.newLineRange(2, 13, 17), foo2.getRange());
-		Location foo3 = implementations.get(1);
-		assertTrue("Unexpected implementation : " + foo3.getUri(), foo3.getUri().contains("org/sample/Foo3.java"));
+		Location foo3 = implementations.stream().filter(i -> i.getUri().contains("org/sample/Foo3.java")).findFirst().get();
 		assertEquals(JDTUtils.newLineRange(5, 13, 17), foo3.getRange());
 	}
 
@@ -251,9 +250,13 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		// only jdk classes are expected to implement Runnable
 		assertEquals(implementations.toString(), 8, implementations.size());
 		Range defaultRange = JDTUtils.newRange();
-		assertTrue("Unexpected implementation : " + implementations.get(0).getUri(), implementations.get(0).getUri().contains("org/sample/RunnableTest.java"));
-		for (int i = 1; i < implementations.size(); i++) {
-			Location implem = implementations.get(i);
+
+		boolean containsRunnableTest = implementations.stream().anyMatch(i -> i.getUri().contains("org/sample/RunnableTest.java"));
+		assertTrue("Implementation not found : org/sample/RunnableTest.java", containsRunnableTest);
+
+		List<? extends Location> implementainsNotRunnableTest = implementations.stream().filter(i -> !i.getUri().contains("org/sample/RunnableTest.java")).toList();
+		for (int i = 0; i < implementainsNotRunnableTest.size(); i++) {
+			Location implem = implementainsNotRunnableTest.get(i);
 			assertTrue("Unexpected implementation : " + implem.getUri(), implem.getUri().contains("rtstubs.jar"));
 			assertEquals("Expected default location ", defaultRange, implem.getRange());//no jdk sources available
 		}

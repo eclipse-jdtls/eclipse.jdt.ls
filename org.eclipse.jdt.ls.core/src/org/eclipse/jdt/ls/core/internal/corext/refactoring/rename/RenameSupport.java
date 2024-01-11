@@ -14,7 +14,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -293,7 +292,7 @@ public class RenameSupport {
 	public static RenameSupport create(IType type, String newName, int flags) throws CoreException {
 		JavaRenameProcessor processor = new RenameTypeProcessor(type) {
 			@Override
-			protected void createChangeForRenamedCUStandardResource(IType type, TextChangeManager changeManager, IResource resource, DynamicValidationRefactoringChange result) throws CoreException {
+			protected void createChangeForRenamedCUStandardResource(IType type, TextChangeManager changeManager, DynamicValidationRefactoringChange result) throws CoreException {
 				addTypeDeclarationUpdate(changeManager);
 				addConstructorRenames(changeManager);
 				result.addAll(changeManager.getAllChanges());
