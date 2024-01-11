@@ -291,7 +291,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		//Reference location
 		List<Location> locations = (List<Location>) args.get(2);
 		assertEquals(2, locations.size());
-		Location loc = locations.get(0);
+		Location loc = locations.stream().filter(l -> l.getUri().contains("Foo2")).findFirst().get();
 		assertTrue(loc.getUri().endsWith("src/java/Foo2.java"));
 		assertRange(5, 13, 17, loc.getRange());
 	}
