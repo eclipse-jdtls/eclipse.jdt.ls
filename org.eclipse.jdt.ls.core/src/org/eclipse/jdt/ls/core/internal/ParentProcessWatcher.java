@@ -88,9 +88,9 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 
 		String command;
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
-			command = "cmd /c \"tasklist /FI \"PID eq " + pid + "\" | findstr " + pid + "\"";
+			command = String.format("cmd /c \"tasklist /FI \"PID eq %1$d\" | findstr %1$d\"", pid);
 		} else {
-			command = "kill -0 " + pid;
+			command = String.format("kill -0 %d", pid);
 		}
 		Process process = null;
 		boolean finished = false;
