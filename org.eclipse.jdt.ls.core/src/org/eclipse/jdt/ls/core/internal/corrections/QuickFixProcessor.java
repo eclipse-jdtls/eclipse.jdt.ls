@@ -39,10 +39,12 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
+import org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsSubProcessorCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectionProposal;
@@ -56,6 +58,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElements
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 
@@ -532,18 +535,15 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addFallThroughProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnhandledWarningToken:
-			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.ProblemNotAnalysed:
-			// SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnusedWarningToken:
-			// SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnhandledWarningToken:
+				Collection<ASTRewriteCorrectionProposalCore> newProposals = SuppressWarningsSubProcessorCore.addUnknownSuppressWarningProposals(context, problem);
+				newProposals.forEach(e -> proposals.add(CodeActionHandler.wrap(e, CodeActionKind.QuickFix)));
+				break;
+			case IProblem.ProblemNotAnalysed:
+			case IProblem.UnusedWarningToken:
+				ASTRewriteCorrectionProposalCore addedProposal = SuppressWarningsSubProcessorCore.addRemoveUnusedSuppressWarningProposals(context, problem);
+				proposals.add(CodeActionHandler.wrap(addedProposal, CodeActionKind.QuickFix));
+				break;
 			case IProblem.MissingEnumConstantCase:
 			case IProblem.MissingEnumDefaultCase:
 			case IProblem.SwitchExpressionsYieldMissingEnumConstantCase:
@@ -681,12 +681,10 @@ public class QuickFixProcessor {
 				String str = problem.toString();
 				System.out.println(str);
 		}
-		// if
-		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))
-		// {
-		// SuppressWarningsSubProcessor.addSuppressWarningsProposals(context,
-		// problem, proposals);
-		// }
+		if (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {
+			Collection<ASTRewriteCorrectionProposalCore> newProposals = SuppressWarningsSubProcessorCore.addSuppressWarningsProposals(context, problem);
+			newProposals.forEach(e -> proposals.add(CodeActionHandler.wrap(e, CodeActionKind.QuickFix)));
+		}
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
 	}
