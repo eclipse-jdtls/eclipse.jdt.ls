@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
@@ -178,9 +179,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			// getContainerForLocation() will return the nearest container for the given path,
 			// if the project has been imported, container.getProject() will return the imported IProject
 			// otherwise, container.getProject() will return the root level project
-			if (container != null && projectInfo.getParent() != null) {
-				MavenProjectInfo parentInfo = projectInfo.getParent();
-				File parentPom = parentInfo.getPomFile();
+			File parentPom = getParentPomFile(projectInfo);
+			if (container != null && parentPom != null) {
 				IContainer parentContainer = root.getContainerForLocation(new Path(parentPom.getAbsolutePath()));
 				if (parentContainer != null && Objects.equals(container.getProject(), parentContainer.getProject())) {
 					container = null;
@@ -244,6 +244,25 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		subMonitor.setWorkRemaining(20);
 		updateProjects(projects, lastWorkspaceStateSaved, subMonitor.split(20));
 		subMonitor.done();
+	}
+
+	private File getParentPomFile(MavenProjectInfo projectInfo) {
+		if (projectInfo.getParent() != null) {
+			return projectInfo.getParent().getPomFile();
+		}
+
+		if (projectInfo.getModel() != null) {
+			String parentPomRelativePath = projectInfo.getModel().getParent() == null ? null : projectInfo.getModel().getParent().getRelativePath();
+			if (StringUtils.isNotBlank(parentPomRelativePath)) {
+				File currentProject = projectInfo.getPomFile().getParentFile();
+				File parentPomFile = currentProject.toPath().resolve(parentPomRelativePath).normalize().toFile();
+				if (parentPomFile.exists()) {
+					return parentPomFile;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	private long getLastWorkspaceStateModified() {

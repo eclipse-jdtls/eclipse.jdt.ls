@@ -20,6 +20,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -32,6 +34,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.EventNotification;
 import org.eclipse.jdt.ls.core.internal.EventType;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -115,6 +118,67 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
+	}
+
+	@Test
+	public void testManualImportNewMavenProjects() throws Exception {
+		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
+		IWorkspace workspace = wsRoot.getWorkspace();
+		IProject[] projects = workspace.getRoot().getProjects();
+		assertEquals(0, projects.length);
+
+		importProjects("maven/multimodule");
+		waitForJobs();
+		projects = workspace.getRoot().getProjects();
+		assertEquals(6, projects.length);
+
+		// Add new sub-module
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		File projectBasePath = project.getLocation().toFile();
+		IFile parentPom = project.getFile("/pom.xml");
+		ResourceUtils.setContent(parentPom, ResourceUtils.getContent(parentPom).replaceAll("<module>module1</module>", "<module>module1</module>\n<module>module4</module>"));
+		File subModulePath = new File(projectBasePath, "module4");
+		FileUtils.forceMkdir(subModulePath);
+		File newModulePom = new File(subModulePath, "pom.xml");
+		newModulePom.createNewFile();
+		BufferedWriter writer = new BufferedWriter(new FileWriter(newModulePom, true));
+		writer.newLine();
+		//@formatter:off
+		writer.write(
+		"<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
+			"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+			"xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+			"<modelVersion>4.0.0</modelVersion>" +
+			"<parent>" +
+				"<groupId>foo.bar</groupId>" +
+				"<artifactId>multimodule</artifactId>" +
+				"<version>0.0.1-SNAPSHOT</version>" +
+			"</parent>" +
+			"<artifactId>module4</artifactId>" +
+		"</project>");
+		//@formatter:on
+		writer.close();
+
+		// Verify no projects imported
+		projects = workspace.getRoot().getProjects();
+		assertEquals(6, projects.length);
+
+		// Verify import projects
+		projectsManager.setConnection(client);
+
+		// Manual import the new maven module
+		projectsManager.changeImportedProjects(Arrays.asList(newModulePom.toURI().toString()),
+			Arrays.asList(JDTUtils.getFileURI(parentPom)), Collections.emptyList(), new NullProgressMonitor());
+		waitForJobs();
+		IProject newProject = workspace.getRoot().getProject("module4");
+		assertTrue("New module is imported", newProject.exists());
+		projects = workspace.getRoot().getProjects();
+		assertEquals(7, projects.length);
+
+		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
+		verify(client, times(1)).sendEventNotification(argument.capture());
+		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
+		assertEquals(((List<URI>) argument.getValue().getData()).size(), 1);
 	}
 
 	@Test
