@@ -84,7 +84,7 @@ public class AddMissingMethodDeclarationQuickFixTest extends AbstractSelectionTe
 				""";
 		//@formatter:on
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "notEmpty"));
-		Expected e1 = new Expected("Add missing method 'notEmpty' to class 'App'", expected, CodeActionKind.QuickFix);
+		Expected e1 = new Expected("Add missing method 'notEmpty' to class 'App'", expected, JavaCodeActionKind.QUICK_ASSIST);
 		assertCodeActions(codeActions, e1);
 	}
 
@@ -130,7 +130,7 @@ public class AddMissingMethodDeclarationQuickFixTest extends AbstractSelectionTe
 				""";
 		//@formatter:on
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, CodeActionUtil.getRange(cu, "notEmpty"));
-		Expected e1 = new Expected("Add missing method 'notEmpty' to class 'App'", expected, CodeActionKind.QuickFix);
+		Expected e1 = new Expected("Add missing method 'notEmpty' to class 'App'", expected, JavaCodeActionKind.QUICK_ASSIST);
 		assertCodeActions(codeActions, e1);
 	}
 }

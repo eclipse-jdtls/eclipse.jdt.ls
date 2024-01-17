@@ -1447,7 +1447,7 @@ public class QuickAssistProcessor {
 			if (fix != null) {
 				try {
 					var p = new ChangeCorrectionProposalCore(fix.getDisplayString(), fix.createChange(null), IProposalRelevance.ADD_INFERRED_LAMBDA_PARAMETER_TYPES);
-					resultingCollections.add(CodeActionHandler.wrap(p, CodeActionKind.QuickFix));
+					resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 					return true;
 				} catch (CoreException e) {
 					// ignore
