@@ -42,6 +42,7 @@ import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectionProposal;
@@ -157,6 +158,10 @@ public class QuickFixProcessor {
 			case IProblem.UndefinedName:
 			case IProblem.UnresolvedVariable:
 				UnresolvedElementsSubProcessor.getVariableProposals(context, problem, null, proposals);
+				break;
+			case IProblem.UninitializedBlankFinalField:
+				UnInitializedFinalFieldBaseSubProcessor<ProposalKindWrapper> processor = new UnInitializedFinalFieldSubProcessor();
+				processor.addProposals(context, problem, proposals);
 				break;
 			case IProblem.AmbiguousType:
 			case IProblem.JavadocAmbiguousType:
