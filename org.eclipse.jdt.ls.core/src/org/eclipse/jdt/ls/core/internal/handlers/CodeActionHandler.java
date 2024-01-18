@@ -332,6 +332,11 @@ public class CodeActionHandler {
 					arguments.add(e.getAsString());
 				}
 			}
+			if (diagnostic.getData() instanceof String[] data) {
+				for (String s : data) {
+					arguments.add(s);
+				}
+			}
 			locations[i] = new ProblemLocationCore(start, end - start, problemId, arguments.toArray(new String[0]), isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
 		}
 		return locations;
