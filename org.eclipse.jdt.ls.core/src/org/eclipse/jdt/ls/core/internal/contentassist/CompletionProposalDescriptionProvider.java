@@ -15,6 +15,7 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jdt.core.CompletionContext;
@@ -51,11 +52,19 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	private CompletionContext fContext;
 	private ICompilationUnit fUnit;
+	private Map<String, Integer> fCollapsedTypes;
 
 	/**
 	 * Creates a new label provider.
 	 *
 	 */
+	public CompletionProposalDescriptionProvider(ICompilationUnit unit, CompletionContext context, Map<String, Integer> collapsedTypes) {
+		super();
+		fContext = context;
+		fUnit = unit;
+		fCollapsedTypes = collapsedTypes;
+	}
+
 	public CompletionProposalDescriptionProvider(ICompilationUnit unit, CompletionContext context) {
 		super();
 		fContext = context;
@@ -319,20 +328,33 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
 		StringBuilder description = this.createMethodProposalDescription(methodProposal);
+		String proposalName = String.valueOf(methodProposal.getName());
+		boolean skipDetail = false;
 		if (isCompletionItemLabelDetailsSupport()){
-			StringBuilder methodParams = new StringBuilder();
-			methodParams.append('(');
-			appendUnboundedParameterList(methodParams, methodProposal);
-			methodParams.append(')');
-			if (methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
-				StringBuilder returnType = new StringBuilder();
-				appendReturnType(returnType, methodProposal);
-				setLabelDetails(item, String.valueOf(methodProposal.getName()), methodParams.toString(), returnType.toString());
+			if (fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
+				setLabelDetails(item, proposalName, "(...)", fCollapsedTypes.get(proposalName).toString() + " overloads");
+				skipDetail = true;
 			} else {
-				setLabelDetails(item, String.valueOf(methodProposal.getName()), methodParams.toString(), null);
+				StringBuilder methodParams = new StringBuilder();
+				methodParams.append('(');
+				appendUnboundedParameterList(methodParams, methodProposal);
+				methodParams.append(')');
+				if (methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
+					StringBuilder returnType = new StringBuilder();
+					appendReturnType(returnType, methodProposal);
+					setLabelDetails(item, proposalName, methodParams.toString(), returnType.toString());
+				} else {
+					setLabelDetails(item, proposalName, methodParams.toString(), null);
+				}
 			}
 		} else {
-			item.setLabel(description.toString());
+			if (fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
+				item.setLabel(proposalName + "(...)");
+				item.setDetail(fCollapsedTypes.get(proposalName).toString() + " overloads");
+				skipDetail = true;
+			} else {
+				item.setLabel(description.toString());
+			}
 		}
 		item.setInsertText(String.valueOf(methodProposal.getName()));
 
@@ -352,13 +374,16 @@ public class CompletionProposalDescriptionProvider {
 
 		declaringType= Signature.getSimpleName(declaringType);
 		typeInfo.append(declaringType);
-		StringBuilder detail = new StringBuilder();
-		if (typeInfo.length() > 0) {
-			detail.append(typeInfo);
-			detail.append('.');
+
+		if (!skipDetail) {
+			StringBuilder detail = new StringBuilder();
+			if (typeInfo.length() > 0) {
+				detail.append(typeInfo);
+				detail.append('.');
+			}
+			detail.append(description);
+			item.setDetail(detail.toString());
 		}
-		detail.append(description);
-		item.setDetail(detail.toString());
 
 		if (fUnit != null && methodProposal.isConstructor() && typeInfo.length() > 0 && item.getData() != null && methodProposal.getRequiredProposals() != null && methodProposal.getRequiredProposals().length > 0) {
 			CompletionProposal requiredProposal = methodProposal.getRequiredProposals()[0];
@@ -701,7 +726,7 @@ public class CompletionProposalDescriptionProvider {
 		// change the proposal to required type proposal when the
 		// argument guessing is turned off and the proposal is a constructor.
 		if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGuessMethodArgumentsMode() ==
-				CompletionGuessMethodArgumentsMode.OFF) {
+				CompletionGuessMethodArgumentsMode.OFF || JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCollapseCompletionItemsEnabled()) {
 			CompletionProposal requiredTypeProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
 			if (requiredTypeProposal != null) {
 				proposal = requiredTypeProposal;

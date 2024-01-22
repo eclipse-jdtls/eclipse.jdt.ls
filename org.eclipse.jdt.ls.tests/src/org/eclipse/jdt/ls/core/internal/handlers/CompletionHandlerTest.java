@@ -4087,6 +4087,53 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(list.getItems().get(2).getFilterText().startsWith("test(String x, int y, boolean z)"));
 	}
 
+	@Test
+	public void testCompletion_collapse() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
+		preferenceManager.getPreferences().setCollapseCompletionItemsEnabled(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"public class Test {",
+				"	public void test(String x){}",
+				"	public void test(String x, int y){}",
+				"	public void test(String x, int y, boolean z){}",
+				"	public static void main(String[] args) {",
+				"		  Test obj = new Test();",
+				"		  obj.test",
+				"	}",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "obj.test");
+		assertFalse(list.getItems().isEmpty());
+		assertTrue(list.getItems().get(0).getLabelDetails().getDetail().startsWith("(...)"));
+		assertTrue(list.getItems().get(0).getLabelDetails().getDescription().startsWith("3 overloads"));
+	}
+
+	@Test
+	public void testCompletion_collapse_extends() throws Exception {
+		when(preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport()).thenReturn(true);
+		preferenceManager.getPreferences().setCollapseCompletionItemsEnabled(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", String.join("\n",
+		//@formatter:off
+				"package org.sample",
+				"class Test extends TestSuper {",
+				"	public void test(String x){}",
+				"	public static void main(String[] args) {",
+				"		  Test obj = new Test();",
+				"		  obj.test",
+				"	}",
+				"}",
+				"public class TestSuper {",
+				"	public void test(String x, int y){}",
+				"}"));
+				//@formatter:on
+		CompletionList list = requestCompletions(unit, "obj.test");
+		assertFalse(list.getItems().isEmpty());
+		assertTrue(list.getItems().get(0).getLabelDetails().getDetail().startsWith("(...)"));
+		assertTrue(list.getItems().get(0).getLabelDetails().getDescription().startsWith("2 overloads"));
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}
