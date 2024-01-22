@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	private List<CompletionProposal> proposals = new ArrayList<>();
 	// Cache to store all the types that has been collapsed, due to off mode of argument guessing.
-	private Set<String> collapsedTypes = new HashSet<>();
+	private Map<String, Integer> collapsedTypes = new HashMap<>();
 	private final ICompilationUnit unit;
 	private final String uri; // URI of this.unit, used in future "resolve" requests
 	private CompletionProposalDescriptionProvider descriptionProvider;
@@ -471,7 +470,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		super.acceptContext(context);
 		this.context = context;
 		response.setContext(context);
-		this.descriptionProvider = new CompletionProposalDescriptionProvider(unit, context);
+		this.descriptionProvider = new CompletionProposalDescriptionProvider(unit, context, collapsedTypes);
 		this.proposalProvider = new CompletionProposalReplacementProvider(
 			unit,
 			context,
@@ -739,15 +738,21 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	 * Check if the current completion proposal needs to be collapsed.
 	 */
 	private boolean needToCollapse(CompletionProposal proposal) {
-		if (preferenceManager.getPreferences().getGuessMethodArgumentsMode() != CompletionGuessMethodArgumentsMode.OFF) {
-			return false;
+		if (preferenceManager.getPreferences().isCollapseCompletionItemsEnabled() || preferenceManager.getPreferences().getGuessMethodArgumentsMode() == CompletionGuessMethodArgumentsMode.OFF) {
+
+			if (proposal.getKind() == CompletionProposal.METHOD_REF && preferenceManager.getPreferences().isCollapseCompletionItemsEnabled()) {
+				return collapsedTypes.merge(String.valueOf(proposal.getName()), 1, Integer::sum) > 1;
+			}
+
+			CompletionProposal requiredProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
+
+			if (requiredProposal == null) {
+				return false;
+			}
+
+			return collapsedTypes.merge(String.valueOf(requiredProposal.getSignature()), 1, Integer::sum) > 1;
 		}
 
-		CompletionProposal requiredProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
-		if (requiredProposal == null) {
-			return false;
-		}
-
-		return !collapsedTypes.add(String.valueOf(requiredProposal.getSignature()));
+		return false;
 	}
 }

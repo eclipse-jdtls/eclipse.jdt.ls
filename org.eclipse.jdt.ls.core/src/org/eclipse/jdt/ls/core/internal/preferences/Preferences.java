@@ -398,6 +398,8 @@ public class Preferences {
 	 */
 	public static final String JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY = "java.completion.guessMethodArguments";
 
+	public static final String JAVA_COMPLETION_COLLAPSE_KEY = "java.completion.collapseCompletionItems";
+
 	/**
 	 * A named preference that defines how member elements are ordered by code
 	 * actions.
@@ -622,6 +624,7 @@ public class Preferences {
 	private boolean foldingRangeEnabled;
 	private boolean selectionRangeEnabled;
 	private CompletionGuessMethodArgumentsMode guessMethodArguments;
+	private boolean collapseCompletionItems;
 
 	private boolean javaFormatComments;
 	private boolean hashCodeEqualsTemplateUseJava7Objects;
@@ -879,6 +882,7 @@ public class Preferences {
 		foldingRangeEnabled = true;
 		selectionRangeEnabled = true;
 		guessMethodArguments = CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES;
+		collapseCompletionItems = false;
 		javaFormatComments = true;
 		hashCodeEqualsTemplateUseJava7Objects = false;
 		hashCodeEqualsTemplateUseInstanceof = false;
@@ -1082,6 +1086,9 @@ public class Preferences {
 			prefs.setGuessMethodArgumentsMode(CompletionGuessMethodArgumentsMode.fromString(guessMethodArgumentsMode,
 					CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES));
 		}
+
+		boolean collapseCompletionItemsEnabled = getBoolean(configuration, JAVA_COMPLETION_COLLAPSE_KEY, false);
+		prefs.setCollapseCompletionItemsEnabled(collapseCompletionItemsEnabled);
 
 		boolean hashCodeEqualsTemplateUseJava7Objects = getBoolean(configuration, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, false);
 		prefs.setHashCodeEqualsTemplateUseJava7Objects(hashCodeEqualsTemplateUseJava7Objects);
@@ -1557,6 +1564,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setCollapseCompletionItemsEnabled(boolean enabled) {
+		this.collapseCompletionItems = enabled;
+		return this;
+	}
+
 	public Preferences setJavaFormatEnabled(boolean enabled) {
 		this.javaFormatEnabled = enabled;
 		return this;
@@ -1875,6 +1887,10 @@ public class Preferences {
 
 	public CompletionGuessMethodArgumentsMode getGuessMethodArgumentsMode() {
 		return guessMethodArguments;
+	}
+
+	public boolean isCollapseCompletionItemsEnabled() {
+		return collapseCompletionItems;
 	}
 
 	public boolean isHashCodeEqualsTemplateUseJava7Objects() {

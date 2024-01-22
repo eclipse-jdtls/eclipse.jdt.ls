@@ -209,7 +209,7 @@ public class CompletionProposalReplacementProvider {
 			if (!completionBuffer.isEmpty()) {
 				return completionBuffer.toString();
 			}
-			
+
 			String defaultText = getDefaultTextEditText(item);
 			int start = proposal.getReplaceStart();
 			int end = proposal.getReplaceEnd();
@@ -627,7 +627,7 @@ public class CompletionProposalReplacementProvider {
 		}
 
 		CompletionGuessMethodArgumentsMode guessMethodArgumentsMode = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGuessMethodArgumentsMode();
-		if (guessMethodArgumentsMode == CompletionGuessMethodArgumentsMode.OFF) {
+		if (guessMethodArgumentsMode == CompletionGuessMethodArgumentsMode.OFF || JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCollapseCompletionItemsEnabled()) {
 			buffer.append(CURSOR_POSITION);
 			return;
 		}

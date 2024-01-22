@@ -182,7 +182,8 @@ public class CompletionResolveHandler {
 		// resolving documentation
 		// 1. get the required type proposal when the argument guessing is
 		// turned off and the proposal is a constructor.
-		if (manager.getPreferences().getGuessMethodArgumentsMode() == CompletionGuessMethodArgumentsMode.OFF) {
+		if (manager.getPreferences().getGuessMethodArgumentsMode() == CompletionGuessMethodArgumentsMode.OFF ||
+				JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCollapseCompletionItemsEnabled()) {
 			CompletionProposal requiredTypeProposal = CompletionProposalUtils.getRequiredTypeProposal(proposal);
 			if (requiredTypeProposal != null) {
 				proposal = requiredTypeProposal;
