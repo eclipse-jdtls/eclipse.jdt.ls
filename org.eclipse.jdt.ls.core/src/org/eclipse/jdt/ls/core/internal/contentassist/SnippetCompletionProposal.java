@@ -289,7 +289,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		CompletionContext completionContext = scc.getCompletionContext();
 		char[] completionToken = completionContext.getToken();
 		if (completionToken == null) {
-			return Collections.emptyList();
+			completionToken = new char[0];
 		}
 		int tokenLocation = completionContext.getTokenLocation();
 		JavaContextType contextType = null;
@@ -430,7 +430,10 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {
 		JavaContextType contextType = (JavaContextType) JavaLanguageServerPlugin.getInstance().getTemplateContextRegistry().getContextType(template.getContextTypeId());
 		char[] completionToken = completionContext.getToken();
-		if (contextType == null || completionToken == null) {
+		if (completionToken == null) {
+			completionToken = new char[0];
+		}
+		if (contextType == null) {
 			return null;
 		}
 
