@@ -35,8 +35,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.Settings;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
@@ -51,7 +53,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.osgi.framework.Bundle;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PreferenceManagerTest {
@@ -114,6 +118,46 @@ public class PreferenceManagerTest {
 		preferences.setMavenGlobalSettings(null);
 		preferenceManager.update(preferences);
 		verify(mavenConfig).setGlobalSettingsFile(null);
+	}
+
+	@Test
+	public void testUpdateMavenLifecycleMappings() throws Exception {
+		String path = "/foo/bar.xml";
+		Preferences preferences = Preferences.createFrom(Collections.singletonMap(Preferences.MAVEN_LIFECYCLE_MAPPINGS_KEY, path));
+		preferenceManager.update(preferences);
+		verify(mavenConfig).setWorkspaceLifecycleMappingMetadataFile(path);
+
+		//check setting the same path doesn't call Maven's config update
+		reset(mavenConfig);
+		when(mavenConfig.getWorkspaceLifecycleMappingMetadataFile()).thenReturn(path);
+		when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
+		preferenceManager.update(preferences);
+		verify(mavenConfig, never()).setGlobalSettingsFile(anyString());
+
+		//check setting null is allowed
+		reset(mavenConfig);
+		Mockito.lenient().when(mavenConfig.getWorkspaceLifecycleMappingMetadataFile()).thenReturn(path);
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IMavenConstants.PLUGIN_ID);
+		String oldMappings = prefs.get(MavenPreferenceConstants.P_WORKSPACE_MAPPINGS_LOCATION, null);
+		try {
+			prefs.put(MavenPreferenceConstants.P_WORKSPACE_MAPPINGS_LOCATION, path);
+			when(mavenConfig.getNotCoveredMojoExecutionSeverity()).thenReturn("ignore");
+			String defaultPath = null;
+			Bundle bundle = Platform.getBundle("org.eclipse.m2e.core");
+			if (bundle != null) {
+				IPath stateLocation = Platform.getStateLocation(bundle);
+				defaultPath = stateLocation.append(Preferences.LIFECYCLE_MAPPING_METADATA_SOURCE_NAME).toString();
+			}
+			preferences.setMavenLifecycleMappings(null);
+			preferenceManager.update(preferences);
+			verify(mavenConfig).setWorkspaceLifecycleMappingMetadataFile(defaultPath);
+		} finally {
+			if (oldMappings == null) {
+				prefs.remove(MavenPreferenceConstants.P_WORKSPACE_MAPPINGS_LOCATION);
+			} else {
+				prefs.put(MavenPreferenceConstants.P_WORKSPACE_MAPPINGS_LOCATION, oldMappings);
+			}
+		}
 	}
 
 	@Test

@@ -43,6 +43,7 @@ import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -73,6 +74,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.MessageType;
+import org.osgi.framework.Bundle;
 
 /**
  * Preferences model
@@ -314,6 +316,11 @@ public class Preferences {
 	 */
 	public static final String MAVEN_GLOBAL_SETTINGS_KEY = "java.configuration.maven.globalSettings";
 
+	/**
+	 * Preference key for Maven lifecycle mappings xml location.
+	 */
+	public static final String MAVEN_LIFECYCLE_MAPPINGS_KEY = "java.configuration.maven.lifecycleMappings";
+
 	public static final String MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY = "java.configuration.maven.notCoveredPluginExecutionSeverity";
 
 	public static final String MAVEN_DEFAULT_MOJO_EXECUTION_ACTION = "java.configuration.maven.defaultMojoExecutionAction";
@@ -504,6 +511,8 @@ public class Preferences {
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT = "java.compile.nullAnalysis.nonnullbydefault";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
 
+	public static final String LIFECYCLE_MAPPING_METADATA_SOURCE_NAME = "lifecycle-mapping-metadata.xml";
+
 	/**
 	 * Preference key for list of cleanups to run on save
 	 */
@@ -632,6 +641,7 @@ public class Preferences {
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
+	private String mavenLifecycleMappings;
 	private String mavenNotCoveredPluginExecutionSeverity;
 	private String mavenDefaultMojoExecutionAction;
 
@@ -1141,6 +1151,9 @@ public class Preferences {
 
 		String mavenGlobalSettings = getString(configuration, MAVEN_GLOBAL_SETTINGS_KEY, null);
 		prefs.setMavenGlobalSettings(mavenGlobalSettings);
+
+		String mavenLifecycleMappings = getString(configuration, MAVEN_LIFECYCLE_MAPPINGS_KEY, null);
+		prefs.setMavenLifecycleMappings(mavenLifecycleMappings);
 
 		String mavenNotCoveredPluginExecution = getString(configuration, MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY, IGNORE);
 		prefs.setMavenNotCoveredPluginExecutionSeverity(mavenNotCoveredPluginExecution);
@@ -1911,6 +1924,22 @@ public class Preferences {
 
 	public String getMavenGlobalSettings() {
 		return mavenGlobalSettings;
+	}
+
+	public Preferences setMavenLifecycleMappings(String mavenLifecycleMappings) {
+		if (mavenLifecycleMappings == null || mavenLifecycleMappings.isBlank()) {
+			Bundle bundle = Platform.getBundle("org.eclipse.m2e.core");
+			if (bundle != null) {
+				IPath stateLocation = Platform.getStateLocation(bundle);
+				mavenLifecycleMappings = stateLocation.append(LIFECYCLE_MAPPING_METADATA_SOURCE_NAME).toString();
+			}
+		}
+		this.mavenLifecycleMappings = ResourceUtils.expandPath(mavenLifecycleMappings);
+		return this;
+	}
+
+	public String getMavenLifecycleMappings() {
+		return mavenLifecycleMappings;
 	}
 
 	public String getMavenNotCoveredPluginExecutionSeverity() {

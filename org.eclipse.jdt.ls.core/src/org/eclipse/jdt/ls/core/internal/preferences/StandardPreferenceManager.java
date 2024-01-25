@@ -38,6 +38,7 @@ import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.embedder.MavenProperties;
+import org.eclipse.m2e.core.internal.lifecyclemapping.LifecycleMappingFactory;
 import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
@@ -83,25 +84,40 @@ public class StandardPreferenceManager extends PreferenceManager {
 	public void update(Preferences preferences) {
 		super.update(preferences);
 
+		boolean updateMavenProjects = false;
 		String newMavenSettings = preferences.getMavenUserSettings();
 		String oldMavenSettings = getMavenConfiguration().getUserSettingsFile();
 		if (!Objects.equals(newMavenSettings, oldMavenSettings)) {
 			try {
 				getMavenConfiguration().setUserSettingsFile(newMavenSettings);
+				updateMavenProjects = true;
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("failed to set Maven settings", e);
 				preferences.setMavenUserSettings(oldMavenSettings);
 			}
 		}
-		boolean updateMavenProjects = false;
 		String newMavenGlobalSettings = preferences.getMavenGlobalSettings();
 		String oldMavenGlobalSettings = getMavenConfiguration().getGlobalSettingsFile();
 		if (!Objects.equals(newMavenGlobalSettings, oldMavenGlobalSettings)) {
 			try {
 				getMavenConfiguration().setGlobalSettingsFile(newMavenGlobalSettings);
+				updateMavenProjects = true;
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("failed to set Maven global settings", e);
-				preferences.setMavenUserSettings(oldMavenSettings);
+				preferences.setMavenGlobalSettings(oldMavenGlobalSettings);
+			}
+		}
+		String newMavenLifecycleMappings = preferences.getMavenLifecycleMappings();
+		String oldMavenLifecycleMappings = getMavenConfiguration().getWorkspaceLifecycleMappingMetadataFile();
+		if (!Objects.equals(newMavenLifecycleMappings, oldMavenLifecycleMappings)) {
+			try {
+				getMavenConfiguration().setWorkspaceLifecycleMappingMetadataFile(newMavenLifecycleMappings);
+				// reloads lifcycle mapping. See org.eclipse.m2e.core.ui.internal.preferences.LifecycleMappingPreferencePage.performOK()
+				LifecycleMappingFactory.getWorkspaceMetadata(true);
+				updateMavenProjects = true;
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("failed to set Maven lifecycle mappings", e);
+				preferences.setMavenLifecycleMappings(oldMavenLifecycleMappings);
 			}
 		}
 		try {
