@@ -28,9 +28,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -376,61 +378,11 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 	}
 
 	public static IClasspathEntry[] resolveClassPathEntries(IJavaProject javaProject, List<IPath> sourcePaths, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
-		List<IClasspathEntry> newEntries = new LinkedList<>();
-		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
-			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
-				newEntries.add(entry);
-			}
+		Map<IPath, IPath> sourceAndOutput = new HashMap<>();
+		for (IPath sourcePath : sourcePaths) {
+			sourceAndOutput.put(sourcePath, null);
 		}
-
-		// Sort the source paths to make the child folders come first
-		Collections.sort(sourcePaths, new Comparator<IPath>() {
-			@Override
-			public int compare(IPath path1, IPath path2) {
-				return path1.toString().compareTo(path2.toString()) * -1;
-			}
-		});
-
-		List<IClasspathEntry> sourceEntries = new LinkedList<>();
-		for (IPath currentPath : sourcePaths) {
-			boolean canAddToSourceEntries = true;
-			List<IPath> exclusionPatterns = new ArrayList<>();
-			for (IClasspathEntry sourceEntry : sourceEntries) {
-				if (Objects.equals(sourceEntry.getPath(), currentPath)) {
-					JavaLanguageServerPlugin.logError("Skip duplicated source path: " + currentPath.toString());
-					canAddToSourceEntries = false;
-					break;
-				}
-
-				if (currentPath.isPrefixOf(sourceEntry.getPath())) {
-					exclusionPatterns.add(sourceEntry.getPath().makeRelativeTo(currentPath).addTrailingSeparator());
-				}
-			}
-
-			if (currentPath.isPrefixOf(outputPath)) {
-				exclusionPatterns.add(outputPath.makeRelativeTo(currentPath).addTrailingSeparator());
-			}
-
-			if (canAddToSourceEntries) {
-				if (excludingPaths != null) {
-					for (IPath exclusion : excludingPaths) {
-						if (currentPath.isPrefixOf(exclusion) && !currentPath.equals(exclusion)) {
-							exclusionPatterns.add(exclusion.makeRelativeTo(currentPath).addTrailingSeparator());
-						}
-					}
-				}
-				sourceEntries.add(JavaCore.newSourceEntry(currentPath, exclusionPatterns.toArray(IPath[]::new)));
-			}
-		}
-		newEntries.addAll(sourceEntries);
-
-		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
-		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, outputPath);
-		if (!checkStatus.isOK()) {
-			throw new CoreException(checkStatus);
-		}
-
-		return rawClasspath;
+		return ProjectUtils.resolveClassPathEntries(javaProject, sourceAndOutput, excludingPaths, outputPath);
 	}
 
 	public static IPath getOutputPath(IJavaProject javaProject, String outputPath, boolean isUpdate) throws CoreException {

@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -51,10 +53,12 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelStatus;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.internal.core.ClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
@@ -683,6 +687,85 @@ public final class ProjectUtils {
 				DiagnosticsCommand.refreshDiagnostics(JDTUtils.toURI(unit), "thisFile", JDTUtils.isDefaultProject(unit) || !JDTUtils.isOnClassPath(unit));
 			}
 		}
+	}
+
+	/**
+	 * Resolve the classpath entries for the given project.
+	 * @param javaProject the java project
+	 * @param sourceAndOutput the source and output paths
+	 * @param excludingPaths the excluding paths
+	 * @param outputPath the output path
+	 * @return the resolved classpath entries
+	 * @throws CoreException
+	 */
+	public static IClasspathEntry[] resolveClassPathEntries(IJavaProject javaProject, Map<IPath, IPath> sourceAndOutput, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
+		List<IClasspathEntry> newEntries = new LinkedList<>();
+		Map<IPath, IClasspathEntry> originalSources = new HashMap<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
+				newEntries.add(entry);
+			} else {
+				originalSources.put(entry.getPath(), entry);
+			}
+		}
+
+		List<IPath> sourcePaths = new ArrayList<>(sourceAndOutput.keySet());
+		// Sort the source paths to make the child folders come first
+		Collections.sort(sourcePaths, (source1, source2) ->
+				source2.toString().compareTo(source1.toString()));
+
+		if (outputPath == null) {
+			outputPath = javaProject.getOutputLocation();
+		}
+		List<IClasspathEntry> sourceEntries = new LinkedList<>();
+		for (IPath currentPath : sourcePaths) {
+			boolean canAddToSourceEntries = true;
+			List<IPath> exclusionPatterns = new ArrayList<>();
+			for (IClasspathEntry sourceEntry : sourceEntries) {
+				if (Objects.equals(sourceEntry.getPath(), currentPath)) {
+					JavaLanguageServerPlugin.logError("Skip duplicated source path: " + currentPath.toString());
+					canAddToSourceEntries = false;
+					break;
+				}
+
+				if (currentPath.isPrefixOf(sourceEntry.getPath())) {
+					exclusionPatterns.add(sourceEntry.getPath().makeRelativeTo(currentPath).addTrailingSeparator());
+				}
+			}
+
+			if (currentPath.isPrefixOf(outputPath)) {
+				exclusionPatterns.add(outputPath.makeRelativeTo(currentPath).addTrailingSeparator());
+			}
+
+			if (canAddToSourceEntries) {
+				if (excludingPaths != null) {
+					for (IPath exclusion : excludingPaths) {
+						if (currentPath.isPrefixOf(exclusion) && !currentPath.equals(exclusion)) {
+							exclusionPatterns.add(exclusion.makeRelativeTo(currentPath).addTrailingSeparator());
+						}
+					}
+				}
+				IPath specificOutputPath = sourceAndOutput.get(currentPath);
+				if (originalSources.containsKey(currentPath)) {
+					IClasspathEntry originalSource = originalSources.get(currentPath);
+					sourceEntries.add(JavaCore.newSourceEntry(
+							currentPath, originalSource.getInclusionPatterns(), exclusionPatterns.toArray(IPath[]::new),
+							specificOutputPath, originalSource.getExtraAttributes()));
+				} else {
+					sourceEntries.add(JavaCore.newSourceEntry(currentPath, exclusionPatterns.toArray(IPath[]::new),
+							specificOutputPath));
+				}
+			}
+		}
+		newEntries.addAll(sourceEntries);
+
+		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
+		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, outputPath);
+		if (!checkStatus.isOK()) {
+			throw new CoreException(checkStatus);
+		}
+
+		return rawClasspath;
 	}
 
 }
