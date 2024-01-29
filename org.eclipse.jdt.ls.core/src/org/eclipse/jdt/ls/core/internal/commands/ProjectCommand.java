@@ -73,6 +73,7 @@ import org.eclipse.lsp4j.SymbolInformation;
 
 public class ProjectCommand {
 
+	public static final String NATURE_IDS = IConstants.PLUGIN_ID + ".natureIds";
 	public static final String VM_LOCATION = IConstants.PLUGIN_ID + ".vm.location";
 	public static final String SOURCE_PATHS = IConstants.PLUGIN_ID + ".sourcePaths";
 	public static final String OUTPUT_PATH = IConstants.PLUGIN_ID + ".outputPath";
@@ -90,6 +91,7 @@ public class ProjectCommand {
 	 *        <p>
 	 *        Besides the options defined in JavaCore, the following keys can also be used:
 	 *        <ul>
+	 *          <li>"org.eclipse.jdt.ls.core.natureIds": Get the nature ids of the given project</li>
 	 *          <li>"org.eclipse.jdt.ls.core.vm.location": Get the location of the VM assigned to build the given Java project.</li>
 	 *          <li>"org.eclipse.jdt.ls.core.sourcePaths": Get the source root paths of the given Java project.</li>
 	 *          <li>"org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
@@ -107,6 +109,9 @@ public class ProjectCommand {
 		Map<String, Object> settings = new HashMap<>();
 		for (String key : settingKeys) {
 			switch(key) {
+				case NATURE_IDS:
+					settings.putIfAbsent(key, project.getDescription().getNatureIds());
+					break;
 				case VM_LOCATION:
 					IVMInstall vmInstall = JavaRuntime.getVMInstall(javaProject);
 					if (vmInstall == null) {

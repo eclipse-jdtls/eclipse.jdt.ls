@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -47,12 +48,26 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.junit.Test;
 
 /**
  * ProjectCommandTest
  */
 public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
+
+	@Test
+	public void testGetProjectNatureIds() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uriString = project.getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList("org.eclipse.jdt.ls.core.natureIds");
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		List<String> natureIds = Arrays.asList((String[]) options.get("org.eclipse.jdt.ls.core.natureIds"));
+		assertEquals(2, natureIds.size());
+		assertTrue(natureIds.contains(JavaCore.NATURE_ID));
+		assertTrue(natureIds.contains(IMavenConstants.NATURE_ID));
+	}
 
 	@Test
 	public void testGetProjectSettingsForMavenJava7() throws Exception {
