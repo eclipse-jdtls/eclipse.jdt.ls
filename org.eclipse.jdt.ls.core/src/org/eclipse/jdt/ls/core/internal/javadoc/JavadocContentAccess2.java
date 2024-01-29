@@ -115,7 +115,7 @@ public class JavadocContentAccess2 {
 			}
 
 			@Override
-			protected StringBuffer createSuperMethodReferencesHTML(ArrayList<IMethod> superInterfaceMethods, IMethod superClassMethod) throws JavaModelException {
+			protected StringBuffer createSuperMethodReferencesHTML(ArrayList<IMethod> superInterfaceMethods, IMethod superClassMethod) {
 				// jdtls override to return null
 				return null;
 			}

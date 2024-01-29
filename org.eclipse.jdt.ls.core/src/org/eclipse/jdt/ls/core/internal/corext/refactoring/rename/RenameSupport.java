@@ -292,12 +292,15 @@ public class RenameSupport {
 	public static RenameSupport create(IType type, String newName, int flags) throws CoreException {
 		JavaRenameProcessor processor = new RenameTypeProcessor(type) {
 			@Override
-			protected void createChangeForRenamedCUStandardResource(IType type, TextChangeManager changeManager, DynamicValidationRefactoringChange result) throws CoreException {
-				addTypeDeclarationUpdate(changeManager);
-				addConstructorRenames(changeManager);
-				result.addAll(changeManager.getAllChanges());
-				String renamedCUName = JavaModelUtil.getRenamedCUName(type.getCompilationUnit(), getNewElementName());
-				result.add(new RenameCompilationUnitChange(type.getCompilationUnit(), renamedCUName));
+			protected void createChangeForRenamedCUStandardResource(IType type, TextChangeManager changeManager, DynamicValidationRefactoringChange result) {
+				try {
+					addTypeDeclarationUpdate(changeManager);
+					addConstructorRenames(changeManager);
+					result.addAll(changeManager.getAllChanges());
+					String renamedCUName = JavaModelUtil.getRenamedCUName(type.getCompilationUnit(), getNewElementName());
+					result.add(new RenameCompilationUnitChange(type.getCompilationUnit(), renamedCUName));
+				} catch (CoreException e) {
+				}
 			}
 
 		};
