@@ -52,12 +52,12 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.JavadocTagsSubProcessorCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingReturnTypeCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingReturnTypeInLambdaCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.TypeMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
@@ -171,7 +171,7 @@ public class ReturnTypeSubProcessor {
 					TextElement commentStart= ast.newTextElement();
 					newTag.fragments().add(commentStart);
 
-					JavadocTagsSubProcessor.insertTag(rewrite.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY), newTag, null);
+					JavadocTagsSubProcessorCore.insertTag(rewrite.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY), newTag, null);
 					proposal.addLinkedPosition(rewrite.track(commentStart), false, "comment_start"); //$NON-NLS-1$
 
 				}
@@ -231,7 +231,7 @@ public class ReturnTypeSubProcessor {
 				TextElement commentStart= ast.newTextElement();
 				newTag.fragments().add(commentStart);
 
-				JavadocTagsSubProcessor.insertTag(rewrite.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY), newTag, null);
+				JavadocTagsSubProcessorCore.insertTag(rewrite.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY), newTag, null);
 				proposal.addLinkedPosition(rewrite.track(commentStart), false, "comment_start"); //$NON-NLS-1$
 			}
 
@@ -290,7 +290,7 @@ public class ReturnTypeSubProcessor {
 					rewrite.replace(returnType, ast.newPrimitiveType(PrimitiveType.VOID), null);
 					Javadoc javadoc= methodDecl.getJavadoc();
 					if (javadoc != null) {
-						TagElement tagElement= JavadocTagsSubProcessor.findTag(javadoc, TagElement.TAG_RETURN, null);
+						TagElement tagElement = JavadocTagsSubProcessorCore.findTag(javadoc, TagElement.TAG_RETURN, null);
 						if (tagElement != null) {
 							rewrite.remove(tagElement, null);
 						}

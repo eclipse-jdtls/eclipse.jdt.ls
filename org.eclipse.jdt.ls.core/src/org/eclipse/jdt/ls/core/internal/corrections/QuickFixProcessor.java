@@ -380,7 +380,7 @@ public class QuickFixProcessor {
 			// problem, 10));
 			// break;
 			case IProblem.JavadocMissing:
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem.getCoveringNode(context.getASTRoot()), proposals, CodeActionKind.QuickFix);
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem, proposals, CodeActionKind.QuickFix);
 				break;
 			case IProblem.JavadocMissingParamTag:
 			case IProblem.JavadocMissingReturnTag:

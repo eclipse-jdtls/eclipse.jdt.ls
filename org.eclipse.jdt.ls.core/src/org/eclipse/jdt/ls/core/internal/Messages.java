@@ -7,8 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Copied from /org.eclipse.jdt.ui/src/org/eclipse/jdt/internal/corext/util/Messages.java
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/

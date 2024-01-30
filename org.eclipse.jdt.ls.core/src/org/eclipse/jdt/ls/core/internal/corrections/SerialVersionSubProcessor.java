@@ -16,16 +16,12 @@ package org.eclipse.jdt.ls.core.internal.corrections;
 
 import java.util.Collection;
 
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
-import org.eclipse.jdt.internal.corext.fix.PotentialProgrammingProblemsFixCore;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.SerialVersionBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.SerialVersionProposalCore;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
-import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.CodeActionKind;
 
 /**
@@ -33,7 +29,7 @@ import org.eclipse.lsp4j.CodeActionKind;
  *
  * @since 3.1
  */
-public final class SerialVersionSubProcessor {
+public final class SerialVersionSubProcessor extends SerialVersionBaseSubProcessor<ProposalKindWrapper> {
 
 	/**
 	 * Determines the serial version quickfix proposals.
@@ -46,18 +42,14 @@ public final class SerialVersionSubProcessor {
 	 *            the proposal collection to extend
 	 */
 	public static final void getSerialVersionProposals(final IInvocationContextCore context, final IProblemLocationCore location, final Collection<ProposalKindWrapper> proposals) {
+		new SerialVersionSubProcessor().addSerialVersionProposals(context, location, proposals);
+	}
 
-		Assert.isNotNull(context);
-		Assert.isNotNull(location);
-		Assert.isNotNull(proposals);
-
-		IProposableFix[] fixes = PotentialProgrammingProblemsFixCore.createMissingSerialVersionFixes(context.getASTRoot(), location);
-		if (fixes != null) {
-			proposals.add(CodeActionHandler.wrap(new SerialVersionProposalCore(fixes[0], IProposalRelevance.MISSING_SERIAL_VERSION_DEFAULT, context, true), CodeActionKind.QuickFix));
-			ICompilationUnit unit = context.getCompilationUnit();
-			if (unit != null && unit.getJavaProject() != null && !ProjectsManager.DEFAULT_PROJECT_NAME.equals(unit.getJavaProject().getProject().getName())) {
-				proposals.add(CodeActionHandler.wrap(new SerialVersionProposalCore(fixes[1], IProposalRelevance.MISSING_SERIAL_VERSION, context, false), CodeActionKind.QuickFix));
-			}
-		}
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.SerialVersionBaseSubProcessor#createSerialVersionProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, int, org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore, boolean)
+	 */
+	@Override
+	protected ProposalKindWrapper createSerialVersionProposal(IProposableFix iProposableFix, int missingSerialVersion, IInvocationContextCore context, boolean b) {
+		return CodeActionHandler.wrap(new SerialVersionProposalCore(iProposableFix, missingSerialVersion, context, b), CodeActionKind.QuickFix);
 	}
 }

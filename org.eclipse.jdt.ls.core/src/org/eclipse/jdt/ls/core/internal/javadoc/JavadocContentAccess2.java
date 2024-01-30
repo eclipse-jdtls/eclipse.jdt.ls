@@ -7,8 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Code copied from org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAccess2
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Tom Hofmann, Google <eclipse@tom.eicher.name> - [hovering] NPE when hovering over @value reference within a type's javadoc - https://bugs.eclipse.org/bugs/show_bug.cgi?id=320084

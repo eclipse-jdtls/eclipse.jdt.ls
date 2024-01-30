@@ -230,8 +230,9 @@ public class QuickAssistProcessor {
 			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
 
 			List<Integer> javaDocCommentProblems = Arrays.asList(IProblem.JavadocMissing);
-			if (!problemExists(locations, javaDocCommentProblems)) {
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
+			IProblemLocationCore found = findProblemLocation(locations, javaDocCommentProblems);
+			if (found != null) {
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, found, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
 			}
 
 			// Variable quick fixes
@@ -933,6 +934,15 @@ public class QuickAssistProcessor {
 			}
 		}
 		return false;
+	}
+
+	public static IProblemLocationCore findProblemLocation(IProblemLocationCore[] locations, List<Integer> problems) {
+		for (IProblemLocationCore location : locations) {
+			if (problems.contains(location.getProblemId())) {
+				return location;
+			}
+		}
+		return null;
 	}
 
 	public static boolean getTryWithResourceProposals(IInvocationContextCore context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
