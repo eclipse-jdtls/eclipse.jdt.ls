@@ -71,7 +71,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		Range range = new Range(new Position(5, 16), new Position(5, 17));
 		setIgnoredCommands(ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(3, codeActions.size());
+		assertEquals(4, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
@@ -84,6 +84,10 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		assertEquals("Add missing case statements", action.getTitle());
 		edit = getTextEdit(codeAction);
 		assertEquals("\n        case One:\n            break;\n        default:\n            break;", edit.getNewText());
+		codeAction = codeActions.get(2);
+		action = codeAction.getRight();
+		assertEquals(CodeActionKind.QuickFix, action.getKind());
+		assertEquals("Add @SuppressWarnings 'incomplete-switch' to 'testing()'", action.getTitle());
 	}
 
 	@Test
@@ -112,7 +116,7 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		options.put(JavaCore.COMPILER_PB_MISSING_ENUM_CASE_DESPITE_DEFAULT, JavaCore.ENABLED);
 		fJProject.setOptions(options);
 		codeActions = evaluateCodeActions(cu, range);
-		assertEquals(3, codeActions.size());
+		assertEquals(4, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
@@ -125,6 +129,10 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		assertEquals("Insert '//$CASES-OMITTED$'", action.getTitle());
 		edit = getTextEdit(codeAction);
 		assertEquals("            //$CASES-OMITTED$\n        ", edit.getNewText());
+		codeAction = codeActions.get(2);
+		action = codeAction.getRight();
+		assertEquals(CodeActionKind.QuickFix, action.getKind());
+		assertEquals("Add @SuppressWarnings 'incomplete-switch' to 'testing()'", action.getTitle());
 	}
 
 	private TextEdit getTextEdit(Either<Command, CodeAction> codeAction) {

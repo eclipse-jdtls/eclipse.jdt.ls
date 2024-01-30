@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
@@ -533,17 +534,12 @@ public class QuickFixProcessor {
 			// problem, proposals);
 			// break;
 			// case IProblem.UnhandledWarningToken:
-			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context,
-			// problem, proposals);
+			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
 			// break;
-			// case IProblem.ProblemNotAnalysed:
-			// SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnusedWarningToken:
-			// SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.ProblemNotAnalysed:
+			case IProblem.UnusedWarningToken:
+				SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingEnumConstantCase:
 			case IProblem.MissingEnumDefaultCase:
 			case IProblem.SwitchExpressionsYieldMissingEnumConstantCase:
@@ -681,12 +677,9 @@ public class QuickFixProcessor {
 				String str = problem.toString();
 				System.out.println(str);
 		}
-		// if
-		// (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject()))
-		// {
-		// SuppressWarningsSubProcessor.addSuppressWarningsProposals(context,
-		// problem, proposals);
-		// }
+		if (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {
+			SuppressWarningsSubProcessor.addSuppressWarningsProposals(context, problem, proposals);
+		}
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
 	}

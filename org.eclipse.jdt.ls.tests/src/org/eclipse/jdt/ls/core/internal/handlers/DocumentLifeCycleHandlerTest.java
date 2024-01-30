@@ -168,8 +168,8 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(cu);
-		assertEquals(codeActions.size(), 1);
-		assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		boolean hasCodeAction = codeActions.stream().anyMatch(codeAction -> "Remove (including condition)".equals(codeAction.getRight().getTitle()));
+		assertTrue("Code action to remove dead code not found", hasCodeAction);
 	}
 
 	protected List<Either<Command, CodeAction>> getCodeActions(ICompilationUnit cu) throws JavaModelException {
