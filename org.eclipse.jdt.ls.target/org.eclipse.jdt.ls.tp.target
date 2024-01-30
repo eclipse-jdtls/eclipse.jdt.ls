@@ -41,22 +41,11 @@
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.21.2/"/>
            <unit id="org.eclipse.lsp4j" version="0.0.0"/>
         </location>
-	    <location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
-		    <dependencies>
-			    <dependency>
-				    <groupId>commons-codec</groupId>
-				    <artifactId>commons-codec</artifactId>
-				    <version>1.16.0</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
-				    <groupId>org.apache.commons</groupId>
-				    <artifactId>commons-lang3</artifactId>
-				    <version>3.14.0</version>
-				    <type>jar</type>
-			    </dependency>
-		    </dependencies>
-	    </location>
+	    <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+            <repository location="https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/2024-03/"/>
+            <unit id="org.apache.commons.lang3" version="0.0.0"/>
+            <unit id="org.apache.commons.commons-codec" version="0.0.0"/>
+        </location>
 	    <location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" label="Logging" missingManifest="generate" type="Maven">
 		    <dependencies>
 			    <dependency>
