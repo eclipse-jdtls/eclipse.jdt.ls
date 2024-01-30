@@ -231,8 +231,8 @@ public class QuickAssistProcessor {
 
 			List<Integer> javaDocCommentProblems = Arrays.asList(IProblem.JavadocMissing);
 			IProblemLocationCore found = findProblemLocation(locations, javaDocCommentProblems);
-			if (found != null) {
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, found, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
+			if (found == null) {
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
 			}
 
 			// Variable quick fixes

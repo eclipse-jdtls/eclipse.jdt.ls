@@ -20,6 +20,7 @@ import java.util.Collection;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ModuleDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.ui.text.correction.AddAllMissingJavadocTagsProposalCore;
@@ -28,8 +29,8 @@ import org.eclipse.jdt.internal.ui.text.correction.AddMissingJavadocTagProposalC
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingModuleJavadocTagProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.JavadocTagsBaseSubProcessor;
+import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -50,10 +51,18 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 		new JavadocTagsSubProcessor().addUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
 	}
 
-	public static void getMissingJavadocCommentProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getMissingJavadocCommentProposals(IInvocationContextCore context, ASTNode coveringNode,
 			Collection<ProposalKindWrapper> proposals, String kind) throws CoreException {
 		ArrayList<ProposalKindWrapper> tmp = new ArrayList<>();
-		new JavadocTagsSubProcessor().addMissingJavadocCommentProposals(context, problem, tmp);
+		// TODO this should be fixed upstream.
+		// We should be able to pass the node, not only a problem
+		IProblemLocationCore stub = new ProblemLocation(0, 0, 0, null, false, kind) {
+			@Override
+			public ASTNode getCoveringNode(CompilationUnit astRoot) {
+				return coveringNode;
+			}
+		};
+		new JavadocTagsSubProcessor().addMissingJavadocCommentProposals(context, stub, tmp);
 		for (int i = 0; i < tmp.size(); i++) {
 			proposals.add(new ProposalKindWrapper(tmp.get(i).getProposal(), kind));
 		}
@@ -109,8 +118,8 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	 * @see org.eclipse.jdt.internal.ui.text.correction.JavadocTagsBaseSubProcessor#addJavadocCommentProposal(java.lang.String, org.eclipse.jdt.core.ICompilationUnit, int, int, java.lang.String)
 	 */
 	@Override
-	protected ProposalKindWrapper addJavadocCommentProposal(String label, ICompilationUnit cu, int addJavadocModule, int startPosition, String comment) {
-		AddJavadocCommentProposalCore proposal = new AddJavadocCommentProposalCore(label, cu, IProposalRelevance.ADD_JAVADOC_METHOD, startPosition, comment);
+	protected ProposalKindWrapper addJavadocCommentProposal(String label, ICompilationUnit cu, int relevance, int startPosition, String comment) {
+		AddJavadocCommentProposalCore proposal = new AddJavadocCommentProposalCore(label, cu, relevance, startPosition, comment);
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 

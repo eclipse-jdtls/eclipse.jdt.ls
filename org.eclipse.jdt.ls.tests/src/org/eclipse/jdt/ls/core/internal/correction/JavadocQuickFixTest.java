@@ -804,7 +804,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public <A> void foo(int a) throws IOException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'foo'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -851,7 +851,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void empty() {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'empty'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -905,7 +905,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public E(int a) throws IOException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'E'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -926,7 +926,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append(" */\n");
 		buf.append("public class E<A, B> {\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'E'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -961,7 +961,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public static final int COLOR= 1;\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'COLOR'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
