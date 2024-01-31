@@ -83,7 +83,7 @@
                   id="java.project.getClasspaths">
             </command>
             <command
-                  id="java.project.updateSourcePaths">
+                  id="java.project.updateClassPaths">
             </command>
             <command
                   id="java.project.isTestFile">

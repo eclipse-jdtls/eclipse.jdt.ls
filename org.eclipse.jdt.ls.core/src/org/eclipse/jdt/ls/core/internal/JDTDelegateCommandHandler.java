@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntries;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
@@ -98,12 +99,11 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return ProjectCommand.getProjectSettings((String) arguments.get(0), (ArrayList<String>) arguments.get(1));
 				case "java.project.getClasspaths":
 					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
-				case "java.project.updateSourcePaths": {
+				case "java.project.updateClassPaths": {
 					String projectUri = (String) arguments.get(0);
-					ArrayList<String> sourcePaths = (ArrayList) arguments.get(1);
+					ProjectClasspathEntries entries = (JSONUtility.toModel(arguments.get(1), ProjectClasspathEntries.class));
 					Map<String, String> sourceAndOutput = new HashMap<>();
-					for (String sourcePath : sourcePaths) {
-						ProjectClasspathEntry entry = JSONUtility.toModel(sourcePath, ProjectClasspathEntry.class);
+					for (ProjectClasspathEntry entry : entries.getClasspathEntries()) {
 						if (entry.getKind() == IClasspathEntry.CPE_SOURCE) {
 							sourceAndOutput.put(entry.getPath(), entry.getOutput());
 						}
