@@ -21,14 +21,17 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -158,6 +161,37 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		} else {
 			assertEquals(expectedReferencedLibraryPath, actualReferencedLibraryPaths[0]);
 		}
+	}
+
+	@Test
+	public void testGetClasspathEntries() throws Exception {
+		importProjects("maven/salut2");
+		IProject project = WorkspaceHelper.getProject("salut2");
+		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		assertNotNull(options.get(ProjectCommand.CLASSPATH_ENTRIES));
+		assertTrue(entries.size() > 0);
+	}
+
+	@Test
+	public void testUpdateSourcePaths() throws Exception {
+		importProjects("maven/salut2");
+		IProject project = WorkspaceHelper.getProject("salut2");
+		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
+
+		Map<String, String> sourceAndOutput = new HashMap<>();
+		sourceAndOutput.put(new Path("src/main/java").toOSString(), "bin");
+		sourceAndOutput.put(new Path("src/main/java/aaa").toOSString(), "bin");
+		ProjectCommand.updateSourcePaths(uriString, sourceAndOutput);
+
+		IJavaProject javaProject = JavaCore.create(project);
+		IClasspathEntry[] sourcePaths = javaProject.getResolvedClasspath(true);
+		List<IClasspathEntry> newSourcePaths = Arrays.stream(sourcePaths).filter(sourcePath -> {
+				return sourcePath.getEntryKind() == IClasspathEntry.CPE_SOURCE;
+		}).collect(Collectors.toList());
+		assertEquals(2, newSourcePaths.size());
 	}
 
 	@Test

@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -77,6 +78,7 @@ public class ProjectCommand {
 	public static final String VM_LOCATION = IConstants.PLUGIN_ID + ".vm.location";
 	public static final String SOURCE_PATHS = IConstants.PLUGIN_ID + ".sourcePaths";
 	public static final String OUTPUT_PATH = IConstants.PLUGIN_ID + ".outputPath";
+	public static final String CLASSPATH_ENTRIES = IConstants.PLUGIN_ID + ".classpathEntries";
 	public static final String REFERENCED_LIBRARIES = IConstants.PLUGIN_ID + ".referencedLibraries";
 	private static final String TEST_SCOPE_VALUE = "test";
 
@@ -97,6 +99,7 @@ public class ProjectCommand {
 	 *          <li>"org.eclipse.jdt.ls.core.outputPath": Get the default output path of the given Java project. Note that the default output path
 	 *              may not be equal to the output path of each source root.</li>
 	 *          <li>"org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project.</li>
+	 *          <li>"org.eclipse.jdt.ls.core.classpathEntries": Get all the classpath entries of the given Java project.</li>
 	 *        </ul>
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
@@ -143,12 +146,61 @@ public class ProjectCommand {
 							.toArray(String[]::new);
 					settings.putIfAbsent(key, referencedLibraries);
 					break;
+				case CLASSPATH_ENTRIES:
+					IClasspathEntry[] entries = javaProject.getRawClasspath();
+					List<ProjectClasspathEntry> classpathEntries = new LinkedList<>();
+					for (IClasspathEntry entry : entries) {
+						IPath path = entry.getPath();
+						IPath output = entry.getOutputLocation();
+						if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+							path = project.getFolder(path.makeRelativeTo(project.getFullPath())).getLocation();
+							if (output != null) {
+								output = project.getFolder(output.makeRelativeTo(project.getFullPath())).getLocation();
+							}
+						}
+						Map<String, String> attributes = new HashMap<>();
+						for (IClasspathAttribute attribute : entry.getExtraAttributes()) {
+							attributes.put(attribute.getName(), attribute.getValue());
+						}
+						classpathEntries.add(new ProjectClasspathEntry(entry.getEntryKind(), path.toOSString(),
+								output == null ? null : output.toOSString(), attributes));
+					}
+					settings.putIfAbsent(key, classpathEntries);
+					break;
 				default:
 					settings.putIfAbsent(key, javaProject.getOption(key, true));
 					break;
 			}
 		}
 		return settings;
+	}
+
+	/**
+	 * Updates the project source paths.
+	 * @param uri Uri of the project.
+	 * @param sourceAndOutput A map of source paths and their corresponding output paths.
+	 * @throws CoreException
+	 * @throws URISyntaxException
+	 */
+	public static void updateSourcePaths(String uri, Map<String, String> sourceAndOutput) throws CoreException, URISyntaxException {
+		IJavaProject javaProject = getJavaProjectFromUri(uri);
+		IProject project = javaProject.getProject();
+		Map<IPath, IPath> sourceAndOutputWithFullPath = new HashMap<>();
+		for (Map.Entry<String, String> entry : sourceAndOutput.entrySet()) {
+			IPath path = project.getFolder(entry.getKey()).getFullPath();
+			IPath outputLocation = null;
+			String output = entry.getValue();
+			if (output != null) {
+				if (".".equals(output)) {
+					outputLocation = project.getFullPath();
+				} else {
+					outputLocation = project.getFolder(output).getFullPath();
+				}
+			}
+			sourceAndOutputWithFullPath.put(path, outputLocation);
+		}
+		IClasspathEntry[] newEntries = ProjectUtils.resolveClassPathEntries(javaProject, sourceAndOutputWithFullPath, Collections.emptyList(), null);
+		javaProject.setRawClasspath(newEntries, new NullProgressMonitor());
 	}
 
 	/**

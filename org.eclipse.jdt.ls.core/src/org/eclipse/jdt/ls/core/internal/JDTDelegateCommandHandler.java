@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +23,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntries;
+import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.GetAllProjectOptions;
@@ -95,6 +99,18 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return ProjectCommand.getProjectSettings((String) arguments.get(0), (ArrayList<String>) arguments.get(1));
 				case "java.project.getClasspaths":
 					return ProjectCommand.getClasspaths((String) arguments.get(0), JSONUtility.toModel(arguments.get(1), ClasspathOptions.class));
+				case "java.project.updateClassPaths": {
+					String projectUri = (String) arguments.get(0);
+					ProjectClasspathEntries entries = (JSONUtility.toModel(arguments.get(1), ProjectClasspathEntries.class));
+					Map<String, String> sourceAndOutput = new HashMap<>();
+					for (ProjectClasspathEntry entry : entries.getClasspathEntries()) {
+						if (entry.getKind() == IClasspathEntry.CPE_SOURCE) {
+							sourceAndOutput.put(entry.getPath(), entry.getOutput());
+						}
+					}
+					ProjectCommand.updateSourcePaths(projectUri, sourceAndOutput);
+					return null;
+				}
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
 				case "java.project.getAll":
