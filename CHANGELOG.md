@@ -1,5 +1,22 @@
 # Change Log
 
+# [1.32.0 (February 1st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/124?closed=1)
+ * enhancement - Add Unnamed patterns and variables (Java 21) preview support. See [#2963](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2963).
+ * enhancement - Add quick fixes for for suppressing warnings using `@SuppressWarnings`. See [#2698](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2698).
+ * enhancement - Add quick fixes for uninitialized `final` fields. See [#1328](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1328).
+ * enhancement - Add support for externally provided `lifecycle-mapping-metadata.xml` file. See [#3005](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3005).
+ * enhancement - Support accessing project nature IDs through delegate command. See [#3029](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3029).
+ * enhancement - Add new delegate command/options to to query classpath entries and update source paths. See [#3033](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3033).
+ * bug fix - Allow generic snippets to be returned when completion token is `null`. See [#3026](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3026).
+ * bug fix - Allow to import the newly created maven submodule within a multi-module project. See [#3023](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3023).
+ * bug fix - Avoid string concatenation with `Runtime.getRuntime().exec(..)`. See [#3022](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3022).
+ * dependencies - Update LSP4J to 0.21.2. See [#3024](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3024).
+ * build - Build against `eclipse-jdtls/jdt-core-incubator`. See [#2963](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2963).
+ * build - Bump Tycho from 4.0.4 to 4.0.5. See [#3037](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3037).
+ * build - Update target platform to latest 4.31-I-build. See [#3020](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3020).
+ * debt - Use `AddMissingMethodDeclarationFixCore` from jdt.core.manipulation. See [#3014](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3014).
+ * documentation - Added OpenSumi as a consuming client. See [#3034](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3034).
+
 # [1.31.0 (January 11th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/123?closed=1)
  * performance - Ensure initial import of projects respect resource filter settings. See [#2999](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2999).
  * performance - Improve the performance of "Organize Imports" when "favorite static imports" are involved. See [#2994](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2994).
