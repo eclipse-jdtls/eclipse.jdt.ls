@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -876,6 +878,26 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("B.java", buf.toString(), false, null);
 		assertCodeActionNotExists(cu, "Add Javadoc for 'foo'");
+	}
+
+	@Test
+	public void testAllJavadocPresent() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" * Some comment\n");
+		buf.append(" */\n");
+		buf.append("public class E {\n");
+		buf.append("   /**\n");
+		buf.append("    * Some comment2\n");
+		buf.append("    */\n");
+		buf.append("    public void empty() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range r = new Range(new Position(8, 18), new Position(8, 18));
+		assertCodeActionNotExists(cu, r, "Add Javadoc comment");
 	}
 
 	@Test

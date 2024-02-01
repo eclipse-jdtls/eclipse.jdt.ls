@@ -73,6 +73,19 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	}
 
 	@Override
+	public void addMissingJavadocCommentProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+		ASTNode node = problem.getCoveringNode(context.getASTRoot());
+		ASTNode node2 = ASTNodes.getNormalizedNode(node);
+		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(node2);
+		if (bodyDeclaration != null) {
+			Javadoc javadoc = bodyDeclaration.getJavadoc();
+			if (javadoc == null) {
+				super.addMissingJavadocCommentProposals(context, problem, proposals);
+			}
+		}
+	}
+
+	@Override
 	public void addMissingJavadocTagProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		ASTNode node2 = ASTNodes.getNormalizedNode(node);
 		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(node2);
