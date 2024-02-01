@@ -20,9 +20,13 @@ import java.util.Collection;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.ModuleDeclaration;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.ui.text.correction.AddAllMissingJavadocTagsProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddJavadocCommentProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingJavadocTagProposalCore;
@@ -65,6 +69,18 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 		new JavadocTagsSubProcessor().addMissingJavadocCommentProposals(context, stub, tmp);
 		for (int i = 0; i < tmp.size(); i++) {
 			proposals.add(new ProposalKindWrapper(tmp.get(i).getProposal(), kind));
+		}
+	}
+
+	@Override
+	public void addMissingJavadocTagProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+		ASTNode node2 = ASTNodes.getNormalizedNode(node);
+		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(node2);
+		if (bodyDeclaration != null) {
+			Javadoc javadoc = bodyDeclaration.getJavadoc();
+			if (javadoc != null) {
+				super.addMissingJavadocTagProposals(context, node, proposals);
+			}
 		}
 	}
 
