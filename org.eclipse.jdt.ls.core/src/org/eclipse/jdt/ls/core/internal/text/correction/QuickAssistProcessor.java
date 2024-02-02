@@ -927,12 +927,16 @@ public class QuickAssistProcessor {
 	}
 
 	public static boolean problemExists(IProblemLocationCore[] locations, List<Integer> problems) {
+		return findProblemLocation(locations, problems) != null;
+	}
+
+	public static IProblemLocationCore findProblemLocation(IProblemLocationCore[] locations, List<Integer> problems) {
 		for (IProblemLocationCore location : locations) {
 			if (problems.contains(location.getProblemId())) {
-				return true;
+				return location;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	public static boolean getTryWithResourceProposals(IInvocationContextCore context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {

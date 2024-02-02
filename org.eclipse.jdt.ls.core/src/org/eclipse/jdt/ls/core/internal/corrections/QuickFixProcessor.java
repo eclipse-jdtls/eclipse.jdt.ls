@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
@@ -380,7 +381,8 @@ public class QuickFixProcessor {
 			// problem, 10));
 			// break;
 			case IProblem.JavadocMissing:
-				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, problem.getCoveringNode(context.getASTRoot()), proposals, CodeActionKind.QuickFix);
+				ASTNode node = problem.getCoveringNode(context.getASTRoot());
+				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, node, proposals, CodeActionKind.QuickFix);
 				break;
 			case IProblem.JavadocMissingParamTag:
 			case IProblem.JavadocMissingReturnTag:

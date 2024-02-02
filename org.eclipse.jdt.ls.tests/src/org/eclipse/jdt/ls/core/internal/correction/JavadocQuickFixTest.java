@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -804,7 +806,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public <A> void foo(int a) throws IOException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'foo'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -851,7 +853,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public void empty() {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'empty'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -876,6 +878,26 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("B.java", buf.toString(), false, null);
 		assertCodeActionNotExists(cu, "Add Javadoc for 'foo'");
+	}
+
+	@Test
+	public void testAllJavadocPresent() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" * Some comment\n");
+		buf.append(" */\n");
+		buf.append("public class E {\n");
+		buf.append("   /**\n");
+		buf.append("    * Some comment2\n");
+		buf.append("    */\n");
+		buf.append("    public void empty() {\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range r = new Range(new Position(8, 18), new Position(8, 18));
+		assertCodeActionNotExists(cu, r, "Add Javadoc comment");
 	}
 
 	@Test
@@ -905,7 +927,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    public E(int a) throws IOException {\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'E'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -926,7 +948,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append(" */\n");
 		buf.append("public class E<A, B> {\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'E'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 
@@ -961,7 +983,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("     */\n");
 		buf.append("    public static final int COLOR= 1;\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc for 'COLOR'", buf.toString());
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 

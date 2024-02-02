@@ -58,6 +58,7 @@ import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.core.manipulation.MembersOrderPreferenceCacheCommon;
+import org.eclipse.jdt.internal.ui.PreferenceConstantsCore;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -66,7 +67,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.RuntimeEnvironment;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathResult;
-import org.eclipse.jdt.ls.core.internal.contentassist.TypeFilter;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionMatchCaseMode;
 import org.eclipse.jdt.ls.core.internal.handlers.InlayHintsParameterMode;
@@ -1624,7 +1624,7 @@ public class Preferences {
 	public Preferences setFilteredTypes(List<String> filteredTypes) {
 		this.filteredTypes = (filteredTypes == null) ? Collections.emptyList() : filteredTypes;
 		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
-		pref.put(TypeFilter.TYPEFILTER_ENABLED, String.join(";", filteredTypes));
+		pref.put(PreferenceConstantsCore.TYPEFILTER_ENABLED, String.join(";", filteredTypes));
 		JavaLanguageServerPlugin.getInstance().getTypeFilter().dispose();
 		return this;
 	}

@@ -570,17 +570,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class C {\n");
 		buf.append("    private int test;\n");
 		buf.append("\n");
-		buf.append("    /**\n");
-		buf.append("     * @return the test\n");
-		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
 		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
-		buf.append("    /**\n");
-		buf.append("     * @param test the test to set\n");
-		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
 		buf.append("        \n");
@@ -591,7 +585,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("         c.setTest(1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e2 = new Expected("Create getter and setter for 'test'", buf.toString());
+		Expected e2 = new Expected("Create getter and setter for 'test'...", buf.toString());
 
 		assertCodeActions(cu, e1, e2);
 	}
@@ -677,17 +671,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class C {\n");
 		buf.append("    private int test;\n");
 		buf.append("\n");
-		buf.append("    /**\n");
-		buf.append("     * @return the test\n");
-		buf.append("     */\n");
 		buf.append("    public int getTest() {\n");
 		buf.append("        return test;\n");
 		buf.append("        \n");
 		buf.append("    }\n");
 		buf.append("\n");
-		buf.append("    /**\n");
-		buf.append("     * @param test the test to set\n");
-		buf.append("     */\n");
 		buf.append("    public void setTest(int test) {\n");
 		buf.append("        this.test = test;\n");
 		buf.append("        \n");
@@ -698,7 +686,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		buf.append("         setTest(1);\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e6 = new Expected("Create getter and setter for 'test'", buf.toString());
+		Expected e6 = new Expected("Create getter and setter for 'test'...", buf.toString());
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5, e6);
 	}

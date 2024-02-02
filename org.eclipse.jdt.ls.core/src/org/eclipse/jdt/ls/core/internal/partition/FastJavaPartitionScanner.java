@@ -8,8 +8,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *
- * Originally copied from org.eclipse.jdt.internal.ui.text.FastJavaPartitionScanner
- *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
