@@ -230,8 +230,7 @@ public class QuickAssistProcessor {
 			getConvertToSwitchExpressionProposals(context, coveringNode, resultingCollections);
 
 			List<Integer> javaDocCommentProblems = Arrays.asList(IProblem.JavadocMissing);
-			IProblemLocationCore found = findProblemLocation(locations, javaDocCommentProblems);
-			if (found == null) {
+			if (!problemExists(locations, javaDocCommentProblems)) {
 				JavadocTagsSubProcessor.getMissingJavadocCommentProposals(context, coveringNode, resultingCollections, JavaCodeActionKind.QUICK_ASSIST);
 			}
 
