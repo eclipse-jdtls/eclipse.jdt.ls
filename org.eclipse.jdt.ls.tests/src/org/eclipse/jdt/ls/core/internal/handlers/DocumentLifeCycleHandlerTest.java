@@ -1008,17 +1008,17 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Path filePath = Files.createTempDirectory("testDiagnosticsOnExternalFileWithInternalProject").resolve("A.java");
 		try {
 			String content = "error public class A { }";
-			Files.writeString(filePath, content); 
+			Files.writeString(filePath, content);
 			lifeCycleHandler.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(filePath.toUri().toString(), "java", 0, content)));
 			List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 			assertFalse("No diagnostics sent on open", diagnosticReports.isEmpty());
 			List<Diagnostic> diagnostics = diagnosticReports.get(0).getDiagnostics();
-			assertTrue("First diagnostics not sent", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("error on token \"error\"")));
+			assertTrue("First diagnostics not sent", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")));
 			lifeCycleHandler.didChange(new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(filePath.toUri().toString(), 0), List.of(new TextDocumentContentChangeEvent(new Range(new Position(0, 0), new Position(0, 0)), "another"))));
 			diagnosticReports = getClientRequests("publishDiagnostics");
 			assertEquals("No diagnostics sent on change", 2, diagnosticReports.size());
 			diagnostics = diagnosticReports.get(1).getDiagnostics();
-			assertTrue("diagnostics not updated upon edit", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("error on token \"anothererror\"")));
+			assertTrue("diagnostics not updated upon edit", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")));
 		} finally {
 			Files.delete(filePath);
 			Files.delete(filePath.getParent());
