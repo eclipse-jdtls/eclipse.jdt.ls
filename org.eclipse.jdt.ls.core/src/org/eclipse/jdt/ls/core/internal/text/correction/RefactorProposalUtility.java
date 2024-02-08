@@ -76,8 +76,8 @@ import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefact
 import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -114,7 +114,7 @@ public class RefactorProposalUtility {
 	public static final String MOVE_TYPE_COMMAND = "moveType";
 	public static final String INTRODUCE_PARAMETER_COMMAND = "introduceParameter";
 
-	public static List<ProposalKindWrapper> getMoveRefactoringProposals(CodeActionParams params, IInvocationContextCore context) {
+	public static List<ProposalKindWrapper> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
 		int relevance = IProposalRelevance.MOVE_REFACTORING;
 		List<String> kindOfActions = params.getContext().getOnly();
 		boolean alwaysShowMove = kindOfActions != null && kindOfActions.contains(CodeActionKind.Refactor);
@@ -280,23 +280,23 @@ public class RefactorProposalUtility {
 		return type == null ? null : type.getQualifiedName();
 	}
 
-	public static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, false, inferSelectionSupport);
 	}
 
-	public static List<ProposalKindWrapper> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static List<ProposalKindWrapper> getExtractVariableCommandProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractVariableProposals(params, context, problemsAtLocation, true, inferSelectionSupport);
 	}
 
-	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, false, inferSelectionSupport);
 	}
 
-	public static ProposalKindWrapper getExtractMethodCommandProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
+	public static ProposalKindWrapper getExtractMethodCommandProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, null, true, inferSelectionSupport);
 	}
 
-	private static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
+	private static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean returnAsCommand, boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
 		}
@@ -320,7 +320,7 @@ public class RefactorProposalUtility {
 		return proposals;
 	}
 
-	private static boolean supportsExtractVariable(IInvocationContextCore context) {
+	private static boolean supportsExtractVariable(IInvocationContext context) {
 		ASTNode node = context.getCoveredNode();
 		if (!(node instanceof Expression)) {
 			if (context.getSelectionLength() != 0) {
@@ -342,11 +342,11 @@ public class RefactorProposalUtility {
 		return true;
 	}
 
-	public static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+	private static ProposalKindWrapper getExtractVariableAllOccurrenceProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
 			boolean inferSelectionSupport) throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_all_description;
@@ -399,11 +399,11 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractVariableProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
+	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
 			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_local_description;
@@ -456,9 +456,9 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static boolean containsMatchingProblem(IProblemLocationCore[] locations, int problemId) {
+	public static boolean containsMatchingProblem(IProblemLocation[] locations, int problemId) {
 		if (locations != null) {
-			for (IProblemLocationCore location : locations) {
+			for (IProblemLocation location : locations) {
 				if (IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER.equals(location.getMarkerType()) && location.getProblemId() == problemId) {
 					return true;
 				}
@@ -467,8 +467,8 @@ public class RefactorProposalUtility {
 		return false;
 	}
 
-	public static ProposalKindWrapper getAssignVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
-			IProblemLocationCore[] locations)
+	public static ProposalKindWrapper getAssignVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+			IProblemLocation[] locations)
 			throws CoreException {
 		ASTNode node = context.getCoveringNode();
 		Statement statement = ASTResolving.findParentStatement(node);
@@ -508,8 +508,8 @@ public class RefactorProposalUtility {
 		}
 	}
 
-	public static ProposalKindWrapper getAssignFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
-			IProblemLocationCore[] locations) throws CoreException {
+	public static ProposalKindWrapper getAssignFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand,
+			IProblemLocation[] locations) throws CoreException {
 		ASTNode node = context.getCoveringNode();
 		Statement statement = ASTResolving.findParentStatement(node);
 		if (!(statement instanceof ExpressionStatement)) {
@@ -555,7 +555,7 @@ public class RefactorProposalUtility {
 	 * Merge the "Extract to Field" and "Convert Local Variable to Field" to a
 	 * generic "Extract to Field".
 	 */
-	public static ProposalKindWrapper getGenericExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
+	public static ProposalKindWrapper getGenericExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
 			boolean inferSelectionSupport)
 			throws CoreException {
 		ProposalKindWrapper proposal = getConvertVariableToFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand);
@@ -566,12 +566,12 @@ public class RefactorProposalUtility {
 		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, inferSelectionSupport);
 	}
 
-	public static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+	public static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
 			throws CoreException {
 		return getExtractFieldProposal(params, context, problemsAtLocation, formatterOptions, initializeIn, returnAsCommand, false);
 	}
 
-	private static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
+	private static ProposalKindWrapper getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand,
 			boolean inferSelectionSupport) throws CoreException {
 		if (!supportsExtractVariable(context)) {
 			return null;
@@ -653,11 +653,11 @@ public class RefactorProposalUtility {
 		return scopes;
 	}
 
-	public static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand) throws CoreException {
 		return getExtractConstantProposal(params, context, problemsAtLocation, formatterOptions, returnAsCommand, false);
 	}
 
-	private static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
+	private static ProposalKindWrapper getExtractConstantProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, boolean returnAsCommand, boolean inferSelectionSupport)
 			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		String label = CorrectionMessages.QuickAssistProcessor_extract_to_constant_description;
@@ -709,7 +709,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ProposalKindWrapper getConvertVariableToFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
+	public static ProposalKindWrapper getConvertVariableToFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Map formatterOptions, String initializeIn, boolean returnAsCommand)
 			throws CoreException {
 		ASTNode node = context.getCoveredNode();
 		if (!(node instanceof SimpleName)) {
@@ -785,12 +785,12 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand)
+	public static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand)
 			throws CoreException {
 		return getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formattingOptions, returnAsCommand, false);
 	}
 
-	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand,
+	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formattingOptions, boolean returnAsCommand,
 			boolean inferSelectionSupport) throws CoreException {
 		if (!(coveringNode instanceof Expression) && !(coveringNode instanceof Statement) && !(coveringNode instanceof Block)) {
 			return null;
@@ -848,7 +848,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	private static String proposeMethodNameHeuristic(IInvocationContextCore context, ASTNode coveringNode) {
+	private static String proposeMethodNameHeuristic(IInvocationContext context, ASTNode coveringNode) {
 
 		int selStart = context.getSelectionOffset();
 		int selEnd = context.getSelectionOffset() + context.getSelectionLength();
@@ -892,7 +892,7 @@ public class RefactorProposalUtility {
 		return "extracted";
 	}
 
-	public static ProposalKindWrapper getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocationCore[] problemLocations)
+	public static ProposalKindWrapper getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocation[] problemLocations)
 			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
 		final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
@@ -913,7 +913,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ProposalKindWrapper getExtractInterfaceProposal(CodeActionParams params, IInvocationContextCore context) {
+	public static ProposalKindWrapper getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;
@@ -936,7 +936,7 @@ public class RefactorProposalUtility {
 		return null;
 	}
 
-	public static ProposalKindWrapper getChangeSignatureProposal(CodeActionParams params, IInvocationContextCore context) {
+	public static ProposalKindWrapper getChangeSignatureProposal(CodeActionParams params, IInvocationContext context) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;

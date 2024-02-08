@@ -17,7 +17,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.InitializeFinalFieldProposalCore;
@@ -31,19 +31,19 @@ import org.eclipse.lsp4j.CodeActionKind;
 public class UnInitializedFinalFieldSubProcessor extends UnInitializedFinalFieldBaseSubProcessor<ProposalKindWrapper> {
 
 	@Override
-	protected ProposalKindWrapper createInitializeFinalFieldProposal(IProblemLocationCore problem, ICompilationUnit targetCU, SimpleName node, IVariableBinding targetBinding, int createConstructor) {
+	protected ProposalKindWrapper createInitializeFinalFieldProposal(IProblemLocation problem, ICompilationUnit targetCU, SimpleName node, IVariableBinding targetBinding, int createConstructor) {
 		InitializeFinalFieldProposalCore proposal = new InitializeFinalFieldProposalCore(problem, targetCU, node, targetBinding, IProposalRelevance.CREATE_CONSTRUCTOR);
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
 	@Override
-	protected ProposalKindWrapper createInitializeFinalFieldProposal(IProblemLocationCore problem, ICompilationUnit targetCU, MethodDeclaration node, int createConstructor, int updateAtConstructor) {
+	protected ProposalKindWrapper createInitializeFinalFieldProposal(IProblemLocation problem, ICompilationUnit targetCU, MethodDeclaration node, int createConstructor, int updateAtConstructor) {
 		InitializeFinalFieldProposalCore proposal = new InitializeFinalFieldProposalCore(problem, targetCU, node, IProposalRelevance.CREATE_CONSTRUCTOR, InitializeFinalFieldProposalCore.UPDATE_AT_CONSTRUCTOR);
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
 	@Override
-	protected ProposalKindWrapper conditionallyCreateInitializeFinalFieldProposal(IProblemLocationCore problem, ICompilationUnit targetCU, MethodDeclaration node, int createConstructor, int updateAtConstructor) {
+	protected ProposalKindWrapper conditionallyCreateInitializeFinalFieldProposal(IProblemLocation problem, ICompilationUnit targetCU, MethodDeclaration node, int createConstructor, int updateAtConstructor) {
 		InitializeFinalFieldProposalCore initializeFinalFieldProposal = new InitializeFinalFieldProposalCore(problem, targetCU, node, IProposalRelevance.CREATE_CONSTRUCTOR, InitializeFinalFieldProposalCore.UPDATE_CONSTRUCTOR_NEW_PARAMETER);
 		try {
 			if (initializeFinalFieldProposal.hasProposal()) {

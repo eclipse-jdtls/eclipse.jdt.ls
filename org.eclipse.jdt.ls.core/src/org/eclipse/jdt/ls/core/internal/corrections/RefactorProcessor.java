@@ -94,8 +94,8 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ASTRewriteRemoveImportsCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
@@ -125,7 +125,7 @@ public class RefactorProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<ProposalKindWrapper> getProposals(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getProposals(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			ArrayList<ProposalKindWrapper> proposals = new ArrayList<>();
@@ -164,7 +164,7 @@ public class RefactorProcessor {
 		return Collections.emptyList();
 	}
 
-	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, IProblemLocationCore[] locations, ArrayList<ProposalKindWrapper> resultingCollections) throws CoreException {
+	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocation[] locations, ArrayList<ProposalKindWrapper> resultingCollections) throws CoreException {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -176,7 +176,7 @@ public class RefactorProcessor {
 		return false;
 	}
 
-	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
+	private boolean getInverseLocalVariableProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -196,7 +196,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -213,12 +213,12 @@ public class RefactorProcessor {
 
 	}
 
-	static boolean noErrorsAtLocation(IProblemLocationCore[] locations, ASTNode coveringNode) {
+	static boolean noErrorsAtLocation(IProblemLocation[] locations, ASTNode coveringNode) {
 		if (locations != null) {
 			int start = coveringNode.getStartPosition();
 			int length = coveringNode.getLength();
 			for (int i = 0; i < locations.length; i++) {
-				IProblemLocationCore location = locations[i];
+				IProblemLocation location = locations[i];
 				if (location.getOffset() > start + length || (location.getOffset() + location.getLength()) < start) {
 					continue;
 				}
@@ -235,7 +235,7 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private boolean getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -255,7 +255,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getAssignToVariableProposals(IInvocationContextCore context, ASTNode node, IProblemLocationCore[] locations, Collection<ProposalKindWrapper> resultingCollections, CodeActionParams params) {
+	private boolean getAssignToVariableProposals(IInvocationContext context, ASTNode node, IProblemLocation[] locations, Collection<ProposalKindWrapper> resultingCollections, CodeActionParams params) {
 		try {
 			Map formatterOptions = null;
 			ProposalKindWrapper proposal = RefactorProposalUtility.getAssignVariableProposal(params, context, locations != null && locations.length != 0, formatterOptions,
@@ -274,7 +274,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private boolean getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -294,7 +294,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private boolean getExtractFieldProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -311,7 +311,7 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getInlineProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private boolean getInlineProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -396,7 +396,7 @@ public class RefactorProcessor {
 	}
 
 
-	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private boolean getConvertAnonymousToNestedProposals(CodeActionParams params, IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (proposals == null) {
 			return false;
 		}
@@ -416,7 +416,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	public static ProposalKindWrapper getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContextCore context, final ASTNode node, boolean returnAsCommand) throws CoreException {
+	public static ProposalKindWrapper getConvertAnonymousToNestedProposal(CodeActionParams params, IInvocationContext context, final ASTNode node, boolean returnAsCommand) throws CoreException {
 		String label = CorrectionMessages.QuickAssistProcessor_convert_anonym_to_nested;
 		ClassInstanceCreation cic = getClassInstanceCreation(node);
 		if (cic == null) {
@@ -478,7 +478,7 @@ public class RefactorProcessor {
 		}
 	}
 
-	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getConvertAnonymousClassCreationsToLambdaProposals(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		ClassInstanceCreation cic = getClassInstanceCreation(covering);
 		if (cic == null) {
 			return false;
@@ -501,7 +501,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getConvertLambdaToAnonymousClassCreationsProposals(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}
@@ -529,7 +529,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+	private static boolean getConvertVarTypeToResolvedTypeProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -607,7 +607,7 @@ public class RefactorProcessor {
 		return name;
 	}
 
-	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+	private static boolean getConvertResolvedTypeToVarTypeProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		CompilationUnit astRoot = context.getASTRoot();
 		IJavaElement root = astRoot.getJavaElement();
 		if (root == null) {
@@ -722,7 +722,7 @@ public class RefactorProcessor {
 	 * @return {@code true} if the operation could or has been performed,
 	 *         {@code false otherwise}
 	 */
-	private static boolean getAddStaticImportProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+	private static boolean getAddStaticImportProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		if (!(node instanceof SimpleName)) {
 			return false;
 		}
@@ -894,7 +894,7 @@ public class RefactorProcessor {
 		return false;
 	}
 
-	private static boolean getConvertForLoopProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getConvertForLoopProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		ForStatement forStatement = getEnclosingForStatementHeader(node);
 		if (forStatement == null) {
 			return false;
@@ -994,7 +994,7 @@ public class RefactorProcessor {
 		return null;
 	}
 
-	private boolean getExtractInterfaceProposal(CodeActionParams params, IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
+	private boolean getExtractInterfaceProposal(CodeActionParams params, IInvocationContext context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -1013,7 +1013,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getChangeSignatureProposal(CodeActionParams params, IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
+	private boolean getChangeSignatureProposal(CodeActionParams params, IInvocationContext context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -1028,7 +1028,7 @@ public class RefactorProcessor {
 		return true;
 	}
 
-	private boolean getSurroundWithTryCatchProposal(IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
+	private boolean getSurroundWithTryCatchProposal(IInvocationContext context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}

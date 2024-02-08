@@ -66,7 +66,7 @@ import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecke
 import org.eclipse.jdt.internal.core.manipulation.dom.OperatorPrecedence;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.Messages;
@@ -84,7 +84,7 @@ import org.eclipse.lsp4j.CodeActionParams;
 public class InvertBooleanUtility {
 	public static final String INVERT_VARIABLE_COMMAND = "invertVariable";
 
-	public static ProposalKindWrapper getInvertVariableProposal(CodeActionParams params, IInvocationContextCore context, ASTNode covering, boolean returnAsCommand) {
+	public static ProposalKindWrapper getInvertVariableProposal(CodeActionParams params, IInvocationContext context, ASTNode covering, boolean returnAsCommand) {
 		// cursor should be placed on variable name
 		if (!(covering instanceof SimpleName)) {
 			return null;
@@ -232,13 +232,13 @@ public class InvertBooleanUtility {
 		return CodeActionHandler.wrap(proposal, CodeActionKind.Refactor);
 	}
 
-	public static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
+	public static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> proposals) {
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, covering);
 		return getInverseConditionProposals(params, context, covering, coveredNodes, proposals);
 
 	}
 
-	private static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContextCore context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> proposals) {
+	private static boolean getInverseConditionProposals(CodeActionParams params, IInvocationContext context, ASTNode covering, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> proposals) {
 		if (proposals == null) {
 			return false;
 		}
@@ -491,7 +491,7 @@ public class InvertBooleanUtility {
 		return prefixExpression;
 	}
 
-	public static boolean getSplitAndConditionProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	public static boolean getSplitAndConditionProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		Operator andOperator = InfixExpression.Operator.CONDITIONAL_AND;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {
@@ -561,7 +561,7 @@ public class InvertBooleanUtility {
 		return true;
 	}
 
-	public static boolean getSplitOrConditionProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	public static boolean getSplitOrConditionProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		Operator orOperator = InfixExpression.Operator.CONDITIONAL_OR;
 		// check that user invokes quick assist on infix expression
 		if (!(node instanceof InfixExpression)) {

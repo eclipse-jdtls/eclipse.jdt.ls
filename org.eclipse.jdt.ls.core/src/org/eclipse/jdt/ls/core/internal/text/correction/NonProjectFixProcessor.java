@@ -18,8 +18,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ls.core.internal.DiagnosticsState;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -42,7 +42,7 @@ public class NonProjectFixProcessor {
 		this.nonProjectDiagnosticsState = JavaLanguageServerPlugin.getNonProjectDiagnosticsState();
 	}
 
-	public List<Either<Command, CodeAction>> getCorrections(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) {
+	public List<Either<Command, CodeAction>> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
@@ -50,7 +50,7 @@ public class NonProjectFixProcessor {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		String uri = JDTUtils.toURI(context.getCompilationUnit());
 		for (int i = 0; i < locations.length; i++) {
-			IProblemLocationCore curr = locations[i];
+			IProblemLocation curr = locations[i];
 			Integer id = Integer.valueOf(curr.getProblemId());
 			if (id == DiagnosticsHandler.NON_PROJECT_JAVA_FILE
 				|| id == DiagnosticsHandler.NOT_ON_CLASSPATH) {

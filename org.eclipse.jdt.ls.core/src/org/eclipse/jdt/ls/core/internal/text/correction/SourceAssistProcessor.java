@@ -55,8 +55,8 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -116,7 +116,7 @@ public class SourceAssistProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<Either<Command, CodeAction>> getSourceActionCommands(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations, IProgressMonitor monitor) {
+	public List<Either<Command, CodeAction>> getSourceActionCommands(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations, IProgressMonitor monitor) {
 		List<Either<Command, CodeAction>> $ = new ArrayList<>();
 		ICompilationUnit cu = context.getCompilationUnit();
 		IType type = getSelectionType(context);
@@ -267,7 +267,7 @@ public class SourceAssistProcessor {
 		return $;
 	}
 
-	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContextCore context, List<Either<Command, CodeAction>> $, IType type, List<String> fieldNames, boolean isInTypeDeclaration) throws JavaModelException {
+	private void addGenerateAccessorsSourceActionCommand(CodeActionParams params, IInvocationContext context, List<Either<Command, CodeAction>> $, IType type, List<String> fieldNames, boolean isInTypeDeclaration) throws JavaModelException {
 		AccessorField[] accessors = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.BOTH);
 		AccessorField[] getters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.GETTER);
 		AccessorField[] setters = GenerateGetterSetterOperation.getUnimplementedAccessors(type, AccessorKind.SETTER);
@@ -338,7 +338,7 @@ public class SourceAssistProcessor {
 		result.add(targetAction);
 	}
 
-	private TextEdit getOrganizeImportsTextEdit(IInvocationContextCore context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
+	private TextEdit getOrganizeImportsTextEdit(IInvocationContext context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;
@@ -372,7 +372,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContextCore context, IType type, String kind, boolean isInTypeDeclaration, AccessorField[] accessors, AccessorKind accessorKind) {
+	private Optional<Either<Command, CodeAction>> getGetterSetterAction(CodeActionParams params, IInvocationContext context, IType type, String kind, boolean isInTypeDeclaration, AccessorField[] accessors, AccessorKind accessorKind) {
 		boolean isQuickAssist = kind.equals(JavaCodeActionKind.QUICK_ASSIST);
 		try {
 			if (accessors == null || accessors.length == 0) {
@@ -434,7 +434,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private boolean supportsHashCodeEquals(IInvocationContextCore context, IType type, IProgressMonitor monitor) {
+	private boolean supportsHashCodeEquals(IInvocationContext context, IType type, IProgressMonitor monitor) {
 		try {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isEnum() || type.getCompilationUnit() == null) {
 				return false;
@@ -498,7 +498,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContextCore context, IType type, String kind, IProgressMonitor monitor) {
+	private Optional<Either<Command, CodeAction>> getGenerateConstructorsAction(CodeActionParams params, IInvocationContext context, IType type, String kind, IProgressMonitor monitor) {
 		try {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
@@ -542,7 +542,7 @@ public class SourceAssistProcessor {
 		return Optional.empty();
 	}
 
-	private Optional<Either<Command, CodeAction>> getGenerateDelegateMethodsAction(CodeActionParams params, IInvocationContextCore context, IType type) {
+	private Optional<Either<Command, CodeAction>> getGenerateDelegateMethodsAction(CodeActionParams params, IInvocationContext context, IType type) {
 		try {
 			if (!preferenceManager.getClientPreferences().isGenerateDelegateMethodsPromptSupported() || !GenerateDelegateMethodsHandler.supportsGenerateDelegateMethods(type)) {
 				return Optional.empty();
@@ -564,12 +564,12 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleAction(IInvocationContextCore context) {
+	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleAction(IInvocationContext context) {
 		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
 		return getFinalModifierWherePossibleAction(context, fix, ActionMessages.GenerateFinalModifiersAction_label, JavaCodeActionKind.SOURCE_GENERATE_FINAL_MODIFIERS);
 	}
 
-	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContextCore context) {
+	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContext context) {
 		ASTNode coveringNode = context.getCoveringNode();
 		List<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, coveringNode);
 		List<ASTNode> possibleASTNodes = getPossibleASTNodesForFinalModifier(coveredNodes);
@@ -605,7 +605,7 @@ public class SourceAssistProcessor {
 		return results;
 	}
 
-	private Optional<Either<Command, CodeAction>> getFinalModifierWherePossibleAction(IInvocationContextCore context, IProposableFix fix, String actionMessage, String kind) {
+	private Optional<Either<Command, CodeAction>> getFinalModifierWherePossibleAction(IInvocationContext context, IProposableFix fix, String actionMessage, String kind) {
 		if (fix == null) {
 			return Optional.empty();
 		}
@@ -642,7 +642,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContextCore context, CodeActionParams params, String kind, String label, boolean avoidVolatileChanges) {
+	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContext context, CodeActionParams params, String kind, String label, boolean avoidVolatileChanges) {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(label, new GroupCategorySet(new GroupCategory(label, label, label)));
 		try {
 			TextEdit edit = CompilationUnitSorter.sort(context.getASTRoot(), new DefaultJavaElementComparator(avoidVolatileChanges), 0, group, null);
@@ -658,7 +658,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersForSelectionProposal(IInvocationContextCore context, CodeActionParams params, List<ASTNode> coveredNodes, boolean avoidVolatileChanges) {
+	private Optional<Either<Command, CodeAction>> getSortMembersForSelectionProposal(IInvocationContext context, CodeActionParams params, List<ASTNode> coveredNodes, boolean avoidVolatileChanges) {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(ActionMessages.SortMembers_selectionLabel, new GroupCategorySet(new GroupCategory(ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel)));
 		PartialSortMembersOperation operation = new PartialSortMembersOperation(new IJavaElement[] { context.getASTRoot().getJavaElement() }, new DefaultJavaElementComparator(avoidVolatileChanges));
 		try {
@@ -675,7 +675,7 @@ public class SourceAssistProcessor {
 		}
 	}
 
-	private Optional<Either<Command, CodeAction>> getSortMembersAction(IInvocationContextCore context, CodeActionParams params, String kind, boolean avoidVolatileChanges) {
+	private Optional<Either<Command, CodeAction>> getSortMembersAction(IInvocationContext context, CodeActionParams params, String kind, boolean avoidVolatileChanges) {
 		CompilationUnit unit = context.getASTRoot();
 		if (unit != null) {
 			ITypeRoot typeRoot = unit.getTypeRoot();
@@ -741,7 +741,7 @@ public class SourceAssistProcessor {
 		return workspaceEdit;
 	}
 
-	public static IType getSelectionType(IInvocationContextCore context) {
+	public static IType getSelectionType(IInvocationContext context) {
 		ICompilationUnit unit = context.getCompilationUnit();
 		ASTNode node = context.getCoveredNode();
 		if (node == null) {

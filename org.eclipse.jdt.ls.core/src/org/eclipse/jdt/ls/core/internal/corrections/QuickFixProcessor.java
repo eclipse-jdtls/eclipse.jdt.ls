@@ -41,8 +41,6 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AddImportCorrectionProposalCore;
@@ -58,6 +56,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElements
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 
@@ -80,14 +80,14 @@ public class QuickFixProcessor {
 		return start;
 	}
 
-	public List<ProposalKindWrapper> getCorrections(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getCorrections(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) throws CoreException {
 		if (locations == null || locations.length == 0) {
 			return Collections.emptyList();
 		}
 		ArrayList<ProposalKindWrapper> resultingCollections = new ArrayList<>();
 		Set<Integer> handledProblems = new HashSet<>(locations.length);
 		for (int i = 0; i < locations.length; i++) {
-			IProblemLocationCore curr = locations[i];
+			IProblemLocation curr = locations[i];
 			if (handledProblems(curr, locations, handledProblems)) {
 				process(params, context, curr, resultingCollections);
 			}
@@ -95,14 +95,14 @@ public class QuickFixProcessor {
 		return resultingCollections;
 	}
 
-	private static boolean handledProblems(IProblemLocationCore location, IProblemLocationCore[] locations, Set<Integer> handledProblems) {
+	private static boolean handledProblems(IProblemLocation location, IProblemLocation[] locations, Set<Integer> handledProblems) {
 		int problemId = location.getProblemId();
 		if (handledProblems.contains(problemId)) {
 			return false;
 		}
 		if (problemId == IProblem.UndefinedName) {
 			// skip different problems with the same resolution
-			for (IProblemLocationCore l : locations) {
+			for (IProblemLocation l : locations) {
 				if (l.getProblemId() == IProblem.UndefinedType && Arrays.deepEquals(l.getProblemArguments(), location.getProblemArguments())) {
 					handledProblems.add(problemId);
 					return false;
@@ -112,7 +112,7 @@ public class QuickFixProcessor {
 		return handledProblems.add(problemId);
 	}
 
-	private void process(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private void process(CodeActionParams params, IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		int id = problem.getProblemId();
 		if (id == 0) { // no proposals for none-problem locations
 			return;
@@ -686,7 +686,7 @@ public class QuickFixProcessor {
 		// problem, proposals);
 	}
 
-	public void addAddAllMissingImportsProposal(IInvocationContextCore context, Collection<ProposalKindWrapper> proposals) {
+	public void addAddAllMissingImportsProposal(IInvocationContext context, Collection<ProposalKindWrapper> proposals) {
 		if (proposals.size() == 0) {
 			return;
 		}

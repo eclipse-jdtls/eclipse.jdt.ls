@@ -32,8 +32,8 @@ import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.internal.corext.util.Messages;
 import org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
@@ -50,17 +50,17 @@ import org.eclipse.ltk.core.refactoring.CompositeChange;
 
 public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcessor<ProposalKindWrapper> {
 
-	public static void getWrongTypeNameProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) {
 		new ReorgCorrectionsSubProcessor().addWrongTypeNameProposals(context, problem, proposals);
 	}
 
-	public static void getWrongPackageDeclNameProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new ReorgCorrectionsSubProcessor().addWrongPackageDeclNameProposals(context, problem, proposals);
 	}
 
-	public static void removeImportStatementProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new ReorgCorrectionsSubProcessor().addRemoveImportStatementProposals(context, problem, proposals);
 	}
@@ -75,20 +75,20 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createCorrectMainTypeNameProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore, java.lang.String, java.lang.String, int)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createCorrectMainTypeNameProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.ui.text.java.IInvocationContext, java.lang.String, java.lang.String, int)
 	 */
 	@Override
-	public ProposalKindWrapper createCorrectMainTypeNameProposal(ICompilationUnit cu, IInvocationContextCore context, String currTypeName, String newTypeName, int relevance) {
+	public ProposalKindWrapper createCorrectMainTypeNameProposal(ICompilationUnit cu, IInvocationContext context, String currTypeName, String newTypeName, int relevance) {
 		String title = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_renametype_description, BasicElementLabels.getJavaElementName(newTypeName));
 		CorrectMainTypeNameProposalCore p = new CorrectMainTypeNameProposalCore(title, cu, null, context, currTypeName, newTypeName, relevance);
 		return CodeActionHandler.wrap(p, CodeActionKind.QuickFix);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createCorrectPackageDeclarationProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore, int)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createCorrectPackageDeclarationProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.internal.ui.text.correction.IProblemLocation, int)
 	 */
 	@Override
-	protected ProposalKindWrapper createCorrectPackageDeclarationProposal(ICompilationUnit cu, IProblemLocationCore problem, int relevance) {
+	protected ProposalKindWrapper createCorrectPackageDeclarationProposal(ICompilationUnit cu, IProblemLocation problem, int relevance) {
 		return CodeActionHandler.wrap(new CorrectPackageDeclarationProposalCore(cu, problem, relevance), CodeActionKind.QuickFix);
 	}
 
@@ -110,7 +110,7 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	}
 
 	@Override
-	public void addRemoveImportStatementProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public void addRemoveImportStatementProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		super.addRemoveImportStatementProposals(context, problem, proposals);
 		ICleanUpFixCore removeAllUnusedImportsFix = UnusedCodeFixCore.createCleanUp(context.getASTRoot(), false, false, false, false, false, true, false, false);
 		if (removeAllUnusedImportsFix != null) {
@@ -125,10 +125,10 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createRemoveUnusedImportProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp, int, org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createRemoveUnusedImportProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp, int, org.eclipse.jdt.ui.text.java.IInvocationContext)
 	 */
 	@Override
-	protected ProposalKindWrapper createRemoveUnusedImportProposal(IProposableFix fix, UnusedCodeCleanUp unusedCodeCleanUp, int relevance, IInvocationContextCore context) {
+	protected ProposalKindWrapper createRemoveUnusedImportProposal(IProposableFix fix, UnusedCodeCleanUp unusedCodeCleanUp, int relevance, IInvocationContext context) {
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
@@ -142,10 +142,10 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createProjectSetupFixProposal(org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore, org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore, java.lang.String, java.util.Collection)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createProjectSetupFixProposal(org.eclipse.jdt.ui.text.java.IInvocationContext, org.eclipse.jdt.internal.ui.text.correction.IProblemLocation, java.lang.String, java.util.Collection)
 	 */
 	@Override
-	public ProposalKindWrapper createProjectSetupFixProposal(IInvocationContextCore context, IProblemLocationCore problem, String missingType, Collection<ProposalKindWrapper> proposals) {
+	public ProposalKindWrapper createProjectSetupFixProposal(IInvocationContext context, IProblemLocation problem, String missingType, Collection<ProposalKindWrapper> proposals) {
 		// Not yet implemented in jdt.ls,  jdt.ui impl is UI-based
 		return null;
 	}

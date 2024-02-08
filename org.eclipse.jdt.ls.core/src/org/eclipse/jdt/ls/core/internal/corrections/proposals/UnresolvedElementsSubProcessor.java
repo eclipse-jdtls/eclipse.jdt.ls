@@ -29,8 +29,8 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.TypeKinds;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
@@ -55,12 +55,12 @@ import org.eclipse.lsp4j.CodeActionKind;
 
 public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubProcessor<ProposalKindWrapper> {
 
-	public static void getVariableProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getVariableProposals(IInvocationContext context, IProblemLocation problem,
 			IVariableBinding resolvedField, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectVariableProposals(context, problem, resolvedField, proposals);
 	}
 
-	public static void getTypeProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getTypeProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectTypeProposals(context, problem, proposals);
 	}
@@ -70,27 +70,27 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 		new UnresolvedElementsSubProcessor().collectNewTypeProposals(cu, refNode, kind, relevance, null);
 	}
 
-	public static void getMethodProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getMethodProposals(IInvocationContext context, IProblemLocation problem,
 			boolean isOnlyParameterMismatch, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectMethodProposals(context, problem, isOnlyParameterMismatch, proposals);
 	}
 
-	public static void getConstructorProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getConstructorProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectConstructorProposals(context, problem, proposals);
 	}
 
-	public static void getAmbiguousTypeReferenceProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getAmbiguousTypeReferenceProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectAmbiguosTypeReferenceProposals(context, problem, proposals);
 	}
 
-	public static void getArrayAccessProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getArrayAccessProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) {
 		new UnresolvedElementsSubProcessor().collectArrayAccessProposals(context, problem, proposals);
 	}
 
-	public static void getAnnotationMemberProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getAnnotationMemberProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectAnnotationMemberProposals(context, problem, proposals);
 	}
@@ -282,9 +282,9 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 	}
 
 	@Override
-	public void collectTypeProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	public void collectTypeProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		// This is a hack because upstream does not behave as we expect.
-		IProblemLocationCore wrap = new ProblemLocationWrapper(problem) {
+		IProblemLocation wrap = new ProblemLocationWrapper(problem) {
 			@Override
 			public ASTNode getCoveringNode(CompilationUnit astRoot) {
 				ICompilationUnit cu = context.getCompilationUnit();

@@ -31,8 +31,8 @@ import org.eclipse.jdt.internal.ui.text.correction.AddAllMissingJavadocTagsPropo
 import org.eclipse.jdt.internal.ui.text.correction.AddJavadocCommentProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingJavadocTagProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingModuleJavadocTagProposalCore;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.JavadocTagsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
@@ -46,21 +46,21 @@ import org.eclipse.lsp4j.CodeActionKind;
  *
  */
 public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<ProposalKindWrapper> {
-	public static void getMissingJavadocTagProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new JavadocTagsSubProcessor().addMissingJavadocTagProposals(context, problem, proposals);
 	}
 
-	public static void getUnusedAndUndocumentedParameterOrExceptionProposals(IInvocationContextCore context,
-			IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public static void getUnusedAndUndocumentedParameterOrExceptionProposals(IInvocationContext context,
+			IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new JavadocTagsSubProcessor().addUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
 	}
 
-	public static void getMissingJavadocCommentProposals(IInvocationContextCore context, ASTNode coveringNode,
+	public static void getMissingJavadocCommentProposals(IInvocationContext context, ASTNode coveringNode,
 			Collection<ProposalKindWrapper> proposals, String kind) throws CoreException {
 		ArrayList<ProposalKindWrapper> tmp = new ArrayList<>();
 		// TODO this should be fixed upstream.
 		// We should be able to pass the node, not only a problem
-		IProblemLocationCore stub = new ProblemLocation(0, 0, 0, null, false, kind) {
+		IProblemLocation stub = new ProblemLocation(0, 0, 0, null, false, kind) {
 			@Override
 			public ASTNode getCoveringNode(CompilationUnit astRoot) {
 				return coveringNode;
@@ -73,7 +73,7 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	}
 
 	@Override
-	public void addMissingJavadocCommentProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	public void addMissingJavadocCommentProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		ASTNode node = problem.getCoveringNode(context.getASTRoot());
 		ASTNode node2 = ASTNodes.getNormalizedNode(node);
 		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(node2);
@@ -86,7 +86,7 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	}
 
 	@Override
-	public void addMissingJavadocTagProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+	public void addMissingJavadocTagProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
 		ASTNode node2 = ASTNodes.getNormalizedNode(node);
 		BodyDeclaration bodyDeclaration = ASTResolving.findParentBodyDeclaration(node2);
 		if (bodyDeclaration != null) {
@@ -97,12 +97,12 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 		}
 	}
 
-	public static void getRemoveJavadocTagProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) {
 		new JavadocTagsSubProcessor().addRemoveJavadocTagProposals(context, problem, proposals);
 	}
 
-	public static void getInvalidQualificationProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void getInvalidQualificationProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) {
 		new JavadocTagsSubProcessor().addInvalidQualificationProposals(context, problem, proposals);
 	}

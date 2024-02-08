@@ -36,9 +36,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
-import org.eclipse.jdt.internal.ui.text.correction.ProblemLocationCore;
+import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewAnnotationMemberProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
@@ -61,6 +59,8 @@ import org.eclipse.jdt.ls.core.internal.text.correction.NonProjectFixProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -141,11 +141,11 @@ public class CodeActionHandler {
 			return Collections.emptyList();
 		}
 
-		IInvocationContextCore context = getContext(unit, astRoot, params.getRange());
+		IInvocationContext context = getContext(unit, astRoot, params.getRange());
 		List<Diagnostic> diagnostics = params.getContext().getDiagnostics().stream().filter((d) -> {
 			return JavaLanguageServerPlugin.SERVER_SOURCE_ID.equals(d.getSource());
 		}).collect(Collectors.toList());
-		IProblemLocationCore[] locations = getProblemLocationCores(unit, diagnostics);
+		IProblemLocation[] locations = getProblemLocationCores(unit, diagnostics);
 		if (monitor.isCanceled()) {
 			return Collections.emptyList();
 		}
@@ -318,8 +318,8 @@ public class CodeActionHandler {
 		}
 	}
 
-	public static IProblemLocationCore[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
-		IProblemLocationCore[] locations = new IProblemLocationCore[diagnostics.size()];
+	public static IProblemLocation[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
+		IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
 			Diagnostic diagnostic = diagnostics.get(i);
 			int start = DiagnosticsHelper.getStartOffset(unit, diagnostic.getRange());
@@ -337,7 +337,7 @@ public class CodeActionHandler {
 					arguments.add(s);
 				}
 			}
-			locations[i] = new ProblemLocationCore(start, end - start, problemId, arguments.toArray(new String[0]), isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
+			locations[i] = new ProblemLocation(start, end - start, problemId, arguments.toArray(new String[0]), isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
 		}
 		return locations;
 	}
@@ -367,7 +367,7 @@ public class CodeActionHandler {
 		return CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 	}
 
-	public static IInvocationContextCore getContext(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
+	public static IInvocationContext getContext(ICompilationUnit unit, CompilationUnit astRoot, Range range) {
 		int start = DiagnosticsHelper.getStartOffset(unit, range);
 		int end = DiagnosticsHelper.getEndOffset(unit, range);
 		InnovationContext context = new InnovationContext(unit, start, end - start);
