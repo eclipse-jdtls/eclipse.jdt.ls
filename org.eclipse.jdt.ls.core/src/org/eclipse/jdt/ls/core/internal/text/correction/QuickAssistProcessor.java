@@ -125,8 +125,8 @@ import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
@@ -168,7 +168,7 @@ public class QuickAssistProcessor {
 		this.preferenceManager = preferenceManager;
 	}
 
-	public List<ProposalKindWrapper> getAssists(CodeActionParams params, IInvocationContextCore context, IProblemLocationCore[] locations) throws CoreException {
+	public List<ProposalKindWrapper> getAssists(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
 		if (coveringNode != null) {
 			// ArrayList<ASTNode> coveredNodes = getFullyCoveredNodes(context, coveringNode);
@@ -243,7 +243,7 @@ public class QuickAssistProcessor {
 		return Collections.emptyList();
 	}
 
-	private static boolean getExtractMethodFromLambdaProposal(IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private static boolean getExtractMethodFromLambdaProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			return false;
 		}
@@ -274,7 +274,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private static boolean getConvertLambdaExpressionAndMethodRefCleanUpProposal(IInvocationContextCore context, ASTNode coveringNode, Collection<ProposalKindWrapper> proposals) throws CoreException {
+	private static boolean getConvertLambdaExpressionAndMethodRefCleanUpProposal(IInvocationContext context, ASTNode coveringNode, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if (coveringNode instanceof Block && coveringNode.getLocationInParent() == LambdaExpression.BODY_PROPERTY) {
 			return false;
 		}
@@ -300,7 +300,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getAssignParamToFieldProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getAssignParamToFieldProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -350,7 +350,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getAssignAllParamsToFieldsProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		node = ASTNodes.getNormalizedNode(node);
 		ASTNode parent = node.getParent();
 		if (!(parent instanceof SingleVariableDeclaration) || !(parent.getParent() instanceof MethodDeclaration)) {
@@ -383,7 +383,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	public static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContextCore context, ASTNode coveringNode) {
+	public static ArrayList<ASTNode> getFullyCoveredNodes(IInvocationContext context, ASTNode coveringNode) {
 		final ArrayList<ASTNode> coveredNodes = new ArrayList<>();
 		final int selectionBegin = context.getSelectionOffset();
 		final int selectionEnd = selectionBegin + context.getSelectionLength();
@@ -739,7 +739,7 @@ public class QuickAssistProcessor {
 		return blockBody;
 	}
 
-	public static boolean getCatchClauseToThrowsProposals(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	public static boolean getCatchClauseToThrowsProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return true;
 		}
@@ -883,7 +883,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getConvertMethodReferenceToLambdaProposal(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) throws JavaModelException {
+	private static boolean getConvertMethodReferenceToLambdaProposal(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) throws JavaModelException {
 		MethodReference methodReference;
 		if (covering instanceof MethodReference ref) {
 			methodReference = ref;
@@ -916,7 +916,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	public static boolean getTryWithResourceProposals(IProblemLocationCore[] locations, IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
+	public static boolean getTryWithResourceProposals(IProblemLocation[] locations, IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		final List<Integer> exceptionProblems = Arrays.asList(IProblem.UnclosedCloseable, IProblem.UnclosedCloseable, IProblem.PotentiallyUnclosedCloseable, IProblem.UnhandledException);
 		if (problemExists(locations, exceptionProblems)) {
 			return false;
@@ -926,12 +926,12 @@ public class QuickAssistProcessor {
 		return getTryWithResourceProposals(context, node, coveredNodes, resultingCollections);
 	}
 
-	public static boolean problemExists(IProblemLocationCore[] locations, List<Integer> problems) {
+	public static boolean problemExists(IProblemLocation[] locations, List<Integer> problems) {
 		return findProblemLocation(locations, problems) != null;
 	}
 
-	public static IProblemLocationCore findProblemLocation(IProblemLocationCore[] locations, List<Integer> problems) {
-		for (IProblemLocationCore location : locations) {
+	public static IProblemLocation findProblemLocation(IProblemLocation[] locations, List<Integer> problems) {
+		for (IProblemLocation location : locations) {
 			if (problems.contains(location.getProblemId())) {
 				return location;
 			}
@@ -939,7 +939,7 @@ public class QuickAssistProcessor {
 		return null;
 	}
 
-	public static boolean getTryWithResourceProposals(IInvocationContextCore context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
+	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		if (!JavaModelUtil.is1d8OrHigher(context.getCompilationUnit().getJavaProject())) {
 			return false;
 		}
@@ -1177,7 +1177,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getConvertToSwitchExpressionProposals(IInvocationContextCore context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (covering instanceof Block block) {
 			List<Statement> statements = block.statements();
 			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
@@ -1219,7 +1219,7 @@ public class QuickAssistProcessor {
 		return true;
 	}
 
-	private static boolean getStringConcatToTextBlockProposal(IInvocationContextCore context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+	private static boolean getStringConcatToTextBlockProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections == null) {
 			return false;
 		}
@@ -1253,7 +1253,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getJoinVariableProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getJoinVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			SplitVariableFixCore fix = SplitVariableFixCore.createSplitVariableFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1269,7 +1269,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getSplitVariableProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getSplitVariableProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			JoinVariableFixCore fix = JoinVariableFixCore.createJoinVariableFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1285,7 +1285,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getInvertEqualsProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getInvertEqualsProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = InvertEqualsExpressionFixCore.createInvertEqualsFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1301,7 +1301,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getAddInferredLambdaParameterTypesProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getAddInferredLambdaParameterTypesProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = AddInferredLambdaParameterTypesFixCore.createAddInferredLambdaParameterTypesFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1317,7 +1317,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getAddVarLambdaParameterTypesProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getAddVarLambdaParameterTypesProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = AddVarLambdaParameterTypesFixCore.createAddVarLambdaParameterTypesFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1333,7 +1333,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getChangeLambdaBodyToBlockProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getChangeLambdaBodyToBlockProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ChangeLambdaBodyToBlockFixCore.createChangeLambdaBodyToBlockFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1349,7 +1349,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getChangeLambdaBodyToExpressionProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getChangeLambdaBodyToExpressionProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ChangeLambdaBodyToExpressionFixCore.createChangeLambdaBodyToBlockFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1365,7 +1365,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getRemoveVarOrInferredLambdaParameterTypesProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getRemoveVarOrInferredLambdaParameterTypesProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = RemoveVarOrInferredLambdaParameterTypesFixCore.createRemoveVarOrInferredLambdaParameterTypesFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1381,7 +1381,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getConvertLambdaToMethodReferenceProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getConvertLambdaToMethodReferenceProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ConvertLambdaToMethodReferenceFixCore.createConvertLambdaToMethodReferenceFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1397,7 +1397,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getConvertToMessageFormatProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getConvertToMessageFormatProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ConvertToMessageFormatFixCore.createConvertToMessageFormatFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1413,7 +1413,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getConvertToStringBufferProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getConvertToStringBufferProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ConvertToStringBufferFixCore.createConvertToStringBufferFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1429,7 +1429,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getConvertToStringFormatProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getConvertToStringFormatProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = ConvertToStringFormatFixCore.createConvertToStringFormatFix(context.getASTRoot(), coveringNode);
 			if (fix != null) {
@@ -1445,7 +1445,7 @@ public class QuickAssistProcessor {
 		return false;
 	}
 
-	private boolean getAddMissingMethodDeclarationProposal(IInvocationContextCore context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
+	private boolean getAddMissingMethodDeclarationProposal(IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> resultingCollections) {
 		if (resultingCollections != null) {
 			var fix = AddMissingMethodDeclarationFixCore.createAddMissingMethodDeclaration(context.getASTRoot(), coveringNode);
 			if (fix != null) {

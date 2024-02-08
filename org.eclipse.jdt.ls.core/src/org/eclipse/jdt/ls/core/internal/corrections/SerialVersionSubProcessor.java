@@ -17,8 +17,8 @@ package org.eclipse.jdt.ls.core.internal.corrections;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.SerialVersionBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.SerialVersionProposalCore;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -41,15 +41,15 @@ public final class SerialVersionSubProcessor extends SerialVersionBaseSubProcess
 	 * @param proposals
 	 *            the proposal collection to extend
 	 */
-	public static final void getSerialVersionProposals(final IInvocationContextCore context, final IProblemLocationCore location, final Collection<ProposalKindWrapper> proposals) {
+	public static final void getSerialVersionProposals(final IInvocationContext context, final IProblemLocation location, final Collection<ProposalKindWrapper> proposals) {
 		new SerialVersionSubProcessor().addSerialVersionProposals(context, location, proposals);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.SerialVersionBaseSubProcessor#createSerialVersionProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, int, org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore, boolean)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.SerialVersionBaseSubProcessor#createSerialVersionProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, int, org.eclipse.jdt.ui.text.java.IInvocationContext, boolean)
 	 */
 	@Override
-	protected ProposalKindWrapper createSerialVersionProposal(IProposableFix iProposableFix, int missingSerialVersion, IInvocationContextCore context, boolean b) {
+	protected ProposalKindWrapper createSerialVersionProposal(IProposableFix iProposableFix, int missingSerialVersion, IInvocationContext context, boolean b) {
 		return CodeActionHandler.wrap(new SerialVersionProposalCore(iProposableFix, missingSerialVersion, context, b), CodeActionKind.QuickFix);
 	}
 }

@@ -33,8 +33,8 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -74,7 +74,7 @@ public class GetRefactorEditHandler {
 			return null;
 		}
 		context.setASTRoot(ast);
-		IProblemLocationCore[] locations = CodeActionHandler.getProblemLocationCores(unit, params.context.getContext().getDiagnostics());
+		IProblemLocation[] locations = CodeActionHandler.getProblemLocationCores(unit, params.context.getContext().getDiagnostics());
 		boolean problemsAtLocation = locations.length != 0;
 		String positionKey = DEFAULT_POSITION_KEY;
 
@@ -240,7 +240,7 @@ public class GetRefactorEditHandler {
 		return targetPosition;
 	}
 
-	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContextCore context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
+	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
 		if (RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(refactorType)) {
 			return RefactorProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
@@ -256,7 +256,7 @@ public class GetRefactorEditHandler {
 		return null;
 	}
 
-	private static ProposalKindWrapper getAssignVariableProposal(GetRefactorEditParams params, IInvocationContextCore context, boolean problemsAtLocation, String refactorType, Map formatterOptions, IProblemLocationCore[] locations)
+	private static ProposalKindWrapper getAssignVariableProposal(GetRefactorEditParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions, IProblemLocation[] locations)
 			throws CoreException {
 		if (RefactorProposalUtility.ASSIGN_VARIABLE_COMMAND.equals(refactorType)) {
 			return RefactorProposalUtility.getAssignVariableProposal(params.context, context, problemsAtLocation, formatterOptions, false, locations);
@@ -267,7 +267,7 @@ public class GetRefactorEditHandler {
 		return null;
 	}
 
-	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContextCore context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
+	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
 		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
 	}
 

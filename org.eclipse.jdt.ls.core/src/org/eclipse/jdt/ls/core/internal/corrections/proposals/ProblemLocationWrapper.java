@@ -14,12 +14,12 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 
-public class ProblemLocationWrapper implements IProblemLocationCore {
-	private IProblemLocationCore delegate;
+public class ProblemLocationWrapper implements IProblemLocation {
+	private IProblemLocation delegate;
 
-	public ProblemLocationWrapper(IProblemLocationCore del) {
+	public ProblemLocationWrapper(IProblemLocation del) {
 		this.delegate = del;
 	}
 

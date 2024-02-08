@@ -44,7 +44,7 @@ import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspMethodBinding;
@@ -225,7 +225,7 @@ public class GenerateConstructorsHandler {
 		if (range == null) {
 			return Collections.emptyList();
 		}
-		IInvocationContextCore context = CodeActionHandler.getContext(unit, astRoot, range);
+		IInvocationContext context = CodeActionHandler.getContext(unit, astRoot, range);
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
 		return CodeActionUtility.getFieldNames(coveredNodes, context.getCoveringNode());
 	}

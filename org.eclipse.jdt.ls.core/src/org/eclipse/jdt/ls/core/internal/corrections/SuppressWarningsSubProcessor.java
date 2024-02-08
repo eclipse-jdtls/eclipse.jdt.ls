@@ -18,8 +18,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsProposalCore;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -28,15 +28,15 @@ import org.eclipse.lsp4j.CodeActionKind;
 
 public class SuppressWarningsSubProcessor extends SuppressWarningsBaseSubProcessor<ProposalKindWrapper> {
 
-	public static void addSuppressWarningsProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public static void addSuppressWarningsProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new SuppressWarningsSubProcessor().getSuppressWarningsProposals(context, problem, proposals);
 	}
 
-	public static void addUnknownSuppressWarningProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public static void addUnknownSuppressWarningProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new SuppressWarningsSubProcessor().getUnknownSuppressWarningProposals(context, problem, proposals);
 	}
 
-	public static void addRemoveUnusedSuppressWarningProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) {
+	public static void addRemoveUnusedSuppressWarningProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new SuppressWarningsSubProcessor().getRemoveUnusedSuppressWarningProposals(context, problem, proposals);
 	}
 

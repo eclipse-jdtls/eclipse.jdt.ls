@@ -40,8 +40,8 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CastCorrectionProposalCore;
@@ -64,7 +64,7 @@ public class TypeMismatchSubProcessor extends TypeMismatchBaseSubProcessor<Propo
 	public TypeMismatchSubProcessor() {
 	}
 
-	public static void addTypeMismatchProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new TypeMismatchSubProcessor().collectTypeMismatchProposals(context, problem, proposals);
 	}
@@ -73,34 +73,34 @@ public class TypeMismatchSubProcessor extends TypeMismatchBaseSubProcessor<Propo
 		return TypeMismatchSubProcessor.boxOrUnboxPrimitives(castType, toCast, ast);
 	}
 
-	public static void addChangeSenderTypeProposals(IInvocationContextCore context, Expression nodeToCast,
+	public static void addChangeSenderTypeProposals(IInvocationContext context, Expression nodeToCast,
 			ITypeBinding castTypeBinding, boolean isAssignedNode, int relevance,
 			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		new TypeMismatchSubProcessor().collectChangeSenderTypeProposals(context, nodeToCast, castTypeBinding, isAssignedNode, relevance, proposals);
 	}
 
-	public static ProposalKindWrapper createCastProposal(IInvocationContextCore context, ITypeBinding castTypeBinding, Expression nodeToCast, int relevance) {
+	public static ProposalKindWrapper createCastProposal(IInvocationContext context, ITypeBinding castTypeBinding, Expression nodeToCast, int relevance) {
 		return new TypeMismatchSubProcessor().collectCastProposals(context, castTypeBinding, nodeToCast, relevance);
 	}
 
-	public static void addIncompatibleReturnTypeProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		new TypeMismatchSubProcessor().collectIncompatibleReturnTypeProposals(context, problem, proposals);
 	}
 
-	public static void addIncompatibleThrowsProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws JavaModelException {
 		new TypeMismatchSubProcessor().collectIncompatibleThrowsProposals(context, problem, proposals);
 	}
 
-	public static void addTypeMismatchInForEachProposals(IInvocationContextCore context, IProblemLocationCore problem,
+	public static void addTypeMismatchInForEachProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) {
 		new TypeMismatchSubProcessor().collectTypeMismatchInForEachProposals(context, problem, proposals);
 	}
 
 	@Override
-	public void collectTypeMismatchProposals(IInvocationContextCore context, IProblemLocationCore problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
-		IProblemLocationCore wrapped = new ProblemLocationWrapper(problem) {
+	public void collectTypeMismatchProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+		IProblemLocation wrapped = new ProblemLocationWrapper(problem) {
 			@Override
 			public String[] getProblemArguments() {
 				// This is a hack to get around superclass restrictions
