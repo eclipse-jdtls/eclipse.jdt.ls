@@ -5,6 +5,9 @@ on:
     - cron: '0 8 * * *'
   workflow_dispatch:
 
+permissions:
+  actions: write
+
 jobs:
   pr-verify-job:
     runs-on: ubuntu-latest
