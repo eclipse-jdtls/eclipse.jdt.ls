@@ -13,18 +13,28 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NodeFinder;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
@@ -34,6 +44,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.BindingComparator;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
@@ -67,23 +78,89 @@ public class GenerateToStringHandler {
 		if (type == null) {
 			return response;
 		}
-
 		try {
 			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(type.getCompilationUnit(), CoreASTProvider.WAIT_YES, monitor);
 			if (astRoot == null) {
 				return response;
 			}
-
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
 				response.type = type.getTypeQualifiedName();
-				response.fields = JdtDomModels.getDeclaredFields(typeBinding, false);
+				IVariableBinding[] fields = typeBinding.getDeclaredFields();
+				HashMap<IJavaElement, IVariableBinding> fieldsToBindingsMap = new HashMap<>();
+				HashMap<IJavaElement, IVariableBinding> selectedFieldsToBindingsMap = new HashMap<>();
+				for (IVariableBinding variableBinding : fields) {
+					if (!Modifier.isStatic(variableBinding.getModifiers())) {
+						fieldsToBindingsMap.put(variableBinding.getJavaElement(), variableBinding);
+						if (!Modifier.isTransient(variableBinding.getModifiers())) {
+							selectedFieldsToBindingsMap.put(variableBinding.getJavaElement(), variableBinding);
+						}
+					}
+				}
+				final IField[] allFields;
+				if (type.isRecord()) {
+					allFields = type.getRecordComponents();
+				} else {
+					allFields = type.getFields();
+				}
+				List<IVariableBinding> fieldsToBindings = new ArrayList<>();
+				List<IVariableBinding> selectedFieldsToBindings = new ArrayList<>();
+				for (IMember member : allFields) {
+					IVariableBinding memberBinding = selectedFieldsToBindingsMap.remove(member);
+					if (memberBinding != null) {
+						selectedFieldsToBindings.add(memberBinding);
+						fieldsToBindingsMap.remove(member);
+					}
+				}
+				for (IMember member : allFields) {
+					IVariableBinding memberBinding = fieldsToBindingsMap.remove(member);
+					if (memberBinding != null) {
+						fieldsToBindings.add(memberBinding);
+					}
+				}
+				selectedFieldsToBindings.sort(new BindingComparator());
+				fieldsToBindings.sort(new BindingComparator());
+				List<IVariableBinding> inheritedFieldsToBindings = new ArrayList<>();
+				ITypeBinding superTypeBinding = typeBinding;
+				while ((superTypeBinding = superTypeBinding.getSuperclass()) != null) {
+					for (IVariableBinding candidateField : superTypeBinding.getDeclaredFields()) {
+						if (!Modifier.isPrivate(candidateField.getModifiers()) && !Modifier.isStatic(candidateField.getModifiers()) && !JdtDomModels.contains(fieldsToBindings, candidateField)) {
+							inheritedFieldsToBindings.add(candidateField);
+						}
+					}
+				}
+				inheritedFieldsToBindings.sort(new BindingComparator());
+				List<IMethodBinding> methodsToBindings = new ArrayList<>();
+				for (IMethodBinding candidateMethod : typeBinding.getDeclaredMethods()) {
+					if (!Modifier.isStatic(candidateMethod.getModifiers()) && candidateMethod.getParameterTypes().length == 0 && !"void".equals(candidateMethod.getReturnType().getName()) && !"toString".equals(candidateMethod.getName()) //$NON-NLS-1$//$NON-NLS-2$
+							&& !"clone".equals(candidateMethod.getName())) { //$NON-NLS-1$
+						methodsToBindings.add(candidateMethod);
+					}
+				}
+				methodsToBindings.sort(new BindingComparator());
+				superTypeBinding = typeBinding;
+				List<IMethodBinding> inheritedMethodsToBindings = new ArrayList<>();
+				while ((superTypeBinding = superTypeBinding.getSuperclass()) != null) {
+					for (IMethodBinding candidateMethod : superTypeBinding.getDeclaredMethods()) {
+						if (!Modifier.isPrivate(candidateMethod.getModifiers()) && !Modifier.isStatic(candidateMethod.getModifiers()) && candidateMethod.getParameterTypes().length == 0
+								&& !"void".equals(candidateMethod.getReturnType().getName()) && !JdtDomModels.contains(methodsToBindings, candidateMethod) && !"clone".equals(candidateMethod.getName())) { //$NON-NLS-1$ //$NON-NLS-2$
+							inheritedMethodsToBindings.add(candidateMethod);
+						}
+					}
+				}
+				inheritedMethodsToBindings.sort(new BindingComparator());
+				List<LspVariableBinding> result = new LinkedList<>();
+				result.addAll(selectedFieldsToBindings.stream().map(f -> new LspVariableBinding(f, true)).toList());
+				result.addAll(fieldsToBindings.stream().map(f -> new LspVariableBinding(f)).toList());
+				result.addAll(inheritedFieldsToBindings.stream().map(f -> new LspVariableBinding(f)).toList());
+				result.addAll(methodsToBindings.stream().map(f -> new LspVariableBinding(f)).toList());
+				result.addAll(inheritedMethodsToBindings.stream().map(f -> new LspVariableBinding(f)).toList());
+				response.fields = result.toArray(new LspVariableBinding[0]);
 				response.exists = CodeActionUtility.hasMethod(type, METHODNAME_TOSTRING);
 			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to check toString status", e);
 		}
-
 		return response;
 	}
 
@@ -144,7 +221,7 @@ public class GenerateToStringHandler {
 
 			ITypeBinding typeBinding = ASTNodes.getTypeBinding(astRoot, type);
 			if (typeBinding != null) {
-				IVariableBinding[] selectedFields = JdtDomModels.convertToVariableBindings(typeBinding, fields);
+				IBinding[] selectedFields = JdtDomModels.convertToBindings(typeBinding, fields);
 				GenerateToStringOperation operation = GenerateToStringOperation.createOperation(typeBinding, selectedFields, astRoot, insertPosition, settings, false, false);
 				operation.run(null);
 				return operation.getResultingEdit();
