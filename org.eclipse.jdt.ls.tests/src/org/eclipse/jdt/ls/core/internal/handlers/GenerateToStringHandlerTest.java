@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -20,11 +21,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.GenerateToStringOperation;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
@@ -34,6 +38,7 @@ import org.eclipse.jdt.internal.corext.util.ValidateEditException;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
@@ -56,7 +61,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(params);
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
-		assertEquals(2, response.fields.length);
+		assertEquals(5, response.fields.length);
 		assertFalse(response.exists);
 	}
 
@@ -79,7 +84,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(params);
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
-		assertEquals(2, response.fields.length);
+		assertEquals(5, response.fields.length);
 		assertTrue(response.exists);
 	}
 
@@ -112,22 +117,22 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
-		String expected = "package p;\r\n" +
-				"\r\n" +
-				"import java.util.Arrays;\r\n" +
-				"import java.util.List;\r\n" +
-				"\r\n" +
-				"public class B {\r\n" +
-				"	private static String UUID = \"23434343\";\r\n" +
-				"	String name;\r\n" +
-				"	int id;\r\n" +
-				"	List<String> aList;\r\n" +
-				"	String[] arrays;\r\n" +
-				"	@Override\r\n" +
-				"	public String toString() {\r\n" +
-				"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
-				"	}\r\n" +
-				"}";
+		String expected = "package p;\r\n"
+				+ "\r\n"
+				+ "import java.util.Arrays;\r\n"
+				+ "import java.util.List;\r\n"
+				+ "\r\n"
+				+ "public class B {\r\n"
+				+ "	private static String UUID = \"23434343\";\r\n"
+				+ "	String name;\r\n"
+				+ "	int id;\r\n"
+				+ "	List<String> aList;\r\n"
+				+ "	String[] arrays;\r\n"
+				+ "	@Override\r\n"
+				+ "	public String toString() {\r\n"
+				+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+				+ "	}\r\n"
+				+ "}";
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());
@@ -150,7 +155,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(params);
 		assertEquals("B", response.type);
 		assertNotNull(response.fields);
-		assertEquals(3, response.fields.length);
+		assertEquals(6, response.fields.length);
 		assertFalse(response.exists);
 		assertEquals("stringField", response.fields[0].name);
 		assertEquals("intField", response.fields[1].name);
@@ -169,18 +174,18 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
-		String expected = "package p;\r\n" +
-				"\r\n" +
-				"public class B {\r\n" +
-				"	public String stringField;\r\n" +
-				"	public int intField;\r\n" +
-				"	public static int staticIntField;\r\n" +
-				"	public boolean booleanField;\r\n" +
-				"	@Override\r\n" +
-				"	public String toString() {\r\n" +
-				"		return \"B [stringField=\" + stringField + \", intField=\" + intField + \", booleanField=\" + booleanField + \"]\";\r\n" +
-				"	}\r\n" +
-				"}";
+		String expected = "package p;\r\n"
+				+ "\r\n"
+				+ "public class B {\r\n"
+				+ "	public String stringField;\r\n"
+				+ "	public int intField;\r\n"
+				+ "	public static int staticIntField;\r\n"
+				+ "	public boolean booleanField;\r\n"
+				+ "	@Override\r\n"
+				+ "	public String toString() {\r\n"
+				+ "		return \"B [stringField=\" + stringField + \", intField=\" + intField + \", booleanField=\" + booleanField + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+				+ "	}\r\n"
+				+ "}";
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());
@@ -218,35 +223,42 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
-		String expected = "package p;\r\n" +
-				"\r\n" +
-				"import java.util.List;\r\n" +
-				"\r\n" +
-				"public class B {\r\n" +
-				"	private static String UUID = \"23434343\";\r\n" +
-				"	String name;\r\n" +
-				"	int id;\r\n" +
-				"	List<String> aList;\r\n" +
-				"	String[] arrays;\r\n" +
-				"	@Override\r\n" +
-				"	public String toString() {\r\n" +
-				"		final int maxLen = 10;\r\n" +
-				"		StringBuilder builder = new StringBuilder();\r\n" +
-				"		builder.append(\"B [\");\r\n" +
-				"		if (name != null) {\r\n" +
-				"			builder.append(\"name=\").append(name).append(\", \");\r\n" +
-				"		}\r\n" +
-				"		builder.append(\"id=\").append(id).append(\", \");\r\n" +
-				"		if (aList != null) {\r\n" +
-				"			builder.append(\"aList=\").append(aList.subList(0, Math.min(aList.size(), maxLen))).append(\", \");\r\n" +
-				"		}\r\n" +
-				"		if (arrays != null) {\r\n" +
-				"			builder.append(\"arrays=\").append(arrays);\r\n" +
-				"		}\r\n" +
-				"		builder.append(\"]\");\r\n" +
-				"		return builder.toString();\r\n" +
-				"	}\r\n" +
-				"}";
+		String expected = "package p;\r\n"
+				+ "\r\n"
+				+ "import java.util.List;\r\n"
+				+ "\r\n"
+				+ "public class B {\r\n"
+				+ "	private static String UUID = \"23434343\";\r\n"
+				+ "	String name;\r\n"
+				+ "	int id;\r\n"
+				+ "	List<String> aList;\r\n"
+				+ "	String[] arrays;\r\n"
+				+ "	@Override\r\n"
+				+ "	public String toString() {\r\n"
+				+ "		final int maxLen = 10;\r\n"
+				+ "		StringBuilder builder = new StringBuilder();\r\n"
+				+ "		builder.append(\"B [\");\r\n"
+				+ "		if (name != null) {\r\n"
+				+ "			builder.append(\"name=\").append(name).append(\", \");\r\n"
+				+ "		}\r\n"
+				+ "		builder.append(\"id=\").append(id).append(\", \");\r\n"
+				+ "		if (aList != null) {\r\n"
+				+ "			builder.append(\"aList=\").append(aList.subList(0, Math.min(aList.size(), maxLen))).append(\", \");\r\n"
+				+ "		}\r\n"
+				+ "		if (arrays != null) {\r\n"
+				+ "			builder.append(\"arrays=\").append(arrays).append(\", \");\r\n"
+				+ "		}\r\n"
+				+ "		if (getClass() != null) {\r\n"
+				+ "			builder.append(\"getClass()=\").append(getClass()).append(\", \");\r\n"
+				+ "		}\r\n"
+				+ "		builder.append(\"hashCode()=\").append(hashCode()).append(\", \");\r\n"
+				+ "		if (super.toString() != null) {\r\n"
+				+ "			builder.append(\"toString()=\").append(super.toString());\r\n"
+				+ "		}\r\n"
+				+ "		builder.append(\"]\");\r\n"
+				+ "		return builder.toString();\r\n"
+				+ "	}\r\n"
+				+ "}";
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());
@@ -285,22 +297,22 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 			generateToString(unit.findPrimaryType(), settings, cursor);
 
 			/* @formatter:off */
-			String expected = "package p;\r\n" +
-					"\r\n" +
-					"import java.util.Arrays;\r\n" +
-					"import java.util.List;\r\n" +
-					"\r\n" +
-					"public class B {\r\n" +
-					"	private static String UUID = \"23434343\";\r\n" +
-					"	String name;\r\n" +
-					"	int id;\r\n" +
-					"	List<String> aList;/*|*/\r\n" +
-					"	@Override\r\n" +
-					"	public String toString() {\r\n" +
-					"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
-					"	}\r\n" +
-					"	String[] arrays;\r\n" +
-					"}";
+			String expected = "package p;\r\n"
+					+ "\r\n"
+					+ "import java.util.Arrays;\r\n"
+					+ "import java.util.List;\r\n"
+					+ "\r\n"
+					+ "public class B {\r\n"
+					+ "	private static String UUID = \"23434343\";\r\n"
+					+ "	String name;\r\n"
+					+ "	int id;\r\n"
+					+ "	List<String> aList;/*|*/\r\n"
+					+ "	@Override\r\n"
+					+ "	public String toString() {\r\n"
+					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+					+ "	}\r\n"
+					+ "	String[] arrays;\r\n"
+					+ "}";
 			/* @formatter:on */
 
 			compareSource(expected, unit.getSource());
@@ -342,28 +354,64 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 			generateToString(unit.findPrimaryType(), settings, cursor);
 
 			/* @formatter:off */
-			String expected = "package p;\r\n" +
-					"\r\n" +
-					"import java.util.Arrays;\r\n" +
-					"import java.util.List;\r\n" +
-					"\r\n" +
-					"public class B {\r\n" +
-					"	private static String UUID = \"23434343\";\r\n" +
-					"	String name;\r\n" +
-					"	int id;\r\n" +
-					"	@Override\r\n" +
-					"	public String toString() {\r\n" +
-					"		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \"]\";\r\n" +
-					"	}\r\n" +
-					"	List<String> aList;/*|*/\r\n" +
-					"	String[] arrays;\r\n" +
-					"}";
+			String expected = "package p;\r\n"
+					+ "\r\n"
+					+ "import java.util.Arrays;\r\n"
+					+ "import java.util.List;\r\n"
+					+ "\r\n"
+					+ "public class B {\r\n"
+					+ "	private static String UUID = \"23434343\";\r\n"
+					+ "	String name;\r\n"
+					+ "	int id;\r\n"
+					+ "	@Override\r\n"
+					+ "	public String toString() {\r\n"
+					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+					+ "	}\r\n"
+					+ "	List<String> aList;/*|*/\r\n"
+					+ "	String[] arrays;\r\n"
+					+ "}";
 			/* @formatter:on */
 
 			compareSource(expected, unit.getSource());
 		} finally {
 			preferences.setCodeGenerationInsertionLocation(oldValue);
 		}
+	}
+
+	@Test
+	public void testInheritedFieldsAndMethods() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = getProject("hello");
+		IJavaProject javaProject = JavaCore.create(project);
+		ToStringGenerationSettingsCore settings = new ToStringGenerationSettingsCore();
+		settings.overrideAnnotation = true;
+		settings.createComments = false;
+		settings.useBlocks = false;
+		settings.stringFormatTemplate = GenerateToStringHandler.DEFAULT_TEMPLATE;
+		settings.toStringStyle = GenerateToStringOperation.STRING_CONCATENATION;
+		settings.skipNulls = false;
+		settings.customArrayToString = true;
+		settings.limitElements = false;
+		settings.customBuilderSettings = new CustomBuilderSettings();
+		IType type = javaProject.findType("org.sample.Child");
+		CheckToStringResponse response = GenerateToStringHandler.checkToStringStatus(type);
+		assertNotNull(response);
+		assertEquals(5, response.fields.length);
+		LspVariableBinding name = response.fields[0];
+		// Child.name, field, selected
+		assertEquals("name", name.name);
+		assertTrue(name.isField);
+		assertTrue(name.isSelected);
+		// Parent.parentName, field, not selected
+		LspVariableBinding parentName = response.fields[1];
+		assertEquals("parentName", parentName.name);
+		assertTrue(parentName.isField);
+		assertFalse(parentName.isSelected);
+		// Object.getClass, method, not selected
+		LspVariableBinding getClass = response.fields[2];
+		assertEquals("getClass", getClass.name);
+		assertFalse(getClass.isField);
+		assertFalse(parentName.isSelected);
 	}
 
 	private void generateToString(IType type, ToStringGenerationSettingsCore settings) throws ValidateEditException, CoreException {
