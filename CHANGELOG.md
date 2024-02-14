@@ -1,5 +1,12 @@
 # Change Log
 
+# [1.33.0 (February 15th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/125?closed=1)
+ * enhancement - Add Unnamed classes (Java 21) preview support. See [#3042](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3042).
+ * enhancement - Add support for manual cleanup actions command. See [#3010](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3010).
+ * bug fix - Support Gradle 8.5 with Java 21. See [#3044](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3044).
+ * build - Add missing About files to bundles. See [#3057](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3057).
+ * debt - Reduce duplicate code by consuming subprocessors (Javadoc, Getter/Setter, Serial version) from jdt.core.manipulation. See [#3036](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3036).
+
 # [1.32.0 (February 1st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/124?closed=1)
  * enhancement - Add Unnamed patterns and variables (Java 21) preview support. See [#2963](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2963).
  * enhancement - Add quick fixes for for suppressing warnings using `@SuppressWarnings`. See [#2698](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2698).
