@@ -134,7 +134,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		assertFalse(unit.getSource().contains("import org.junit.jupiter.api.Test"));
 		CodeActionParams params = new CodeActionParams();
 		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
-		Position position = new Position(3, 4);
+		Position position = new Position(3, 5);
 		final Range range = new Range(position, position);
 		params.setRange(range);
 		CodeActionContext context = new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedType), range)), Collections.singletonList(CodeActionKind.QuickFix));

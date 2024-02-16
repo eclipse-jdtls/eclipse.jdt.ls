@@ -247,13 +247,15 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 			context.setOnly(Arrays.asList(CodeActionKind.QuickFix));
 			codeActionParams.setContext(context);
 			List<Either<Command, CodeAction>> codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(10, codeActions.size());
-			CodeAction action = codeActions.get(0).getRight();
-			assertNotNull(action);
-			assertEquals("Create loop variable 'element'", action.getTitle());
-			action = codeActions.get(1).getRight();
-			assertNotNull(action);
-			assertNotEquals("Create loop variable 'element'", action.getTitle());
+			String target = "Create loop variable 'element'";
+			int count = 0;
+			for (int i = 0; i < codeActions.size(); i++) {
+				CodeAction action = codeActions.get(i).getRight();
+				if (target.equals(action.getTitle())) {
+					count++;
+				}
+			}
+			assertEquals(1, count);
 		} finally {
 			preferenceManager.getPreferences().setJavaQuickFixShowAt(showQuickFixes);
 		}

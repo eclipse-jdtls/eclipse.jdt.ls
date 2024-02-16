@@ -45,9 +45,9 @@ import org.eclipse.jdt.internal.ui.text.correction.IInvocationContextCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProblemLocationCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AddImportCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.corrections.proposals.AddImportCorrectionProposal;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GradleCompatibilityProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
@@ -691,7 +691,7 @@ public class QuickFixProcessor {
 			return;
 		}
 
-		Optional<Integer> minRelevance = proposals.stream().filter(w -> w.getProposal() instanceof AddImportCorrectionProposal).map((w) -> w.getProposal().getRelevance()).min(Comparator.naturalOrder());
+		Optional<Integer> minRelevance = proposals.stream().filter(w -> w.getProposal() instanceof AddImportCorrectionProposalCore).map((w) -> w.getProposal().getRelevance()).min(Comparator.naturalOrder());
 		if (minRelevance.isPresent()) {
 			CUCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, context.getCompilationUnit(),
 					minRelevance.get() - 1, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
