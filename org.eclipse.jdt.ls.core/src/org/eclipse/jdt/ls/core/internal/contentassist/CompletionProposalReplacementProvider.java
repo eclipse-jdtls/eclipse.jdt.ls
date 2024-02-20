@@ -235,7 +235,7 @@ public class CompletionProposalReplacementProvider {
 				if (proposal instanceof GetterSetterCompletionProposal getterSetterProposal) {
 					appendMethodPotentialReplacement(completionBuffer, getterSetterProposal);
 				} else {
-					appendReplacementString(completionBuffer, proposal);
+					appendReplacementString(completionBuffer, proposal, false);
 				}
 				break;
 			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
@@ -246,7 +246,8 @@ public class CompletionProposalReplacementProvider {
 				appendLambdaExpressionReplacement(completionBuffer, proposal);
 				break;
 			default:
-				appendReplacementString(completionBuffer, proposal);
+				boolean overloadedMethodProposal = item.getLabelDetails() == null ? false : "(...)".equals(item.getLabelDetails().getDetail());
+				appendReplacementString(completionBuffer, proposal, overloadedMethodProposal);
 				break;
 		}
 		return completionBuffer.toString();
@@ -534,7 +535,7 @@ public class CompletionProposalReplacementProvider {
 		return context.isInJavadoc();
 	}
 
-	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal) {
+	private void appendReplacementString(StringBuilder buffer, CompletionProposal proposal, boolean overloadedMethod) {
 		final boolean completionSnippetsSupported = client.isCompletionSnippetsSupported();
 		if (!hasArgumentList(proposal)) {
 			String str = null;
@@ -578,7 +579,7 @@ public class CompletionProposalReplacementProvider {
 			buffer.append(LPAREN);
 		}
 
-		if (hasParameters(proposal)) {
+		if (hasParameters(proposal) || overloadedMethod) {
 			appendGuessingCompletion(buffer, proposal);
 		}
 
@@ -734,7 +735,7 @@ public class CompletionProposalReplacementProvider {
 	private org.eclipse.lsp4j.TextEdit toRequiredTypeEdit(CompletionProposal typeProposal, char trigger, boolean canUseDiamond) {
 
 		StringBuilder buffer = new StringBuilder();
-		appendReplacementString(buffer, typeProposal);
+		appendReplacementString(buffer, typeProposal, false);
 
 		if (compilationUnit == null /*|| getContext() != null && getContext().isInJavadoc()*/) {
 			Range range = toReplacementRange(typeProposal);

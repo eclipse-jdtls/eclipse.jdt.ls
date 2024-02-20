@@ -64,11 +64,6 @@ public class SignatureHelpContext {
 	private String methodName;
 
 	/**
-	 * {@link #declaringTypeNames()}
-	 */
-	private List<String> declaringTypeNames;
-
-	/**
 	 * {@link #arguments()}
 	 */
 	private List<Expression> arguments;
@@ -102,7 +97,6 @@ public class SignatureHelpContext {
 		}
 		findTargetNode(root, unit, triggerOffset);
 		resolveMethodName(this.targetNode);
-		resolveDeclaringTypeName(this.targetNode);
 		this.arguments = resolveArguments(this.targetNode);
 		resolveParameterTypes(this.targetNode);
 		guessCompletionOffset(this.targetNode, unit);
@@ -320,50 +314,6 @@ public class SignatureHelpContext {
 			if (binding != null) {
 				this.methodName = binding.getDeclaringClass().getName();
 			}
-		}
-	}
-
-	/**
-	 * Get the declaring type names of the method-like node. Following names will be added:
-	 *   <ul>
-	 *     <li> The declaring type</li>
-	 *     <li> All the super types</li>
-	 *     <li> All the interfaces</li>
-	 *   </ul>
-	 *
-	 * @param node
-	 */
-	private void resolveDeclaringTypeName(ASTNode node) {
-		if (node == null) {
-			return;
-		}
-
-		IMethodBinding methodBinding = null;
-		if (node instanceof MethodInvocation methodInvocation) {
-			methodBinding = methodInvocation.resolveMethodBinding();
-		} else if (node instanceof ClassInstanceCreation classInstanceCreation) {
-			methodBinding = classInstanceCreation.resolveConstructorBinding();
-		} else if (node instanceof SuperMethodInvocation superMethodInvocation) {
-			methodBinding = superMethodInvocation.resolveMethodBinding();
-		} else if (node instanceof SuperConstructorInvocation superConstructorInvocation) {
-			methodBinding = superConstructorInvocation.resolveConstructorBinding();
-		} else if (node instanceof ConstructorInvocation constructorInvocation) {
-			methodBinding = constructorInvocation.resolveConstructorBinding();
-		}
-
-		if (methodBinding != null) {
-			ITypeBinding declaringType = methodBinding.getDeclaringClass();
-			List<String> typeNames = new ArrayList<>();
-			for (ITypeBinding mInterface : declaringType.getInterfaces()) {
-				String unqualifiedName = mInterface.getErasure().getName().replace(";", "");
-				typeNames.add(unqualifiedName);
-			}
-			while (declaringType != null) {
-				String unqualifiedName = declaringType.getErasure().getName().replace(";", "");
-				typeNames.add(unqualifiedName);
-				declaringType = declaringType.getSuperclass();
-			}
-			this.declaringTypeNames = typeNames;
 		}
 	}
 
@@ -680,14 +630,6 @@ public class SignatureHelpContext {
 	 */
 	public String methodName() {
 		return methodName;
-	}
-
-	/**
-	 * The declaring type name of the method invocation. It's used to filter methods from
-	 * different types but with same names that provided by the completion engine.
-	 */
-	public List<String> declaringTypeNames() {
-		return declaringTypeNames;
 	}
 
 	/**

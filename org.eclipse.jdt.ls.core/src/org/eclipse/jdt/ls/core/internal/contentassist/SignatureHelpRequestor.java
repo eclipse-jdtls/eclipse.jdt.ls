@@ -43,7 +43,6 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.handlers.SignatureHelpUtils;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -64,20 +63,18 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 	private boolean acceptType = false;
 	private String methodName;
 	private boolean isDescriptionEnabled;
-	private List<String> declaringTypeNames;
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, List<String> declaringTypeName) {
-		this(aUnit, methodName, declaringTypeName, false);
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName) {
+		this(aUnit, methodName, false);
 	}
 
-	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, List<String> declaringTypeName, boolean acceptType) {
+	public SignatureHelpRequestor(ICompilationUnit aUnit, String methodName, boolean acceptType) {
 		this.unit = aUnit;
 		setRequireExtendedContext(true);
 		infoProposals = new HashMap<>();
 		this.acceptType = acceptType;
 		this.methodName = methodName;
 		this.isDescriptionEnabled = isDescriptionEnabled();
-		this.declaringTypeNames = declaringTypeName;
 	}
 
 	public SignatureHelp getSignatureHelp(IProgressMonitor monitor) {
@@ -120,20 +117,6 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		if (!isIgnored(proposal.getKind())) {
 			if (proposal.getKind() == CompletionProposal.METHOD_REF && !Objects.equals(proposal.getName() == null ? null : new String(proposal.getName()), methodName)) {
 				return;
-			}
-			if (this.declaringTypeNames != null) {
-				char[] declarationSignature = proposal.getDeclarationSignature();
-				if (declarationSignature != null) {
-					String proposalTypeSimpleName = SignatureHelpUtils.getSimpleTypeName(String.valueOf(declarationSignature));
-					for (String typeName : this.declaringTypeNames) {
-						String declaringTypeSimpleName = Signature.getSimpleName(typeName);
-						if (Objects.equals(proposalTypeSimpleName, declaringTypeSimpleName)) {
-							proposals.putIfAbsent(String.valueOf(proposal.getSignature()), proposal);
-							return;
-						}
-					}
-					return;
-				}
 			}
 			proposals.putIfAbsent(String.valueOf(proposal.getSignature()), proposal);
 		}
