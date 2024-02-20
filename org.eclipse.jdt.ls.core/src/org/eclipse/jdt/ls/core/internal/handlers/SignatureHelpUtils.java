@@ -72,10 +72,10 @@ public class SignatureHelpUtils {
 				}
 			}
 
-			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, context.methodName(), context.declaringTypeNames());
+			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, context.methodName());
 			unit.codeComplete(context.completionOffset(), collector, monitor);
 			help = collector.getSignatureHelp(monitor);
-			if (help.getSignatures().isEmpty() && context.secondaryCompletionOffset() > -1) {
+			if (context.secondaryCompletionOffset() > -1) {
 				unit.codeComplete(context.secondaryCompletionOffset(), collector, monitor);
 				help = collector.getSignatureHelp(monitor);
 			}
@@ -135,7 +135,7 @@ public class SignatureHelpUtils {
 			return false;
 		}
 		String[] parameterTypes = Signature.getParameterTypes(String.valueOf(proposal.getSignature()));
-		
+
 		// since the signature information are sorted by the parameter numbers, if the user's code does not
 		// contain argument right now, we can say this is a match.
 		if (context.arguments().isEmpty()) {
@@ -255,7 +255,7 @@ public class SignatureHelpUtils {
 		if (type == null) {
 			return;
 		}
-		
+
 		IMethod[] methods = type.getMethods();
 		List<SignatureInformation> infos = new ArrayList<>();
 		for (IMethod method : methods) {

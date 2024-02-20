@@ -744,6 +744,9 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 7, 15);
 		assertNotNull(help);
+		// There should really only be one signature in this list, though there are two as a result of
+		// https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3073
+		assertEquals(2, help.getSignatures().size());
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("foo() : String"));
 	}
@@ -1236,6 +1239,30 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelp help = getSignatureHelp(cu, 3, 13);
 		String fromHelpSignatures = help.getSignatures().get(help.getActiveSignature()).getLabel();
 		assertTrue(l.contains(fromHelpSignatures));
+	}
+
+	@Test
+	public void testSignatureHelp_overloads() throws JavaModelException {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class Car extends Vehicle {\n");
+		buf.append("   public void speed(int x, int y) {}\n");
+		buf.append("   public static void main(int [] args) {\n");
+		buf.append("      Car test = new Car();\n");
+		buf.append("      test.speed();\n");
+		buf.append("   }\n");
+		buf.append("}\n");
+		buf.append("class Vehicle extends MovingObject {\n");
+		buf.append("   public void speed(int x) {}\n");
+		buf.append("}\n");
+		buf.append("class MovingObject {\n");
+		buf.append("   public void speed(int x, int y, int z) {}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("Car.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 5, 17);
+		assertNotNull(help);
+		assertEquals(3, help.getSignatures().size());
 	}
 
 	private void testAssertEquals(ICompilationUnit cu, int line, int character) {

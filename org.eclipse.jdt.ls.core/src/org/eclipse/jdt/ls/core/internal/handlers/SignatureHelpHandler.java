@@ -92,7 +92,7 @@ public class SignatureHelpHandler {
 			}
 			IMethod method = getMethod(node);
 			String name = method != null ? method.getElementName() : getMethodName(node, unit, contextInfomation);
-			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, name, null);
+			SignatureHelpRequestor collector = new SignatureHelpRequestor(unit, name);
 			if (offset > -1 && !monitor.isCanceled()) {
 				int pos = contextInfomation[0] + 1;
 				if (method != null) {
@@ -115,7 +115,7 @@ public class SignatureHelpHandler {
 					SignatureHelp help2 = null;
 					SignatureHelpRequestor collector2 = null;
 					if (contextInfomation[0] + 1 != offset) {
-						collector2 = new SignatureHelpRequestor(unit, name, null, true);
+						collector2 = new SignatureHelpRequestor(unit, name, true);
 						unit.codeComplete(offset, collector2, monitor);
 						help2 = collector2.getSignatureHelp(monitor);
 					}
