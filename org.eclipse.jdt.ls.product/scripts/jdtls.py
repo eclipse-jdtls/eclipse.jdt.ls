@@ -23,7 +23,8 @@ def get_java_executable(validate_java_version):
 	java_executable = 'java'
 
 	if 'JAVA_HOME' in os.environ:
-		java_exec_to_test = Path(os.environ['JAVA_HOME']) / 'bin' / 'java'
+		ext = '.exe' if platform.system()  == 'Windows' else ''
+		java_exec_to_test = Path(os.environ['JAVA_HOME']) / 'bin' / f'java{ext}'
 		if java_exec_to_test.is_file():
 			java_executable = java_exec_to_test.resolve()
 
