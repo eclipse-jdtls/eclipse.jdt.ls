@@ -68,17 +68,13 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
-import org.eclipse.jdt.core.manipulation.CleanUpRequirementsCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.ConvertLoopFixCore;
-import org.eclipse.jdt.internal.corext.fix.ICleanUpCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
@@ -91,11 +87,9 @@ import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.internal.ui.fix.AbstractCleanUpCore;
+import org.eclipse.jdt.internal.ui.fix.AbstractCleanUp;
 import org.eclipse.jdt.internal.ui.fix.LambdaExpressionsCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.MultiFixMessages;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ASTRewriteRemoveImportsCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
@@ -107,6 +101,12 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.CleanUpRequirements;
+import org.eclipse.jdt.ui.cleanup.ICleanUp;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
@@ -908,14 +908,14 @@ public class RefactorProcessor {
 		}
 		Map<String, String> options = new HashMap<>();
 		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
-		ICleanUpCore cleanUp = new AbstractCleanUpCore(options) {
+		ICleanUp cleanUp = new AbstractCleanUp(options) {
 			@Override
-			public CleanUpRequirementsCore getRequirementsCore() {
-				return new CleanUpRequirementsCore(isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
+			public CleanUpRequirements getRequirements() {
+				return new CleanUpRequirements(isEnabled(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED), false, false, null);
 			}
 
 			@Override
-			public ICleanUpFixCore createFixCore(CleanUpContextCore context) throws CoreException {
+			public ICleanUpFix createFix(CleanUpContext context) throws CoreException {
 				CompilationUnit compilationUnit = context.getAST();
 				if (compilationUnit == null) {
 					return null;
