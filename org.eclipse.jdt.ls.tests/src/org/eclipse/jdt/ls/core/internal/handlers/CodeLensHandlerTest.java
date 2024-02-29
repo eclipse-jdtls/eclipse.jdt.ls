@@ -118,13 +118,15 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 	private CodeLensHandler handler;
 
 	private IProject project;
+	private IProject java21Project;
 
 	private PreferenceManager preferenceManager;
 
 	@Before
 	public void setup() throws Exception {
-		importProjects("eclipse/hello");
+		importProjects(List.of("eclipse/hello", "eclipse/java21"));
 		project = WorkspaceHelper.getProject("hello");
+		java21Project = WorkspaceHelper.getProject("java21");
 		preferenceManager = mock(PreferenceManager.class);
 		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
 		handler = new CodeLensHandler(preferenceManager);
@@ -377,8 +379,46 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertRange(5, 13, 16, cl.getRange());
 	}
 
+	@Test
+	public void testNoReferenceCodeLensForUnnamedClasses() throws Exception {
+		String payload = createCodeLensSymbolsRequestJava21("src/main/java/UnnamedWithString.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
+
+		//then
+		assertEquals("Found " + result, 2, result.size());
+
+		// CodeLens on foo()
+		CodeLens cl = result.get(0);
+		assertRange(0, 7, 10, cl.getRange());
+
+		// CodeLens on main()
+		cl = result.get(1);
+		assertRange(4, 5, 9, cl.getRange());
+
+		payload = createCodeLensRequestJava21("src/main/java/UnnamedWithString.java", 0, 7, 10);
+		cl = getParams(payload);
+		cl = handler.resolve(cl, monitor);
+		assertNotNull(cl.getCommand());
+		assertEquals("1 reference", cl.getCommand().getTitle());
+
+		payload = createCodeLensRequestJava21("src/main/java/UnnamedWithString.java", 4, 5, 9);
+		cl = getParams(payload);
+		cl = handler.resolve(cl, monitor);
+		assertNotNull(cl.getCommand());
+		assertEquals("0 references", cl.getCommand().getTitle());
+	}
+
 	String createCodeLensSymbolsRequest(String file) {
 		URI uri = project.getFile(file).getRawLocationURI();
+		return createCodeLensSymbolRequest(uri);
+	}
+
+	String createCodeLensSymbolsRequestJava21(String file) {
+		URI uri = java21Project.getFile(file).getRawLocationURI();
 		return createCodeLensSymbolRequest(uri);
 	}
 
@@ -389,6 +429,11 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	String createCodeLensRequest(String file, int line, int start, int end) {
 		URI uri = project.getFile(file).getRawLocationURI();
+		return createCodeLensRequest(uri, line, start, end);
+	}
+
+	String createCodeLensRequestJava21(String file, int line, int start, int end) {
+		URI uri = java21Project.getFile(file).getRawLocationURI();
 		return createCodeLensRequest(uri, line, start, end);
 	}
 
