@@ -245,6 +245,11 @@ public class Preferences {
 	public static final String JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY = "java.saveActions.organizeImports";
 
 	/**
+	 * Preference key to enable/disable rename file on save
+	 */
+	public static final String JAVA_SAVE_ACTIONS_RENAME_FILE_ENABLED = "java.saveActions.renameFile";
+
+	/**
 	 * Preference key to enable/disable signature help.
 	 */
 	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
@@ -611,6 +616,7 @@ public class Preferences {
 	private String javaQuickFixShowAt;
 	private boolean javaFormatOnTypeEnabled;
 	private boolean javaSaveActionsOrganizeImportsEnabled;
+	private boolean javaSaveActionsRenameFileEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean signatureHelpDescriptionEnabled;
 	private boolean renameEnabled;
@@ -869,6 +875,7 @@ public class Preferences {
 		javaQuickFixShowAt = LINE;
 		javaFormatOnTypeEnabled = false;
 		javaSaveActionsOrganizeImportsEnabled = false;
+		javaSaveActionsRenameFileEnabled = true;
 		signatureHelpEnabled = false;
 		signatureHelpDescriptionEnabled = false;
 		renameEnabled = true;
@@ -1040,6 +1047,9 @@ public class Preferences {
 
 		boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, false);
 		prefs.setJavaSaveActionAutoOrganizeImportsEnabled(javaSaveActionAutoOrganizeImportsEnabled);
+
+		boolean javaSaveActionRenameFileEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_RENAME_FILE_ENABLED, true);
+		prefs.setJavaSaveActionRenameFileEnabled(javaSaveActionRenameFileEnabled);
 
 		boolean signatureHelpEnabled = getBoolean(configuration, SIGNATURE_HELP_ENABLED_KEY, true);
 		prefs.setSignatureHelpEnabled(signatureHelpEnabled);
@@ -1584,6 +1594,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setJavaSaveActionRenameFileEnabled(boolean javaSaveActionsRenameFileEnabled) {
+		this.javaSaveActionsRenameFileEnabled = javaSaveActionsRenameFileEnabled;
+		return this;
+	}
+
 	public Preferences setHashCodeEqualsTemplateUseJava7Objects(boolean hashCodeEqualsTemplateUseJ7Objects) {
 		this.hashCodeEqualsTemplateUseJava7Objects = hashCodeEqualsTemplateUseJ7Objects;
 		return this;
@@ -1847,6 +1862,10 @@ public class Preferences {
 
 	public boolean isJavaSaveActionsOrganizeImportsEnabled() {
 		return javaSaveActionsOrganizeImportsEnabled;
+	}
+
+	public boolean isJavaSaveActionsRenameFileEnabled() {
+		return javaSaveActionsRenameFileEnabled;
 	}
 
 	public boolean isSignatureHelpEnabled() {
