@@ -40,7 +40,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -78,23 +77,18 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void ignoreMissingResourceFilters() throws Exception {
-		JavaClientConnection javaClient = new JavaClientConnection(client);
-		try {
-			String name = "ignored-filter";
-			importProjects("eclipse/" + name);
-			IProject project = getProject(name);
-			assertIsJavaProject(project);
-			assertNoErrors(project);
-			//1 message sent to the platform logger
-			assertEquals(logListener.getErrors().toString(), 1, logListener.getErrors().size());
-			String error = logListener.getErrors().get(0);
-			assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
-			//but no message sent to the client
-			List<Object> loggedMessages = clientRequests.get("logMessage");
-			assertNull("Unexpected logs " + loggedMessages, loggedMessages);
-		} finally {
-			javaClient.disconnect();
-		}
+		String name = "ignored-filter";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		assertIsJavaProject(project);
+		assertNoErrors(project);
+		//1 message sent to the platform logger
+		assertEquals(logListener.getErrors().toString(), 1, logListener.getErrors().size());
+		String error = logListener.getErrors().get(0);
+		assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
+		//but no message sent to the client
+		List<Object> loggedMessages = clientRequests.get("logMessage");
+		assertNull("Unexpected logs " + loggedMessages, loggedMessages);
 	}
 
 	@Test

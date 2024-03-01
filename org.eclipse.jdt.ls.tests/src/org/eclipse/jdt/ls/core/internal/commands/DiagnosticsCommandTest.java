@@ -66,7 +66,6 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 	@After
 	public void tearDown() throws Exception {
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(originalGlobalErrorLevel);
-		javaClient.disconnect();
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();

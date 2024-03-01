@@ -64,7 +64,6 @@ public class CompletionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 
 	@After
 	public void tearDown() throws Exception {
-		javaClient.disconnect();
 	}
 
 	@Test

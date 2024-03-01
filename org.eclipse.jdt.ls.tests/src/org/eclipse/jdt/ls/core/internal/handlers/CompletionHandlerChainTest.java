@@ -60,7 +60,6 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 
 	@After
 	public void tearDown() throws Exception {
-		javaClient.disconnect();
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {

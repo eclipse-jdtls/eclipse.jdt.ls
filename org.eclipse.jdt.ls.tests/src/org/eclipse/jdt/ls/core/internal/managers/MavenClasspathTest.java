@@ -51,7 +51,6 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 	@After
 	public void tearDown() throws Exception {
 		sharedASTProvider.disposeAST();
-		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}

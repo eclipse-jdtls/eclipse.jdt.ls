@@ -117,7 +117,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	@After
 	public void tearDown() throws Exception {
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
-		javaClient.disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}

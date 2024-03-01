@@ -51,6 +51,7 @@ import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegi
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
+import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ISourceDownloader;
@@ -127,6 +128,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	private ExecutorService executorService;
 	private CompletionContributionService completionContributionService;
+	private LogHandler logHandler;
 
 	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -146,6 +148,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaLanguageServerPlugin.context = bundleContext;
 		JavaLanguageServerPlugin.pluginInstance = this;
 		setPreferenceNodeId();
+
+		logHandler = new LogHandler();
+		logHandler.install();
 
 		if (JDTEnvironmentUtils.isSyntaxServer()) {
 			disableServices();
@@ -353,6 +358,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 		protocol.connectClient(launcher.getRemoteProxy());
 		launcher.startListening();
+		logHandler.setClientConnection(pluginInstance.getClientConnection());
 	}
 
 	/*

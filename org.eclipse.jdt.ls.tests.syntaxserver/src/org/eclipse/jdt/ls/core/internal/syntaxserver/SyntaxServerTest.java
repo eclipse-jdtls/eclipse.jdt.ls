@@ -106,7 +106,6 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 			System.setProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID, oldServerMode);
 		}
 		ProjectsManager.setAutoBuilding(oldBuildStatus);
-		server.getClientConnection().disconnect();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
 		}

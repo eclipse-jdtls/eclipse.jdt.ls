@@ -20,7 +20,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams;
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse;
@@ -76,13 +75,10 @@ public class JavaClientConnection {
 
 	}
 
-	private final LogHandler logHandler;
 	final JavaLanguageClient client;
 
 	public JavaClientConnection(JavaLanguageClient client) {
 		this.client = client;
-		logHandler = new LogHandler();
-		logHandler.install(this);
 	}
 
 	public Object executeClientCommand(Duration timeout, String id, Object... params) throws InterruptedException, ExecutionException, TimeoutException {
@@ -215,12 +211,6 @@ public class JavaClientConnection {
 
 	public CompletableFuture<Void> refreshInlayHints() {
 		return this.client.refreshInlayHints();
-	}
-
-	public void disconnect() {
-		if (logHandler != null) {
-			logHandler.uninstall();
-		}
 	}
 
 	public void telemetryEvent(Object object) {

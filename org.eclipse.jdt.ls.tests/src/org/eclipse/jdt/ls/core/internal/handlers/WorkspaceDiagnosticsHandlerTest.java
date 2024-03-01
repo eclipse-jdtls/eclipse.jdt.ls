@@ -104,7 +104,6 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		handler.removeResourceChangeListener();
-		connection.disconnect();
 	}
 
 	@Test

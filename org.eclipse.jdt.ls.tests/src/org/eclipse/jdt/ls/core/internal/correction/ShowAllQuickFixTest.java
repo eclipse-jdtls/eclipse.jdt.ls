@@ -86,7 +86,6 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 			cu.discardWorkingCopy();
 		}
 		super.cleanUp();
-		javaClient.disconnect();
 		Job.getJobManager().setProgressProvider(null);
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);
 	}

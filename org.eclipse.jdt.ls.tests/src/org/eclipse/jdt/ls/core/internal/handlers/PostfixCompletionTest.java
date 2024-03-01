@@ -73,7 +73,6 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 
 	@After
 	public void tearDown() throws Exception {
-		javaClient.disconnect();
 		preferences.setPostfixCompletionEnabled(false);
 	}
 

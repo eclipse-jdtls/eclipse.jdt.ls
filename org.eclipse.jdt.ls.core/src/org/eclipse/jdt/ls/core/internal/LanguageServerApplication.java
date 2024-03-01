@@ -58,7 +58,7 @@ public class LanguageServerApplication implements IApplication {
 				// Setting progressProvider is only allowed if the application is "owned" by the caller.
 				// see Javadoc for setProgressProvider.
 				// In case of JDT-LS integrated in Eclipse Workbench, the application is the workbench and this progressProvider
-				// must not be overridden. In case of the LanguageServerApplication, we own it, so we can set. 
+				// must not be overridden. In case of the LanguageServerApplication, we own it, so we can set.
 				Job.getJobManager().setProgressProvider(progressReporterManager);
 			}
 		}

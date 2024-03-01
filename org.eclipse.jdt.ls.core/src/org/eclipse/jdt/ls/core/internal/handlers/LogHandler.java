@@ -12,16 +12,25 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Predicate;
 
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
+import org.eclipse.jdt.ls.core.internal.LogReader;
+import org.eclipse.jdt.ls.core.internal.LogReader.LogEntry;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryEvent;
 import org.eclipse.lsp4j.MessageType;
 
@@ -49,6 +58,10 @@ public class LogHandler {
 	private JavaClientConnection connection;
 	private Predicate<IStatus> filter;
 
+	private String firstRecordedEntryDateString;
+
+	private List<IStatus> statusCache = new ArrayList<>();
+
 	/**
 	 * Equivalent to <code>LogHandler(defaultLogFilter)</code>.
 	 */
@@ -60,22 +73,43 @@ public class LogHandler {
 		this.filter = filter;
 	}
 
-	public void install(JavaClientConnection rcpConnection) {
+	public void install() {
 		this.dateFormat = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM);
 		this.logLevelMask = getLogLevelMask(System.getProperty("log.level", ""));//Empty by default
-		this.connection = rcpConnection;
 
 		this.logListener = new ILogListener() {
 			@Override
 			public void logging(IStatus status, String bundleId) {
-				processLogMessage(status);
+				String dateString = dateFormat.format(new Date());
+				if (firstRecordedEntryDateString == null) {
+					firstRecordedEntryDateString = dateString;
+				}
+				if (connection == null) {
+					statusCache.add(status);
+				} else {
+					processLogMessage(status);
+				}
 			}
 		};
 		Platform.addLogListener(this.logListener);
 	}
 
-	public void uninstall() {
-		Platform.removeLogListener(this.logListener);
+	public void setClientConnection(JavaClientConnection clientConnection) {
+		this.connection = clientConnection;
+
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		File workspaceFile = root.getRawLocation().makeAbsolute().toFile();
+		Path serverLogPath = Paths.get(workspaceFile.getAbsolutePath(), ".metadata", ".log");
+
+		List<LogEntry> entries = LogReader.parseLogFile(serverLogPath.toFile(), this.firstRecordedEntryDateString);
+
+		for (IStatus event : statusCache) {
+			processLogMessage(event);
+		}
+
+		for (LogEntry e : entries) {
+			processLogMessage(e);
+		}
 	}
 
 	private int getLogLevelMask(String logLevel) {
@@ -93,6 +127,21 @@ public class LogHandler {
 		}
 	}
 
+	private void processLogMessage(LogEntry entry) {
+		String dateString = this.dateFormat.format(entry.getDate());
+		String message = entry.getMessage() + '\n' + entry.getStack();
+
+		connection.logMessage(getMessageTypeFromSeverity(entry.getSeverity()), dateString + ' ' + message);
+		// Send a trace event to client
+		if (entry.getSeverity() == IStatus.ERROR) {
+			JsonObject properties = new JsonObject();
+			properties.addProperty("message", redact(entry.getMessage()));
+			if (entry.getStack() != null) {
+				properties.addProperty("exception", message);
+			}
+			connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
+		}
+	}
 	private void processLogMessage(IStatus status) {
 		if ((filter != null && !filter.test(status)) || !status.matches(this.logLevelMask)) {
 			//no op;
