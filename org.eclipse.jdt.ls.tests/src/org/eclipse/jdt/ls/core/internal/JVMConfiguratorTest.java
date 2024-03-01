@@ -85,7 +85,6 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			environment.setDefaultVM(defaultJRE);
 		}
 		waitForBackgroundJobs();
-		javaClient.disconnect();
 	}
 
 	@Test

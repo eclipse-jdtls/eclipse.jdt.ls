@@ -76,7 +76,6 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 
 	@After
 	public void tearDown() throws Exception {
-		javaClient.disconnect();
 	}
 
 	@Test

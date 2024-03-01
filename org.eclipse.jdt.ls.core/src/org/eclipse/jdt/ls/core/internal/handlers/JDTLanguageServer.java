@@ -267,7 +267,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	//For testing purposes
 	public void disconnectClient() {
 		Job.getJobManager().setProgressProvider(null);
-		this.client.disconnect();
 	}
 
 	public ProgressReporterManager getProgressReporterManager() {

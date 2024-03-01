@@ -69,7 +69,6 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@After
 	public void tearDown() throws Exception {
-		javaClient.disconnect();
 		handler.removeResourceChangeListener();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();
