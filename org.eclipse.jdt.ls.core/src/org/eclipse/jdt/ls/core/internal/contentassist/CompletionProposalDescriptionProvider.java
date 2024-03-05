@@ -15,7 +15,6 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
