@@ -70,13 +70,11 @@ public class CompletionProposalDescriptionProvider {
 		super();
 		fContext = context;
 		fUnit = unit;
-		fCollapsedTypes = new HashMap<>();
 	}
 
 	public CompletionProposalDescriptionProvider(CompletionContext context) {
 		super();
 		fContext = context;
-		fCollapsedTypes = new HashMap<>();
 	}
 
 	/**
@@ -334,7 +332,7 @@ public class CompletionProposalDescriptionProvider {
 		String proposalName = String.valueOf(methodProposal.getName());
 		boolean skipDetail = false;
 		if (isCompletionItemLabelDetailsSupport()){
-			if (fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
+			if (fCollapsedTypes != null && fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
 				setLabelDetails(item, proposalName, "(...)", fCollapsedTypes.get(proposalName).toString() + " overloads");
 				skipDetail = true;
 			} else {
@@ -351,7 +349,7 @@ public class CompletionProposalDescriptionProvider {
 				}
 			}
 		} else {
-			if (fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
+			if (fCollapsedTypes != null && fCollapsedTypes.getOrDefault(proposalName, 0) > 1 && methodProposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
 				item.setLabel(proposalName + "(...)");
 				item.setDetail(fCollapsedTypes.get(proposalName).toString() + " overloads");
 				skipDetail = true;
