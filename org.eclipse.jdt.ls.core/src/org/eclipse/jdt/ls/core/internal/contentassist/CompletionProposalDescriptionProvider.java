@@ -53,7 +53,7 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	private CompletionContext fContext;
 	private ICompilationUnit fUnit;
-	private Map<String, Integer> fCollapsedTypes = new HashMap<>();
+	private Map<String, Integer> fCollapsedTypes;
 
 	/**
 	 * Creates a new label provider.
@@ -70,11 +70,13 @@ public class CompletionProposalDescriptionProvider {
 		super();
 		fContext = context;
 		fUnit = unit;
+		fCollapsedTypes = new HashMap<>();
 	}
 
 	public CompletionProposalDescriptionProvider(CompletionContext context) {
 		super();
 		fContext = context;
+		fCollapsedTypes = new HashMap<>();
 	}
 
 	/**
