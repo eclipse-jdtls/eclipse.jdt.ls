@@ -15,6 +15,7 @@
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
@@ -52,7 +53,7 @@ public class CompletionProposalDescriptionProvider {
 	 */
 	private CompletionContext fContext;
 	private ICompilationUnit fUnit;
-	private Map<String, Integer> fCollapsedTypes;
+	private Map<String, Integer> fCollapsedTypes = new HashMap<>();
 
 	/**
 	 * Creates a new label provider.
