@@ -76,8 +76,6 @@ import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefact
 import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -92,6 +90,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodEx
 import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodParameter;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.ltk.core.refactoring.Refactoring;
@@ -337,6 +337,15 @@ public class RefactorProposalUtility {
 		ITypeBinding binding = expression.resolveTypeBinding();
 		if (binding == null || Bindings.isVoidType(binding)) {
 			return false;
+		}
+
+		try {
+			boolean isUnnamedClass = List.of(context.getCompilationUnit().getTypes()).stream().anyMatch(t -> JDTUtils.isUnnamedClass(t));
+			if (isUnnamedClass) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			// continue
 		}
 
 		return true;
@@ -895,6 +904,10 @@ public class RefactorProposalUtility {
 	public static ProposalKindWrapper getIntroduceParameterRefactoringProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean returnAsCommand, IProblemLocation[] problemLocations)
 			throws CoreException {
 		final ICompilationUnit cu = context.getCompilationUnit();
+		boolean isUnnamedClass = List.of(cu.getTypes()).stream().anyMatch(t -> JDTUtils.isUnnamedClass(t));
+		if (isUnnamedClass) {
+			return null;
+		}
 		final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
 		LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
 		introduceParameterRefactoring.setLinkedProposalModel(linkedProposalModel);

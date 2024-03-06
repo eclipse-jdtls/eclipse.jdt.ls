@@ -95,6 +95,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.ASTRewriteRemoveImp
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposalCore;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -373,6 +374,10 @@ public class RefactorProcessor {
 					}
 				}
 			} else if (binding instanceof IMethodBinding) {
+				boolean isUnnamedClass = List.of(context.getCompilationUnit().getTypes()).stream().anyMatch(t -> JDTUtils.isUnnamedClass(t));
+				if (isUnnamedClass) {
+					return false;
+				}
 				// Inline Method
 				if (RefactoringAvailabilityTesterCore.isInlineMethodAvailable((IMethod) binding.getJavaElement())) {
 					InlineMethodRefactoring refactoring = InlineMethodRefactoring.create(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
