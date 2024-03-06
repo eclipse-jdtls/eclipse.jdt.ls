@@ -55,8 +55,6 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
@@ -86,6 +84,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -645,6 +645,10 @@ public class SourceAssistProcessor {
 	private Optional<Either<Command, CodeAction>> getSortMembersProposal(IInvocationContext context, CodeActionParams params, String kind, String label, boolean avoidVolatileChanges) {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(label, new GroupCategorySet(new GroupCategory(label, label, label)));
 		try {
+			boolean isUnnamedClass = List.of(context.getCompilationUnit().getTypes()).stream().anyMatch(t -> JDTUtils.isUnnamedClass(t));
+			if (isUnnamedClass) {
+				return Optional.empty();
+			}
 			TextEdit edit = CompilationUnitSorter.sort(context.getASTRoot(), new DefaultJavaElementComparator(avoidVolatileChanges), 0, group, null);
 			if (edit == null) {
 				return Optional.empty();
@@ -662,6 +666,10 @@ public class SourceAssistProcessor {
 		CategorizedTextEditGroup group = new CategorizedTextEditGroup(ActionMessages.SortMembers_selectionLabel, new GroupCategorySet(new GroupCategory(ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel, ActionMessages.SortMembers_selectionLabel)));
 		PartialSortMembersOperation operation = new PartialSortMembersOperation(new IJavaElement[] { context.getASTRoot().getJavaElement() }, new DefaultJavaElementComparator(avoidVolatileChanges));
 		try {
+			boolean isUnnamedClass = List.of(context.getCompilationUnit().getTypes()).stream().anyMatch(t -> JDTUtils.isUnnamedClass(t));
+			if (isUnnamedClass) {
+				return Optional.empty();
+			}
 			TextEdit edit = operation.calculateEdit(context.getASTRoot(), coveredNodes, group);
 			if (edit == null) {
 				return Optional.empty();
