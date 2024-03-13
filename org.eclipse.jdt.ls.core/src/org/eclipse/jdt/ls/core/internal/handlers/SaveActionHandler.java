@@ -79,10 +79,6 @@ public class SaveActionHandler {
 			edit.addAll(handleSaveActionOrganizeImports(documentUri, monitor));
 		}
 
-		if (preferences.isJavaSaveActionsRenameFileEnabled()) {
-			handleSaveActionRenameFile(documentUri, monitor);
-		}
-
 		LinkedHashSet<String> cleanUpIds = new LinkedHashSet<>();
 
 		List<String> lspCleanups = Collections.emptyList();
@@ -92,6 +88,7 @@ public class SaveActionHandler {
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
+		cleanUpIds.remove("renameFile");
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		return edit;
@@ -114,6 +111,7 @@ public class SaveActionHandler {
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
+		cleanUpIds.remove("renameFile");
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(doc, new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		Map<String, List<TextEdit>> editMap = new HashMap<>();
@@ -167,7 +165,7 @@ public class SaveActionHandler {
 		return edit;
 	}
 
-	private void handleSaveActionRenameFile(String documentUri, IProgressMonitor monitor) {
+	private void handleSaveActionRenameFile(String documentUri) {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(documentUri);
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
