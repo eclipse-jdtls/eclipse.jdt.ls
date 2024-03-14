@@ -49,7 +49,7 @@ public class WorkspaceFolderChangeHandlerTest extends AbstractProjectsManagerBas
 		File rootFolder = copyFiles("maven/salut", true);
 		String rootFolderUri = rootFolder.toURI().toString();
 		IPath rootFolderPath = ResourceUtils.canonicalFilePathFromURI(rootFolderUri);
-		WorkspaceFolder workspaceFolder = new WorkspaceFolder(rootFolder.toURI().toString());
+		WorkspaceFolder workspaceFolder = new WorkspaceFolder(rootFolder.toURI().toString(), "test");
 
 		WorkspaceFoldersChangeEvent event = new WorkspaceFoldersChangeEvent(Arrays.asList(workspaceFolder), Collections.emptyList());
 		DidChangeWorkspaceFoldersParams params = new DidChangeWorkspaceFoldersParams(event);

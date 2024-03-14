@@ -16,8 +16,8 @@ package org.eclipse.lsp4j.extended;
 import java.util.List;
 
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.jsonrpc.util.Preconditions;
 import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
-import org.eclipse.lsp4j.util.Preconditions;
 import org.eclipse.xtext.xbase.lib.Pure;
 import org.eclipse.xtext.xbase.lib.util.ToStringBuilder;
 
@@ -80,20 +80,26 @@ public class ProjectBuildParams {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		ProjectBuildParams other = (ProjectBuildParams) obj;
 		if (identifiers == null) {
-			if (other.identifiers != null)
+			if (other.identifiers != null) {
 				return false;
-		} else if (!identifiers.equals(other.identifiers))
+			}
+		} else if (!identifiers.equals(other.identifiers)) {
 			return false;
-		if (isFullBuild != other.isFullBuild)
+		}
+		if (isFullBuild != other.isFullBuild) {
 			return false;
+		}
 		return true;
 	}
 
