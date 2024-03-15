@@ -180,7 +180,11 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			}
 			if (!cu.isWorkingCopy()) {
 				markers = resource.findMarkers(null, false, IResource.DEPTH_ONE);
-				document = JsonRpcHelpers.toDocument(cu.getBuffer());
+				try {
+					document = JsonRpcHelpers.toDocument(cu.getBuffer());
+				} catch (JavaModelException e) {
+					// do nothing
+				}
 			} else if (handler != null) {
 				handler.triggerValidation(cu);
 			}

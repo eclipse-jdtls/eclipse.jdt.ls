@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -933,6 +934,19 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public void didSave(DidSaveTextDocumentParams params) {
 		debugTrace(">> document/didSave");
 		documentLifeCycleHandler.didSave(params);
+		String documentUri = params.getTextDocument().getUri();
+		Preferences preferences = preferenceManager.getPreferences();
+		List<String> lspCleanups = Collections.emptyList();
+		if (preferences.getCleanUpActionsOnSaveEnabled()) {
+			lspCleanups = preferences.getCleanUpActions();
+		}
+
+		if (lspCleanups.contains("renameFile")) {
+			computeAsync((monitor) -> {
+				DocumentLifeCycleHandler.handleFileRenameForTypeDeclaration(documentUri);
+				return null;
+			});
+		}
 	}
 
 	@Override

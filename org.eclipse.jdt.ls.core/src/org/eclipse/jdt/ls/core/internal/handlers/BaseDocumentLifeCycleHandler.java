@@ -71,7 +71,6 @@ import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
@@ -81,9 +80,7 @@ import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
-import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
-import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -378,19 +375,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 				JavaLanguageServerPlugin.logException("Handle document save ", e);
 			}
 		}
-
-		Preferences preferences = preferenceManager.getPreferences();
-		List<String> lspCleanups = Collections.emptyList();
-		if (preferences.getCleanUpActionsOnSaveEnabled()) {
-			lspCleanups = preferences.getCleanUpActions();
-		}
-
-		if (lspCleanups.contains("renameFile")) {
-			handleSaveActionRenameFile(documentUri);
-		}
 	}
 
-	private void handleSaveActionRenameFile(String documentUri) {
+	public static void handleFileRenameForTypeDeclaration(String documentUri) {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(documentUri);
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
@@ -400,10 +387,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 			String newName = renameProblem.getArguments()[1];
 			String oldName = cu.getElementName();
 			String newUri = documentUri.replace(oldName, newName + ".java");
-			List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = new ArrayList<>();
-			RenameFile operation = new RenameFile(documentUri, newUri);
-			documentChanges.add(Either.forRight(operation));
-			WorkspaceEdit edit = new WorkspaceEdit(documentChanges);
+			WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forRight(new RenameFile(documentUri, newUri))));
 			edit.setChanges(Collections.emptyMap());
 			final boolean applyNow = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceApplyEditSupported();
 			if (applyNow) {

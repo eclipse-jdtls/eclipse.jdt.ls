@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
@@ -29,9 +28,6 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -40,14 +36,10 @@ import org.eclipse.jdt.ls.core.internal.cleanup.CleanUpRegistry;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.lsp4j.RenameFile;
-import org.eclipse.lsp4j.ResourceOperation;
-import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WillSaveTextDocumentParams;
 import org.eclipse.lsp4j.WorkspaceEdit;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.osgi.service.prefs.BackingStoreException;
 
 public class SaveActionHandler {
@@ -165,26 +157,4 @@ public class SaveActionHandler {
 		return edit;
 	}
 
-	private void handleSaveActionRenameFile(String documentUri) {
-		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(documentUri);
-		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
-		IProblem[] problems = astRoot.getProblems();
-		Optional<IProblem> desiredProblem = Arrays.stream(problems).filter(p -> p.getID() == IProblem.PublicClassMustMatchFileName).findFirst();
-		if (desiredProblem.isPresent()) {
-			IProblem renameProblem = desiredProblem.get();
-			String newName = renameProblem.getArguments()[1];
-			String oldName = cu.getElementName();
-			String newUri = documentUri.replace(oldName, newName + ".java");
-			List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = new ArrayList<>();
-			RenameFile operation = new RenameFile(documentUri, newUri);
-			documentChanges.add(Either.forRight(operation));
-			WorkspaceEdit edit = new WorkspaceEdit(documentChanges);
-			edit.setChanges(Collections.emptyMap());
-			final boolean applyNow = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceApplyEditSupported();
-			if (applyNow) {
-				JavaLanguageServerPlugin.getInstance().getClientConnection().applyWorkspaceEdit(edit);
-				return;
-			}
-		}
-	}
 }
