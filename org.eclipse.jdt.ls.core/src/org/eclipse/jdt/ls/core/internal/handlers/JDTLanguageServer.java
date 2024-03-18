@@ -941,7 +941,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			lspCleanups = preferences.getCleanUpActions();
 		}
 
-		if (lspCleanups.contains("renameFile")) {
+		if (lspCleanups.contains(BaseDocumentLifeCycleHandler.RENAME_FILE_TO_TYPE)) {
 			computeAsync((monitor) -> {
 				DocumentLifeCycleHandler.handleFileRenameForTypeDeclaration(documentUri);
 				return null;

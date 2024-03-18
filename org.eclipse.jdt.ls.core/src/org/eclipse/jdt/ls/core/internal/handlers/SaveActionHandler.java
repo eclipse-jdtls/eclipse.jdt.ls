@@ -80,7 +80,7 @@ public class SaveActionHandler {
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
-		cleanUpIds.remove("renameFile");
+		cleanUpIds.remove(BaseDocumentLifeCycleHandler.RENAME_FILE_TO_TYPE);
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(params.getTextDocument(), new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		return edit;
@@ -103,7 +103,7 @@ public class SaveActionHandler {
 		Collection<String> jdtSettingCleanups = getCleanupsFromJDTUIPreferences(jdtUiPreferences);
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
-		cleanUpIds.remove("renameFile");
+		cleanUpIds.remove(BaseDocumentLifeCycleHandler.RENAME_FILE_TO_TYPE);
 		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(doc, new ArrayList<>(cleanUpIds), monitor);
 		edit.addAll(cleanUpEdits);
 		Map<String, List<TextEdit>> editMap = new HashMap<>();

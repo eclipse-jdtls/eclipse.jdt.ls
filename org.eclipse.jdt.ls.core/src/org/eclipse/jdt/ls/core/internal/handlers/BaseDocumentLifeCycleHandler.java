@@ -96,6 +96,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public static final String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
 	public static final String PUBLISH_DIAGNOSTICS_JOBS = "DocumentLifeCyclePublishDiagnosticsJobs";
+	public static final String RENAME_FILE_TO_TYPE = "renameFileToType";
 
 	/**
 	 * The max & init value of adaptive debounce time for document lifecycle job.
