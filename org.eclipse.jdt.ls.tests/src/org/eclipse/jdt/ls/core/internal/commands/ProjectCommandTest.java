@@ -173,6 +173,29 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 		assertNotNull(options.get(ProjectCommand.CLASSPATH_ENTRIES));
 		assertTrue(entries.size() > 0);
+		assertTrue(entries.stream().anyMatch(entry -> {
+			return entry.getKind() == IClasspathEntry.CPE_SOURCE;
+		}));
+		assertTrue(entries.stream().anyMatch(entry -> {
+			return entry.getKind() == IClasspathEntry.CPE_LIBRARY;
+		}));
+	}
+
+	@Test
+	public void testUpdateClasspathEntries() throws Exception {
+		importProjects("maven/salut2");
+		IProject project = WorkspaceHelper.getProject("salut2");
+		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+
+		int size = entries.size();
+		entries.remove(size - 1);
+		ProjectCommand.updateClasspaths(uriString, entries, new NullProgressMonitor());
+
+		List<ProjectClasspathEntry> newEntries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		assertEquals(size - 1, newEntries.size());
 	}
 
 	@Test

@@ -102,13 +102,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.updateClassPaths": {
 					String projectUri = (String) arguments.get(0);
 					ProjectClasspathEntries entries = (JSONUtility.toModel(arguments.get(1), ProjectClasspathEntries.class));
-					Map<String, String> sourceAndOutput = new HashMap<>();
-					for (ProjectClasspathEntry entry : entries.getClasspathEntries()) {
-						if (entry.getKind() == IClasspathEntry.CPE_SOURCE) {
-							sourceAndOutput.put(entry.getPath(), entry.getOutput());
-						}
-					}
-					ProjectCommand.updateSourcePaths(projectUri, sourceAndOutput);
+					ProjectCommand.updateClasspaths(projectUri, entries.getClasspathEntries(), monitor);
 					return null;
 				}
 				case "java.project.isTestFile":
