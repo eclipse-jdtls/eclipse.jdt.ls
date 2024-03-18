@@ -16,12 +16,14 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,8 +79,11 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseError;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.text.edits.DeleteEdit;
@@ -91,6 +96,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public static final String DOCUMENT_LIFE_CYCLE_JOBS = "DocumentLifeCycleJobs";
 	public static final String PUBLISH_DIAGNOSTICS_JOBS = "DocumentLifeCyclePublishDiagnosticsJobs";
+	public static final String RENAME_FILE_TO_TYPE = "renameFileToType";
 
 	/**
 	 * The max & init value of adaptive debounce time for document lifecycle job.
@@ -355,7 +361,8 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
-		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
+		String documentUri = params.getTextDocument().getUri();
+		lastSyncedDocumentLengths.remove(documentUri);
 		IFile file = JDTUtils.findFile(params.getTextDocument().getUri());
 		if (file != null && !Objects.equals(ProjectsManager.getDefaultProject(), file.getProject())) {
 			// no need for a workspace runnable, change is trivial
@@ -367,6 +374,25 @@ public abstract class BaseDocumentLifeCycleHandler {
 				ResourcesPlugin.getWorkspace().run((IWorkspaceRunnable) monitor -> handleSaved(params), null, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Handle document save ", e);
+			}
+		}
+	}
+
+	public static void handleFileRenameForTypeDeclaration(String documentUri) {
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(documentUri);
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+		IProblem[] problems = astRoot.getProblems();
+		Optional<IProblem> desiredProblem = Arrays.stream(problems).filter(p -> p.getID() == IProblem.PublicClassMustMatchFileName).findFirst();
+		if (desiredProblem.isPresent()) {
+			IProblem renameProblem = desiredProblem.get();
+			String newName = renameProblem.getArguments()[1];
+			String oldName = cu.getElementName();
+			String newUri = documentUri.replace(oldName, newName + ".java");
+			WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forRight(new RenameFile(documentUri, newUri))));
+			edit.setChanges(Collections.emptyMap());
+			final boolean applyNow = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceApplyEditSupported();
+			if (applyNow) {
+				JavaLanguageServerPlugin.getInstance().getClientConnection().applyWorkspaceEdit(edit);
 			}
 		}
 	}
