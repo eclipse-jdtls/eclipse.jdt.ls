@@ -1855,7 +1855,11 @@ public final class JDTUtils {
 	}
 
 	public static boolean isUnnamedClass(IJavaElement element) {
-		return element.getElementType() == IJavaElement.TYPE && element.getElementName().startsWith("<unnamed_class$");
+		try {
+			return element.getElementType() == IJavaElement.TYPE && ((IType) element).isImplicitlyDeclared();
+		} catch (JavaModelException e) {
+			return false;
+		}
 	}
 
 }
