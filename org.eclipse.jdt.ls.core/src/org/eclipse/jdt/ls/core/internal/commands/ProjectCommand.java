@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IContainer;
@@ -46,9 +47,11 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelStatus;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.IType;
@@ -147,22 +150,43 @@ public class ProjectCommand {
 					settings.putIfAbsent(key, referencedLibraries);
 					break;
 				case CLASSPATH_ENTRIES:
-					IClasspathEntry[] entries = javaProject.getRawClasspath();
+					List<IClasspathEntry> entriesToBeScan = new LinkedList<>();
+					Collections.addAll(entriesToBeScan, javaProject.getRawClasspath());
 					List<ProjectClasspathEntry> classpathEntries = new LinkedList<>();
-					for (IClasspathEntry entry : entries) {
+					for (int i = 0; i < entriesToBeScan.size(); i++) {
+						IClasspathEntry entry = entriesToBeScan.get(i);
 						IPath path = entry.getPath();
 						IPath output = entry.getOutputLocation();
-						if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
+						int entryKind = entry.getEntryKind();
+						if (entryKind == IClasspathEntry.CPE_SOURCE) {
+							IPath relativePath = path.makeRelativeTo(project.getFullPath());
+							if (relativePath.isEmpty()) {
+								continue; // A valid relative source path should not be empty.
+							}
 							path = project.getFolder(path.makeRelativeTo(project.getFullPath())).getLocation();
 							if (output != null) {
 								output = project.getFolder(output.makeRelativeTo(project.getFullPath())).getLocation();
+							}
+						} else if (entryKind == IClasspathEntry.CPE_CONTAINER) {
+							// skip JRE container, since it's already handled in VM_LOCATION.
+							if (!path.toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
+								entriesToBeScan.addAll(expandContainerEntry(javaProject, entry));
+							}
+							continue;
+						} else if (entryKind == IClasspathEntry.CPE_LIBRARY) {
+							if (!path.toFile().exists()) {
+								// the case when lib path is relative
+								path = project.getFile(path.makeRelativeTo(project.getFullPath())).getLocation();
+							}
+							if (!path.toFile().exists()) {
+								continue;
 							}
 						}
 						Map<String, String> attributes = new HashMap<>();
 						for (IClasspathAttribute attribute : entry.getExtraAttributes()) {
 							attributes.put(attribute.getName(), attribute.getValue());
 						}
-						classpathEntries.add(new ProjectClasspathEntry(entry.getEntryKind(), path.toOSString(),
+						classpathEntries.add(new ProjectClasspathEntry(entryKind, path.toOSString(),
 								output == null ? null : output.toOSString(), attributes));
 					}
 					settings.putIfAbsent(key, classpathEntries);
@@ -173,6 +197,164 @@ public class ProjectCommand {
 			}
 		}
 		return settings;
+	}
+
+	/**
+	 * Update the project classpath by the given classpath entries.
+	 */
+	public static void updateClasspaths(String uri, List<ProjectClasspathEntry> entries, IProgressMonitor monitor) throws CoreException, URISyntaxException {
+		IJavaProject javaProject = getJavaProjectFromUri(uri);
+		IProject project = javaProject.getProject();
+		Map<IPath, IPath> sourceAndOutput = new HashMap<>();
+		List<IClasspathEntry> newEntries = new LinkedList<>();
+		List<IClasspathEntry> newDependencyEntries = new LinkedList<>();
+		for (ProjectClasspathEntry entry : entries) {
+			if (entry.getKind() == IClasspathEntry.CPE_SOURCE) {
+				IPath path = project.getFolder(entry.getPath()).getFullPath();
+				IPath outputLocation = null;
+				String output = entry.getOutput();
+				if (output != null) {
+					if (".".equals(output)) {
+						outputLocation = project.getFullPath();
+					} else {
+						outputLocation = project.getFolder(output).getFullPath();
+					}
+				}
+				sourceAndOutput.put(path, outputLocation);
+			} else if (entry.getKind() == IClasspathEntry.CPE_CONTAINER) {
+				if (entry.getPath().startsWith(JavaRuntime.JRE_CONTAINER)) {
+					String jdkPath = entry.getPath().substring(JavaRuntime.JRE_CONTAINER.length());
+					newEntries.add(getNewJdkEntry(javaProject, jdkPath));
+				} else {
+					JavaLanguageServerPlugin.logInfo("The container entry " + entry.getPath() + " is not supported to be updated.");
+				}
+			} else {
+				newDependencyEntries.add(convertClasspathEntry(entry));
+			}
+		}
+		IClasspathEntry[] sources = ProjectUtils.resolveSourceClasspathEntries(javaProject, sourceAndOutput, Collections.emptyList(), javaProject.getOutputLocation());
+		newEntries.addAll(Arrays.asList(sources));
+		newEntries.addAll(resolveDependencyEntries(javaProject, newDependencyEntries));
+
+		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
+		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, javaProject.getOutputLocation());
+		if (!checkStatus.isOK()) {
+			throw new CoreException(checkStatus);
+		}
+		javaProject.setRawClasspath(rawClasspath, monitor);
+	}
+
+	/**
+	 * Check the new dependency entries are different from the current ones or not.
+	 * If they are equal, return the current dependency entries, otherwise return the new ones.
+	 */
+	private static List<IClasspathEntry> resolveDependencyEntries(IJavaProject javaProject, List<IClasspathEntry> newEntries) throws JavaModelException {
+		List<IClasspathEntry> currentDependencyEntries = new LinkedList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE &&
+					!entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
+				currentDependencyEntries.add(entry);
+			}
+		}
+
+		Map<IPath, IClasspathEntry> currentEntryMapping = new HashMap<>();
+		for (IClasspathEntry entry : currentDependencyEntries) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+				List<IClasspathEntry> expandedContainerEntry = expandContainerEntry(javaProject, entry);
+				for (IClasspathEntry containerEntry : expandedContainerEntry) {
+					currentEntryMapping.put(containerEntry.getPath(), containerEntry);
+				}
+			} else {
+				currentEntryMapping.put(entry.getPath(), entry);
+			}
+		}
+
+		// Use new dependency entries if the size is different
+		if (newEntries.size() != currentEntryMapping.size()) {
+			return newEntries;
+		}
+
+		for (IClasspathEntry entry : newEntries) {
+			IClasspathEntry currentEntry = currentEntryMapping.get(entry.getPath());
+			if (currentEntry == null) {
+				return newEntries;
+			}
+		}
+
+		return currentDependencyEntries;
+	}
+
+	/**
+	 * Expand the container entry, the returned list is guaranteed to contain no container entry.
+	 */
+	private static List<IClasspathEntry> expandContainerEntry(IJavaProject javaProject, IClasspathEntry entry) throws JavaModelException {
+		if (entry.getEntryKind() != IClasspathEntry.CPE_CONTAINER) {
+			return Collections.singletonList(entry);
+		}
+
+		List<IClasspathEntry> resolvedEntries = new LinkedList<>();
+		List<IClasspathEntry> entriesToScan = new LinkedList<>();
+		entriesToScan.add(entry);
+		for (int i = 0; i < entriesToScan.size(); i++) {
+			IClasspathEntry currentEntry = entriesToScan.get(i);
+			if (currentEntry.getEntryKind() != IClasspathEntry.CPE_CONTAINER) {
+				resolvedEntries.add(currentEntry);
+				continue;
+			}
+			IClasspathContainer container = JavaCore.getClasspathContainer(currentEntry.getPath(), javaProject);
+			if (container == null) {
+				continue;
+			}
+			IClasspathEntry[] containerEntries = container.getClasspathEntries();
+			for (IClasspathEntry containerEntry : containerEntries) {
+				if (containerEntry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+					entriesToScan.add(containerEntry);
+				} else {
+					resolvedEntries.add(containerEntry);
+				}
+			}
+		}
+		return resolvedEntries;
+	}
+
+	/**
+	 * Convert ProjectClasspathEntry to IClasspathEntry.
+	 */
+	private static IClasspathEntry convertClasspathEntry(ProjectClasspathEntry entry) {
+		List<IClasspathAttribute> attributes = new LinkedList<>();
+		if (entry.getAttributes() != null) {
+			for (Entry<String, String> attributeEntry : entry.getAttributes().entrySet()) {
+				attributes.add(JavaCore.newClasspathAttribute(attributeEntry.getKey(), attributeEntry.getValue()));
+			}
+		}
+		switch (entry.getKind()) {
+			case IClasspathEntry.CPE_CONTAINER:
+				return JavaCore.newContainerEntry(
+					IPath.fromOSString(entry.getPath()),
+					ClasspathEntry.NO_ACCESS_RULES,
+					attributes.toArray(IClasspathAttribute[]::new),
+					false
+				);
+			case IClasspathEntry.CPE_LIBRARY:
+				return JavaCore.newLibraryEntry(
+					IPath.fromOSString(entry.getPath()),
+					null,
+					null,
+					ClasspathEntry.NO_ACCESS_RULES,
+					attributes.toArray(IClasspathAttribute[]::new),
+					false
+				);
+			case IClasspathEntry.CPE_PROJECT:
+				return JavaCore.newProjectEntry(
+					IPath.fromOSString(entry.getPath()),
+					ClasspathEntry.NO_ACCESS_RULES,
+					false,
+					attributes.toArray(IClasspathAttribute[]::new),
+					false
+				);
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -432,31 +614,40 @@ public class ProjectCommand {
 
 	public static JdkUpdateResult updateProjectJdk(String projectUri, String jdkPath, IProgressMonitor monitor) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
-		IClasspathEntry[] originalClasspathEntries = javaProject.getRawClasspath();
-		IClasspathAttribute[] extraAttributes = null;
 		List<IClasspathEntry> newClasspathEntries = new ArrayList<>();
-		for (IClasspathEntry entry : originalClasspathEntries) {
-			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
-					entry.getPath().toString().startsWith("org.eclipse.jdt.launching.JRE_CONTAINER")) {
-				extraAttributes = entry.getExtraAttributes();
-			} else {
-				newClasspathEntries.add(entry);
+		try {
+			for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+				if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
+						entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
+					newClasspathEntries.add(getNewJdkEntry(javaProject, jdkPath));
+				} else {
+					newClasspathEntries.add(entry);
+				}
 			}
+			javaProject.setRawClasspath(newClasspathEntries.toArray(IClasspathEntry[]::new), monitor);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+			return new JdkUpdateResult(false, e.getMessage());
+		}
+		return new JdkUpdateResult(true, jdkPath);
+	}
+
+	private static IClasspathEntry getNewJdkEntry(IJavaProject javaProject, String jdkPath) throws CoreException {
+		IVMInstall vmInstall = getVmInstallByPath(jdkPath);
+		List<IClasspathAttribute> extraAttributes = new ArrayList<>();
+		if (vmInstall == null) {
+			throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The select JDK path is not valid."));
+		}
+		if (javaProject.getOwnModuleDescription() != null) {
+			extraAttributes.add(JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true"));
 		}
 
-		IVMInstall vmInstall = getVmInstallByPath(jdkPath);
-		if (vmInstall == null) {
-			JavaLanguageServerPlugin.log(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "The select JDK path is not valid."));
-			return new JdkUpdateResult(false, "The selected JDK path is not valid.");
-		}
-		newClasspathEntries.add(JavaCore.newContainerEntry(
+		return JavaCore.newContainerEntry(
 				JavaRuntime.newJREContainerPath(vmInstall),
 				ClasspathEntry.NO_ACCESS_RULES,
-				extraAttributes,
+				extraAttributes.toArray(IClasspathAttribute[]::new),
 				false /*isExported*/
-		));
-		javaProject.setRawClasspath(newClasspathEntries.toArray(IClasspathEntry[]::new), monitor);
-		return new JdkUpdateResult(true, vmInstall.getInstallLocation().getAbsolutePath());
+		);
 	}
 
 	private static IVMInstall getVmInstallByPath(String path) {

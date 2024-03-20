@@ -700,11 +700,32 @@ public final class ProjectUtils {
 	 */
 	public static IClasspathEntry[] resolveClassPathEntries(IJavaProject javaProject, Map<IPath, IPath> sourceAndOutput, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
 		List<IClasspathEntry> newEntries = new LinkedList<>();
-		Map<IPath, IClasspathEntry> originalSources = new HashMap<>();
 		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
 			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE) {
 				newEntries.add(entry);
-			} else {
+			}
+		}
+
+		if (outputPath == null) {
+			outputPath = javaProject.getOutputLocation();
+		}
+
+		IClasspathEntry[] newSources = resolveSourceClasspathEntries(javaProject, sourceAndOutput, excludingPaths, outputPath);
+		newEntries.addAll(Arrays.asList(newSources));
+
+		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
+		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, outputPath);
+		if (!checkStatus.isOK()) {
+			throw new CoreException(checkStatus);
+		}
+
+		return rawClasspath;
+	}
+
+	public static IClasspathEntry[] resolveSourceClasspathEntries(IJavaProject javaProject, Map<IPath, IPath> sourceAndOutput, List<IPath> excludingPaths, IPath outputPath) throws CoreException {
+		Map<IPath, IClasspathEntry> originalSources = new HashMap<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
 				originalSources.put(entry.getPath(), entry);
 			}
 		}
@@ -757,15 +778,7 @@ public final class ProjectUtils {
 				}
 			}
 		}
-		newEntries.addAll(sourceEntries);
-
-		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
-		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, outputPath);
-		if (!checkStatus.isOK()) {
-			throw new CoreException(checkStatus);
-		}
-
-		return rawClasspath;
+		return sourceEntries.toArray(IClasspathEntry[]::new);
 	}
 
 }
