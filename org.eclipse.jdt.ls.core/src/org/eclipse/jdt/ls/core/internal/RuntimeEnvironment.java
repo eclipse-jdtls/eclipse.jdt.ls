@@ -17,6 +17,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -109,14 +110,8 @@ public class RuntimeEnvironment {
 			return false;
 		}
 		RuntimeEnvironment other = (RuntimeEnvironment) obj;
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
-			return false;
-		}
-		return true;
+		return Objects.equals(name, other.name) &&
+				Objects.equals(path, other.path);
 	}
 
 	public boolean isValid() {
