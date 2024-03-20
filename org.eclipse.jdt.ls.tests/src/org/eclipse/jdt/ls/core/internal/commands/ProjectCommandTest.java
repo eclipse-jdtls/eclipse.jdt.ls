@@ -194,6 +194,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		entries.remove(size - 1);
 		ProjectCommand.updateClasspaths(uriString, entries, new NullProgressMonitor());
 
+		options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 		List<ProjectClasspathEntry> newEntries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 		assertEquals(size - 1, newEntries.size());
 	}

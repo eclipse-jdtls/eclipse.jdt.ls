@@ -14,8 +14,6 @@
 package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayDeque;
@@ -31,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IContainer;
@@ -77,11 +74,6 @@ import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
-import org.eclipse.m2e.jdt.IClasspathManager;
-import org.eclipse.m2e.jdt.MavenJdtPlugin;
-import org.eclipse.m2e.jdt.internal.BuildPathManager;
-import org.eclipse.m2e.jdt.internal.MavenClasspathContainer;
-import org.eclipse.m2e.jdt.internal.MavenClasspathContainerSaveHelper;
 
 public class ProjectCommand {
 
@@ -176,13 +168,9 @@ public class ProjectCommand {
 								output = project.getFolder(output.makeRelativeTo(project.getFullPath())).getLocation();
 							}
 						} else if (entryKind == IClasspathEntry.CPE_CONTAINER) {
-							IPath containerPath = entry.getPath();
 							// skip JRE container, since it's already handled in VM_LOCATION.
-							if (!containerPath.toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
-								IClasspathContainer container = JavaCore.getClasspathContainer(containerPath, javaProject);
-								if (container != null) {
-									entriesToBeScan.addAll(Arrays.asList(container.getClasspathEntries()));
-								}
+							if (!path.toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
+								entriesToBeScan.addAll(expandContainerEntry(javaProject, entry));
 							}
 							continue;
 						} else if (entryKind == IClasspathEntry.CPE_LIBRARY) {
@@ -219,7 +207,7 @@ public class ProjectCommand {
 		IProject project = javaProject.getProject();
 		Map<IPath, IPath> sourceAndOutput = new HashMap<>();
 		List<IClasspathEntry> newEntries = new LinkedList<>();
-		List<IClasspathEntry> dependencyEntries = new LinkedList<>();
+		List<IClasspathEntry> newDependencyEntries = new LinkedList<>();
 		for (ProjectClasspathEntry entry : entries) {
 			if (entry.getKind() == IClasspathEntry.CPE_SOURCE) {
 				IPath path = project.getFolder(entry.getPath()).getFullPath();
@@ -241,18 +229,12 @@ public class ProjectCommand {
 					JavaLanguageServerPlugin.logInfo("The container entry " + entry.getPath() + " is not supported to be updated.");
 				}
 			} else {
-				dependencyEntries.add(convertClasspathEntry(entry));
+				newDependencyEntries.add(convertClasspathEntry(entry));
 			}
 		}
 		IClasspathEntry[] sources = ProjectUtils.resolveSourceClasspathEntries(javaProject, sourceAndOutput, Collections.emptyList(), javaProject.getOutputLocation());
 		newEntries.addAll(Arrays.asList(sources));
-
-		// update maven classpath container since it's exposed from m2e.
-		// May consider extracting this operation to an API of IBuildSupport.
-		if (ProjectUtils.isMavenProject(project)) {
-			dependencyEntries = resolveMavenDependencyEntries(javaProject, dependencyEntries.toArray(IClasspathEntry[]::new), monitor);
-		}
-		newEntries.addAll(dependencyEntries);
+		newEntries.addAll(resolveDependencyEntries(javaProject, newDependencyEntries));
 
 		IClasspathEntry[] rawClasspath = newEntries.toArray(IClasspathEntry[]::new);
 		IJavaModelStatus checkStatus = ClasspathEntry.validateClasspath(javaProject, rawClasspath, javaProject.getOutputLocation());
@@ -263,13 +245,86 @@ public class ProjectCommand {
 	}
 
 	/**
+	 * Check the new dependency entries are different from the current ones or not.
+	 * If they are equal, return the current dependency entries, otherwise return the new ones.
+	 */
+	private static List<IClasspathEntry> resolveDependencyEntries(IJavaProject javaProject, List<IClasspathEntry> newEntries) throws JavaModelException {
+		List<IClasspathEntry> currentDependencyEntries = new LinkedList<>();
+		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
+			if (entry.getEntryKind() != IClasspathEntry.CPE_SOURCE &&
+					!entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
+				currentDependencyEntries.add(entry);
+			}
+		}
+
+		Map<IPath, IClasspathEntry> currentEntryMapping = new HashMap<>();
+		for (IClasspathEntry entry : currentDependencyEntries) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+				List<IClasspathEntry> expandedContainerEntry = expandContainerEntry(javaProject, entry);
+				for (IClasspathEntry containerEntry : expandedContainerEntry) {
+					currentEntryMapping.put(containerEntry.getPath(), containerEntry);
+				}
+			} else {
+				currentEntryMapping.put(entry.getPath(), entry);
+			}
+		}
+
+		// Use new dependency entries if the size is different
+		if (newEntries.size() != currentEntryMapping.size()) {
+			return newEntries;
+		}
+
+		for (IClasspathEntry entry : newEntries) {
+			IClasspathEntry currentEntry = currentEntryMapping.get(entry.getPath());
+			if (currentEntry == null) {
+				return newEntries;
+			}
+		}
+
+		return currentDependencyEntries;
+	}
+
+	/**
+	 * Expand the container entry, the returned list is guaranteed to contain no container entry.
+	 */
+	private static List<IClasspathEntry> expandContainerEntry(IJavaProject javaProject, IClasspathEntry entry) throws JavaModelException {
+		if (entry.getEntryKind() != IClasspathEntry.CPE_CONTAINER) {
+			return Collections.singletonList(entry);
+		}
+
+		List<IClasspathEntry> resolvedEntries = new LinkedList<>();
+		List<IClasspathEntry> entriesToScan = new LinkedList<>();
+		entriesToScan.add(entry);
+		for (int i = 0; i < entriesToScan.size(); i++) {
+			IClasspathEntry currentEntry = entriesToScan.get(i);
+			if (currentEntry.getEntryKind() != IClasspathEntry.CPE_CONTAINER) {
+				resolvedEntries.add(currentEntry);
+				continue;
+			}
+			IClasspathContainer container = JavaCore.getClasspathContainer(currentEntry.getPath(), javaProject);
+			if (container == null) {
+				continue;
+			}
+			IClasspathEntry[] containerEntries = container.getClasspathEntries();
+			for (IClasspathEntry containerEntry : containerEntries) {
+				if (containerEntry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+					entriesToScan.add(containerEntry);
+				} else {
+					resolvedEntries.add(containerEntry);
+				}
+			}
+		}
+		return resolvedEntries;
+	}
+
+	/**
 	 * Convert ProjectClasspathEntry to IClasspathEntry.
 	 */
 	private static IClasspathEntry convertClasspathEntry(ProjectClasspathEntry entry) {
 		List<IClasspathAttribute> attributes = new LinkedList<>();
 		if (entry.getAttributes() != null) {
-			for (Entry<String, String> attributEntry : entry.getAttributes().entrySet()) {
-				attributes.add(JavaCore.newClasspathAttribute(attributEntry.getKey(), attributEntry.getValue()));
+			for (Entry<String, String> attributeEntry : entry.getAttributes().entrySet()) {
+				attributes.add(JavaCore.newClasspathAttribute(attributeEntry.getKey(), attributeEntry.getValue()));
 			}
 		}
 		switch (entry.getKind()) {
@@ -300,69 +355,6 @@ public class ProjectCommand {
 			default:
 				return null;
 		}
-	}
-
-	/**
-	 * See {@link org.eclipse.m2e.jdt.internal.BuildPathManager#updateClasspath()}
-	 */
-	private static List<IClasspathEntry> resolveMavenDependencyEntries(IJavaProject javaProject, IClasspathEntry[] entries, IProgressMonitor monitor) {
-		IProject project = javaProject.getProject();
-		if (!ProjectUtils.isMavenProject(project)) {
-			JavaLanguageServerPlugin.logError("Project '" + javaProject.getElementName() + "' is not a Maven project.");
-			return Collections.emptyList();
-		}
-
-		List<IClasspathEntry> mavenEntries = new LinkedList<>();
-		List<IClasspathEntry> resolvedEntries = new LinkedList<>();
-		for (IClasspathEntry entry : entries) {
-			if (isMavenEntry(entry)) {
-				mavenEntries.add(entry);
-			} else {
-				resolvedEntries.add(entry);
-			}
-		}
-		try {
-			IClasspathEntry containerEntry = BuildPathManager.getMavenContainerEntry(javaProject);
-			IPath path = containerEntry != null ? containerEntry.getPath() :
-					IPath.fromOSString(BuildPathManager.CONTAINER_ID);
-			IClasspathContainer container = new MavenClasspathContainer(path, entries);
-			JavaCore.setClasspathContainer(container.getPath(), new IJavaProject[] {javaProject},
-					new IClasspathContainer[] {container}, monitor);
-			saveContainerState(project, container);
-			resolvedEntries.add(JavaCore.newContainerEntry(path));
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.log(e);
-		}
-		return resolvedEntries;
-	}
-
-	private static boolean isMavenEntry(IClasspathEntry entry) {
-		for (IClasspathAttribute attribute : entry.getExtraAttributes()) {
-			if (Objects.equals(IClasspathManager.POMDERIVED_ATTRIBUTE, attribute.getName()) && Boolean.parseBoolean(attribute.getValue())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * See {@link org.eclipse.m2e.jdt.internal.BuildPathManager#saveContainerState()}
-	 */
-	private static void saveContainerState(IProject project, IClasspathContainer container) {
-		File containerStateFile = getContainerStateFile(project);
-		try (FileOutputStream is = new FileOutputStream(containerStateFile)) {
-		  new MavenClasspathContainerSaveHelper().writeContainer(container, is);
-		} catch(IOException ex) {
-			JavaLanguageServerPlugin.logException("Can't save classpath container state for " + project.getName(), ex); //$NON-NLS-1$
-		}
-	}
-
-	/**
-	 * See {@link org.eclipse.m2e.jdt.internal.BuildPathManager#getContainerStateFile()}
-	 */
-	private static File getContainerStateFile(IProject project) {
-		File stateLocationDir = MavenJdtPlugin.getDefault().getStateLocation().toFile();
-		return new File(stateLocationDir, project.getName() + ".container"); //$NON-NLS-1$
 	}
 
 	/**
