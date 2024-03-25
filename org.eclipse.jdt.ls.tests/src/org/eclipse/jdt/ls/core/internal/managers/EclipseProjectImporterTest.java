@@ -191,7 +191,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testPreviewFeaturesDisabledByDefault() throws Exception {
-		String name = "java21";
+		String name = "java22";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);

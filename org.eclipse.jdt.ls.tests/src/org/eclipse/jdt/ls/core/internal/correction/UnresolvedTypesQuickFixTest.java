@@ -1492,11 +1492,11 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testTypeInSealedTypeDeclaration() throws Exception {
-		Map<String, String> options21 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options21, JavaCore.VERSION_21);
-		options21.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options21.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject1.setOptions(options21);
+		Map<String, String> options22 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
+		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject1.setOptions(options22);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();

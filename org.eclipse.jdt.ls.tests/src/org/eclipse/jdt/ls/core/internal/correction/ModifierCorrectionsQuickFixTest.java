@@ -1203,11 +1203,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddSealedMissingClassModifierProposal() throws Exception {
-		Map<String, String> options21 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options21, JavaCore.VERSION_21);
-		options21.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options21.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options21);
+		Map<String, String> options22 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
+		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options22);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 
@@ -1250,11 +1250,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddSealedAsDirectSuperClass() throws Exception {
-		Map<String, String> options21 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options21, JavaCore.VERSION_21);
-		options21.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options21.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options21);
+		Map<String, String> options22 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
+		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options22);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 
@@ -1279,11 +1279,11 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddPermitsToDirectSuperClass() throws Exception {
-		Map<String, String> options21 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options21, JavaCore.VERSION_21);
-		options21.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options21.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options21);
+		Map<String, String> options22 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
+		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+		fJProject.setOptions(options22);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 

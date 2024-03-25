@@ -31,9 +31,7 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
+import org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
@@ -43,6 +41,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
@@ -128,7 +128,7 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createRemoveUnusedImportProposal(org.eclipse.jdt.internal.corext.fix.IProposableFix, org.eclipse.jdt.internal.ui.fix.UnusedCodeCleanUp, int, org.eclipse.jdt.ui.text.java.IInvocationContext)
 	 */
 	@Override
-	protected ProposalKindWrapper createRemoveUnusedImportProposal(IProposableFix fix, UnusedCodeCleanUp unusedCodeCleanUp, int relevance, IInvocationContext context) {
+	protected ProposalKindWrapper createRemoveUnusedImportProposal(IProposableFix fix, UnusedCodeCleanUpCore unusedCodeCleanUp, int relevance, IInvocationContext context) {
 		if (fix != null) {
 			try {
 				CompilationUnitChange change = fix.createChange(null);
