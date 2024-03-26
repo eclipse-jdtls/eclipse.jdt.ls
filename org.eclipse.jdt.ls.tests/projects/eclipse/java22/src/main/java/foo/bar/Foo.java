@@ -3,7 +3,9 @@ package foo.bar;
 /**
  * It's a Foo class
  */
-public sealed interface Foo
-permits Bar { 
+public class Foo {
+	public Foo() {
+		System.out.println();
+		super();
+	}
 }
-record Bar(String name) implements Foo { }

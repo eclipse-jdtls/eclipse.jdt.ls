@@ -1203,11 +1203,9 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddSealedMissingClassModifierProposal() throws Exception {
-		Map<String, String> options22 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
-		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options22);
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject.setOptions(options17);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 
@@ -1250,11 +1248,9 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddSealedAsDirectSuperClass() throws Exception {
-		Map<String, String> options22 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
-		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options22);
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject.setOptions(options17);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 
@@ -1279,11 +1275,9 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAddPermitsToDirectSuperClass() throws Exception {
-		Map<String, String> options22 = new HashMap<>();
-		JavaModelUtil.setComplianceOptions(options22, JavaCore.VERSION_22);
-		options22.put(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
-		options22.put(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
-		fJProject.setOptions(options22);
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject.setOptions(options17);
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
 		assertNoErrors(fJProject.getResource());
 
