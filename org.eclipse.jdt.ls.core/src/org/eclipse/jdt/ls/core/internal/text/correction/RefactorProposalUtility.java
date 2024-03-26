@@ -512,7 +512,7 @@ public class RefactorProposalUtility {
 					Arrays.asList(ASSIGN_VARIABLE_COMMAND, params));
 			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		} else {
-			AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance);
+			AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.LOCAL, expressionStatement, typeBinding, relevance, false);
 			return CodeActionHandler.wrap(p, JavaCodeActionKind.REFACTOR_ASSIGN_VARIABLE);
 		}
 	}
@@ -553,7 +553,7 @@ public class RefactorProposalUtility {
 						Arrays.asList(ASSIGN_FIELD_COMMAND, params));
 				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			} else {
-				AssignToVariableAssistProposalCore proposal = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance);
+				AssignToVariableAssistProposalCore proposal = new AssignToVariableAssistProposalCore(cu, AssignToVariableAssistProposalCore.FIELD, expressionStatement, typeBinding, relevance, false);
 				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_ASSIGN_FIELD);
 			}
 		}

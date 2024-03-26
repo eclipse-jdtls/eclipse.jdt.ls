@@ -216,7 +216,7 @@ public class TypeMismatchSubProcessor extends TypeMismatchBaseSubProcessor<Propo
 	 */
 	@Override
 	protected ProposalKindWrapper createNewVariableCorrectionProposal(String label, ICompilationUnit cu, int local, SimpleName simpleName, ITypeBinding senderBinding, int relevance) {
-		NewVariableCorrectionProposalCore p = new NewVariableCorrectionProposalCore(label, cu, NewVariableCorrectionProposalCore.LOCAL, simpleName, null, relevance);
+		NewVariableCorrectionProposalCore p = new NewVariableCorrectionProposalCore(label, cu, NewVariableCorrectionProposalCore.LOCAL, simpleName, null, relevance, false);
 		return CodeActionHandler.wrap(p, CodeActionKind.QuickFix);
 	}
 

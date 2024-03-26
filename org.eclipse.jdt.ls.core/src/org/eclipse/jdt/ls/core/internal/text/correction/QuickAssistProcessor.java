@@ -337,7 +337,7 @@ public class QuickAssistProcessor {
 					ASTNode fieldDeclFrag = root.findDeclaringNode(curr);
 					if (fieldDeclFrag instanceof VariableDeclarationFragment fragment) {
 						if (fragment.getInitializer() == null) {
-							AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD);
+							AssignToVariableAssistProposalCore p = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, fragment, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_EXISTING_FIELD, false);
 							resultingCollections.add(CodeActionHandler.wrap(p, JavaCodeActionKind.QUICK_ASSIST));
 						}
 					}
@@ -345,7 +345,7 @@ public class QuickAssistProcessor {
 			}
 		}
 
-		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), paramDecl, null, typeBinding, IProposalRelevance.ASSIGN_PARAM_TO_NEW_FIELD, false);
 		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
@@ -378,7 +378,7 @@ public class QuickAssistProcessor {
 			return true;
 		}
 
-		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS);
+		AssignToVariableAssistProposalCore fieldProposal = new AssignToVariableAssistProposalCore(context.getCompilationUnit(), parameters, IProposalRelevance.ASSIGN_ALL_PARAMS_TO_NEW_FIELDS, false);
 		resultingCollections.add(CodeActionHandler.wrap(fieldProposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
