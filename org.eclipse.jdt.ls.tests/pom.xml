@@ -81,9 +81,9 @@
 							<configuration>
 								<dependencies>
 									<dependency>
-										<artifactId>org.eclipse.jdt</artifactId>
+										<artifactId>org.eclipse.jdt.launching.macosx</artifactId>
 										<version>0.0.0</version>
-										<type>eclipse-feature</type>
+										<type>eclipse-plugin</type>
 									</dependency>
 								</dependencies>
 							</configuration>
