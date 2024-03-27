@@ -592,6 +592,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		return proposals;
 	}
 
+	public void addAdditionalProposal(CompletionProposal proposals) {
+		this.proposals.add(proposals);
+	}
+
 	/**
 	 * copied from
 	 * org.eclipse.jdt.ui.text.java.CompletionProposalCollector.isFiltered(CompletionProposal)
