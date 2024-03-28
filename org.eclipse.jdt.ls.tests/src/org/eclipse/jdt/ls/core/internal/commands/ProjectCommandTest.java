@@ -182,6 +182,27 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	@Test
+	public void testGetClasspathEntriesWithNonExistLib() throws Exception {
+		importProjects("maven/salut2");
+		IProject project = WorkspaceHelper.getProject("salut2");
+		IJavaProject javaProject = JavaCore.create(project);
+		List<IClasspathEntry> classpathEntries = Arrays.stream(javaProject.getRawClasspath())
+				.collect(Collectors.toList());
+		classpathEntries.add(JavaCore.newLibraryEntry(new Path("/foo/bar/a.jar"), null, null));
+		javaProject.setRawClasspath(classpathEntries.toArray(IClasspathEntry[]::new), monitor);
+
+		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		assertNotNull(options.get(ProjectCommand.CLASSPATH_ENTRIES));
+		assertTrue(entries.size() > 0);
+		assertTrue(entries.stream().anyMatch(entry -> {
+			return entry.getKind() == IClasspathEntry.CPE_LIBRARY && entry.getPath().equals("/foo/bar/a.jar");
+		}));
+	}
+
+	@Test
 	public void testUpdateClasspathEntries() throws Exception {
 		importProjects("maven/salut2");
 		IProject project = WorkspaceHelper.getProject("salut2");

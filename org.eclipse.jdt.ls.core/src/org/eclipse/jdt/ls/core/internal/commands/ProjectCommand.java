@@ -175,11 +175,11 @@ public class ProjectCommand {
 							continue;
 						} else if (entryKind == IClasspathEntry.CPE_LIBRARY) {
 							if (!path.toFile().exists()) {
-								// the case when lib path is relative
-								path = project.getFile(path.makeRelativeTo(project.getFullPath())).getLocation();
-							}
-							if (!path.toFile().exists()) {
-								continue;
+								// check if it's a project based full path
+								IPath filePath = project.getFile(path.makeRelativeTo(project.getFullPath())).getLocation();
+								if (filePath != null && filePath.toFile().exists()) {
+									path = filePath;
+								}
 							}
 						}
 						Map<String, String> attributes = new HashMap<>();
