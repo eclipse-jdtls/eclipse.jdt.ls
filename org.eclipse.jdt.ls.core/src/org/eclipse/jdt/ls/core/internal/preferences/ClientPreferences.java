@@ -427,7 +427,10 @@ public class ClientPreferences {
 	}
 
 	public InsertTextMode getCompletionItemInsertTextModeDefault() {
-		return capabilities.getTextDocument().getCompletion().getInsertTextMode();
+		return v3supported
+			&& capabilities.getTextDocument().getCompletion() != null
+			? capabilities.getTextDocument().getCompletion().getInsertTextMode()
+			: null;
 	}
 
 	public boolean isCompletionListItemDefaultsSupport() {
