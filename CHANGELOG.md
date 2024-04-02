@@ -1,5 +1,28 @@
 # Change Log
 
+# [1.34.0 (April 3rd, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/126?closed=1)
+ * enhancement - Provide support for Java 22. See [#3111](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3111).
+ * enhancement - Add setting to group completion items representing overloaded methods together. See [#2282](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2282), [#3086](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3086).
+ * enhancement - Automatically rename file to match type declaration once save is triggered. See [#3091](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3091).
+ * enhancement - Support updating whole classpath of the project in delegate commands. See [#3098](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3098).
+ * enhancement - Read the server logs in order to discover early startup log messages. See [#3106](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3106).
+ * bug fix - Signature help should display all overloaded methods. See [#3052](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3052).
+ * bug fix - Fix issues with Unnamed classes (Java 21) (reference computation, code actions, compilation). See [#3069](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3069), [#3089](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3089), [#3090](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3090).
+ * bug fix - Support list of patterns in case statements (Java 21). See [#3043](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3043).
+ * bug fix - Allow methods, inherited fields, inherited methods for `Generate toString()` code action. See [#3055](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3055).
+ * bug fix - Update Buildship to 3.1.10, which fixes "Marker property value is too long". See [#2424](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2424).
+ * bug fix - Set the `nullUncheckedConversion` setting to be ignored by default. See [#3067](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3067).
+ * bug fix - Fix NPE when fetching the classpath of the project. See [#3115](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3115).
+ * bug fix - Handle a non-existent completion item insert text mode capability. See [#3116](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3116).
+ * bug fix - Add `--java-executable` argument to `jdtls.py` wrapper. See [#3080](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3080).
+ * bug fix - Fix python script to retrieve `JAVA_HOME` executable on Windows. See [#3071](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3071).
+ * dependencies - Update to LSP4J 0.22.0. See [#3099](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3099).
+ * dependencies - Update target platform to Eclipse 2024-03 release & 4.31-I-builds content. See [#3076](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3076), [#3105](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3105).
+ * dependencies - Bump org.apache.maven.plugins:maven-assembly-plugin from 3.6.0 to 3.7.1. See [#3095](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3095), [#3102](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3102).
+ * build - Fix tests failing to run on MacOS. See [#3113](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3113).
+ * build - Update Tycho from 4.0.5 to 4.0.7. See [#3064](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3064), [#3117](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3117).
+ * debt - Migrate ReorgCorrections, TypeMismatch, UnresolvedElements sub processors. See [#3045](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3045), [#3048](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3048).
+
 # [1.33.0 (February 15th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/125?closed=1)
  * enhancement - Add Unnamed classes (Java 21) preview support. See [#3042](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3042).
  * enhancement - Add support for manual cleanup actions command. See [#3010](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3010).
