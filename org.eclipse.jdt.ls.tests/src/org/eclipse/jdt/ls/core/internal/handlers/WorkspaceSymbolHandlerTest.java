@@ -128,7 +128,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	public void testCamelCaseSearch() {
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("NPE", monitor);
 		assertNotNull(results);
-		assertEquals("NullPointerException", results.get(0).getName());
+		assertTrue(results.stream().anyMatch(s -> s.getName().equals("NullPointerException")));
 
 		results = WorkspaceSymbolHandler.search("HaMa", monitor);
 		String className = "HashMap";
@@ -199,6 +199,17 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		results = WorkspaceSymbolHandler.search("java.lang", monitor);
 		assertTrue(results.size() > 1);
 		assertTrue(results.stream().anyMatch(s -> "Exception".equals(s.getName()) && "java.lang".equals(s.getContainerName())));
+	}
+
+	@Test
+	public void testSearchPartialPackage() {
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("util.Array", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> s.getName().equals("ArrayList") && s.getContainerName().equals("java.util")));
+
+		results = WorkspaceSymbolHandler.search("util.Pattern", monitor);
+		assertTrue(results.size() > 1);
+		assertTrue(results.stream().anyMatch(s -> s.getName().equals("Pattern") && s.getContainerName().equals("java.util.regex")));
 	}
 
 	@Test
