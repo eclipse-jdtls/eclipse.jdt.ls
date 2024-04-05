@@ -70,9 +70,8 @@ public class WorkspaceSymbolHandler {
 			if (qualIndex != -1) {
 				qualifierName = tQuery.substring(0, qualIndex);
 				typeName = tQuery.substring(qualIndex + 1);
-				qualifierMatchRule = SearchPattern.R_CAMELCASE_MATCH;
-				if (qualifierName.contains("*") || qualifierName.contains("?")) {
-					qualifierMatchRule = SearchPattern.R_PATTERN_MATCH;
+				if (!qualifierName.contains("*") && !qualifierName.contains("?")) {
+					qualifierName = String.format("*%s*", qualifierName);
 				}
 			}
 
