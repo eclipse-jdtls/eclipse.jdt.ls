@@ -76,6 +76,9 @@ import org.eclipse.lsp4j.ExecuteCommandCapabilities;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
+import org.eclipse.lsp4j.FileOperationOptions;
+import org.eclipse.lsp4j.FileOperationPatternKind;
+import org.eclipse.lsp4j.FileOperationsServerCapabilities;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
@@ -366,6 +369,21 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		newWatchers = watchers.subList(0, 9);
 		Collections.sort(newWatchers, Comparator.comparing(fileSystemWatcher -> fileSystemWatcher.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
 		assertEquals(newWatchers, watchers);
+	}
+
+	@Test
+	public void testWorkspaceWillRenameFiles() throws Exception {
+		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+		when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+		when(mockCapabilies.isWorkspaceWillRenameFilesSupported()).thenReturn(Boolean.TRUE);
+		InitializeResult result = initialize(true);
+		FileOperationsServerCapabilities fileOpSrvCap = result.getCapabilities().getWorkspace().getFileOperations();
+		assertNotNull(fileOpSrvCap);
+		FileOperationOptions fileOpOps = fileOpSrvCap.getWillRename();
+		assertNotNull(fileOpOps);
+		assertEquals("file", fileOpOps.getFilters().get(0).getScheme());
+		assertEquals(FileOperationPatternKind.File, fileOpOps.getFilters().get(0).getPattern().getMatches());
+		assertEquals("**/*.java", fileOpOps.getFilters().get(0).getPattern().getGlob());
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/2429

@@ -65,6 +65,10 @@ public class ClientPreferences {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getWorkspaceFolders());
 	}
 
+	public boolean isWorkspaceWillRenameFilesSupported() {
+		return v3supported && capabilities.getWorkspace() != null && capabilities.getWorkspace().getFileOperations() != null && isTrue(capabilities.getWorkspace().getFileOperations().getWillRename());
+	}
+
 	public boolean isCompletionDynamicRegistered() {
 		return v3supported && isDynamicRegistrationSupported(capabilities.getTextDocument().getCompletion());
 	}

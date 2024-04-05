@@ -52,6 +52,11 @@ import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentFilter;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
 import org.eclipse.lsp4j.ExecuteCommandOptions;
+import org.eclipse.lsp4j.FileOperationFilter;
+import org.eclipse.lsp4j.FileOperationOptions;
+import org.eclipse.lsp4j.FileOperationPattern;
+import org.eclipse.lsp4j.FileOperationPatternKind;
+import org.eclipse.lsp4j.FileOperationsServerCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.SaveOptions;
@@ -219,6 +224,15 @@ final public class InitHandler extends BaseInitHandler {
 		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
 		wsFoldersOptions.setSupported(Boolean.TRUE);
 		wsFoldersOptions.setChangeNotifications(Boolean.TRUE);
+
+		if (preferenceManager.getClientPreferences().isWorkspaceWillRenameFilesSupported()) {
+			FileOperationsServerCapabilities wsFileOperations = new FileOperationsServerCapabilities();
+			FileOperationPattern fileOpPattern = new FileOperationPattern("**/*.java");
+			fileOpPattern.setMatches(FileOperationPatternKind.File);
+			wsFileOperations.setWillRename(new FileOperationOptions(List.of(new FileOperationFilter(fileOpPattern, "file"))));
+			wsCapabilities.setFileOperations(wsFileOperations);
+		}
+
 		wsCapabilities.setWorkspaceFolders(wsFoldersOptions);
 		capabilities.setWorkspace(wsCapabilities);
 
