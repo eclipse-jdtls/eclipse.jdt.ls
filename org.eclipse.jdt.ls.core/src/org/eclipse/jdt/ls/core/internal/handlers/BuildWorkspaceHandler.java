@@ -80,6 +80,7 @@ public class BuildWorkspaceHandler {
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;
 			} else {
+				WorkspaceDiagnosticsHandler.checkPreviewFeatureValidity(problemMarkers);
 				// for default project, problem markers aren't sent. Add logs here for trouble shooting.
 				String newline = System.getProperty("line.separator");
 				logError("Error occured while building workspace. Details: " + newline + String.join(newline, errors));

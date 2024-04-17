@@ -40,7 +40,12 @@ public enum EventType {
 	/**
 	 * Source attachments have been updated for some jar libraries.
 	 */
-	SourceInvalidated(500);
+	SourceInvalidated(500),
+
+	/**
+	 * Incompatibility between release version and preview features
+	 */
+	PreviewFeaturesNotAllowed(600);
 
 	private final int value;
 
