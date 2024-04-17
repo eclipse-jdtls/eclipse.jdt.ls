@@ -20,7 +20,9 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -61,6 +63,7 @@ public class LogHandler {
 	private String firstRecordedEntryDateString;
 
 	private List<IStatus> statusCache = new ArrayList<>();
+	private Set<Integer> knownErrors = new HashSet<>();
 
 	/**
 	 * Equivalent to <code>LogHandler(defaultLogFilter)</code>.
@@ -106,6 +109,7 @@ public class LogHandler {
 		for (IStatus event : statusCache) {
 			processLogMessage(event);
 		}
+		statusCache.clear();
 
 		for (LogEntry e : entries) {
 			processLogMessage(e);
@@ -139,7 +143,11 @@ public class LogHandler {
 			if (entry.getStack() != null) {
 				properties.addProperty("exception", message);
 			}
-			connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
+			int hashCode = properties.hashCode();
+			if (!knownErrors.contains(hashCode)) {
+				knownErrors.add(hashCode);
+				connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
+			}
 		}
 	}
 	private void processLogMessage(IStatus status) {
@@ -165,7 +173,11 @@ public class LogHandler {
 			if (status.getException() != null) {
 				properties.addProperty("exception", message);
 			}
-			connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
+			int hashCode = properties.hashCode();
+			if (!knownErrors.contains(hashCode)) {
+				knownErrors.add(hashCode);
+				connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
+			}
 		}
 	}
 
