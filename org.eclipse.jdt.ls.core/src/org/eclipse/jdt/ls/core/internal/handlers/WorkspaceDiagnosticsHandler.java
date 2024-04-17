@@ -44,6 +44,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -61,6 +63,9 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.Messages;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * Listens to the resource change events and converts {@link IMarker}s to {@link Diagnostic}s.
@@ -340,6 +345,31 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (document != null) {
 				List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, entry.getValue().toArray(new IMarker[0]), isDiagnosticTagSupported);
 				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics));
+			}
+		}
+
+		checkPreviewFeatureValidity(markers);
+	}
+
+	public static void checkPreviewFeatureValidity(List<IMarker> problemMarkers) {
+		// Preview feature support enabled on incompatible release version
+		List<IMarker> previewFeatureMarkers = problemMarkers.stream().filter(m -> m.getAttribute(IJavaModelMarker.ID, 0) == IProblem.PreviewFeaturesNotAllowed).collect(Collectors.toList());
+		JsonArray errorList = new JsonArray();
+		if (!previewFeatureMarkers.isEmpty()) {
+			for (IMarker marker : previewFeatureMarkers) {
+				// error message mentions invalid release level, and the supported level
+				String errorMessage = ResourceUtils.getMessage(marker);
+				String projectUri = JDTUtils.getFileURI(marker.getResource().getProject());
+				JsonObject entry = new JsonObject();
+				entry.addProperty("uri", projectUri);
+				entry.addProperty("message", errorMessage);
+				if (!errorList.contains(entry)) {
+					errorList.add(entry);
+				}
+			}
+			if (JavaLanguageServerPlugin.getProjectsManager().getConnection() != null) {
+				EventNotification prevFeatNotAllowedNotification = new EventNotification().withType(EventType.PreviewFeaturesNotAllowed).withData(errorList);
+				JavaLanguageServerPlugin.getProjectsManager().getConnection().sendEventNotification(prevFeatNotAllowedNotification);
 			}
 		}
 	}
