@@ -16,11 +16,15 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.gson.JsonObject;
 
 import org.eclipse.core.resources.IBuildConfiguration;
 import org.eclipse.core.resources.ICommand;
@@ -34,10 +38,19 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.ls.core.internal.ActionableNotification;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.EventNotification;
+import org.eclipse.jdt.ls.core.internal.EventType;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
+import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.extended.ProjectBuildParams;
 
 /**
@@ -78,6 +91,23 @@ public class BuildWorkspaceHandler {
 			if (errors.isEmpty()) {
 				return BuildWorkspaceStatus.SUCCEED;
 			} else {
+				// Preview feature support enabled on incompatible release version
+				Optional<IMarker> prevFeatMarkerOpt = problemMarkers.stream().filter(m -> m.getAttribute(IJavaModelMarker.ID, 0) == IProblem.PreviewFeaturesNotAllowed).findFirst();
+				if (prevFeatMarkerOpt.isPresent()) {
+					IMarker previewFeatureMarker = prevFeatMarkerOpt.get();
+					// error message mentions invalid release level, and the supported level
+					String errorMessage = String.format("Error occured while building workspace. Details: %s", ResourceUtils.getMessage(previewFeatureMarker));
+					String projectUri = JDTUtils.getFileURI(previewFeatureMarker.getResource().getProject());
+					JsonObject response = new JsonObject();
+					response.addProperty("uri", projectUri);
+					response.addProperty("message", errorMessage);
+					if (projectsManager.getConnection() != null) {
+						EventNotification prevFeatNotAllowedNotification = new EventNotification()
+										.withType(EventType.PreviewFeaturesNotAllowed)
+										.withData(response);
+						projectsManager.getConnection().sendEventNotification(prevFeatNotAllowedNotification);
+					}
+				}
 				// for default project, problem markers aren't sent. Add logs here for trouble shooting.
 				String newline = System.getProperty("line.separator");
 				logError("Error occured while building workspace. Details: " + newline + String.join(newline, errors));
