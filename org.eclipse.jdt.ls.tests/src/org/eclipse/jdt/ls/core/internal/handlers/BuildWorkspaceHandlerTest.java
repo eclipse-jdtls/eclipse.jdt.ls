@@ -87,7 +87,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		preferences.setMaxBuildCount(4);
 
 		List<IProject> projects = importProjects("eclipse/multi");
-		assertEquals(3, projects.size());
+		assertEquals(2, projects.size());
 
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
@@ -98,7 +98,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		preferences.setMaxBuildCount(4);
 
 		List<IProject> projects = importProjects("maven/multimodule");
-		assertEquals(6, projects.size());
+		assertEquals(5, projects.size());
 
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
 		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);

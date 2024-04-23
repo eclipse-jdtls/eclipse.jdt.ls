@@ -266,6 +266,12 @@ public final class JDTUtils {
 			return null;
 		}
 
+		try {
+			ProjectsManager.createJavaProject(ProjectsManager.getDefaultProject(), new NullProgressMonitor());
+			ProjectsManager.cleanupResources(ProjectsManager.getDefaultProject());
+		} catch (Exception e) {
+			// continue
+		}
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			String fileName = path.getFileName().toString();

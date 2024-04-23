@@ -40,7 +40,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 		{
 			Collection<String> folders = Arrays.asList(EclipseFolder, MavenFolder);
 			importProjects(folders);
-			assertEquals(3, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNotNull(WorkspaceHelper.getProject("salut"));
 		}
@@ -49,7 +49,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			Collection<String> folders = Arrays.asList(MavenMultiFolder, EclipseFolder);
 			importProjects(folders);
 
-			assertEquals(4, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(3, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNull(WorkspaceHelper.getProject("salut"));
 			assertNotNull(WorkspaceHelper.getProject("project1"));
@@ -62,7 +62,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 		{
 			Collection<String> folders = Arrays.asList(EclipseFolder, MavenFolder);
 			importProjects(folders);
-			assertEquals(3, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNotNull(WorkspaceHelper.getProject("salut"));
 		}
@@ -72,7 +72,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			Collection<String> toRemove = Arrays.asList(MavenFolder);
 			updateProjects(toAdd, toRemove);
 
-			assertEquals(4, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(3, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNull(WorkspaceHelper.getProject("salut"));
 			assertNotNull(WorkspaceHelper.getProject("project1"));
@@ -85,7 +85,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			Collection<String> toRemove = Arrays.asList(MavenMultiFolder);
 			updateProjects(toAdd, toRemove);
 
-			assertEquals(3, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
 			assertNotNull(WorkspaceHelper.getProject("salut"));
 			assertNull(WorkspaceHelper.getProject("project1"));
@@ -98,7 +98,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			Collection<String> toRemove = Arrays.asList(EclipseFolder, MavenFolder);
 			updateProjects(toAdd, toRemove);
 
-			assertEquals(2, WorkspaceHelper.getAllProjects().size()); // includes the default project
+			assertEquals(1, WorkspaceHelper.getAllProjects().size());
 			assertNull(WorkspaceHelper.getProject("hello"));
 			assertNull(WorkspaceHelper.getProject("salut"));
 			assertNotNull(WorkspaceHelper.getProject("simple-gradle"));

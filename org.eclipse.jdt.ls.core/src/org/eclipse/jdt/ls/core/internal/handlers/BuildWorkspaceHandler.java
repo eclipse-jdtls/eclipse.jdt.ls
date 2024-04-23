@@ -56,7 +56,9 @@ public class BuildWorkspaceHandler {
 			if (monitor.isCanceled()) {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
-			projectsManager.cleanupResources(projectsManager.getDefaultProject());
+			if (ProjectUtils.getAllProjects(false).length == 0) {
+				ProjectsManager.cleanupResources(ProjectsManager.getDefaultProject());
+			}
 			if (forceReBuild) {
 				SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 				ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, subMonitor.split(50));
@@ -67,7 +69,7 @@ public class BuildWorkspaceHandler {
 			List<IMarker> problemMarkers = new ArrayList<>();
 			IProject[] projects = ProjectUtils.getAllProjects();
 			for (IProject project : projects) {
-				if (!project.equals(projectsManager.getDefaultProject())) {
+				if (!project.equals(ProjectsManager.getDefaultProject())) {
 					List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
 					if (markers != null) {
 						problemMarkers.addAll(markers);

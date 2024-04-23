@@ -94,7 +94,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void importMultipleJavaProject() throws Exception {
 		List<IProject> projects = importProjects("eclipse/multi");
-		assertEquals(3, projects.size());
+		assertEquals(2, projects.size());
 
 		IProject bar = getProject("bar");
 		assertIsJavaProject(bar);
@@ -123,7 +123,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		try {
 			javaImportExclusions.add(BAR_PATTERN);
 			List<IProject> projects = importProjects("eclipse/multi");
-			assertEquals(2, projects.size());
+			assertEquals(1, projects.size());
 			IProject bar = getProject("bar");
 			assertNull(bar);
 			IProject foo = getProject("foo");

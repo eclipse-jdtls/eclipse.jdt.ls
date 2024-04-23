@@ -44,14 +44,12 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 
 	private NavigateToDefinitionHandler handler;
 	private IProject project;
-	private IProject defaultProject;
 
 	@Before
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
-		defaultProject = linkFilesToDefaultProject("singlefile/Single.java").getProject();
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, monitor);
@@ -144,6 +142,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	public void testJdkClasses() throws Exception {
 		// because for test, we are using fake rt.jar(rtstubs.jar), the issue of issue https://bugs.eclipse.org/bugs/show_bug.cgi?id=541573 will
 		// never occur in test cases
+		IProject defaultProject = linkFilesToDefaultProject("singlefile/Single.java").getProject();
 		String uri = ClassFileUtil.getURI(defaultProject, "Single");
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		handler.definition(new TextDocumentPositionParams(identifier, new Position(1, 31)), monitor);

@@ -121,7 +121,7 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 	@Test
 	public void testSettingsGradle() throws Exception {
 		List<IProject> projects = importProjects("gradle/sample");
-		assertEquals(3, projects.size());//default, app, sample
+		assertEquals(2, projects.size()); // app, sample
 		IProject root = WorkspaceHelper.getProject("sample");
 		assertIsGradleProject(root);
 		IProject project = WorkspaceHelper.getProject("app");

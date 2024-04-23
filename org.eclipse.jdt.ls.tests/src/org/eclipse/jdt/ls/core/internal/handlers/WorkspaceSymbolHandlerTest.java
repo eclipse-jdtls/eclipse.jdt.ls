@@ -78,7 +78,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "Array";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Unexpected results", 22, results.size());
+		assertEquals("Unexpected results", 11, results.size());
 		Range defaultRange = JDTUtils.newRange();
 		for (SymbolInformation symbol : results) {
 			assertNotNull("Kind is missing", symbol.getKind());

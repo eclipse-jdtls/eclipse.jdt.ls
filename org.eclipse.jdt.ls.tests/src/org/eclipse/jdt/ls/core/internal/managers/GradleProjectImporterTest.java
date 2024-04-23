@@ -107,7 +107,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void importNestedGradleProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/nested");
-		assertEquals(4, projects.size());//default + 3 gradle projects
+		assertEquals(3, projects.size()); // 3 gradle projects
 		IProject gradle1 = WorkspaceHelper.getProject("gradle1");
 		assertIsGradleProject(gradle1);
 		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
@@ -120,14 +120,14 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testDeleteInvalidProjects() throws Exception {
 		List<IProject> projects = importProjects(Arrays.asList("gradle/nested/gradle1", "gradle/nested/gradle2"));
-		assertEquals(3, projects.size());//default + 2 gradle projects
+		assertEquals(2, projects.size()); // 2 gradle projects
 		IProject gradle1 = WorkspaceHelper.getProject("gradle1");
 		assertIsGradleProject(gradle1);
 		IProject gradle2 = WorkspaceHelper.getProject("gradle2");
 		assertIsGradleProject(gradle2);
 
 		projects = importProjects("gradle/nested/gradle1");
-		assertEquals(2, projects.size());
+		assertEquals(1, projects.size());
 		gradle1 = WorkspaceHelper.getProject("gradle1");
 		assertNotNull(gradle1);
 		gradle2 = WorkspaceHelper.getProject("gradle2");
@@ -140,7 +140,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			javaImportExclusions.add(GRADLE1_PATTERN);
 			List<IProject> projects = importProjects("gradle/nested");
-			assertEquals(3, projects.size());//default + 2 gradle projects
+			assertEquals(2, projects.size()); // 2 gradle projects
 			IProject gradle1 = WorkspaceHelper.getProject("gradle1");
 			assertNull(gradle1);
 			IProject gradle2 = WorkspaceHelper.getProject("gradle2");
@@ -174,7 +174,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
 			assertEquals(((FixedVersionGradleDistribution) distribution).getVersion(), requiredVersion);
 			List<IProject> projects = importProjects("eclipse/eclipsegradle");
-			assertEquals(2, projects.size());//default + 1 eclipse projects
+			assertEquals(1, projects.size()); // 1 eclipse project
 			IProject eclipse = WorkspaceHelper.getProject("eclipsegradle");
 			assertNotNull(eclipse);
 			assertTrue(eclipse.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(eclipse));
@@ -193,7 +193,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			gradleUserHome.deleteOnExit();
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHome.getAbsolutePath());
 			List<IProject> projects = importProjects("gradle/simple-gradle");
-			assertEquals(2, projects.size());//default + 1 eclipse projects
+			assertEquals(1, projects.size()); // 1 eclipse project
 			IProject project = WorkspaceHelper.getProject("simple-gradle");
 			assertNotNull(project);
 			assertTrue(project.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(project));
@@ -267,7 +267,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(false);
 			List<IProject> projects = importProjects("eclipse/eclipsegradle");
-			assertEquals(2, projects.size());//default + 1 eclipse projects
+			assertEquals(1, projects.size()); // 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipse");
 			assertNotNull(eclipse);
 			assertFalse(eclipse.getName() + " has the Gradle nature", ProjectUtils.isGradleProject(eclipse));
@@ -487,7 +487,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			// force overrideWorkspace
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleArguments(List.of("--stacktrace"));
 			List<IProject> projects = importProjects("gradle/subprojects");
-			assertEquals(4, projects.size());//default + 3 gradle projects
+			assertEquals(3, projects.size()); // 3 gradle projects
 			IProject root = WorkspaceHelper.getProject("subprojects");
 			assertIsGradleProject(root);
 			IProject project1 = WorkspaceHelper.getProject("project1");
@@ -536,7 +536,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void importGradleKtsProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/kradle");
-		assertEquals(2, projects.size());//default + gradle kts projects
+		assertEquals(1, projects.size()); // gradle kts projects
 		IProject kradle = WorkspaceHelper.getProject("kradle");
 		assertIsGradleProject(kradle);
 		assertNoErrors(kradle);
@@ -629,7 +629,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testNameConflictProject() throws Exception {
 		List<IProject> projects = importProjects("gradle/nameConflict");
-		assertEquals(3, projects.size());
+		assertEquals(2, projects.size());
 		IProject root = WorkspaceHelper.getProject("nameConflict");
 		assertIsGradleProject(root);
 		IProject subProject = WorkspaceHelper.getProject("nameConflict-nameconflict");
@@ -641,7 +641,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			this.preferences.setAndroidSupportEnabled(true);
 			List<IProject> projects = importProjects("gradle/android");
-			assertEquals(3, projects.size());
+			assertEquals(2, projects.size());
 			IProject androidAppProject = WorkspaceHelper.getProject("app");
 			assertNotNull(androidAppProject);
 			IJavaProject javaProject = JavaCore.create(androidAppProject);
@@ -684,7 +684,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			this.preferences.setAndroidSupportEnabled(true);
 			List<IProject> projects = importProjects("gradle/android");
-			assertEquals(3, projects.size());
+			assertEquals(2, projects.size());
 			IProject androidAppProject = WorkspaceHelper.getProject("app");
 			assertNotNull(androidAppProject);
 			IJavaProject javaProject = JavaCore.create(androidAppProject);

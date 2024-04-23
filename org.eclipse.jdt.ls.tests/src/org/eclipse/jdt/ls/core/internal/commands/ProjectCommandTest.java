@@ -391,7 +391,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	public void getAllJavaProject() throws Exception {
 		importProjects("maven/multimodule");
 		List<URI> projects = ProjectCommand.getAllJavaProjects();
-		assertEquals(4, projects.size());
+		assertEquals(3, projects.size());
 	}
 
 	private static Range START_OF_DOCUMENT = new Range(new Position(0, 0), new Position(0, 0));
