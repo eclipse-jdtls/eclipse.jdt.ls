@@ -56,6 +56,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IRegistryChangeEvent;
 import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
@@ -211,6 +212,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected IFile linkFilesToDefaultProject(String path) throws Exception {
+		try {
+			ProjectsManager.createJavaProject(ProjectsManager.getDefaultProject(), new NullProgressMonitor());
+			ProjectsManager.cleanupResources(ProjectsManager.getDefaultProject());
+		} catch (OperationCanceledException e) {
+		} catch (CoreException e) {
+		}
 		IProject testProject = ProjectsManager.getDefaultProject();
 		String fullpath = copyFiles(path, true).getAbsolutePath().replace('\\', '/');
 		String fileName = fullpath.substring(fullpath.lastIndexOf("/") + 1);

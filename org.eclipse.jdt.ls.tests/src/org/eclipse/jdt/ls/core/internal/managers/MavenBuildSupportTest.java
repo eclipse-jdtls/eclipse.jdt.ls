@@ -130,7 +130,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	@Test
 	public void testIgnoreInnerPomChanges() throws Exception {
 		IProject project = importMavenProject("archetyped");
-		assertEquals("The inner pom should not have been imported", 2, WorkspaceHelper.getAllProjects().size());
+		assertEquals("The inner pom should not have been imported", 1, WorkspaceHelper.getAllProjects().size());
 
 		IFile innerPom = project.getFile("src/main/resources/archetype-resources/pom.xml");
 
@@ -229,7 +229,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		waitForBackgroundJobs();
 		assertTrue(ProjectUtils.isMavenProject(project));
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		assertEquals(root.getProjects().length, 14);
+		assertEquals(root.getProjects().length, 13);
 		project = root.getProject("batchchild");
 		assertTrue(ProjectUtils.isMavenProject(project));
 	}

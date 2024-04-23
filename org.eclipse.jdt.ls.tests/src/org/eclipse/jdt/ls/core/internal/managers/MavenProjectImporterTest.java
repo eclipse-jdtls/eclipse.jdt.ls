@@ -92,7 +92,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		try {
 			javaImportExclusions.add(PROJECT1_PATTERN);
 			List<IProject> projects = importProjects("maven/multi");
-			assertEquals(2, projects.size());//default + project 2
+			assertEquals(1, projects.size()); // project 2
 			IProject project1 = WorkspaceHelper.getProject("project1");
 			assertNull(project1);
 			IProject project2 = WorkspaceHelper.getProject("project2");
@@ -134,7 +134,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	@Test
 	public void testUnzippedSourceImportExclusions() throws Exception {
 		List<IProject> projects = importProjects("maven/unzipped-sources");
-		assertEquals(Arrays.asList(ProjectsManager.getDefaultProject()), projects);
+		assertTrue(projects.isEmpty());
 	}
 
 	@Test
@@ -143,7 +143,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		try {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportMavenEnabled(false);
 			List<IProject> projects = importProjects("eclipse/eclipsemaven");
-			assertEquals(2, projects.size());//default + 1 eclipse projects
+			assertEquals(1, projects.size()); // 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipse");
 			assertNotNull(eclipse);
 			assertFalse(eclipse.getName() + " has the Maven nature", ProjectUtils.isMavenProject(eclipse));

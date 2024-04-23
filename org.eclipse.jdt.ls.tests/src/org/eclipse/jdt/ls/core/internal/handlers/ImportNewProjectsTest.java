@@ -72,7 +72,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		importProjects("maven/multimodule");
 		waitForJobs();
 		projects = workspace.getRoot().getProjects();
-		assertEquals(6, projects.length);
+		assertEquals(5, projects.length);
 
 		// Add new sub-module
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
@@ -103,7 +103,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 		// Verify no projects imported
 		projects = workspace.getRoot().getProjects();
-		assertEquals(6, projects.length);
+		assertEquals(5, projects.length);
 
 		// Verify import projects
 		projectsManager.setConnection(client);
@@ -112,7 +112,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IProject newProject = workspace.getRoot().getProject("module4");
 		assertTrue(newProject.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(7, projects.length);
+		assertEquals(6, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(client, times(1)).sendEventNotification(argument.capture());
@@ -130,7 +130,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		importProjects("maven/multimodule");
 		waitForJobs();
 		projects = workspace.getRoot().getProjects();
-		assertEquals(6, projects.length);
+		assertEquals(5, projects.length);
 
 		// Add new sub-module
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
@@ -161,7 +161,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 		// Verify no projects imported
 		projects = workspace.getRoot().getProjects();
-		assertEquals(6, projects.length);
+		assertEquals(5, projects.length);
 
 		// Verify import projects
 		projectsManager.setConnection(client);
@@ -173,7 +173,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IProject newProject = workspace.getRoot().getProject("module4");
 		assertTrue("New module is imported", newProject.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(7, projects.length);
+		assertEquals(6, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(client, times(1)).sendEventNotification(argument.capture());
@@ -192,7 +192,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		importProjects("gradle/multi-module");
 		waitForJobs();
 		projects = workspace.getRoot().getProjects();
-		assertEquals(4, projects.length);
+		assertEquals(3, projects.length);
 		// Add new sub-module
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multi-module");
 		File projectBasePath = project.getLocation().toFile();
@@ -207,7 +207,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 		// Verify no projects imported
 		projects = workspace.getRoot().getProjects();
-		assertEquals(4, projects.length);
+		assertEquals(3, projects.length);
 
 		// Verify import projects
 		projectsManager.setConnection(client);
@@ -216,7 +216,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IProject newProject = workspace.getRoot().getProject("test");
 		assertTrue(newProject.exists());
 		projects = workspace.getRoot().getProjects();
-		assertEquals(5, projects.length);
+		assertEquals(4, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
 		verify(client, times(1)).sendEventNotification(argument.capture());
@@ -231,7 +231,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		IProject[] projects = workspace.getRoot().getProjects();
 		assertEquals(0, projects.length);
 		importProjects("mixed");
-		assertEquals(4, wsRoot.getProjects().length);
+		assertEquals(3, wsRoot.getProjects().length);
 		IProject hello = wsRoot.getProject("hello");
 		assertNotNull(hello);
 		assertIsJavaProject(hello);

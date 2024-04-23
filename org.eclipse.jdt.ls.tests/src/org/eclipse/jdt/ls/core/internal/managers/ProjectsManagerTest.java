@@ -242,10 +242,9 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"module1",
-			"childmodule",
-			"jdt.ls-java-project"
+				"childmodule"
 		));
-		assertEquals(3, allProjects.length);
+		assertEquals(2, allProjects.length);
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}
@@ -268,10 +267,9 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"module1",
 			"childmodule",
-			"module2",
-			"jdt.ls-java-project"
+				"module2"
 		));
-		assertEquals(4, allProjects.length);
+		assertEquals(3, allProjects.length);
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}
@@ -286,10 +284,9 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		expectedProjects = new HashSet<>(Arrays.asList(
 			"module1",
 			"childmodule",
-			"module3",
-			"jdt.ls-java-project"
+			"module3"
 		));
-		assertEquals(4, allProjects.length);
+		assertEquals(3, allProjects.length);
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}
@@ -307,12 +304,11 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-			"jdt.ls-java-project",
 			"hello",
 			"salut",
 			"simple-gradle"
 		));
-		assertEquals(4, allProjects.length);
+		assertEquals(3, allProjects.length);
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}
@@ -329,11 +325,10 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-			"jdt.ls-java-project",
 			"salut",
 			"simple-gradle"
 		));
-		assertEquals(3, allProjects.length);
+		assertEquals(2, allProjects.length);
 		for (IProject project : allProjects) {
 			assertTrue(expectedProjects.contains(project.getName()));
 		}

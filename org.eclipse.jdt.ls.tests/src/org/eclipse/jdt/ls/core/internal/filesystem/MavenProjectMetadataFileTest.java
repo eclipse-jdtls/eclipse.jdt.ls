@@ -111,7 +111,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 	@Test
 	public void testInvalidProject() throws Exception {
 		List<IProject> projects = importProjects(MAVEN_INVALID);
-		assertEquals(2, projects.size());
+		assertEquals(1, projects.size());
 		IProject invalid = WorkspaceHelper.getProject(INVALID);
 		assertIsMavenProject(invalid);
 		IFile projectFile = invalid.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
@@ -123,7 +123,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		file.delete();
 		assertFalse(file.exists());
 		projects = importProjects(MAVEN_INVALID);
-		assertEquals(2, projects.size());
+		assertEquals(1, projects.size());
 		invalid = WorkspaceHelper.getProject(INVALID);
 		assertIsMavenProject(invalid);
 	}

@@ -116,8 +116,10 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		if (!preferenceManager.getClientPreferences().skipProjectConfiguration()) {
 			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 			cleanInvalidProjects(rootPaths, subMonitor.split(20));
-			createJavaProject(getDefaultProject(), subMonitor.split(10));
-			cleanupResources(getDefaultProject());
+			if (rootPaths.isEmpty() && !ProjectsManager.getDefaultProject().exists()) {
+				ProjectsManager.createJavaProject(ProjectsManager.getDefaultProject(), subMonitor.split(10));
+				ProjectsManager.cleanupResources(ProjectsManager.getDefaultProject());
+			}
 			Collection<IPath> projectConfigurations = preferenceManager.getPreferences().getProjectConfigurations();
 			if (projectConfigurations == null) {
 				// old way to import project
@@ -336,7 +338,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return job;
 	}
 
-	public void cleanupResources(IProject project) throws CoreException {
+	public static void cleanupResources(IProject project) throws CoreException {
 		IJavaProject javaProj = JavaCore.create(project);
 		if (javaProj == null) {
 			return;
@@ -724,7 +726,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			for (Entry<IBuildSupport, List<IProject>> entry : groupByBuildSupport(projects).entrySet()) {
 				IStatus onWillUpdateStatus = onWillConfigurationUpdate(entry.getKey(),
 						entry.getValue(), monitor);
-				
+
 				// if onWillUpdate() failed, skip updating the projects.
 				if (!onWillUpdateStatus.isOK()) {
 					status.add(onWillUpdateStatus);

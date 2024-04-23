@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,6 +31,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IJavaProject;
@@ -42,11 +44,13 @@ import org.eclipse.jdt.launching.IVMInstallType;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.LibraryLocation;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.SymbolInformation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -244,6 +248,18 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		MessageParams notification = notifications.get(0);
 		assertEquals(MessageType.Error, notification.getType());
 		assertEquals("Invalid runtime for " + runtime.getName() + ": 'bin' should be removed from the path (" + runtime.getPath() + ").", notification.getMessage());
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/3452
+	@Test
+	public void testJavaRuntimesDoNotLeak() throws Exception {
+		importProjects("maven/salut-java11");
+		IProject project = WorkspaceHelper.getProject("salut-java11");
+		assertIsJavaProject(project);
+		assertEquals("11", getJavaSourceLevel(project));
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("java.lang.Object", new NullProgressMonitor());
+		int numOfObjectSymbols = results.stream().filter(s -> "java.lang".equals(s.getContainerName()) && "Object".equals(s.getName())).toList().size();
+		assertEquals(1, numOfObjectSymbols);
 	}
 
 	private void assertComplianceAndPreviewSupport(IJavaProject javaProject, String compliance, boolean previewEnabled) {
