@@ -1,5 +1,12 @@
 # Change Log
 
+# [1.35.0 (April 25th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/127?closed=1)
+ * enhancement - Add `final` to new declarations generated from code actions. See [#2371](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2371).
+ * bug fix - Qualifier of workspace symbol search should be wildcard search. See [#3134](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3134).
+ * bug fix - Proper support `workspace/willRenameFiles` with `willRename` capability. See [#3126](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3126).
+ * bug fix - Static imports with wildcard should resolve all elements. See [#3130](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3130).
+ * build - Update target platform to newer 4.32-I-builds (I20240416-1800). See [#3136](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3136).
+
 # [1.34.0 (April 3rd, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/126?closed=1)
  * enhancement - Provide support for Java 22. See [#3111](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3111).
  * enhancement - Add setting to group completion items representing overloaded methods together. See [#2282](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2282), [#3086](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3086).
