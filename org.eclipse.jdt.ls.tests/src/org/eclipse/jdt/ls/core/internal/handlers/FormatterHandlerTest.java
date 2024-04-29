@@ -709,6 +709,49 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(expectedText, newText);
 	}
 
+	@Test // https://github.com/redhat-developer/vscode-java/issues/3396
+	public void testFormattingOnTypeReturnMidline() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Baz.java",
+		//@formatter:off
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "    public String print() {\n"
+			+ "        int a = 1;\n"
+			+ "        return String.format(\"Value: {}\",\n"
+			+ "        a);\n"
+			+ "    }\n"
+			+ "}"
+		//@formatter:on
+		);
+
+		String uri = JDTUtils.toURI(unit);
+		TextDocumentIdentifier textDocument = new TextDocumentIdentifier(uri);
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+
+		DocumentOnTypeFormattingParams params = new DocumentOnTypeFormattingParams(textDocument, options, new Position(5, 41), "\n");
+
+		preferences.setJavaFormatOnTypeEnabled(true);
+		List<? extends TextEdit> edits = server.onTypeFormatting(params).get();
+		assertNotNull(edits);
+
+		//@formatter:off
+		String expectedText =
+			  "package org.sample;\n"
+			+ "\n"
+			+ "public class Baz {\n"
+			+ "    public String print() {\n"
+			+ "        int a = 1;\n"
+			+ "        return String.format(\"Value: {}\",\n"
+			+ "                a);\n"
+			+ "    }\n"
+			+ "}";
+		//@formatter:on
+
+		String newText = TextEditUtil.apply(unit, edits);
+		assertEquals(expectedText, newText);
+	}
+
 	@Test
 	public void testDisableFormattingOnType() throws Exception {
 		//@formatter:off

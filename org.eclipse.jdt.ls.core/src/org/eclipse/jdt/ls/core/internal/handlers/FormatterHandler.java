@@ -52,6 +52,7 @@ import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
+import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -63,6 +64,9 @@ public class FormatterHandler {
 
 	private static final char CLOSING_BRACE = '}';
 	private static final char NEW_LINE = '\n';
+	private static final char COMMA = ',';
+	private static final String SPACE = " ";
+	private static final String TAB = "\t";
 
 	private PreferenceManager preferenceManager;
 
@@ -114,12 +118,44 @@ public class FormatterHandler {
 		String sourceToFormat = document.get();
 		int kind = getFormattingKind(cu, includeComments);
 		TextEdit format = formatter.format(kind, sourceToFormat, region.getOffset(), region.getLength(), 0, lineDelimiter);
+		InsertEdit commaIndentationEdit = computeIndentationIfCommaPresent(cu, document, region, options);
+		if (commaIndentationEdit != null) {
+			format.addChild(commaIndentationEdit);
+		}
 		if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
 			// nothing to return
 			return Collections.<org.eclipse.lsp4j.TextEdit>emptyList();
 		}
 		MultiTextEdit flatEdit = TextEditUtil.flatten(format);
 		return convertEdits(flatEdit.getChildren(), document);
+	}
+
+	private InsertEdit computeIndentationIfCommaPresent(ICompilationUnit cu, IDocument document, IRegion region, FormattingOptions options) {
+		int length = region.getLength();
+		try {
+			if (document.getChar(region.getOffset() + length) == NEW_LINE) {
+				for (int i = region.getOffset() + length - 1; i >= region.getOffset(); i--) {
+					char lastCharacter = document.getChar(i);
+					if (Character.isWhitespace(lastCharacter)) {
+						continue;
+					} else if (lastCharacter == COMMA) {
+						String newText = "";
+						int numTabs = Integer.valueOf(getOptions(options, cu).get(DefaultCodeFormatterConstants.FORMATTER_CONTINUATION_INDENTATION));
+						if (options.isInsertSpaces()) {
+							newText = SPACE.repeat(options.getTabSize() * numTabs);
+						} else {
+							newText = TAB.repeat(numTabs);
+						}
+						return new InsertEdit(document.getLineOffset(document.getLineOfOffset(region.getOffset()) + 1), newText);
+					} else {
+						return null;
+					}
+				}
+			}
+			return null;
+		} catch (BadLocationException e) {
+			return null;
+		}
 	}
 
 	private int getFormattingKind(ICompilationUnit cu, boolean includeComments) {
@@ -187,6 +223,11 @@ public class FormatterHandler {
 			textEdit.setNewText(replaceEdit.getText());
 			int offset = edit.getOffset();
 			textEdit.setRange(new Range(createPosition(document, offset), createPosition(document, offset + edit.getLength())));
+		}
+		if (edit instanceof InsertEdit insertEdit) {
+			textEdit.setNewText(insertEdit.getText());
+			int offset = edit.getOffset();
+			textEdit.setRange(new Range(createPosition(document, offset), createPosition(document, offset)));
 		}
 		return textEdit;
 	}
