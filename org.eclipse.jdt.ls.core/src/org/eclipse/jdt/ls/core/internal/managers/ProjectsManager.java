@@ -306,7 +306,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					long start = System.currentTimeMillis();
 					IProject[] projects = getWorkspaceRoot().getProjects();
 					for (IProject project : projects) {
-						if (ResourceUtils.isContainedIn(project.getLocation(), removedRootPaths)) {
+						if (ResourceUtils.isContainedIn(ProjectUtils.getProjectRealFolder(project), removedRootPaths)) {
 							try {
 								project.delete(false, true, subMonitor.split(1));
 							} catch (CoreException e) {
