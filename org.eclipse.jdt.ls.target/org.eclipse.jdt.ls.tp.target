@@ -25,7 +25,7 @@
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
             <unit id="org.apache.commons.commons-io" version="0.0.0"/>
             <unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.32-I-builds/I20240417-1800/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.32-I-builds/I20240422-1800/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
