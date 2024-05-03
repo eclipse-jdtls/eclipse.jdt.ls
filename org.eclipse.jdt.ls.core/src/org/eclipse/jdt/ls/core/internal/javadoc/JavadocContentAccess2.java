@@ -247,7 +247,7 @@ public class JavadocContentAccess2 {
 			fBuf.append(getBlockTagStart());
 			super.handleReturnTagBody(tag, returnDescription);
 			fBuf.append(getBlockTagEnd());
-			fBuf.append(getBlockTagEntryStart());
+			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
