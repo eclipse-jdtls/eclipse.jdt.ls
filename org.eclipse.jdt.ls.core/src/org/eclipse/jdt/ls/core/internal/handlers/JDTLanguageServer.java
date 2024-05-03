@@ -90,8 +90,6 @@ import org.eclipse.lsp4j.CallHierarchyOutgoingCall;
 import org.eclipse.lsp4j.CallHierarchyOutgoingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyPrepareParams;
 import org.eclipse.lsp4j.CodeAction;
-import org.eclipse.lsp4j.CodeActionKind;
-import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CodeLens;
 import org.eclipse.lsp4j.CodeLensOptions;
@@ -418,7 +416,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					new ExecuteCommandOptions(new ArrayList<>(commandHandler.getNonStaticCommands())));
 		}
 		if (preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, getCodeActionOptions());
+			toggleCapability(preferenceManager.getClientPreferences().isCodeActionDynamicRegistered(), Preferences.CODE_ACTION_ID, Preferences.CODE_ACTION, CodeActionHandler.createOptions(preferenceManager));
 		}
 		if (preferenceManager.getClientPreferences().isFoldgingRangeDynamicRegistered()) {
 			toggleCapability(preferenceManager.getPreferences().isFoldingRangeEnabled(), Preferences.FOLDINGRANGE_ID, Preferences.FOLDINGRANGE, null);
@@ -452,19 +450,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				JavaLanguageServerPlugin.logException(e);
 			}
 		}
-	}
-
-	private CodeActionOptions getCodeActionOptions() {
-		String[] kinds = { CodeActionKind.QuickFix, CodeActionKind.Refactor, CodeActionKind.RefactorExtract, CodeActionKind.RefactorInline, CodeActionKind.RefactorRewrite, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports };
-		List<String> codeActionKinds = new ArrayList<>();
-		for (String kind : kinds) {
-			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
-				codeActionKinds.add(kind);
-			}
-		}
-		CodeActionOptions options = new CodeActionOptions(codeActionKinds);
-		options.setResolveProvider(Boolean.valueOf(preferenceManager.getClientPreferences().isResolveCodeActionSupported()));
-		return options;
 	}
 
 	/* (non-Javadoc)

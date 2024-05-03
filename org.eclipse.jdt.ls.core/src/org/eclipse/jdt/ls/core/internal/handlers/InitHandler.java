@@ -47,7 +47,6 @@ import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
-import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentFilter;
 import org.eclipse.lsp4j.DocumentOnTypeFormattingOptions;
@@ -145,13 +144,7 @@ final public class InitHandler extends BaseInitHandler {
 			capabilities.setRenameProvider(RenameHandler.createOptions());
 		}
 		if (!preferenceManager.getClientPreferences().isCodeActionDynamicRegistered()) {
-			if (preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
-				CodeActionOptions codeActionOptions = new CodeActionOptions();
-				codeActionOptions.setResolveProvider(Boolean.TRUE);
-				capabilities.setCodeActionProvider(codeActionOptions);
-			} else {
-				capabilities.setCodeActionProvider(Boolean.TRUE);
-			}
+			capabilities.setCodeActionProvider(CodeActionHandler.createOptions(preferenceManager));
 		}
 		if (!preferenceManager.getClientPreferences().isExecuteCommandDynamicRegistrationSupported()) {
 			Set<String> commands = commandHandler.getAllCommands();
