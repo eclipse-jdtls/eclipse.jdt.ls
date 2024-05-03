@@ -64,6 +64,7 @@ import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionOptions;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Diagnostic;
@@ -79,6 +80,19 @@ public class CodeActionHandler {
 	public static final ResponseStore<Either<ChangeCorrectionProposalCore, CodeActionProposal>> codeActionStore
 		= new ResponseStore<>(ForkJoinPool.commonPool().getParallelism());
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
+
+	public static CodeActionOptions createOptions(PreferenceManager preferenceManager) {
+		String[] kinds = { CodeActionKind.QuickFix, CodeActionKind.Refactor, CodeActionKind.RefactorExtract, CodeActionKind.RefactorInline, CodeActionKind.RefactorRewrite, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports };
+		List<String> codeActionKinds = new ArrayList<>();
+		for (String kind : kinds) {
+			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
+				codeActionKinds.add(kind);
+			}
+		}
+		CodeActionOptions options = new CodeActionOptions(codeActionKinds);
+		options.setResolveProvider(Boolean.valueOf(preferenceManager.getClientPreferences().isResolveCodeActionSupported()));
+		return options;
+	}
 
 	private QuickFixProcessor quickFixProcessor;
 	private RefactorProcessor refactorProcessor;
