@@ -232,33 +232,33 @@ public class JavadocContentAccess2 {
 		@Override
 		protected void handleBlockTags(String title, List<TagElement> tags) {
 			super.handleBlockTags(title, tags);
-			fBuf.append(BlOCK_TAG_ENTRY_END);
+			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
 		protected void handleSingleTag(TagElement tag) {
-			fBuf.append(BLOCK_TAG_START);
+			fBuf.append(getBlockTagStart());
 			super.handleSingleTag(tag);
-			fBuf.append(BLOCK_TAG_END);
+			fBuf.append(getBlockTagEnd());
 		}
 
 		@Override
 		protected void handleReturnTagBody(TagElement tag, CharSequence returnDescription) {
-			fBuf.append(BLOCK_TAG_START);
+			fBuf.append(getBlockTagStart());
 			super.handleReturnTagBody(tag, returnDescription);
-			fBuf.append(BLOCK_TAG_END);
-			fBuf.append(BlOCK_TAG_ENTRY_END);
+			fBuf.append(getBlockTagEnd());
+			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
 		protected void handleBlockTagBody(TagElement tag) {
 			List fragments = tag.fragments();
 			if (!fragments.isEmpty()) {
-				fBuf.append(BLOCK_TAG_START);
-				fBuf.append(BlOCK_TAG_ENTRY_START);
+				fBuf.append(getBlockTagStart());
+				fBuf.append(getBlockTagEntryStart());
 				super.handleContentElements(fragments);
-				fBuf.append(BlOCK_TAG_ENTRY_END);
-				fBuf.append(BLOCK_TAG_END);
+				fBuf.append(getBlockTagEntryEnd());
+				fBuf.append(getBlockTagEnd());
 			}
 		}
 
@@ -271,24 +271,24 @@ public class JavadocContentAccess2 {
 
 		@Override
 		protected void handleExceptionTagsBody(List<TagElement> tags, List<String> exceptionNames, CharSequence[] exceptionDescriptions) {
-			fBuf.append(BLOCK_TAG_START);
+			fBuf.append(getBlockTagStart());
 			super.handleExceptionTagsBody(tags, exceptionNames, exceptionDescriptions);
-			fBuf.append(BLOCK_TAG_END);
-			fBuf.append(BlOCK_TAG_ENTRY_END);
+			fBuf.append(getBlockTagEnd());
+			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
 		protected void handleSingleParameterTag(TagElement tag) {
-			fBuf.append(BLOCK_TAG_START);
+			fBuf.append(getBlockTagStart());
 			super.handleSingleParameterTag(tag);
-			fBuf.append(BLOCK_TAG_END);
+			fBuf.append(getBlockTagEnd());
 		}
 
 		@Override
 		protected void handleSingleParameterDescription(String name, CharSequence description, boolean isTypeParameters) {
-			fBuf.append(BLOCK_TAG_START);
+			fBuf.append(getBlockTagStart());
 			super.handleSingleParameterDescription(name, description, isTypeParameters);
-			fBuf.append(BLOCK_TAG_END);
+			fBuf.append(getBlockTagEnd());
 		}
 
 		protected String markSnippet(String text, boolean isInSnippet) {
@@ -320,5 +320,26 @@ public class JavadocContentAccess2 {
 			}
 			return "";
 		}
+
+		@Override
+		protected String getBlockTagStart() {
+			return "<ul>";
+		}
+
+		@Override
+		protected String getBlockTagEnd() {
+			return "</ul>";
+		}
+
+		@Override
+		protected String getBlockTagEntryStart() {
+			return "<li>";
+		}
+
+		@Override
+		protected String getBlockTagEntryEnd() {
+			return "</li>";
+		}
+
 	}
 }
