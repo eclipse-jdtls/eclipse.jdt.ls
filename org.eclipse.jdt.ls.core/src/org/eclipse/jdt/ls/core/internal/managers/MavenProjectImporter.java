@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -288,14 +289,17 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		while (iterator.hasNext()) {
 			IProject project = iterator.next();
 			project.open(monitor);
+			IFile pomFile = project.getFile(POM_FILE);
+			pomFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
+			if (!needsMavenUpdate(pomFile, lastWorkspaceStateSaved)) {
+				iterator.remove();
+				continue;
+			}
 			if (Platform.OS_WIN32.equals(Platform.getOS())) {
 				project.refreshLocal(IResource.DEPTH_ONE, monitor);
 				((Workspace) ResourcesPlugin.getWorkspace()).getRefreshManager().refresh(project);
 			} else {
 				project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-			}
-			if (!needsMavenUpdate(project, lastWorkspaceStateSaved)) {
-				iterator.remove();
 			}
 		}
 		if (projects.isEmpty()) {
@@ -318,8 +322,8 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}.schedule();
 	}
 
-	private boolean needsMavenUpdate(IProject project, long lastWorkspaceStateSaved) {
-		return project.getFile(POM_FILE).getLocalTimeStamp() > lastWorkspaceStateSaved;
+	private boolean needsMavenUpdate(IResource pomFile, long lastWorkspaceStateSaved) {
+		return pomFile.getLocalTimeStamp() > lastWorkspaceStateSaved;
 	}
 
 	private Set<MavenProjectInfo> getMavenProjects(File directory, MavenModelManager modelManager, IProgressMonitor monitor) throws OperationCanceledException {

@@ -248,7 +248,9 @@ final public class InitHandler extends BaseInitHandler {
 		Job.getJobManager().wakeUp(ResourcesPlugin.FAMILY_AUTO_BUILD);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		if (workspace instanceof Workspace workspaceImpl) {
-			workspaceImpl.getBuildManager().waitForAutoBuildOff();
+			if (!Job.getJobManager().isSuspended()) {
+				workspaceImpl.getBuildManager().waitForAutoBuildOff();
+			}
 		}
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override

@@ -307,8 +307,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					classpathUpdateHandler.addElementChangeListener();
 					SourceAttachUpdateHandler attachListener = new SourceAttachUpdateHandler(client);
 					attachListener.addElementChangeListener();
-					pm.registerWatchers();
-					debugTrace(">> watchers registered");
 
 					registerCapabilities();
 					// we do not have the user setting initialized yet at this point but we should
@@ -326,10 +324,15 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					IndexUtils.copyIndexesToSharedLocation();
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 					logInfo(">> build jobs finished");
+					// https://github.com/redhat-developer/vscode-java/issues/3637 - delay registerWatchers
+					pm.registerWatchers();
+					debugTrace(">> watchers registered");
+					pm.projectsBuildFinished(monitor);
 					telemetryManager.onBuildFinished(System.currentTimeMillis());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
+					pm.projectsBuildFinished(monitor);
 					return Status.CANCEL_STATUS;
 				}
 				return Status.OK_STATUS;
@@ -562,7 +565,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		try {
 			boolean isAutobuildEnabled = preferenceManager.getPreferences().isAutobuildEnabled();
 			boolean autoBuildChanged = ProjectsManager.setAutoBuilding(isAutobuildEnabled);
-			if (jvmChanged || nullAnalysisOptionsUpdated && isAutobuildEnabled) {
+			if ((jvmChanged || nullAnalysisOptionsUpdated) && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(true));
 			} else if (autoBuildChanged && isAutobuildEnabled) {
 				buildWorkspace(Either.forLeft(false));
@@ -1224,6 +1227,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 	private void waitForLifecycleJobs(IProgressMonitor monitor) {
 		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+	}
+
+	// for test only
+	public boolean isEventHandlerEmpty() {
+		return this.workspaceEventHandler.isEmpty();
 	}
 
 }

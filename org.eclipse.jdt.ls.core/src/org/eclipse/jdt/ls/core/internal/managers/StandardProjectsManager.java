@@ -100,6 +100,19 @@ public class StandardProjectsManager extends ProjectsManager {
 	protected static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
 	private static final Set<String> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
+	private boolean buildFinished;
+	private boolean shouldUpdateProjects;
+
+	@Override
+	public boolean shouldUpdateProjects() {
+		return shouldUpdateProjects;
+	}
+
+	@Override
+	public void setShouldUpdateProjects(boolean shouldUpdateProjects) {
+		this.shouldUpdateProjects = shouldUpdateProjects;
+	}
+
 	//@formatter:off
 	private static final List<String> basicWatchers = Arrays.asList(
 			"**/*.java",
@@ -301,6 +314,10 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	public static void configureSettings(Preferences preferences, boolean cleanWorkspace) {
 		URI settingsUri = preferences.getSettingsAsURI();
+		URI formatterUri = preferences.getFormatterAsURI();
+		if (settingsUri == null && formatterUri == null && !cleanWorkspace) {
+			return;
+		}
 		Properties properties = null;
 		if (settingsUri != null) {
 			try (InputStream inputStream = settingsUri.toURL().openStream()) {
@@ -312,7 +329,6 @@ public class StandardProjectsManager extends ProjectsManager {
 			}
 		}
 		initializeDefaultOptions(preferences);
-		URI formatterUri = preferences.getFormatterAsURI();
 		Map<String, String> formatterOptions = null;
 		if (formatterUri != null) {
 			try (InputStream inputStream = formatterUri.toURL().openStream()) {
@@ -344,7 +360,9 @@ public class StandardProjectsManager extends ProjectsManager {
 				}
 			});
 		}
-		JavaCore.setOptions(javaOptions);
+		if (!Objects.equals(javaOptions, JavaCore.getOptions())) {
+			JavaCore.setOptions(javaOptions);
+		}
 		if (cleanWorkspace && preferences.isAutobuildEnabled()) {
 			new WorkspaceJob("Clean workspace...") {
 
@@ -382,6 +400,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		return buildSupports().filter(bs -> bs.applies(project)).findFirst();
 	}
 
+	@Override
 	protected Stream<IBuildSupport> buildSupports() {
 		Map<Integer, IBuildSupport> supporters = new TreeMap<>();
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, BUILD_SUPPORT_EXTENSION_POINT_ID);
@@ -647,5 +666,23 @@ public class StandardProjectsManager extends ProjectsManager {
 		IFrameworkSupport androidSupport = new AndroidSupport();
 		androidSupport.onDidProjectsImported(monitor);
 		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+	}
+
+	@Override
+	public void projectsBuildFinished(IProgressMonitor monitor) {
+		this.buildFinished = true;
+		if (this.shouldUpdateProjects) {
+			for (IProject project : ProjectUtils.getAllProjects()) {
+				if (ProjectUtils.isMavenProject(project)) {
+					updateProject(project, true);
+				}
+			}
+			this.shouldUpdateProjects = false;
+		}
+	}
+
+	@Override
+	public boolean isBuildFinished() {
+		return buildFinished;
 	}
 }

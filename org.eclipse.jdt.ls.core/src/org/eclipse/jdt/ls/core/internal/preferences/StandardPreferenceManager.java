@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 
 import org.apache.maven.settings.Activation;
@@ -30,8 +29,10 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.m2e.apt.MavenJdtAptPlugin;
 import org.eclipse.m2e.apt.preferences.PreferencesConstants;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -43,6 +44,7 @@ import org.eclipse.m2e.core.internal.preferences.MavenConfigurationImpl;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.internal.preferences.ProblemSeverity;
 import org.eclipse.m2e.core.lifecyclemapping.model.PluginExecutionAction;
+import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Preference manager
@@ -52,7 +54,6 @@ import org.eclipse.m2e.core.lifecyclemapping.model.PluginExecutionAction;
  *
  */
 public class StandardPreferenceManager extends PreferenceManager {
-	private static final String TRUE = "true";
 	private static final String JAVALS_PROFILE = "javals.profile";
 	public static final String M2E_DISABLE_TEST_CLASSPATH_FLAG = "m2e.disableTestClasspathFlag";
 	private static final String M2E_APT_ID = MavenJdtAptPlugin.PLUGIN_ID;
@@ -122,26 +123,10 @@ public class StandardPreferenceManager extends PreferenceManager {
 		}
 		try {
 			Settings mavenSettings = MavenPlugin.getMaven().getSettings();
-			boolean oldDisableTest = false;
 			String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-			String oldMultiModuleProjectDirectory = systemMmpd;
-			List<String> activeProfilesIds = mavenSettings.getActiveProfiles();
-			for (org.apache.maven.settings.Profile settingsProfile : mavenSettings.getProfiles()) {
-				if ((settingsProfile.getActivation() != null && settingsProfile.getActivation().isActiveByDefault()) || activeProfilesIds.contains(settingsProfile.getId())) {
-					if (TRUE.equals(settingsProfile.getProperties().get(M2E_DISABLE_TEST_CLASSPATH_FLAG))) {
-						oldDisableTest = true;
-					}
-					if (systemMmpd == null) {
-						Object mmpd = settingsProfile.getProperties().get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-						if (mmpd instanceof String s) {
-							oldMultiModuleProjectDirectory = s;
-						}
-					}
-					if (oldDisableTest && oldMultiModuleProjectDirectory != null) {
-						break;
-					}
-				}
-			}
+			IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+			boolean oldDisableTest = prefs.getBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+			String oldMultiModuleProjectDirectory = prefs.get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, null);
 			String multiModuleProjectDirectory = systemMmpd;
 			if (multiModuleProjectDirectory == null) {
 				if (preferences.getRootPaths() != null) {
@@ -158,23 +143,32 @@ public class StandardPreferenceManager extends PreferenceManager {
 					}
 				}
 			}
-			if (!Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag())) {
-				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
-				if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
-					Profile profile = new Profile();
-					profile.setId(JAVALS_PROFILE);
-					Activation activation = new Activation();
-					activation.setActiveByDefault(true);
-					profile.setActivation(activation);
-					profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
-					if (multiModuleProjectDirectory != null) {
-						profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
-					} else {
-						profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-					}
-					mavenSettings.addProfile(profile);
-					mavenSettings.addActiveProfile(profile.getId());
-					updateMavenProjects = true;
+			updateMavenProjects = updateMavenProjects || !Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag());
+			mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
+			if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
+				Profile profile = new Profile();
+				profile.setId(JAVALS_PROFILE);
+				Activation activation = new Activation();
+				activation.setActiveByDefault(true);
+				profile.setActivation(activation);
+				profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
+				if (multiModuleProjectDirectory != null) {
+					profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+				} else {
+					profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+				}
+				mavenSettings.addProfile(profile);
+				mavenSettings.addActiveProfile(profile.getId());
+				prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
+				if (multiModuleProjectDirectory != null) {
+					prefs.put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+				} else {
+					prefs.remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+				}
+				try {
+					prefs.flush();
+				} catch (BackingStoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				}
 			}
 		} catch (CoreException e) {
@@ -198,9 +192,23 @@ public class StandardPreferenceManager extends PreferenceManager {
 			updateMavenProjects = true;
 		}
 		if (updateMavenProjects) {
-			for (IProject project : ProjectUtils.getAllProjects()) {
-				if (ProjectUtils.isMavenProject(project)) {
-					JavaLanguageServerPlugin.getProjectsManager().updateProject(project, true);
+			ProjectsManager projectManager = JavaLanguageServerPlugin.getProjectsManager();
+			if (projectManager != null) {
+				if (projectManager.isBuildFinished()) {
+					for (IProject project : ProjectUtils.getAllProjects()) {
+						if (ProjectUtils.isMavenProject(project)) {
+							projectManager.updateProject(project, true);
+						}
+					}
+				} else {
+					boolean hasMavenProjects = false;
+					for (IProject project : ProjectUtils.getAllProjects()) {
+						if (ProjectUtils.isMavenProject(project)) {
+							hasMavenProjects = true;
+							break;
+						}
+					}
+					projectManager.setShouldUpdateProjects(hasMavenProjects);
 				}
 			}
 		}
