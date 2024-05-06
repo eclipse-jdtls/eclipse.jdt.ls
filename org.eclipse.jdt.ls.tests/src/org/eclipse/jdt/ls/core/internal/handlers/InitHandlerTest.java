@@ -122,6 +122,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		server = new JDTLanguageServer(projectsManager, preferenceManager, commandHandler);
 		server.connectClient(client);
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		JobHelpers.waitForJobsToComplete(monitor);
 	}
 
 	@After
@@ -319,6 +320,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		importProjects(Arrays.asList("maven/salut", "gradle/simple-gradle"));
 		newEmptyProject();
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
+		projectsManager.projectsBuildFinished(null);
 		// 8 basic + 3 project roots
 		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, watchers.size());
 		List<FileSystemWatcher> projectWatchers = watchers.subList(9, 12);
@@ -355,6 +357,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		DidChangeWatchedFilesParams params = new DidChangeWatchedFilesParams();
 		params.getChanges().add(fileEvent);
 		server.didChangeWatchedFiles(params);
+		long start = System.currentTimeMillis();
+		while (!server.isEventHandlerEmpty()) {
+			Thread.sleep(200);
+			if (System.currentTimeMillis() - start > 60000 /* 1 minute*/) {
+				break;
+			}
+		}
 		JobHelpers.waitForJobsToComplete();
 		assertTrue(FileUtils.contentEquals(sourceFile, outputFile));
 		verify(client, times(1)).registerCapability(any());

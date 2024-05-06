@@ -103,4 +103,27 @@ public interface IProjectsManager {
 	default void projectsImported(IProgressMonitor monitor) {
 		// do nothing
 	}
+
+	/**
+	 * Executed after the projects are imported and finished.
+	 */
+	default void projectsBuildFinished(IProgressMonitor monitor) {
+		// do nothing
+	}
+
+	/**
+	 * Check whether the build is finished
+	 */
+	default boolean isBuildFinished() {
+		return true;
+	};
+
+	default boolean shouldUpdateProjects() {
+		return false;
+	}
+
+	default void setShouldUpdateProjects(boolean update) {
+		// do nothing
+	}
+
 }

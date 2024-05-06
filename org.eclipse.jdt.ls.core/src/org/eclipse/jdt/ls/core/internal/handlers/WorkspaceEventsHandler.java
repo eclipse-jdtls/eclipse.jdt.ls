@@ -57,6 +57,10 @@ public class WorkspaceEventsHandler {
 		Thread eventThread = new Thread(() -> {
 			while(true) {
 				try {
+					// https://github.com/redhat-developer/vscode-java/issues/3637
+					while (!pm.isBuildFinished()) {
+						Thread.sleep(200);
+					}
 					FileEvent event = queue.take();
 					handleFileEvent(event);
 				} catch (InterruptedException e) {
@@ -95,6 +99,11 @@ public class WorkspaceEventsHandler {
 		for (FileEvent fileEvent : fileEvents) {
 			handleFileEvent(fileEvent);
 		}
+	}
+
+	// for test only
+	public boolean isEmpty() {
+		return queue.isEmpty();
 	}
 
 	private void handleFileEvent(FileEvent fileEvent) {

@@ -164,7 +164,9 @@ public class PreferenceManager {
 		// workaround for https://github.com/redhat-developer/vscode-java/issues/718
 		javaCoreOptions.put(JavaCore.CORE_CIRCULAR_CLASSPATH, JavaCore.WARNING);
 		javaCoreOptions.put(JavaCore.COMPILER_IGNORE_UNNAMED_MODULE_FOR_SPLIT_PACKAGE, JavaCore.ENABLED);
-		JavaCore.setOptions(javaCoreOptions);
+		if (!Objects.equals(javaCoreOptions, JavaCore.getOptions())) {
+			JavaCore.setOptions(javaCoreOptions);
+		}
 	}
 
 	private static void reloadTemplateStore() {
@@ -226,7 +228,9 @@ public class PreferenceManager {
 		}
 		Hashtable<String, String> options = JavaCore.getOptions();
 		preferences.updateTabSizeInsertSpaces(options);
-		JavaCore.setOptions(options);
+		if (!Objects.equals(options, JavaCore.getOptions())) {
+			JavaCore.setOptions(options);
+		}
 		List<String> resourceFilters = preferences.getResourceFilters();
 		IEclipsePreferences eclipsePreferences = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		// add the resourceFilters preference; the org.eclipse.jdt.ls.filesystem plugin uses it

@@ -505,14 +505,24 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				return status;
 			}
 		};
+		waitForUpdateJobs();
 		job.schedule();
 		return job;
+	}
+
+	private void waitForUpdateJobs() {
+		int maxThread = preferenceManager.getPreferences().getMaxConcurrentBuilds();
+		Job[] jobs = Job.getJobManager().find(IConstants.UPDATE_PROJECT_FAMILY);
+		if (jobs != null && jobs.length > maxThread) {
+			JobHelpers.waitForJobs(IConstants.UPDATE_PROJECT_FAMILY, null);
+		}
 	}
 
 	@Override
 	public Job updateProjects(Collection<IProject> projects, boolean force) {
 		JavaLanguageServerPlugin.sendStatus(ServiceStatus.Message, "Updating project configurations...");
 		UpdateProjectsWorkspaceJob job = new UpdateProjectsWorkspaceJob(projects, force);
+		waitForUpdateJobs();
 		job.schedule();
 		return job;
 	}
