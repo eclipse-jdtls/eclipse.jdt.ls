@@ -56,7 +56,7 @@ public class BuildWorkspaceHandler {
 			if (monitor.isCanceled()) {
 				return BuildWorkspaceStatus.CANCELLED;
 			}
-			if (ProjectUtils.getAllProjects(false).length == 0) {
+			if (ProjectsManager.getDefaultProject().exists()) {
 				ProjectsManager.cleanupResources(ProjectsManager.getDefaultProject());
 			}
 			if (forceReBuild) {
@@ -166,8 +166,9 @@ public class BuildWorkspaceHandler {
 	 *   <code>false</code> if not, or if this couldn't be determined
 	 */
 	protected boolean hasBuilder(IProject project) {
-		if (!project.isAccessible())
+		if (!project.isAccessible()) {
 			return false;
+		}
 		try {
 			ICommand[] commands = project.getDescription().getBuildSpec();
 			if (commands.length > 0) {
