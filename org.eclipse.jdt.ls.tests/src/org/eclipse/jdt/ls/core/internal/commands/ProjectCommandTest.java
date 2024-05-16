@@ -447,6 +447,26 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		assertFalse(updateProjectJdk.success);
 	}
 
+	@Test
+	public void testUpdateMavenProfiles() throws Exception {
+		final String KEY = "org.eclipse.m2e.core.selectedProfiles";
+
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uriString = project.getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList(KEY);
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+
+		assertEquals("", options.get(KEY));
+
+		Map<String, Object> updateOptions = new HashMap<>();
+		updateOptions.put(KEY, "my profile");
+		ProjectCommand.updateProjectOptions(uriString, updateOptions);
+
+		options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		assertEquals("my profile", options.get(KEY));
+	}
+
 	private SymbolInformation buildClassSymbol(IProject project, String fqClassName) throws Exception {
 		String uriString = buildClassfileUri(project, fqClassName);
 		SymbolInformation si = new SymbolInformation();

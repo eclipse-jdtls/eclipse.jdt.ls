@@ -105,6 +105,12 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					ProjectCommand.updateClasspaths(projectUri, entries.getClasspathEntries(), monitor);
 					return null;
 				}
+				case "java.project.updateProjectOptions": {
+					String projectUri = (String) arguments.get(0);
+					Map<String, Object> options = JSONUtility.toModel(arguments.get(1), Map.class);
+					ProjectCommand.updateProjectOptions(projectUri, options);
+					return null;
+				}
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
 				case "java.project.getAll":
