@@ -303,7 +303,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				try {
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
-					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client);
+					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
 					classpathUpdateHandler.addElementChangeListener();
 					SourceAttachUpdateHandler attachListener = new SourceAttachUpdateHandler(client);
 					attachListener.addElementChangeListener();
