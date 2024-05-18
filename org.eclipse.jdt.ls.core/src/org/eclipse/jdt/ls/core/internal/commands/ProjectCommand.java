@@ -718,7 +718,7 @@ public class ProjectCommand {
 	 * @throws CoreException
 	 * @throws URISyntaxException
 	 */
-	public static void updateProjectOptions(String projectUri, Map<String, Object> options) throws CoreException, URISyntaxException {
+	public static void updateProjectSettings(String projectUri, Map<String, Object> options) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = getJavaProjectFromUri(projectUri);
 		IProject project = javaProject.getProject();
 		for (Map.Entry<String, Object> entry : options.entrySet()) {

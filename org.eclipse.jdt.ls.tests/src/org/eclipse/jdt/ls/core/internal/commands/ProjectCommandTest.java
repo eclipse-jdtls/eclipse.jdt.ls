@@ -461,7 +461,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 
 		Map<String, Object> updateOptions = new HashMap<>();
 		updateOptions.put(KEY, "my profile");
-		ProjectCommand.updateProjectOptions(uriString, updateOptions);
+		ProjectCommand.updateProjectSettings(uriString, updateOptions);
 
 		options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 		assertEquals("my profile", options.get(KEY));
