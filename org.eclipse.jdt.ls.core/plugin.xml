@@ -86,6 +86,9 @@
                   id="java.project.updateClassPaths">
             </command>
             <command
+                  id="java.project.updateSettings">
+            </command>
+            <command
                   id="java.project.isTestFile">
             </command>
             <command

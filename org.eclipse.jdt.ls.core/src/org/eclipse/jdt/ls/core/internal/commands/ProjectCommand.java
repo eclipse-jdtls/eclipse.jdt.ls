@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IContainer;
@@ -74,6 +75,9 @@ import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.project.IProjectConfigurationManager;
+import org.eclipse.m2e.core.project.ResolverConfiguration;
 
 public class ProjectCommand {
 
@@ -83,6 +87,7 @@ public class ProjectCommand {
 	public static final String OUTPUT_PATH = IConstants.PLUGIN_ID + ".outputPath";
 	public static final String CLASSPATH_ENTRIES = IConstants.PLUGIN_ID + ".classpathEntries";
 	public static final String REFERENCED_LIBRARIES = IConstants.PLUGIN_ID + ".referencedLibraries";
+	public static final String M2E_SELECTED_PROFILES = "org.eclipse.m2e.core.selectedProfiles";
 	private static final String TEST_SCOPE_VALUE = "test";
 
 	/**
@@ -103,6 +108,7 @@ public class ProjectCommand {
 	 *              may not be equal to the output path of each source root.</li>
 	 *          <li>"org.eclipse.jdt.ls.core.referencedLibraries": Get all the referenced library files of the given Java project.</li>
 	 *          <li>"org.eclipse.jdt.ls.core.classpathEntries": Get all the classpath entries of the given Java project.</li>
+	 *          <li>"org.eclipse.m2e.core.selectedProfiles": Get the selected profiles of the given Maven project.</li>
 	 *        </ul>
 	 * @return A <code>Map<string, string></code> with all the setting keys and
 	 *         their values.
@@ -190,6 +196,12 @@ public class ProjectCommand {
 								output == null ? null : output.toOSString(), attributes));
 					}
 					settings.putIfAbsent(key, classpathEntries);
+					break;
+				case M2E_SELECTED_PROFILES:
+					// Note, this is an experimental feature, the returned value might be changed.
+					IProjectConfigurationManager projectManager = MavenPlugin.getProjectConfigurationManager();
+					ResolverConfiguration config = (ResolverConfiguration) projectManager.getProjectConfiguration(javaProject.getProject());
+					settings.putIfAbsent(key, config.getSelectedProfiles());
 					break;
 				default:
 					settings.putIfAbsent(key, javaProject.getOption(key, true));
@@ -696,6 +708,44 @@ public class ProjectCommand {
 		public JdkUpdateResult(boolean success, String message) {
 			this.success = success;
 			this.message = message;
+		}
+	}
+
+	/**
+	 * Update the options of the given project.
+	 * @param projectUri
+	 * @param options
+	 * @throws CoreException
+	 * @throws URISyntaxException
+	 */
+	public static void updateProjectSettings(String projectUri, Map<String, Object> options) throws CoreException, URISyntaxException {
+		IJavaProject javaProject = getJavaProjectFromUri(projectUri);
+		IProject project = javaProject.getProject();
+		for (Map.Entry<String, Object> entry : options.entrySet()) {
+			switch (entry.getKey()) {
+				case M2E_SELECTED_PROFILES:
+					IProjectConfigurationManager mavenProjectMgr = MavenPlugin.getProjectConfigurationManager();
+					ResolverConfiguration config = (ResolverConfiguration) mavenProjectMgr.getProjectConfiguration(project);
+					String selectedProfiles = (String) entry.getValue();
+					selectedProfiles = Arrays.stream(selectedProfiles.split(","))
+							.map(String::trim)
+							.filter(s -> !s.isEmpty())
+							.reduce((s1, s2) -> s1 + "," + s2)
+							.orElse("");
+					if (Objects.equals(config.getSelectedProfiles(), selectedProfiles)) {
+						continue;
+					}
+
+					config.setSelectedProfiles(selectedProfiles);
+					config.setResolveWorkspaceProjects(true);
+					boolean isSet = mavenProjectMgr.setResolverConfiguration(project, config);
+					if (isSet) {
+						JavaLanguageServerPlugin.getProjectsManager().updateProject(project, true);
+					}
+					break;
+				default:
+					break;
+			}
 		}
 	}
 }
