@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -721,6 +722,8 @@ public class ProjectCommand {
 	public static void updateProjectSettings(String projectUri, Map<String, Object> options) throws CoreException, URISyntaxException {
 		IJavaProject javaProject = getJavaProjectFromUri(projectUri);
 		IProject project = javaProject.getProject();
+		Map<String, String> newOptions = new HashMap<>();
+		final Set<String> validOptionKeys = JavaCore.getDefaultOptions().keySet();
 		for (Map.Entry<String, Object> entry : options.entrySet()) {
 			switch (entry.getKey()) {
 				case M2E_SELECTED_PROFILES:
@@ -744,8 +747,16 @@ public class ProjectCommand {
 					}
 					break;
 				default:
+					if (validOptionKeys.contains(entry.getKey())) {
+						newOptions.put(entry.getKey(), entry.getValue().toString());
+					}
 					break;
 			}
+		}
+		if (!newOptions.isEmpty()) {
+			Map<String, String> javaProjectOptions = javaProject.getOptions(false);
+			javaProjectOptions.putAll(newOptions);
+			javaProject.setOptions(javaProjectOptions);
 		}
 	}
 }
