@@ -723,7 +723,7 @@ public class ProjectCommand {
 		IJavaProject javaProject = getJavaProjectFromUri(projectUri);
 		IProject project = javaProject.getProject();
 		Map<String, String> newOptions = new HashMap<>();
-		final Set<String> validOptionKeys = JavaCore.getDefaultOptions().keySet();
+		final Map<String, String> currentOptions = javaProject.getOptions(true);
 		for (Map.Entry<String, Object> entry : options.entrySet()) {
 			switch (entry.getKey()) {
 				case M2E_SELECTED_PROFILES:
@@ -747,16 +747,18 @@ public class ProjectCommand {
 					}
 					break;
 				default:
-					if (validOptionKeys.contains(entry.getKey())) {
+					String settingValue = currentOptions.get(entry.getKey());
+					// only update the options whose keys are valid and value are different from the current ones
+					if (settingValue != null && !settingValue.equals(entry.getValue().toString().trim())) {
 						newOptions.put(entry.getKey(), entry.getValue().toString());
 					}
 					break;
 			}
 		}
 		if (!newOptions.isEmpty()) {
-			Map<String, String> javaProjectOptions = javaProject.getOptions(false);
-			javaProjectOptions.putAll(newOptions);
-			javaProject.setOptions(javaProjectOptions);
+			Map<String, String> projectSpecificOptions = javaProject.getOptions(false);
+			projectSpecificOptions.putAll(newOptions);
+			javaProject.setOptions(projectSpecificOptions);
 		}
 	}
 }
