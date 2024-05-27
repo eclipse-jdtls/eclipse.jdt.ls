@@ -31,6 +31,8 @@
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
+		<cbi-jdt-repo.url>https://repo.eclipse.org/content/repositories/eclipse-staging/</cbi-jdt-repo.url>
+		<cbi-ecj-version>3.38.0.v20240524-2033</cbi-ecj-version>
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
@@ -187,6 +189,35 @@
 						</dependency-resolution>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-compiler-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<dependencies>
+						<dependency>
+							<groupId>org.eclipse.jdt</groupId>
+							<artifactId>ecj</artifactId>
+							<version>${cbi-ecj-version}</version>
+						</dependency>
+					</dependencies>
+					<configuration>
+						<compilerArgs>
+							<args>-verbose</args>
+							<args>-inlineJSR</args>
+							<args>-enableJavadoc</args>
+							<args>-encoding</args>
+							<args>${project.build.sourceEncoding}</args>
+							<args>-proceedOnError</args>
+						</compilerArgs>
+						<log>xml</log>
+						<logDirectory>${compileLogDir}</logDirectory>
+						<showWarnings>true</showWarnings>
+						<excludeResources>
+							<exclude>**/package.html</exclude>
+						</excludeResources>
+						<useProjectSettings>true</useProjectSettings>
+					</configuration>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
@@ -315,11 +346,27 @@
 				<generateSourceRef>false</generateSourceRef>
 			</properties>
 		</profile>
+		<profile>
+			<id>javac</id>
+			<properties>
+				<tycho.testArgLine>--add-opens jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED --add-opens jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED -DICompilationUnitResolver=org.eclipse.jdt.core.dom.JavacCompilationUnitResolver -DCompilationUnit.DOM_BASED_OPERATIONS=true -DAbstractImageBuilder.compiler=org.eclipse.jdt.internal.javac.JavacCompiler</tycho.testArgLine>
+			</properties>
+		</profile>
 	</profiles>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>cbi-release</id>
 			<url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>cbi-jdt</id>
+			<url>${cbi-jdt-repo.url}</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
 	<distributionManagement>

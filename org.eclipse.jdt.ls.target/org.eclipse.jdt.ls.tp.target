@@ -33,8 +33,9 @@
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
             <unit id="org.eclipse.jdt.core" version="0.0.0"/>
+			<unit id="org.eclipse.jdt.core.javac" version="0.0.0"/>
             <unit id="org.eclipse.jdt.apt.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/jdtls/jdt-core-incubator/snapshots/"/>
+            <repository location="https://ci.eclipse.org/ls/job/jdt-core-incubator/job/dom-with-javac/lastSuccessfulBuild/artifact/repository/target/repository/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>

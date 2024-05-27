@@ -58,6 +58,17 @@
 							</artifactItems>
 						</configuration>
 					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-toolchains-plugin</artifactId>
+						<configuration>
+							<toolchains>
+								<jdk>
+									<id>JavaSE-22</id>
+								</jdk>
+							</toolchains>
+						</configuration>
+					</plugin>
 				</plugins>
 			</build>
 		</profile>
