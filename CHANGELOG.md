@@ -1,5 +1,19 @@
 # Change Log
 
+# [1.36.0 (May 30th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/128?closed=1)
+ * performance - Create the default project only when it is necessary. See [#3140](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3140).
+ * performance - Improve order of operations when importing multi-module Maven projects. See [#3150](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3150).
+ * enhancement - Support delegate API to retrieve/update active profiles of Maven projects. See [#3158](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3158).
+ * enhancement - Support delegate API for updating Java project options. See [#3162](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3162).
+ * bug fix - Fix indentation for new line preceded by comma. See [#3142](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3142).
+ * bug fix - Switch expression on a boolean value does not report error. See [#3141](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3141).
+ * bug fix - `codeActionKinds` not sent when `CodeActionClientCapabilities` is not dynamic. See [#3148](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3148).
+ * bug fix - Only clean default project when building workspace if it exists. See [#3153](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3153).
+ * dependencies - Update Tycho from 4.0.7 to 4.0.8. See [#3164](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3164).
+ * dependencies - Update to Apache Commons Codec 1.17.0. See [#3169](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3169).
+ * dependencies - Update target platform to 4.32-I-builds (I20240526-1800). See [#3168](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3168).
+ * debt - Make use of new getters in superclass to override javadoc formatting. See [#3144](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3144).
+
 # [1.35.0 (April 25th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/127?closed=1)
  * enhancement - Add `final` to new declarations generated from code actions. See [#2371](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2371).
  * bug fix - Qualifier of workspace symbol search should be wildcard search. See [#3134](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3134).
