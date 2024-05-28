@@ -467,6 +467,24 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		assertEquals("my profile", options.get(KEY));
 	}
 
+	@Test
+	public void testUpdateProjectOptions() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uriString = project.getLocationURI().toString();
+		List<String> settingKeys = Arrays.asList(JavaCore.COMPILER_CODEGEN_METHOD_PARAMETERS_ATTR);
+		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+
+		assertEquals(JavaCore.DO_NOT_GENERATE, options.get(JavaCore.COMPILER_CODEGEN_METHOD_PARAMETERS_ATTR));
+
+		Map<String, Object> updateOptions = new HashMap<>();
+		updateOptions.put(JavaCore.COMPILER_CODEGEN_METHOD_PARAMETERS_ATTR, JavaCore.GENERATE);
+		ProjectCommand.updateProjectSettings(uriString, updateOptions);
+
+		options = ProjectCommand.getProjectSettings(uriString, settingKeys);
+		assertEquals(JavaCore.GENERATE, options.get(JavaCore.COMPILER_CODEGEN_METHOD_PARAMETERS_ATTR));
+	}
+
 	private SymbolInformation buildClassSymbol(IProject project, String fqClassName) throws Exception {
 		String uriString = buildClassfileUri(project, fqClassName);
 		SymbolInformation si = new SymbolInformation();
