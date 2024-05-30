@@ -41,7 +41,7 @@
 				</property>
 			</activation>
 			<properties>
-				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.28.jar</lombokArgs>
+				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.32.jar</lombokArgs>
 			</properties>
 			<build>
 				<plugins>
@@ -53,7 +53,7 @@
 								<artifactItem>
 									<groupId>org.projectlombok</groupId>
 									<artifactId>lombok</artifactId>
-									<version>1.18.28</version>
+									<version>1.18.32</version>
 								</artifactItem>
 							</artifactItems>
 						</configuration>
