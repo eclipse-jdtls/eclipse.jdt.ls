@@ -113,6 +113,11 @@ public abstract class BaseInitHandler {
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
+			try {
+				ProjectsManager.setAutoBuilding(preferenceManager.getPreferences().isAutobuildEnabled());
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed apply autobuilding setting", e);
+			}
 			if (!isWorkspaceInitialized()) {
 				// We don't care about triggering a full build here, like in onDidChangeConfiguration
 				try {
