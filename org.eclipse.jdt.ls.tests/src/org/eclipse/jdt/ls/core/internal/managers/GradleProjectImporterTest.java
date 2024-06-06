@@ -636,6 +636,17 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertIsGradleProject(subProject);
 	}
 
+	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1743
+	@Test
+	public void testNameConflictProject2() throws Exception {
+		List<IProject> projects = importProjects("gradle/nameconflict2");
+		assertEquals(2, projects.size());
+		IProject project1 = WorkspaceHelper.getProject("rest-service-initial");
+		assertIsGradleProject(project1);
+		IProject project2 = WorkspaceHelper.getProject("rest-service-complete");
+		assertIsGradleProject(project2);
+	}
+
 	@Test
 	public void testAndroidProjectSupport() throws Exception {
 		try {
