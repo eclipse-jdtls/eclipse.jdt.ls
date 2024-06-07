@@ -20,16 +20,20 @@ from pathlib import Path
 import tempfile
 
 def get_java_executable(known_args):
+	is_windows = platform.system() == 'Windows'
 	if known_args.java_executable is not None:
 		java_executable = known_args.java_executable
 	else:
 		java_executable = 'java'
 
 		if 'JAVA_HOME' in os.environ:
-			ext = '.exe' if platform.system()  == 'Windows' else ''
+			ext = '.exe' if is_windows else ''
 			java_exec_to_test = Path(os.environ['JAVA_HOME']) / 'bin' / f'java{ext}'
 			if java_exec_to_test.is_file():
 				java_executable = java_exec_to_test.resolve()
+
+	if is_windows:
+		java_executable = str(java_executable)
 
 	if not known_args.validate_java_version:
 		return java_executable
@@ -103,7 +107,7 @@ def main(args):
 			"--add-opens", "java.base/java.util=ALL-UNNAMED",
 			"--add-opens", "java.base/java.lang=ALL-UNNAMED"] \
 			+ known_args.jvm_arg \
-			+ ["-jar", jar_path,
+			+ ["-jar", str(jar_path),
 			"-data", known_args.data] \
 			+ args
 
