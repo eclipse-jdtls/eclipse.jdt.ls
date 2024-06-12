@@ -220,9 +220,14 @@ final public class InitHandler extends BaseInitHandler {
 
 		if (preferenceManager.getClientPreferences().isWorkspaceWillRenameFilesSupported()) {
 			FileOperationsServerCapabilities wsFileOperations = new FileOperationsServerCapabilities();
-			FileOperationPattern fileOpPattern = new FileOperationPattern("**/*.java");
-			fileOpPattern.setMatches(FileOperationPatternKind.File);
-			wsFileOperations.setWillRename(new FileOperationOptions(List.of(new FileOperationFilter(fileOpPattern, "file"))));
+			FileOperationPattern fileOpPatternJava = new FileOperationPattern("**/*.java");
+			fileOpPatternJava.setMatches(FileOperationPatternKind.File);
+			FileOperationPattern fileOpPatternPackage = new FileOperationPattern("**");
+			fileOpPatternPackage.setMatches(FileOperationPatternKind.Folder);
+			wsFileOperations.setWillRename(new FileOperationOptions(List.of(
+				new FileOperationFilter(fileOpPatternJava, "file"),
+				new FileOperationFilter(fileOpPatternPackage, "file")
+			)));
 			wsCapabilities.setFileOperations(wsFileOperations);
 		}
 
