@@ -12,17 +12,24 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ISafeRunnable;
@@ -47,11 +54,15 @@ import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsCo
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.lsp4j.ClientCapabilities;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.text.templates.ContextTypeRegistry;
 import org.eclipse.text.templates.TemplatePersistenceData;
 import org.eclipse.text.templates.TemplateReaderWriter;
@@ -237,6 +248,16 @@ public class PreferenceManager {
 		// add the resourceFilters preference; the org.eclipse.jdt.ls.filesystem plugin uses it
 		eclipsePreferences.put(Preferences.JAVA_RESOURCE_FILTERS, String.join("::", resourceFilters));
 		// TODO serialize preferences
+
+		if (!oldPreferences.getDiagnosticFilter().equals(preferences.getDiagnosticFilter())) {
+			Set<String> oldMatchingURI = BaseDiagnosticsHandler.getDocumentsMatchingFilter(oldPreferences.getDiagnosticFilter());
+			Set<String> matchingURI = BaseDiagnosticsHandler.getDocumentsMatchingFilter(preferences.getDiagnosticFilter());
+			matchingURI.removeAll(oldMatchingURI);
+			for (String uri : matchingURI) {
+				PublishDiagnosticsParams diagnostics = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList());
+				JavaLanguageServerPlugin.getInstance().getClientConnection().publishDiagnostics(diagnostics);
+			}
+		}
 	}
 
 	private void preferencesChanged(Preferences oldPreferences, Preferences newPreferences) {

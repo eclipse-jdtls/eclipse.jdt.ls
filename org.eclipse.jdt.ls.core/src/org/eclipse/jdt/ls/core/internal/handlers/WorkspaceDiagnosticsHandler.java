@@ -196,7 +196,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		if (document != null) {
 			String uri = JDTUtils.getFileURI(resource);
-			this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers, isDiagnosticTagSupported)));
+			if (!BaseDiagnosticsHandler.matchesDiagnosticFilter(uri, JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getDiagnosticFilter())) {
+				this.connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), toDiagnosticsArray(document, markers, isDiagnosticTagSupported)));
+			}
 		}
 		return false;
 	}
@@ -207,6 +209,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		List<IMarker> projectMarkers = new ArrayList<>(markers.length);
 
 		String uri = JDTUtils.getFileURI(project);
+		if (BaseDiagnosticsHandler.matchesDiagnosticFilter(uri, JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getDiagnosticFilter())) {
+			return;
+		}
 		IFile pom = project.getFile("pom.xml");
 		IFile gradleWrapperProperties = project.getFile(GradleProjectImporter.GRADLE_WRAPPER_PROPERTIES_DESCRIPTOR);
 		List<IMarker> pomMarkers = new ArrayList<>();
@@ -316,6 +321,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			}
 			IDocument document = null;
 			String uri = JDTUtils.getFileURI(file);
+			if (BaseDiagnosticsHandler.matchesDiagnosticFilter(uri, JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getDiagnosticFilter())) {
+				continue;
+			}
 			if (JavaCore.isJavaLikeFileName(file.getName())) {
 				ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
 				//ignoring working copies, they're handled in the DocumentLifecycleHandler

@@ -487,6 +487,7 @@ public class Preferences {
 	public static final String JAVA_TELEMETRY_ENABLED_KEY = "java.telemetry.enabled";
 
 	public static final String JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES = "java.edit.validateAllOpenBuffersOnChanges";
+	public static final String JAVA_DIAGNOSTIC_FILER = "java.diagnostic.filter";
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -696,6 +697,7 @@ public class Preferences {
 	private boolean telemetryEnabled;
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
+	private List<String> diagnosticFilter;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -932,6 +934,7 @@ public class Preferences {
 		extractInterfaceReplaceEnabled = false;
 		telemetryEnabled = false;
 		validateAllOpenBuffersOnChanges = true;
+		diagnosticFilter = new ArrayList<>();
 	}
 
 	private static void initializeNullAnalysisClasspathStorage() {
@@ -1325,6 +1328,8 @@ public class Preferences {
 		prefs.setValidateAllOpenBuffersOnChanges(validateAllOpenBuffers);
 		boolean chainCompletionEnabled = getBoolean(configuration, CHAIN_COMPLETION_KEY, false);
 		prefs.setChainCompletionEnabled(chainCompletionEnabled);
+		List<String> diagnosticFilter = getList(configuration, JAVA_DIAGNOSTIC_FILER, Collections.emptyList());
+		prefs.setDiagnosticFilter(diagnosticFilter);
 		return prefs;
 	}
 
@@ -2568,5 +2573,13 @@ public class Preferences {
 
 	public void setValidateAllOpenBuffersOnChanges(boolean validateAllOpenBuffersOnChanges) {
 		this.validateAllOpenBuffersOnChanges = validateAllOpenBuffersOnChanges;
+	}
+
+	public List<String> getDiagnosticFilter() {
+		return this.diagnosticFilter;
+	}
+
+	public void setDiagnosticFilter(List<String> diagnosticFilter) {
+		this.diagnosticFilter = diagnosticFilter;
 	}
 }

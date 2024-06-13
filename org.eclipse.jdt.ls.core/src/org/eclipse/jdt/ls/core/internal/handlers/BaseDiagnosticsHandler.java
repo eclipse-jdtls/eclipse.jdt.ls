@@ -13,13 +13,18 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.io.File;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -33,6 +38,7 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -129,12 +135,48 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 
 	@Override
 	public void endReporting() {
-		JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
-		boolean isDiagnosticTagSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isDiagnosticTagSupported();
-		List<Diagnostic> diagnostics = toDiagnosticsArray(this.cu, problems, isDiagnosticTagSupported);
-		collectNonJavaProblems(diagnostics, isDiagnosticTagSupported);
-		PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics);
-		this.connection.publishDiagnostics($);
+		if (!matchesDiagnosticFilter(uri, JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getDiagnosticFilter())) {
+			JavaLanguageServerPlugin.logInfo(problems.size() + " problems reported for " + this.uri.substring(this.uri.lastIndexOf('/')));
+			boolean isDiagnosticTagSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isDiagnosticTagSupported();
+			List<Diagnostic> diagnostics = toDiagnosticsArray(this.cu, problems, isDiagnosticTagSupported);
+			collectNonJavaProblems(diagnostics, isDiagnosticTagSupported);
+			PublishDiagnosticsParams $ = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), diagnostics);
+			this.connection.publishDiagnostics($);
+		}
+	}
+
+	/**
+	 * @param uri the String URI to test
+	 * @param diagnosticFilters a list of patterns to test against
+	 * @return true if the URI matches any of the given patterns.
+	 */
+	public static boolean matchesDiagnosticFilter(String uri, List<String> diagnosticFilters) {
+		return JDTUtils.isExcludedFile(diagnosticFilters, uri);
+	}
+
+	/**
+	 * @param diagnosticFilter a list of patterns to test against
+	 * @return a set of document URI that match any of the given patterns.
+	 */
+	public static Set<String> getDocumentsMatchingFilter(List<String> diagnosticFilter) {
+		Set<String> uris = new HashSet<>();
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			try {
+				IMarker[] markers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
+				for (IMarker marker : markers) {
+					URI locationURI = marker.getResource().getLocationURI();
+					if (locationURI != null && !new File(locationURI).isDirectory()) {
+						String uriString = locationURI.toString();
+						if (BaseDiagnosticsHandler.matchesDiagnosticFilter(uriString, diagnosticFilter)) {
+							uris.add(uriString);
+						}
+					}
+				}
+			} catch (CoreException e) {
+				// continue
+			}
+		}
+		return uris;
 	}
 
 	/**
