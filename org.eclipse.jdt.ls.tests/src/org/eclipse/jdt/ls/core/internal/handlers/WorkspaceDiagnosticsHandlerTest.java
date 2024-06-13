@@ -651,6 +651,17 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		}
 	}
 
+	@Test
+	public void testDiagnosticFiltering() throws Exception {
+		preferences.setDiagnosticFilter(List.of("**/Foo*.java"));
+		importProjects("eclipse/hello");
+		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
+		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
+		for (PublishDiagnosticsParams param : captor.getAllValues()) {
+			assertTrue(param.getUri() + " should have been excluded from diagnostics.", !param.getUri().contains("Foo"));
+		}
+	}
+
 	private IMarker createMarker(int severity, String msg, int line, int start, int end) {
 		IMarker m = mock(IMarker.class);
 		when(m.exists()).thenReturn(true);
