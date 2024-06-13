@@ -77,8 +77,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 public class CodeActionHandler {
+	// Store a few of the latest Code Action results because any one of them might be resolved further.
+	// Multiple Code Actions are computed in parallel through ForkJoinPool's common pool leading to a race condition where
+	// the last Code Action request to finish processing is not the client's latest request. History size must scale with pool size.
 	public static final ResponseStore<Either<ChangeCorrectionProposalCore, CodeActionProposal>> codeActionStore
-		= new ResponseStore<>(ForkJoinPool.commonPool().getParallelism());
+			= new ResponseStore<>(Math.max(ForkJoinPool.getCommonPoolParallelism(), 8));
 	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	public static CodeActionOptions createOptions(PreferenceManager preferenceManager) {
