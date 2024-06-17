@@ -2455,7 +2455,7 @@ public class Preferences {
 			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
 			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
 			String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage);
-			if (nonnullType != null || nullableType != null || nonnullbydefaultTypes != null) {
+			if (nonnullType != null && nullableType != null && nonnullbydefaultTypes != null) {
 				return true;
 			}
 		}
@@ -2529,7 +2529,7 @@ public class Preferences {
 	 */
 	private Map<String, String> generateProjectNullAnalysisOptions(String nonnullType, String nullableType, String nonnullbydefaultType) {
 		Map<String, String> options = new HashMap<>();
-		if (nonnullType == null && nullableType == null && nonnullbydefaultType == null) {
+		if (nonnullType == null || nullableType == null || nonnullbydefaultType == null) {
 			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "disabled");
 			// set default values
 			Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
