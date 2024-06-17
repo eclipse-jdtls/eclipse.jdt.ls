@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -224,6 +225,33 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
 			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		}
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/3387
+	@Test
+	public void testMissingNonNull() throws Exception {
+		try {
+			this.preferenceManager.getPreferences().setNonnullTypes(List.of("javax.annotation.Nonnull", "org.eclipse.jdt.annotation.NonNull"));
+			this.preferenceManager.getPreferences().setNullableTypes(List.of("javax.annotation.Nullable", "org.eclipse.jdt.annotation.Nullable"));
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(List.of("org.eclipse.jdt.annotation.NonNullByDefault", "javax.annotation.ParametersAreNonnullByDefault"));
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.automatic);
+			List<IProject> projects = importProjects("eclipse/testnullable3");
+			IProject project = projects.get(0);
+			assertIsJavaProject(project);
+			boolean updated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+			assertFalse(updated);
+			projects = importProjects("eclipse/testnullable2");
+			project = projects.get(0);
+			assertIsJavaProject(project);
+			updated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+			assertTrue(updated);
+		} finally {
+			this.preferenceManager.getPreferences().setNonnullTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNullableTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().setNonnullbydefaultTypes(Collections.emptyList());
+			this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+			this.preferenceManager.getPreferences().setNullAnalysisMode(FeatureStatus.disabled);
 		}
 	}
 
