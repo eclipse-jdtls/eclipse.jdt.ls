@@ -89,6 +89,45 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 	}
 
 	@Test
+	public void testExtractVariableFinal() throws Exception {
+		preferences.setCodeGenerationAddFinalForNewDeclaration("all");
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		int x= /*]*/0/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
+		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
+		Assert.assertNotNull(refactorEdit);
+		Assert.assertNotNull(refactorEdit.edit);
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		final int j = 0;\n");
+		buf.append("        int x= /*]*/j/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		AbstractSourceTestCase.compareSource(buf.toString(), actual);
+
+		Assert.assertNotNull(refactorEdit.command);
+		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		Assert.assertNotNull(refactorEdit.command.getArguments());
+		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+	}
+
+	@Test
 	public void testExtractVariableAllOccurrence() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
@@ -114,6 +153,45 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("class A{\n");
 		buf.append("	void m(int i){\n");
 		buf.append("		int j = 0;\n");
+		buf.append("        int x= /*]*/j/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		AbstractSourceTestCase.compareSource(buf.toString(), actual);
+
+		Assert.assertNotNull(refactorEdit.command);
+		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		Assert.assertNotNull(refactorEdit.command.getArguments());
+		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+	}
+
+	@Test
+	public void testExtractVariableAllOccurrenceFinal() throws Exception {
+		preferences.setCodeGenerationAddFinalForNewDeclaration("all");
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		int x= /*]*/0/*[*/;\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		Range selection = getRange(cu, null);
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
+		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params);
+		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
+		Assert.assertNotNull(refactorEdit);
+		Assert.assertNotNull(refactorEdit.edit);
+		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("class A{\n");
+		buf.append("	void m(int i){\n");
+		buf.append("		final int j = 0;\n");
 		buf.append("        int x= /*]*/j/*[*/;\n");
 		buf.append("	}\n");
 		buf.append("}\n");

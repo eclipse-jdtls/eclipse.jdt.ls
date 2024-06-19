@@ -367,6 +367,8 @@ public class RefactorProposalUtility {
 		} else {
 			relevance = IProposalRelevance.EXTRACT_LOCAL_ALL;
 		}
+		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
+		boolean setFinal = "all".equals(declsToFinal) || "variables".equals(declsToFinal);
 		if (inferSelectionSupport && context.getSelectionLength() == 0) {
 			ASTNode parent = context.getCoveringNode();
 			while (parent != null && parent instanceof Expression) {
@@ -375,6 +377,7 @@ public class RefactorProposalUtility {
 					continue;
 				}
 				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				refactoring.setDeclareFinal(setFinal);
 				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
 					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
@@ -384,6 +387,7 @@ public class RefactorProposalUtility {
 			return null;
 		}
 		ExtractTempRefactoring extractTempRefactoring = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
+		extractTempRefactoring.setDeclareFinal(setFinal);
 		if (extractTempRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
 				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params));
@@ -424,6 +428,8 @@ public class RefactorProposalUtility {
 		} else {
 			relevance = IProposalRelevance.EXTRACT_LOCAL;
 		}
+		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
+		boolean setFinal = "all".equals(declsToFinal) || "variables".equals(declsToFinal);
 		if (inferSelectionSupport && context.getSelectionLength() == 0) {
 			ASTNode parent = context.getCoveringNode();
 			while (parent != null && parent instanceof Expression) {
@@ -432,6 +438,7 @@ public class RefactorProposalUtility {
 					continue;
 				}
 				ExtractTempRefactoring refactoring = new ExtractTempRefactoring(context.getASTRoot(), parent.getStartPosition(), parent.getLength());
+				refactoring.setDeclareFinal(setFinal);
 				if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 					CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
 					return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_EXTRACT_VARIABLE);
@@ -442,6 +449,7 @@ public class RefactorProposalUtility {
 		}
 		ExtractTempRefactoring extractTempRefactoringSelectedOnly = new ExtractTempRefactoring(context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength(), formatterOptions);
 		extractTempRefactoringSelectedOnly.setReplaceAllOccurrences(false);
+		extractTempRefactoringSelectedOnly.setDeclareFinal(setFinal);
 		if (extractTempRefactoringSelectedOnly.checkInitialConditions(new NullProgressMonitor()).isOK()) {
 			if (returnAsCommand) {
 				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(EXTRACT_VARIABLE_COMMAND, params));
