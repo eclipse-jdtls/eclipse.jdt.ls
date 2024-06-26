@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.37.0 (June 27th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/129?closed=1)
+ * performance - Ensure every null analysis annotation has a value defined when enabled. See [#3196](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3196).
+ * enhancement - Add `final` to "Extract to local variable" quick assist if requested. See [#3198](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3198).
+ * bug fix - Revalidate project files after classpath changes when autobuild is off. See [#3155](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3155).
+ * bug fix - Code completion fails with classes that are permitted by a sealed class. See [#3195](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3195).
+ * bug fix - Some code actions may fail to resolve when machine's processor count too low. See [#3180](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3180).
+ * bug fix - Support the import of multi-folder Gradle projects with same name. See [#1743](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1743).
+ * bug fix - Autobuild setting should be respected on initialization. See [#3176](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3176).
+ * bug fix - Improve chain completion by waiting for either "main" or "context" chains. See [#2730](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2730).
+ * bug fix - Report only one instance of a logged error through telemetry. See [#3190](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3190).
+ * bug fix - Filter reported for `workspace/willRenameFiles` should include folders/packages. See [#3183](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3183).
+ * bug fix - Add windows checks for `jdtls.py`. See [#3179](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3179).
+ * dependencies - Update target platform to newer 4.33-I-builds (I20240621-0030). See [#3200](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3200).
+ * dependencies - Bump build dependency plugins. See [#3185](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3185), [#3187](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3187), [#3197](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3197), [#3201](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3201), [#3186](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3186).
+
 # [1.36.0 (May 30th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/128?closed=1)
  * performance - Create the default project only when it is necessary. See [#3140](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3140).
  * performance - Improve order of operations when importing multi-module Maven projects. See [#3150](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3150).
