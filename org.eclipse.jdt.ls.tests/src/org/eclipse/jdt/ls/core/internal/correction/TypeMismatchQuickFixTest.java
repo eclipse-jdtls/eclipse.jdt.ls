@@ -653,7 +653,18 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf.append("}\n");
 		Expected e1 = new Expected("Change type of 'sb' to 'StringBuilder'", buf.toString());
 
-		assertCodeActions(cu, e1);
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    private class StringBuilder { }\n");
+		buf.append("    private final StringBuilder sb;\n");
+		buf.append("    public E() {\n");
+		buf.append("        sb= new StringBuilder();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e2 = new Expected("Change 'StringBuilder' to compatible type", buf.toString());
+
+		assertCodeActions(cu, e1, e2);
 	}
 
 	@Test
@@ -1596,7 +1607,15 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    E e1;\n");
 		buf.append("}\n");
 		Expected e2 = new Expected("Change type of 'e2' to 'Object'", buf.toString());
-		assertCodeActions(cu, e1, e2);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class Test {\n");
+		buf.append("    test2.E e2= new test2.E();\n");
+		buf.append("    E e1;\n");
+		buf.append("}\n");
+		Expected e3 = new Expected("Change 'Object' to compatible type", buf.toString());
+		assertCodeActions(cu, e1, e2, e3);
 	}
 
 	@Test
