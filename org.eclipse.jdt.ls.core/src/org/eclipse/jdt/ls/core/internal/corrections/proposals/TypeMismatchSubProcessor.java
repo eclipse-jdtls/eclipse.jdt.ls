@@ -241,6 +241,10 @@ public class TypeMismatchSubProcessor extends TypeMismatchBaseSubProcessor<Propo
 	 */
 	@Override
 	protected ProposalKindWrapper createChangeConstructorTypeProposal(ICompilationUnit targetCu, ASTNode callerNode, CompilationUnit astRoot, ITypeBinding castTypeBinding, int relevance) {
+		if (callerNode != null) {
+			TypeChangeCorrectionProposalCore p = new TypeChangeCorrectionProposalCore(targetCu, callerNode, astRoot, castTypeBinding, relevance);
+			return CodeActionHandler.wrap(p, CodeActionKind.QuickFix);
+		}
 		return null;
 	}
 
