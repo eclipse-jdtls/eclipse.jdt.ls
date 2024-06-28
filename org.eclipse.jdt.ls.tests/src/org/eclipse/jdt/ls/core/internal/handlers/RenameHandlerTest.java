@@ -616,8 +616,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	// https://github.com/redhat-developer/vscode-java/issues/2805
 	@Test
 	public void testRenameMethodLombok() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
+		if (Boolean.getBoolean("jdt.ls.lombok.disabled")) {
 			return;
 		}
 		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
