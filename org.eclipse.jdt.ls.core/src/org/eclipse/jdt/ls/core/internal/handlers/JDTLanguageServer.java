@@ -301,6 +301,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				try {
+					pm.cleanInvalidJavaProjects(monitor);
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
