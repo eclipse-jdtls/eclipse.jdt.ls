@@ -126,4 +126,12 @@ public interface IProjectsManager {
 		// do nothing
 	}
 
+	/**
+	 * Clean up the invalid Java projects
+	 * https://github.com/redhat-developer/vscode-java/issues/3639
+	 */
+	default void cleanInvalidJavaProjects(IProgressMonitor monitor) {
+		// do nothing
+	}
+
 }
