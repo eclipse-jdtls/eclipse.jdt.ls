@@ -668,6 +668,24 @@ public class StandardProjectsManager extends ProjectsManager {
 		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 	}
 
+	public static void cleanInvalidJavaProjects(IProgressMonitor monitor) {
+		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
+			IProject project = javaProject.getProject();
+			if (project.equals(getDefaultProject())) {
+				continue;
+			}
+			IFile classpathFile = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
+			if (!classpathFile.exists()) {
+				try {
+					JavaLanguageServerPlugin.logInfo("The '" + project.getName() + "' project has no .classpath. Removing Java nature and builder.");
+					ProjectUtils.removeJavaNatureAndBuilder(project, monitor);
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+			}
+		}
+	}
+
 	@Override
 	public void projectsBuildFinished(IProgressMonitor monitor) {
 		this.buildFinished = true;

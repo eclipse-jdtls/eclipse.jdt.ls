@@ -80,6 +80,7 @@ import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.lsp.ValidateDocumentParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
@@ -301,6 +302,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				try {
+					StandardProjectsManager.cleanInvalidJavaProjects(monitor);
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
