@@ -17,6 +17,34 @@
 			<plugins>
 				<plugin>
 					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-compiler-plugin</artifactId>
+					<configuration>
+						<deriveReleaseCompilerArgumentFromTargetLevel>false</deriveReleaseCompilerArgumentFromTargetLevel>
+						<compilerId>javac</compilerId>
+						<compilerArgs combine.self="override">
+							<arg>--add-exports</arg>
+							<arg>java.base/java.lang=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+							<arg>--add-exports</arg>
+							<arg>jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+						</compilerArgs>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
@@ -64,7 +92,7 @@
 						<configuration>
 							<toolchains>
 								<jdk>
-									<id>JavaSE-22</id>
+									<id>JavaSE-23</id>
 								</jdk>
 							</toolchains>
 						</configuration>
