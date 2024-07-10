@@ -1,14 +1,14 @@
 eclipse.preferences.version=1
 org.eclipse.jdt.core.compiler.codegen.inlineJsrBytecode=enabled
-org.eclipse.jdt.core.compiler.codegen.targetPlatform=22
-org.eclipse.jdt.core.compiler.compliance=22
+org.eclipse.jdt.core.compiler.codegen.targetPlatform=23
+org.eclipse.jdt.core.compiler.compliance=23
 org.eclipse.jdt.core.compiler.problem.assertIdentifier=error
 org.eclipse.jdt.core.compiler.problem.discouragedReference=ignore
 org.eclipse.jdt.core.compiler.problem.enablePreviewFeatures=disabled
 org.eclipse.jdt.core.compiler.problem.enumIdentifier=error
 org.eclipse.jdt.core.compiler.problem.reportPreviewFeatures=warning
 org.eclipse.jdt.core.compiler.release=enabled
-org.eclipse.jdt.core.compiler.source=22
+org.eclipse.jdt.core.compiler.source=23
 org.eclipse.jdt.core.formatter.align_fields_grouping_blank_lines=2147483647
 org.eclipse.jdt.core.formatter.align_type_members_on_columns=false
 org.eclipse.jdt.core.formatter.alignment_for_additive_operator=16
