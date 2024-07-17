@@ -2276,7 +2276,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(CompletionItemKind.Class, ci.getKind());
 		assertEquals("ArrayList - java.util", ci.getLabel());
 		assertEquals("java.util.ArrayList", ci.getDetail());
-		assertEquals("999999148", ci.getSortText());
+		assertEquals("999999116", ci.getSortText());
 		assertNotNull(ci.getTextEdit().getLeft());
 	}
 

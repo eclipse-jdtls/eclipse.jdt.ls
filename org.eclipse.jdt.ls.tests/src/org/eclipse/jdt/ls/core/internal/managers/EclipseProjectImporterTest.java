@@ -186,7 +186,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
-		assertHasErrors(project, "The Java feature 'Sealed Types' is only available with source level 17 and above");
+		assertHasErrors(project, "Syntax error on token \"sealed\", static expected");
 	}
 
 	@Test

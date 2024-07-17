@@ -40,8 +40,6 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CastCorrectionProposalCore;
@@ -55,6 +53,8 @@ import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -234,6 +234,14 @@ public class TypeMismatchSubProcessor extends TypeMismatchBaseSubProcessor<Propo
 		rewrite.replace(parameter.getType(), newType, null);
 
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor#createChangeConstructorTypeProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.dom.ASTNode, org.eclipse.jdt.core.dom.CompilationUnit, org.eclipse.jdt.core.dom.ITypeBinding, int)
+	 */
+	@Override
+	protected ProposalKindWrapper createChangeConstructorTypeProposal(ICompilationUnit targetCu, ASTNode callerNode, CompilationUnit astRoot, ITypeBinding castTypeBinding, int relevance) {
+		return null;
 	}
 
 }

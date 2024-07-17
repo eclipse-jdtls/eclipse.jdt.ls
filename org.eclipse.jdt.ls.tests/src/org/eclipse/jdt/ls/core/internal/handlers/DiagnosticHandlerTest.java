@@ -200,12 +200,13 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("import java.security.Certificate;\n");
+		buf.append("public interface E extends Certificate {}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
 		IProblem[] problems = astRoot.getProblems();
 		List<Diagnostic> diagnostics = DiagnosticsHandler.toDiagnosticsArray(cu, Arrays.asList(problems), true);
-		assertEquals(2, diagnostics.size());
+		assertEquals(1, diagnostics.size());
 		List<DiagnosticTag> tags = diagnostics.get(0).getTags();
 		assertEquals(1, tags.size());
 		assertEquals(DiagnosticTag.Deprecated, tags.get(0));

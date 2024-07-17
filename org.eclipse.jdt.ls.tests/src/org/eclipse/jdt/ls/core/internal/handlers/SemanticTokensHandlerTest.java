@@ -66,7 +66,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	private void setOptions() {
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-		JavaCore.setComplianceOptions("16", options);
+		JavaCore.setComplianceOptions("17", options);
 		semanticTokensProject.setOptions(options);
 	}
 
