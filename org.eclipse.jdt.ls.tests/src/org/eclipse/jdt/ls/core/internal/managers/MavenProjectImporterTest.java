@@ -455,6 +455,23 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/3639
+	@Test
+	public void testInvalidProject() throws Exception {
+		try {
+			importMavenProject("invalid2");
+		} catch (Exception e) {
+			// ignore
+		}
+		IProject[] projects = ProjectUtils.getAllProjects(false);
+		assertEquals(2, projects.length); // invalid2 & module1
+		IJavaProject[] javaProjects = ProjectUtils.getJavaProjects();
+		assertEquals(1, javaProjects.length);
+		StandardProjectsManager.cleanInvalidJavaProjects(new NullProgressMonitor());
+		javaProjects = ProjectUtils.getJavaProjects();
+		assertEquals(0, javaProjects.length);
+	}
+
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
 
 		int updateProjectJobCalled;
