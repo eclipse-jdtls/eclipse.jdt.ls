@@ -245,20 +245,19 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 
 	@Test
 	public void testBug480682() throws Exception {
-		StringBuilder buf = new StringBuilder();
-		buf.append("public class Test480682 extends Base {\n");
-		buf.append("}\n");
-		buf.append("abstract class Base implements I {\n");
-		buf.append("    @Override\n");
-		buf.append("    public final void method1() {}\n");
-		buf.append("}\n");
-		buf.append("interface I {\n");
-		buf.append("    void method1();\n");
-		buf.append("    void method2();\n");
-		buf.append("}\n");
-
-		ICompilationUnit cu = fPackageP.createCompilationUnit("Test480682.java", buf.toString(), true, null);
-		IType testClass = cu.createType(buf.toString(), null, true, null);
+		ICompilationUnit cu = fPackageP.createCompilationUnit("Test480682.java", """
+				public class Test480682 extends Base {
+				}
+				abstract class Base implements I {
+				    @Override
+				    public final void method1() {}
+				}
+				interface I {
+				    void method1();
+				    void method2();
+				}
+				""", true, null);
+		IType testClass = cu.getType("Test480682");
 
 		List<OverridableMethod> overridableMethods = getOverridableMethods(testClass);
 		checkUnimplementedMethods(new String[] { "method2()" }, overridableMethods);
