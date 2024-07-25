@@ -161,8 +161,7 @@ public class CallHierarchyHandler {
 		IMember candidate = null;
 		int offset = JsonRpcHelpers.toOffset(root, line, character);
 		List<IJavaElement> selectedElements = codeResolve(root, offset);
-		Stream<IJavaElement> possibleElements = selectedElements.stream().filter(CallHierarchyCore::isPossibleInputElement);
-		Optional<IJavaElement> firstElement = possibleElements.findFirst().flatMap(element -> {
+		Optional<IJavaElement> firstElement = selectedElements.findFirst().flatMap(element -> {
 			if (!prepare && element instanceof IType) {
 				return Optional.ofNullable(getEnclosingMember(root, offset)).map(IJavaElement.class::cast).filter(e -> !element.equals(e)).or(() -> Optional.of(element));
 			}
