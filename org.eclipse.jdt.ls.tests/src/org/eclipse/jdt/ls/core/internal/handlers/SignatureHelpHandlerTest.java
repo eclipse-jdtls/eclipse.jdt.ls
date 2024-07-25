@@ -674,7 +674,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		IProject proj = WorkspaceHelper.getProject("java16");
 		IJavaProject javaProject = JavaCore.create(proj);
 		ICompilationUnit unit = (ICompilationUnit) javaProject.findElement(new Path("foo/bar/Bar.java"));
-		SignatureHelp help = getSignatureHelp(unit, 9, 10);
+		SignatureHelp help = getSignatureHelp(unit, 11, 10);
 		assertNotNull(help);
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("Edge(int fromNodeId, int toNodeId, Object fromPoint, Object toPoint, double length, Object profile)"));
