@@ -1,3 +1,5 @@
+package foo.bar;
+
 public class Bar {
 	record Edge(int fromNodeId,
 		int toNodeId,
