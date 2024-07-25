@@ -18,6 +18,8 @@ import re
 import subprocess
 from pathlib import Path
 import tempfile
+import jdtls
+import sys
 
 def get_java_executable(known_args):
 	if known_args.java_executable is not None:
@@ -111,3 +113,5 @@ def main(args):
 		os.execvp(java_executable, exec_args)
 	else:
 		subprocess.run([java_executable] + exec_args)
+
+jdtls.main(sys.argv[1:])
