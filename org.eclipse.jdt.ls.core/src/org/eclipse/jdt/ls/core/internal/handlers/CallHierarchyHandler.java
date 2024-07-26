@@ -20,6 +20,7 @@ import static org.eclipse.jdt.core.IJavaElement.COMPILATION_UNIT;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,7 +81,8 @@ public class CallHierarchyHandler {
 				return null;
 			}
 			checkMonitor(monitor);
-			return Arrays.asList(toCallHierarchyItem(candidate));
+			CallHierarchyItem symbol = toCallHierarchyItem(candidate);
+			return symbol != null ? Arrays.asList(symbol) : Collections.emptyList();
 		} catch (OperationCanceledException e) {
 			// do nothing
 		} catch (JavaModelException e) {
@@ -213,9 +215,11 @@ public class CallHierarchyHandler {
 					IOpenable openable = getOpenable(location);
 					Range callRange = getRange(openable, location);
 					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-					symbol.setSelectionRange(callRange);
-					List<Range> ranges = toCallRanges(callLocations);
-					result.add(new CallHierarchyIncomingCall(symbol, ranges));
+					if (symbol != null) {
+						symbol.setSelectionRange(callRange);
+						List<Range> ranges = toCallRanges(callLocations);
+						result.add(new CallHierarchyIncomingCall(symbol, ranges));
+					}
 				}
 			}
 			IMember member = call.getMember();
@@ -268,7 +272,9 @@ public class CallHierarchyHandler {
 				List<Range> ranges = toCallRanges(callLocations);
 				for (int i = 0; i < callLocations.size(); i++) {
 					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-					result.add(new CallHierarchyOutgoingCall(symbol, ranges));
+					if (symbol != null) {
+						result.add(new CallHierarchyOutgoingCall(symbol, ranges));
+					}
 				}
 			}
 			IMember member = call.getMember();
@@ -306,6 +312,9 @@ public class CallHierarchyHandler {
 
 	private CallHierarchyItem toCallHierarchyItem(IMember member) throws JavaModelException {
 		Location fullLocation = getLocation(member, LocationType.FULL_RANGE);
+		if (fullLocation == null) {
+			return null;
+		}
 		Range range = fullLocation.getRange();
 		String uri = fullLocation.getUri();
 		CallHierarchyItem item = new CallHierarchyItem();
