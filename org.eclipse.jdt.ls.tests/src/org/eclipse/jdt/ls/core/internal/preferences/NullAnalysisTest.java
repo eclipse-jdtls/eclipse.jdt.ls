@@ -20,7 +20,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -112,15 +111,6 @@ public class NullAnalysisTest extends AbstractGradleBasedTest {
 			assertTrue(marker2.getResource() instanceof IFile);
 			assertEquals("TestJavax.java", ((IFile) marker2.getResource()).getFullPath().lastSegment());
 			IMarker marker3 = getWarningMarker(project, "Null type safety: The expression of type 'List<String>' needs unchecked conversion to conform to '@Nonnull List<String>'");
-			assertNull(marker3);
-			IJavaProject javaProject = JavaCore.create(project);
-			Map<String, String> options = javaProject.getOptions(true);
-			assertEquals(JavaCore.IGNORE, options.get(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION));
-			Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
-			options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION));
-			javaProject.setOptions(options);
-			waitForBackgroundJobs();
-			marker3 = getWarningMarker(project, "Null type safety: The expression of type 'List<String>' needs unchecked conversion to conform to '@Nonnull List<String>'");
 			assertNotNull(marker3);
 			assertTrue(marker3.getResource() instanceof IFile);
 			assertEquals("TestJavax.java", ((IFile) marker3.getResource()).getFullPath().lastSegment());
