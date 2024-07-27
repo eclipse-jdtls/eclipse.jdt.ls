@@ -379,5 +379,4 @@ public class PreferenceManagerTest {
 			assertEquals(false, preferenceManager.getPreferences().isTelemetryEnabled());
 		}
 	}
-
 }
