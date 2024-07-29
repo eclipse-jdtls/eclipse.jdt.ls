@@ -81,8 +81,8 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
 		assertEquals(settingKeys.size(), options.size());
-		assertEquals("1.7", options.get("org.eclipse.jdt.core.compiler.compliance"));
-		assertEquals("1.7", options.get("org.eclipse.jdt.core.compiler.source"));
+		assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.compliance"));
+		assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.source"));
 	}
 
 	@Test
@@ -94,8 +94,8 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
 
 		assertEquals(settingKeys.size(), options.size());
-		assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.compliance"));
-		assertEquals("1.8", options.get("org.eclipse.jdt.core.compiler.source"));
+		assertEquals("11", options.get("org.eclipse.jdt.core.compiler.compliance"));
+		assertEquals("11", options.get("org.eclipse.jdt.core.compiler.source"));
 	}
 
 	@Test

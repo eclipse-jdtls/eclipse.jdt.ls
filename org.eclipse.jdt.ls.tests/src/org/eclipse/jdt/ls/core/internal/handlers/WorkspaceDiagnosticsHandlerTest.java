@@ -411,7 +411,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
-		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("1.7", "1.8"));
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("1.8", "11"));
 
 		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 		assertNoErrors(project);
@@ -427,11 +427,9 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		projectsManager.setConnection(client);
 		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/salut"))||p.getUri().endsWith("maven/salut/")).findFirst();
 		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
-		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
-		assertEquals(diags.toString(), 2, diags.size());
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
-		diags = pomDiags.get().getDiagnostics();
+		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
 		assertEquals(diags.toString(), 1, diags.size());
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));

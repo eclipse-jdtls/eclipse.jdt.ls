@@ -45,7 +45,7 @@ public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBase
 		String name = "salut";
 		IProject project = importMavenProject(name);
 		assertIsJavaProject(project);
-		assertEquals("1.7", getJavaSourceLevel(project));
+		assertEquals("1.8", getJavaSourceLevel(project));
 		assertNoErrors(project);
 		return project;
 	}

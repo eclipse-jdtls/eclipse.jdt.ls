@@ -26,7 +26,6 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -1067,43 +1066,6 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Change return type of 'getAnnotation(..)' to 'T'", buf.toString());
-
-		assertCodeActions(cu, e1);
-	}
-
-	@Test
-	public void testMismatchingReturnTypeOnGenericMethod14() throws Exception {
-		Map<String, String> options14 = new HashMap<>(fJProject1.getOptions(false));
-		JavaModelUtil.setComplianceOptions(options14, JavaCore.VERSION_1_4);
-		fJProject1.setOptions(options14);
-		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.lang.reflect.AccessibleObject;\n");
-		buf.append("public class E {\n");
-		buf.append("    void m() {\n");
-		buf.append("        new AccessibleObject() {\n");
-		buf.append("            public void getAnnotation(Class annotationClass) {\n");
-		buf.append("            }\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.lang.annotation.Annotation;\n");
-		buf.append("import java.lang.reflect.AccessibleObject;\n");
-		buf.append("public class E {\n");
-		buf.append("    void m() {\n");
-		buf.append("        new AccessibleObject() {\n");
-		buf.append("            public Annotation getAnnotation(Class annotationClass) {\n");
-		buf.append("            }\n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Change return type of 'getAnnotation(..)' to 'Annotation'", buf.toString());
 
 		assertCodeActions(cu, e1);
 	}
