@@ -59,7 +59,7 @@ public class GradleBuildSupportTest extends AbstractGradleBasedTest {
 		projectsManager.updateProject(project, false);
 		waitForBackgroundJobs();
 		assertNoErrors(project);
-		assertEquals("1.7", ProjectUtils.getJavaSourceLevel(project));
+		assertEquals("1.8", ProjectUtils.getJavaSourceLevel(project));
 	}
 
 }

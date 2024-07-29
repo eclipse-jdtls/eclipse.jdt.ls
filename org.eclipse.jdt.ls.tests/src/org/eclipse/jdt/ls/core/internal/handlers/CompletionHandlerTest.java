@@ -1713,22 +1713,22 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_classMethodOverrideJava4() throws Exception {
-		testCompletion_classMethodOverride("java4", true, false);
+		testCompletion_classMethodOverride("java11", true, true);
 	}
 
 	@Test
 	public void testCompletion_interfaceMethodOverrideJava4() throws Exception {
-		testCompletion_interfaceMethodOverride("java4", true, false);
+		testCompletion_interfaceMethodOverride("java11", true, true);
 	}
 
 	@Test
 	public void testCompletion_classMethodOverrideJava5() throws Exception {
-		testCompletion_classMethodOverride("java5", true, true);
+		testCompletion_classMethodOverride("java11", true, true);
 	}
 
 	@Test
 	public void testCompletion_interfaceMethodOverrideJava5() throws Exception {
-		testCompletion_interfaceMethodOverride("java5", true, false);
+		testCompletion_interfaceMethodOverride("java11", true, true);
 	}
 
 	private void testCompletion_classMethodOverride(String projectName, boolean supportSnippets,

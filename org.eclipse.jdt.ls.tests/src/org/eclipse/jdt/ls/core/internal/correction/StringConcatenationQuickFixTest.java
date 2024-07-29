@@ -137,7 +137,7 @@ public class StringConcatenationQuickFixTest extends AbstractQuickFixTest {
 	@Test
 	public void testConvertToStringBuffer() throws Exception {
 		Map<String, String> options1_4 = new HashMap<>(fJProject.getOptions(false));
-		JavaModelUtil.setComplianceOptions(options1_4, JavaCore.VERSION_1_4);
+		JavaModelUtil.setComplianceOptions(options1_4, JavaCore.VERSION_1_8);
 		fJProject.setOptions(options1_4);
 
 		try {
@@ -157,17 +157,17 @@ public class StringConcatenationQuickFixTest extends AbstractQuickFixTest {
 					package test;
 					public class Test {
 						private void print(String name, int age) {
-						  StringBuffer stringBuffer = new StringBuffer();
-							stringBuffer.append("User name: ");
-							stringBuffer.append(name);
-							stringBuffer.append(", age: ");
-							stringBuffer.append(age);
-						String value = stringBuffer.toString();
+						  StringBuilder stringBuilder = new StringBuilder();
+							stringBuilder.append("User name: ");
+							stringBuilder.append(name);
+							stringBuilder.append(", age: ");
+							stringBuilder.append(age);
+						String value = stringBuilder.toString();
 						}
 					}
 					""";
 
-			Expected e = new Expected(MessageFormat.format(CorrectionMessages.QuickAssistProcessor_convert_to_string_buffer_description, "StringBuffer"), expected);
+			Expected e = new Expected(MessageFormat.format(CorrectionMessages.QuickAssistProcessor_convert_to_string_buffer_description, "StringBuilder"), expected);
 			Range selection = CodeActionUtil.getRange(cu, "User name:");
 			assertCodeActions(cu, selection, e);
 		} finally {

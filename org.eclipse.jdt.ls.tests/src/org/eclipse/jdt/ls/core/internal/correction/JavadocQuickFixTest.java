@@ -989,53 +989,6 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testInvalidQualification1() throws Exception {
-		Map<String, String> original = fJProject1.getOptions(false);
-		HashMap<String, String> newOptions = new HashMap<>(original);
-		JavaCore.setComplianceOptions(JavaCore.VERSION_1_4, newOptions);
-		fJProject1.setOptions(newOptions);
-
-		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package pack;\n");
-		buf.append("\n");
-		buf.append("public class A {\n");
-		buf.append("    public static class B {\n");
-		buf.append("        public static class C {\n");
-		buf.append("            \n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
-
-		IPackageFragment pack2 = fSourceFolder.createPackageFragment("pack2", false, null);
-		buf = new StringBuilder();
-		buf.append("package pack2;\n");
-		buf.append("\n");
-		buf.append("import pack.A.B.C;\n");
-		buf.append("\n");
-		buf.append("/**\n");
-		buf.append(" * {@link C} \n");
-		buf.append(" */\n");
-		buf.append("public class E {\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack2.createCompilationUnit("E.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package pack2;\n");
-		buf.append("\n");
-		buf.append("import pack.A.B.C;\n");
-		buf.append("\n");
-		buf.append("/**\n");
-		buf.append(" * {@link pack.A.B.C} \n");
-		buf.append(" */\n");
-		buf.append("public class E {\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Qualify inner type name", buf.toString());
-		assertCodeActions(cu, e1);
-	}
-
-	@Test
-	public void testInvalidQualification2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");
@@ -1074,7 +1027,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	public void testInvalidQualification3() throws Exception {
+	public void testInvalidQualification2() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package pack;\n");

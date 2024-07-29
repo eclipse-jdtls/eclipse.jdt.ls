@@ -30,7 +30,7 @@ public abstract class AbstractGradleBasedTest extends AbstractProjectsManagerBas
 	protected IProject importSimpleJavaProject() throws Exception {
 		IProject project = importGradleProject("simple-gradle");
 		assertIsJavaProject(project);
-		assertEquals("1.7", getJavaSourceLevel(project));
+		assertEquals("1.8", getJavaSourceLevel(project));
 		return project;
 	}
 
