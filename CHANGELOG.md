@@ -1,5 +1,15 @@
 # Change Log
 
+# [1.38.0 (August 1st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/130?closed=1)
+ * performance - Clean up invalid projects during the initialization. See [#3208](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3208).
+ * enhancement - Add `java.diagnostic.filter` to exclude files from diagnostic publishing. See [#3218](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3218).
+ * enhancement - Add support for callees based on implementors for call hierarchy. See [#2780](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2780).
+ * bug fix - Call hierarchy should handle lack of classfile content support from client. See [#3206](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3206).
+ * bug fix - Fix package declaration in test file. See [#3223](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3223).
+ * bug fix - Fix duplicated content in test class. See [#3219](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3219).
+ * dependencies - Target platform update resulting in **loss of support for Java versions older than 1.8**. See [#3227](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3227).
+ * dependencies - Bump org.eclipse.cbi.maven.plugins:eclipse-jarsigner-plugin from 1.4.3 to 1.5.0. See [#3217](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3217).
+
 # [1.37.0 (June 27th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/129?closed=1)
  * performance - Ensure every null analysis annotation has a value defined when enabled. See [#3196](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3196).
  * enhancement - Add `final` to "Extract to local variable" quick assist if requested. See [#3198](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3198).
