@@ -140,7 +140,7 @@ public class ChainCompletionProposalComputer {
 			try {
 				var completionProposal = createCompletionProposal(chain);
 				if (completionProposal != null) {
-					coll.addAdditionalProposal(completionProposal);
+					coll.accept(completionProposal);
 				}
 			} catch (JavaModelException e) {
 				// ignore
