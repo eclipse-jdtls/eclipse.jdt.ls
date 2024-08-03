@@ -254,16 +254,11 @@ public class ChainCompletionProposalComputer {
 	// given Collection.emptyList()	return Collection.emptyList
 	// args[i].lines().toList()	return args[i].lines().toList
 	private char[] getQualifiedMethodName(String name) {
-		var nonSnippetName = removeSnippetString(name);
-		int index = nonSnippetName.lastIndexOf('(');
+		int index = name.lastIndexOf('(');
 		if (index > 0) {
-			return nonSnippetName.substring(0, index).toCharArray();
+			return name.substring(0, index).toCharArray();
 		}
-		return nonSnippetName.toCharArray();
-	}
-
-	private String removeSnippetString(String name) {
-		return name.replaceAll("\\[\\$\\{.*\\}\\]", "[i]");
+		return name.toCharArray();
 	}
 
 	private CompletionProposal createCompletionProposal(final Chain chain) throws JavaModelException {
