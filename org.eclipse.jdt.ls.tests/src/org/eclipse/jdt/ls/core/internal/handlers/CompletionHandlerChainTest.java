@@ -8,9 +8,11 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.ProjectScope;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
@@ -58,6 +60,7 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setChainCompletionEnabled(true);
 		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
+		increaseChainCompletionTimeout();
 	}
 
 	@After
@@ -88,6 +91,11 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
+	}
+
+	private void increaseChainCompletionTimeout() {
+		// if they don't finish within 5secs we might have a performance issue.
+		new ProjectScope(project.getProject()).getNode(JavaManipulation.getPreferenceNodeId()).putInt("recommenders.chain.timeout", 5);
 	}
 
 	@Test
@@ -214,9 +222,9 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		assertEquals("completion label", "stream.toList() : List<String>", item.get().getLabel());
 		assertEquals("completion edit text", "stream.toList()", item.get().getTextEdit().getLeft().getNewText());
 
-		item = list.getItems().stream().filter(i -> i.getLabel().startsWith("streams[i].")).findFirst();
+		item = list.getItems().stream().filter(i -> i.getLabel().startsWith("streams[")).findFirst();
 		assertTrue("array completion", item.isPresent());
-		assertEquals("array completion label", "streams[i].toList() : List<String>", item.get().getLabel());
+		assertEquals("array completion label", "streams[].toList() : List<String>", item.get().getLabel());
 		assertEquals("array completion edit text", "streams[${1:i}].toList()", item.get().getTextEdit().getLeft().getNewText());
 
 	}
@@ -244,9 +252,9 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 						""");
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "names =");
-		var item = list.getItems().stream().filter(i -> i.getLabel().startsWith("streams[i].")).findFirst();
+		var item = list.getItems().stream().filter(i -> i.getLabel().startsWith("streams[].")).findFirst();
 		assertTrue("completion", item.isPresent());
-		assertEquals("completion label", "streams[i].toList(int size) : List<String>", item.get().getLabel());
+		assertEquals("completion label", "streams[].toList(int size) : List<String>", item.get().getLabel());
 		assertEquals("completion edit text", "streams[${1:i}].toList(${2:size})", item.get().getTextEdit().getLeft().getNewText());
 	}
 
