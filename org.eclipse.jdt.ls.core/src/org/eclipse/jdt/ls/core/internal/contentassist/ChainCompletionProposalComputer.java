@@ -24,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -98,7 +97,7 @@ public class ChainCompletionProposalComputer {
 
 		final IType invocationType = cu.findPrimaryType();
 
-		final String token = coll.getContext().getToken() != null ? String.valueOf(coll.getContext().getToken()) : null;
+		final String token = (coll.getContext().getToken() != null && coll.getContext().getToken().length > 0) ? String.valueOf(coll.getContext().getToken()) : null;
 		final List<ChainType> expectedTypes = resolveBindingsForExpectedTypes(cu.getJavaProject(), coll.getContext());
 		final ChainFinder mainFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType, token);
 		final ChainFinder contextFinder = new ChainFinder(expectedTypes, Arrays.asList(excludedTypes), invocationType, token);
@@ -120,8 +119,8 @@ public class ChainCompletionProposalComputer {
 					// ignore
 				}
 			}, executor);
-			CompletableFuture<?> future = CompletableFuture.anyOf(mainChains, contextChains);
 
+			CompletableFuture<?> future = CompletableFuture.allOf(mainChains, contextChains);
 			long timeout = Long.parseLong(JavaManipulation.getPreference("recommenders.chain.timeout", cu.getJavaProject()));
 			future.get(timeout, TimeUnit.SECONDS);
 		} catch (final Exception e) {
@@ -251,19 +250,9 @@ public class ChainCompletionProposalComputer {
 		return String.valueOf(element.getElementName()).startsWith(prefix);
 	}
 
-	// given Collection.emptyList()	return Collection.emptyList
-	// args[i].lines().toList()	return args[i].lines().toList
-	private char[] getQualifiedMethodName(String name) {
-		int index = name.lastIndexOf('(');
-		if (index > 0) {
-			return name.substring(0, index).toCharArray();
-		}
-		return name.toCharArray();
-	}
-
 	private CompletionProposal createCompletionProposal(final Chain chain) throws JavaModelException {
 		final var edge = chain.getElements().get(chain.getElements().size() - 1);
-		final var insertText = createInsertText(chain, chain.getExpectedDimensions());
+		final var chainText = createChainText(chain, chain.getExpectedDimensions());
 		final var root = chain.getElements().get(0);
 		CompletionProposal cp = null;
 
@@ -271,11 +260,11 @@ public class ChainCompletionProposalComputer {
 			case FIELD: {
 				cp = CompletionProposal.create(CompletionProposal.FIELD_REF, coll.getContext().getOffset());
 				var field = ((IField) edge.getElement());
-				cp.setName(getQualifiedMethodName(insertText));
+				cp.setName(chainText.displayText().toCharArray());
 				cp.setSignature(field.getTypeSignature().toCharArray());
 				cp.setDeclarationSignature(Signature.createTypeSignature(field.getDeclaringType().getFullyQualifiedName(), true).toCharArray());
-				cp.setCompletion(insertText.toCharArray());
-				cp.setReplaceRange(coll.getContext().getOffset(), coll.getContext().getOffset() + insertText.length());
+				cp.setCompletion(chainText.insertText().toCharArray());
+				cp.setReplaceRange(coll.getContext().getOffset(), coll.getContext().getOffset() + chainText.length());
 				if(coll.getContext().getToken() != null && coll.getContext().getToken().length > 0) {
 					cp.setTokenRange(coll.getContext().getTokenStart(), coll.getContext().getTokenEnd());
 				}
@@ -284,11 +273,11 @@ public class ChainCompletionProposalComputer {
 			case METHOD: {
 				cp = CompletionProposal.create(CompletionProposal.METHOD_REF, coll.getContext().getOffset());
 				var method = ((IMethod) edge.getElement());
-				cp.setName(getQualifiedMethodName(insertText));
+				cp.setName(chainText.displayText().toCharArray());
 				cp.setSignature(toGenericSignature(method));
 				cp.setDeclarationSignature(Signature.createTypeSignature(method.getDeclaringType().getFullyQualifiedName(), true).toCharArray());
-				cp.setCompletion(insertText.toCharArray());
-				cp.setReplaceRange(coll.getContext().getOffset(), coll.getContext().getOffset() + insertText.length());
+				cp.setCompletion(chainText.insertText().toCharArray());
+				cp.setReplaceRange(coll.getContext().getOffset(), coll.getContext().getOffset() + chainText.length());
 				cp.setParameterNames(toCharArray(method.getParameterNames()));
 				if(coll.getContext().getToken() != null && coll.getContext().getToken().length > 0) {
 					cp.setTokenRange(coll.getContext().getTokenStart(), coll.getContext().getTokenEnd());
@@ -328,28 +317,35 @@ public class ChainCompletionProposalComputer {
 		return result;
 	}
 
-	private String createInsertText(final Chain chain, final int expectedDimension) throws JavaModelException {
-		final AtomicInteger counter = new AtomicInteger(1);
-		StringBuilder sb = new StringBuilder(64);
+	private ChainText createChainText(final Chain chain, final int expectedDimension) throws JavaModelException {
+		StringBuilder insertText = new StringBuilder(64);
+		StringBuilder displayText = new StringBuilder(64);
 		for (final ChainElement edge : chain.getElements()) {
 			switch (edge.getElementType()) {
 				case FIELD:
 				case TYPE:
 				case LOCAL_VARIABLE:
-					appendVariableString(edge, sb);
+					appendVariableString(edge, insertText);
+					appendVariableString(edge, displayText);
 					break;
 				case METHOD:
 					final IMethod method = (IMethod) edge.getElement();
-					sb.append(method.getElementName());
-					appendParameters(sb, method, counter);
+					insertText.append(method.getElementName());
+					appendParameters(insertText, method);
+
+					displayText.append(method.getElementName());
 					break;
 				default:
 			}
-			appendArrayDimensions(sb, edge.getReturnTypeDimension(), expectedDimension, snippetStringSupported, counter);
-			sb.append(".");
+			appendArrayDimensions(insertText, edge.getReturnTypeDimension(), expectedDimension, snippetStringSupported);
+			insertText.append(".");
+
+			appendArrayDimensions(displayText, edge.getReturnTypeDimension(), expectedDimension, false);
+			displayText.append(".");
 		}
-		deleteLastChar(sb);
-		return sb.toString();
+		deleteLastChar(insertText);
+		deleteLastChar(displayText);
+		return new ChainText(insertText.toString(), displayText.toString());
 	}
 
 	private static void appendVariableString(final ChainElement edge, final StringBuilder sb) {
@@ -359,7 +355,7 @@ public class ChainCompletionProposalComputer {
 		sb.append((edge.getElement()).getElementName());
 	}
 
-	private void appendParameters(final StringBuilder sb, final IMethod method, final AtomicInteger counter) throws JavaModelException {
+	private void appendParameters(final StringBuilder sb, final IMethod method) throws JavaModelException {
 		sb.append("(");
 		if (snippetStringSupported) {
 			String[] parameterNames = method.getParameterNames();
@@ -374,10 +370,10 @@ public class ChainCompletionProposalComputer {
 		sb.append(")");
 	}
 
-	private void appendArrayDimensions(final StringBuilder sb, final int dimension, final int expectedDimension, final boolean appendVariables, final AtomicInteger counter) {
+	private void appendArrayDimensions(final StringBuilder sb, final int dimension, final int expectedDimension, final boolean snippetStringSupported) {
 		for (int i = dimension; i-- > expectedDimension;) {
 			sb.append("[");
-			if (appendVariables) {
+			if (snippetStringSupported) {
 				sb.append("${").append(dimension).append(":i}");
 			}
 			sb.append("]");
@@ -473,4 +469,10 @@ public class ChainCompletionProposalComputer {
 		return fqExpectedTypes;
 	}
 
+	private record ChainText(String insertText, String displayText) {
+
+		public int length() {
+			return insertText().length();
+		}
+	}
 }
