@@ -74,8 +74,12 @@ public class GetRefactorEditHandler {
 			return null;
 		}
 		context.setASTRoot(ast);
-		IProblemLocation[] locations = CodeActionHandler.getProblemLocationCores(unit, params.context.getContext().getDiagnostics());
-		boolean problemsAtLocation = locations.length != 0;
+		IProblemLocation[] locations = null;
+		boolean problemsAtLocation = false;
+		if (params.context.getContext() != null && params.context.getContext().getDiagnostics() != null) {
+			locations = CodeActionHandler.getProblemLocationCores(unit, params.context.getContext().getDiagnostics());
+			problemsAtLocation = locations.length != 0;
+		}
 		String positionKey = DEFAULT_POSITION_KEY;
 
 		try {
