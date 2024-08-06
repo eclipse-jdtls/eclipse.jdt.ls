@@ -19,6 +19,7 @@ import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.R
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
@@ -1855,14 +1856,24 @@ public final class JDTUtils {
 	}
 
 	public static boolean isExcludedFile(List<String> patterns, String uriString) {
+		if (patterns.isEmpty()) {
+			return false;
+		}
+
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return false;
 		}
 
-		java.nio.file.Path path = Paths.get(uri);
-		FileSystem fileSystems = path.getFileSystem();
-		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path)).collect(Collectors.toList()).isEmpty();
+		// https://github.com/redhat-developer/vscode-java/issues/3735
+		java.nio.file.Path[] path = new java.nio.file.Path[1];
+		try {
+			path[0] = Paths.get(uri.toURL().getPath());
+		} catch (MalformedURLException e) {
+			path[0] = Paths.get(uri);
+		}
+		FileSystem fileSystems = path[0].getFileSystem();
+		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path[0])).collect(Collectors.toList()).isEmpty();
 	}
 
 	/**
