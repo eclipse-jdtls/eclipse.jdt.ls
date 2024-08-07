@@ -2546,7 +2546,6 @@ public class Preferences {
 			options.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION));
 			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, defaultOptions.get(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT));
 			options.put(JavaCore.COMPILER_PB_SYNTACTIC_NULL_ANALYSIS_FOR_FIELDS, defaultOptions.get(JavaCore.COMPILER_PB_SYNTACTIC_NULL_ANALYSIS_FOR_FIELDS));
-			options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, defaultOptions.get(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION));
 		} else {
 			options.put(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, "enabled");
 			options.put(JavaCore.COMPILER_NONNULL_ANNOTATION_NAME, nonnullType != null ? nonnullType : "");
@@ -2558,7 +2557,6 @@ public class Preferences {
 			options.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, "warning");
 			options.put(JavaCore.COMPILER_PB_MISSING_NONNULL_BY_DEFAULT_ANNOTATION, "ignore");
 			options.put(JavaCore.COMPILER_PB_SYNTACTIC_NULL_ANALYSIS_FOR_FIELDS, JavaCore.ENABLED);
-			options.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.IGNORE);
 		}
 		return options;
 	}
