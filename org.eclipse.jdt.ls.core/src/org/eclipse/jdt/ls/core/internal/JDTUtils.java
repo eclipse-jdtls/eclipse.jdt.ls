@@ -1835,6 +1835,10 @@ public final class JDTUtils {
 	}
 
 	public static boolean isExcludedFile(List<String> patterns, String uriString) {
+		if (patterns.isEmpty()) {
+			return false;
+		}
+
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return false;
