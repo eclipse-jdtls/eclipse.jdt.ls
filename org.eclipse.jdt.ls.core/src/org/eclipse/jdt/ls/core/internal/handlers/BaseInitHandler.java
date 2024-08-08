@@ -19,13 +19,18 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
@@ -57,7 +62,6 @@ public abstract class BaseInitHandler {
 		this.projectsManager = projectsManager;
 	}
 
-	@SuppressWarnings("unchecked")
 	public InitializeResult initialize(InitializeParams param) {
 		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
 		InitializeResult result = new InitializeResult();
@@ -70,6 +74,7 @@ public abstract class BaseInitHandler {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
 		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
 		Map<String, Object> extendedClientCapabilities = getInitializationOption(initializationOptions, "extendedClientCapabilities", Map.class);
@@ -109,7 +114,6 @@ public abstract class BaseInitHandler {
 			rootPaths.add(workspaceLocation);
 		}
 		if (initializationOptions.get(SETTINGS_KEY) instanceof Map<?, ?> settings) {
-			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);

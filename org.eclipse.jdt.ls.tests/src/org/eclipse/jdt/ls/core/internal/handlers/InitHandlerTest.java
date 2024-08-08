@@ -56,6 +56,7 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.util.Util;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstallChangedListener;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -68,6 +69,7 @@ import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DidChangeConfigurationCapabilities;
@@ -460,6 +462,24 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		capabilities.setWorkspace(worspaceCapabilities);
 		ClientPreferences preferences = new ClientPreferences(capabilities);
 		assertFalse(preferences.isResourceOperationSupported());
+	}
+
+	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3222
+	@Test
+	public void testFilesAssociations() throws Exception {
+		try {
+			ClientPreferences mockCapabilies = mock(ClientPreferences.class);
+			when(preferenceManager.getClientPreferences()).thenReturn(mockCapabilies);
+			List<String> fileAssociations = new ArrayList<>();
+			fileAssociations.add("maxj");
+			preferences.setFilesAssociations(fileAssociations);
+			PreferenceManager.configureContentTypes(preferences);
+			assertTrue(Util.isJavaLikeFileName("Test.maxj"));
+		} finally {
+			preferences.getFilesAssociations().clear();
+			PreferenceManager.configureContentTypes(preferences);
+			assertFalse(Util.isJavaLikeFileName("Test.maxj"));
+		}
 	}
 
 	private void removeExclusionPattern(IJavaProject javaProject) throws JavaModelException {

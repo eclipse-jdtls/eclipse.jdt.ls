@@ -520,7 +520,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		try (Stream<java.nio.file.Path> walk = Files.walk(directory, 1)) {
 			Optional<java.nio.file.Path> found = walk.filter(Files::isRegularFile).filter(file -> {
 				try {
-					return file.toString().endsWith(".java") && !Objects.equals(nioFile.getName(), file.toFile().getName()) && Files.size(file) > 0;
+					return JDTUtils.isJavaFile(file) && !Objects.equals(nioFile.getName(), file.toFile().getName()) && Files.size(file) > 0;
 				} catch (IOException e) {
 					return false;
 				}
@@ -672,7 +672,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 					return FileVisitResult.TERMINATE;
 				}
 
-				if (javaFile == null && f.getName().endsWith(".java")) {
+				if (javaFile == null && JDTUtils.isJavaFile(f.getName())) {
 					javaFile = f;
 				}
 			}

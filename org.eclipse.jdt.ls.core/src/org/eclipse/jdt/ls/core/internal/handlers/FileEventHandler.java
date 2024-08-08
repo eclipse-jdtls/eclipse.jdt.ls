@@ -305,7 +305,7 @@ public class FileEventHandler {
 		}
 
 		return (oldPath.toFile().isFile() || newPath.toFile().isFile())
-			&& oldPath.lastSegment().endsWith(".java") && newPath.lastSegment().endsWith(".java")
+				&& JDTUtils.isJavaFile(oldPath.lastSegment()) && JDTUtils.isJavaFile(newPath.lastSegment())
 			&& Objects.equals(oldPath.removeLastSegments(1), newPath.removeLastSegments(1));
 	}
 
@@ -331,7 +331,7 @@ public class FileEventHandler {
 			return false;
 		}
 
-		return oldPath.toFile().isFile() && oldPath.lastSegment().endsWith(".java")
+		return oldPath.toFile().isFile() && JDTUtils.isJavaFile(oldPath.lastSegment())
 			&& Objects.equals(oldPath.lastSegment(), newPath.lastSegment());
 	}
 
