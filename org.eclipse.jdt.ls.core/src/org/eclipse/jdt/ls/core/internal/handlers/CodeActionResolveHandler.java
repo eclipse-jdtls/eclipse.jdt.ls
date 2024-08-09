@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -95,8 +96,6 @@ public class CodeActionResolveHandler {
 			ProposalCore[] proposalList = group.getProposals();
 			PositionInformation[] positionList = group.getPositions();
 			StringBuilder snippet = new StringBuilder();
-			snippet.append(SNIPPET_PREFIX);
-			snippet.append(snippetNumber);
 			snippet.append(SNIPPET_CHOICE_INDICATOR);
 			if (proposalList.length > 1) {
 				for (int i = 0; i < positionList.length; i++) {
@@ -115,11 +114,10 @@ public class CodeActionResolveHandler {
 							}
 						}
 						// If snippet is empty or only has one choice, ignore this group
-						if (snippet.toString().equals(SNIPPET_PREFIX) || snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
+						if (snippet.toString().equals(String.valueOf(SNIPPET_CHOICE_INDICATOR)) || snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
 							break;
 						}
 						snippet.append(SNIPPET_CHOICE_POSTFIX);
-						snippetNumber++;
 					}
 					snippets.add(new Triple(snippet.toString(), offset, length));
 				}
@@ -128,6 +126,12 @@ public class CodeActionResolveHandler {
 		if (!snippets.isEmpty()) {
 			// Sort snippets in descending order based on offset, so that the edits are applied in an order that does not alter the offset of later edits
 			snippets.sort(null);
+			ListIterator<Triple> li = snippets.listIterator(snippets.size());
+			while (li.hasPrevious()) {
+				Triple element = li.previous();
+				element.snippet = SNIPPET_PREFIX + snippetNumber + element.snippet;
+				snippetNumber++;
+			}
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
 					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits();
