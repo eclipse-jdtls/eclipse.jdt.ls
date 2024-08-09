@@ -174,7 +174,7 @@ public class WorkspaceEventsHandler {
 
 	private void discardWorkingCopies(String parentUri) {
 		IPath parentPath = ResourceUtils.filePathFromURI(parentUri);
-		if (parentPath != null && !parentPath.lastSegment().endsWith(".java")) {
+		if (parentPath != null && !JDTUtils.isJavaFile(parentPath)) {
 			ICompilationUnit[] workingCopies = JavaCore.getWorkingCopies(null);
 			for (ICompilationUnit workingCopy : workingCopies) {
 				IResource resource = workingCopy.getResource();

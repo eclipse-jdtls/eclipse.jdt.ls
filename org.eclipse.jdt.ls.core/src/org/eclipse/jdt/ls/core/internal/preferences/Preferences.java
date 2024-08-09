@@ -120,6 +120,11 @@ public class Preferences {
 	 * Tab Size
 	 */
 	public static final String JAVA_CONFIGURATION_TABSIZE = "java.format.tabSize";
+
+	/**
+	 * Files associations to languages
+	 */
+	public static final String JAVA_CONFIGURATION_ASSOCIATIONS = "java.associations";
 	/**
 	 * Specifies Java Execution Environments.
 	 */
@@ -589,6 +594,7 @@ public class Preferences {
 	private static Map<String, List<String>> nonnullClasspathStorage = new HashMap<>();
 	private static Map<String, List<String>> nullableClasspathStorage = new HashMap<>();
 	private static Map<String, List<String>> nonnullbydefaultClasspathStorage = new HashMap<>();
+	private List<String> filesAssociations = new ArrayList<>();
 
 	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
@@ -1330,7 +1336,34 @@ public class Preferences {
 		prefs.setChainCompletionEnabled(chainCompletionEnabled);
 		List<String> diagnosticFilter = getList(configuration, JAVA_DIAGNOSTIC_FILER, Collections.emptyList());
 		prefs.setDiagnosticFilter(diagnosticFilter);
+		Object object = getValue(configuration, JAVA_CONFIGURATION_ASSOCIATIONS);
+		Set<String> associations = new HashSet<>();
+		if (object instanceof Map map) {
+			try {
+				Map<String, String> element = map;
+				element.forEach((k, v) -> {
+					// Java LS only support a small subset of the glob pattern syntax (*.xxx)
+					if ("java".equals(v) && validateFilePattern(k)) {
+						associations.add(k.substring(2));
+					}
+				});
+			} catch (Exception e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		prefs.setFilesAssociations(new ArrayList<>(associations));
 		return prefs;
+	}
+
+	private static boolean validateFilePattern(String filename) {
+		if (filename != null && filename.startsWith("*.") && filename.length() > 2) {
+			String ext = filename.substring(2);
+			if (!ext.contains("?") && !ext.contains("*")) {
+				return true;
+			}
+		}
+		JavaLanguageServerPlugin.logInfo("Pattern '" + filename + "' is not supported.");
+		return false;
 	}
 
 	/**
@@ -2581,5 +2614,13 @@ public class Preferences {
 
 	public void setDiagnosticFilter(List<String> diagnosticFilter) {
 		this.diagnosticFilter = diagnosticFilter;
+	}
+
+	public List<String> getFilesAssociations() {
+		return filesAssociations;
+	}
+
+	public void setFilesAssociations(List<String> filesAssociations) {
+		this.filesAssociations = filesAssociations;
 	}
 }

@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ActionableNotification;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProgressReport;
@@ -94,7 +95,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 			JavaLanguageServerPlugin.getProjectsManager().getConnection().sendActionableNotification(notification);
 		}
 	}
-	
+
 	/**
 	 * Find all the Protobuf source output directories of the given project.
 	 * @param project project.
@@ -133,7 +134,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 
 			try (Stream<Path> walkStream = Files.walk(dir.toPath())) {
 				boolean containsJavaFile = walkStream.filter(p -> p.toFile().isFile()).anyMatch(f -> {
-					return f.toString().endsWith(".java");
+					return JDTUtils.isJavaFile(f);
 				});
 
 				if (containsJavaFile) {
@@ -194,7 +195,7 @@ public class ProtobufSupport implements IFrameworkSupport {
 		try {
 			build.get().withConnection(connection -> {
 				connection.newBuild().forTasks("generateProto", "generateTestProto").run();
-				return null; 
+				return null;
 			}, monitor);
 		} catch (Exception e) {
 			JavaLanguageServerPlugin.logException(e);

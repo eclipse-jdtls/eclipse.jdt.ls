@@ -12,13 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,13 +26,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -43,6 +41,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.manipulation.CodeStyleConfiguration;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
+import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType.CodeTemplateVariableResolver;
 import org.eclipse.jdt.internal.core.manipulation.JavaManipulationMessages;
@@ -54,7 +53,6 @@ import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettingsCo
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
@@ -256,6 +254,49 @@ public class PreferenceManager {
 			for (String uri : matchingURI) {
 				PublishDiagnosticsParams diagnostics = new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList());
 				JavaLanguageServerPlugin.getInstance().getClientConnection().publishDiagnostics(diagnostics);
+			}
+		}
+		if (!oldPreferences.getFilesAssociations().equals(preferences.getFilesAssociations())) {
+			configureContentTypes(preferences);
+		}
+	}
+
+	// only for test purpose
+	public static void configureContentTypes(Preferences preferences) {
+		if (preferences != null && preferences.getFilesAssociations() != null) {
+			IContentType javaSourceContentType = Platform.getContentTypeManager().getContentType(JavaCore.JAVA_SOURCE_CONTENT_TYPE);
+			if (javaSourceContentType != null) {
+				List<String> toRemove = new ArrayList<>();
+				String[] specs = javaSourceContentType.getFileSpecs(IContentType.FILE_EXTENSION_SPEC);
+				for (String spec : specs) {
+					if (!SuffixConstants.EXTENSION_java.equals(spec)) {
+						toRemove.add(spec);
+					}
+				}
+				List<String> toAdd = new ArrayList<>();
+				for (String spec : preferences.getFilesAssociations()) {
+					if (toRemove.contains(spec)) {
+						toRemove.remove(spec);
+					} else {
+						toAdd.add(spec);
+					}
+				}
+				for (String spec : toRemove) {
+					try {
+						javaSourceContentType.removeFileSpec(spec, IContentType.FILE_EXTENSION_SPEC);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(e);
+					}
+				}
+				for (String spec : toAdd) {
+					try {
+						javaSourceContentType.addFileSpec(spec, IContentType.FILE_EXTENSION_SPEC);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(e);
+					}
+				}
+			} else {
+				JavaLanguageServerPlugin.logInfo("There is no java source content type.");
 			}
 		}
 	}

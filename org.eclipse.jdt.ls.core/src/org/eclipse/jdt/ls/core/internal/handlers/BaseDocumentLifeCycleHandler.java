@@ -387,7 +387,9 @@ public abstract class BaseDocumentLifeCycleHandler {
 			IProblem renameProblem = desiredProblem.get();
 			String newName = renameProblem.getArguments()[1];
 			String oldName = cu.getElementName();
-			String newUri = documentUri.replace(oldName, newName + ".java");
+			int index = oldName.lastIndexOf(".");
+			String extension = index > 0 ? oldName.substring(index) : ".java";
+			String newUri = documentUri.replace(oldName, newName + extension);
 			WorkspaceEdit edit = new WorkspaceEdit(List.of(Either.forRight(new RenameFile(documentUri, newUri))));
 			edit.setChanges(Collections.emptyMap());
 			final boolean applyNow = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceApplyEditSupported();

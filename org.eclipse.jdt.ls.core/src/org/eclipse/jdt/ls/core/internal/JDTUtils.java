@@ -257,10 +257,13 @@ public final class JDTUtils {
 	}
 
 	static ICompilationUnit getFakeCompilationUnit(URI uri, IProgressMonitor monitor) {
-		if (uri == null || !"file".equals(uri.getScheme()) || !uri.getPath().endsWith(".java")) {
+		if (uri == null || !"file".equals(uri.getScheme())) {
 			return null;
 		}
 		java.nio.file.Path path = Paths.get(uri);
+		if (!isJavaFile(path)) {
+			return null;
+		}
 		//Only support existing standalone java files
 		if (!java.nio.file.Files.isReadable(path)) {
 			return null;
@@ -275,7 +278,7 @@ public final class JDTUtils {
 		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			String fileName = path.getFileName().toString();
-			if (fileName.endsWith(".java") || fileName.endsWith(".class")) {
+			if (isJavaFile(fileName) || fileName.endsWith(".class")) {
 				fileName = fileName.substring(0, fileName.lastIndexOf('.'));
 			}
 			WorkingCopyOwner owner = new WorkingCopyOwner() {
@@ -655,6 +658,23 @@ public final class JDTUtils {
 			}
 			return found;
 		}
+	}
+
+	public static boolean isJavaFile(java.nio.file.Path path) {
+		try {
+			return path != null && isJavaFile(path.toFile().getName());
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return false;
+	}
+
+	public static boolean isJavaFile(IPath path) {
+		return path != null && isJavaFile(path.lastSegment());
+	}
+
+	public static boolean isJavaFile(String name) {
+		return name != null && org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name);
 	}
 
 	/**
@@ -1095,7 +1115,7 @@ public final class JDTUtils {
 	}
 
 	public static ISchedulingRule getRule(String uri) {
-		IResource resource = JDTUtils.findFile(uri);
+		IResource resource = findFile(uri);
 		if (resource != null) {
 			return ResourcesPlugin.getWorkspace().getRuleFactory().createRule(resource);
 		}
@@ -1749,7 +1769,7 @@ public final class JDTUtils {
 				}
 				Location location;
 				if (node != null) {
-					String uriString = JDTUtils.toUri(classFile);
+					String uriString = toUri(classFile);
 					IDocument document = new Document(contents);
 					if (declaration) {
 						int offset = node.getStartPosition();
@@ -1793,7 +1813,7 @@ public final class JDTUtils {
 						locations.add(location);
 					}
 				} else {
-					location = JDTUtils.toLocation(classFile, 0, 0);
+					location = toLocation(classFile, 0, 0);
 					locations.add(location);
 				}
 			} finally {
