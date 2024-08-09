@@ -131,6 +131,10 @@ public class Preferences {
 	public static final String JAVA_CONFIGURATION_RUNTIMES = "java.configuration.runtimes";
 	public static final List<String> JAVA_CONFIGURATION_RUNTIMES_DEFAULT;
 	/**
+	 * Specifies the java formatter scheme.
+	 */
+	public static final String JAVA_FORMATTER_SCHEME = "java.format.scheme";
+	/**
 	 * Specifies the file path or url to the formatter xml url.
 	 */
 	public static final String JAVA_FORMATTER_URL = "java.format.settings.url";
@@ -673,6 +677,8 @@ public class Preferences {
 	private String formatterUrl;
 	private String settingsUrl;
 	private String formatterProfileName;
+	private Map<String, String> formatterSettings;
+	private FormatterScheme formatterScheme;
 	private Collection<IPath> rootPaths;
 	private Collection<IPath> triggerFiles;
 	private Collection<IPath> projectConfigurations;
@@ -778,6 +784,22 @@ public class Preferences {
 				}
 			}
 			return defaultStatus;
+		}
+	}
+
+	public static enum FormatterScheme {
+		eclipse;
+
+		static FormatterScheme fromString(String value, FormatterScheme defaultValue) {
+			if (value != null) {
+				String val = value.toLowerCase();
+				try {
+					return valueOf(val);
+				} catch (Exception e) {
+					//fall back to default severity
+				}
+			}
+			return defaultValue;
 		}
 	}
 
@@ -912,6 +934,8 @@ public class Preferences {
 		formatterUrl = null;
 		settingsUrl = null;
 		formatterProfileName = null;
+		formatterSettings = new HashMap<>();
+		formatterScheme = FormatterScheme.eclipse;
 		importOrder = JAVA_IMPORT_ORDER_DEFAULT;
 		filteredTypes = JAVA_COMPLETION_FILTERED_TYPES_DEFAULT;
 		parallelBuildsCount = PreferenceInitializer.PREF_MAX_CONCURRENT_BUILDS_DEFAULT;
@@ -1212,6 +1236,52 @@ public class Preferences {
 		boolean javaFormatComments = getBoolean(configuration, JAVA_FORMAT_COMMENTS, true);
 		prefs.setJavaFormatComments(javaFormatComments);
 
+		String formatterSchemeString = getString(configuration, JAVA_FORMATTER_SCHEME);
+		if (formatterSchemeString != null) {
+			FormatterScheme formatterScheme = FormatterScheme.fromString(formatterSchemeString, FormatterScheme.eclipse);
+			if (formatterScheme != null) {
+				prefs.setFormatterScheme(formatterScheme);
+			}
+		} else {
+			Object formatterSchemeValue = getValue(configuration, JAVA_FORMATTER_SCHEME);
+			if (formatterSchemeValue instanceof Map) {
+				Map<String, Object> formatterSchemeValueMap = (Map<String, Object>) formatterSchemeValue;
+				Object style = formatterSchemeValueMap.getOrDefault("style", FormatterScheme.eclipse.toString());
+				if (style instanceof String schemeString) {
+					FormatterScheme formatterScheme = FormatterScheme.fromString(schemeString, FormatterScheme.eclipse);
+					if (formatterScheme != null) {
+						prefs.setFormatterScheme(formatterScheme);
+					}
+				}
+				Object path = formatterSchemeValueMap.getOrDefault("path", null);
+				if (path instanceof String pathString) {
+					prefs.setFormatterUrl(pathString);
+				}
+				Object profile = formatterSchemeValueMap.getOrDefault("profile", null);
+				if (profile instanceof String profileString) {
+					prefs.setFormatterProfileName(profileString);
+				}
+				Object configurations = formatterSchemeValueMap.getOrDefault("configurations", new HashMap<>());
+				if (configurations instanceof Map) {
+					Map<String, Object> configurationMap = (Map<String, Object>) configurations;
+					Map<String, String> formatterSettingsMap = new HashMap<>();
+					configurationMap.forEach((k, v) -> {
+						Object value = v;
+						if (value instanceof Double d) {
+							value = d.intValue();
+						} else if (value instanceof Map) {
+							Map<String, Object> valueMap = (Map<String, Object>) value;
+							value = FormatterPreferences.getEclipseAlignmentValue(valueMap);
+						}
+						if (value != null) {
+							formatterSettingsMap.put(String.valueOf(k), String.valueOf(value));
+						}
+					});
+					prefs.setFormatterSettings(formatterSettingsMap);
+				}
+			}
+		}
+
 		List<String> javaImportOrder = getList(configuration, JAVA_IMPORT_ORDER_KEY, JAVA_IMPORT_ORDER_DEFAULT);
 		prefs.setImportOrder(javaImportOrder);
 
@@ -1423,6 +1493,15 @@ public class Preferences {
 	public Preferences setSettingsUrl(String settingsUrl) {
 		this.settingsUrl = ResourceUtils.expandPath(settingsUrl);
 		return this;
+	}
+
+	public Preferences setFormatterSettings(Map<String, String> formatterSettings) {
+		this.formatterSettings = formatterSettings;
+		return this;
+	}
+
+	public void setFormatterScheme(FormatterScheme formatterScheme) {
+		this.formatterScheme = formatterScheme;
 	}
 
 	public Preferences setResourceFilters(List<String> resourceFilters) {
@@ -1769,6 +1848,10 @@ public class Preferences {
 
 	public URI getFormatterAsURI() {
 		return asURI(formatterUrl);
+	}
+
+	public Map<String, String> getFormatterSettings() {
+		return this.formatterSettings;
 	}
 
 	public String getSettingsUrl() {
