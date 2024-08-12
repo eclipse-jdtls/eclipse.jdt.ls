@@ -16,6 +16,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -28,7 +29,10 @@ public class GradleUtilsTest {
 
 	@Test
 	public void testGetMajorJavaVersion() {
-		File javaHome = GradleUtils.getJdkToLaunchDaemon("10");
-		assertTrue("javaHome=" + javaHome.getAbsolutePath(), javaHome.getAbsolutePath().contains("fakejdk" + File.separator + "10"));
+		Map<String, File> vmInstalls = GradleUtils.getAllVmInstalls();
+		vmInstalls.forEach((k, v) -> {
+			File javaHome = GradleUtils.getJdkToLaunchDaemon(k);
+			assertTrue("javaHome=" + javaHome.getAbsolutePath(), javaHome.equals(v));
+		});
 	}
 }

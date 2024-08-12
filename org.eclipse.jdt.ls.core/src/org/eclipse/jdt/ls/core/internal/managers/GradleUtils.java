@@ -28,9 +28,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -218,7 +218,7 @@ public class GradleUtils {
 	 * <ul>
 	 * @param initScript the init script file.
 	 * @param checksum the expected checksum of the file.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws NoSuchAlgorithmException
 	 */
@@ -260,7 +260,7 @@ public class GradleUtils {
 			return Collections.emptyMap();
 		}
 		Map<String, String> options = new HashMap<>();
-	
+
 		for(Object arg : compilerArgs) {
 			String argString = String.valueOf(arg);
 			if (argString.startsWith("-A")) {
@@ -338,11 +338,12 @@ public class GradleUtils {
 	 * The results are returned as map, where key is the major version and value is the file instance of
 	 * the installation.
 	 */
-	private static Map<String, File> getAllVmInstalls() {
+	public static Map<String, File> getAllVmInstalls() {
 		List<IVMInstall> vmList = Stream.of(JavaRuntime.getVMInstallTypes())
-						.map(IVMInstallType::getVMInstalls)
-						.flatMap(Arrays::stream)
-						.toList();
+				// https://github.com/eclipse-jdtls/eclipse-jdt-core-incubator/issues/609
+				.filter(t -> (t.getName() != null && !t.getName().startsWith("TestVMInstall-")))
+				.map(IVMInstallType::getVMInstalls)
+				.flatMap(Arrays::stream).toList();
 		Map<String, File> vmInstalls = new HashMap<>();
 		for (IVMInstall vmInstall : vmList) {
 			if (vmInstall instanceof AbstractVMInstall vm) {
