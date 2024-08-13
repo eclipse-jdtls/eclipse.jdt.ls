@@ -367,7 +367,7 @@ public class PasteEventHandler {
 			}
 
 			String possibleFileName = "Untitled";
-			if (!root.types().isEmpty()) {
+			if (!root.types().isEmpty() && root.types().get(0) instanceof TypeDeclaration) {
 				possibleFileName = ((TypeDeclaration) root.types().get(0)).getName().getIdentifier();
 			}
 			if (Files.exists(Paths.get(desiredPath, possibleFileName + ".java"))) {
