@@ -500,9 +500,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		File javaHome = getJavaHome(preferences);
 		File gradleUserHome = getGradleUserHomeFile();
 		List<String> gradleArguments = new ArrayList<>();
-		if (noDaemon) {
-			gradleArguments.add("--no-daemon");
-		}
+		// https://github.com/microsoft/vscode-gradle/issues/1519
+		//if (noDaemon) {
+		//	gradleArguments.add("--no-daemon");
+		//}
 		gradleArguments.addAll(getGradleInitScriptArgs());
 		gradleArguments.addAll(preferences.getGradleArguments());
 		List<String> gradleJvmArguments = preferences.getGradleJvmArguments();

@@ -181,6 +181,10 @@ public final class JobHelpers {
 		waitForJobs(DownloadSourcesJobMatcher.INSTANCE, maxTimeMillis);
 	}
 
+	public static void waitForLookupJDKToolchainsJob(int maxTimeMillis) {
+		waitForJobs(LookupJDKToolchainsJobMatcher.INSTANCE, maxTimeMillis);
+	}
+
 	public static void waitForJobs(IJobMatcher matcher, int maxWaitMillis) {
 		final long limit = System.currentTimeMillis() + maxWaitMillis;
 		while(true) {
@@ -352,6 +356,15 @@ public final class JobHelpers {
 			return ("org.eclipse.m2e.jdt.internal.DownloadSourcesJob".equals(job.getClass().getName()));
 		}
 
+	}
+
+	static class LookupJDKToolchainsJobMatcher implements IJobMatcher {
+		public static final IJobMatcher INSTANCE = new LookupJDKToolchainsJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return ("org.eclipse.m2e.jdt.LookupJDKToolchainsJob".equals(job.getClass().getName()));
+		}
 	}
 
 }
