@@ -85,6 +85,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -131,6 +132,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 			return null;
 		}
 	});
+
+	@BeforeClass
+	public static void initJVMs() {
+		JobHelpers.waitForLookupJDKToolchainsJob(600000);
+		CorePlugin.publishedGradleVersions().getVersions();
+	}
 
 	@Before
 	public void initProjectManager() throws Exception {

@@ -318,7 +318,7 @@ public class GradleUtils {
 			return null;
 		}
 
-		Map<String, File> jdks = getAllVmInstalls();;
+		Map<String, File> jdks = getAllVmInstalls();
 		Entry<String, File> selected = null;
 		for (Entry<String, File> jdk : jdks.entrySet()) {
 			String javaVersion = jdk.getKey();

@@ -12,16 +12,21 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
+
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.m2e.jdt.MavenJdtPlugin;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
 
 /**
  * @author snjeza
@@ -38,8 +43,20 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(MavenJdtPlugin.PLUGIN_ID);
-		prefs.put(PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS, Boolean.FALSE.toString());
+		// https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3238
+		if ("false".equals(System.getProperty(PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS, "true"))) {
+			IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(MavenJdtPlugin.PLUGIN_ID);
+			prefs.put(PREFERENCE_LOOKUP_JVM_IN_TOOLCHAINS, Boolean.FALSE.toString());
+		}
+		try {
+			long start = System.currentTimeMillis();
+			String symbolicName = MavenJdtPlugin.PLUGIN_ID;
+			JavaLanguageServerPlugin.debugTrace("Starting " + symbolicName);
+			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
+			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
+		} catch (BundleException e) {
+			logException(e.getMessage(), e);
+		}
 		TestVMType.setTestJREAsDefault("17");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
