@@ -537,7 +537,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 	protected void failHelper(ICompilationUnit cu) throws OperationCanceledException, CoreException {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
-		Range range = getRange(cu, problems);
+		Range range = getRange(cu, problems.length > 0 ? problems[0] : null);
 		int start = DiagnosticsHelper.getStartOffset(cu, range);
 		int end = DiagnosticsHelper.getEndOffset(cu, range);
 		ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(astRoot, start, end - start);
@@ -549,7 +549,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 	protected boolean helper(ICompilationUnit cu, InitializeScope initializeIn, String expected) throws Exception {
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
-		Range range = getRange(cu, problems);
+		Range range = getRange(cu, problems.length > 0 ? problems[0] : null);
 		int start = DiagnosticsHelper.getStartOffset(cu, range);
 		int end = DiagnosticsHelper.getEndOffset(cu, range);
 		ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(astRoot, start, end - start);

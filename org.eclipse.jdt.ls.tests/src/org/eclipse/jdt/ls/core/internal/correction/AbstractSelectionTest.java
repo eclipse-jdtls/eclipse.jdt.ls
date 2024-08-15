@@ -26,7 +26,7 @@ public class AbstractSelectionTest extends AbstractQuickFixTest {
 	}
 
 	@Override
-	protected Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
+	protected Range getRange(ICompilationUnit cu, IProblem problem) throws JavaModelException {
 		return CodeActionUtil.getRange(cu);
 	}
 }
