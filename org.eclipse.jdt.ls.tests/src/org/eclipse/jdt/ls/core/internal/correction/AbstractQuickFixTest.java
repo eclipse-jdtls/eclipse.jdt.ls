@@ -225,12 +225,8 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	protected Range getRange(ICompilationUnit cu, IProblem[] problems) throws JavaModelException {
-		if (problems.length == 0) {
-			return new Range(new Position(), new Position());
-		}
-		IProblem problem = problems[0];
-		return JDTUtils.toRange(cu, problem.getSourceStart(), 0);
+	protected Range getRange(ICompilationUnit cu, IProblem problem) throws JavaModelException {
+		return (problem == null) ? new Range(new Position(), new Position()) : JDTUtils.toRange(cu, problem.getSourceStart(), 0);
 	}
 
 	protected void setIgnoredCommands(String... ignoredCommands) {
@@ -246,12 +242,21 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu) throws JavaModelException {
-
+		List<Either<Command, CodeAction>> result = new ArrayList<>();
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
-
-		Range range = getRange(cu, problems);
-		return evaluateCodeActions(cu, range);
+		if (problems.length == 0) {
+			Range range = getRange(cu, null);
+			List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+			result.addAll(codeActions);
+		} else {
+			for (IProblem problem : problems) {
+				Range range = getRange(cu, problem);
+				List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+				result.addAll(codeActions);
+			}
+		}
+		return result;
 	}
 
 	protected List<Either<Command, CodeAction>> evaluateCodeActions(ICompilationUnit cu, Range range) throws JavaModelException {
