@@ -532,9 +532,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 				unit.becomeWorkingCopy(new NullProgressMonitor());
 				publishDiagnostics(unit, new NullProgressMonitor());
 			}
-			if (unit.equals(sharedASTProvider.getActiveJavaElement())) {
-				sharedASTProvider.disposeAST();
-			}
+			sharedASTProvider.disposeAST();
 			unit.discardWorkingCopy();
 			if (JDTUtils.isDefaultProject(unit)) {
 				File f = new File(unit.getUnderlyingResource().getLocationURI());
