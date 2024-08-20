@@ -97,7 +97,7 @@ public class CodeActionResolveHandler {
 			PositionInformation[] positionList = group.getPositions();
 			StringBuilder snippet = new StringBuilder();
 			snippet.append(SNIPPET_CHOICE_INDICATOR);
-			if (proposalList.length > 1) {
+			if (proposalList.length > 0) {
 				for (int i = 0; i < positionList.length; i++) {
 					int offset = positionList[i].getOffset();
 					int length = positionList[i].getLength();
@@ -113,11 +113,16 @@ public class CodeActionResolveHandler {
 								snippet.append(((ReplaceEdit) editWithText).getText());
 							}
 						}
-						// If snippet is empty or only has one choice, ignore this group
-						if (snippet.toString().equals(String.valueOf(SNIPPET_CHOICE_INDICATOR)) || snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
+						// If snippet is empty, ignore this group
+						if (snippet.toString().equals(String.valueOf(SNIPPET_CHOICE_INDICATOR))) {
 							break;
 						}
 						snippet.append(SNIPPET_CHOICE_POSTFIX);
+						// If snippet only has one choice, remove choice indicators
+						if (snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
+							snippet.setCharAt(0, ':');
+							snippet.deleteCharAt(snippet.length() - 2);
+						}
 					}
 					snippets.add(new Triple(snippet.toString(), offset, length));
 				}
