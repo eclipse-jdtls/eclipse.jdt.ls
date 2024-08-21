@@ -947,7 +947,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return null;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Change return type of 'getCollection(..)' to 'List'", buf.toString());
+		Expected e1 = new Expected("Change return type of 'getCollection(..)' to 'List<E>'", buf.toString());
 
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
