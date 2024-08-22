@@ -14,9 +14,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
@@ -95,48 +96,62 @@ public class CodeActionResolveHandler {
 			LinkedProposalPositionGroupCore group = it.next();
 			ProposalCore[] proposalList = group.getProposals();
 			PositionInformation[] positionList = group.getPositions();
+			Arrays.sort(positionList, new Comparator<PositionInformation>() {
+				@Override
+				public int compare(PositionInformation p1, PositionInformation p2) {
+					return p1.getOffset() - p2.getOffset();
+				}
+			});
 			StringBuilder snippet = new StringBuilder();
 			snippet.append(SNIPPET_CHOICE_INDICATOR);
-			if (proposalList.length > 0) {
-				for (int i = 0; i < positionList.length; i++) {
-					int offset = positionList[i].getOffset();
-					int length = positionList[i].getLength();
-					// Create snippet on first iteration
-					if (i == 0) {
-						LinkedPosition linkedPosition = new LinkedPosition(JsonRpcHelpers.toDocument(buffer), positionList[i].getOffset(), positionList[i].getLength(), positionList[i].getSequenceRank());
-						for (int j = 0; j < proposalList.length; j++) {
-							org.eclipse.text.edits.TextEdit editWithText = findReplaceOrInsertEdit(proposalList[j].computeEdits(0, linkedPosition, '\u0000', 0, new LinkedModeModel()));
-							if (editWithText != null) {
-								if (snippet.charAt(snippet.length()-1) != SNIPPET_CHOICE_INDICATOR) {
-									snippet.append(SNIPPET_CHOICE_DELIMITER);
-								}
-								snippet.append(((ReplaceEdit) editWithText).getText());
+			for (int i = 0; i < positionList.length; i++) {
+				int offset = positionList[i].getOffset();
+				int length = positionList[i].getLength();
+				// Create snippet on first iteration
+				if (i == 0) {
+					LinkedPosition linkedPosition = new LinkedPosition(JsonRpcHelpers.toDocument(buffer), positionList[i].getOffset(), positionList[i].getLength(), positionList[i].getSequenceRank());
+					for (int j = 0; j < proposalList.length; j++) {
+						org.eclipse.text.edits.TextEdit editWithText = findReplaceOrInsertEdit(proposalList[j].computeEdits(0, linkedPosition, '\u0000', 0, new LinkedModeModel()));
+						if (editWithText != null) {
+							if (snippet.charAt(snippet.length() - 1) != SNIPPET_CHOICE_INDICATOR) {
+								snippet.append(SNIPPET_CHOICE_DELIMITER);
 							}
-						}
-						// If snippet is empty, ignore this group
-						if (snippet.toString().equals(String.valueOf(SNIPPET_CHOICE_INDICATOR))) {
-							break;
-						}
-						snippet.append(SNIPPET_CHOICE_POSTFIX);
-						// If snippet only has one choice, remove choice indicators
-						if (snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
-							snippet.setCharAt(0, ':');
-							snippet.deleteCharAt(snippet.length() - 2);
+							snippet.append(((ReplaceEdit) editWithText).getText());
 						}
 					}
+					//					// If snippet is empty, ignore this group
+					//					if (snippet.toString().equals(String.valueOf(SNIPPET_CHOICE_INDICATOR))) {
+					//						break;
+					//					}
+					snippet.append(SNIPPET_CHOICE_POSTFIX);
+					// If snippet only has one choice, remove choice indicators
+					if (snippet.indexOf(SNIPPET_CHOICE_DELIMITER) == -1) {
+						snippet.setCharAt(0, ':');
+						snippet.deleteCharAt(snippet.length() - 2);
+					}
 					snippets.add(new Triple(snippet.toString(), offset, length));
+				} else {
+					Triple currentSnippet = snippets.get(snippets.size() - 1);
+					currentSnippet.offset.add(offset);
+					currentSnippet.length.add(length);
 				}
 			}
 		}
 		if (!snippets.isEmpty()) {
 			// Sort snippets in descending order based on offset, so that the edits are applied in an order that does not alter the offset of later edits
 			snippets.sort(null);
-			ListIterator<Triple> li = snippets.listIterator(snippets.size());
-			while (li.hasPrevious()) {
-				Triple element = li.previous();
+			// ListIterator<Triple> li = snippets.listIterator(snippets.size());
+			for (int i = snippets.size() - 1; i >= 0; i--) {
+				Triple element = snippets.get(i);
 				element.snippet = SNIPPET_PREFIX + snippetNumber + element.snippet;
 				snippetNumber++;
+				for (int j = 1; j < element.offset.size(); j++) {
+					snippets.add(new Triple(element.snippet.toString(), element.offset.get(j), element.length.get(j)));
+					element.offset.remove(j);
+					element.length.remove(j);
+				}
 			}
+			snippets.sort(null);
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
 					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits();
@@ -146,10 +161,14 @@ public class CodeActionResolveHandler {
 						int rangeStart = JsonRpcHelpers.toOffset(buffer, editRange.getStart().getLine(), editRange.getStart().getCharacter());
 						int rangeEnd = rangeStart + replacementText.length();
 						for (int k = 0; k < snippets.size(); k++) {
-							if (snippets.get(k).offset >= rangeStart && snippets.get(k).offset <= rangeEnd) {
-								int replaceStart = snippets.get(k).offset - rangeStart;
-								int replaceEnd = replaceStart + snippets.get(k).length;
-								replacementText.replace(replaceStart, replaceEnd, snippets.get(k).snippet);
+							Triple snippetHolder = snippets.get(k);
+							if (snippetHolder.offset.get(0) >= rangeStart && snippetHolder.offset.get(0) <= rangeEnd) {
+								int replaceStart = snippetHolder.offset.get(0) - rangeStart;
+								int replaceEnd = replaceStart + snippetHolder.length.get(0);
+								if (snippetHolder.snippet.endsWith(":}")) {
+									snippetHolder.snippet = snippetHolder.snippet.replaceFirst(":", ":" + replacementText.substring(replaceStart, replaceEnd));
+								}
+								replacementText.replace(replaceStart, replaceEnd, snippetHolder.snippet);
 							}
 						}
 						SnippetTextEdit newEdit = new SnippetTextEdit(editRange, replacementText.toString());
@@ -180,18 +199,18 @@ public class CodeActionResolveHandler {
 
 	private static final class Triple implements Comparable<Triple> {
 		public String snippet;
-		public int offset;
-		public int length;
+		public List<Integer> offset = new ArrayList<>();
+		public List<Integer> length = new ArrayList<>();
 
 		Triple(String snippet, int offset, int length) {
 			this.snippet = snippet;
-			this.offset = offset;
-			this.length = length;
+			this.offset.add(offset);
+			this.length.add(length);
 		}
 
 		@Override
 		public int compareTo(Triple other) {
-			return other.offset - this.offset;
+			return other.offset.get(0) - this.offset.get(0);
 		}
 	}
 }
