@@ -537,6 +537,16 @@ public class Preferences {
 	 */
 	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
 
+	/**
+	 * Preference key to set the scope value to use when searching java code. Allowed value are
+	 * <ul>
+	 * <li><code>main</code>			-	Scope for main code</li>
+	 * <li><code>all</code>				-	Scope for both test and main code</li>
+	 * </ul>
+	 * Any other unknown value will be treated as <code>all</code>.
+	 */
+	public static final String JAVA_SEARCH_SCOPE = "java.search.scope";
+
 	public static final String TEXT_DOCUMENT_FORMATTING = "textDocument/formatting";
 	public static final String TEXT_DOCUMENT_RANGE_FORMATTING = "textDocument/rangeFormatting";
 	public static final String TEXT_DOCUMENT_ON_TYPE_FORMATTING = "textDocument/onTypeFormatting";
@@ -704,6 +714,7 @@ public class Preferences {
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
 	private List<String> diagnosticFilter;
+	private SearchScope searchScope;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -778,6 +789,22 @@ public class Preferences {
 				}
 			}
 			return defaultStatus;
+		}
+	}
+
+	public static enum SearchScope {
+		all, main;
+
+		static SearchScope fromString(String value, SearchScope defaultScope) {
+			if (value != null) {
+				String val = value.toLowerCase();
+				try {
+					return valueOf(val);
+				} catch(Exception e) {
+					//fall back to default severity
+				}
+			}
+			return defaultScope;
 		}
 	}
 
@@ -1352,6 +1379,10 @@ public class Preferences {
 			}
 		}
 		prefs.setFilesAssociations(new ArrayList<>(associations));
+		
+		String searchScope = getString(configuration, JAVA_SEARCH_SCOPE, null);
+		prefs.setSearchScope(SearchScope.fromString(searchScope, SearchScope.all));
+		
 		return prefs;
 	}
 
@@ -2622,5 +2653,13 @@ public class Preferences {
 
 	public void setFilesAssociations(List<String> filesAssociations) {
 		this.filesAssociations = filesAssociations;
+	}
+
+	public void setSearchScope(SearchScope value) {
+		this.searchScope = value;
+	}
+
+	public SearchScope getSearchScope() {
+		return searchScope;
 	}
 }
