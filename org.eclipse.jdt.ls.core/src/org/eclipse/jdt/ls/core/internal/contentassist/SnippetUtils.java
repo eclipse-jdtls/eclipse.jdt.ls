@@ -26,6 +26,7 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.ProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.link.LinkedModeModel;
@@ -107,6 +108,7 @@ public class SnippetUtils {
 	 */
 	public static final void addSnippetsIfApplicable(LinkedCorrectionProposalCore proposal, WorkspaceEdit edit) throws CoreException {
 		ICompilationUnit compilationUnit = proposal.getCompilationUnit();
+		String proposalUri = JDTUtils.toURI(compilationUnit);
 		IBuffer buffer = compilationUnit.getBuffer();
 		LinkedProposalModelCore linkedProposals = proposal.getLinkedProposalModel();
 		List<Triple> snippets = new ArrayList<>();
@@ -180,6 +182,7 @@ public class SnippetUtils {
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
 					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits();
+					String editUri = edit.getDocumentChanges().get(i).getLeft().getTextDocument().getUri();
 					for (int j = 0; j < edits.size(); j++) {
 						Range editRange = edits.get(j).getRange();
 						StringBuilder replacementText = new StringBuilder(edits.get(j).getNewText());
@@ -188,7 +191,7 @@ public class SnippetUtils {
 
 						for (int k = 0; k < snippets.size(); k++) {
 							Triple currentSnippet = snippets.get(k);
-							if (currentSnippet.offset.get(0) >= rangeStart && currentSnippet.offset.get(0) <= rangeEnd) {
+							if (proposalUri.equals(editUri) && currentSnippet.offset.get(0) >= rangeStart && currentSnippet.offset.get(0) <= rangeEnd) {
 								int replaceStart = currentSnippet.offset.get(0) - rangeStart;
 								int replaceEnd = replaceStart + currentSnippet.length.get(0);
 								// If snippet text has not been added due to no elements in the proposal list, create snippet based on the text in the given position range
