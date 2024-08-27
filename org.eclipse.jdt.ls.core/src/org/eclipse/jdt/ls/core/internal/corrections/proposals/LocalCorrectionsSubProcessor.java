@@ -33,6 +33,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Annotation;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CastExpression;
@@ -91,7 +92,6 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
-import org.eclipse.jdt.internal.corext.fix.MissingAnnotationAttributesFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
@@ -102,8 +102,6 @@ import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.ChangeDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.InsertDescription;
@@ -111,6 +109,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatu
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -121,6 +120,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -1105,17 +1106,10 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	public static void addValueForAnnotationProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
-		MissingAnnotationAttributesFixCore fix = MissingAnnotationAttributesFixCore.addMissingAnnotationAttributesProposal(context.getASTRoot(), problem);
-		if (fix != null) {
-			String label = fix.getDisplayString();
-			CompilationUnitChange change;
-			try {
-				change = fix.createChange(null);
-				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(label, context.getCompilationUnit(), change, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
-				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
-			} catch (CoreException e) {
-				// do nothing
-			}
+		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
+		if ((selectedNode instanceof Annotation annotation)) {
+			MissingAnnotationAttributesProposalCore proposal = new MissingAnnotationAttributesProposalCore(context.getCompilationUnit(), annotation, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 	}
 
