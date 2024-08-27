@@ -31,13 +31,13 @@ import org.eclipse.jdt.internal.ui.text.correction.AddAllMissingJavadocTagsPropo
 import org.eclipse.jdt.internal.ui.text.correction.AddJavadocCommentProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingJavadocTagProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.AddMissingModuleJavadocTagProposalCore;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.JavadocTagsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
@@ -112,7 +112,7 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	 */
 	@Override
 	protected ProposalKindWrapper addAllMissingJavadocTagsProposal(String label2, ICompilationUnit compilationUnit, ASTNode parentDeclaration, int relevance) {
-		ASTRewriteCorrectionProposalCore addAllMissing = new AddAllMissingJavadocTagsProposalCore(label2, compilationUnit, parentDeclaration, relevance);
+		AddAllMissingJavadocTagsProposalCore addAllMissing = new AddAllMissingJavadocTagsProposalCore(label2, compilationUnit, parentDeclaration, relevance);
 		return CodeActionHandler.wrap(addAllMissing, CodeActionKind.QuickFix);
 	}
 
@@ -121,7 +121,7 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	 */
 	@Override
 	protected ProposalKindWrapper addMissingJavadocTagProposal(String label, ICompilationUnit compilationUnit, ASTNode parentDeclaration, ASTNode node, int relevance) {
-		ASTRewriteCorrectionProposalCore proposal = new AddMissingJavadocTagProposalCore(label, compilationUnit, parentDeclaration, node, relevance);
+		AddMissingJavadocTagProposalCore proposal = new AddMissingJavadocTagProposalCore(label, compilationUnit, parentDeclaration, node, relevance);
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
@@ -130,7 +130,7 @@ public class JavadocTagsSubProcessor extends JavadocTagsBaseSubProcessor<Proposa
 	 */
 	@Override
 	protected ProposalKindWrapper addAllMissingModuleJavadocTagsProposal(String label2, ICompilationUnit compilationUnit, ModuleDeclaration moduleDecl, ASTNode node, int relevance) {
-		ASTRewriteCorrectionProposalCore addAllMissing = new AddAllMissingJavadocTagsProposalCore(label2, compilationUnit, moduleDecl, relevance);
+		AddAllMissingJavadocTagsProposalCore addAllMissing = new AddAllMissingJavadocTagsProposalCore(label2, compilationUnit, moduleDecl, relevance);
 		return CodeActionHandler.wrap(addAllMissing, CodeActionKind.QuickFix);
 	}
 
