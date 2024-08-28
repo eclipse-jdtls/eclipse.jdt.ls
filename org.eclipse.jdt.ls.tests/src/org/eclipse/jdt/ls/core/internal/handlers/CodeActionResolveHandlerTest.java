@@ -385,7 +385,6 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
-		Assert.assertNotNull(quickfixActions);
 		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
 			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
@@ -402,6 +401,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
 		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
 		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){

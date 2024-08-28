@@ -24,12 +24,20 @@ public class SnippetTextEdit extends TextEdit {
 		this.snippet = new StringValue(snippet);
 	}
 
-	private static final class StringValue {
+	public StringValue getSnippet() {
+		return snippet;
+	}
+
+	public static final class StringValue {
 		public static final String kind = "snippet";
 		String value;
 
 		StringValue(String value) {
 			this.value = value;
+		}
+
+		public String getValue() {
+			return value;
 		}
 	}
 }
