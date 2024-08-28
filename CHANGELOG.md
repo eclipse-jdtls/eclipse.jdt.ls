@@ -1,5 +1,19 @@
 # Change Log
 
+# [1.39.0 (August 28th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/131?closed=1)
+ * enhancement - Support custom source file extensions. See [#3222](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3222).
+ * enhancement - Notify that enabling preview features on incompatible compliance level fails build. See [#3131](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3131).
+ * bug fix - Fix `ClassCastException` for the file paste event. See [#3239](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3239).
+ * bug fix - Dispose of stale AST model references on deletion. See [#3244](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3244).
+ * bug fix - Better handling when file path contains non-ASCII characters. See [#3235](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3235).
+ * bug fix - Add Gradle 8.8 to compatibility check. See [#3212](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3212).
+ * bug fix - Fix Gradle tests started with Java 23. See [#3238](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3238).
+ * bug fix - Enable M2E JDK toolchain lookup (`toolchains.xml`) for project manager tests. See [#3240](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3240).
+ * bug fix - Fix `AbstractQuickFixTest#evaluateCodeActions(..)` logic. See [#3242](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3242).
+ * dependencies - Update to LSP4J 0.23.1. See [#3209](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3209).
+ * dependencies - Update target platform to newer 4.33-I-builds (I20240820-1800). See [#3246](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3246).
+ * dependencies - Bump org.apache.maven.plugins:maven-dependency-plugin from 3.7.1 to 3.8.0. See [#3248](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3248).
+
 # [1.38.0 (August 1st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/130?closed=1)
  * performance - Clean up invalid projects during the initialization. See [#3208](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3208).
  * enhancement - Add `java.diagnostic.filter` to exclude files from diagnostic publishing. See [#3218](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3218).
