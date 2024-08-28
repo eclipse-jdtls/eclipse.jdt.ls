@@ -49,7 +49,8 @@ public class CodeActionResolveHandler {
 		try {
 			Either<ChangeCorrectionProposalCore, CodeActionProposal> proposal = response.getProposals().get(proposalId);
 			WorkspaceEdit edit = proposal.isLeft() ? ChangeUtil.convertToWorkspaceEdit(proposal.getLeft().getChange()) : proposal.getRight().resolveEdit(monitor);
-			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceSnippetEditSupported() && proposal.isLeft() && proposal.getLeft() instanceof LinkedCorrectionProposalCore) {
+			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceSnippetEditSupported() && edit.getDocumentChanges() != null 
+					&& proposal.isLeft() && proposal.getLeft() instanceof LinkedCorrectionProposalCore) {
 				SnippetUtils.addSnippetsIfApplicable((LinkedCorrectionProposalCore) proposal.getLeft(), edit);
 			}
 			if (ChangeUtil.hasChanges(edit)) {

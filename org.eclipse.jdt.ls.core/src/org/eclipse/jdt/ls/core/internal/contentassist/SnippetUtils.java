@@ -135,7 +135,7 @@ public class SnippetUtils {
 
 					// Groups with no proposals will have the snippet text added while amending the WorkspaceEdit
 					for (int j = 0; j < proposalList.length; j++) {
-						org.eclipse.text.edits.TextEdit editWithText = findReplaceOrInsertEdit(proposalList[j].computeEdits(0, linkedPosition, '\u0000', 0, new LinkedModeModel()));
+						org.eclipse.text.edits.TextEdit editWithText = findReplaceEdit(proposalList[j].computeEdits(0, linkedPosition, '\u0000', 0, new LinkedModeModel()));
 						if (editWithText != null) {
 							snippet.append(((ReplaceEdit) editWithText).getText());
 							snippet.append(SNIPPET_CHOICE_SEPARATOR);
@@ -178,7 +178,6 @@ public class SnippetUtils {
 			// Re-sort snippets (with the added individual instances) by offset in descending order,
 			// so that the amendments to the text edit are applied in an order that does not alter the offset of later amendments
 			snippets.sort(null);
-
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
 					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits();
@@ -210,17 +209,16 @@ public class SnippetUtils {
 		}
 	}
 
-	private static final org.eclipse.text.edits.TextEdit findReplaceOrInsertEdit(org.eclipse.text.edits.TextEdit edit) {
+	private static final org.eclipse.text.edits.TextEdit findReplaceEdit(org.eclipse.text.edits.TextEdit edit) {
 		if (edit instanceof ReplaceEdit && !((ReplaceEdit) edit).getText().isBlank()) {
 			return edit;
 		}
 
 		if (edit instanceof MultiTextEdit) {
-			org.eclipse.text.edits.TextEdit[] children = edit.getChildren();
-			for (int i = 0; i < children.length; i++) {
-				org.eclipse.text.edits.TextEdit child = findReplaceOrInsertEdit(children[i]);
-				if (child != null) {
-					return child;
+			for (org.eclipse.text.edits.TextEdit child : edit.getChildren()) {
+				org.eclipse.text.edits.TextEdit replaceEdit = findReplaceEdit(child);
+				if (replaceEdit != null) {
+					return replaceEdit;
 				}
 			}
 		}
