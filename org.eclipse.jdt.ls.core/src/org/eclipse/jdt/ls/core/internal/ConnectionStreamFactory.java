@@ -40,7 +40,7 @@ import org.eclipse.core.runtime.Platform;
  */
 public class ConnectionStreamFactory {
 
-	interface StreamProvider {
+	protected interface StreamProvider {
 		InputStream getInputStream() throws IOException;
 
 		OutputStream getOutputStream() throws IOException;
