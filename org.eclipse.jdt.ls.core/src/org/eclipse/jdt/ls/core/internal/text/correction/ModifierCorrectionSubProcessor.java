@@ -68,8 +68,6 @@ import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore.MakeTypeAbstractOperation;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
-import org.eclipse.jdt.ui.text.java.IInvocationContext;
-import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore;
@@ -79,6 +77,8 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.text.java.IInvocationContext;
+import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -541,7 +541,7 @@ public class ModifierCorrectionSubProcessor {
 		boolean hasNoBody = decl.getBody() == null;
 
 		int id = problem.getProblemId();
-		if (id == IProblem.AbstractMethodInAbstractClass || id == IProblem.EnumAbstractMethodMustBeImplemented || id == IProblem.AbstractMethodInEnum || parentIsAbstractClass) {
+		if (id == IProblem.AbstractMethodInAbstractClass || id == IProblem.EnumAbstractMethodMustBeImplemented || id == IProblem.AbstractMethodInEnum || id == IProblem.BodyForAbstractMethod || parentIsAbstractClass) {
 			AST ast = astRoot.getAST();
 			ASTRewrite rewrite = ASTRewrite.create(ast);
 
@@ -981,10 +981,10 @@ public class ModifierCorrectionSubProcessor {
 		if (!(selectedNode instanceof SimpleName)) {
 			return;
 		}
-		if (!(((SimpleName) selectedNode).getParent() instanceof TypeDeclaration)) {
+		if (!(selectedNode.getParent() instanceof TypeDeclaration)) {
 			return;
 		}
-		TypeDeclaration typeDecl = (TypeDeclaration) ((SimpleName) selectedNode).getParent();
+		TypeDeclaration typeDecl = (TypeDeclaration) selectedNode.getParent();
 		boolean isInterface = typeDecl.isInterface();
 
 		ICompilationUnit cu = context.getCompilationUnit();
