@@ -775,7 +775,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"package test1;\n",
 				"public class B<T> {\n",
 				"	private T t;\n",
-				"	public <U|* extends Number> inspect(U u) { return u; }\n",
+				"	public <U|* extends Number> U inspect(U u) { return u; }\n",
 				"}\n"
 		};
 
@@ -791,7 +791,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				"package test1;\n" +
 				"public class B<T> {\n" +
 				"	private T t;\n" +
-				"	public <UU extends Number> inspect(UU u) { return u; }\n" +
+				"	public <UU extends Number> UU inspect(UU u) { return u; }\n" +
 				"}\n"
 				);
 	}
