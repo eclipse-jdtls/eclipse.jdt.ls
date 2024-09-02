@@ -766,7 +766,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	@Test
 	public void testCleanUpBuildServerFootprint() throws Exception {
 		IProject project = importGradleProject("gradle-build-server");
-		assertFalse(project.hasNature(GradleProjectImporter.GRADLE_BUILD_SERVER_NATURE));
+		assertFalse(ProjectUtils.hasNature(project, GradleProjectImporter.GRADLE_BUILD_SERVER_NATURE));
 		for (ICommand command : project.getDescription().getBuildSpec()) {
 			if (Objects.equals(command.getBuilderName(), GradleProjectImporter.GRADLE_BUILD_SERVER_BUILDER_ID) ||
 					Objects.equals(command.getBuilderName(), GradleProjectImporter.JAVA_PROBLEM_CHECKER_ID)) {

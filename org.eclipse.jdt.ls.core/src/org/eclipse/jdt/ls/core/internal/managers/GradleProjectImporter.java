@@ -169,7 +169,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 				// If code goes here, it means that the project cannot be imported by gradle build server.
 				// The buildship should try to import it if it can. And the buildship importer should clean
 				// up the configurations of the gradle build server in the project description if it has.
-				if (!ProjectUtils.isGradleProject(project) && !project.hasNature(GRADLE_BUILD_SERVER_NATURE)) {
+				if (!ProjectUtils.isGradleProject(project) && !ProjectUtils.hasNature(project, GRADLE_BUILD_SERVER_NATURE)) {
 					String path = project.getLocation().toOSString();
 					gradleDetector.addExclusions(path.replace("\\", "\\\\"));
 				}
@@ -731,7 +731,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	private static void eliminateBuildServerFootprint(IProgressMonitor monitor) {
 		for (IProject project : ProjectUtils.getAllProjects()) {
 			try {
-				if (project.hasNature(GRADLE_BUILD_SERVER_NATURE)) {
+				if (ProjectUtils.hasNature(project, GRADLE_BUILD_SERVER_NATURE)) {
 					GradleUtils.removeConfigurationFromProjectDescription(
 						project,
 						new HashSet<>(Arrays.asList(GRADLE_BUILD_SERVER_NATURE)),
