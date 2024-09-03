@@ -195,6 +195,10 @@ public class ClientPreferences {
 		return capabilities.getWorkspace() != null && isTrue(capabilities.getWorkspace().getApplyEdit());
 	}
 
+	public boolean isWorkspaceSnippetEditSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("snippetEditSupport", "false").toString());
+	}
+
 	public boolean isProgressReportSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("progressReportProvider", "false").toString());
 	}

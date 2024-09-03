@@ -51,6 +51,8 @@ import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.extended.SnippetTextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
 import org.junit.Before;
@@ -358,6 +360,48 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("    }\n");
 		buf.append("}\n");
 		Assert.assertEquals(buf.toString(), actual);
+	}
+
+	@Test
+	public void testResolveCodeAction_LinkedProposals() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isWorkspaceSnippetEditSupported()).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(true);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("import java.util.HashMap;\n");
+		buf.append("import java.util.List;\n");
+		buf.append("public class E {\n");
+		buf.append("    private void hello() {\n");
+		buf.append("        List<String> test = new HashMap();\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit unit = defaultPackage.createCompilationUnit("E.java", buf.toString(), false, null);
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "new HashMap()");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.TypeMismatch), range)), Collections.singletonList(CodeActionKind.QuickFix));
+		params.setContext(context);
+
+		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
+		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : quickfixActions) {
+			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
+			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+		}
+
+		Optional<Either<Command, CodeAction>> removeUnusedResponse = quickfixActions.stream().filter(codeAction -> {
+			return "Change type of 'test' to 'HashMap'".equals(codeAction.getRight().getTitle());
+		}).findFirst();
+		Assert.assertTrue("Should return the quickfix \"Change type of 'test' to 'HashMap'\"", removeUnusedResponse.isPresent());
+		CodeAction unresolvedCodeAction = removeUnusedResponse.get().getRight();
+
+		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
+		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){

@@ -18,9 +18,11 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.contentassist.SnippetUtils;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -46,8 +48,11 @@ public class CodeActionResolveHandler {
 
 		try {
 			Either<ChangeCorrectionProposalCore, CodeActionProposal> proposal = response.getProposals().get(proposalId);
-			WorkspaceEdit edit = proposal.isLeft() ? ChangeUtil.convertToWorkspaceEdit(proposal.getLeft().getChange())
-				: proposal.getRight().resolveEdit(monitor);
+			WorkspaceEdit edit = proposal.isLeft() ? ChangeUtil.convertToWorkspaceEdit(proposal.getLeft().getChange()) : proposal.getRight().resolveEdit(monitor);
+			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isWorkspaceSnippetEditSupported() && edit.getDocumentChanges() != null 
+					&& proposal.isLeft() && proposal.getLeft() instanceof LinkedCorrectionProposalCore) {
+				SnippetUtils.addSnippetsIfApplicable((LinkedCorrectionProposalCore) proposal.getLeft(), edit);
+			}
 			if (ChangeUtil.hasChanges(edit)) {
 				params.setEdit(edit);
 			}
