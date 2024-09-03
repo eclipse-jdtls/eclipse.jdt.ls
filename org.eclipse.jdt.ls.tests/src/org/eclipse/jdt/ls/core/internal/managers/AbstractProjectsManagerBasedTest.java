@@ -67,6 +67,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstallType;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
@@ -76,6 +81,7 @@ import org.eclipse.jdt.ls.core.internal.ProgressReport;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
+import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
@@ -137,6 +143,22 @@ public abstract class AbstractProjectsManagerBasedTest {
 	public static void initJVMs() {
 		JobHelpers.waitForLookupJDKToolchainsJob(600000);
 		CorePlugin.publishedGradleVersions().getVersions();
+		// see https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3261
+		IVMInstallType[] vmInstallTypes = JavaRuntime.getVMInstallTypes();
+		for (IVMInstallType vmInstallType : vmInstallTypes) {
+			if (vmInstallType instanceof TestVMType) {
+				for (IVMInstall vm : vmInstallType.getVMInstalls()) {
+					IExecutionEnvironmentsManager manager = JavaRuntime.getExecutionEnvironmentsManager();
+					IExecutionEnvironment[] environments = manager.getExecutionEnvironments();
+					for (IExecutionEnvironment environment : environments) {
+						if (environment.isStrictlyCompatible(vm)) {
+							environment.setDefaultVM(vm);
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	@Before

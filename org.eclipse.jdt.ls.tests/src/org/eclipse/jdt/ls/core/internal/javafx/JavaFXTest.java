@@ -37,21 +37,20 @@ import org.junit.Test;
 
 public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 
-	private static final String VERSION_1_8 = "1.8";
 	private static final String JAVA_SE_8 = "JavaSE-1.8";
 	private static final String JAVA_SE_17 = "JavaSE-17";
 
 	/**
-	 * Test musts run with the -Djdkfx8.home=/path/to/jdk8+fx System property, or it
-	 * will be skipped.
+	 * Test requires Java 8 in toolchains.xml
 	 */
 	@Test
 	public void testJavaFX() throws Exception {
 		IVMInstall defaultJRE = JavaRuntime.getDefaultVMInstall();
 		String name = "java8fx";
 		IProject project = null;
+		IExecutionEnvironment java8env = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
+		IVMInstall oldJavaVm = java8env.getDefaultVM();
 		try {
-			IExecutionEnvironment java8env = JVMConfigurator.getExecutionEnvironment(JAVA_SE_8);
 			IVMInstall java8vm = null;
 			IVMInstall java8DefaultVm = null;
 			if (java8env != null) {
@@ -89,6 +88,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 			if (environment != null) {
 				environment.setDefaultVM(defaultJRE);
 			}
+			java8env.setDefaultVM(oldJavaVm);
 		}
 	}
 
