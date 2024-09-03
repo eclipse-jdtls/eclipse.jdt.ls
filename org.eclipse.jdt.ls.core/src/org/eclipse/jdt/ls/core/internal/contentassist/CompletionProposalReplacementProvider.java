@@ -89,6 +89,7 @@ public class CompletionProposalReplacementProvider {
 	private static final char COMMA = ',';
 	private static final char LESS = '<';
 	private static final char GREATER = '>';
+	private static final char[] CHARS_DOT = new char[] { '.' };
 	private final ICompilationUnit compilationUnit;
 	private final int offset;
 	private final CompletionContext context;
@@ -148,7 +149,10 @@ public class CompletionProposalReplacementProvider {
 								completionBuffer.append(edit.getNewText());
 								setInsertReplaceRange(requiredProposal, insertReplaceEdit);
 						} else {
-							additionalTextEdits.add(edit);
+							// skip if its chain completions since qualifier is already in completion.
+							if(!isChainCompletion(proposal)) {
+								additionalTextEdits.add(edit);
+							}
 						}
 						break;
 					default:
@@ -209,7 +213,6 @@ public class CompletionProposalReplacementProvider {
 			if (!completionBuffer.isEmpty()) {
 				return completionBuffer.toString();
 			}
-
 			String defaultText = getDefaultTextEditText(item);
 			int start = proposal.getReplaceStart();
 			int end = proposal.getReplaceEnd();
@@ -615,7 +618,19 @@ public class CompletionProposalReplacementProvider {
 		if (proposal.getKind() != CompletionProposal.CONSTRUCTOR_INVOCATION) {
 			String str = new String(proposal.getName());
 			if (client.isCompletionSnippetsSupported()) {
-				str = CompletionUtils.sanitizeCompletion(str);
+				var coreCompletion = new String(proposal.getCompletion());
+				if(isChainCompletion(proposal)) {
+					// add support for chain completion's chain arguments such as array index's or method arguments
+					// so we add the completion's substring before the last '(' as the name replacement.
+					int lparenIndex = coreCompletion.lastIndexOf('(');
+					if(lparenIndex > -1) {
+						str = coreCompletion.substring(0, lparenIndex);
+					} else {
+						str = coreCompletion;
+					}
+				} else {
+					str = CompletionUtils.sanitizeCompletion(str);
+				}
 			}
 			buffer.append(str);
 		}
@@ -657,6 +672,7 @@ public class CompletionProposalReplacementProvider {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 		}
+		final var placeholderOffset = placeholderOffset(buffer);
 		for (int i= 0; i < count; i++) {
 			if (i != 0) {
 				buffer.append(COMMA);
@@ -674,11 +690,21 @@ public class CompletionProposalReplacementProvider {
 				argument = replace.toCharArray();
 			}
 			buffer.append("${");
-			buffer.append(Integer.toString(i+1));
+			buffer.append(Integer.toString(i + placeholderOffset));
 			buffer.append(":");
 			buffer.append(argument);
 			buffer.append("}");
 		}
+	}
+
+	private int placeholderOffset(StringBuilder buffer) {
+		int count = 1; // start with offset 1
+		int index = 0;
+		while ((index = buffer.indexOf("${", index)) != -1) {
+			count++;
+			index++;
+		}
+		return count;
 	}
 
 	private String[] guessParameters(char[][] parameterNames, CompletionProposal proposal) throws JavaModelException {
@@ -1162,4 +1188,15 @@ public class CompletionProposalReplacementProvider {
 		return qualifiedTypeName;
 	}
 
+	/**
+	 * Return if the given proposal is an chain completion proposal. A chain completion proposal is a proposal that is
+	 * either a METHOD_REF or FIELD_REF and contains a dot in the completion string.
+	 */
+	private boolean isChainCompletion(CompletionProposal proposal) {
+		if(proposal.getKind() == CompletionProposal.FIELD_REF || proposal.getKind() == CompletionProposal.METHOD_REF) {
+			char[] completion = proposal.getCompletion();
+			return CharOperation.contains(completion, CHARS_DOT);
+		}
+		return false;
+	}
 }

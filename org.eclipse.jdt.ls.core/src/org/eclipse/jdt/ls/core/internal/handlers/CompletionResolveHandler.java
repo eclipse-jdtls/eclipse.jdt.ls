@@ -216,6 +216,7 @@ public class CompletionResolveHandler {
 				try {
 					IType type = unit.getJavaProject().findType(typeName);
 					if (type != null && proposal.getName() != null) {
+						String name = String.valueOf(proposal.getName());
 						String[] paramSigs = CharOperation.NO_STRINGS;
 						if (proposal instanceof InternalCompletionProposal internalProposal) {
 							Binding binding = internalProposal.getBinding();
@@ -232,9 +233,22 @@ public class CompletionResolveHandler {
 									parameters[i] = getLowerBound(parameters[i]);
 								}
 								paramSigs = parameters;
+							} else if(proposal.getKind() == CompletionProposal.METHOD_REF ||
+								proposal.getKind() == CompletionProposal.FIELD_REF) {
+								// this is mainly for chain completion handling
+								int dotIndex = name.lastIndexOf('.');
+								if(dotIndex > -1) {
+									name = name.substring(dotIndex + 1);
+									if(proposal.getKind() == CompletionProposal.METHOD_REF) {
+										String[] parameters = Signature.getParameterTypes(String.valueOf(fix83600(proposal.getSignature())));
+										for (int i = 0; i < parameters.length; i++) {
+											parameters[i] = getLowerBound(parameters[i]);
+										}
+										paramSigs = parameters;
+									}
+								}
 							}
 						}
-						String name = String.valueOf(proposal.getName());
 						IMethod method = type.getMethod(name, paramSigs);
 						IMethod[] methods = type.findMethods(method);
 						if (methods != null && methods.length > 0) {
