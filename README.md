@@ -13,7 +13,7 @@ and can be used with any editor that supports the protocol, to offer good suppor
 
 Features
 --------------
-* Supports compiling projects from Java 1.5 through 19
+* Supports compiling projects from Java 1.8 through 22
 * Maven pom.xml project support
 * Gradle project support (with experimental Android project import support)
 * Standalone Java files support
