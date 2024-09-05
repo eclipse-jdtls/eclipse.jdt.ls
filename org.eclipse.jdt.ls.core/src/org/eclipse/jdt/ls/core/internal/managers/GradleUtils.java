@@ -24,8 +24,10 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,7 +40,11 @@ import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -380,5 +386,34 @@ public class GradleUtils {
 
 	public static String getMajorJavaVersion(String version) {
 		return CompilerOptions.versionFromJdkLevel(CompilerOptions.versionToJdkLevel(version));
+	}
+
+	/**
+	 * Remove the given nature id and builder name from the project description.
+	 * @param project the project.
+	 * @param natureIdsToRemove the nature ids to remove.
+	 * @param builderNameToRemove the builder names to remove.
+	 */
+	public static void removeConfigurationFromProjectDescription(IProject project, Collection<String> natureIdsToRemove,
+			Collection<String> builderNameToRemove, IProgressMonitor monitor) throws CoreException {
+		IProjectDescription description = project.getDescription();
+		ICommand[] commands = description.getBuildSpec();
+		List<ICommand> newSpecs = new LinkedList<>();
+		for (ICommand command : commands) {
+			if (!builderNameToRemove.contains(command.getBuilderName())) {
+				newSpecs.add(command);
+			}
+		}
+		description.setBuildSpec(newSpecs.toArray(new ICommand[newSpecs.size()]));
+
+		String[] natureIds = description.getNatureIds();
+		List<String> newNatureIds = new LinkedList<>();
+		for (String natureId : natureIds) {
+			if (!natureIdsToRemove.contains(natureId)) {
+				newNatureIds.add(natureId);
+			}
+		}
+		description.setNatureIds(newNatureIds.toArray(new String[newNatureIds.size()]));
+		project.setDescription(description, IResource.AVOID_NATURE_CONFIG ,monitor);
 	}
 }

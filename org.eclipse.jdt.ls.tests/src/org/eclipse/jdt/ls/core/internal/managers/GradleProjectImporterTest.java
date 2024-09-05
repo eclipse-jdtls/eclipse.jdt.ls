@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.eclipse.buildship.core.BuildConfiguration;
@@ -39,6 +41,7 @@ import org.eclipse.buildship.core.LocalGradleDistribution;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
+import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -757,6 +760,19 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		File projectRoot = new File(getSourceProjectDirectory(), "gradle/no-gradlew");
 		GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(projectRoot.toPath());
 		assertTrue(distribution instanceof WrapperGradleDistribution);
+	}
+	
+
+	@Test
+	public void testCleanUpBuildServerFootprint() throws Exception {
+		IProject project = importGradleProject("gradle-build-server");
+		assertFalse(ProjectUtils.hasNature(project, GradleProjectImporter.GRADLE_BUILD_SERVER_NATURE));
+		for (ICommand command : project.getDescription().getBuildSpec()) {
+			if (Objects.equals(command.getBuilderName(), GradleProjectImporter.GRADLE_BUILD_SERVER_BUILDER_ID) ||
+					Objects.equals(command.getBuilderName(), GradleProjectImporter.JAVA_PROBLEM_CHECKER_ID)) {
+				fail("Build server builders should have been removed");
+			}
+		}
 	}
 
 	private ProjectConfiguration getProjectConfiguration(IProject project) {

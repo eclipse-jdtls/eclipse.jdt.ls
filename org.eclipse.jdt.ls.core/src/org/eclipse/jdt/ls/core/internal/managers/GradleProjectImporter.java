@@ -114,6 +114,19 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	public static final String GRADLE_MARKER_COLUMN_START = "gradleColumnStart";
 	public static final String GRADLE_MARKER_COLUMN_END = "gradleColumnEnd";
 
+	/**
+	 * Nature id of the gradle build server project.
+	 */
+	public static final String GRADLE_BUILD_SERVER_NATURE = "com.microsoft.gradle.bs.importer.GradleBuildServerProjectNature";
+	/**
+	 * Builder id of the gradle build server.
+	 */
+	public static final String GRADLE_BUILD_SERVER_BUILDER_ID = "com.microsoft.gradle.bs.importer.builder.BuildServerBuilder";
+	/**
+	 * Builder id of the java problem checker, it's used to provide diagnostics during auto build for gradle build server projects.
+	 */
+	public static final String JAVA_PROBLEM_CHECKER_ID = "java.bs.JavaProblemChecker";
+
 	private static final int GRADLE_RELATED = 0x00080000;
 	private static final int INVALID_TYPE_CODE_ID = GRADLE_RELATED + 1;
 
@@ -152,7 +165,11 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 					.addExclusions("**/build")//default gradle build dir
 					.addExclusions("**/bin");
 			for (IProject project : ProjectUtils.getAllProjects()) {
-				if (!ProjectUtils.isGradleProject(project)) {
+				// The gradle build server has higher priority than buildship when importing gradle projects.
+				// If code goes here, it means that the project cannot be imported by gradle build server.
+				// The buildship should try to import it if it can. And the buildship importer should clean
+				// up the configurations of the gradle build server in the project description if it has.
+				if (!ProjectUtils.isGradleProject(project) && !ProjectUtils.hasNature(project, GRADLE_BUILD_SERVER_NATURE)) {
 					String path = project.getLocation().toOSString();
 					gradleDetector.addExclusions(path.replace("\\", "\\\\"));
 				}
@@ -301,7 +318,7 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		}
 
 		GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
-
+		eliminateBuildServerFootprint(monitor);
 		subMonitor.done();
 	}
 
@@ -705,6 +722,27 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	public static boolean isFailedStatus(IStatus status) {
 		return status != null && !status.isOK() && status.getException() != null;
+	}
+
+	/**
+	 * Eliminate the footprint of the Gradle build server projects. This is necessary
+	 * cleanup in case that user uninstalls/disables the gradle extension.
+	 */
+	private static void eliminateBuildServerFootprint(IProgressMonitor monitor) {
+		for (IProject project : ProjectUtils.getAllProjects()) {
+			try {
+				if (ProjectUtils.hasNature(project, GRADLE_BUILD_SERVER_NATURE)) {
+					GradleUtils.removeConfigurationFromProjectDescription(
+						project,
+						new HashSet<>(Arrays.asList(GRADLE_BUILD_SERVER_NATURE)),
+						new HashSet<>(Arrays.asList(GRADLE_BUILD_SERVER_BUILDER_ID, JAVA_PROBLEM_CHECKER_ID)),
+						monitor
+					);
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to remove Gradle build server configuration from project description", e);
+			}
+		}
 	}
 
 	public class GradleCompatibilityStatus extends Status {
