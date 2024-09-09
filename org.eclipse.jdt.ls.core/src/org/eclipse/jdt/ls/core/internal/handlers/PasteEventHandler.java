@@ -224,6 +224,7 @@ public class PasteEventHandler {
 		ASTParser parser = ASTParser.newParser(AST.getJLSLatest());
 		parser.setSource(cu);
 		parser.setResolveBindings(false);
+		parser.setStatementsRecovery(true);
 		CompilationUnit ast = (CompilationUnit) parser.createAST(monitor);
 		DocumentPasteEdit edit = handleStringPasteEvent(params, cu, ast, monitor);
 		if (edit == null) {
