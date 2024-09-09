@@ -67,6 +67,28 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 	}
 
 	@Test
+	public void testPasteWithErrorOnLine() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
+				"package test;\n" + //
+						"public class A {\n" + //
+						"public void test() {\n" + //
+						"\tString asdf = \"\"\n" + //
+						"}\n" + //
+						"}\n",
+				false, monitor);
+
+		var params = new PasteEventParams( //
+				createLocation(JDTUtils.toUri(unit), 3, 16, 3, 16), //
+				"aaa\naaa", //
+				null, //
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
+	}
+
+	@Test
 	public void testPasteWindowsNewlineInCopiedText() throws CoreException {
 		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", //
 				"package test;\n" + //
