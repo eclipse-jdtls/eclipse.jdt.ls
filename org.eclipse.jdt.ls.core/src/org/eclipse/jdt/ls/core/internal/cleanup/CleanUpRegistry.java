@@ -27,9 +27,9 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 
@@ -111,7 +111,7 @@ public class CleanUpRegistry {
 		}
 
 		// build the context after setting the compiler options so that the built AST has all the required markers
-		CleanUpContextCore context = CleanUpUtils.getCleanUpContext(textDocumentId, opts, monitor);
+		CleanUpContext context = CleanUpUtils.getCleanUpContext(textDocumentId, opts, monitor);
 		List<TextEdit> textEdits = new ArrayList<>();
 		ICompilationUnit cu = context.getCompilationUnit();
 

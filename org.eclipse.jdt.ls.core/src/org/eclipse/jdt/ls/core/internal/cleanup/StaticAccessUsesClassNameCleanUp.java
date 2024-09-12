@@ -18,9 +18,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 
 /**
  * Represents a clean up that prefixes all static member accesses with the
@@ -34,7 +34,7 @@ public class StaticAccessUsesClassNameCleanUp implements ISimpleCleanUp {
 	}
 
 	@Override
-	public ICleanUpFixCore createFix(CleanUpContextCore context) throws CoreException {
+	public ICleanUpFix createFix(CleanUpContext context) throws CoreException {
 		CompilationUnit unit = context.getAST();
 		if (unit == null) {
 			return null;

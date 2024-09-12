@@ -24,7 +24,6 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.util.BasicElementLabels;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
@@ -41,6 +40,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -112,7 +112,7 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	@Override
 	public void addRemoveImportStatementProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		super.addRemoveImportStatementProposals(context, problem, proposals);
-		ICleanUpFixCore removeAllUnusedImportsFix = UnusedCodeFixCore.createCleanUp(context.getASTRoot(), false, false, false, false, false, true, false, false);
+		ICleanUpFix removeAllUnusedImportsFix = UnusedCodeFixCore.createCleanUp(context.getASTRoot(), false, false, false, false, false, true, false, false);
 		if (removeAllUnusedImportsFix != null) {
 			try {
 				CompilationUnitChange change = removeAllUnusedImportsFix.createChange(null);

@@ -16,8 +16,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 
 /**
  * Represents a cleanup change that doesn't need any further configuration (eg.
@@ -39,7 +39,7 @@ public interface ISimpleCleanUp {
 	 *            the context for the clean up (the compilation unit and the AST)
 	 * @return the cleanup fix for the given source file
 	 */
-	ICleanUpFixCore createFix(CleanUpContextCore context) throws CoreException;
+	ICleanUpFix createFix(CleanUpContext context) throws CoreException;
 
 	/**
 	 * Returns a list of all compiler markers (i.e. info, warning, error) that are

@@ -19,12 +19,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.text.edits.TextEdit;
 
@@ -44,14 +44,14 @@ public class CleanUpUtils {
 	 *            the progress monitor
 	 * @return the clean up context for the given text document
 	 */
-	public static CleanUpContextCore getCleanUpContext(TextDocumentIdentifier textDocumentId, Map<String, String> compilerOpts, IProgressMonitor monitor) {
+	public static CleanUpContext getCleanUpContext(TextDocumentIdentifier textDocumentId, Map<String, String> compilerOpts, IProgressMonitor monitor) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(textDocumentId.getUri());
 		return getCleanUpContext(unit, compilerOpts, monitor);
 	}
 
-	public static CleanUpContextCore getCleanUpContext(ICompilationUnit unit, Map<String, String> compilerOpts, IProgressMonitor monitor) {
+	public static CleanUpContext getCleanUpContext(ICompilationUnit unit, Map<String, String> compilerOpts, IProgressMonitor monitor) {
 		CompilationUnit ast = createASTWithOpts(unit, compilerOpts, monitor);
-		return new CleanUpContextCore(unit, ast);
+		return new CleanUpContext(unit, ast);
 	}
 
 	/**
@@ -65,10 +65,10 @@ public class CleanUpUtils {
 	 *            the progress monitor
 	 * @return a non-null list of text edits for the given clean up
 	 */
-	public static TextEdit getTextEditFromCleanUp(ISimpleCleanUp cleanUp, CleanUpContextCore context, IProgressMonitor monitor) {
+	public static TextEdit getTextEditFromCleanUp(ISimpleCleanUp cleanUp, CleanUpContext context, IProgressMonitor monitor) {
 
 		try {
-			ICleanUpFixCore fix = cleanUp != null ? cleanUp.createFix(context) : null;
+			ICleanUpFix fix = cleanUp != null ? cleanUp.createFix(context) : null;
 			if (fix == null) {
 				return null;
 			}
