@@ -17,10 +17,10 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.Java50FixCore;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 
 /**
  * A cleanup that adds the deprecated annotation to classes/fields/methods that
@@ -36,7 +36,7 @@ public class AddDeprecatedAnnotationCleanUp implements ISimpleCleanUp {
 	}
 
 	@Override
-	public ICleanUpFixCore createFix(CleanUpContextCore context) {
+	public ICleanUpFix createFix(CleanUpContext context) {
 		return Java50FixCore.createCleanUp(context.getAST(), false, false, true, false);
 	}
 

@@ -17,10 +17,10 @@ import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.manipulation.CleanUpContextCore;
-import org.eclipse.jdt.core.manipulation.ICleanUpFixCore;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.PatternMatchingForInstanceofFixCore;
+import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
 
 /**
  * Represents a cleanup that uses pattern matching for 'instanceof' cast checks
@@ -33,7 +33,7 @@ public class InstanceofPatternMatch implements ISimpleCleanUp {
 	}
 
 	@Override
-	public ICleanUpFixCore createFix(CleanUpContextCore context) throws CoreException {
+	public ICleanUpFix createFix(CleanUpContext context) throws CoreException {
 		CompilationUnit unit = context.getAST();
 		if (unit == null) {
 			return null;
