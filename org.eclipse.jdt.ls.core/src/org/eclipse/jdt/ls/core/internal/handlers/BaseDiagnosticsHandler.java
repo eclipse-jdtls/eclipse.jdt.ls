@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IMarker;
@@ -33,6 +35,7 @@ import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IProblemRequestor;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -58,6 +61,10 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 
 	public static final int NON_PROJECT_JAVA_FILE = 0x10;
 	public static final int NOT_ON_CLASSPATH = 0x20;
+
+	public static final String DIAG_JAVAC_CODE = "javacCode";
+	public static final String DIAG_ECJ_PROBLEM_ID = "ecjProblemId";
+	public static final String DIAG_ARGUMENTS = "arguments";
 
 	public BaseDiagnosticsHandler(JavaClientConnection conn, ICompilationUnit cu) {
 		problems = new ArrayList<>();
@@ -248,11 +255,29 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 			diag.setCode(Integer.toString(problem.getID()));
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(openable, problem));
+			Map<String, Object> data = new HashMap<>();
 			if (problem.getID() == IProblem.UndefinedName || problem.getID() == IProblem.UndefinedType || problem.getID() == IProblem.UninitializedBlankFinalField) {
-				diag.setData(problem.getArguments());
+				data.put(DIAG_ARGUMENTS, problem.getArguments());
 			}
 			if (isDiagnosticTagSupported) {
 				diag.setTags(getDiagnosticTag(problem.getID()));
+			}
+			if (problem instanceof CategorizedProblem javaProblem) {
+				String[] extraAttributeNames = javaProblem.getExtraMarkerAttributeNames();
+				Object[] extraAttributeValues = javaProblem.getExtraMarkerAttributeValues();
+				if (extraAttributeNames != null && extraAttributeValues != null
+					&& extraAttributeNames.length == extraAttributeValues.length) {
+					for (int i = 0; i < extraAttributeNames.length; i++) {
+						if (DIAG_JAVAC_CODE.equals(extraAttributeNames[i])) {
+							diag.setCode(String.valueOf(extraAttributeValues[i]));
+							data.put(DIAG_ECJ_PROBLEM_ID, Integer.toString(problem.getID()));
+							break;
+						}
+					}
+				}
+			}
+			if (!data.isEmpty()) {
+				diag.setData(data);
 			}
 			array.add(diag);
 		}
