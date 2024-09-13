@@ -42,6 +42,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrection
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
@@ -349,14 +350,19 @@ public class CodeActionHandler {
 			boolean isError = diagnostic.getSeverity() == DiagnosticSeverity.Error;
 			int problemId = getProblemId(diagnostic);
 			List<String> arguments = new ArrayList<>();
-			if (diagnostic.getData() instanceof JsonArray data) {
-				for (JsonElement e : data) {
-					arguments.add(e.getAsString());
+			if (diagnostic.getData() != null) {
+				Map<String, Object> data = JSONUtility.toModel(diagnostic.getData(), Map.class);
+				Object args = data.get(BaseDiagnosticsHandler.DIAG_ARGUMENTS);
+				if (args instanceof JsonArray args1) {
+					for (JsonElement e : args1) {
+						arguments.add(e.getAsString());
+					}
+				} else if (args instanceof String[] args1) {
+					arguments = Arrays.asList(args1);
 				}
-			}
-			if (diagnostic.getData() instanceof String[] data) {
-				for (String s : data) {
-					arguments.add(s);
+				Object ecjProblemId = data.get(BaseDiagnosticsHandler.DIAG_ECJ_PROBLEM_ID);
+				if (ecjProblemId instanceof String id) {
+					problemId = Integer.valueOf(id);
 				}
 			}
 			locations[i] = new ProblemLocation(start, end - start, problemId, arguments.toArray(new String[0]), isError, IJavaModelMarker.JAVA_MODEL_PROBLEM_MARKER);
