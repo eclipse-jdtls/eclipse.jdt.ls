@@ -35,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
@@ -126,8 +127,8 @@ public class WorkspaceSymbolHandler {
 		if (!sourceOnly && preferenceManager != null && preferenceManager.isClientSupportsClassFileContent()) {
 			scope |= IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES;
 		}
-
-		return SearchEngine.createJavaSearchScope(targetProjects, scope);
+		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
+		return SearchEngine.createJavaSearchScope(excludeTestCode, targetProjects, scope);
 	}
 
 	public static class SearchSymbolParams extends WorkspaceSymbolParams {
