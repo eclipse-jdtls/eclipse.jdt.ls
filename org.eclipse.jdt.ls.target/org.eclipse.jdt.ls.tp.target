@@ -27,7 +27,8 @@
             <unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0"/>
 			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
-            <repository location="https://download.eclipse.org/eclipse/updates/4.33/"/>
+			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
+            <repository location="https://download.eclipse.org/eclipse/updates/4.34-I-builds/I20240919-1840/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
@@ -37,7 +38,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2024-03/"/>
+            <repository location="https://download.eclipse.org/releases/2024-09/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.23.1/"/>
