@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateContextType;
 import org.eclipse.lsp4j.ClientCapabilities;
@@ -259,6 +260,10 @@ public class PreferenceManager {
 		if (!oldPreferences.getFilesAssociations().equals(preferences.getFilesAssociations())) {
 			configureContentTypes(preferences);
 		}
+		
+		// update call hierachy test code filer
+		final boolean filterTestCode = this.preferences.getSearchScope() == SearchScope.main;
+		eclipsePreferences.put("PREF_FILTER_TESTCODE", String.valueOf(filterTestCode));
 	}
 
 	// only for test purpose

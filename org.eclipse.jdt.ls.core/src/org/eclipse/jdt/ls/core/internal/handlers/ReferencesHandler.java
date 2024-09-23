@@ -45,6 +45,7 @@ import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.ReferenceParams;
 
@@ -62,7 +63,8 @@ public final class ReferencesHandler {
 		if (isInsideJRE(elementToSearch)) {
 			includeMask |= IJavaSearchScope.SYSTEM_LIBRARIES;
 		}
-		return SearchEngine.createJavaSearchScope(projects, includeMask);
+		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
+		return SearchEngine.createJavaSearchScope(excludeTestCode, projects, includeMask);
 	}
 
 	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
