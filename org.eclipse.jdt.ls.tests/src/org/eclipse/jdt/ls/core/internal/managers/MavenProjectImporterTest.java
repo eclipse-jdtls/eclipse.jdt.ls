@@ -373,6 +373,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertHasErrors(project, "Preview features enabled at an invalid source release level");
 	}
 
+	@Test
 	public void testJava23Project() throws Exception {
 		IProject project = importMavenProject("salut-java23");
 		assertIsJavaProject(project);
