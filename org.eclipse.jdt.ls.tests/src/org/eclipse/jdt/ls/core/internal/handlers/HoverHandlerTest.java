@@ -745,6 +745,53 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("Unexpected hover " + signature, "ENUM1", signature.getValue());
 	}
 
+	@Test
+	public void testHoverMarkdownComment() throws Exception {
+		String name = "java23";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// ## TestClass\n"
+				+ "///\n"
+				+ "/// Paragraph\n"
+				+ "///\n"
+				+ "/// - item 1\n"
+				+ "/// - _item 2_\n"
+				+ "    public class Test {\n"
+				+ "    /// ### m()\n"
+				+ "    ///\n"
+				+ "    /// Paragraph with _emphasis_\n"
+				+ "    /// - item 1\n"
+				+ "    /// - item 2\n"
+				+ "    /// @param i an _integer_ !\n"
+				+ "    void m(int i) {\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 7, 18);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = "## TestClass ##\n"
+				+ "\n"
+				+ "Paragraph\n"
+				+ "\n"
+				+ " *  item 1\n"
+				+ " *  *item 2*";
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);

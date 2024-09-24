@@ -35,6 +35,7 @@ import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavaDocSnippetStri
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocAccess;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocAccessImpl;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocContentAccessUtility;
+import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreMarkdownAccessImpl;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.IJavadocContentFactory;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.JavadocLookup;
 import org.eclipse.jdt.internal.ui.viewsupport.CoreJavaElementLinks;
@@ -120,7 +121,23 @@ public class JavadocContentAccess2 {
 		};
 	}
 
-	public static final IJavadocContentFactory JDT_LS_JAVADOC_CONTENT_FACTORY=new IJavadocContentFactory(){@Override public IJavadocAccess createJavadocAccess(IJavaElement element,Javadoc javadoc,String source,JavadocLookup lookup){if(lookup==null){return new JdtLsJavadocAccessImpl(element,javadoc,source);}else{return new JdtLsJavadocAccessImpl(element,javadoc,source,lookup);}}};
+	public static final IJavadocContentFactory JDT_LS_JAVADOC_CONTENT_FACTORY = new IJavadocContentFactory() {
+		@Override
+		public IJavadocAccess createJavadocAccess(IJavaElement element, Javadoc javadoc, String source, JavadocLookup lookup) {
+			if (source.startsWith("///")) { //$NON-NLS-1$
+				if (lookup == null) {
+					return new CoreMarkdownAccessImpl(element, javadoc, source);
+				} else {
+					return new CoreMarkdownAccessImpl(element, javadoc, source, lookup);
+				}
+			}
+			if (lookup == null) {
+				return new JdtLsJavadocAccessImpl(element, javadoc, source);
+			} else {
+				return new JdtLsJavadocAccessImpl(element, javadoc, source, lookup);
+			}
+		}
+	};
 
 	private static class JdtLsJavadocAccessImpl extends CoreJavadocAccessImpl {
 
