@@ -1,5 +1,23 @@
 # Change Log
 
+# [1.40.0 (September 26th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/132?closed=1)
+ * performance - Consider token to limit the chains that are searched. See [#2835](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2835).
+ * enhancement - Provide support for Java 23. See [#3278](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3278), [#3282](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3282).
+ * enhancement - Support dynamic code actions through LSP snippet syntax. See [#3229](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3229), [#3267](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3267).
+ * enhancement - Control scope for search operations (eg. references, call hierarchy, workspace symbols). See [#3252](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3252).
+ * enhancement - Introduce new type mismatch quickfix for constructor invocations. See [#3241](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3241).
+ * enhancement - Add "Organize Imports" as a clean up. See [#3272](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3272).
+ * bug fix - Import Gradle project via. Buildship if Gradle Build Server is not available. See [#3245](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3245).
+ * bug fix - Copy/paste will not escape content within String literal when code has error. See [#3268](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3268).
+ * bug fix - Allow "remove abstract" quickfix under `javac`. See [#3259](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3259).
+ * bug fix - Fix license check workflow after repository move. See [#3264](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3264).
+ * bug fix - Update supported Java versions in `README.md`. See [#3266](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3266).
+ * bug fix - `CompletionHandlerTest#testCompletion_Lambda` fails randomly. See [#3263](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3263).
+ * bug fix - Improve rename tests so they can work with `javac`. See [#3260](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3260).
+ * bug fix - Fix `ConnectionStreamFactory` with `javac`. See [#3258](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3258).
+ * dependencies - Bump tycho-version from 4.0.8 to 4.0.9. See [#3276](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3276).
+ * dependencies - Bump org.eclipse.cbi.maven.plugins:eclipse-jarsigner-plugin from 1.5.0 to 1.5.1. See [#3285](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3285).
+
 # [1.39.0 (August 28th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/131?closed=1)
  * enhancement - Support custom source file extensions. See [#3222](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3222).
  * enhancement - Notify that enabling preview features on incompatible compliance level fails build. See [#3131](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3131).
