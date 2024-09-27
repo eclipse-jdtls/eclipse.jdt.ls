@@ -20,7 +20,7 @@ public class SnippetTextEdit extends TextEdit {
 	StringValue snippet;
 
 	public SnippetTextEdit(Range range, String snippet) {
-		super(range, "");
+		setRange(range);
 		this.snippet = new StringValue(snippet);
 	}
 
