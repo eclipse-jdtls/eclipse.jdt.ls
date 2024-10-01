@@ -24,6 +24,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1869,8 +1870,13 @@ public final class JDTUtils {
 		java.nio.file.Path[] path = new java.nio.file.Path[1];
 		try {
 			path[0] = Paths.get(uri.toURL().getPath());
-		} catch (MalformedURLException e) {
-			path[0] = Paths.get(uri);
+		} catch (MalformedURLException | InvalidPathException e) {
+			try {
+				path[0] = Paths.get(uri);
+			} catch (Exception e1) {
+				JavaLanguageServerPlugin.logException(e1);
+				return false;
+			}
 		}
 		FileSystem fileSystems = path[0].getFileSystem();
 		return !patterns.stream().filter(pattern -> fileSystems.getPathMatcher("glob:" + pattern).matches(path[0])).collect(Collectors.toList()).isEmpty();
