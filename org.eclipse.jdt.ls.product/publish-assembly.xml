@@ -7,11 +7,27 @@
   </formats>
   <includeBaseDirectory>false</includeBaseDirectory>
   <fileSets>
-    <fileSet>
+	<fileSet>
       <directory>${basedir}/target/repository</directory>
-      <outputDirectory/>
+      <outputDirectory />
       <includes>
         <include>bin/**</include>
+      </includes>
+      <fileMode>755</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/target/repository</directory>
+      <outputDirectory />
+      <includes>
+        <include>features/**</include>
+        <include>plugins/**</include>
+      </includes>
+      <fileMode>444</fileMode>
+    </fileSet>
+    <fileSet>
+      <directory>${basedir}/target/repository</directory>
+      <outputDirectory />
+      <includes>
         <include>config_linux/**</include>
         <include>config_linux_arm/**</include>
         <include>config_mac/**</include>
@@ -22,13 +38,8 @@
         <include>config_ss_mac/**</include>
         <include>config_ss_mac_arm/**</include>
         <include>config_ss_win/**</include>
-        <include>features/**</include>
-        <include>plugins/**</include>
       </includes>
-      <excludes>
-        <exclude>**/*.pack.gz</exclude>
-      </excludes>
-      <fileMode>755</fileMode>
+      <fileMode>644</fileMode>
     </fileSet>
   </fileSets>
 </assembly>
