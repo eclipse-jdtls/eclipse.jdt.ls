@@ -780,12 +780,10 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, hover.getContents().getLeft().size());
 
 		//@formatter:off
-		String expectedJavadoc = "## TestClass ##\n"
-				+ "\n"
-				+ "Paragraph\n"
-				+ "\n"
-				+ " *  item 1\n"
-				+ " *  *item 2*";
+		String expectedJavadoc = "## TestClass  \n"
+				+ "Paragraph  \n"
+				+ "- item 1\n"
+				+ "- _item 2_";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
