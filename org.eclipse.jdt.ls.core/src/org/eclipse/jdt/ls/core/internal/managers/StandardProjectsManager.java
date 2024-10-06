@@ -57,6 +57,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
@@ -67,6 +68,11 @@ import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.TypeNameRequestor;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.launching.AbstractVMInstall;
 import org.eclipse.jdt.launching.IVMInstall;
@@ -702,5 +708,45 @@ public class StandardProjectsManager extends ProjectsManager {
 	@Override
 	public boolean isBuildFinished() {
 		return buildFinished;
+	}
+
+	@Override
+	public void checkIndexes() {
+		Job job = new Job(("Check JDK Index")) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				IJavaProject[] javaProjects = ProjectUtils.getJavaProjects();
+				if (javaProjects.length <= 0) {
+					return Status.OK_STATUS;
+				}
+				SearchEngine engine = new SearchEngine();
+				IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+				boolean found[] = { false };
+				try {
+					engine.searchAllTypeNames("java.lang".toCharArray(), SearchPattern.R_EXACT_MATCH, "String".toCharArray(), //$NON-NLS-1$
+							SearchPattern.R_PATTERN_MATCH | SearchPattern.R_CASE_SENSITIVE, IJavaSearchConstants.CLASS, scope, new TypeNameRequestor() {
+								@Override
+								public void acceptType(int modifiers, char[] packageName, char[] simpleTypeName, char[][] enclosingTypeNames, String path) {
+									found[0] = true;
+								}
+							}, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+				} catch (JavaModelException e) {
+					// search failed
+				} catch (OperationCanceledException e) {
+					return Status.CANCEL_STATUS;
+				}
+				if (!found[0]) {
+					try {
+						JavaLanguageServerPlugin.logInfo("Unable to locate JDK types through index. Attempting to rebuild all indexes.");
+						JavaCore.rebuildIndex(monitor);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException(e);
+					}
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 }
