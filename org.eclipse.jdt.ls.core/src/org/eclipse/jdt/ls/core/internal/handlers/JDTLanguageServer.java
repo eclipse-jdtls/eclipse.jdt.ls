@@ -329,6 +329,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					// https://github.com/redhat-developer/vscode-java/issues/3637 - delay registerWatchers
 					pm.registerWatchers();
 					debugTrace(">> watchers registered");
+					// https://github.com/redhat-developer/vscode-java/issues/3797
+					pm.checkIndexes();
+					debugTrace(">> indexes checked");
 					pm.projectsBuildFinished(monitor);
 					telemetryManager.onBuildFinished(System.currentTimeMillis());
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);

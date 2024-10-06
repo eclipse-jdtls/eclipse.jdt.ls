@@ -888,4 +888,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			}
 		}
 	}
+
+	public void checkIndexes() {
+	}
+
 }
