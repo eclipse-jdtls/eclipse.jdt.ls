@@ -32,11 +32,14 @@ import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
@@ -174,6 +177,27 @@ public class JavaLanguageServerPlugin extends Plugin {
 		if (System.getProperty(AssistOptions.PROPERTY_SubstringMatch) == null) {
 			System.setProperty(AssistOptions.PROPERTY_SubstringMatch, "false");
 		}
+		// https://github.com/redhat-developer/vscode-java/issues/3797
+		Job initializeAfterLoad = new Job("Initialize After Load") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					JavaCore.initializeAfterLoad(monitor);
+				} catch (CoreException e) {
+					logException(e);
+					try {
+						JavaCore.rebuildIndex(monitor);
+					} catch (CoreException e1) {
+						logException(e);
+					}
+				}
+				return Status.OK_STATUS;
+			}
+
+		};
+		initializeAfterLoad.setPriority(Job.SHORT);
+		initializeAfterLoad.schedule();
 	}
 
 	private void disableServices() {
