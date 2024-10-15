@@ -171,6 +171,7 @@ public class TelemetryManager {
 			properties.add("buildFileNames", buildFileNamesList);
 		}
 		properties.addProperty("javaProjectCount", javaProjectCount);
+		properties.addProperty("javac.enabled", Boolean.toString(prefs.getPreferences().isJavacEnabled()));
 		if (sourceLevelMin != 0) {
 			properties.addProperty("compiler.source.min", Float.toString(sourceLevelMin));
 		}

@@ -32,7 +32,7 @@
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
 		<cbi-jdt-repo.url>https://repo.eclipse.org/content/repositories/eclipse-staging/</cbi-jdt-repo.url>
-		<cbi-ecj-version>3.38.0.v20240524-2033</cbi-ecj-version>
+		<cbi-ecj-version>3.39.0.v20240820-0604</cbi-ecj-version>
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
