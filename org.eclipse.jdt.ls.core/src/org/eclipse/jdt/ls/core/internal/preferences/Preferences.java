@@ -516,11 +516,13 @@ public class Preferences {
 
 	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
 	public static final String JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED = "java.jdt.ls.androidSupport.enabled";
+	public static final String JAVA_JDT_LS_JAVAC_ENABLED = "java.jdt.ls.javac.enabled";
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT = "java.compile.nullAnalysis.nonnullbydefault";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
+	public static final String JAVA_COMPLETION_ENGINE = "java.completion.engine";
 
 	public static final String LIFECYCLE_MAPPING_METADATA_SOURCE_NAME = "lifecycle-mapping-metadata.xml";
 
@@ -702,6 +704,7 @@ public class Preferences {
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
+	private boolean javacEnabled;
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
 	private List<String> nullableTypes;
@@ -958,6 +961,7 @@ public class Preferences {
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
+		javacEnabled = false;
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
 		nonnullbydefaultTypes = new ArrayList<>();
@@ -1335,6 +1339,8 @@ public class Preferences {
 		prefs.setAvoidVolatileChanges(avoidVolatileChanges);
 		boolean protobufSupported = getBoolean(configuration, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED, false);
 		prefs.setProtobufSupportEnabled(protobufSupported);
+		boolean javacEnabled = getBoolean(configuration, JAVA_JDT_LS_JAVAC_ENABLED, false);
+		prefs.setJavacEnabled(javacEnabled);
 		boolean androidSupported = getBoolean(configuration, JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED, false);
 		prefs.setAndroidSupportEnabled(androidSupported);
 		List<String> nonnullTypes = getList(configuration, JAVA_COMPILE_NULLANALYSIS_NONNULL, Collections.emptyList());
@@ -1379,10 +1385,10 @@ public class Preferences {
 			}
 		}
 		prefs.setFilesAssociations(new ArrayList<>(associations));
-		
+
 		String searchScope = getString(configuration, JAVA_SEARCH_SCOPE, null);
 		prefs.setSearchScope(SearchScope.fromString(searchScope, SearchScope.all));
-		
+
 		return prefs;
 	}
 
@@ -2379,6 +2385,14 @@ public class Preferences {
 
 	public void setAndroidSupportEnabled(boolean androidSupportEnabled) {
 		this.androidSupportEnabled = androidSupportEnabled;
+	}
+
+	public boolean isJavacEnabled() {
+		return this.javacEnabled;
+	}
+
+	public void setJavacEnabled(boolean javacEnabled) {
+		this.javacEnabled = javacEnabled;
 	}
 
 	public List<String> getNonnullTypes() {

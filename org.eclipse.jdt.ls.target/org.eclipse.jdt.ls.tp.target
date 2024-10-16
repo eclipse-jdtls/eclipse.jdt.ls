@@ -28,13 +28,14 @@
 			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
-            <repository location="https://download.eclipse.org/eclipse/updates/4.34-I-builds/I20240919-1840/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.34-I-builds/I20241014-1810/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
             <unit id="org.eclipse.jdt.core" version="0.0.0"/>
+			<unit id="org.eclipse.jdt.core.javac" version="0.0.0"/>
             <unit id="org.eclipse.jdt.apt.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/jdtls/jdt-core-incubator/snapshots/"/>
+            <repository location="https://ci.eclipse.org/ls/job/jdt-core-incubator/job/dom-with-javac/lastSuccessfulBuild/artifact/repository/target/repository/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
@@ -71,5 +72,5 @@
 		    </dependencies>
 	    </location>
     </locations>
-    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17"/>
+    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-23"/>
 </target>
