@@ -28,7 +28,7 @@
 			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
-            <repository location="https://download.eclipse.org/eclipse/updates/4.34-I-builds/I20241014-1810/"/>
+            <repository location="https://download.eclipse.org/eclipse/updates/4.34-I-builds/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>

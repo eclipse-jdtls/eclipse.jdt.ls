@@ -31,8 +31,6 @@
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
-		<cbi-jdt-repo.url>https://repo.eclipse.org/content/repositories/eclipse-staging/</cbi-jdt-repo.url>
-		<cbi-ecj-version>3.39.0.v20240820-0604</cbi-ecj-version>
 	</properties>
 	<modules>
 		<module>org.eclipse.jdt.ls.target</module>
@@ -193,13 +191,6 @@
 					<groupId>org.eclipse.tycho</groupId>
 					<artifactId>tycho-compiler-plugin</artifactId>
 					<version>${tycho-version}</version>
-					<dependencies>
-						<dependency>
-							<groupId>org.eclipse.jdt</groupId>
-							<artifactId>ecj</artifactId>
-							<version>${cbi-ecj-version}</version>
-						</dependency>
-					</dependencies>
 					<configuration>
 						<compilerArgs>
 							<args>-verbose</args>
@@ -357,16 +348,6 @@
 		<pluginRepository>
 			<id>cbi-release</id>
 			<url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
-		</pluginRepository>
-		<pluginRepository>
-			<id>cbi-jdt</id>
-			<url>${cbi-jdt-repo.url}</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
 	<distributionManagement>
