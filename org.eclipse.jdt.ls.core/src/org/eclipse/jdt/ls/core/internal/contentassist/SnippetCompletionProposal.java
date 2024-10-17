@@ -639,10 +639,6 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 		CodeTemplateContext context = new CodeTemplateContext(template.getContextTypeId(), cu.getJavaProject(), scc.getRecommendedLineSeprator());
 
-		String lineDelimiter = StubUtility.getLineDelimiterUsed(cu.getJavaProject());
-		String fileComment = cu.getTypes().length == 0 ? CodeGeneration.getFileComment(cu, lineDelimiter) : null;
-		context.setVariable(CodeTemplateContextType.FILE_COMMENT, fileComment != null ? fileComment + lineDelimiter : "");
-		context.setVariable(PACKAGEHEADER, scc.getPackageHeader(lineDelimiter));
 		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
 		List<IType> types = Arrays.asList(cu.getAllTypes());
 		int postfix = 0;
@@ -651,10 +647,15 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			postfix++;
 		}
 		if (postfix > 0 && snippetStringSupport) {
-			context.setVariable(CodeTemplateContextType.TYPENAME, "${1:" + typeName + "}");
-		} else {
-			context.setVariable(CodeTemplateContextType.TYPENAME, typeName);
+			typeName = "${1:" + typeName + "}";
 		}
+		context.setVariable(CodeTemplateContextType.TYPENAME, typeName);
+		String lineDelimiter = StubUtility.getLineDelimiterUsed(cu.getJavaProject());
+		String fileComment = cu.getTypes().length == 0 ? CodeGeneration.getFileComment(cu, lineDelimiter) : null;
+		String typeComment = CodeGeneration.getTypeComment(cu, typeName, lineDelimiter);
+		context.setVariable(CodeTemplateContextType.FILE_COMMENT, fileComment != null ? fileComment + lineDelimiter : "");
+		context.setVariable(CodeTemplateContextType.TYPE_COMMENT, typeComment != null ? typeComment + lineDelimiter : "");
+		context.setVariable(PACKAGEHEADER, scc.getPackageHeader(lineDelimiter));
 		context.setVariable(CURSOR, snippetStringSupport ? "${0}" : "");
 
 		// TODO Consider making evaluateTemplate public in StubUtility

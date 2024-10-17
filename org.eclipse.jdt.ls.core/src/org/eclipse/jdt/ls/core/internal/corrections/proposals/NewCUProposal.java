@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -363,7 +364,8 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		if (fileComment != null && !fileComment.isEmpty()) {
 			fileComment += lineDelimiter;
 		}
-		String typeComment = CodeGeneration.getTypeComment(cu, cu.getElementName(), lineDelimiter);
+		String typeName = JavaCore.removeJavaLikeExtension(cu.getElementName());
+		String typeComment = CodeGeneration.getTypeComment(cu, typeName, lineDelimiter);
 		IPackageFragment pack = (IPackageFragment) cu.getParent();
 		String content = CodeGeneration.getCompilationUnitContent(cu, fileComment, typeComment, typeContent, lineDelimiter);
 		if (content != null) {
