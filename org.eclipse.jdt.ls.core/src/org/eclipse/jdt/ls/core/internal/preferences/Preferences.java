@@ -1263,7 +1263,7 @@ public class Preferences {
 		prefs.setStaticImportOnDemandThreshold(staticOnDemandThreshold);
 
 		List<?> runtimeList = getList(configuration, JAVA_CONFIGURATION_RUNTIMES, JAVA_CONFIGURATION_RUNTIMES_DEFAULT);
-		Set<RuntimeEnvironment> runtimes = new HashSet<>();
+		Set<RuntimeEnvironment> runtimes = new LinkedHashSet<>();
 		boolean[] hasDefault = { false };
 		for (Object object : runtimeList) {
 			if (object instanceof Map<?, ?> map) {
