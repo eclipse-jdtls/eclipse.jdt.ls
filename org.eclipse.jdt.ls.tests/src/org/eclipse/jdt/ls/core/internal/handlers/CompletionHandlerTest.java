@@ -540,12 +540,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertEquals("999999999", item.getSortText());
 			assertEquals(item.getInsertTextFormat(), InsertTextFormat.Snippet);
 			assertNotNull(item.getTextEdit());
-			assertEquals("\n * ${0}\n * @param name\n * @param age\n", item.getTextEdit().getLeft().getNewText());
+			assertEquals("\n * ${0}\n * Foo\n * @param name\n * @param age\n", item.getTextEdit().getLeft().getNewText());
 			Range range = item.getTextEdit().getLeft().getRange();
 			assertEquals(1, range.getStart().getLine());
 			assertEquals(3, range.getStart().getCharacter());
 			assertEquals(1, range.getEnd().getLine());
-			assertEquals(" * @param name\n * @param age\n", item.getDocumentation().getLeft());
+			assertEquals(" * Foo\n * @param name\n * @param age\n", item.getDocumentation().getLeft());
 		} finally {
 			unit.discardWorkingCopy();
 			proj.delete(true, monitor);
@@ -583,12 +583,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertEquals("999999999", item.getSortText());
 			assertEquals(item.getInsertTextFormat(), InsertTextFormat.PlainText);
 			assertNotNull(item.getTextEdit());
-			assertEquals("\n * @param name\n * @param age\n", item.getTextEdit().getLeft().getNewText());
+			assertEquals("\n * Foo\n * @param name\n * @param age\n", item.getTextEdit().getLeft().getNewText());
 			Range range = item.getTextEdit().getLeft().getRange();
 			assertEquals(1, range.getStart().getLine());
 			assertEquals(3, range.getStart().getCharacter());
 			assertEquals(1, range.getEnd().getLine());
-			assertEquals(" * @param name\n * @param age\n", item.getDocumentation().getLeft());
+			assertEquals(" * Foo\n * @param name\n * @param age\n", item.getDocumentation().getLeft());
 		} finally {
 			unit.discardWorkingCopy();
 			proj.delete(true, monitor);
