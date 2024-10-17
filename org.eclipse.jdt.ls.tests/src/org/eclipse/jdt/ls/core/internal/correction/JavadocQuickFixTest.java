@@ -943,6 +943,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("/**\n");
+		buf.append(" * E\n");
 		buf.append(" * @param <A>\n");
 		buf.append(" * @param <B>\n");
 		buf.append(" */\n");
