@@ -148,7 +148,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for type comments
 	 */
-	public static final String CODETEMPLATE_TYPECOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
+	public static final String CODETEMPLATE_TYPECOMMENT_DEFAULT = "/**\n" + " * ${type_name}\n" + " * ${tags}\n" + " */";
 
 	/**
 	 * Default value for getter comments
@@ -198,7 +198,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for public class snippet body content
 	 */
-	public static final String CODETEMPLATE_CLASSSNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic class ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_CLASSSNIPPET_PUBLIC = "${filecomment}${package_header}${typecomment}public class ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for interface snippet body content
 	 */
@@ -206,7 +206,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for public interface snippet body content
 	 */
-	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic interface ${type_name} {\n\n\t${cursor}\n}";
+	public static final String CODETEMPLATE_INTERFACESNIPPET_PUBLIC = "${filecomment}${package_header}${typecomment}public interface ${type_name} {\n\n\t${cursor}\n}";
 	/**
 	 * Default value for record snippet body content
 	 */
@@ -214,7 +214,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for public record snippet body content
 	 */
-	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${filecomment}${package_header}/**\n * ${type_name}\n */\npublic record ${type_name}(${cursor}) {\n}";
+	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${filecomment}${package_header}${typecomment}public record ${type_name}(${cursor}) {\n}";
 
 	public static class Month extends SimpleTemplateVariableResolver {
 		public Month() {
