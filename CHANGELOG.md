@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.41.0 (October 31st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/133?closed=1)
+ * enhancement - Experimental support for using `javac` as the compiler. See [#3167](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3167), [#3299](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3299).
+ * bug fix - Intermittent failures to suggest Java core packages for completion & code actions. See [#3296](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3296).
+ * bug fix - Type declaration snippets should respect `java.templates.typeComment`. See [#3295](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3295).
+ * bug fix - `java.diagnostic.filter` is broken on Windows. See [#3290](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3290).
+ * bug fix - Linux release package files have excessive permissions. See [#3293](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3293).
+ * bug fix - No delegateCommandHandler for `java.apply.workspaceEdit`. See [#376](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/376).
+ * dependencies - Bump org.apache.maven.plugins:maven-dependency-plugin from 3.8.0 to 3.8.1. See [#3306](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3306).
+ * dependencies - Bump org.eclipse.cbi.maven.plugins:eclipse-jarsigner-plugin from 1.5.1 to 1.5.2. See [#3288](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3288).
+ * build - o.e.jdt.ls.repository should publish all dependencies. See [#3001](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3001).
+
 # [1.40.0 (September 26th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/132?closed=1)
  * performance - Consider token to limit the chains that are searched. See [#2835](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2835).
  * enhancement - Provide support for Java 23. See [#3278](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3278), [#3282](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3282).
