@@ -20,5 +20,6 @@ jobs:
     with:
       projectId: eclipse.jdt.ls
       submodules: recursive
+      javaVersion: '23'
     secrets:
       gitlabAPIToken: ${{ secrets.ECLIPSE_GITLAB_API_TOKEN }}
