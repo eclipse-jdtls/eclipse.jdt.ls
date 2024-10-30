@@ -192,12 +192,6 @@
 	     	class="org.eclipse.jdt.ls.core.internal.managers.EclipseBuildSupport" />
    </extension>
    <extension
-         point="org.eclipse.ltk.core.refactoring.refactoringContributions">
-      <contribution
-            class="org.eclipse.jdt.ls.core.internal.corext.refactoring.ChangeMethodSignatureRefactoringContribution"
-            id="org.eclipse.jdt.ls.change.method.signature"/>
-   </extension>
-      <extension
          point="org.eclipse.jdt.launching.executionEnvironments">
       <ruleParticipant
             class="org.eclipse.jdt.ls.core.internal.javafx.FXAccessRuleParticipant"
