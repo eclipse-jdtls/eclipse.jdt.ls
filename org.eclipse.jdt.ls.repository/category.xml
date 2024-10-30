@@ -6,6 +6,9 @@
    <bundle id="org.eclipse.jdt.ls.tests" version="0.0.0">
     <category name="jdt.ls.sdk" />
    </bundle>
+   <bundle id="org.eclipse.jdt.ls.filesystem" version="0.0.0">
+    <category name="jdt.ls" />
+   </bundle>
    <bundle id="org.eclipse.jdt.ls.logback.appender" version="0.0.0">
     <category name="jdt.ls" />
    </bundle>
@@ -15,9 +18,24 @@
    <bundle id="org.eclipse.jdt.ls.tests.source" version="0.0.0">
    	<category name="jdt.ls.sdk" />
    </bundle>
+   <bundle id="org.eclipse.jdt.ls.filesystem.source" version="0.0.0">
+    <category name="jdt.ls.sdk" />
+   </bundle>
    <bundle id="org.eclipse.jdt.ls.logback.appender.source" version="0.0.0">
     <category name="jdt.ls.sdk" />
    </bundle>
+
+   <feature id="org.eclipse.equinox.executable" version="0.0.0"/>
+   <bundle id="jakarta.servlet-api" version="0.0.0"/>
+   <bundle id="org.apache.felix.scr" version="0.0.0"/>
+   <bundle id="org.eclipse.ant.core" version="0.0.0"/>
+   <bundle id="org.eclipse.compare.core" version="0.0.0"/>
+   <bundle id="org.eclipse.equinox.security.linux" version="0.0.0" os="linux"/>
+   <bundle id="org.eclipse.equinox.security.macosx" version="0.0.0" os="macosx"/>
+   <bundle id="org.eclipse.equinox.security.win32" version="0.0.0" os="win32"/>
+   <bundle id="org.eclipse.osgi.compatibility.state" version="0.0.0"/>
+   <bundle id="org.eclipse.osgi.services" version="0.0.0"/>
+
    <category-def name="jdt.ls" label="JDT Language Server"/>
    <category-def name="jdt.ls.sdk" label="JDT Language Server (Developer Resources)"/>
 </site>
