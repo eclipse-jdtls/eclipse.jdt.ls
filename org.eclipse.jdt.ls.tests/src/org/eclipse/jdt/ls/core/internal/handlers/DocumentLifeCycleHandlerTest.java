@@ -17,6 +17,8 @@ import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
@@ -338,6 +340,25 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(2, diagnostics.size());
 		diagnosticsParams.clear();
 		closeDocument(cu1);
+	}
+
+	@Test
+	public void testWorkingCopies() throws Exception {
+		importProjects("eclipse/hello");
+		IProject project = WorkspaceHelper.getProject("hello");
+		URI uri = project.getFile("/src/org/sample/Foo.java").getRawLocationURI();
+		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
+		String source = Files.readString(FileUtils.toFile(uri.toURL()).toPath());
+		openDocument(cu, source, 1);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		ICompilationUnit cu1 = JDTUtils.resolveCompilationUnit(uri);
+		ICompilationUnit cu2 = JDTUtils.resolveCompilationUnit(uri);
+		assertSame(cu1, cu2);
+		closeDocument(cu);
+		Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
+		cu1 = JDTUtils.resolveCompilationUnit(uri);
+		cu2 = JDTUtils.resolveCompilationUnit(uri);
+		assertNotSame(cu1, cu2);
 	}
 
 	@Test
