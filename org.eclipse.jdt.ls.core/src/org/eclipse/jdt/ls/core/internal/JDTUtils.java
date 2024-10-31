@@ -196,6 +196,11 @@ public final class JDTUtils {
 
 		IFile resource = (IFile) findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
 		if(resource != null) {
+			for (ICompilationUnit workingCopy : JavaCore.getWorkingCopies(null)) {
+				if (uri.equals(toURI(toURI(workingCopy)))) {
+					return workingCopy;
+				}
+			}
 			return resolveCompilationUnit(resource);
 		} else {
 			return getFakeCompilationUnit(uri, new NullProgressMonitor());
