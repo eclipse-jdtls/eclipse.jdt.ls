@@ -342,6 +342,7 @@ public class QuickFixProcessor {
 			case IProblem.UnusedPrivateType:
 			case IProblem.LocalVariableIsNeverUsed:
 			case IProblem.ArgumentIsNeverUsed:
+			case IProblem.LambdaParameterIsNeverUsed:
 			case IProblem.UnusedPrivateField:
 				LocalCorrectionsSubProcessor.addUnusedMemberProposal(context, problem, proposals);
 				break;

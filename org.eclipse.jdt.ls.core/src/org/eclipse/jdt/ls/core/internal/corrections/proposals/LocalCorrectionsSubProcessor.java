@@ -92,6 +92,7 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.RenameUnusedVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
@@ -433,6 +434,22 @@ public class LocalCorrectionsSubProcessor {
 
 	public static void addUnusedMemberProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		int problemId = problem.getProblemId();
+
+		if (JavaModelUtil.is22OrHigher(context.getCompilationUnit().getJavaProject()) && (problemId == IProblem.LocalVariableIsNeverUsed || problemId == IProblem.LambdaParameterIsNeverUsed)) {
+			RenameUnusedVariableFixCore fix = RenameUnusedVariableFixCore.createRenameToUnnamedFix(context.getASTRoot(), problem);
+			if (fix != null) {
+				try {
+					CompilationUnitChange change = fix.createChange(null);
+					CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, IProposalRelevance.UNUSED_MEMBER);
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.log(e);
+				}
+			}
+		}
+		if (problemId == IProblem.LambdaParameterIsNeverUsed) {
+			return;
+		}
 
 		UnusedCodeFixCore fix = UnusedCodeFixCore.createUnusedMemberFix(context.getASTRoot(), problem, false);
 		if (fix != null) {

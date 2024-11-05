@@ -58,7 +58,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		javaProject = JavaCore.create(project);
 
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
-		JavaCore.setComplianceOptions(JavaCore.VERSION_19, options);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_22, options);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_NUMBER_OF_EMPTY_LINES_TO_PRESERVE, String.valueOf(99));
 		javaProject.setOptions(options);
 
@@ -636,6 +636,41 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 			}
 			""";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("organizeImports"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testRenameUnusedLambdaParameterCleanup() throws Exception {
+		String contents = """
+				package test1;
+				public class A {
+				    private interface J {
+					    public void run(String a, String b);
+				    }
+				    public void test() {
+				        J j = (a, b) -> System.out.println(a);
+					    j.run("a", "b");
+				    }
+				}
+				""";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = """
+				package test1;
+				public class A {
+				    private interface J {
+					    public void run(String a, String b);
+				    }
+				    public void test() {
+				        J j = (a, _) -> System.out.println(a);
+					    j.run("a", "b");
+				    }
+				}
+				""";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("removeUnusedLambdaParameters"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
 	}
