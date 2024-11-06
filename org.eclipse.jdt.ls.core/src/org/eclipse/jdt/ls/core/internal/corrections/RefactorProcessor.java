@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
@@ -110,8 +111,10 @@ import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
 import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
+import org.eclipse.ltk.core.refactoring.NullChange;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 /**
@@ -127,38 +130,99 @@ public class RefactorProcessor {
 	}
 
 	public List<ProposalKindWrapper> getProposals(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations) throws CoreException {
+		return getProposals(params, context, locations, new NullProgressMonitor());
+	}
+
+	public List<ProposalKindWrapper> getProposals(CodeActionParams params, IInvocationContext context, IProblemLocation[] locations, IProgressMonitor monitor) throws CoreException {
 		ASTNode coveringNode = context.getCoveringNode();
+		if (monitor != null && monitor.isCanceled()) {
+			return Collections.emptyList();
+		}
 		if (coveringNode != null) {
 			ArrayList<ProposalKindWrapper> proposals = new ArrayList<>();
 
 			InvertBooleanUtility.getInverseConditionProposals(params, context, coveringNode, proposals);
+			if (monitor != null && monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
 			getInverseLocalVariableProposals(params, context, coveringNode, proposals);
-
+			if (monitor != null && monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
 			getMoveRefactoringProposals(params, context, coveringNode, proposals);
-
+			if (monitor != null && monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
 			boolean noErrorsAtLocation = noErrorsAtLocation(locations, coveringNode);
 			if (noErrorsAtLocation) {
 				boolean problemsAtLocation = locations.length != 0;
 				getExtractVariableProposal(params, context, problemsAtLocation, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getExtractFieldProposal(params, context, problemsAtLocation, proposals);
-				getInlineProposal(context, coveringNode, proposals);
-
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getConvertAnonymousToNestedProposals(params, context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getConvertAnonymousClassCreationsToLambdaProposals(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getConvertLambdaToAnonymousClassCreationsProposals(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 
 				getConvertVarTypeToResolvedTypeProposal(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getConvertResolvedTypeToVarTypeProposal(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 
 				getAddStaticImportProposals(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 
 				getConvertForLoopProposal(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getAssignToVariableProposals(context, coveringNode, locations, proposals, params);
-				getIntroduceParameterProposals(params, context, coveringNode, locations, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getExtractInterfaceProposal(params, context, proposals);
-				getChangeSignatureProposal(params, context, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 				getSurroundWithTryCatchProposal(context, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+				getChangeSignatureProposal(params, context, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+				getIntroduceParameterProposals(params, context, coveringNode, locations, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+				getInlineProposal(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
 			}
 			return proposals;
 		}
@@ -334,15 +398,27 @@ public class RefactorProcessor {
 					// Inline Constant (static final field)
 					if (RefactoringAvailabilityTesterCore.isInlineConstantAvailable((IField) varBinding.getJavaElement())) {
 						InlineConstantRefactoring refactoring = new InlineConstantRefactoring(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-						if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences(new NullProgressMonitor(), new RefactoringStatus()).length > 0) {
-							refactoring.setRemoveDeclaration(refactoring.isDeclarationSelected());
-							refactoring.setReplaceAllReferences(refactoring.isDeclarationSelected());
-							CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
-							final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-							create.run(new NullProgressMonitor());
+						if (refactoring != null) {
 							String label = ActionMessages.InlineConstantRefactoringAction_label;
 							int relevance = IProposalRelevance.INLINE_LOCAL;
-							ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, create.getChange(), relevance);
+							ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, relevance) {
+								@Override
+								public Change getChange() throws CoreException {
+									if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK() && refactoring.getReferences(new NullProgressMonitor(), new RefactoringStatus()).length > 0) {
+										refactoring.setRemoveDeclaration(refactoring.isDeclarationSelected());
+										refactoring.setReplaceAllReferences(refactoring.isDeclarationSelected());
+										CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+										final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+										try {
+											create.run(new NullProgressMonitor());
+											return create.getChange();
+										} catch (CoreException e) {
+											JavaLanguageServerPlugin.log(e);
+										}
+									}
+									return new NullChange();
+								}
+							};
 							resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
 							return true;
 						}
@@ -357,8 +433,10 @@ public class RefactorProcessor {
 				}
 
 				// Inline Local Variable
+				// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3321
+				// I haven't enhanced it because InlineVariableTest.testInlineLocalVariableWithNoReferences() fails; can be enhanced
 				if (binding.getJavaElement() instanceof ILocalVariable localVar && RefactoringAvailabilityTesterCore.isInlineTempAvailable(localVar)) {
-					InlineTempRefactoring refactoring= new InlineTempRefactoring((VariableDeclaration) decl);
+					InlineTempRefactoring refactoring = new InlineTempRefactoring((VariableDeclaration) decl);
 					boolean status;
 					try {
 						status = refactoring.checkAllConditions(new NullProgressMonitor()).isOK();
@@ -382,13 +460,25 @@ public class RefactorProcessor {
 				// Inline Method
 				if (RefactoringAvailabilityTesterCore.isInlineMethodAvailable((IMethod) binding.getJavaElement())) {
 					InlineMethodRefactoring refactoring = InlineMethodRefactoring.create(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
-					if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-						CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
-						final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
-						create.run(new NullProgressMonitor());
+					if (refactoring != null) {
 						String label = ActionMessages.InlineMethodRefactoringAction_label;
 						int relevance = IProposalRelevance.INLINE_LOCAL;
-						ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, create.getChange(), relevance);
+						ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, relevance) {
+							@Override
+							public Change getChange() throws CoreException {
+								if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+									CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+									final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+									try {
+										create.run(new NullProgressMonitor());
+										return create.getChange();
+									} catch (CoreException e) {
+										JavaLanguageServerPlugin.log(e);
+									}
+								}
+								return new NullChange();
+							}
+						};
 						resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
 						return true;
 					}

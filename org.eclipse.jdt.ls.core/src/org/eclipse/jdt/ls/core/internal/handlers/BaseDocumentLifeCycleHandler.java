@@ -258,6 +258,10 @@ public abstract class BaseDocumentLifeCycleHandler {
 		}
 
 		toValidate.add(unit);
+		if (!unit.equals(sharedASTProvider.getActiveJavaElement())) {
+			sharedASTProvider.disposeAST();
+		}
+		sharedASTProvider.setActiveJavaElement(unit);
 		if (debounce && publishDiagnosticsJob != null) {
 			publishDiagnosticsJob.cancel();
 			publishDiagnosticsJob.setRule(null);

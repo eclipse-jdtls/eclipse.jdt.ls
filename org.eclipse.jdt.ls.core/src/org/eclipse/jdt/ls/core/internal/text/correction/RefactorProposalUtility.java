@@ -64,8 +64,6 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 import org.eclipse.jdt.internal.corext.dom.SelectionAnalyzer;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
-import org.eclipse.jdt.internal.corext.refactoring.ExceptionInfo;
-import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractConstantRefactoring;
@@ -73,7 +71,6 @@ import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractTempRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
-import org.eclipse.jdt.internal.corext.refactoring.structure.ChangeSignatureProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
@@ -86,8 +83,6 @@ import org.eclipse.jdt.ls.core.internal.corext.refactoring.code.ExtractFieldRefa
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
-import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodException;
-import org.eclipse.jdt.ls.core.internal.handlers.ChangeSignatureHandler.MethodParameter;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -919,20 +914,63 @@ public class RefactorProposalUtility {
 		if (isUnnamedClass) {
 			return null;
 		}
-		final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
-		LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
-		introduceParameterRefactoring.setLinkedProposalModel(linkedProposalModel);
-		if (introduceParameterRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-			introduceParameterRefactoring.setParameterName(introduceParameterRefactoring.guessedParameterName());
+		CompilationUnit root = context.getASTRoot();
+		if (root == null) {
+			return null;
+		}
+		Selection ds = Selection.createFromStartLength(context.getSelectionOffset(), context.getSelectionLength());
+		SelectionAnalyzer analyzer = new SelectionAnalyzer(ds, false);
+		root.accept(analyzer);
+		ASTNode[] selectedNodes = analyzer.getSelectedNodes();
+		coveringNode = analyzer.getLastCoveringNode();
+		ASTNode node;
+		// resolved in method body
+		if (selectedNodes != null && selectedNodes.length > 0) {
+			node = selectedNodes[0];
+		} else {
+			node = coveringNode;
+		}
+		boolean inMethodBody = false;
+		if (node == null) {
+			inMethodBody = true;
+		} else {
+			while (node != null) {
+				int nodeType = node.getNodeType();
+				if (nodeType == ASTNode.BLOCK && node.getParent() instanceof BodyDeclaration) {
+					inMethodBody = node.getParent().getNodeType() == ASTNode.METHOD_DECLARATION;
+					break;
+				} else if (nodeType == ASTNode.ANONYMOUS_CLASS_DECLARATION) {
+					break;
+				}
+				node = node.getParent();
+			}
+		}
+		boolean inAnnotation = false;
+		if (inMethodBody) {
+			while (node != null) {
+				if (node instanceof org.eclipse.jdt.core.dom.Annotation) {
+					inAnnotation = true;
+					break;
+				}
+				node = node.getParent();
+			}
+		}
+		if (inMethodBody && !inAnnotation && RefactoringAvailabilityTesterCore.isIntroduceParameterAvailable(selectedNodes, coveringNode)) {
 			String label = RefactoringCoreMessages.IntroduceParameterRefactoring_name + "...";
 			int relevance = (problemLocations != null && problemLocations.length > 0) ? IProposalRelevance.EXTRACT_CONSTANT_ERROR : IProposalRelevance.EXTRACT_CONSTANT;
 			if (returnAsCommand) {
 				CUCorrectionCommandProposal proposal = new CUCorrectionCommandProposal(label, cu, relevance, APPLY_REFACTORING_COMMAND_ID, Arrays.asList(INTRODUCE_PARAMETER_COMMAND, params));
 				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER);
 			}
-			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, introduceParameterRefactoring, relevance);
-			proposal.setLinkedProposalModel(linkedProposalModel);
-			return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER);
+			final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(cu, context.getSelectionOffset(), context.getSelectionLength());
+			LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+			introduceParameterRefactoring.setLinkedProposalModel(linkedProposalModel);
+			if (introduceParameterRefactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				introduceParameterRefactoring.setParameterName(introduceParameterRefactoring.guessedParameterName());
+				RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, introduceParameterRefactoring, relevance);
+				proposal.setLinkedProposalModel(linkedProposalModel);
+				return CodeActionHandler.wrap(proposal, JavaCodeActionKind.REFACTOR_INTRODUCE_PARAMETER);
+			}
 		}
 		return null;
 	}
@@ -976,21 +1014,10 @@ public class RefactorProposalUtility {
 		IJavaElement element = methodBinding.getJavaElement();
 		if (element instanceof IMethod method) {
 			try {
-				ChangeSignatureProcessor processor = new ChangeSignatureProcessor(method);
-				if (RefactoringAvailabilityTesterCore.isChangeSignatureAvailable(method) && processor.checkInitialConditions(new NullProgressMonitor()).isOK()) {
-					List<MethodParameter> parameters = new ArrayList<>();
-					for (ParameterInfo info : processor.getParameterInfos()) {
-						parameters.add(new MethodParameter(info.getOldTypeName(), info.getOldName(), info.getDefaultValue() == null ? "null" : info.getDefaultValue(), info.getOldIndex()));
-					}
-					List<MethodException> exceptions = new ArrayList<>();
-					for (ExceptionInfo info : processor.getExceptionInfos()) {
-						exceptions.add(new MethodException(info.getFullyQualifiedName(), info.getElement().getHandleIdentifier()));
-					}
-					ChangeSignatureInfo info = new ChangeSignatureInfo(method.getHandleIdentifier(), JdtFlags.getVisibilityString(processor.getVisibility()), processor.getReturnTypeString(), method.getElementName(),
-							parameters.toArray(MethodParameter[]::new), exceptions.toArray(MethodException[]::new));
+				if (RefactoringAvailabilityTesterCore.isChangeSignatureAvailable(method)) {
 					String label = Messages.format(org.eclipse.jdt.ls.core.internal.corext.refactoring.RefactoringCoreMessages.ChangeSignatureRefactoring_change_signature_for, new String[] { method.getElementName() });
 					CUCorrectionCommandProposal p1 = new CUCorrectionCommandProposal(label, cu, IProposalRelevance.CHANGE_METHOD_SIGNATURE, RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID,
-							Arrays.asList(RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND, params, info));
+							Arrays.asList(RefactorProposalUtility.CHANGE_SIGNATURE_COMMAND, params));
 					return CodeActionHandler.wrap(p1, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
 				}
 			} catch (CoreException e) {
@@ -998,25 +1025,6 @@ public class RefactorProposalUtility {
 			}
 		}
 		return null;
-	}
-
-	public static class ChangeSignatureInfo {
-
-		public String methodIdentifier;
-		public String modifier;
-		public String returnType;
-		public String methodName;
-		public MethodParameter[] parameters;
-		public MethodException[] exceptions;
-
-		public ChangeSignatureInfo(String methodIdentifier, String modifier, String returnType, String methodName, MethodParameter[] parameters, MethodException[] exceptions) {
-			this.methodIdentifier = methodIdentifier;
-			this.modifier = modifier;
-			this.returnType = returnType;
-			this.methodName = methodName;
-			this.parameters = parameters;
-			this.exceptions = exceptions;
-		}
 	}
 
 	public static String getUniqueMethodName(ASTNode astNode, String suggestedName) throws JavaModelException {
