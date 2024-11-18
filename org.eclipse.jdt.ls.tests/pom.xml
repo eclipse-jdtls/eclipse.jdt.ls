@@ -61,6 +61,33 @@
 	</build>
 	<profiles>
 		<profile>
+			<id>javac</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-toolchains-plugin</artifactId>
+						<version>3.2.0</version>
+						<executions>
+							<execution>
+								<phase>validate</phase>
+								<goals>
+									<goal>toolchain</goal>
+								</goals>
+								<configuration>
+									<toolchains>
+										<jdk>
+											<id>JavaSE-23</id>
+										</jdk>
+									</toolchains>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>lombok</id>
 			<activation>
 				<property>
@@ -84,17 +111,6 @@
 									<version>1.18.32</version>
 								</artifactItem>
 							</artifactItems>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-toolchains-plugin</artifactId>
-						<configuration>
-							<toolchains>
-								<jdk>
-									<id>JavaSE-23</id>
-								</jdk>
-							</toolchains>
 						</configuration>
 					</plugin>
 				</plugins>
