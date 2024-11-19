@@ -202,7 +202,7 @@ public class CodeActionHandler {
 
 		if (containsKind(codeActionKinds, CodeActionKind.Refactor)) {
 			try {
-				List<ProposalKindWrapper> refactorProposals = this.refactorProcessor.getProposals(params, context, locations);
+				List<ProposalKindWrapper> refactorProposals = this.refactorProcessor.getProposals(params, context, locations, monitor);
 				refactorProposals.sort(comparator);
 				proposals.addAll(refactorProposals);
 			} catch (CoreException e) {

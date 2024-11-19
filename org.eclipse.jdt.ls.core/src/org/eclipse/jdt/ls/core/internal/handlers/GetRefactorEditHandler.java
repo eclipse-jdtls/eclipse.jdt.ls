@@ -56,6 +56,8 @@ import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
+import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.ltk.core.refactoring.RefactoringStatusEntry;
 
 public class GetRefactorEditHandler {
 	public static final String RENAME_COMMAND = "java.action.rename";
@@ -114,15 +116,26 @@ public class GetRefactorEditHandler {
 				proposal = RefactorProcessor.getConvertAnonymousToNestedProposal(params.context, context, context.getCoveringNode(), false);
 				positionKey = "type_name";
 			} else if (RefactorProposalUtility.INTRODUCE_PARAMETER_COMMAND.equals(params.command)) {
-				// String initializeIn = (params.commandArguments != null && !params.commandArguments.isEmpty()) ? JSONUtility.toModel(params.commandArguments.get(0), String.class) : null;
-				proposal = RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params.context, context, context.getCoveringNode(), false, locations);
-				positionKey = null;
-				if (proposal.getProposal() instanceof RefactoringCorrectionProposalCore rcp) {
-					IntroduceParameterRefactoring refactoring = (IntroduceParameterRefactoring) rcp.getRefactoring();
-					ParameterInfo parameterInfo = refactoring.getAddedParameterInfo();
-					if (parameterInfo != null) {
-						positionKey = parameterInfo.getNewName();
+				final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(context.getCompilationUnit(), context.getSelectionOffset(), context.getSelectionLength());
+				LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+				introduceParameterRefactoring.setLinkedProposalModel(linkedProposalModel);
+				RefactoringStatus refactoringStatus = introduceParameterRefactoring.checkInitialConditions(new NullProgressMonitor());
+				if (refactoringStatus.isOK()) {
+					proposal = RefactorProposalUtility.getIntroduceParameterRefactoringProposals(params.context, context, context.getCoveringNode(), false, locations);
+					positionKey = null;
+					if (proposal.getProposal() instanceof RefactoringCorrectionProposalCore rcp) {
+						IntroduceParameterRefactoring refactoring = (IntroduceParameterRefactoring) rcp.getRefactoring();
+						ParameterInfo parameterInfo = refactoring.getAddedParameterInfo();
+						if (parameterInfo != null) {
+							positionKey = parameterInfo.getNewName();
+						}
 					}
+				} else {
+					StringBuilder buff = new StringBuilder();
+					for (RefactoringStatusEntry refactoringStatusEntry : refactoringStatus.getEntries()) {
+						buff.append(refactoringStatusEntry.toStatus().getMessage());
+					}
+					return new RefactorWorkspaceEdit(buff.toString());
 				}
 			} else if (RefactorProposalUtility.EXTRACT_INTERFACE_COMMAND.equals(params.command)) {
 				if (params.commandArguments != null && params.commandArguments.size() == 3) {

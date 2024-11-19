@@ -84,6 +84,7 @@ import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.text.correction.ChangeSignatureInfo;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
@@ -1132,6 +1133,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params) {
 		debugTrace(">> java/getRefactorEdit");
 		return computeAsync((monitor) -> GetRefactorEditHandler.getEditsForRefactor(params));
+	}
+
+	@Override
+	public CompletableFuture<ChangeSignatureInfo> getChangeSignatureInfo(CodeActionParams params) {
+		debugTrace(">> java/getChangeSignatureInfo");
+		return computeAsync((monitor) -> ChangeSignatureInfoHandler.getChangeSignatureInfo(params, monitor));
 	}
 
 	@Override

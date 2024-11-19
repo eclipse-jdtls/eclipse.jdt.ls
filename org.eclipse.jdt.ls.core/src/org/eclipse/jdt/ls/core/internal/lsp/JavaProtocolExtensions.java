@@ -19,32 +19,33 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.ExtractInterfaceHandler.CheckExtractInterfaceResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
-import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
+import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.GenerateAccessorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.CheckConstructorsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateConstructorsHandler.GenerateConstructorsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.CheckDelegateMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateDelegateMethodsHandler.GenerateDelegateMethodsParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.CheckToStringResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateToStringHandler.GenerateToStringParams;
-import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSelectionParams;
-import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.GetRefactorEditParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler.RefactorWorkspaceEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.InferSelectionParams;
+import org.eclipse.jdt.ls.core.internal.handlers.InferSelectionHandler.SelectionInfo;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveDestinationsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.MoveHandler.MoveParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.AddOverridableMethodParams;
 import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.OverridableMethodsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
+import org.eclipse.jdt.ls.core.internal.text.correction.ChangeSignatureInfo;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
-import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.extended.ProjectBuildParams;
+import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -68,6 +69,7 @@ public interface JavaProtocolExtensions {
 	 * @deprecated Please use {@link #projectConfigurationsUpdate(TextDocumentIdentifier)}.
 	 * @param documentUri the document from which the project configuration will be updated
 	 */
+	@Deprecated
 	@JsonNotification
 	void projectConfigurationUpdate(TextDocumentIdentifier documentUri);
 
@@ -128,6 +130,9 @@ public interface JavaProtocolExtensions {
 
 	@JsonRequest
 	CompletableFuture<RefactorWorkspaceEdit> getRefactorEdit(GetRefactorEditParams params);
+
+	@JsonRequest
+	CompletableFuture<ChangeSignatureInfo> getChangeSignatureInfo(CodeActionParams params);
 
 	@JsonRequest
 	CompletableFuture<List<SelectionInfo>> inferSelection(InferSelectionParams params);
