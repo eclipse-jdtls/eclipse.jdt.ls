@@ -670,7 +670,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 				    }
 				}
 				""";
-		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("removeUnusedLambdaParameters"), monitor);
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("renameUnusedLocalVariables"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
 	}

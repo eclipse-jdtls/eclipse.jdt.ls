@@ -33,7 +33,7 @@ public class RenameUnusedLocalVariableCleanup implements ISimpleCleanUp {
 
 	@Override
 	public Collection<String> getIdentifiers() {
-		return List.of("removeUnusedLambdaParameters", CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES);
+		return List.of("renameUnusedLocalVariables", CleanUpConstants.REMOVE_UNUSED_CODE_LOCAL_VARIABLES);
 	}
 
 	@Override
