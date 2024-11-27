@@ -1,5 +1,14 @@
 # Change Log
 
+# [1.42.0 (November 28th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/134?closed=1)
+ * performance - Improve performance of code actions requests. See [#3321](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3321).
+ * performance - Improve performance of all language server requests that resolve a document URI. See [#3313](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3313).
+ * enhancement - Code action for unused pattern variable, lambda parameter, etc. and a clean up. See [#3319](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3319), [#3329](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3329).
+ * bug fix - Restore `JavaSE-17` as BREE for tests. See [#3326](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3326), [#3331](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3331).
+ * dependencies - Bump Tycho from 4.0.9 to 4.0.10. See [#3324](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3324).
+ * build - Open more requested system packages for tests with javac. See [#3320](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3320).
+ * debt - Remove unused `refactoringContributions` extension point. See [#3308](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3308).
+
 # [1.41.0 (October 31st, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/133?closed=1)
  * enhancement - Experimental support for using `javac` as the compiler. See [#3167](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3167), [#3299](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3299).
  * bug fix - Intermittent failures to suggest Java core packages for completion & code actions. See [#3296](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3296).
