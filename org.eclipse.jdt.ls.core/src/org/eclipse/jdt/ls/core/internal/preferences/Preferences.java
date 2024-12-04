@@ -235,6 +235,11 @@ public class Preferences {
 	public static final String IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY = "java.implementationsCodeLens.enabled";
 
 	/**
+	 * Preference key to enable/disable implementation code lenses for methods.
+	 */
+	public static final String METHOD_IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY = "java.methodImplementationsCodeLens.enabled";
+
+	/**
 	 * Preference key to enable/disable formatter.
 	 */
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
@@ -629,6 +634,7 @@ public class Preferences {
 	private boolean eclipseDownloadSources;
 	private boolean mavenUpdateSnapshots;
 	private boolean implementationsCodeLensEnabled;
+	private boolean methodImplementationsCodeLensEnabled;
 	private boolean javaFormatEnabled;
 	private String javaQuickFixShowAt;
 	private boolean javaFormatOnTypeEnabled;
@@ -907,6 +913,7 @@ public class Preferences {
 		mavenUpdateSnapshots = false;
 		referencesCodeLensEnabled = true;
 		implementationsCodeLensEnabled = false;
+		methodImplementationsCodeLensEnabled = false;
 		javaFormatEnabled = true;
 		javaQuickFixShowAt = LINE;
 		javaFormatOnTypeEnabled = false;
@@ -1073,6 +1080,8 @@ public class Preferences {
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
 		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
 		prefs.setImplementationCodelensEnabled(implementationCodeLensEnabled);
+		boolean methodImplementationCodeLensEnabled = getBoolean(configuration, METHOD_IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
+		prefs.setMethodImplementationCodelensEnabled(methodImplementationCodeLensEnabled);
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
@@ -1583,6 +1592,11 @@ public class Preferences {
 		return this;
 	}
 
+	private Preferences setMethodImplementationCodelensEnabled(boolean enabled) {
+		this.methodImplementationsCodeLensEnabled = enabled;
+		return this;
+	}
+
 	private Preferences setRenameEnabled(boolean enabled) {
 		this.renameEnabled = enabled;
 		return this;
@@ -1912,8 +1926,12 @@ public class Preferences {
 		return implementationsCodeLensEnabled;
 	}
 
+	public boolean isMethodImplementationsCodeLensEnabled() {
+		return methodImplementationsCodeLensEnabled;
+	}
+
 	public boolean isCodeLensEnabled() {
-		return referencesCodeLensEnabled || implementationsCodeLensEnabled;
+		return referencesCodeLensEnabled || implementationsCodeLensEnabled || methodImplementationsCodeLensEnabled;
 	}
 
 	public boolean isJavaFormatEnabled() {

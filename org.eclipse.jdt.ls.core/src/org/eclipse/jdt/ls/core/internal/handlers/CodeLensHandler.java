@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
@@ -103,11 +104,11 @@ public class CodeLensHandler {
 						JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
 				} else if (IMPLEMENTATION_TYPE.equals(type)) {
-					if (element instanceof IType typeElement) {
+					if (element instanceof IType || element instanceof IMethod) {
 						try {
 							IDocument document = JsonRpcHelpers.toDocument(typeRoot.getBuffer());
 							int offset = document.getLineOffset(position.getLine()) + position.getCharacter();
-							locations = findImplementations(typeRoot, typeElement, offset, monitor);
+							locations = findImplementations(typeRoot, element, offset, monitor);
 						} catch (CoreException | BadLocationException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}
@@ -128,12 +129,15 @@ public class CodeLensHandler {
 		return lens;
 	}
 
-	private List<Location> findImplementations(ITypeRoot root, IType type, int offset, IProgressMonitor monitor) throws CoreException {
+	private List<Location> findImplementations(ITypeRoot root, IJavaElement element, int offset, IProgressMonitor monitor) throws CoreException {
 		//java.lang.Object is a special case. We need to minimize heavy cost of I/O,
 		// by avoiding opening all files from the Object hierarchy
-		boolean useDefaultLocation = "java.lang.Object".equals(type.getFullyQualifiedName());
+		boolean useDefaultLocation = false;
+		if (element instanceof IType type) {
+			useDefaultLocation = "java.lang.Object".equals(type.getFullyQualifiedName());
+		}
 		ImplementationToLocationMapper mapper = new ImplementationToLocationMapper(preferenceManager.isClientSupportsClassFileContent(), useDefaultLocation);
-		ImplementationCollector<Location> searcher = new ImplementationCollector<>(root, new Region(offset, 0), type, mapper);
+		ImplementationCollector<Location> searcher = new ImplementationCollector<>(root, new Region(offset, 0), element, mapper);
 		return searcher.findImplementations(monitor);
 	}
 
@@ -230,6 +234,15 @@ public class CodeLensHandler {
 			}
 			if (preferenceManager.getPreferences().isImplementationsCodeLensEnabled() && element instanceof IType type) {
 				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
+					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
+					if (lens != null) {
+						lenses.add(lens);
+					}
+				}
+			}
+
+			if (preferenceManager.getPreferences().isMethodImplementationsCodeLensEnabled() && element instanceof IMethod methodElement) {
+				if ((methodElement.getParent() instanceof IType parentType && parentType.isInterface()) || Flags.isAbstract(methodElement.getFlags())) {
 					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
 					if (lens != null) {
 						lenses.add(lens);
