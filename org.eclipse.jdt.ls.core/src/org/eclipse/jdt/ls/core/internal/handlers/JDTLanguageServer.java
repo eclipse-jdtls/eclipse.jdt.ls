@@ -606,7 +606,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			Object result = commandHandler.executeCommand(params, new NullProgressMonitor());
 			return CompletableFuture.completedFuture(result);
 		} else {
-			return computeAsync((monitor) -> {
+			return computeAsyncWithClientProgress((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
 			});
 		}
