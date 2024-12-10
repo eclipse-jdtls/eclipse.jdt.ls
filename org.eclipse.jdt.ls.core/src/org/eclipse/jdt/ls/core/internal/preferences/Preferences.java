@@ -230,9 +230,9 @@ public class Preferences {
 	public static final String REFERENCES_CODE_LENS_ENABLED_KEY = "java.referencesCodeLens.enabled";
 
 	/**
-	 * Preference key to enable/disable implementation code lenses.
+	 * Preference key to set implementation code lenses.
 	 */
-	public static final String IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY = "java.implementationsCodeLens.enabled";
+	public static final String IMPLEMENTATIONS_CODE_LENS_KEY = "java.implementationCodeLens";
 
 	/**
 	 * Preference key to enable/disable formatter.
@@ -628,7 +628,7 @@ public class Preferences {
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
 	private boolean mavenUpdateSnapshots;
-	private boolean implementationsCodeLensEnabled;
+	private String implementationsCodeLens;
 	private boolean javaFormatEnabled;
 	private String javaQuickFixShowAt;
 	private boolean javaFormatOnTypeEnabled;
@@ -906,7 +906,7 @@ public class Preferences {
 		eclipseDownloadSources = false;
 		mavenUpdateSnapshots = false;
 		referencesCodeLensEnabled = true;
-		implementationsCodeLensEnabled = false;
+		implementationsCodeLens = "none";
 		javaFormatEnabled = true;
 		javaQuickFixShowAt = LINE;
 		javaFormatOnTypeEnabled = false;
@@ -1071,8 +1071,8 @@ public class Preferences {
 		prefs.setMavenUpdateSnapshots(updateSnapshots);
 		boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, true);
 		prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
-		boolean implementationCodeLensEnabled = getBoolean(configuration, IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, false);
-		prefs.setImplementationCodelensEnabled(implementationCodeLensEnabled);
+		String implementationCodeLens = getString(configuration, IMPLEMENTATIONS_CODE_LENS_KEY, "none");
+		prefs.setImplementationCodelens(implementationCodeLens);
 
 		boolean javaFormatEnabled = getBoolean(configuration, JAVA_FORMAT_ENABLED_KEY, true);
 		prefs.setJavaFormatEnabled(javaFormatEnabled);
@@ -1578,8 +1578,8 @@ public class Preferences {
 		this.signatureHelpDescriptionEnabled = signatureHelpDescriptionEnabled;
 	}
 
-	private Preferences setImplementationCodelensEnabled(boolean enabled) {
-		this.implementationsCodeLensEnabled = enabled;
+	private Preferences setImplementationCodelens(String implementationCodeLensOption) {
+		this.implementationsCodeLens = implementationCodeLensOption;
 		return this;
 	}
 
@@ -1908,12 +1908,12 @@ public class Preferences {
 		return mavenUpdateSnapshots;
 	}
 
-	public boolean isImplementationsCodeLensEnabled() {
-		return implementationsCodeLensEnabled;
+	public String getImplementationsCodeLens() {
+		return implementationsCodeLens;
 	}
 
 	public boolean isCodeLensEnabled() {
-		return referencesCodeLensEnabled || implementationsCodeLensEnabled;
+		return referencesCodeLensEnabled || !implementationsCodeLens.equals("none");
 	}
 
 	public boolean isJavaFormatEnabled() {

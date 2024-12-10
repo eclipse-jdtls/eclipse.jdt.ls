@@ -163,7 +163,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void testGetCodeLensSymbolsForClass() throws Exception {
-		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "true"));
+		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "types"));
 		Mockito.reset(preferenceManager);
 		when(preferenceManager.getPreferences()).thenReturn(implementationsCodeLenses);
 		handler = new CodeLensHandler(preferenceManager);
@@ -214,7 +214,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testEnableImplementationsCodeLensSymbols() throws Exception {
-		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "true"));
+		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "types"));
 		Mockito.reset(preferenceManager);
 		when(preferenceManager.getPreferences()).thenReturn(implementationsCodeLenses);
 		handler = new CodeLensHandler(preferenceManager);
@@ -238,7 +238,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testDisableImplementationsCodeLensSymbols() throws Exception {
-		Preferences noImplementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_ENABLED_KEY, "false"));
+		Preferences noImplementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "types"));
 		Mockito.reset(preferenceManager);
 		when(preferenceManager.getPreferences()).thenReturn(noImplementationsCodeLenses);
 		Preferences noReferencesCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.REFERENCES_CODE_LENS_ENABLED_KEY, "false"));
@@ -296,6 +296,86 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		Location loc = locations.stream().filter(l -> l.getUri().contains("Foo2")).findFirst().get();
 		assertTrue(loc.getUri().endsWith("src/java/Foo2.java"));
 		assertRange(5, 13, 17, loc.getRange());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testResolveImplementationsInterfaceMethodCodeLens() {
+		String source = "src/java/ITest.java";
+		String payload = createCodeLensImplementationsRequest(source, 4, 16, 28);
+
+		CodeLens lens = getParams(payload);
+		Range range = lens.getRange();
+		assertRange(4, 16, 28, range);
+
+		CodeLens result = handler.resolve(lens, monitor);
+		assertNotNull(result);
+
+		// Check if command found
+		Command command = result.getCommand();
+		assertNotNull(command);
+		assertEquals("2 implementations", command.getTitle());
+		assertEquals("java.show.implementations", command.getCommand());
+
+		// Check codelens args
+		List<Object> args = command.getArguments();
+		assertEquals(3, args.size());
+
+		// Check we point to the ITest interface
+		String sourceUri = args.get(0).toString();
+		assertTrue(sourceUri.endsWith("ITest.java"));
+
+		// CodeLens position
+		Position p = (Position) args.get(1);
+		assertEquals(4, p.getLine());
+		assertEquals(16, p.getCharacter());
+
+		// Reference location (just checking implementation in Test.java)
+		List<Location> locations = (List<Location>) args.get(2);
+		assertEquals(2, locations.size());
+		Location loc = locations.stream().filter(l -> l.getUri().contains("Test")).findFirst().get();
+		assertTrue(loc.getUri().endsWith("src/java/Test.java"));
+		assertRange(5, 13, 23, loc.getRange());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testResolveImplementationsAbstractMethodCodeLens() {
+		String source = "src/java/Test.java";
+		String payload = createCodeLensImplementationsRequest(source, 7, 25, 45);
+
+		CodeLens lens = getParams(payload);
+		Range range = lens.getRange();
+		assertRange(7, 25, 45, range);
+
+		CodeLens result = handler.resolve(lens, monitor);
+		assertNotNull(result);
+
+		// Check if command found
+		Command command = result.getCommand();
+		assertNotNull(command);
+		assertEquals("1 implementation", command.getTitle());
+		assertEquals("java.show.implementations", command.getCommand());
+
+		// Check codelens args
+		List<Object> args = command.getArguments();
+		assertEquals(3, args.size());
+
+		// Check we point to the Test class
+		String sourceUri = args.get(0).toString();
+		assertTrue(sourceUri.endsWith("Test.java"));
+
+		// CodeLens position
+		Position p = (Position) args.get(1);
+		assertEquals(7, p.getLine());
+		assertEquals(25, p.getCharacter());
+
+		// Reference location (just checking implementation in Test.java)
+		List<Location> locations = (List<Location>) args.get(2);
+		assertEquals(1, locations.size());
+		Location loc = locations.stream().filter(l -> l.getUri().contains("Ext")).findFirst().get();
+		assertTrue(loc.getUri().endsWith("src/java/Ext.java"));
+		assertRange(8, 13, 31, loc.getRange());
 	}
 
 	@SuppressWarnings("unchecked")
