@@ -21,8 +21,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -90,11 +92,47 @@ public class JavadocContentAccess2 {
 			String content = getJavaDocNode(element);
 			if (content != null && content.startsWith("///")) {
 				Javadoc node = CoreJavadocContentAccessUtility.getJavadocNode(element, content);
+				Map<String, List<TagElement>> javadocTags = new HashMap<>();
 				StringBuilder buf = new StringBuilder();
-				for (Object tag : node.tags()) {
-					buf.append("\n");
-					collectTagElements(content, element, (TagElement) tag, buf);
+				for (Object obj : node.tags()) {
+					TagElement tag = (TagElement) obj;
+					if (tag.getTagName() != null) {
+						javadocTags.computeIfAbsent(tag.getTagName(), k -> new ArrayList<>()).add((tag));
+					} else {
+						buf.append("\n");
+						collectTagElements(content, element, tag, buf);
+					}
 				}
+
+				for (Map.Entry<String, List<TagElement>> entry : javadocTags.entrySet()) {
+					String tagName = entry.getKey();
+
+					String heading = switch (tagName) {
+						case TagElement.TAG_API_NOTE -> "API Note:";
+						case TagElement.TAG_AUTHOR -> "Author:";
+						case TagElement.TAG_IMPL_SPEC -> "Impl Spec:";
+						case TagElement.TAG_IMPL_NOTE -> "Impl Note:";
+						case TagElement.TAG_PARAM -> "Parameters:";
+						case TagElement.TAG_PROVIDES -> "Provides:";
+						case TagElement.TAG_RETURN -> "Returns:";
+						case TagElement.TAG_THROWS -> "Throws:";
+						case TagElement.TAG_EXCEPTION -> "Throws:";
+						case TagElement.TAG_SINCE -> "Since:";
+						case TagElement.TAG_SEE -> "See:";
+						case TagElement.TAG_VERSION -> "See:";
+						case TagElement.TAG_USES -> "Uses:";
+						default -> "";
+					};
+					buf.append("\n");
+					buf.append("* **" + heading + "**");
+
+					for (TagElement tag : entry.getValue()) {
+						buf.append("\n");
+						buf.append("  * ");
+						collectTagElements(content, element, tag, buf);
+					}
+				}
+
 				return buf.length() > 0 ? new StringReader(buf.substring(1)) : new StringReader(content);
 			} else {
 				String rawHtml = access.getHTMLContent(element, true);
@@ -109,27 +147,6 @@ public class JavadocContentAccess2 {
 	}
 
 	private static void collectTagElements(String content, IJavaElement element, TagElement tag, StringBuilder buf) {
-		if (tag.getTagName() != null) {
-			String heading = switch (tag.getTagName()) {
-				case TagElement.TAG_API_NOTE -> "API Note:";
-				case TagElement.TAG_AUTHOR -> "Author:";
-				case TagElement.TAG_IMPL_SPEC -> "Impl Spec:";
-				case TagElement.TAG_IMPL_NOTE -> "Impl Note:";
-				case TagElement.TAG_PARAM -> "Parameters:";
-				case TagElement.TAG_PROVIDES -> "Provides:";
-				case TagElement.TAG_RETURN -> "Returns:";
-				case TagElement.TAG_THROWS -> "Throws:";
-				case TagElement.TAG_EXCEPTION -> "Throws:";
-				case TagElement.TAG_SINCE -> "Since:";
-				case TagElement.TAG_SEE -> "See:";
-				case TagElement.TAG_VERSION -> "See:";
-				case TagElement.TAG_USES -> "Uses:";
-				default -> "";
-			};
-			buf.append("* **" + heading + "**");
-			buf.append("\n");
-			buf.append("  * ");
-		}
 		Deque<ASTNode> queue = new LinkedList<>();
 		queue.addAll(tag.fragments());
 		while (!queue.isEmpty()) {
