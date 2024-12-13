@@ -1305,4 +1305,50 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testAddPermittedSubTypeForSwitch() throws Exception {
+		Map<String, String> options21 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options21, JavaCore.VERSION_21);
+		fJProject.setOptions(options21);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		assertNoErrors(fJProject.getResource());
+
+		StringBuilder buf = new StringBuilder();
+		buf = new StringBuilder();
+		buf.append("package test;\n"
+				+ "public class SealedInSwitch {\n"
+				+ "	public static void test() {\n"
+				+ "		Shape input = null;\n"
+				+ "		switch (input) {\n"
+				+ "		}\n"
+				+ "	}\n"
+				+ "	public sealed class Shape permits Oval, Triangle, Rectangle {}\n"
+				+ "	public final class Oval extends Shape {}\n"
+				+ "	public final class Triangle extends Shape {}\n"
+				+ "	public final class Rectangle extends Shape {}"
+				+ "}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("SealedInSwitch.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test;\n"
+				+ "public class SealedInSwitch {\n"
+				+ "	public static void test() {\n"
+				+ "		Shape input = null;\n"
+				+ "		switch (input) {\n"
+				+ "			case SealedInSwitch.Oval s -> {}\n"
+				+ "			case SealedInSwitch.Triangle s2 -> {}\n"
+				+ "			case SealedInSwitch.Rectangle s3 -> {}\n"
+				+ "			case null -> {}\n"
+				+ "			default -> {}\n"
+				+ "		}\n"
+				+ "	}\n"
+				+ "	public sealed class Shape permits Oval, Triangle, Rectangle {}\n"
+				+ "	public final class Oval extends Shape {}\n"
+				+ "	public final class Triangle extends Shape {}\n"
+				+ "	public final class Rectangle extends Shape {}"
+				+ "}\n");
+		Expected e1 = new Expected("Add permitted type cases", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
 }

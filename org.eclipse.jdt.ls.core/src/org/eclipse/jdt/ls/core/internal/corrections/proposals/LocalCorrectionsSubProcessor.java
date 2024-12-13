@@ -103,15 +103,23 @@ import org.eclipse.jdt.internal.corext.refactoring.util.SurroundWithAnalyzer;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.fix.UnnecessaryCodeCleanUpCore;
+import org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.ChangeDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.InsertDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore.RemoveDescription;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateNewObjectProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateObjectReferenceProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateVariableReferenceProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -126,7 +134,7 @@ import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
-public class LocalCorrectionsSubProcessor {
+public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcessor<ProposalKindWrapper> {
 
 	private static final String ADD_STATIC_ACCESS_ID = "org.eclipse.jdt.ui.correction.changeToStatic"; //$NON-NLS-1$
 
@@ -1085,22 +1093,11 @@ public class LocalCorrectionsSubProcessor {
 	}
 
 	public static void addTypeAsPermittedSubTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
-		SealedClassFixCore fix = SealedClassFixCore.addTypeAsPermittedSubTypeProposal(context.getASTRoot(), problem);
-		if (fix != null) {
-			String label = fix.getDisplayString();
-			CompilationUnitChange change;
-			try {
-				change = fix.createChange(null);
+		new LocalCorrectionsSubProcessor().getTypeAsPermittedSubTypeProposal(context, problem, proposals);
+	}
 
-				ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
-				IType sealedType = SealedClassFixCore.getSealedType(selectedNode);
-				ICompilationUnit unit = SealedClassFixCore.getCompilationUnitForSealedType(sealedType);
-				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(label, unit, change, IProposalRelevance.DECLARE_SEALED_AS_DIRECT_SUPER_TYPE);
-				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
-			} catch (CoreException e) {
-				// do nothing
-			}
-		}
+	public static void addPermittedTypesProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getPermittedTypesProposal(context, problem, proposals);
 	}
 
 	public static void addSealedAsDirectSuperTypeProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
@@ -1128,6 +1125,133 @@ public class LocalCorrectionsSubProcessor {
 			MissingAnnotationAttributesProposalCore proposal = new MissingAnnotationAttributesProposalCore(context.getCompilationUnit(), annotation, IProposalRelevance.ADD_MISSING_ANNOTATION_ATTRIBUTES);
 			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#refactoringCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper refactoringCorrectionProposalToT(RefactoringCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected ProposalKindWrapper linkedCorrectionProposalToT(LinkedCorrectionProposalCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#changeMethodSignatureProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper changeMethodSignatureProposalToT(ChangeMethodSignatureProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#fixCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper fixCorrectionProposalToT(FixCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#constructorFromSuperClassProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper constructorFromSuperClassProposalToT(ConstructorFromSuperclassProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#createNewObjectProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.CreateNewObjectProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper createNewObjectProposalToT(CreateNewObjectProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#createObjectReferenceProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.CreateObjectReferenceProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper createObjectReferenceProposalToT(CreateObjectReferenceProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#createVariableReferenceProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.CreateVariableReferenceProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper createVariableReferenceProposalToT(CreateVariableReferenceProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#astRewriteCorrectionProposalToT(org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper astRewriteCorrectionProposalToT(ASTRewriteCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#replaceCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper replaceCorrectionProposalToT(ReplaceCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected ProposalKindWrapper cuCorrectionProposalToT(CUCorrectionProposalCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#newVariableCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper newVariableCorrectionProposalToT(NewVariableCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#missingAnnotationAttributesProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper missingAnnotationAttributesProposalToT(MissingAnnotationAttributesProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#newMethodCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper newMethodCorrectionProposalToT(NewMethodCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor#modifierChangeCorrectionProposalToT(org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore, int)
+	 */
+	@Override
+	protected ProposalKindWrapper modifierChangeCorrectionProposalToT(ModifierChangeCorrectionProposalCore core, int uid) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
