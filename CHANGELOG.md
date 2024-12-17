@@ -1,5 +1,13 @@
 # Change Log
 
+# [1.43.0 (December 19th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/135?closed=1)
+ * enhancement - Add code lens for interface / abstract method implementations. See [#3333](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3333).
+   * `java.implementationCodelens.enabled` replaced by `java.implementationCodeLens`
+   *  Values for new setting are `"none"`, `"types"`, `"methods"`, `"all"`
+ * enhancement - Add quick fix for sealed class within empty switch expression. See [#3345](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3345).
+ * enhancement - Support code assist on unresolved types. See [#3339](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3339).
+ * bug fix - Improve rendering of Markdown Comments (JEP 467). See [#3332](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3332).
+
 # [1.42.0 (November 28th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/134?closed=1)
  * performance - Improve performance of code actions requests. See [#3321](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3321).
  * performance - Improve performance of all language server requests that resolve a document URI. See [#3313](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3313).
