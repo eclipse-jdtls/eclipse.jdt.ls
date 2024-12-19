@@ -881,11 +881,30 @@ public final class JDTUtils {
 			return null;
 		}
 
+		String classId = classFile.getHandleIdentifier();
+		String classFileName = classFile.getElementName();
+		// try to point to the parent class if this is an inner class, this avoid
+		// opening new tab for the actual same source file.
+		if (classFileName.contains("$")) {
+			String parentClassId = classId.substring(0, classId.lastIndexOf("$")) + ".class";
+			IJavaElement parentClass = JavaCore.create(parentClassId);
+			if (parentClass != null && parentClass instanceof IClassFile parentClassFile) {
+				try {
+					// they are from the same source file if the contents are the same.
+					if (Objects.equals(parentClassFile.getBuffer(), classFile.getBuffer())) {
+						classId = parentClassFile.getHandleIdentifier();
+						classFileName = parentClassFile.getElementName();
+					}
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException("Error get content of the class file", e);
+				}
+			}
+		}
 		String packageName = classFile.getParent().getElementName();
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFileName, classId, null).toASCIIString();
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
