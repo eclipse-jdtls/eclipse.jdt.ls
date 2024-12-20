@@ -16,9 +16,11 @@ import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IProject;
@@ -73,7 +75,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 			return false;
 		}
 
-		IVMInstall vm = findVM(jvmHome, null);
+		IVMInstall vm = findVM(jvmHome);
 		if (vm == null) {
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
 			if (installType == null || installType.getVMInstalls().length == 0) {
@@ -109,13 +111,19 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		boolean changed = false;
 		boolean defaultVMSet = false;
 		Set<RuntimeEnvironment> runtimes = preferences.getRuntimes();
-		for (RuntimeEnvironment runtime : runtimes) {
-			if (runtime.isValid()) {
+		Map<String, List<RuntimeEnvironment>> environments = runtimes
+				.stream()
+				.filter(RuntimeEnvironment::isValid)
+				.collect(Collectors.groupingBy(RuntimeEnvironment::getName));
+		for (String environmentName : environments.keySet()) {
+			List<RuntimeEnvironment> envRuntimes = environments.get(environmentName);
+			for (int i = 0; i < envRuntimes.size(); i++) {
+				RuntimeEnvironment runtime = envRuntimes.get(i);
 				File file = runtime.getInstallationFile();
 				if (file != null && file.isDirectory()) {
 					URL javadocURL = runtime.getJavadocURL();
 					IPath sourcePath = runtime.getSourcePath();
-					IVMInstall vm = findVM(file, runtime.getName());
+					IVMInstall vm = findVM(file);
 					IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
 					if (installType == null || installType.getVMInstalls().length == 0) {
 						// https://github.com/eclipse/eclipse.jdt.ls/issues/1646
@@ -163,13 +171,13 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 						}
 						boolean libChanged = false;
 						if (libs != null) {
-							for (int i = 0; i < libs.length; i++) {
-								LibraryLocation lib = libs[i];
+							for (int j = 0; j < libs.length; j++) {
+								LibraryLocation lib = libs[j];
 								IPath systemSourcePath = sourcePath != null ? sourcePath : lib.getSystemLibrarySourcePath();
 								URL javadocLocation = javadocURL != null ? javadocURL : lib.getJavadocLocation();
 								LibraryLocation newLib = new LibraryLocation(lib.getSystemLibraryPath(), systemSourcePath, lib.getPackageRootPath(), javadocLocation, lib.getIndexLocation(), lib.getExternalAnnotationsPath());
 								libChanged = libChanged || !newLib.equals(lib);
-								libs[i] = newLib;
+								libs[j] = newLib;
 							}
 						}
 						if (libChanged) {
@@ -187,7 +195,7 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 							changed = true;
 						}
 					}
-					if (!setDefaultEnvironmentVM(vm, runtime.getName())) {
+					if (i == 0 && !setDefaultEnvironmentVM(vm, runtime.getName())) {
 						sendNotification(connection, "Invalid runtime for " + runtime.getName() + ": Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment.");
 						JavaLanguageServerPlugin.logError("Runtime at '" + runtime.getPath() + "' is not compatible with the '" + runtime.getName() + "' environment");
 					}
@@ -261,14 +269,11 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		return null;
 	}
 
-	public static IVMInstall findVM(File file, String name) {
+	public static IVMInstall findVM(File file) {
 		IVMInstallType[] types = JavaRuntime.getVMInstallTypes();
 		for (IVMInstallType type : types) {
 			IVMInstall[] installs = type.getVMInstalls();
 			for (IVMInstall install : installs) {
-				if (name != null && name.equals(install.getName())) {
-					return install;
-				}
 				if (file != null && file.equals(install.getInstallLocation())) {
 					return install;
 				}
