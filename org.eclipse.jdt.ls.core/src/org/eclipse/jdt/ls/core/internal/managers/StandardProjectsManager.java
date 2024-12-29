@@ -40,6 +40,9 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
+import org.eclipse.buildship.core.internal.DefaultGradleBuild;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -263,7 +266,22 @@ public class StandardProjectsManager extends ProjectsManager {
 								// The sync task is handled by Buildship when sync.auto is turned on,
 								// except for the annotation processing configuration updating.
 								// See https://github.com/redhat-developer/vscode-java/issues/2673
-								GradleBuildSupport.syncAnnotationProcessingConfiguration(project, new NullProgressMonitor());
+								// See https://github.com/redhat-developer/vscode-java/issues/3893
+								Optional<GradleBuild> build = GradleCore.getWorkspace().getBuild(project);
+								boolean syncAnnotationProcessing = true;
+								if (build.isPresent()) {
+									GradleBuild gradleBuild = build.get();
+									if (gradleBuild instanceof DefaultGradleBuild defaultGradleBuild) {
+										org.eclipse.buildship.core.internal.configuration.BuildConfiguration gradleConfig = defaultGradleBuild.getBuildConfig();
+										if (!gradleConfig.isAutoSync()) {
+											updateProject(project, true);
+											syncAnnotationProcessing = false;
+										}
+									}
+								}
+								if (syncAnnotationProcessing) {
+									GradleBuildSupport.syncAnnotationProcessingConfiguration(project, new NullProgressMonitor());
+								}
 								return;
 							}
 							updateProject(project, true);
