@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
@@ -77,6 +80,15 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 							AptConfig.setEnabled(javaProject, false);
 						}
 					}
+				}
+			}
+			boolean updateBuildConfigurationChanged = !Objects.equals(oldPreferences.getUpdateBuildConfigurationStatus(), newPreferences.getUpdateBuildConfigurationStatus());
+			if (updateBuildConfigurationChanged) {
+				for (IProject project : ProjectUtils.getGradleProjects()) {
+					String projectPath = project.getLocation().toFile().getAbsolutePath();
+					BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
+					GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(buildConfiguration);
+					gradleBuild.synchronize(new NullProgressMonitor());
 				}
 			}
 		}

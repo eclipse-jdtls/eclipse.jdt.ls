@@ -27,6 +27,7 @@ import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.buildship.core.internal.DefaultGradleBuild;
 import org.eclipse.buildship.core.internal.launch.GradleClasspathProvider;
 import org.eclipse.buildship.core.internal.preferences.PersistentModel;
 import org.eclipse.buildship.core.internal.util.file.FileUtils;
@@ -106,7 +107,17 @@ public class GradleBuildSupport implements IBuildSupport {
 					|| (settingsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath()))
 					|| (buildKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(buildKtsFile.toPath()))
 					|| (settingsKtsFile.exists() && JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsKtsFile.toPath()));
-			if (isRoot || shouldUpdate) {
+			// https://github.com/redhat-developer/vscode-java/issues/3893
+			shouldUpdate |= isRoot;
+			if (!shouldUpdate) {
+				if (force && gradleBuild instanceof DefaultGradleBuild defaultGradleBuild) {
+					org.eclipse.buildship.core.internal.configuration.BuildConfiguration gradleConfig = defaultGradleBuild.getBuildConfig();
+					if (!gradleConfig.isAutoSync()) {
+						shouldUpdate = true;
+					}
+				}
+			}
+			if (shouldUpdate) {
 				gradleBuild.synchronize(monitor);
 				syncAnnotationProcessingConfiguration(gradleBuild, monitor);
 			}
