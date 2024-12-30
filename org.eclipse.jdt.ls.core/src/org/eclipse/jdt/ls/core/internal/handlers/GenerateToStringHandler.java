@@ -201,7 +201,6 @@ public class GenerateToStringHandler {
 		settings.customBuilderSettings = new CustomBuilderSettings();
 		if (type.getCompilationUnit().getJavaProject() != null) {
 			String version = type.getCompilationUnit().getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true);
-			settings.is50orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_5);
 			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
 		}
 

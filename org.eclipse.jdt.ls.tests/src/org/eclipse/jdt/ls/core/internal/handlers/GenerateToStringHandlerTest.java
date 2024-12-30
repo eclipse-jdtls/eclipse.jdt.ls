@@ -130,7 +130,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 				+ "	String[] arrays;\r\n"
 				+ "	@Override\r\n"
 				+ "	public String toString() {\r\n"
-				+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+				+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + Arrays.toString(arrays) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
 				+ "	}\r\n"
 				+ "}";
 		/* @formatter:on */
@@ -218,7 +218,6 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		settings.limitElements = true;
 		settings.limitValue = 10;
 		settings.customBuilderSettings = new CustomBuilderSettings();
-		settings.is50orHigher = true;
 		settings.is60orHigher = true;
 		generateToString(unit.findPrimaryType(), settings);
 
@@ -309,7 +308,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 					+ "	List<String> aList;/*|*/\r\n"
 					+ "	@Override\r\n"
 					+ "	public String toString() {\r\n"
-					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + Arrays.toString(arrays) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
 					+ "	}\r\n"
 					+ "	String[] arrays;\r\n"
 					+ "}";
@@ -365,7 +364,7 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 					+ "	int id;\r\n"
 					+ "	@Override\r\n"
 					+ "	public String toString() {\r\n"
-					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + (arrays != null ? Arrays.asList(arrays) : null) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
+					+ "		return \"B [name=\" + name + \", id=\" + id + \", aList=\" + aList + \", arrays=\" + Arrays.toString(arrays) + \", getClass()=\" + getClass() + \", hashCode()=\" + hashCode() + \", toString()=\" + super.toString() + \"]\";\r\n"
 					+ "	}\r\n"
 					+ "	List<String> aList;/*|*/\r\n"
 					+ "	String[] arrays;\r\n"
