@@ -404,6 +404,49 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/3905
+	@Test
+	public void testGH3905() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isWorkspaceSnippetEditSupported()).thenReturn(true);
+		when(preferenceManager.getClientPreferences().isResourceOperationSupported()).thenReturn(true);
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("public class E {\n");
+		buf.append("    public class SuperType {\n");
+		buf.append("        public SuperType(String name) {}\n");
+		buf.append("    }\n");
+		buf.append("    public class SubType extends SuperType {\n");
+		buf.append("    }\n");
+		buf.append("}");
+		ICompilationUnit unit = defaultPackage.createCompilationUnit("E.java", buf.toString(), false, null);
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "SubType");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedConstructorInDefaultConstructor), range)), Collections.singletonList(CodeActionKind.QuickFix));
+		params.setContext(context);
+
+		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
+		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : quickfixActions) {
+			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
+			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+		}
+
+		Optional<Either<Command, CodeAction>> unresolvedResponse = quickfixActions.stream().filter(codeAction -> {
+			return "Add constructor 'SubType(String)'".equals(codeAction.getRight().getTitle());
+		}).findFirst();
+		Assert.assertTrue("Should return the quickfix \"Add constructor 'SubType(String)'\"", unresolvedResponse.isPresent());
+		CodeAction unresolvedCodeAction = unresolvedResponse.get().getRight();
+
+		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
+		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }");
+	}
+
 	private Diagnostic getDiagnostic(String code, Range range){
 		Diagnostic $ = new Diagnostic();
 		$.setCode(code);
