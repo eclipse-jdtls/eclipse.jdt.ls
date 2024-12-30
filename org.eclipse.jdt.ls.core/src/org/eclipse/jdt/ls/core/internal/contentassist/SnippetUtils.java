@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -118,6 +119,11 @@ public class SnippetUtils {
 			LinkedProposalPositionGroupCore group = it.next();
 			ProposalCore[] proposalList = group.getProposals();
 			PositionInformation[] positionList = group.getPositions();
+			// Some positions might be undefined offset = -1
+			// eg. AST Nodes created but not applied to model
+			positionList = Arrays.asList(positionList).stream()
+					.filter(pi -> pi.getOffset() >= 0)
+					.collect(Collectors.toList()).toArray(new PositionInformation[0]);
 			// Sorts in ascending order to ensure first position in list has the smallest offset
 			Arrays.sort(positionList, (p1, p2) -> {
 				return p1.getOffset() - p2.getOffset();
