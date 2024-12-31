@@ -218,7 +218,6 @@ public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 		settings.limitElements = true;
 		settings.limitValue = 10;
 		settings.customBuilderSettings = new CustomBuilderSettings();
-		settings.is60orHigher = true;
 		generateToString(unit.findPrimaryType(), settings);
 
 		/* @formatter:off */
