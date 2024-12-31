@@ -212,7 +212,7 @@ public class ParameterGuesser {
 		if (code != null) {
 			return code;
 		}
-		if (fEnclosingElement != null && JavaModelUtil.is50OrHigher(fEnclosingElement.getJavaProject())) {
+		if (fEnclosingElement != null) {
 			if (code == PrimitiveType.SHORT) {
 				if ("java.lang.Short".equals(type)) { //$NON-NLS-1$
 					return code;

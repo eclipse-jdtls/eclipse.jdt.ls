@@ -26,7 +26,6 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -41,7 +40,6 @@ import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.Gener
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore;
 import org.eclipse.jdt.internal.corext.codemanipulation.tostringgeneration.ToStringGenerationSettingsCore.CustomBuilderSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.BindingComparator;
@@ -199,10 +197,6 @@ public class GenerateToStringHandler {
 		settings.limitElements = preferences.getGenerateToStringLimitElements() > 0;
 		settings.limitValue = Math.max(preferences.getGenerateToStringLimitElements(), 0);
 		settings.customBuilderSettings = new CustomBuilderSettings();
-		if (type.getCompilationUnit().getJavaProject() != null) {
-			String version = type.getCompilationUnit().getJavaProject().getOption(JavaCore.COMPILER_SOURCE, true);
-			settings.is60orHigher = !JavaModelUtil.isVersionLessThan(version, JavaCore.VERSION_1_6);
-		}
 
 		return generateToString(type, fields, settings, insertPosition, monitor);
 	}

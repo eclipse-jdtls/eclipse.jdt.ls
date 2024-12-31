@@ -40,7 +40,6 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AddImportCorrectionProposalCore;
@@ -683,9 +682,7 @@ public class QuickFixProcessor {
 				String str = problem.toString();
 				System.out.println(str);
 		}
-		if (JavaModelUtil.is50OrHigher(context.getCompilationUnit().getJavaProject())) {
-			SuppressWarningsSubProcessor.addSuppressWarningsProposals(context, problem, proposals);
-		}
+		SuppressWarningsSubProcessor.addSuppressWarningsProposals(context, problem, proposals);
 		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
 		// problem, proposals);
 	}
