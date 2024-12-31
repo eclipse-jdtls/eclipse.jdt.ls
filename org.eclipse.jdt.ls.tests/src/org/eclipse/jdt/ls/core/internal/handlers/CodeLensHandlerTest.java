@@ -237,6 +237,28 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testEnableImplementationsCodeLensSymbolsForBaseTypes() throws Exception {
+		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "all"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(implementationsCodeLenses);
+		handler = new CodeLensHandler(preferenceManager);
+
+		String payload = createCodeLensSymbolsRequest("src/java/Foo.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+
+		//when
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
+
+		//then
+		assertEquals(6, result.size());
+		@SuppressWarnings("unchecked")
+		long implementations = result.stream().filter(cl -> "implementations".equals(((List<Object>) cl.getData()).get(2))).count();
+		assertEquals(3, implementations);
+	}
+
+	@Test
 	public void testDisableImplementationsCodeLensSymbols() throws Exception {
 		Preferences noImplementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "types"));
 		Mockito.reset(preferenceManager);
