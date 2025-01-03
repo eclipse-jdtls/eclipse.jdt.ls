@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
+import org.eclipse.buildship.core.BuildConfiguration;
+import org.eclipse.buildship.core.GradleBuild;
+import org.eclipse.buildship.core.GradleCore;
 import org.eclipse.buildship.core.GradleDistribution;
 import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
@@ -31,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 
@@ -75,6 +79,20 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 						IJavaProject javaProject = JavaCore.create(project);
 						if (javaProject != null) {
 							AptConfig.setEnabled(javaProject, false);
+						}
+					}
+				}
+			}
+			boolean updateBuildConfigurationChanged = !Objects.equals(oldPreferences.getUpdateBuildConfigurationStatus(), newPreferences.getUpdateBuildConfigurationStatus());
+			if (updateBuildConfigurationChanged) {
+				if (newPreferences.getUpdateBuildConfigurationStatus().equals(FeatureStatus.automatic)) {
+					for (IProject project : ProjectUtils.getGradleProjects()) {
+						ProjectConfiguration configuration = CorePlugin.configurationManager().loadProjectConfiguration(project);
+						if (!configuration.getBuildConfiguration().isAutoSync()) {
+							String projectPath = project.getLocation().toFile().getAbsolutePath();
+							BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
+							GradleBuild gradleBuild = GradleCore.getWorkspace().createBuild(buildConfiguration);
+							gradleBuild.synchronize(new NullProgressMonitor());
 						}
 					}
 				}
