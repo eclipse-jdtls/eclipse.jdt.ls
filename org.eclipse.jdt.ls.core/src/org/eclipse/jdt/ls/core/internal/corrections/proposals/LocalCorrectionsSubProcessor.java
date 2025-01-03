@@ -176,19 +176,17 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 
-		if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
-			refactoring = SurroundWithTryCatchRefactoring.create(cu, offset, length, true);
-			if (refactoring == null) {
-				return;
-			}
+		refactoring = SurroundWithTryCatchRefactoring.create(cu, offset, length, true);
+		if (refactoring == null) {
+			return;
+		}
 
-			refactoring.setLeaveDirty(true);
-			if (refactoring.checkActivationBasics(astRoot).isOK()) {
-				String label = CorrectionMessages.LocalCorrectionsSubProcessor_surroundwith_trymulticatch_description;
-				RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_MULTICATCH);
-				proposal.setLinkedProposalModel(refactoring.getLinkedProposalModel());
-				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
-			}
+		refactoring.setLeaveDirty(true);
+		if (refactoring.checkActivationBasics(astRoot).isOK()) {
+			String label = CorrectionMessages.LocalCorrectionsSubProcessor_surroundwith_trymulticatch_description;
+			RefactoringCorrectionProposalCore proposal = new RefactoringCorrectionProposalCore(label, cu, refactoring, IProposalRelevance.SURROUND_WITH_TRY_MULTICATCH);
+			proposal.setLinkedProposalModel(refactoring.getLinkedProposalModel());
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 		}
 
 		//Surround with try-with
@@ -251,91 +249,89 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 
-			if (JavaModelUtil.is1d7OrHigher(cu.getJavaProject())) {
-				List<CatchClause> catchClauses = surroundingTry.catchClauses();
+			List<CatchClause> catchClauses = surroundingTry.catchClauses();
 
-				if (catchClauses != null && catchClauses.size() == 1) {
-					List<ITypeBinding> filteredExceptions = SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
-					String label = filteredExceptions.size() > 1 ? CorrectionMessages.LocalCorrectionsSubProcessor_addexceptionstoexistingcatch_description
-							: CorrectionMessages.LocalCorrectionsSubProcessor_addexceptiontoexistingcatch_description;
+			if (catchClauses != null && catchClauses.size() == 1) {
+				List<ITypeBinding> filteredExceptions = SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
+				String label = filteredExceptions.size() > 1 ? CorrectionMessages.LocalCorrectionsSubProcessor_addexceptionstoexistingcatch_description
+						: CorrectionMessages.LocalCorrectionsSubProcessor_addexceptiontoexistingcatch_description;
+				ASTRewrite rewrite = ASTRewrite.create(ast);
+				LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH);
+				ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
+				ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
+
+				CatchClause catchClause = catchClauses.get(0);
+				Type type = catchClause.getException().getType();
+				if (type instanceof UnionType unionType) {
+					ListRewrite listRewrite = rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
+					for (int i = 0; i < filteredExceptions.size(); i++) {
+						ITypeBinding excBinding = filteredExceptions.get(i);
+						Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
+						listRewrite.insertLast(type2, null);
+
+						String typeKey = "type" + i; //$NON-NLS-1$
+						proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
+						addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+					}
+				} else {
+					UnionType newUnionType = ast.newUnionType();
+					List<Type> types = newUnionType.types();
+
+					types.add((Type) rewrite.createCopyTarget(type));
+					for (int i = 0; i < filteredExceptions.size(); i++) {
+						ITypeBinding excBinding = filteredExceptions.get(i);
+						Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
+						types.add(type2);
+
+						String typeKey = "type" + i; //$NON-NLS-1$
+						proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
+						addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
+					}
+					rewrite.replace(type, newUnionType, null);
+				}
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+			} else if (catchClauses != null && catchClauses.size() == 0) {
+				List<ITypeBinding> filteredExceptions = SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
+				if (filteredExceptions.size() > 1) {
+					String label = CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalmulticatch_description;
 					ASTRewrite rewrite = ASTRewrite.create(ast);
-					LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_EXCEPTIONS_TO_EXISTING_CATCH);
+					LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_MULTI_CATCH);
 					ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
 					ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
 
-					CatchClause catchClause = catchClauses.get(0);
-					Type type = catchClause.getException().getType();
-					if (type instanceof UnionType unionType) {
-						ListRewrite listRewrite = rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
-						for (int i = 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding = filteredExceptions.get(i);
-							Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							listRewrite.insertLast(type2, null);
+					CodeScopeBuilder.Scope scope = CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).findScope(offset, length);
+					scope.setCursor(offset);
 
-							String typeKey = "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
-						}
-					} else {
-						UnionType newUnionType = ast.newUnionType();
-						List<Type> types = newUnionType.types();
+					CatchClause newCatchClause = ast.newCatchClause();
+					String varName = StubUtility.getExceptionVariableName(cu.getJavaProject());
+					String name = scope.createName(varName, false);
+					SingleVariableDeclaration var = ast.newSingleVariableDeclaration();
+					var.setName(ast.newSimpleName(name));
 
-						types.add((Type) rewrite.createCopyTarget(type));
-						for (int i = 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding = filteredExceptions.get(i);
-							Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							types.add(type2);
+					UnionType newUnionType = ast.newUnionType();
+					List<Type> types = newUnionType.types();
 
-							String typeKey = "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
-						}
-						rewrite.replace(type, newUnionType, null);
+					for (int i = 0; i < filteredExceptions.size(); i++) {
+						ITypeBinding excBinding = filteredExceptions.get(i);
+						Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
+						types.add(type2);
+
+						String typeKey = "type" + i; //$NON-NLS-1$
+						proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
+						addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
 					}
+					String nameKey = "name"; //$NON-NLS-1$
+					proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
+					var.setType(newUnionType);
+					newCatchClause.setException(var);
+					String catchBody = StubUtility.getCatchBodyContent(cu, "Exception", name, selectedNode, String.valueOf('\n')); //$NON-NLS-1$
+					if (catchBody != null) {
+						ASTNode node = rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
+						newCatchClause.getBody().statements().add(node);
+					}
+					ListRewrite listRewrite = rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
+					listRewrite.insertFirst(newCatchClause, null);
 					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
-				} else if (catchClauses != null && catchClauses.size() == 0) {
-					List<ITypeBinding> filteredExceptions = SurroundWithTryCatchRefactoring.filterSubtypeExceptions(uncaughtExceptions);
-					if (filteredExceptions.size() > 1) {
-						String label = CorrectionMessages.LocalCorrectionsSubProcessor_addadditionalmulticatch_description;
-						ASTRewrite rewrite = ASTRewrite.create(ast);
-						LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.ADD_ADDITIONAL_MULTI_CATCH);
-						ImportRewrite imports = proposal.createImportRewrite(context.getASTRoot());
-						ImportRewriteContext importRewriteContext = new ContextSensitiveImportRewriteContext(decl, imports);
-
-						CodeScopeBuilder.Scope scope = CodeScopeBuilder.perform(decl, Selection.createFromStartLength(offset, length)).findScope(offset, length);
-						scope.setCursor(offset);
-
-						CatchClause newCatchClause = ast.newCatchClause();
-						String varName = StubUtility.getExceptionVariableName(cu.getJavaProject());
-						String name = scope.createName(varName, false);
-						SingleVariableDeclaration var = ast.newSingleVariableDeclaration();
-						var.setName(ast.newSimpleName(name));
-
-						UnionType newUnionType = ast.newUnionType();
-						List<Type> types = newUnionType.types();
-
-						for (int i = 0; i < filteredExceptions.size(); i++) {
-							ITypeBinding excBinding = filteredExceptions.get(i);
-							Type type2 = imports.addImport(excBinding, ast, importRewriteContext, TypeLocation.EXCEPTION);
-							types.add(type2);
-
-							String typeKey = "type" + i; //$NON-NLS-1$
-							proposal.addLinkedPosition(rewrite.track(type2), false, typeKey);
-							addExceptionTypeLinkProposals(proposal, excBinding, typeKey);
-						}
-						String nameKey = "name"; //$NON-NLS-1$
-						proposal.addLinkedPosition(rewrite.track(var.getName()), false, nameKey);
-						var.setType(newUnionType);
-						newCatchClause.setException(var);
-						String catchBody = StubUtility.getCatchBodyContent(cu, "Exception", name, selectedNode, String.valueOf('\n')); //$NON-NLS-1$
-						if (catchBody != null) {
-							ASTNode node = rewrite.createStringPlaceholder(catchBody, ASTNode.RETURN_STATEMENT);
-							newCatchClause.getBody().statements().add(node);
-						}
-						ListRewrite listRewrite = rewrite.getListRewrite(surroundingTry, TryStatement.CATCH_CLAUSES_PROPERTY);
-						listRewrite.insertFirst(newCatchClause, null);
-						proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
-					}
 				}
 			}
 		}
