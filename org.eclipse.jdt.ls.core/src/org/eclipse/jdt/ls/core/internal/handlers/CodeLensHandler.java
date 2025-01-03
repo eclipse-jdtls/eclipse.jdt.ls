@@ -22,7 +22,6 @@ import java.util.List;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
@@ -233,17 +232,15 @@ public class CodeLensHandler {
 				}
 			}
 			String implementationsPreference = preferenceManager.getPreferences().getImplementationsCodeLens();
-			if (("all".equals(implementationsPreference) || "types".equals(implementationsPreference)) && element instanceof IType type) {
-				if (type.isInterface() || Flags.isAbstract(type.getFlags())) {
-					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
-					if (lens != null) {
-						lenses.add(lens);
-					}
+			if (("all".equals(implementationsPreference) || "types".equals(implementationsPreference)) && element instanceof IType) {
+				CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
+				if (lens != null) {
+					lenses.add(lens);
 				}
 			}
 
 			if (("all".equals(implementationsPreference) || "methods".equals(implementationsPreference)) && element instanceof IMethod methodElement) {
-				if ((methodElement.getParent() instanceof IType parentType && parentType.isInterface()) || Flags.isAbstract(methodElement.getFlags())) {
+				if (methodElement.getParent() instanceof IType) {
 					CodeLens lens = getCodeLens(IMPLEMENTATION_TYPE, element, typeRoot);
 					if (lens != null) {
 						lenses.add(lens);
