@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.internal.net.ProxySelector;
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -52,6 +53,7 @@ import org.eclipse.jdt.ls.core.contentassist.ICompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegistry;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
+import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
@@ -68,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxProjectsManager;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.text.templates.ContextTypeRegistry;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -78,6 +81,7 @@ import com.google.common.base.Throwables;
 
 public class JavaLanguageServerPlugin extends Plugin {
 
+	public static final String INITIALIZE_AFTER_JOB = "INITIALIZE_AFTER_JOB";
 	public static final String JDT_UI_PLUGIN = "org.eclipse.jdt.ui";
 	public static final String MANUAL = "Manual";
 	public static final String DIRECT = "Direct";
@@ -183,6 +187,17 @@ public class JavaLanguageServerPlugin extends Plugin {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
+					// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
+					// start org.eclipse.buildship.core before JavaCore.initializeAfterLoad to avoid deadlock - https://github.com/redhat-developer/vscode-java/issues/3901
+					// https://github.com/redhat-developer/vscode-java/issues/3184
+					// start the m2e and buildship plugin before calling JavaCore.setOptions
+					// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
+					// https://github.com/redhat-developer/vscode-java/issues/3904 moved from InitHandler.handleInitializationOptions()
+					BundleUtils.startBundle(CorePlugin.PLUGIN_ID);
+					BundleUtils.startBundle(IMavenConstants.PLUGIN_ID);
+					long start = System.currentTimeMillis();
+					JobHelpers.waitForProjectRegistryRefreshJob();
+					JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
 					JavaCore.initializeAfterLoad(monitor);
 				} catch (CoreException e) {
 					logException(e);
@@ -193,6 +208,14 @@ public class JavaLanguageServerPlugin extends Plugin {
 					}
 				}
 				return Status.OK_STATUS;
+			}
+
+			/* (non-Javadoc)
+			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
+			 */
+			@Override
+			public boolean belongsTo(Object family) {
+				return INITIALIZE_AFTER_JOB.equals(family);
 			}
 
 		};

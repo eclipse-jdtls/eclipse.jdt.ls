@@ -14,8 +14,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -33,8 +30,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
@@ -66,9 +63,6 @@ import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
 import org.eclipse.lsp4j.WorkspaceServerCapabilities;
-import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleException;
 
 /**
  * Handler for the VS Code extension initialization
@@ -97,15 +91,7 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
-		// https://github.com/redhat-developer/vscode-java/issues/3184
-		// start the m2e and buildship plugin before calling JavaCore.setOptions
-		// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
-		startBundle(IMavenConstants.PLUGIN_ID);
-		long start = System.currentTimeMillis();
-		JobHelpers.waitForProjectRegistryRefreshJob();
-		JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
-		// load gradle plugin https://github.com/redhat-developer/vscode-java/issues/2088
-		startBundle(CorePlugin.PLUGIN_ID);
+		JobHelpers.waitForJobs(JavaLanguageServerPlugin.INITIALIZE_AFTER_JOB, new NullProgressMonitor());
 		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
 
 		try {
@@ -313,14 +299,4 @@ final public class InitHandler extends BaseInitHandler {
 		job.schedule();
 	}
 
-	private void startBundle(String symbolicName) {
-		try {
-			long start = System.currentTimeMillis();
-			JavaLanguageServerPlugin.debugTrace("Starting " + symbolicName);
-			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
-			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
-		} catch (BundleException e) {
-			logException(e.getMessage(), e);
-		}
-	}
 }
