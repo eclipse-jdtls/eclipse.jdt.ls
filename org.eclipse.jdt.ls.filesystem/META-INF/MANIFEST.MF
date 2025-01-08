@@ -11,6 +11,6 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.filesystem;bundle-version="1.9.500",
  org.eclipse.core.resources;bundle-version="3.18.100",
  org.eclipse.jdt.core;bundle-version="3.32.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: org.eclipse.jdt.ls.application
 Bundle-ActivationPolicy: lazy

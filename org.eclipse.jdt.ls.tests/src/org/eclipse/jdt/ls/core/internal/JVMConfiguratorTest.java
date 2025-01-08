@@ -65,7 +65,7 @@ import org.osgi.framework.Bundle;
 @RunWith(MockitoJUnitRunner.class)
 public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
-	private static final String ENVIRONMENT_NAME = "JavaSE-17";
+	private static final String ENVIRONMENT_NAME = "JavaSE-21";
 	private IVMInstall originalVm;
 	private JavaClientConnection javaClient;
 	@Mock
@@ -82,9 +82,9 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@After
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		TestVMType.setTestJREAsDefault("17");
+		TestVMType.setTestJREAsDefault("21");
 		IVMInstall defaultJRE = JavaRuntime.getDefaultVMInstall();
-		IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment("JavaSE-17");
+		IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment("JavaSE-21");
 		if (environment != null) {
 			environment.setDefaultVM(defaultJRE);
 		}
@@ -106,7 +106,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		try {
 			Preferences prefs = new Preferences();
 			Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
-			URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/17a"));
+			URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/21a"));
 			File file = URIUtil.toFile(URIUtil.toURI(url));
 			String path = file.getAbsolutePath();
 			String javadoc = "file:///javadoc";
@@ -131,7 +131,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertNotNull(vm);
 			assertTrue(vm instanceof IVMInstall2);
 			String version = ((IVMInstall2) vm).getJavaVersion();
-			assertTrue(version.startsWith(JavaCore.VERSION_17));
+			assertTrue(version.startsWith(JavaCore.VERSION_21));
 			StandardVMType svt = (StandardVMType) vm.getVMInstallType();
 			LibraryLocation[] libs = vm.getLibraryLocations();
 			assertNotNull(libs);
@@ -157,7 +157,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testInvalidJavadoc() throws Exception {
 		Bundle bundle = Platform.getBundle(JavaLanguageServerTestPlugin.PLUGIN_ID);
-		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/17a"));
+		URL url = FileLocator.toFileURL(bundle.getEntry("/fakejdk2/21a"));
 		File file = URIUtil.toFile(URIUtil.toURI(url));
 		String path = file.getAbsolutePath();
 		String javadoc = new File(file, "doc").getAbsolutePath();
@@ -178,8 +178,8 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			IProject invisibleProject = copyAndImportFolder("singlefile/java13", "foo/bar/Foo.java");
 			IJavaProject randomProject = JavaCore.create(invisibleProject);
 
-			assertComplianceAndPreviewSupport(defaultProject, "17", false);
-			assertComplianceAndPreviewSupport(randomProject, "17", false);
+			assertComplianceAndPreviewSupport(defaultProject, "21", false);
+			assertComplianceAndPreviewSupport(randomProject, "21", false);
 
 			String latest = JavaCore.latestSupportedJavaVersion();
 			TestVMType.setTestJREAsDefault(latest);
@@ -192,10 +192,10 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertComplianceAndPreviewSupport(defaultProject, "12", false);
 			assertComplianceAndPreviewSupport(randomProject, "12", false);
 
-			TestVMType.setTestJREAsDefault("17");
+			TestVMType.setTestJREAsDefault("21");
 
-			assertComplianceAndPreviewSupport(defaultProject, "17", false);
-			assertComplianceAndPreviewSupport(randomProject, "17", false);
+			assertComplianceAndPreviewSupport(defaultProject, "21", false);
+			assertComplianceAndPreviewSupport(randomProject, "21", false);
 
 		} finally {
 			JavaRuntime.removeVMInstallChangedListener(jvmConfigurator);
@@ -232,7 +232,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		when(clientPreferences.isActionableRuntimeNotificationSupport()).thenReturn(false);
 
 		Preferences prefs = new Preferences();
-		File file = new File("fakejdk2", "17a" + File.separator + "bin");
+		File file = new File("fakejdk2", "21a" + File.separator + "bin");
 		String path = file.getAbsolutePath();
 		Set<RuntimeEnvironment> runtimes = new HashSet<>();
 		RuntimeEnvironment runtime = new RuntimeEnvironment();

@@ -7,8 +7,8 @@ bin/
 !org.eclipse.jdt.ls.tests/projects/eclipse/testnullable2/lib/
 !org.eclipse.jdt.ls.tests/projects/eclipse/testnullable3/lib/
 !org.eclipse.jdt.ls.tests/projects/maven/salut5/node_modules/
-!org.eclipse.jdt.ls.tests/fakejdk2/17a/bin
-!org.eclipse.jdt.ls.tests/fakejdk2/17a/lib
+!org.eclipse.jdt.ls.tests/fakejdk2/21a/bin
+!org.eclipse.jdt.ls.tests/fakejdk2/21a/lib
 maven-wrapper.jar
 *.iml
 .idea
