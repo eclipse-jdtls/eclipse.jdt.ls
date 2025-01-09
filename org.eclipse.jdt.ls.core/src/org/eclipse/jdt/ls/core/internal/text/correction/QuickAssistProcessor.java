@@ -124,7 +124,6 @@ import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
@@ -941,10 +940,6 @@ public class QuickAssistProcessor {
 	}
 
 	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
-		if (!JavaModelUtil.is1d8OrHigher(context.getCompilationUnit().getJavaProject())) {
-			return false;
-		}
-
 		ASTNode parentStatement = ASTResolving.findAncestor(node, ASTNode.VARIABLE_DECLARATION_STATEMENT);
 		if (!(parentStatement instanceof VariableDeclarationStatement) && !(parentStatement instanceof ExpressionStatement) && !(node instanceof SimpleName) && (coveredNodes == null || coveredNodes.isEmpty())) {
 			return false;

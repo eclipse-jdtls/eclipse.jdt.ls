@@ -66,7 +66,6 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore.MakeTypeAbstractOperation;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
@@ -586,7 +585,7 @@ public class ModifierCorrectionSubProcessor {
 				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			}
 
-			if (JavaModelUtil.is1d8OrHigher(cu.getJavaProject()) && parentIsInterface) {
+			if (parentIsInterface) {
 				{
 					// insert proposal to add static modifier
 					String label = Messages.format(CorrectionMessages.ModifierCorrectionSubProcessor_changemodifiertostatic_description, decl.getName());

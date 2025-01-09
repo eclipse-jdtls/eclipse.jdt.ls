@@ -47,7 +47,6 @@ import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.corext.dom.IASTSharedValues;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.text.Chain;
 import org.eclipse.jdt.internal.ui.text.ChainElement;
 import org.eclipse.jdt.internal.ui.text.ChainElement.ElementType;
@@ -398,12 +397,10 @@ public class ChainCompletionProposalComputer {
 				}
 			}
 
-			if (JavaModelUtil.is1d8OrHigher(project)) {
-				if ("java.util.stream.Collector".equals(chainType.getType().getFullyQualifiedName())) {
-					IType type = project.findType("java.util.stream.Collectors");
-					if (type != null) {
-						results.add(new ChainElement(type, false));
-					}
+			if ("java.util.stream.Collector".equals(chainType.getType().getFullyQualifiedName())) {
+				IType type = project.findType("java.util.stream.Collectors");
+				if (type != null) {
+					results.add(new ChainElement(type, false));
 				}
 			}
 		}
