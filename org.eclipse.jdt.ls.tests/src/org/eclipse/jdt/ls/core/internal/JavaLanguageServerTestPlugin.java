@@ -57,7 +57,7 @@ public class JavaLanguageServerTestPlugin implements BundleActivator {
 		} catch (BundleException e) {
 			logException(e.getMessage(), e);
 		}
-		TestVMType.setTestJREAsDefault("17");
+		TestVMType.setTestJREAsDefault("21");
 		JavaCore.initializeAfterLoad(new NullProgressMonitor());
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		IWorkspaceDescription description = workspace.getDescription();

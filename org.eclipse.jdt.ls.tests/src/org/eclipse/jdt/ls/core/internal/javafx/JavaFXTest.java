@@ -38,7 +38,7 @@ import org.junit.Test;
 public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 
 	private static final String JAVA_SE_8 = "JavaSE-1.8";
-	private static final String JAVA_SE_17 = "JavaSE-17";
+	private static final String JAVA_SE_21 = "JavaSE-21";
 
 	/**
 	 * Test requires Java 8 in toolchains.xml
@@ -84,7 +84,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 			assertTrue("Unexpected errors:\n " + errorsStr, errorsStr.contains("javafx cannot be resolved"));
 		} finally {
 			JavaRuntime.setDefaultVMInstall(defaultJRE, monitor, true);
-			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_17);
+			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_21);
 			if (environment != null) {
 				environment.setDefaultVM(defaultJRE);
 			}
@@ -96,7 +96,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 	@After
 	public void cleanUp() throws Exception {
 		super.cleanUp();
-		TestVMType.setTestJREAsDefault("17");
+		TestVMType.setTestJREAsDefault("21");
 		// Copied from org.eclipse.jdt.core.tests.model.ClasspathInitializerTests.tearDown()
 		// Cleanup caches
 		JavaModelManager manager = JavaModelManager.getJavaModelManager();

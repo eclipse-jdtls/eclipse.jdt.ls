@@ -5,6 +5,6 @@ Bundle-SymbolicName: org.eclipse.jdt.ls.logback.appender;singleton:=true
 Bundle-Version: 1.44.0.qualifier
 Fragment-Host: ch.qos.logback.classic
 Automatic-Module-Name: org.eclipse.jdt.ls.logback.appender
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.25.0"
 Bundle-Vendor: %Bundle-Vendor
