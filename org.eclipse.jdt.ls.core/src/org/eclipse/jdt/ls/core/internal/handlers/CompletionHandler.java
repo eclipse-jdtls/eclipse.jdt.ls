@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
+import org.eclipse.jdt.ls.core.contentassist.ICompletionProposalProvider;
 import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
 import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
@@ -285,6 +286,9 @@ public class CompletionHandler{
 				try {
 					if (isIndexEngineEnabled()) {
 						unit.codeComplete(offset, collector, subMonitor);
+						if (!subMonitor.isCanceled()) {
+							collectFromRegisteredProviders(offset, unit, collector, subMonitor);
+						}
 					} else {
 						ModelBasedCompletionEngine.codeComplete(unit, offset, collector, DefaultWorkingCopyOwner.PRIMARY, subMonitor);
 					}
@@ -333,6 +337,13 @@ public class CompletionHandler{
 			list.setItemDefaults(collector.getCompletionItemDefaults());
 		}
 		return list;
+	}
+
+	private void collectFromRegisteredProviders(int offset, ICompilationUnit unit, CompletionProposalRequestor collector, IProgressMonitor monitor) {
+		List<ICompletionProposalProvider> providers = ((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getProposalProviders();
+		providers.forEach(provider -> {
+			provider.compute(offset, unit, collector.getContext(), monitor).forEach(collector::accept);
+		});
 	}
 
 	private String[] getFavoriteStaticMembers() {
