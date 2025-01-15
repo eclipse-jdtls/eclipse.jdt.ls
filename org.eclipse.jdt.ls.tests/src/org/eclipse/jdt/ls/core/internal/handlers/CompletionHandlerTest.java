@@ -3461,7 +3461,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(lambda);
 		assertTrue(lambda.getTextEdit().getLeft().getNewText().matches("\\$\\{1:\\w+\\} -> \\$\\{0\\}"));
 
-		assertEquals("(Object arg0) ->", lambda.getLabel());
+		try {
+			assertEquals("(Object t) ->", lambda.getLabel());
+		} catch (ComparisonFailure e) {
+			// In case the JDK has no sources
+			assertEquals("(Object arg0) ->", lambda.getLabel());
+		}
 		assertNull(lambda.getLabelDetails().getDetail());
 		assertEquals(lambda.getLabelDetails().getDescription(), "void");
 	}
