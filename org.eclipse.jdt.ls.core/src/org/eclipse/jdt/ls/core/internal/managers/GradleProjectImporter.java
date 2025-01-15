@@ -316,8 +316,19 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			}
 			break;
 		}
-
-		GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
+		// https://github.com/redhat-developer/vscode-java/issues/3904
+		// skip synchronizeAnnotationProcessingConfiguration  if not required
+		boolean shouldSynchronize = false;
+		for (Path directory : directoriesToImport) {
+			File location = directory.toFile();
+			if (shouldSynchronize(location)) {
+				shouldSynchronize = true;
+				break;
+			}
+		}
+		if (shouldSynchronize) {
+			GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
+		}
 		eliminateBuildServerFootprint(monitor);
 		subMonitor.done();
 	}
