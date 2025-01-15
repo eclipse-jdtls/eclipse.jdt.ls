@@ -14,6 +14,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static java.lang.String.format;
+import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logException;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -349,5 +351,16 @@ public final class BundleUtils {
 			}
 		}
 		return null;
+	}
+
+	public static void startBundle(String symbolicName) {
+		try {
+			long start = System.currentTimeMillis();
+			JavaLanguageServerPlugin.debugTrace("Starting " + symbolicName);
+			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
+			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
+		} catch (BundleException e) {
+			logException(e.getMessage(), e);
+		}
 	}
 }
