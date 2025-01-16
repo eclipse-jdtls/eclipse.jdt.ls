@@ -60,4 +60,14 @@ public class SuppressWarningsSubProcessor extends SuppressWarningsBaseSubProcess
 		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
+	@Override
+	protected boolean alreadyHasProposal(Collection<ProposalKindWrapper> proposals, String warningToken) {
+		for (ProposalKindWrapper element : proposals) {
+			if (element.getProposal() instanceof SuppressWarningsProposalCore swp && warningToken.equals(swp.getWarningToken())) {
+				return true; // only one at a time
+			}
+		}
+		return false;
+	}
+
 }
