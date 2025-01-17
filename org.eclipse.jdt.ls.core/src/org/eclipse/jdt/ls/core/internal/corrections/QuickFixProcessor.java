@@ -232,11 +232,17 @@ public class QuickFixProcessor {
 			case IProblem.SealedNotDirectSuperInterface:
 			case IProblem.SealedNotDirectSuperClass:
 				LocalCorrectionsSubProcessor.addSealedAsDirectSuperTypeProposal(context, problem, proposals);
+				break;
 			case IProblem.SealedSuperClassDoesNotPermit:
 			case IProblem.SealedSuperInterfaceDoesNotPermit:
 				LocalCorrectionsSubProcessor.addTypeAsPermittedSubTypeProposal(context, problem, proposals);
+				break;
 			case IProblem.StaticMethodRequested:
 			case IProblem.NonStaticFieldFromStaticInvocation:
+				LocalCorrectionsSubProcessor.addObjectReferenceProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addVariableReferenceProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addNewObjectProposal(context, problem, proposals);
+				//$FALL-THROUGH$
 			case IProblem.InstanceMethodDuringConstructorInvocation:
 			case IProblem.InstanceFieldDuringConstructorInvocation:
 				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_STATIC, IProposalRelevance.CHANGE_MODIFIER_TO_STATIC);
@@ -353,29 +359,24 @@ public class QuickFixProcessor {
 			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_PRIVATE,
 			// IProposalRelevance.CHANGE_VISIBILITY_TO_NON_PRIVATE);
 			// break;
-			// case IProblem.SuperfluousSemicolon:
-			// LocalCorrectionsSubProcessor.addSuperfluousSemicolonProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.SuperfluousSemicolon:
+				LocalCorrectionsSubProcessor.addSuperfluousSemicolonProposal(context, problem, proposals);
+				break;
 			case IProblem.UnnecessaryCast:
 				LocalCorrectionsSubProcessor.addUnnecessaryCastProposal(context, problem, proposals);
 				break;
-			// case IProblem.UnnecessaryInstanceof:
-			// LocalCorrectionsSubProcessor.addUnnecessaryInstanceofProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnnecessaryInstanceof:
+				LocalCorrectionsSubProcessor.addUnnecessaryInstanceofProposal(context, problem, proposals);
+				break;
 			// case IProblem.UnusedMethodDeclaredThrownException:
 			// case IProblem.UnusedConstructorDeclaredThrownException:
 			// LocalCorrectionsSubProcessor.addUnnecessaryThrownExceptionProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnqualifiedFieldAccess:
-			// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context,
-			// problem, proposals,
-			// IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
-			// LocalCorrectionsSubProcessor.addUnqualifiedFieldAccessProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnqualifiedFieldAccess:
+				// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
+				LocalCorrectionsSubProcessor.addUnqualifiedFieldAccessProposal(context, problem, proposals);
+				break;
 			// case IProblem.Task:
 			// proposals.add(new TaskMarkerProposal(context.getCompilationUnit(),
 			// problem, 10));
@@ -429,14 +430,12 @@ public class QuickFixProcessor {
 			case IProblem.MissingSerialVersion:
 				SerialVersionSubProcessor.getSerialVersionProposals(context, problem, proposals);
 				break;
-			// case IProblem.UnnecessaryElse:
-			// LocalCorrectionsSubProcessor.getUnnecessaryElseProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.SuperclassMustBeAClass:
-			// LocalCorrectionsSubProcessor.getInterfaceExtendsClassProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnnecessaryElse:
+				LocalCorrectionsSubProcessor.addUnnecessaryElseProposals(context, problem, proposals);
+				break;
+			case IProblem.SuperclassMustBeAClass:
+				LocalCorrectionsSubProcessor.addInterfaceExtendsClassProposals(context, problem, proposals);
+				break;
 			case IProblem.CodeCannotBeReached:
 			case IProblem.DeadCode:
 				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
@@ -513,15 +512,14 @@ public class QuickFixProcessor {
 			// ReorgCorrectionsSubProcessor.getAccessRulesProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.AssignmentHasNoEffect:
-			// LocalCorrectionsSubProcessor.getAssignmentHasNoEffectProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnsafeTypeConversion:
-			// case IProblem.RawTypeReference:
-			// case IProblem.UnsafeRawMethodInvocation:
-			// LocalCorrectionsSubProcessor.addDeprecatedFieldsToMethodsProposals(context,
-			// problem, proposals);
+			case IProblem.AssignmentHasNoEffect:
+				LocalCorrectionsSubProcessor.addAssignmentHasNoEffectProposals(context, problem, proposals);
+				break;
+			case IProblem.UnsafeTypeConversion:
+			case IProblem.RawTypeReference:
+			case IProblem.UnsafeRawMethodInvocation:
+				LocalCorrectionsSubProcessor.addDeprecatedFieldsToMethodsProposals(context, problem, proposals);
+				break;
 			// //$FALL-THROUGH$
 			// case IProblem.UnsafeElementTypeConversion:
 			// LocalCorrectionsSubProcessor.addTypePrametersToRawTypeReference(context,
@@ -531,10 +529,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.FallthroughCase:
-			// LocalCorrectionsSubProcessor.addFallThroughProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.FallthroughCase:
+				LocalCorrectionsSubProcessor.addFallThroughProposals(context, problem, proposals);
+				break;
 			// case IProblem.UnhandledWarningToken:
 			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
 			// break;
@@ -554,6 +551,12 @@ public class QuickFixProcessor {
 			case IProblem.MissingDefaultCase:
 				LocalCorrectionsSubProcessor.addMissingDefaultCaseProposal(context, problem, proposals);
 				break;
+			case IProblem.IllegalTotalPatternWithDefault:
+				LocalCorrectionsSubProcessor.addRemoveDefaultCaseProposal(context, problem, proposals);
+				break;
+			case IProblem.IllegalFallthroughToPattern:
+				LocalCorrectionsSubProcessor.addFallThroughProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingEnumConstantCaseDespiteDefault:
 				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addCasesOmittedProposals(context, problem, proposals);
@@ -564,6 +567,12 @@ public class QuickFixProcessor {
 				break;
 			case IProblem.NotAccessibleType:
 				GradleCompatibilityProcessor.getGradleCompatibilityProposals(context, problem, proposals);
+				break;
+			case IProblem.AbstractServiceImplementation:
+			case IProblem.ProviderMethodOrConstructorRequiredForServiceImpl:
+			case IProblem.ServiceImplDefaultConstructorNotPublic:
+				// LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addServiceProviderConstructorProposals(context, problem, proposals);
 				break;
 			// case IProblem.MissingSynchronizedModifierInInheritedMethod:
 			// ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context,
@@ -652,10 +661,9 @@ public class QuickFixProcessor {
 			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
 			// problem, ChangeKind.OVERRIDDEN, proposals);
 			// break;
-			// case IProblem.IllegalQualifiedEnumConstantLabel:
-			// LocalCorrectionsSubProcessor.addIllegalQualifiedEnumConstantLabelProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.IllegalQualifiedEnumConstantLabel:
+				LocalCorrectionsSubProcessor.addIllegalQualifiedEnumConstantLabelProposal(context, problem, proposals);
+				break;
 			// case IProblem.DuplicateInheritedDefaultMethods:
 			// case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
 			// LocalCorrectionsSubProcessor.addOverrideDefaultMethodProposal(context,

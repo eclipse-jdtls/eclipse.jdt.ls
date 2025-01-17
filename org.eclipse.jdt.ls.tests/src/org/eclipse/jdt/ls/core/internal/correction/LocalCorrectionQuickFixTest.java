@@ -725,11 +725,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E {\n");
+		buf.append("    public void throwIOException () throws IOException {\n");
+		buf.append("        throw new IOException();\n");
+		buf.append("    }\n");
 		buf.append("    void foo() {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new IOException();\n");
+		buf.append("            throwIOException();\n");
 		buf.append("        } catch (IOException e) {\n");
-		buf.append("            throw new IOException();\n");
+		buf.append("            throwIOException();\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -739,11 +742,14 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E {\n");
+		buf.append("    public void throwIOException () throws IOException {\n");
+		buf.append("        throw new IOException();\n");
+		buf.append("    }\n");
 		buf.append("    void foo() throws IOException {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new IOException();\n");
+		buf.append("            throwIOException();\n");
 		buf.append("        } catch (IOException e) {\n");
-		buf.append("            throw new IOException();\n");
+		buf.append("            throwIOException();\n");
 		buf.append("        }\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -754,12 +760,15 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.IOException;\n");
 		buf.append("public class E {\n");
+		buf.append("    public void throwIOException () throws IOException {\n");
+		buf.append("        throw new IOException();\n");
+		buf.append("    }\n");
 		buf.append("    void foo() {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new IOException();\n");
+		buf.append("            throwIOException();\n");
 		buf.append("        } catch (IOException e) {\n");
 		buf.append("            try {\n");
-		buf.append("                throw new IOException();\n");
+		buf.append("                throwIOException();\n");
 		buf.append("            } catch (IOException e1) {\n");
 		buf.append("                // TODO Auto-generated catch block\n");
 		buf.append("                e1.printStackTrace();\n");
@@ -1031,8 +1040,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n" //
 				+ "public class E {\n" //
-				+ "    public void test () {\n" //
+				+ "    public void throwException () throws Exception {\n" //
 				+ "        throw new Exception();\n" //
+				+ "    }" //
+				+ "    public void test () {\n" //
+				+ "        throwException();\n" //
 				+ "        try {\n" //
 				+ "        } catch (Exception e) {\n" //
 				+ "            // TODO: handle exception\n" //
@@ -1043,9 +1055,12 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n" //
 				+ "public class E {\n" //
+				+ "    public void throwException () throws Exception {\n" //
+				+ "        throw new Exception();\n" //
+				+ "    }" //
 				+ "    public void test () {\n" //
 				+ "        try {\n" //
-				+ "            throw new Exception();\n" //
+				+ "            throwException();\n" //
 				+ "        } catch (Exception e) {\n" //
 				+ "            // TODO Auto-generated catch block\n" //
 				+ "            e.printStackTrace();\n" //
@@ -1279,8 +1294,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends A {\n");
-		buf.append("    public void foo() {\n");
+		buf.append("    private void throwException() throws Exception {\n");
 		buf.append("        throw new Exception();\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() {\n");
+		buf.append("        throwException();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
@@ -1288,8 +1306,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends A {\n");
-		buf.append("    public void foo() throws Exception {\n");
+		buf.append("    private void throwException() throws Exception {\n");
 		buf.append("        throw new Exception();\n");
+		buf.append("    }\n");
+		buf.append("    public void foo() throws Exception {\n");
+		buf.append("        throwException();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
@@ -1298,9 +1319,12 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
 		buf.append("public class E extends A {\n");
+		buf.append("    private void throwException() throws Exception {\n");
+		buf.append("        throw new Exception();\n");
+		buf.append("    }\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new Exception();\n");
+		buf.append("            throwException();\n");
 		buf.append("        } catch (Exception e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");
@@ -1322,8 +1346,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.Closeable;\n");
 		buf.append("import java.io.FileNotFoundException;\n");
 		buf.append("public class A implements Closeable {\n");
-		buf.append("    public void close() {\n");
+		buf.append("    public void throwFileNotFoundException () throws FileNotFoundException {\n");
 		buf.append("        throw new FileNotFoundException();\n");
+		buf.append("    }\n");
+		buf.append("    public void close() {\n");
+		buf.append("        throwFileNotFoundException();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("A.java", buf.toString(), false, null);
@@ -1333,8 +1360,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.Closeable;\n");
 		buf.append("import java.io.FileNotFoundException;\n");
 		buf.append("public class A implements Closeable {\n");
-		buf.append("    public void close() throws FileNotFoundException {\n");
+		buf.append("    public void throwFileNotFoundException () throws FileNotFoundException {\n");
 		buf.append("        throw new FileNotFoundException();\n");
+		buf.append("    }\n");
+		buf.append("    public void close() throws FileNotFoundException {\n");
+		buf.append("        throwFileNotFoundException();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 
@@ -1345,9 +1375,12 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("import java.io.Closeable;\n");
 		buf.append("import java.io.FileNotFoundException;\n");
 		buf.append("public class A implements Closeable {\n");
+		buf.append("    public void throwFileNotFoundException () throws FileNotFoundException {\n");
+		buf.append("        throw new FileNotFoundException();\n");
+		buf.append("    }\n");
 		buf.append("    public void close() {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new FileNotFoundException();\n");
+		buf.append("            throwFileNotFoundException();\n");
 		buf.append("        } catch (FileNotFoundException e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");
@@ -1368,8 +1401,11 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.Closeable;\n");
 		buf.append("public class A implements Closeable {\n");
-		buf.append("    public void close() {\n");
+		buf.append("    public void throwThrowable() throws Throwable {\n");
 		buf.append("        throw new Throwable();\n");
+		buf.append("    }\n");
+		buf.append("    public void close() {\n");
+		buf.append("        throwThrowable();\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("A.java", buf.toString(), false, null);
@@ -1378,9 +1414,12 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("package test1;\n");
 		buf.append("import java.io.Closeable;\n");
 		buf.append("public class A implements Closeable {\n");
+		buf.append("    public void throwThrowable() throws Throwable {\n");
+		buf.append("        throw new Throwable();\n");
+		buf.append("    }\n");
 		buf.append("    public void close() {\n");
 		buf.append("        try {\n");
-		buf.append("            throw new Throwable();\n");
+		buf.append("            throwThrowable();\n");
 		buf.append("        } catch (Throwable e) {\n");
 		buf.append("            // TODO Auto-generated catch block\n");
 		buf.append("            e.printStackTrace();\n");
