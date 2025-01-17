@@ -399,7 +399,8 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		}
 
 		IType cuType = fCompilationUnit.findPrimaryType();
-		String[] permittedNames = cuType.getPermittedSubtypeNames();
+		String[] permittedNames = cuType != null ? cuType.getPermittedSubtypeNames() : new String[0];
+		boolean isInterface = cuType != null ? cuType.isInterface() : false;
 		boolean isPermitted = Arrays.asList(permittedNames).stream().anyMatch(p -> name.equals(p));
 		if (isPermitted) {
 			buf.append("final ");
@@ -412,7 +413,7 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 			case K_CLASS:
 				type = "class "; //$NON-NLS-1$
 				templateID = CodeGeneration.CLASS_BODY_TEMPLATE_ID;
-				superType = cuType.isInterface() ? "implements " : "extends ";
+				superType = isInterface ? "implements " : "extends ";
 				break;
 			case K_INTERFACE:
 				type = "interface "; //$NON-NLS-1$
