@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.44.0 (January 22nd, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/136?closed=1)
+ * performance - Enhance initialization of gradle projects. See [#3357](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3357).
+ * enhancement - Implementation code lens for non interface/abstract base types/methods. See [#3355](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3355).
+ * bug fix - Handle snippet position groups with undefined offsets (eg. `Add constructor ..`). See [#3352](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3352).
+ * bug fix - Remove API methods checking whether source level is 1.7 or below. See [#3350](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3350), [#3353](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3353), [#3354](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3354), [#3360](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3360).
+ * bug fix - Ensure Gradle project always reacts to build configuration changes. See [#3349](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3349).
+ * bug fix - Update the `javac` build profile with new `--add-opens`. See [#3351](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3351).
+ * bug fix - `CompletionHandlerTest.testCompletion_Lambda` fails randomly. See [#3361](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3361).
+ * debt - Bump minimum required Java Execution Environment from 17 to 21. See [#3358](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3358), [#3363](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3363).
+ * debt - Avoid duplicate suppress warning suggestions through new API method. See [#3362](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3362).
+
 # [1.43.0 (December 19th, 2024)](https://github.com/eclipse/eclipse.jdt.ls/milestone/135?closed=1)
  * enhancement - Add code lens for interface / abstract method implementations. See [#3333](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3333).
    * `java.implementationCodelens.enabled` replaced by `java.implementationCodeLens`
