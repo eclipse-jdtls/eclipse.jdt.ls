@@ -77,6 +77,7 @@ import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
+import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
@@ -475,6 +476,24 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	public static void addVariableReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new LocalCorrectionsSubProcessor().getVariableReferenceProposal(context, problem, proposals);
+	}
+
+	public static void addUninitializedLocalVariableProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getUninitializedLocalVariableProposal(context, problem, proposals);
+	}
+
+	public static void addOverrideDefaultMethodProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getOverrideDefaultMethodProposal(context, problem, proposals);
+	}
+
+	public static void addUnusedTypeParameterProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		UnusedCodeFixCore fix = UnusedCodeFixCore.createUnusedTypeParameterFix(context.getASTRoot(), problem);
+		if (fix != null) {
+			FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, fix.getCleanUp(), IProposalRelevance.UNUSED_MEMBER, context);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+		}
+
+		JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
 	}
 
 	public static void getMissingEnumConstantCaseProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
