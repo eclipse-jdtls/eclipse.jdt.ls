@@ -332,11 +332,10 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addNonFinalLocalProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UninitializedLocalVariable:
-			// case IProblem.UninitializedLocalVariableHintMissingDefault:
-			// LocalCorrectionsSubProcessor.addUninitializedLocalVariableProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UninitializedLocalVariable:
+			case IProblem.UninitializedLocalVariableHintMissingDefault:
+				LocalCorrectionsSubProcessor.addUninitializedLocalVariableProposal(context, problem, proposals);
+				break;
 			case IProblem.UnhandledExceptionInDefaultConstructor:
 			case IProblem.UndefinedConstructorInDefaultConstructor:
 			case IProblem.NotVisibleConstructorInDefaultConstructor:
@@ -644,10 +643,9 @@ public class QuickFixProcessor {
 			// NullAnnotationsCorrectionProcessor.addRemoveRedundantAnnotationProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.UnusedTypeParameter:
-			// LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedTypeParameter:
+				LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context, problem, proposals);
+				break;
 			// case IProblem.NullableFieldReference:
 			// NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context,
 			// problem, proposals);
@@ -664,11 +662,10 @@ public class QuickFixProcessor {
 			case IProblem.IllegalQualifiedEnumConstantLabel:
 				LocalCorrectionsSubProcessor.addIllegalQualifiedEnumConstantLabelProposal(context, problem, proposals);
 				break;
-			// case IProblem.DuplicateInheritedDefaultMethods:
-			// case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
-			// LocalCorrectionsSubProcessor.addOverrideDefaultMethodProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.DuplicateInheritedDefaultMethods:
+			case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
+				LocalCorrectionsSubProcessor.addOverrideDefaultMethodProposal(context, problem, proposals);
+				break;
 			// case IProblem.PotentialNullLocalVariableReference:
 			// IJavaProject prj2= context.getCompilationUnit().getJavaProject();
 			// if (prj2 != null &&

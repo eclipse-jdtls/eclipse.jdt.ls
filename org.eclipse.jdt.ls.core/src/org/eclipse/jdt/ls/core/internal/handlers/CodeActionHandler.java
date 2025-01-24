@@ -358,7 +358,10 @@ public class CodeActionHandler {
 						arguments.add(e.getAsString());
 					}
 				} else if (args instanceof String[] args1) {
+					// Needed for test cases (no LSP4J transmission)
 					arguments = Arrays.asList(args1);
+				} else if (args instanceof List args1) {
+					arguments = args1;
 				}
 				Object ecjProblemId = data.get(BaseDiagnosticsHandler.DIAG_ECJ_PROBLEM_ID);
 				if (ecjProblemId instanceof String id) {

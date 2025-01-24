@@ -256,7 +256,11 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 			diag.setSeverity(convertSeverity(problem));
 			diag.setRange(convertRange(openable, problem));
 			Map<String, Object> data = new HashMap<>();
-			if (problem.getID() == IProblem.UndefinedName || problem.getID() == IProblem.UndefinedType || problem.getID() == IProblem.UninitializedBlankFinalField) {
+			if (problem.getID() == IProblem.UndefinedName
+					|| problem.getID() == IProblem.UndefinedType
+					|| problem.getID() == IProblem.UninitializedBlankFinalField
+					|| problem.getID() == IProblem.DuplicateInheritedDefaultMethods
+					|| problem.getID() == IProblem.InheritedDefaultMethodConflictsWithOtherInherited) {
 				data.put(DIAG_ARGUMENTS, problem.getArguments());
 			}
 			if (isDiagnosticTagSupported) {
