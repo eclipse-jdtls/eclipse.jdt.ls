@@ -39,6 +39,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
@@ -606,6 +607,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			Object result = commandHandler.executeCommand(params, new NullProgressMonitor());
 			return CompletableFuture.completedFuture(result);
 		} else {
+			// see https://github.com/redhat-developer/vscode-java/issues/3926
+			if (JavaModelManager.getIndexManager() != null) {
+				JavaModelManager.getIndexManager().waitForIndex(true, null);
+			}
 			return computeAsync((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
 			});
