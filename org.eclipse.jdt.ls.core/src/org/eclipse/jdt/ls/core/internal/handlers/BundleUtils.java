@@ -357,7 +357,16 @@ public final class BundleUtils {
 		try {
 			long start = System.currentTimeMillis();
 			JavaLanguageServerPlugin.debugTrace("Starting " + symbolicName);
-			Platform.getBundle(symbolicName).start(Bundle.START_TRANSIENT);
+			Bundle bundle = Platform.getBundle(symbolicName);
+			if (bundle == null) {
+				if (!Platform.isRunning()) {
+					JavaLanguageServerPlugin.logInfo("The platform is not running.");
+				} else {
+					JavaLanguageServerPlugin.logInfo("There is no bundle " + symbolicName + ".");
+				}
+				return;
+			}
+			bundle.start(Bundle.START_TRANSIENT);
 			JavaLanguageServerPlugin.logInfo("Started " + symbolicName + " " + (System.currentTimeMillis() - start) + "ms");
 		} catch (BundleException e) {
 			logException(e.getMessage(), e);
