@@ -171,7 +171,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			} else {
 				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
 			}
-			String requiredVersion = "7.3.3";
+			String requiredVersion = "8.5";
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
 			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
@@ -761,7 +761,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		GradleDistribution distribution = GradleProjectImporter.getGradleDistribution(projectRoot.toPath());
 		assertTrue(distribution instanceof WrapperGradleDistribution);
 	}
-	
+
 
 	@Test
 	public void testCleanUpBuildServerFootprint() throws Exception {
