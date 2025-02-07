@@ -36,9 +36,6 @@ import org.eclipse.lsp4j.SymbolKind;
 public final class SymbolUtils {
 	private static final Range DEFAULT_RANGE = new Range(new Position(0, 0), new Position(0, 0));
 
-	private SymbolUtils() {
-	}
-
 	static IJavaElement[] filter(IJavaElement[] elements) {
 		return Stream.of(elements).filter(e -> (!SymbolUtils.isInitializer(e) && !SymbolUtils.isSyntheticElement(e))).toArray(IJavaElement[]::new);
 	}
@@ -148,7 +145,7 @@ public final class SymbolUtils {
 	}
 
 	static String getDetail(IJavaElement element, String name, long additionalFlags) {
-		return constructDetail(element, name, ALL_DEFAULT | M_APP_RETURNTYPE | ROOT_VARIABLE | additionalFlags);
+		return constructDetail(element, name, ALL_DEFAULT | ROOT_VARIABLE | additionalFlags);
 	}
 
 	private static String constructDetail(IJavaElement element, String name, long flags) {

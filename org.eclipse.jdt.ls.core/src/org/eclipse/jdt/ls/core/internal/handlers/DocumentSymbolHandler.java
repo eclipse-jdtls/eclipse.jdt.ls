@@ -20,6 +20,8 @@ import static org.eclipse.jdt.core.IJavaElement.METHOD;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_DECLARATION;
 import static org.eclipse.jdt.core.IJavaElement.PACKAGE_FRAGMENT;
 import static org.eclipse.jdt.core.IJavaElement.TYPE;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.F_POST_QUALIFIED;
+import static org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore.M_POST_QUALIFIED;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import static org.eclipse.jdt.ls.core.internal.handlers.SymbolUtils.filter;
 import static org.eclipse.jdt.ls.core.internal.handlers.SymbolUtils.getDetail;
@@ -45,6 +47,8 @@ import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
@@ -87,15 +91,26 @@ import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.validation.NonNull;
 import org.eclipse.xtext.xbase.lib.Exceptions;
+import org.eclipse.xtext.xbase.lib.Pure;
 
 public class DocumentSymbolHandler {
-	private PreferenceManager preferenceManager;
+	PreferenceManager preferenceManager;
 
 	private static IScanner fScanner;
 
 	public DocumentSymbolHandler(PreferenceManager preferenceManager) {
 		this.preferenceManager = preferenceManager;
+	}
+
+	public List<ExtendedDocumentSymbol> extendedDocumentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
+		ITypeRoot unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri());
+		if (unit == null || !unit.exists()) {
+			return Collections.emptyList();
+		}
+		List<DocumentSymbol> symbols = getHierarchicalOutline(unit, monitor, true);
+		return symbols.stream().map(s -> (ExtendedDocumentSymbol) s).toList();
 	}
 
 	public List<Either<SymbolInformation, DocumentSymbol>> documentSymbol(DocumentSymbolParams params, IProgressMonitor monitor) {
@@ -106,7 +121,7 @@ public class DocumentSymbolHandler {
 		}
 
 		if (preferenceManager.getClientPreferences().isHierarchicalDocumentSymbolSupported()) {
-			List<DocumentSymbol> symbols = this.getHierarchicalOutline(unit, monitor);
+			List<DocumentSymbol> symbols = this.getHierarchicalOutline(unit, monitor, false);
 			return symbols.stream().map(Either::<SymbolInformation, DocumentSymbol>forRight).collect(toList());
 		} else {
 			SymbolInformation[] elements = this.getOutline(unit, monitor);
@@ -173,7 +188,7 @@ public class DocumentSymbolHandler {
 		}
 	}
 
-	private List<DocumentSymbol> getHierarchicalOutline(ITypeRoot unit, IProgressMonitor monitor) {
+	List<DocumentSymbol> getHierarchicalOutline(ITypeRoot unit, IProgressMonitor monitor, boolean includeInherited) {
 		try {
 			if (unit instanceof IClassFile && unit.getSourceRange() == null) { // no source attached
 				return getHierarchicalOutlineFromDecompiledSource(unit, monitor);
@@ -192,7 +207,7 @@ public class DocumentSymbolHandler {
 					scanner.resetTo(shift, shift + sourceRange.getLength());
 				}
 			}
-			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor)).filter(Objects::nonNull).collect(Collectors.toList());
+			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor, includeInherited)).filter(Objects::nonNull).collect(Collectors.toList());
 		} catch (OperationCanceledException e) {
 			logInfo("User abort while collecting the document symbols.");
 		} catch (JavaModelException e) {
@@ -205,7 +220,7 @@ public class DocumentSymbolHandler {
 		return emptyList();
 	}
 
-	private DocumentSymbol toDocumentSymbol(IJavaElement unit, ITypeRoot root, IProgressMonitor monitor) {
+	private DocumentSymbol toDocumentSymbol(IJavaElement unit, ITypeRoot root, IProgressMonitor monitor, boolean includeInherited) {
 		int type = unit.getElementType();
 		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT && type != PACKAGE_FRAGMENT) {
 			return null;
@@ -216,7 +231,7 @@ public class DocumentSymbolHandler {
 		if (monitor.isCanceled()) {
 			throw new OperationCanceledException("User abort");
 		}
-		DocumentSymbol symbol = new DocumentSymbol();
+		DocumentSymbol symbol = includeInherited ? new ExtendedDocumentSymbol() : new DocumentSymbol();
 		try {
 			String name = getName(unit);
 			symbol.setName(name);
@@ -251,12 +266,35 @@ public class DocumentSymbolHandler {
 					symbol.setDeprecated(true);
 				}
 			}
-			symbol.setDetail(getDetail(unit, name));
+			if (symbol instanceof ExtendedDocumentSymbol) {
+				symbol.setDetail(getDetail(unit, name, M_POST_QUALIFIED | F_POST_QUALIFIED));
+			} else {
+				symbol.setDetail(getDetail(unit, name));
+			}
 			if (unit instanceof IParent parent) {
+				List<IJavaElement> children = new ArrayList<>();
+				children.addAll(Arrays.asList(filter(parent.getChildren())));
+				if (symbol instanceof ExtendedDocumentSymbol) {
+					Location loc = JDTUtils.toLocation(unit);
+					if (loc != null) {
+						((ExtendedDocumentSymbol) symbol).setUri(loc.getUri());
+					}
+					if (unit instanceof IType tp) {
+						ITypeHierarchy supertypeHierarchy = tp.newSupertypeHierarchy(monitor);
+						if (monitor.isCanceled()) {
+							throw new OperationCanceledException();
+						}
+						IType[] superClasses = supertypeHierarchy.getAllSuperclasses(tp);
+						for (IType superType : superClasses) {
+							if (!"java.lang.Object".equals(superType.getFullyQualifiedName())) {
+								children.addAll(Arrays.asList(filter(superType.getChildren())));
+							}
+						}
+					}
+				}
 				//@formatter:off
-				IJavaElement[] children = filter(parent.getChildren());
-				symbol.setChildren(Stream.of(children)
-						.map(child -> toDocumentSymbol(child, null, monitor))
+				symbol.setChildren(children.stream()
+						.map(child -> toDocumentSymbol(child, null, monitor, includeInherited))
 						.filter(Objects::nonNull)
 						.collect(Collectors.toList()));
 				//@formatter:off
@@ -539,6 +577,53 @@ public class DocumentSymbolHandler {
 			}
 
 			return false;
+		}
+	}
+
+	public static class ExtendedDocumentSymbol extends DocumentSymbol {
+		/**
+		 * The uri of the document of this symbol.
+		 */
+		@NonNull
+		private String uri;
+
+		/**
+		 * The uri of the document of this symbol.
+		 */
+		public void setUri(@NonNull String uri) {
+			this.uri = uri;
+		}
+
+		/**
+		 * The uri of the document of this symbol.
+		 */
+		@NonNull
+		@Pure
+		public String getUri() {
+			return this.uri;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = super.hashCode();
+			result = prime * result + Objects.hash(uri);
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!super.equals(obj)) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			ExtendedDocumentSymbol other = (ExtendedDocumentSymbol) obj;
+			return Objects.equals(uri, other.uri);
 		}
 	}
 }
