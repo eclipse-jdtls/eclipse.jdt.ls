@@ -344,7 +344,9 @@ public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 		buf.append("    void foo(String... strs);\n");
 		buf.append("}\n");
 		buf.append("public class C1 {\n");
-		buf.append("    FI fi = strs -> System.out.println();\n");
+		buf.append("    FI fi = strs -> {\n");
+		buf.append("             System.out.println();\n");
+		buf.append("    /*]*/};\n");
 		buf.append("}\n");
 		Expected e = new Expected("Convert to lambda expression", buf.toString());
 
