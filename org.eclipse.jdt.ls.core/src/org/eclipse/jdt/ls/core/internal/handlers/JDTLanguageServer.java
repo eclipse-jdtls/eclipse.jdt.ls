@@ -751,8 +751,8 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	}
 
 	@Override
-	public CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbols(DocumentSymbolParams params) {
-		logInfo(">> java/extendedDocumentSymbols");
+	public CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbol(DocumentSymbolParams params) {
+		logInfo(">> java/extendedDocumentSymbol");
 		DocumentSymbolHandler handler = new DocumentSymbolHandler(preferenceManager);
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);

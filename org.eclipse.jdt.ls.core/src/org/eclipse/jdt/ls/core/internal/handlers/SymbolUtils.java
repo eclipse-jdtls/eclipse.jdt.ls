@@ -40,7 +40,7 @@ public final class SymbolUtils {
 		return Stream.of(elements).filter(e -> (!SymbolUtils.isInitializer(e) && !SymbolUtils.isSyntheticElement(e))).toArray(IJavaElement[]::new);
 	}
 
-	static boolean isInitializer(IJavaElement element) {
+	private static boolean isInitializer(IJavaElement element) {
 		if (element.getElementType() == IJavaElement.METHOD) {
 			String name = element.getElementName();
 			if ((name != null && name.indexOf('<') >= 0)) {
@@ -50,7 +50,7 @@ public final class SymbolUtils {
 		return false;
 	}
 
-	static boolean isSyntheticElement(IJavaElement element) {
+	private static boolean isSyntheticElement(IJavaElement element) {
 		if (!(element instanceof IMember)) {
 			return false;
 		}
@@ -110,16 +110,15 @@ public final class SymbolUtils {
 			case IJavaElement.METHOD:
 				try {
 					// TODO handle `IInitializer`. What should be the `SymbolKind`?
-					if (element instanceof IMethod) {
-						if (((IMethod) element).isConstructor()) {
-							return SymbolKind.Constructor;
-						}
+					if (element instanceof IMethod method && method.isConstructor()) {
+						return SymbolKind.Constructor;
 					}
 					return SymbolKind.Method;
 				} catch (JavaModelException e) {
 					return SymbolKind.Method;
 				}
 			case IJavaElement.PACKAGE_DECLARATION:
+			case IJavaElement.PACKAGE_FRAGMENT:
 				return SymbolKind.Package;
 		}
 		return SymbolKind.String;
@@ -151,7 +150,7 @@ public final class SymbolUtils {
 	private static String constructDetail(IJavaElement element, String name, long flags) {
 		String nameWithDetails = JavaElementLabelsCore.getElementLabel(element, flags);
 		if (nameWithDetails != null && nameWithDetails.startsWith(name)) {
-			return nameWithDetails.substring(name.length()).trim();
+			return nameWithDetails.substring(name.length());
 		}
 		return "";
 	}

@@ -161,6 +161,6 @@ public interface JavaProtocolExtensions {
 	 * List all the symbols in the document (class) hierarchy.
 	 */
 	@JsonRequest
-	CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbols(DocumentSymbolParams params);
+	CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbol(DocumentSymbolParams params);
 
 }
