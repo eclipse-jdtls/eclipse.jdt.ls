@@ -56,6 +56,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler.ExtendedDocumentSymbol;
 import org.eclipse.jdt.ls.core.internal.handlers.ExtractInterfaceHandler.CheckExtractInterfaceResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
@@ -746,6 +747,16 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return computeAsync((monitor) -> {
 			waitForLifecycleJobs(monitor);
 			return handler.documentSymbol(params, monitor);
+		});
+	}
+
+	@Override
+	public CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbol(DocumentSymbolParams params) {
+		logInfo(">> java/extendedDocumentSymbol");
+		DocumentSymbolHandler handler = new DocumentSymbolHandler(preferenceManager);
+		return computeAsync((monitor) -> {
+			waitForLifecycleJobs(monitor);
+			return handler.extendedDocumentSymbol(params, monitor);
 		});
 	}
 

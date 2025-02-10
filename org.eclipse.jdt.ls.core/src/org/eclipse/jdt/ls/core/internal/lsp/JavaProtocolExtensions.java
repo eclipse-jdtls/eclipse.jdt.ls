@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
+import org.eclipse.jdt.ls.core.internal.handlers.DocumentSymbolHandler.ExtendedDocumentSymbol;
 import org.eclipse.jdt.ls.core.internal.handlers.ExtractInterfaceHandler.CheckExtractInterfaceResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.FindLinksHandler.FindLinksParams;
 import org.eclipse.jdt.ls.core.internal.handlers.GenerateAccessorsHandler.AccessorCodeActionParams;
@@ -40,6 +41,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.OverrideMethodsHandler.Overrida
 import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSymbolParams;
 import org.eclipse.jdt.ls.core.internal.text.correction.ChangeSignatureInfo;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.DocumentSymbolParams;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -154,4 +156,11 @@ public interface JavaProtocolExtensions {
 
 	@JsonNotification
 	void validateDocument(ValidateDocumentParams params);
+
+	/**
+	 * List all the symbols in the document (class) hierarchy.
+	 */
+	@JsonRequest
+	CompletableFuture<List<ExtendedDocumentSymbol>> extendedDocumentSymbol(DocumentSymbolParams params);
+
 }
