@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -55,6 +57,7 @@ import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Initializer;
 import org.eclipse.jdt.core.dom.LambdaExpression;
@@ -79,6 +82,7 @@ import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.UnionType;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
@@ -108,6 +112,7 @@ import org.eclipse.jdt.internal.corext.fix.AddMissingMethodDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.fix.AddVarLambdaParameterTypesFixCore;
 import org.eclipse.jdt.internal.corext.fix.ChangeLambdaBodyToBlockFixCore;
 import org.eclipse.jdt.internal.corext.fix.ChangeLambdaBodyToExpressionFixCore;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.ConvertLambdaToMethodReferenceFixCore;
 import org.eclipse.jdt.internal.corext.fix.ConvertToMessageFormatFixCore;
 import org.eclipse.jdt.internal.corext.fix.ConvertToStringBufferFixCore;
@@ -117,6 +122,7 @@ import org.eclipse.jdt.internal.corext.fix.InvertEqualsExpressionFixCore;
 import org.eclipse.jdt.internal.corext.fix.JoinVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionAndMethodRefFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.fix.PatternInstanceofToSwitchFixCore;
 import org.eclipse.jdt.internal.corext.fix.RemoveVarOrInferredLambdaParameterTypesFixCore;
 import org.eclipse.jdt.internal.corext.fix.SplitVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.StringConcatToTextBlockFixCore;
@@ -124,8 +130,10 @@ import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
+import org.eclipse.jdt.internal.ui.fix.PatternInstanceofToSwitchCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
@@ -135,6 +143,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
@@ -238,6 +247,7 @@ public class QuickAssistProcessor {
 			getSplitVariableProposal(context, coveringNode, resultingCollections);
 			getJoinVariableProposal(context, coveringNode, resultingCollections);
 			getInvertEqualsProposal(context, coveringNode, resultingCollections);
+			getConvertPatternInstanceofIfStmtToSwitchProposals(context, coveringNode, resultingCollections);
 			return resultingCollections;
 		}
 		return Collections.emptyList();
@@ -1456,4 +1466,28 @@ public class QuickAssistProcessor {
 		}
 		return false;
 	}
+
+	private static boolean getConvertPatternInstanceofIfStmtToSwitchProposals(IInvocationContext context, ASTNode covering, ArrayList<ProposalKindWrapper> resultingCollections) {
+		ASTNode ancestor= ASTNodes.getFirstAncestorOrNull(covering, IfStatement.class, MethodDeclaration.class, TypeDeclaration.class);
+		if (!(ancestor instanceof IfStatement ifStmt)) {
+			return false;
+		}
+		while (ifStmt.getLocationInParent() == IfStatement.ELSE_STATEMENT_PROPERTY) {
+			ifStmt= (IfStatement) ifStmt.getParent();
+		}
+		IProposableFix fix= PatternInstanceofToSwitchFixCore.createPatternInstanceofToSwitchFix(ifStmt);
+		if (fix == null)
+			return false;
+
+		if (resultingCollections == null)
+			return true;
+
+		// add correction proposal
+		Map<String, String> options= new Hashtable<>();
+		options.put(CleanUpConstants.USE_SWITCH_FOR_INSTANCEOF_PATTERN, CleanUpOptions.TRUE);
+		FixCorrectionProposalCore proposal= new FixCorrectionProposalCore(fix, new PatternInstanceofToSwitchCleanUpCore(options), IProposalRelevance.CONVERT_PATTERN_INSTANCEOF_TO_SWITCH, context);
+		resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
+		return true;
+	}
+
 }
