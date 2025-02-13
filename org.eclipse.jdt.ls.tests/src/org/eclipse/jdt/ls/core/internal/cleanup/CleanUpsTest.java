@@ -60,6 +60,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
 		JavaCore.setComplianceOptions(JavaCore.VERSION_22, options);
 		options.put(DefaultCodeFormatterConstants.FORMATTER_NUMBER_OF_EMPTY_LINES_TO_PRESERVE, String.valueOf(99));
+		options.put(DefaultCodeFormatterConstants.FORMATTER_INDENT_SWITCHSTATEMENTS_COMPARE_TO_SWITCH, DefaultCodeFormatterConstants.TRUE);
 		javaProject.setOptions(options);
 
 		fSourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src/main/java"));
@@ -395,9 +396,9 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 			    public void test() {
 			        Day day2 = Day.THURSDAY;
 			        String message2 = switch (day2) {
-			        case SATURDAY, SUNDAY -> "Weekend!";
-			        case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> "Weekday";
-			        default -> "???";
+			            case SATURDAY, SUNDAY -> "Weekend!";
+			            case MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY -> "Weekday";
+			            default -> "???";
 			        };
 			    }
 
@@ -671,6 +672,59 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 				}
 				""";
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("renameUnusedLocalVariables"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testPatternInstanceofToSwitch() throws Exception {
+
+		String contents = """
+                package test1;
+                public class E {
+                    public void foo(Object x, Object y) {
+                        int i, j;
+                        double d;
+                        boolean b;
+                        if (x instanceof Integer xint) {
+                            i = xint.intValue();
+                        } else if (x instanceof Double xdouble) {
+                            d = xdouble.doubleValue();
+                        } else if (x instanceof Boolean xboolean) {
+                            b = xboolean.booleanValue();
+                        } else {
+                            i = 0;
+                            d = 0.0D;
+                            b = false;
+                        }
+                    }
+                }
+				""";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = """
+				            package test1;
+				            public class E {
+				                public void foo(Object x, Object y) {
+				                    int i, j;
+				                    double d;
+				                    boolean b;
+				                    switch (x) {
+				                        case Integer xint -> i = xint.intValue();
+				                        case Double xdouble -> d = xdouble.doubleValue();
+				                        case Boolean xboolean -> b = xboolean.booleanValue();
+				                        case null, default -> {
+				                            i = 0;
+				                            d = 0.0D;
+				                            b = false;
+				                        }
+				                    }
+				                }
+				            }
+				""";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("useSwitchForInstanceofPattern"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
 	}

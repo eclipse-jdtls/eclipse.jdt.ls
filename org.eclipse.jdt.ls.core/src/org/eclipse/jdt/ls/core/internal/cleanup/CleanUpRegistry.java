@@ -56,7 +56,8 @@ public class CleanUpRegistry {
 			new TryWithResourceCleanUp(),
 			new LambdaExpressionAndMethodRefCleanUp(),
 			new OrganizeImportsCleanup(),
-			new RenameUnusedLocalVariableCleanup());
+			new RenameUnusedLocalVariableCleanup(),
+			new PatternInstanceofToSwitchCleanup());
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
