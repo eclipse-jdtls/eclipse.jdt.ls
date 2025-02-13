@@ -675,4 +675,57 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	public void testPatternInstanceofToSwitch() throws Exception {
+
+		String contents = """
+                package test1;
+                public class E {
+                    public void foo(Object x, Object y) {
+                        int i, j;
+                        double d;
+                        boolean b;
+                        if (x instanceof Integer xint) {
+                            i = xint.intValue();
+                        } else if (x instanceof Double xdouble) {
+                            d = xdouble.doubleValue();
+                        } else if (x instanceof Boolean xboolean) {
+                            b = xboolean.booleanValue();
+                        } else {
+                            i = 0;
+                            d = 0.0D;
+                            b = false;
+                        }
+                    }
+                }
+				""";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = """
+				            package test1;
+				            public class E {
+				                public void foo(Object x, Object y) {
+				                    int i, j;
+				                    double d;
+				                    boolean b;
+				                    switch (x) {
+				                    case Integer xint -> i = xint.intValue();
+				                    case Double xdouble -> d = xdouble.doubleValue();
+				                    case Boolean xboolean -> b = xboolean.booleanValue();
+				                    case null, default -> {
+				                        i = 0;
+				                        d = 0.0D;
+				                        b = false;
+				                    }
+				                    }
+				                }
+				            }
+				""";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("useSwitchForInstanceofPattern"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
 }
