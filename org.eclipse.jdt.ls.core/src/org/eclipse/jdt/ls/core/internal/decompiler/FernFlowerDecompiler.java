@@ -22,10 +22,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.jar.Manifest;
 
 import org.eclipse.core.runtime.CoreException;
@@ -38,9 +38,9 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 
 public class FernFlowerDecompiler extends DecompilerImpl {
 	public static final String DECOMPILER_HEADER = "// Source code is decompiled from a .class file using FernFlower decompiler.\n";
@@ -74,7 +74,7 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 		decompilerOptions.put(IFernflowerPreferences.DECOMPILE_INNER, "1");
 		decompilerOptions.put(IFernflowerPreferences.DECOMPILE_ENUM, "1");
 		decompilerOptions.put(IFernflowerPreferences.LOG_LEVEL, Severity.ERROR.name());
-		decompilerOptions.put(IFernflowerPreferences.ASCII_STRING_CHARACTERS, "1");
+		decompilerOptions.put(IFernflowerPreferences.ASCII_STRING_CHARACTERS, "0");
 		decompilerOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
 		if (Boolean.getBoolean("jdt.ls.debug")) {
 			decompilerOptions.put(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
@@ -98,7 +98,7 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 		fernflower.addSource(new File("__Fernflower__.class"));
 		fernflower.decompileContext();
 		final String decompiledCode = DECOMPILER_HEADER + resultSaver.content;
-		
+
 		final Map<Integer, Set<Integer>> originalLineMappings = new TreeMap<>();
 		final Map<Integer, Set<Integer>> decompiledLineMappings = new TreeMap<>();
 		for (int i = 0; i + 1 < resultSaver.originalLinesMapping.length; i = i + 2) {
