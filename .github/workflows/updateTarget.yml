@@ -1,0 +1,24 @@
+name: Target Platform Updates
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 8 * * *'
+  push:
+    branches:
+      - master
+    paths:
+      - '**.target'
+
+jobs:
+  update:
+    uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/updateTarget.yml@master
+    with:
+      author: JDT-LS Bot <jdtls-bot@eclipse.org>
+      path: 'org.eclipse.jdt.ls.target'
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
