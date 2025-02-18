@@ -39,7 +39,7 @@
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2024-12/"/>
+            <repository location="https://download.eclipse.org/releases/2025-03/"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
            <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.24.0/"/>
@@ -50,13 +50,13 @@
 			    <dependency>
 				    <groupId>commons-codec</groupId>
 				    <artifactId>commons-codec</artifactId>
-				    <version>1.17.0</version>
+				    <version>1.18.0</version>
 				    <type>jar</type>
 			    </dependency>
 			    <dependency>
 				    <groupId>org.apache.commons</groupId>
 				    <artifactId>commons-lang3</artifactId>
-				    <version>3.14.0</version>
+				    <version>3.17.0</version>
 				    <type>jar</type>
 			    </dependency>
 		    </dependencies>
