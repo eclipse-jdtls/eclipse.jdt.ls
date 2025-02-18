@@ -18,7 +18,7 @@ jobs:
   update:
     uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/updateTarget.yml@master
     with:
-      author: JDT-LS Bot <jdtls-bot@eclipse.org>
+      author: eclipse-ls-bot <ls-bot@eclipse.org>
       path: 'org.eclipse.jdt.ls.target'
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
