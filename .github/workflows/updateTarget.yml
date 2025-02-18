@@ -14,6 +14,10 @@ on:
     paths:
       - '**.target'
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update:
     uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/updateTarget.yml@master
