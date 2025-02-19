@@ -11,8 +11,16 @@
 # Contributors:
 # Marc Schreiber - initial API and implementation
 ###############################################################################
-import jdtls
+import importlib.util
 import sys
+import os
+
+script_dir = os.path.dirname(os.path.realpath(__file__))
+file_path = os.path.join(script_dir, "jdtls.py")
+
+spec = importlib.util.spec_from_file_location("jdtls", file_path)
+jdtls = importlib.util.module_from_spec(spec)
+sys.modules["jdtls"] = jdtls
+spec.loader.exec_module(jdtls)
 
 jdtls.main(sys.argv[1:])
-
