@@ -38,11 +38,18 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.corext.fix.FixMessages;
+import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.InlineMethodFixCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AddImportCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.GetterSetterCorrectionSubProcessor;
@@ -151,10 +158,9 @@ public class QuickFixProcessor {
 			case IProblem.ParameterMismatch:
 				UnresolvedElementsSubProcessor.getMethodProposals(context, problem, true, proposals);
 				break;
-			// case IProblem.MethodButWithConstructorName:
-			// ReturnTypeSubProcessor.addMethodWithConstrNameProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MethodButWithConstructorName:
+				ReturnTypeSubProcessor.addMethodWithConstrNameProposals(context, problem, proposals);
+				break;
 			case IProblem.UndefinedField:
 			case IProblem.UndefinedName:
 			case IProblem.UnresolvedVariable:
@@ -170,6 +176,7 @@ public class QuickFixProcessor {
 				break;
 			case IProblem.UndefinedType:
 			case IProblem.JavadocUndefinedType:
+			case IProblem.VarIsNotAllowedHere:
 				UnresolvedElementsSubProcessor.getTypeProposals(context, problem, proposals);
 				break;
 			case IProblem.TypeMismatch:
@@ -502,6 +509,19 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addOverridingDeprecatedMethodProposal(context,
 			// problem, proposals);
 			// break;
+			case IProblem.UsingDeprecatedMethod:
+				ASTNode deprecatedMethodNode = context.getCoveredNode();
+				if (deprecatedMethodNode != null && !(deprecatedMethodNode instanceof MethodInvocation)) {
+					deprecatedMethodNode = deprecatedMethodNode.getParent();
+				}
+				if (deprecatedMethodNode instanceof MethodInvocation methodInvocation && QuickAssistProcessorUtil.isDeprecatedMethodCallWithReplacement(methodInvocation)) {
+					IProposableFix fix = InlineMethodFixCore.create(FixMessages.InlineDeprecatedMethod_msg, (CompilationUnit) methodInvocation.getRoot(), methodInvocation);
+					if (fix != null) {
+						proposals.add(CodeActionHandler.wrap(null, CodeActionKind.QuickFix));
+						new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context);
+					}
+				}
+				break;
 			// case IProblem.IsClassPathCorrect:
 			// ReorgCorrectionsSubProcessor.getIncorrectBuildPathProposals(context,
 			// problem, proposals);
@@ -560,6 +580,8 @@ public class QuickFixProcessor {
 				LocalCorrectionsSubProcessor.getMissingEnumConstantCaseProposals(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addCasesOmittedProposals(context, problem, proposals);
 				break;
+			case IProblem.SwitchExpressionsReturnWithinSwitchExpression:
+				ReturnTypeSubProcessor.replaceReturnWithYieldStatementProposals(context, problem, proposals);
 			case IProblem.UnclosedCloseable:
 			case IProblem.PotentiallyUnclosedCloseable:
 				LocalCorrectionsSubProcessor.getTryWithResourceProposals(context, problem, proposals);
