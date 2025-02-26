@@ -1,5 +1,22 @@
 # Change Log
 
+# [1.45.0 (February 27th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/137?closed=1)
+ * enhancement - Support for inherited document symbols. See [#3378](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3378).
+ * enhancement - Introduce approximately 15 new quick fixes. See [#3368](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3368), [#3372](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3372).
+ * enhancement - Introduce quick assist & cleanup converting a pattern-instanceof-if-chain to a switch statement. See [#3383](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3383).
+ * bug fix - Unicode characters not rendering correctly in decompiled file. See [#3384](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3384).
+ * bug fix - Fix a potential deadlock in search-based functionality. See [#3371](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3371).
+ * bug fix - React to upstream changes preserving comments in lambda conversions. See [#3380](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3380).
+ * bug fix - Adjust Equinox launcher detection for mason-registry packaging. See [#3379](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3379).
+ * bug fix - Allow `jdtls.py` to be dynamically imported. See [#3386](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3386).
+ * bug fix - `jdtls.py` should reflect requirement for Java 21. See [#3392](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3392).
+ * bug fix - Standardize on Gradle 8.5 to avoid multiple daemons at test runtime. See [#3373](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3373), [#3375](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3375).
+ * bug fix - Gson bundle has improper self-`Import-Package` requirements. See [#3236](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3236).
+ * dependencies - Update some target platform dependencies to newer releases. See [#3374](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3374), [#3391](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3391).
+ * build - Bump tycho-version from 4.0.10 to 4.0.12. See [#3395](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3395), [#3377](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3377).
+ * build - Bump org.apache.maven.plugins:maven-clean-plugin from 3.4.0 to 3.4.1. See [#3393](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3393).
+ * build - Add GitHub workflow to automatically update target platform. See [#3385](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3385), [#3389](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3389), [#3390](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3390).
+
 # [1.44.0 (January 22nd, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/136?closed=1)
  * performance - Enhance initialization of gradle projects. See [#3357](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3357).
  * enhancement - Implementation code lens for non interface/abstract base types/methods. See [#3355](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3355).
