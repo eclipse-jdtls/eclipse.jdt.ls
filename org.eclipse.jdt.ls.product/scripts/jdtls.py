@@ -40,8 +40,8 @@ def get_java_executable(known_args):
 	for match in matches:
 		java_major_version = int(match.group("major"))
 
-		if java_major_version < 17:
-			raise Exception("jdtls requires at least Java 17")
+		if java_major_version < 21:
+			raise Exception("jdtls requires at least Java 21")
 
 		return java_executable
 
