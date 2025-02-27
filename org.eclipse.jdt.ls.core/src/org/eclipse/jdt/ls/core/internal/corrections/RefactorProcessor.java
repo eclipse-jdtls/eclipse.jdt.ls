@@ -80,10 +80,12 @@ import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
+import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.MakeStaticRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ImportRemover;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryCatchRefactoring;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
@@ -223,11 +225,13 @@ public class RefactorProcessor {
 				if (monitor != null && monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
+				getMakeMethodStaticRefactoringProposal(params, context, coveringNode, proposals, monitor);
 			}
 			return proposals;
 		}
 		return Collections.emptyList();
 	}
+
 
 	private boolean getIntroduceParameterProposals(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, IProblemLocation[] locations, ArrayList<ProposalKindWrapper> resultingCollections) throws CoreException {
 		if (resultingCollections == null) {
@@ -1178,4 +1182,33 @@ public class RefactorProcessor {
 
 		return false;
 	}
+
+	private boolean getMakeMethodStaticRefactoringProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> proposals, IProgressMonitor monitor) {
+		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(context.getCompilationUnit(), context.getSelectionOffset(), context.getSelectionLength());
+		try {
+			if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+				String label = RefactoringCoreMessages.MakeStaticRefactoring_name;
+				int relevance = IProposalRelevance.CHANGE_METHOD_SIGNATURE;
+				ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, relevance) {
+					@Override
+					public Change getChange() throws CoreException {
+						CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+						final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+						try {
+							create.run(new NullProgressMonitor());
+							return create.getChange();
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.log(e);
+						}
+						return new NullChange();
+					}
+				};
+				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline));
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+		return true;
+	}
+
 }
