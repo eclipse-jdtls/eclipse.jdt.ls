@@ -326,10 +326,10 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		// 8 basic + 3 project roots
 		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, watchers.size());
 		List<FileSystemWatcher> projectWatchers = watchers.subList(9, 12);
-		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/TestProject"));
+		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
 		assertTrue(WatchKind.Delete == projectWatchers.get(0).getKind());
-		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/maven/salut"));
-		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/gradle/simple-gradle"));
+		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
+		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("simple-gradle"));
 
 		watchers = watchers.subList(0, 9);
 		Collections.sort(watchers, Comparator.comparing(fileSystemWatcher -> fileSystemWatcher.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
@@ -373,9 +373,9 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).registerCapability(any());
 		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, newWatchers.size());
 		projectWatchers = newWatchers.subList(9, 12);
-		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/TestProject"));
-		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/maven/salut"));
-		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/gradle/simple-gradle"));
+		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
+		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
+		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("simple-gradle"));
 
 		newWatchers = watchers.subList(0, 9);
 		Collections.sort(newWatchers, Comparator.comparing(fileSystemWatcher -> fileSystemWatcher.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));

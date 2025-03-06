@@ -99,6 +99,7 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.MessageType;
+import org.eclipse.lsp4j.RelativePattern;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WatchKind;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -107,7 +108,7 @@ import org.xml.sax.InputSource;
 public class StandardProjectsManager extends ProjectsManager {
 	private final static String FORMATTER_OPTION_PREFIX = JavaCore.PLUGIN_ID + ".formatter"; //$NON-NLS-1$
 	protected static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
-	private static final Set<String> watchers = new LinkedHashSet<>();
+	private static final Set<Either<String, RelativePattern>> watchers = new LinkedHashSet<>();
 	private PreferenceManager preferenceManager;
 	private boolean buildFinished;
 	private boolean shouldUpdateProjects;
@@ -123,12 +124,12 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	//@formatter:off
-	private static final List<String> basicWatchers = Arrays.asList(
-			"**/*.java",
-			"**/.project",
-			"**/.classpath",
-			"**/.settings/*.prefs",
-			"**/src/**"
+	private static final List<Either<String, RelativePattern>> basicWatchers = Arrays.asList(
+			Either.forLeft("**/*.java"),
+			Either.forLeft("**/.project"),
+			Either.forLeft("**/.classpath"),
+			Either.forLeft("**/.settings/*.prefs"),
+			Either.forLeft("**/src/**")
 	);
 	//@formatter:on
 
@@ -465,8 +466,8 @@ public class StandardProjectsManager extends ProjectsManager {
 	public List<FileSystemWatcher> registerWatchers() {
 		logInfo(">> registerWatchers'");
 		if (preferenceManager.getClientPreferences().isWorkspaceChangeWatchedFilesDynamicRegistered()) {
-			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
-			buildSupports().forEach(e -> e.getWatchPatterns().forEach(patterns::add));
+			Set<Either<String, RelativePattern>> patterns = new LinkedHashSet<>(basicWatchers);
+			buildSupports().forEach(e -> e.getWatchPatterns().forEach(p -> patterns.add(Either.forLeft(p))));
 			Set<IPath> sources = new HashSet<>();
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
@@ -519,9 +520,9 @@ public class StandardProjectsManager extends ProjectsManager {
 							IPath projectFolder = ProjectUtils.getProjectRealFolder(project);
 							Set<String> libraries = preferenceManager.getPreferences().getReferencedLibraries().getInclude();
 							for (String pattern: libraries) {
-								patterns.add(ProjectUtils.resolveGlobPath(projectFolder, pattern).toPortableString());
+								patterns.add(Either.forLeft(ProjectUtils.resolveGlobPath(projectFolder, pattern).toPortableString()));
 							}
-							patterns.add("**/.settings");
+							patterns.add(Either.forLeft("**/.settings"));
 						}
 					}
 				}
@@ -550,14 +551,14 @@ public class StandardProjectsManager extends ProjectsManager {
 				addWatcher(settings, sources);
 			}
 			patterns.addAll(sources.stream().map(p -> ResourceUtils.toGlobPattern(p, false)).collect(Collectors.toList()));
-			for (String pattern : patterns) {
-				FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(pattern));
+			for (Either<String, RelativePattern> pattern : patterns) {
+				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
 			// Watch on project root folders.
 			for (IProject project : projects) {
 				if (ProjectUtils.isVisibleProject(project) && project.exists()) {
-					FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(ResourceUtils.toGlobPattern(project.getLocation(), false)), WatchKind.Delete);
+					FileSystemWatcher watcher = new FileSystemWatcher(ResourceUtils.toGlobPattern(project.getLocation(), false), WatchKind.Delete);
 					fileWatchers.add(watcher);
 				}
 			}

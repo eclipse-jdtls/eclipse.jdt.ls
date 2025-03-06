@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.lsp4j.RelativePattern;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Test;
 
 public class ResourceUtilsTest {
@@ -28,11 +30,11 @@ public class ResourceUtilsTest {
 	@Test
 	public void testToGlobPattern() {
 		assertNull(toGlobPattern(null));
-		assertEquals("/foo/bar/**", toGlobPattern(Path.forPosix("/foo/bar")));
-		assertEquals("/foo/bar/**", toGlobPattern(Path.forPosix("/foo/bar/")));
-		assertEquals("**/foo/bar/**", toGlobPattern(Path.forWindows("c:/foo/bar/")));
-		assertEquals("**/foo/bar/**", toGlobPattern(Path.forWindows("c:\\foo\\bar")));
-		assertEquals("/foo/bar/foo.jar", toGlobPattern(Path.forPosix("/foo/bar/foo.jar")));
+		assertEquals(Either.forLeft("/foo/bar/**"), toGlobPattern(Path.forPosix("/foo/bar")));
+		assertEquals(Either.forLeft("/foo/bar/**"), toGlobPattern(Path.forPosix("/foo/bar/")));
+		assertEquals(Either.forLeft("**/foo/bar/**"), toGlobPattern(Path.forWindows("c:/foo/bar/")));
+		assertEquals(Either.forLeft("**/foo/bar/**"), toGlobPattern(Path.forWindows("c:\\foo\\bar")));
+		assertEquals(Either.forRight(new RelativePattern(Either.forRight("/foo/bar"), "foo.jar")), toGlobPattern(Path.forPosix("/foo/bar/foo.jar")));
 	}
 
 	@Test
