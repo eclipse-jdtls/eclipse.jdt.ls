@@ -47,6 +47,8 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.lsp4j.RelativePattern;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 import com.google.common.io.CharStreams;
 
@@ -288,7 +290,7 @@ public final class ResourceUtils {
 	 *            the path to convert
 	 * @return a glob pattern prefixed with the path
 	 */
-	public static String toGlobPattern(IPath path) {
+	public static Either<String, RelativePattern> toGlobPattern(IPath path) {
 		if (path == null) {
 			return null;
 		}
@@ -306,9 +308,13 @@ public final class ResourceUtils {
 	 *            whether to end the glob with "/**"
 	 * @return a glob pattern prefixed with the path
 	 */
-	public static String toGlobPattern(IPath path, boolean recursive) {
+	public static Either<String, RelativePattern> toGlobPattern(IPath path, boolean recursive) {
 		if (path == null) {
 			return null;
+		}
+
+		if (path.isAbsolute() && !recursive) {
+			return Either.forRight(new RelativePattern(Either.forRight(path.removeLastSegments(1).toPortableString()), path.lastSegment()));
 		}
 
 		String globPattern = path.toPortableString();
@@ -328,7 +334,7 @@ public final class ResourceUtils {
 			}
 		}
 
-		return globPattern;
+		return Either.forLeft(globPattern);
 	}
 
 	public static String dos2Unix(String str) {

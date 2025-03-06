@@ -54,17 +54,18 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
 import org.eclipse.lsp4j.FileSystemWatcher;
+import org.eclipse.lsp4j.RelativePattern;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class SyntaxProjectsManager extends ProjectsManager {
 	//@formatter:off
-	private static final List<String> basicWatchers = Arrays.asList(
-			"**/*.java"
+	private static final List<Either<String, RelativePattern>> basicWatchers = Arrays.asList(
+			Either.forLeft("**/*.java")
 			// "**/src/**"
 	);
 	//@formatter:on
 
-	private final Set<String> watchers = new LinkedHashSet<>();
+	private final Set<Either<String, RelativePattern>> watchers = new LinkedHashSet<>();
 
 	private Job registerWatcherJob = new Job("Register Watchers") {
 
@@ -137,14 +138,14 @@ public class SyntaxProjectsManager extends ProjectsManager {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 			}
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
-			Set<String> patterns = new LinkedHashSet<>(basicWatchers);
+			Set<Either<String, RelativePattern>> patterns = new LinkedHashSet<>(basicWatchers);
 			patterns.addAll(Stream.of(sources).map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
 
-			for (String pattern : patterns) {
-				FileSystemWatcher watcher = new FileSystemWatcher(Either.forLeft(pattern));
+			for (Either<String, RelativePattern> pattern : patterns) {
+				FileSystemWatcher watcher = new FileSystemWatcher(pattern);
 				fileWatchers.add(watcher);
 			}
-	
+
 			if (!patterns.equals(watchers)) {
 				JavaLanguageServerPlugin.logInfo(">> registerFeature 'workspace/didChangeWatchedFiles'");
 				DidChangeWatchedFilesRegistrationOptions didChangeWatchedFilesRegistrationOptions = new DidChangeWatchedFilesRegistrationOptions(fileWatchers);
