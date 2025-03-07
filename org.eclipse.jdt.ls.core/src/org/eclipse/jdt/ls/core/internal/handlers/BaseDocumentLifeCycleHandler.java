@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IFile;
@@ -60,6 +61,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.OpenableElementInfo;
 import org.eclipse.jdt.internal.core.PackageFragment;
+import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -385,9 +387,24 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public static void handleFileRenameForTypeDeclaration(String documentUri) {
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(documentUri);
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, null);
+		if (astRoot == null) {
+			return;
+		}
 		IProblem[] problems = astRoot.getProblems();
 		Optional<IProblem> desiredProblem = Arrays.stream(problems).filter(p -> p.getID() == IProblem.PublicClassMustMatchFileName).findFirst();
-		if (desiredProblem.isPresent()) {
+		long publicTopLevelTypeCount = 1;
+		try {
+			publicTopLevelTypeCount = Stream.of(cu.getTypes()).filter(t -> {
+				try {
+					return JdtFlags.isPublic(t);
+				} catch (JavaModelException e) {
+					return false;
+				}
+			}).count();
+		} catch (JavaModelException e) {
+			// continue
+		}
+		if (desiredProblem.isPresent() && publicTopLevelTypeCount == 1) {
 			IProblem renameProblem = desiredProblem.get();
 			String newName = renameProblem.getArguments()[1];
 			String oldName = cu.getElementName();
