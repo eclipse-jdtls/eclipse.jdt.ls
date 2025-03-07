@@ -54,7 +54,6 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
@@ -97,7 +96,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	private CoreASTProvider sharedASTProvider;
 
 	private DocumentLifeCycleHandler lifeCycleHandler;
-	private JavaClientConnection javaClient;
 
 	private File temp;
 
@@ -111,9 +109,11 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
 		//		sharedASTProvider.clearASTCreationCount();
-		javaClient = new JavaClientConnection(client);
-		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
+		JDTLanguageServer server = new JDTLanguageServer(projectsManager, preferenceManager);
+		server.connectClient(client);
+		lifeCycleHandler = new DocumentLifeCycleHandler(server.getClientConnection(), preferenceManager, projectsManager, false);
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
 
 	@After
@@ -256,7 +256,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported();
-		assertEquals(0, getCacheSize());
+		assertEquals(1, getCacheSize());
 		assertNewASTsCreated(0);
 
 		closeDocument(cu1);
@@ -438,7 +438,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(true, cu1.isWorkingCopy());
 		assertEquals(false, cu1.hasUnsavedChanges());
 		assertNewProblemReported();
-		assertEquals(0, getCacheSize());
+		assertEquals(1, getCacheSize());
 		assertNewASTsCreated(0);
 
 		closeDocument(cu1);
@@ -886,6 +886,82 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		documentMonitorAfterClose.checkChanged(); // Version not changed (null -> null)
 	}
 
+	@Test
+	public void testFileRenameForTypeDeclaration() throws Exception {
+		Mockito.lenient().when(clientPreferences.isWorkspaceApplyEditSupported()).thenReturn(true);
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		String content = "package test1;\n"
+				+ "\n"
+				+ "class Foo {\n"
+				+ "}";
+
+		ICompilationUnit cu1 = pack1.createCompilationUnit("Other.java", content, false, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+		saveDocument(cu1);
+
+		assertEquals(0, getClientRequests("applyEdit").size());
+		clientRequests.clear();
+		closeDocument(cu1);
+
+		content = "package test1;\n"
+				+ "\n"
+				+ "public class Foo {\n"
+				+ "}";
+
+		cu1 = pack1.createCompilationUnit("Other.java", content, true, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+		saveDocument(cu1);
+
+		// RenameFile operation through 'workspace/applyEdit'
+		assertEquals(1, getClientRequests("applyEdit").size());
+		clientRequests.clear();
+		closeDocument(cu1);
+
+		content = "package test1;\n"
+				+ "\n"
+				+ "public interface Foo {\n"
+				+ "}\n"
+				+ "\n"
+				+ "class Bar {\n"
+				+ "}\n"
+				+ "\n"
+				+ "class Biz {\n"
+				+ "}";
+
+		cu1 = pack1.createCompilationUnit("Other.java", content, true, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+		saveDocument(cu1);
+
+		// RenameFile operation through 'workspace/applyEdit'
+		assertEquals(1, getClientRequests("applyEdit").size());
+		clientRequests.clear();
+		closeDocument(cu1);
+
+		content = "public class Foo {\n"
+				+ "}\n"
+				+ "\n"
+				+ "public class Bar {\n"
+				+ "}\n"
+				+ "\n"
+				+ "public class Biz {\n"
+				+ "}";
+
+		cu1 = pack1.createCompilationUnit("Other.java", content, true, null);
+
+		openDocument(cu1, cu1.getSource(), 1);
+		saveDocument(cu1);
+
+		assertEquals(0, getClientRequests("applyEdit").size());
+		clientRequests.clear();
+		closeDocument(cu1);
+	}
+
 	private void assertChanged(DocumentMonitor documentMonitor) {
 		try {
 			documentMonitor.checkChanged();
@@ -968,6 +1044,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		saveParms.setTextDocument(textDocument);
 		saveParms.setText(cu.getSource());
 		lifeCycleHandler.didSave(saveParms);
+		DocumentLifeCycleHandler.handleFileRenameForTypeDeclaration(JDTUtils.toURI(cu));
 		waitForBackgroundJobs();
 	}
 

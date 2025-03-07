@@ -184,8 +184,12 @@ public class JavaClientConnection {
 	public boolean applyWorkspaceEdit(WorkspaceEdit edit){
 		ApplyWorkspaceEditParams $ = new ApplyWorkspaceEditParams();
 		$.setEdit(edit);
-		ApplyWorkspaceEditResponse response = client.applyEdit($).join();
-		return response.isApplied();
+		CompletableFuture<ApplyWorkspaceEditResponse> future = client.applyEdit($);
+		if (future != null) {
+			ApplyWorkspaceEditResponse response = future.join();
+			return response.isApplied();
+		}
+		return false;
 	}
 
 	/**
