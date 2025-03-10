@@ -15,12 +15,10 @@ package org.eclipse.jdt.ls.core.internal.corrections;
 import java.util.Collection;
 
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.SuppressWarningsFixCore;
 import org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsBaseSubProcessor;
-import org.eclipse.jdt.internal.ui.text.correction.SuppressWarningsProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
@@ -44,8 +42,8 @@ public class SuppressWarningsSubProcessor extends SuppressWarningsBaseSubProcess
 	}
 
 	@Override
-	protected ProposalKindWrapper createSuppressWarningsProposal(String warningToken, String label, ICompilationUnit cu, ASTNode node, ChildListPropertyDescriptor property, int relevance) {
-		return CodeActionHandler.wrap(new SuppressWarningsProposalCore(warningToken, label, cu, node, property, relevance), CodeActionKind.QuickFix);
+	protected ProposalKindWrapper createSuppressWarningsProposal(IProposableFix fix, ICleanUp cleanUp, int relevance, IInvocationContext context) {
+		return CodeActionHandler.wrap(new FixCorrectionProposalCore(fix, cleanUp, relevance, context), CodeActionKind.QuickFix);
 	}
 
 	@Override
@@ -63,7 +61,9 @@ public class SuppressWarningsSubProcessor extends SuppressWarningsBaseSubProcess
 	@Override
 	protected boolean alreadyHasProposal(Collection<ProposalKindWrapper> proposals, String warningToken) {
 		for (ProposalKindWrapper element : proposals) {
-			if (element.getProposal() instanceof SuppressWarningsProposalCore swp && warningToken.equals(swp.getWarningToken())) {
+			if (element.getProposal() instanceof FixCorrectionProposalCore prop
+					&& prop.getCleanUp() instanceof SuppressWarningsFixCore swf
+					&& warningToken.equals(swf.getWarningToken())) {
 				return true; // only one at a time
 			}
 		}
