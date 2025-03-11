@@ -284,8 +284,8 @@ public class DocumentSymbolHandler {
 						if (monitor.isCanceled()) {
 							throw new OperationCanceledException();
 						}
-						IType[] superClasses = supertypeHierarchy.getAllSuperclasses(tp);
-						for (IType superType : superClasses) {
+						IType[] superTypes = supertypeHierarchy.getAllSupertypes(tp);
+						for (IType superType : superTypes) {
 							if (!"java.lang.Object".equals(superType.getFullyQualifiedName())) {
 								children.addAll(Arrays.asList(filter(superType.getChildren())));
 							}
