@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.preferences;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +45,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionMatchCaseMode;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
@@ -377,6 +380,43 @@ public class PreferenceManagerTest {
 			Preferences preferences = new Preferences();
 			preferenceManager.update(preferences);
 			assertEquals(false, preferenceManager.getPreferences().isTelemetryEnabled());
+		}
+	}
+
+	@Test
+	public void testPreferencesMerged() {
+		try {
+			PreferenceManager.initialize();
+			Map<String, Object> prefs1 = new HashMap<>();
+			prefs1.put(Preferences.COMPLETION_ENABLED_KEY, false);
+			prefs1.put(Preferences.JAVA_COMPLETION_COLLAPSE_KEY, true);
+			prefs1.put(Preferences.JAVA_HOME, "/tmp/java/home");
+			preferenceManager.update(prefs1);
+
+			assertEquals(false, preferenceManager.getPreferences().isCompletionEnabled());
+			assertEquals(true, preferenceManager.getPreferences().isCollapseCompletionItemsEnabled());
+			assertEquals("/tmp/java/home", preferenceManager.getPreferences().getJavaHome());
+
+			Map<String, Object> prefs2 = new HashMap<>();
+			prefs2.put(Preferences.JAVA_FORMATTER_URL, "/tmp/formatter.xml");
+			prefs2.put(Preferences.JAVA_SETTINGS_URL, "/tmp/settings.prefs");
+			preferenceManager.update(prefs2);
+
+			assertEquals(false, preferenceManager.getPreferences().isCompletionEnabled());
+			assertEquals(true, preferenceManager.getPreferences().isCollapseCompletionItemsEnabled());
+			assertEquals("/tmp/java/home", preferenceManager.getPreferences().getJavaHome());
+			assertEquals("/tmp/formatter.xml", preferenceManager.getPreferences().getFormatterUrl());
+			assertEquals("/tmp/settings.prefs", preferenceManager.getPreferences().getSettingsUrl());
+
+			preferenceManager.update(new HashMap<>());
+
+			assertEquals(false, preferenceManager.getPreferences().isCompletionEnabled());
+			assertEquals(true, preferenceManager.getPreferences().isCollapseCompletionItemsEnabled());
+			assertEquals("/tmp/java/home", preferenceManager.getPreferences().getJavaHome());
+			assertEquals("/tmp/formatter.xml", preferenceManager.getPreferences().getFormatterUrl());
+			assertEquals("/tmp/settings.prefs", preferenceManager.getPreferences().getSettingsUrl());
+
+		} finally {
 		}
 	}
 
