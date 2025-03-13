@@ -19,7 +19,6 @@ import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +29,6 @@ import java.util.function.Function;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -546,14 +544,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		Object settings = JSONUtility.toModel(params.getSettings(), Map.class);
 		boolean nullAnalysisOptionsUpdated = false;
 		if (settings instanceof Map) {
-			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
-			@SuppressWarnings("unchecked")
 			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
-			prefs.setRootPaths(rootPaths);
 			boolean nullAnalysisConfigurationsChanged =!prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes())
 				|| !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes())
 				|| !prefs.getNullAnalysisMode().equals(preferenceManager.getPreferences().getNullAnalysisMode());
-			preferenceManager.update(prefs);
+			preferenceManager.update((Map<String, Object>)settings);
 			if (nullAnalysisConfigurationsChanged) {
 				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated
 				nullAnalysisOptionsUpdated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();

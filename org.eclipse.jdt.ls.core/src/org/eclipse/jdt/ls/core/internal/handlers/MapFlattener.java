@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -144,6 +145,30 @@ public final class MapFlattener {
 			}
 		}
 		return null;
+	}
+
+	public static void setString(Map<String, Object> configuration, String key, String value) {
+		setValue(configuration, key, value);
+	}
+
+	public static void setBoolean(Map<String, Object> configuration, String key, Boolean value) {
+		setValue(configuration, key, value);
+	}
+
+	public static void setInt(Map<String, Object> configuration, String key, Integer value) {
+		setValue(configuration, key, value);
+	}
+
+	public static void setList(Map<String, Object> configuration, String key, List<?> value) {
+		setValue(configuration, key, value);
+	}
+
+	public static void setList(Map<String, Object> configuration, String key, Set<?> value) {
+		setValue(configuration, key, value);
+	}
+
+	public static void setValue(Map<String, Object> configuration, String key, Object value) {
+		configuration.put(key, value);
 	}
 
 }
