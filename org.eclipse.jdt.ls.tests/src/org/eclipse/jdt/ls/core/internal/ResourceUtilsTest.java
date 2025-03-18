@@ -34,7 +34,7 @@ public class ResourceUtilsTest {
 		assertEquals(Either.forLeft("/foo/bar/**"), toGlobPattern(Path.forPosix("/foo/bar/")));
 		assertEquals(Either.forLeft("**/foo/bar/**"), toGlobPattern(Path.forWindows("c:/foo/bar/")));
 		assertEquals(Either.forLeft("**/foo/bar/**"), toGlobPattern(Path.forWindows("c:\\foo\\bar")));
-		assertEquals(Either.forRight(new RelativePattern(Either.forRight("/foo/bar"), "foo.jar")), toGlobPattern(Path.forPosix("/foo/bar/foo.jar")));
+		assertEquals(Either.forRight(new RelativePattern(Either.forRight("file:/foo/bar"), "foo.jar")), toGlobPattern(Path.forPosix("/foo/bar/foo.jar")));
 	}
 
 	@Test
