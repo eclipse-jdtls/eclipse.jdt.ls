@@ -314,7 +314,8 @@ public final class ResourceUtils {
 		}
 
 		if (path.isAbsolute() && !recursive) {
-			return Either.forRight(new RelativePattern(Either.forRight(path.removeLastSegments(1).toPortableString()), path.lastSegment()));
+			String baseUri = path.removeLastSegments(1).toFile().toURI().toString();
+			return Either.forRight(new RelativePattern(Either.forRight(baseUri), path.lastSegment()));
 		}
 
 		String globPattern = path.toPortableString();
