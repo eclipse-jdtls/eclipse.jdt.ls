@@ -226,7 +226,12 @@ public class PreferenceManager {
 	public void update(Map<String, Object> preferences) {
 		Map<String, Object> currMap = this.preferences.asMap();
 		currMap.putAll(preferences);
-		update(Preferences.createFrom(currMap));
+		Preferences newPreferences = Preferences.createFrom(currMap);
+		// Preserve preferences stored here that are never sent after initialization
+		newPreferences.setRootPaths(this.preferences.getRootPaths());
+		newPreferences.setTriggerFiles(this.preferences.getTriggerFiles());
+		newPreferences.setProjectConfigurations(this.preferences.getProjectConfigurations());
+		update(newPreferences);
 	}
 
 	public void update(Preferences preferences) {
