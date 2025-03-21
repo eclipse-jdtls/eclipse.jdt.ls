@@ -93,7 +93,7 @@ public class StringConcatenationQuickFixTest extends AbstractQuickFixTest {
 						stringBuilder.append(name);
 						stringBuilder.append(", age: ");
 						stringBuilder.append(age);
-					String value = stringBuilder.toString();
+					  String value = stringBuilder.toString();
 					}
 				}
 				""";
@@ -162,7 +162,7 @@ public class StringConcatenationQuickFixTest extends AbstractQuickFixTest {
 							stringBuilder.append(name);
 							stringBuilder.append(", age: ");
 							stringBuilder.append(age);
-						String value = stringBuilder.toString();
+						  String value = stringBuilder.toString();
 						}
 					}
 					""";
