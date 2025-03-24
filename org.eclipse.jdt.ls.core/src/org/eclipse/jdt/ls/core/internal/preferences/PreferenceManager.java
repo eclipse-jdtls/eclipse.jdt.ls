@@ -57,6 +57,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.MapFlattener;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateContextType;
@@ -225,7 +226,7 @@ public class PreferenceManager {
 	 */
 	public void update(Map<String, Object> preferences) {
 		Map<String, Object> currMap = this.preferences.asMap();
-		currMap.putAll(preferences);
+		MapFlattener.putAll(currMap, preferences);
 		Preferences newPreferences = Preferences.createFrom(currMap);
 		// Preserve preferences stored here that are never sent after initialization
 		newPreferences.setRootPaths(this.preferences.getRootPaths());

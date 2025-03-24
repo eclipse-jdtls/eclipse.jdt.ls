@@ -154,4 +154,22 @@ public class MapFlattenerTest {
 		assertSame(bottom, getValue(config, "java.bottom"));
 	}
 
+	@Test
+	public void testMergeMaps() throws Exception {
+		Map<String, Object> result = new HashMap<>();
+		result.put("java.configuration.runtimes", new Map[] { Map.of("name", "JavaSE-1", "path", "/path/to/java-1") });
+		assertEquals(1, result.size());
+
+		assertEquals("JavaSE-1", ((Map[]) getValue(result, "java.configuration.runtimes"))[0].get("name"));
+		assertEquals("/path/to/java-1", ((Map[]) getValue(result, "java.configuration.runtimes"))[0].get("path"));
+
+		Map<String, Object> updatedSettings = new HashMap<>();
+		updatedSettings.put("java", Map.of("configuration", Map.of("runtimes",
+				new Map[] { Map.of("name", "JavaSE-99", "path", "/path/to/java-99") })));
+
+		MapFlattener.putAll(result, updatedSettings);
+		assertEquals("JavaSE-99", ((Map[]) getValue(result, "java.configuration.runtimes"))[0].get("name"));
+		assertEquals("/path/to/java-99", ((Map[]) getValue(result, "java.configuration.runtimes"))[0].get("path"));
+	}
+
 }
