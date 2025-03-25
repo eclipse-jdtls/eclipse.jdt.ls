@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -181,7 +182,7 @@ public final class MapFlattener {
 	private static Stream<Map.Entry<String, Object>> flatten(Map.Entry<String, Object> entry) {
 		if (entry.getValue() instanceof Map<?, ?>) {
 			Map<String, Object> nested = (Map<String, Object>) entry.getValue();
-			return nested.entrySet().stream().map(e -> Map.entry(entry.getKey() + "." + e.getKey(), e.getValue())).flatMap(MapFlattener::flatten);
+			return nested.entrySet().stream().map(e -> new AbstractMap.SimpleEntry<String, Object>(entry.getKey() + "." + e.getKey(), e.getValue())).flatMap(MapFlattener::flatten);
 		}
 		return Stream.of(entry);
 	}
