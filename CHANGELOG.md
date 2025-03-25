@@ -1,5 +1,19 @@
 # Change Log
 
+# [1.46.0 (March 27th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/138?closed=1)
+ * enhancement - Provide support for Java 24. See [#3410](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3410).
+ * enhancement - Add `Make static` refactoring. See [#3400](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3400).
+ * enhancement - Code action to ignore configurable compiler problems. See [#1765](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/1765).
+ * enhancement - Adopt quick fixes for some more problems. See [#3398](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3398).
+   - `MethodButWithConstructorName`, `UsingDeprecatedMethod`,
+   - `VarIsNotAllowedHere`, `SwitchExpressionsReturnWithinSwitchExpression`
+ * bug fix - Only rename source file to match the single public type declaration. See [#3403](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3403).
+ * bug fix - Fix inherited document symbols to work for interfaces as well. See [#3404](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3404).
+ * bug fix - Detect changes to watched files that are outside of the workspace. [#1765](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/1765), [#3407](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3407).
+ * bug fix - Guard against `null` workspace edits in some cases. See [#3408](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3408).
+ * bug fix - Preference manager should merge updated preferences instead of overwriting. See [#3108](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3108).
+ * dependencies - Update M2E from 2.7.0 to 2.8.0. See [#3402](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3402).
+
 # [1.45.0 (February 27th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/137?closed=1)
  * enhancement - Support for inherited document symbols. See [#3378](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3378).
  * enhancement - Introduce approximately 15 new quick fixes. See [#3368](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3368), [#3372](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3372).
