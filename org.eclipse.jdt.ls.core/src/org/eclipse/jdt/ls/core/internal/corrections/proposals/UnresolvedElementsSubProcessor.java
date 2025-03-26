@@ -105,6 +105,10 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 		if ((kind & TypeKinds.CLASSES) != 0) {
 			NewCUProposal proposal = new NewCUProposal(cu, node, NewCUProposal.K_CLASS, enclosing, rel + 3);
 			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+			if (canUseRecord(cu.getJavaProject(), refNode)) {
+				proposal = new NewCUProposal(cu, node, NewCUProposal.K_RECORD, enclosing, rel + 3);
+                proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+            }
 		}
 		if ((kind & TypeKinds.INTERFACES) != 0) {
 			NewCUProposal proposal = new NewCUProposal(cu, node, NewCUProposal.K_INTERFACE, enclosing, rel + 3);

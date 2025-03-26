@@ -73,6 +73,7 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 	public static final int K_INTERFACE = 2;
 	public static final int K_ENUM = 3;
 	public static final int K_ANNOTATION = 4;
+	public static final int K_RECORD= 5;
 
 	private Name fNode;
 	private ICompilationUnit fCompilationUnit;
@@ -125,43 +126,51 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		boolean isInnerType = fTypeContainer instanceof IType;
 		switch (fTypeKind) {
 			case K_CLASS:
-				if (fNode != null) {
-					if (isInnerType) {
-						if (containerName.length() == 0) {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerclass_description, typeLabel));
-						} else {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerclass_intype_description, new String[] { typeLabel, containerLabel }));
-						}
+			if (fNode != null) {
+				if (isInnerType) {
+					if (containerName.length() == 0) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerclass_description, typeLabel));
 					} else {
-						if (containerName.length() == 0) {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createclass_description, typeLabel));
-						} else {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createclass_inpackage_description, new String[] { typeLabel, containerLabel }));
-						}
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerclass_intype_description, new String[] { typeLabel, containerLabel }));
 					}
+				} else {
+					if (containerName.length() == 0) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createclass_description, typeLabel));
+					} else {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createclass_inpackage_description, new String[] { typeLabel, containerLabel }));
+					}
+				}
+			} else {
+				if (isInnerType) {
+					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerclass_description, containerLabel));
 				} else {
 					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewclass_inpackage_description, containerLabel));
 				}
-				break;
+			}
+			break;
 			case K_INTERFACE:
-				if (fNode != null) {
-					if (isInnerType) {
-						if (containerName.length() == 0) {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerinterface_description, typeLabel));
-						} else {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerinterface_intype_description, new String[] { typeLabel, containerLabel }));
-						}
+			if (fNode != null) {
+				if (isInnerType) {
+					if (containerName.length() == 0) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerinterface_description, typeLabel));
 					} else {
-						if (containerName.length() == 0) {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinterface_description, typeLabel));
-						} else {
-							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinterface_inpackage_description, new String[] { typeLabel, containerLabel }));
-						}
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerinterface_intype_description, new String[] { typeLabel, containerLabel }));
 					}
+				} else {
+					if (containerName.length() == 0) {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinterface_description, typeLabel));
+					} else {
+						setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinterface_inpackage_description, new String[] { typeLabel, containerLabel }));
+					}
+				}
+			} else {
+				if (isInnerType) {
+					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerinterface_description, containerLabel));
 				} else {
 					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinterface_inpackage_description, containerLabel));
 				}
-				break;
+			}
+			break;
 			case K_ENUM:
 				if (fNode != null) {
 					if (isInnerType) {
@@ -200,6 +209,29 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 					setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewannotation_inpackage_description, containerLabel));
 				}
 				break;
+				case K_RECORD:
+					if (fNode != null) {
+						if (isInnerType) {
+							if (containerName.length() == 0) {
+								setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerrecord_description, typeLabel));
+							} else {
+								setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createinnerrecord_intype_description, new String[] { typeLabel, containerLabel }));
+							}
+						} else {
+							if (containerName.length() == 0) {
+								setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createrecord_description, typeLabel));
+							} else {
+								setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createrecord_inpackage_description, new String[] { typeLabel, containerLabel }));
+							}
+						}
+					} else {
+						if (isInnerType) {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewinnerrecord_description, containerLabel));
+						} else {
+							setDisplayName(Messages.format(CorrectionMessages.NewCUCompletionUsingWizardProposal_createnewrecord_inpackage_description, containerLabel));
+						}
+					}
+					break;
 			default:
 				throw new IllegalArgumentException("Unknown type kind"); //$NON-NLS-1$
 		}
@@ -304,6 +336,9 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 				break;
 			case K_ANNOTATION:
 				newDeclaration = ast.newAnnotationTypeDeclaration();
+				break;
+			case K_RECORD:
+				newDeclaration = ast.newRecordDeclaration();
 				break;
 			default:
 				return null;
@@ -428,6 +463,10 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 				type = "@interface "; //$NON-NLS-1$
 				templateID = CodeGeneration.ANNOTATION_BODY_TEMPLATE_ID;
 				break;
+			case K_RECORD:
+				type = "record "; //$NON-NLS-1$
+				templateID = CodeGeneration.RECORD_BODY_TEMPLATE_ID;
+				break;
 		}
 		buf.append(type);
 		buf.append(name);
@@ -435,6 +474,8 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 			buf.append(' ');
 			buf.append(superType);
 			buf.append(cuType.getElementName());
+		} else if (fTypeKind == K_RECORD) {
+			buf.append("() ");
 		}
 
 		buf.append(" {").append(lineDelimiter); //$NON-NLS-1$
