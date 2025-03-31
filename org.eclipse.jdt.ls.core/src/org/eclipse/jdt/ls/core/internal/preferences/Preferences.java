@@ -17,11 +17,6 @@ import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getInt;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getList;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getString;
 import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.getValue;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.setBoolean;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.setInt;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.setList;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.setString;
-import static org.eclipse.jdt.ls.core.internal.handlers.MapFlattener.setValue;
 
 import java.io.File;
 import java.net.URI;
@@ -613,6 +608,7 @@ public class Preferences {
 	private static Map<String, List<String>> nonnullbydefaultClasspathStorage = new HashMap<>();
 	private List<String> filesAssociations = new ArrayList<>();
 
+	private Map<String, Object> configuration;
 	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
@@ -890,6 +886,7 @@ public class Preferences {
 	}
 
 	public Preferences() {
+		configuration = null;
 		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
@@ -1027,6 +1024,7 @@ public class Preferences {
 			throw new IllegalArgumentException("Configuration can not be null");
 		}
 		Preferences prefs = new Preferences();
+		prefs.configuration = configuration;
 
 		String incompleteClasspathSeverity = getString(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
 		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
@@ -1515,11 +1513,6 @@ public class Preferences {
 			fPreferenceStore.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, sortOrder);
 		}
 		return this;
-	}
-
-	public String getMembersSortOrder() {
-		IEclipsePreferences fPreferenceStore = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
-		return fPreferenceStore.get(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, null);
 	}
 
 	private Preferences setPreferredContentProviderIds(List<String> preferredContentProviderIds) {
@@ -2114,111 +2107,10 @@ public class Preferences {
 	}
 
 	public Map<String, Object> asMap() {
-		Map<String, Object> result = new HashMap<>();
-		setString(result, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, this.getIncompleteClasspathSeverity().name());
-		setString(result, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, this.getUpdateBuildConfigurationStatus().name());
-		setBoolean(result, IMPORT_GRADLE_ENABLED, this.isImportGradleEnabled());
-		setBoolean(result, JAVA_CONFIGURATION_INSERTSPACES, this.isInsertSpaces());
-		setInt(result, JAVA_CONFIGURATION_TABSIZE, this.getTabSize());
-		setBoolean(result, IMPORT_GRADLE_OFFLINE_ENABLED, this.isImportGradleOfflineEnabled());
-		setBoolean(result, GRADLE_WRAPPER_ENABLED, this.isGradleWrapperEnabled());
-		setString(result, GRADLE_VERSION, this.getGradleVersion());
-		setList(result, GRADLE_ARGUMENTS, this.getGradleArguments());
-		setList(result, GRADLE_JVM_ARGUMENTS, this.getGradleJvmArguments());
-		setString(result, GRADLE_HOME, this.getGradleHome());
-		setString(result, GRADLE_JAVA_HOME, this.getGradleJavaHome());
-		setString(result, GRADLE_USER_HOME, this.getGradleUserHome());
-		setBoolean(result, GRADLE_ANNOTATION_PROCESSING_ENABLED, this.isGradleAnnotationProcessingEnabled());
-		setBoolean(result, IMPORT_MAVEN_ENABLED, this.isImportMavenEnabled());
-		setBoolean(result, IMPORT_MAVEN_OFFLINE, this.isMavenOffline());
-		setBoolean(result, MAVEN_DISABLE_TEST_CLASSPATH_FLAG, this.isMavenDisableTestClasspathFlag());
-		setBoolean(result, MAVEN_DOWNLOAD_SOURCES, this.isMavenDownloadSources());
-		setBoolean(result, ECLIPSE_DOWNLOAD_SOURCES, this.isEclipseDownloadSources());
-		setBoolean(result, MAVEN_UPDATE_SNAPSHOTS, this.isMavenUpdateSnapshots());
-		setBoolean(result, REFERENCES_CODE_LENS_ENABLED_KEY, this.isReferencesCodeLensEnabled());
-		setString(result, IMPLEMENTATIONS_CODE_LENS_KEY, this.getImplementationsCodeLens());
-		setBoolean(result, JAVA_FORMAT_ENABLED_KEY, this.isJavaFormatEnabled());
-		setString(result, QUICK_FIX_SHOW_AT, this.getJavaQuickFixShowAt());
-		setBoolean(result, JAVA_FORMAT_ON_TYPE_ENABLED_KEY, this.isJavaFormatOnTypeEnabled());
-		setBoolean(result, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, this.isJavaSaveActionsOrganizeImportsEnabled());
-		setBoolean(result, SIGNATURE_HELP_ENABLED_KEY, this.isSignatureHelpEnabled());
-		setBoolean(result, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY, this.isSignatureHelpDescriptionEnabled());
-		setBoolean(result, RENAME_ENABLED_KEY, this.isRenameEnabled());
-		setBoolean(result, EXECUTE_COMMAND_ENABLED_KEY, this.isExecuteCommandEnabled());
-		setBoolean(result, AUTOBUILD_ENABLED_KEY, this.isAutobuildEnabled());
-		setBoolean(result, COMPLETION_ENABLED_KEY, this.isCompletionEnabled());
-		setBoolean(result, POSTFIX_COMPLETION_KEY, this.isPostfixCompletionEnabled());
-		setString(result, COMPLETION_MATCH_CASE_MODE_KEY, this.getCompletionMatchCaseMode().name());
-		setBoolean(result, COMPLETION_LAZY_RESOLVE_TEXT_EDIT_ENABLED_KEY, this.isCompletionLazyResolveTextEditEnabled());
-		setBoolean(result, JAVA_COMPLETION_OVERWRITE_KEY, this.isCompletionOverwrite());
-		setBoolean(result, FOLDINGRANGE_ENABLED_KEY, this.isFoldingRangeEnabled());
-		setBoolean(result, SELECTIONRANGE_ENABLED_KEY, this.isSelectionRangeEnabled());
-		setString(result, JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, this.getGuessMethodArgumentsMode().name());
-		setBoolean(result, JAVA_COMPLETION_COLLAPSE_KEY, this.isCollapseCompletionItemsEnabled());
-		setBoolean(result, JAVA_CODEGENERATION_HASHCODEEQUALS_USEJAVA7OBJECTS, this.isHashCodeEqualsTemplateUseJava7Objects());
-		setBoolean(result, JAVA_CODEGENERATION_HASHCODEEQUALS_USEINSTANCEOF, this.isHashCodeEqualsTemplateUseInstanceof());
-		setBoolean(result, JAVA_CODEGENERATION_USEBLOCKS, this.isCodeGenerationTemplateUseBlocks());
-		setBoolean(result, JAVA_CODEGENERATION_GENERATECOMMENTS, this.isCodeGenerationTemplateGenerateComments());
-		setString(result, JAVA_CODEGENERATION_TOSTRING_TEMPLATE, this.getGenerateToStringTemplate());
-		setString(result, JAVA_CODEGENERATION_TOSTRING_CODESTYLE, this.getGenerateToStringCodeStyle());
-		setBoolean(result, JAVA_CODEGENERATION_TOSTRING_SKIPNULLVALUES, this.isGenerateToStringSkipNullValues());
-		setBoolean(result, JAVA_CODEGENERATION_TOSTRING_LISTARRAYCONTENTS, this.isGenerateToStringListArrayContents());
-		setInt(result, JAVA_CODEGENERATION_TOSTRING_LIMITELEMENTS, this.getGenerateToStringLimitElements());
-		setString(result, JAVA_CODEGENERATION_INSERTIONLOCATION, this.getCodeGenerationInsertionLocation());
-		setString(result, JAVA_CODEGENERATION_ADD_FINAL_FOR_NEW_DECLARATION, this.getCodeGenerationAddFinalForNewDeclaration());
-		setList(result, JAVA_IMPORT_EXCLUSIONS_KEY, this.getJavaImportExclusions());
-		setValue(result, JAVA_PROJECT_REFERENCED_LIBRARIES_KEY, this.getReferencedLibraries());
-		setString(result, JAVA_PROJECT_OUTPUT_PATH_KEY, this.getInvisibleProjectOutputPath());
-		setList(result, JAVA_PROJECT_SOURCE_PATHS_KEY, this.getInvisibleProjectSourcePaths());
-		setList(result, JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, Arrays.asList(this.getJavaCompletionFavoriteMembers()));
-		setList(result, JAVA_GRADLE_WRAPPER_SHA256_KEY, this.getGradleWrapperList());
-		setString(result, MAVEN_USER_SETTINGS_KEY, this.getMavenUserSettings());
-		setString(result, MAVEN_GLOBAL_SETTINGS_KEY, this.getMavenGlobalSettings());
-		setString(result, MAVEN_LIFECYCLE_MAPPINGS_KEY, this.getMavenLifecycleMappings());
-		setString(result, MAVEN_NOT_COVERED_PLUGIN_EXECUTION_SEVERITY, this.getMavenNotCoveredPluginExecutionSeverity());
-		setString(result, MAVEN_DEFAULT_MOJO_EXECUTION_ACTION, this.getMavenDefaultMojoExecutionAction());
-		setString(result, MEMBER_SORT_ORDER, this.getMembersSortOrder());
-		setList(result, PREFERRED_CONTENT_PROVIDER_KEY, this.getPreferredContentProviderIds());
-		setString(result, JAVA_HOME, this.getJavaHome());
-		setString(result, JAVA_FORMATTER_URL, this.getFormatterUrl());
-		setString(result, JAVA_SETTINGS_URL, this.getSettingsUrl());
-		setList(result, JAVA_RESOURCE_FILTERS, this.getResourceFilters());
-		setString(result, JAVA_FORMATTER_PROFILE_NAME, this.getFormatterProfileName());
-		setBoolean(result, JAVA_FORMAT_COMMENTS, this.isJavaFormatComments());
-		setList(result, JAVA_IMPORT_ORDER_KEY, Arrays.asList(this.getImportOrder()));
-		setList(result, JAVA_COMPLETION_FILTERED_TYPES_KEY, Arrays.asList(this.getFilteredTypes()));
-		setInt(result, JAVA_MAX_CONCURRENT_BUILDS, this.getMaxConcurrentBuilds());
-		setInt(result, JAVA_COMPLETION_MAX_RESULTS_KEY, this.getMaxCompletionResults());
-		setInt(result, IMPORTS_ONDEMANDTHRESHOLD, this.getImportOnDemandThreshold());
-		setInt(result, IMPORTS_STATIC_ONDEMANDTHRESHOLD, this.getStaticImportOnDemandThreshold());
-		setList(result, JAVA_CONFIGURATION_RUNTIMES, this.getRuntimes());
-		setList(result, JAVA_TEMPLATES_FILEHEADER, this.getFileHeaderTemplate());
-		setList(result, JAVA_TEMPLATES_TYPECOMMENT, this.getTypeCommentTemplate());
-		setBoolean(result, JAVA_REFERENCES_INCLUDE_ACCESSORS, this.isIncludeAccessors());
-		setBoolean(result, JAVA_EDIT_SMARTSEMICOLON_DETECTION, this.isSmartSemicolonDetection());
-		setBoolean(result, JAVA_REFERENCES_INCLUDE_DECOMPILED_SOURCES, this.isIncludeDecompiledSources());
-		setBoolean(result, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS, this.isIncludeSourceMethodDeclarations());
-		setString(result, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, this.getInlayHintsParameterMode().name());
-		setList(result, JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS, this.getInlayHintsExclusionList());
-		setString(result, JAVA_PROJECT_ENCODING, this.getProjectEncoding().name());
-		setBoolean(result, JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES, this.getAvoidVolatileChanges());
-		setBoolean(result, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED, this.isProtobufSupportEnabled());
-		setBoolean(result, JAVA_JDT_LS_JAVAC_ENABLED, this.isJavacEnabled());
-		setBoolean(result, JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED, this.isAndroidSupportEnabled());
-		setList(result, JAVA_COMPILE_NULLANALYSIS_NONNULL, this.getNonnullTypes());
-		setList(result, JAVA_COMPILE_NULLANALYSIS_NULLABLE, this.getNullableTypes());
-		setList(result, JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT, this.getNonnullbydefaultTypes());
-		setString(result, JAVA_COMPILE_NULLANALYSIS_MODE, this.getNullAnalysisMode().name());
-		setList(result, JAVA_CLEANUPS_ACTIONS, this.getCleanUpActions());
-		setBoolean(result, JAVA_CLEANUPS_ACTIONS_ON_SAVE_CLEANUP, this.cleanUpActionsOnSaveEnabled);
-		setBoolean(result, JAVA_REFACTORING_EXTRACT_INTERFACE_REPLACE, this.getExtractInterfaceReplaceEnabled());
-		setBoolean(result, JAVA_TELEMETRY_ENABLED_KEY, this.isTelemetryEnabled());
-		setBoolean(result, JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES, this.isValidateAllOpenBuffersOnChanges());
-		setBoolean(result, CHAIN_COMPLETION_KEY, this.isChainCompletionEnabled());
-		setList(result, JAVA_DIAGNOSTIC_FILER, this.getDiagnosticFilter());
-		setList(result, JAVA_CONFIGURATION_ASSOCIATIONS, this.getFilesAssociations());
-		setString(result, JAVA_SEARCH_SCOPE, this.getSearchScope().name());
-		return result;
+		if (configuration == null) {
+			return null;
+		}
+		return Collections.unmodifiableMap(configuration);
 	}
 
 	public Preferences setRootPaths(Collection<IPath> rootPaths) {

@@ -13,14 +13,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Type;
-import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
@@ -148,43 +144,6 @@ public final class MapFlattener {
 			}
 		}
 		return null;
-	}
-
-	public static void setString(Map<String, Object> configuration, String key, String value) {
-		setValue(configuration, key, value);
-	}
-
-	public static void setBoolean(Map<String, Object> configuration, String key, Boolean value) {
-		setValue(configuration, key, value);
-	}
-
-	public static void setInt(Map<String, Object> configuration, String key, Integer value) {
-		setValue(configuration, key, value);
-	}
-
-	public static void setList(Map<String, Object> configuration, String key, List<?> value) {
-		setValue(configuration, key, value);
-	}
-
-	public static void setList(Map<String, Object> configuration, String key, Set<?> value) {
-		setValue(configuration, key, value);
-	}
-
-	public static void setValue(Map<String, Object> configuration, String key, Object value) {
-		configuration.put(key, value);
-	}
-
-	public static void putAll(Map<String, Object> currentConfiguration, Map<String, Object> newConfiguration) {
-		Map<String, Object> flattenedNewConfig = newConfiguration.entrySet().stream().flatMap(MapFlattener::flatten).collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), HashMap::putAll);
-		currentConfiguration.putAll(flattenedNewConfig);
-	}
-
-	private static Stream<Map.Entry<String, Object>> flatten(Map.Entry<String, Object> entry) {
-		if (entry.getValue() instanceof Map<?, ?>) {
-			Map<String, Object> nested = (Map<String, Object>) entry.getValue();
-			return nested.entrySet().stream().map(e -> new AbstractMap.SimpleEntry<String, Object>(entry.getKey() + "." + e.getKey(), e.getValue())).flatMap(MapFlattener::flatten);
-		}
-		return Stream.of(entry);
 	}
 
 }
