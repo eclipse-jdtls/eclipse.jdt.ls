@@ -271,7 +271,11 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		logInfo(">> workspace/didChangeConfiguration");
 		Object settings = JSONUtility.toModel(params.getSettings(), Map.class);
 		if (settings instanceof Map) {
-			preferenceManager.update((Map<String, Object>) settings);
+			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
+			@SuppressWarnings("unchecked")
+			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			prefs.setRootPaths(rootPaths);
+			preferenceManager.update(prefs);
 		}
 	}
 

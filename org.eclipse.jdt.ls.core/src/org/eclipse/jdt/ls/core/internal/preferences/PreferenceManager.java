@@ -57,7 +57,6 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
-import org.eclipse.jdt.ls.core.internal.handlers.MapFlattener;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.jface.text.templates.TemplateContextType;
@@ -219,24 +218,8 @@ public class PreferenceManager {
 		return true;
 	}
 
-	/**
-	 * Add the given map of key/value preferences to the existing preferences
-	 *
-	 * @param preferences a given key/value map of preferences
-	 */
-	public void update(Map<String, Object> preferences) {
-		Map<String, Object> currMap = this.preferences.asMap();
-		MapFlattener.putAll(currMap, preferences);
-		Preferences newPreferences = Preferences.createFrom(currMap);
-		// Preserve preferences stored here that are never sent after initialization
-		newPreferences.setRootPaths(this.preferences.getRootPaths());
-		newPreferences.setTriggerFiles(this.preferences.getTriggerFiles());
-		newPreferences.setProjectConfigurations(this.preferences.getProjectConfigurations());
-		update(newPreferences);
-	}
-
 	public void update(Preferences preferences) {
-		if (preferences == null) {
+		if(preferences == null){
 			throw new IllegalArgumentException("Preferences can not be null");
 		}
 		Preferences oldPreferences = this.preferences;
@@ -277,7 +260,7 @@ public class PreferenceManager {
 		if (!oldPreferences.getFilesAssociations().equals(preferences.getFilesAssociations())) {
 			configureContentTypes(preferences);
 		}
-
+		
 		// update call hierachy test code filer
 		final boolean filterTestCode = this.preferences.getSearchScope() == SearchScope.main;
 		eclipsePreferences.put("PREF_FILTER_TESTCODE", String.valueOf(filterTestCode));
