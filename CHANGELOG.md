@@ -1,5 +1,9 @@
 # Change Log
 
+# [1.46.1 (April 1st, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/139?closed=1)
+ * bug fix - Fix issues with preference manager by reverting "merge" behaviour. See [#3429](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3429).
+ * bug fix - Add missing "Create record" quick fix. See [#3420](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3420).
+
 # [1.46.0 (March 27th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/138?closed=1)
  * enhancement - Provide support for Java 24. See [#3410](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3410).
  * enhancement - Add `Make static` refactoring. See [#3400](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3400).
