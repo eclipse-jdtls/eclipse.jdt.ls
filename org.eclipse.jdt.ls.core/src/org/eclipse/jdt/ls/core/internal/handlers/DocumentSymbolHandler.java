@@ -34,9 +34,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -207,7 +209,8 @@ public class DocumentSymbolHandler {
 					scanner.resetTo(shift, shift + sourceRange.getLength());
 				}
 			}
-			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor, includeInherited)).filter(Objects::nonNull).collect(Collectors.toList());
+			Set<IJavaElement> visited = new HashSet<>(); // avoid cycles (eg. an inner class super type is parent)
+			return childrenStream.map(child -> toDocumentSymbol(child, unit, monitor, includeInherited, visited)).filter(Objects::nonNull).collect(Collectors.toList());
 		} catch (OperationCanceledException e) {
 			logInfo("User canceled while collecting the document symbols.");
 		} catch (JavaModelException e) {
@@ -220,7 +223,8 @@ public class DocumentSymbolHandler {
 		return emptyList();
 	}
 
-	private DocumentSymbol toDocumentSymbol(IJavaElement unit, ITypeRoot root, IProgressMonitor monitor, boolean includeInherited) {
+	private DocumentSymbol toDocumentSymbol(IJavaElement unit, ITypeRoot root, IProgressMonitor monitor, boolean includeInherited, Set<IJavaElement> visited) {
+		visited.add(unit);
 		int type = unit.getElementType();
 		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT && type != PACKAGE_FRAGMENT) {
 			return null;
@@ -287,17 +291,20 @@ public class DocumentSymbolHandler {
 						IType[] superTypes = supertypeHierarchy.getAllSupertypes(tp);
 						for (IType superType : superTypes) {
 							if (!"java.lang.Object".equals(superType.getFullyQualifiedName())) {
-								children.addAll(Arrays.asList(filter(superType.getChildren())));
+								List<IJavaElement> superTypeChildren = Arrays.asList(filter(superType.getChildren())).stream().filter(c -> !visited.contains(c)).toList();
+								children.addAll(superTypeChildren);
 							}
 						}
 					}
 				}
-				//@formatter:off
-				symbol.setChildren(children.stream()
-						.map(child -> toDocumentSymbol(child, null, monitor, includeInherited))
-						.filter(Objects::nonNull)
-						.collect(Collectors.toList()));
-				//@formatter:off
+				if (!children.isEmpty()) {
+					//@formatter:off
+					symbol.setChildren(children.stream()
+							.map(child -> toDocumentSymbol(child, null, monitor, includeInherited, visited))
+							.filter(Objects::nonNull)
+							.collect(Collectors.toList()));
+					//@formatter:off
+				}
 			}
 		} catch (JavaModelException e) {
 			Exceptions.sneakyThrow(e);
