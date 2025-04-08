@@ -136,8 +136,10 @@ public class LogHandler {
 		String message = entry.getMessage() + '\n' + entry.getStack();
 
 		connection.logMessage(getMessageTypeFromSeverity(entry.getSeverity()), dateString + ' ' + message);
+		final boolean hasWorkspaceExitedUnsaved = entry.getSeverity() == IStatus.WARNING
+				&& entry.getMessage().contains("workspace exited with unsaved changes in the previous session");
 		// Send a trace event to client
-		if (entry.getSeverity() == IStatus.ERROR) {
+		if (entry.getSeverity() == IStatus.ERROR || hasWorkspaceExitedUnsaved) {
 			JsonObject properties = new JsonObject();
 			properties.addProperty("message", redact(entry.getMessage()));
 			if (entry.getStack() != null) {
@@ -166,8 +168,11 @@ public class LogHandler {
 		}
 
 		connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' ' + message);
+
+		final boolean hasWorkspaceExitedUnsaved = status.getSeverity() == IStatus.WARNING
+				&& status.getMessage().contains("workspace exited with unsaved changes in the previous session");
 		// Send a trace event to client
-		if (status.getSeverity() == IStatus.ERROR) {
+		if (status.getSeverity() == IStatus.ERROR || hasWorkspaceExitedUnsaved) {
 			JsonObject properties = new JsonObject();
 			properties.addProperty("message", redact(status.getMessage()));
 			if (status.getException() != null) {
