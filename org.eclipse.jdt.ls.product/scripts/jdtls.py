@@ -25,9 +25,9 @@ def get_java_executable(known_args):
 	else:
 		java_executable = 'java'
 
-		if 'JAVA_HOME' in os.environ:
+		if 'JAVA_JDK_21' in os.environ:
 			ext = '.exe' if platform.system() == 'Windows' else ''
-			java_exec_to_test = Path(os.environ['JAVA_HOME']) / 'bin' / f'java{ext}'
+			java_exec_to_test = Path(os.environ['JAVA_JDK_21']) / 'bin' / f'java{ext}'
 			if java_exec_to_test.is_file():
 				java_executable = str(java_exec_to_test.resolve())
 
