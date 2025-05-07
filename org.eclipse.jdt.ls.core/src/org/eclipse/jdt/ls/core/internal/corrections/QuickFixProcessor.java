@@ -166,6 +166,8 @@ public class QuickFixProcessor {
 			case IProblem.UnresolvedVariable:
 				UnresolvedElementsSubProcessor.getVariableProposals(context, problem, null, proposals);
 				break;
+			case IProblem.ExpressionShouldBeAVariable:
+				LocalCorrectionsSubProcessor.addExpressionShouldBeAVariableProposals(context, problem, proposals);
 			case IProblem.UninitializedBlankFinalField:
 				UnInitializedFinalFieldBaseSubProcessor<ProposalKindWrapper> processor = new UnInitializedFinalFieldSubProcessor();
 				processor.addProposals(context, problem, proposals);

@@ -2720,16 +2720,16 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        switch (1) {\n");
-		buf.append("            case 1:\n");
-		buf.append("                foo();\n");
-		buf.append("                break;\n");
-		buf.append("                foo();\n");
-		buf.append("                new Object();\n");
-		buf.append("            case 2:\n");
-		buf.append("                foo();\n");
-		buf.append("                break;\n");
-		buf.append("            default:\n");
-		buf.append("                break;\n");
+		buf.append("        case 1:\n");
+		buf.append("            foo();\n");
+		buf.append("            break;\n");
+		buf.append("            foo();\n");
+		buf.append("            new Object();\n");
+		buf.append("        case 2:\n");
+		buf.append("            foo();\n");
+		buf.append("            break;\n");
+		buf.append("        default:\n");
+		buf.append("            break;\n");
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
@@ -2740,18 +2740,42 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("    public void foo() {\n");
 		buf.append("        switch (1) {\n");
-		buf.append("            case 1:\n");
-		buf.append("                foo();\n");
-		buf.append("                break;\n");
-		buf.append("            case 2:\n");
-		buf.append("                foo();\n");
-		buf.append("                break;\n");
-		buf.append("            default:\n");
-		buf.append("                break;\n");
+		buf.append("        case 1:\n");
+		buf.append("            foo();\n");
+		buf.append("            break;\n");
+		buf.append("        case 2:\n");
+		buf.append("            foo();\n");
+		buf.append("            break;\n");
+		buf.append("        default:\n");
+		buf.append("            break;\n");
 		buf.append("        };\n");
 		buf.append("    }\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Remove", buf.toString());
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testExpressionShouldBeVariable() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n"
+				+ "public class E {\n"
+				+ "    public static void foo (String input) {\n"
+				+ "        ((String)input);\n"
+				+ "    }\n"
+				+ "}");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n"
+				+ "public class E {\n"
+				+ "    public static void foo (String input) {\n"
+				+ "        String string = (String)input;\n"
+				+ "    }\n"
+				+ "}");
+		Expected e1 = new Expected("Create local variable using expression", buf.toString());
+		assertCodeActionExists(cu, e1);
 	}
 
 }

@@ -89,6 +89,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionPropos
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewLocalVariableCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
@@ -837,6 +838,10 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		new LocalCorrectionsSubProcessor().getValueForAnnotationProposals(context, problem, proposals);
 	}
 
+	public static void addExpressionShouldBeAVariableProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getExpressionShouldBeAVariableProposalsBase(context, problem, proposals);
+	}
+
 	@Override
 	protected ProposalKindWrapper refactoringCorrectionProposalToT(RefactoringCorrectionProposalCore core, int uid) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
@@ -909,6 +914,11 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	@Override
 	protected ProposalKindWrapper modifierChangeCorrectionProposalToT(ModifierChangeCorrectionProposalCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper newLocalVariableCorrectionProposalToT(NewLocalVariableCorrectionProposalCore core, int uid) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
 	}
 
