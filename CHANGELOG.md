@@ -1,5 +1,12 @@
 # Change Log
 
+# [1.47.0 (May 15th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/140?closed=1)
+ * enhancement - Implement methods in newly created type from an inherited sealed class. See [#1570](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/1570).
+ * enhancement - Code action for "The left-hand side of an assginment must be a variable". See [#3441](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3441).
+ * bug fix - Avoid `StackOverflowError` when computing Extended Outline. See [#3435](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3435).
+ * bug fix - Report through 'telemetry/event' workspace exiting with unsaved changes. See [#3439](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3439).
+ * dependencies - Target platform should reference 2025-06. See [#3413](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3413).
+
 # [1.46.1 (April 1st, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/139?closed=1)
  * bug fix - Fix issues with preference manager by reverting "merge" behaviour. See [#3429](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3429).
  * bug fix - Add missing "Create record" quick fix. See [#3420](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3420).
