@@ -36,9 +36,9 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.gmaven</groupId>
-				<artifactId>groovy-maven-plugin</artifactId>
-				<version>2.1.1</version>
+				<groupId>org.codehaus.gmavenplus</groupId>
+				<artifactId>gmavenplus-plugin</artifactId>
+				<version>4.2.0</version>
 				<executions>
 					<execution>
 						<?m2e ignore?>
@@ -46,8 +46,11 @@
 						<goals>
 							<goal>execute</goal>
 						</goals>
-						<configuration>
-							<source>
+					</execution>
+				</executions>
+				<configuration>
+					<scripts>
+						<script>
 								import groovy.json.JsonSlurper
 								import groovy.json.JsonOutput
 
@@ -117,10 +120,23 @@
 								def json = JsonOutput.toJson(checksums)
 								checksumsFile.write(JsonOutput.prettyPrint(json))
 								println "Wrote to ${checksumsFile}"
-							</source>
-						</configuration>
-					</execution>
-				</executions>
+						</script>
+					</scripts>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.groovy</groupId>
+						<artifactId>groovy</artifactId>
+						<version>4.0.26</version>
+						<scope>runtime</scope>
+					</dependency>
+					<dependency>
+						<groupId>org.apache.groovy</groupId>
+						<artifactId>groovy-json</artifactId>
+						<version>4.0.26</version>
+						<scope>runtime</scope>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 	</build>
