@@ -58,7 +58,9 @@
 								import java.net.http.HttpRequest
 								import java.net.http.HttpResponse.BodyHandlers
 								import java.util.concurrent.CompletableFuture
-								import java.util.stream.Collectors;
+								import java.util.concurrent.ExecutorService
+								import java.util.concurrent.Executors
+								import java.util.stream.Collectors
 
 
 								def checksumsFile = new File(project.basedir.absolutePath, "gradle/checksums/checksums.json")
@@ -80,14 +82,15 @@
 									String wrapperChecksumUrl;
 									String sha256
 								}
-								HttpClient client = HttpClient.newHttpClient()
+								ExecutorService executor = Executors.newCachedThreadPool()
+								HttpClient client = HttpClient.newBuilder().executor(executor).build()
 								def futures = []
 								versions.each {
 									if (it.wrapperChecksumUrl == null) {
 										return
 									}
 									HttpRequest request = HttpRequest.newBuilder().uri(URI.create(it.wrapperChecksumUrl)).build()
-									futures.add(client.sendAsync(request, BodyHandlers.ofString()).thenApply { response ->
+									futures.add(client.sendAsync(request, BodyHandlers.ofString()).thenApplyAsync({ response ->
 										if (response.statusCode() == 301) {
 											String newUrl = response.headers().firstValue("location").orElse(null)
 											if (newUrl != null) {
@@ -107,15 +110,15 @@
 											// Return the body of the original response
 											return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: response.body())
 										}
-									})
+									}, executor))
 								}
 
 								def checksums = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-										.thenApply { v ->
+										.thenApplyAsync({ v ->
 											futures.stream().map({ f ->
 												f.join()
 											}).collect(Collectors.toList())
-										}.get()
+										}, executor).get()
 
 								def json = JsonOutput.toJson(checksums)
 								checksumsFile.write(JsonOutput.prettyPrint(json))
