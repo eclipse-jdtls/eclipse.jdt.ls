@@ -329,18 +329,15 @@ public class QuickFixProcessor {
 			case IProblem.MissingValueForAnnotationMember:
 				LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context, problem, proposals);
 				break;
-			// case IProblem.BodyForNativeMethod:
-			// ModifierCorrectionSubProcessor.addNativeMethodProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MethodRequiresBody:
-			// ModifierCorrectionSubProcessor.addMethodRequiresBodyProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.OuterLocalMustBeFinal:
-			// ModifierCorrectionSubProcessor.addNonFinalLocalProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.BodyForNativeMethod:
+				ModifierCorrectionSubProcessor.addNativeMethodProposals(context, problem, proposals);
+				break;
+			case IProblem.MethodRequiresBody:
+				ModifierCorrectionSubProcessor.addMethodRequiresBodyProposals(context, problem, proposals);
+				break;
+			case IProblem.OuterLocalMustBeEffectivelyFinal:
+				ModifierCorrectionSubProcessor.addNonFinalLocalProposal(context, problem, proposals);
+				break;
 			case IProblem.UninitializedLocalVariable:
 			case IProblem.UninitializedLocalVariableHintMissingDefault:
 				LocalCorrectionsSubProcessor.addUninitializedLocalVariableProposal(context, problem, proposals);
@@ -359,14 +356,12 @@ public class QuickFixProcessor {
 			case IProblem.UnusedPrivateField:
 				LocalCorrectionsSubProcessor.addUnusedMemberProposal(context, problem, proposals);
 				break;
-			// case IProblem.NeedToEmulateFieldReadAccess:
-			// case IProblem.NeedToEmulateFieldWriteAccess:
-			// case IProblem.NeedToEmulateMethodAccess:
-			// case IProblem.NeedToEmulateConstructorAccess:
-			// ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context,
-			// problem, proposals, ModifierCorrectionSubProcessor.TO_NON_PRIVATE,
-			// IProposalRelevance.CHANGE_VISIBILITY_TO_NON_PRIVATE);
-			// break;
+			case IProblem.NeedToEmulateFieldReadAccess:
+			case IProblem.NeedToEmulateFieldWriteAccess:
+			case IProblem.NeedToEmulateMethodAccess:
+			case IProblem.NeedToEmulateConstructorAccess:
+				ModifierCorrectionSubProcessor.addNonAccessibleReferenceProposal(context, problem, proposals, ModifierCorrectionSubProcessor.TO_NON_PRIVATE, IProposalRelevance.CHANGE_VISIBILITY_TO_NON_PRIVATE);
+				break;
 			case IProblem.SuperfluousSemicolon:
 				LocalCorrectionsSubProcessor.addSuperfluousSemicolonProposal(context, problem, proposals);
 				break;
@@ -507,10 +502,12 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.OverridingDeprecatedMethod:
-			// ModifierCorrectionSubProcessor.addOverridingDeprecatedMethodProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.OverridingDeprecatedMethod:
+			case IProblem.OverridingDeprecatedSinceVersionMethod:
+			case IProblem.OverridingTerminallyDeprecatedMethod:
+			case IProblem.OverridingTerminallyDeprecatedSinceVersionMethod:
+				ModifierCorrectionSubProcessor.addOverridingDeprecatedMethodProposal(context, problem, proposals);
+				break;
 			case IProblem.UsingDeprecatedMethod:
 				ASTNode deprecatedMethodNode = context.getCoveredNode();
 				if (deprecatedMethodNode != null && !(deprecatedMethodNode instanceof MethodInvocation)) {
@@ -597,19 +594,17 @@ public class QuickFixProcessor {
 				// LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addServiceProviderConstructorProposals(context, problem, proposals);
 				break;
-			// case IProblem.MissingSynchronizedModifierInInheritedMethod:
-			// ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MissingSynchronizedModifierInInheritedMethod:
+				ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context, problem, proposals);
+				break;
 			// case IProblem.UnusedObjectAllocation:
 			// LocalCorrectionsSubProcessor.getUnusedObjectAllocationProposals(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.MethodCanBeStatic:
-			// case IProblem.MethodCanBePotentiallyStatic:
-			// ModifierCorrectionSubProcessor.addStaticMethodProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MethodCanBeStatic:
+			case IProblem.MethodCanBePotentiallyStatic:
+				ModifierCorrectionSubProcessor.addStaticMethodProposal(context, problem, proposals);
+				break;
 			// case IProblem.PotentialHeapPollutionFromVararg :
 			// VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context,
 			// problem, proposals);
