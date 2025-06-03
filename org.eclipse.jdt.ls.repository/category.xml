@@ -26,6 +26,7 @@
    </bundle>
 
    <feature id="org.eclipse.equinox.executable" version="0.0.0"/>
+   <bundle id="org.eclipse.jdt.core.javac" version="0.0.0"/>
    <bundle id="jakarta.servlet-api" version="0.0.0"/>
    <bundle id="org.apache.felix.scr" version="0.0.0"/>
    <bundle id="org.eclipse.ant.core" version="0.0.0"/>
