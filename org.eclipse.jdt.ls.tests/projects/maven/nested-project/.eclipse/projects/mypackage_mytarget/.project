@@ -24,7 +24,7 @@
 		<link>
 			<name>linked-srcs/com/packages/foo/File.java</name>
 			<type>1</type>
-			<location>/Users/anqihuang/code/nestedprojectlinked/com/packages/foo/File.java</location>
+			<location>../../../com/packages/foo/File.java</location>
 		</link>
 	</linkedResources>
 	<filteredResources>
