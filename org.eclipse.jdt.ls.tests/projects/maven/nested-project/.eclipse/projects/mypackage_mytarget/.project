@@ -24,7 +24,7 @@
 		<link>
 			<name>linked-srcs/com/packages/foo/File.java</name>
 			<type>1</type>
-			<location>../../../com/packages/foo/File.java</location>
+			<location>PARENT-3-PROJECT_LOC/com/packages/foo/File.java</location>
 		</link>
 	</linkedResources>
 	<filteredResources>
