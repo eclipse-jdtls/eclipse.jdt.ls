@@ -1140,7 +1140,7 @@ public final class JDTUtils {
 		if (uri == null || !"file".equals(uri.getScheme())) {
 			return null;
 		}
- 		IResource[] resources = resourceFinder.apply(uri);
+		IResource[] resources = resourceFinder.apply(uri);
 		if (resources.length == 0) {
 			//On Mac, Linked resources are referenced via the "real" URI, i.e file://USERS/username/...
 			//instead of file://Users/username/..., so we check against that real URI.
