@@ -16,11 +16,6 @@ package org.eclipse.jdt.ls.core.internal.semantictokens;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.ITypeRoot;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
@@ -56,18 +51,18 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.SemanticTokens;
-import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
 	private final IScanner scanner;
 	private List<SemanticToken> tokens;
 
-	public SemanticTokensVisitor(CompilationUnit cu) {
+	public SemanticTokensVisitor(CompilationUnit unit) {
 		super(true);
-		this.cu = cu;
-		this.scanner = createScanner(cu);
+		this.cu = unit;
+		this.scanner = JDTUtils.createScanner(unit);
 		this.tokens = new ArrayList<>();
 	}
 
@@ -492,40 +487,6 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		}
 		acceptNodeList(node.bodyDeclarations());
 		return false;
-	}
-
-	/**
-	 * Tries to create an {@link IScanner} for the source of the given compilation unit.
-	 *
-	 * @param cu the compilation unit
-	 * @return the scanner, or {@code null} if not available
-	 */
-	private IScanner createScanner(CompilationUnit cu) {
-		final ITypeRoot typeRoot = cu.getTypeRoot();
-		if (typeRoot == null) {
-			return null;
-		}
-		final IJavaProject javaProject = typeRoot.getJavaProject();
-		if (javaProject == null) {
-			return null;
-		}
-		final String source;
-		try {
-			source = typeRoot.getSource();
-		} catch (JavaModelException e) {
-			return null;
-		}
-		if (source == null) {
-			return null;
-		}
-
-		final String sourceLevel = javaProject.getOption(JavaCore.COMPILER_SOURCE, true);
-		final String complianceLevel = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
-		final boolean enablePreview = JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
-
-		final IScanner scanner = ToolFactory.createScanner(false, false, false, sourceLevel, complianceLevel, enablePreview);
-		scanner.setSource(source.toCharArray());
-		return scanner;
 	}
 
 	private int getNextValidToken(IScanner scanner) {

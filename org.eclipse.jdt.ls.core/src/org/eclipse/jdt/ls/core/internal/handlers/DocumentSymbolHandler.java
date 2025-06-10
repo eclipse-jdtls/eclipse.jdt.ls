@@ -204,7 +204,7 @@ public class DocumentSymbolHandler {
 				ISourceRange sourceRange = unit.getSourceRange();
 				if (sourceRange != null) {
 					final int shift = sourceRange.getOffset();
-					IScanner scanner = getScanner();
+					IScanner scanner = getScanner(JDTUtils.getAst(unit, monitor));
 					scanner.setSource(unit.getSource().toCharArray());
 					scanner.resetTo(shift, shift + sourceRange.getLength());
 				}
@@ -240,7 +240,7 @@ public class DocumentSymbolHandler {
 			String name = getName(unit);
 			symbol.setName(name);
 			if (type == PACKAGE_FRAGMENT) {
-				IScanner scanner = getScanner();
+				IScanner scanner = getScanner(JDTUtils.getAst(root, monitor));
 				int token = 0;
 				int packageStart = -1;
 				int packageEnd = -1;
@@ -312,9 +312,9 @@ public class DocumentSymbolHandler {
 		return symbol;
 	}
 
-	private static IScanner getScanner() {
+	private static IScanner getScanner(CompilationUnit unit) {
 		if (fScanner == null) {
-			fScanner = ToolFactory.createScanner(true, false, false, true);
+			fScanner = JDTUtils.createScanner(unit);
 		}
 		return fScanner;
 	}

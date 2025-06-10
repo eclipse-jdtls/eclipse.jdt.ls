@@ -36,6 +36,8 @@ import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -50,9 +52,9 @@ public class FoldingRangeHandler {
 
 	private static IScanner fScanner;
 
-	private static IScanner getScanner() {
+	private static IScanner getScanner(CompilationUnit unit) {
 		if (fScanner == null) {
-			fScanner = ToolFactory.createScanner(true, false, false, true);
+			fScanner = JDTUtils.createScanner(unit);
 		}
 		return fScanner;
 	}
@@ -87,7 +89,7 @@ public class FoldingRangeHandler {
 			}
 
 			final int shift = range.getOffset();
-			IScanner scanner = getScanner();
+			IScanner scanner = getScanner(JDTUtils.getAst(unit, monitor));
 			scanner.setSource(contents.toCharArray());
 			scanner.resetTo(shift, shift + range.getLength());
 
