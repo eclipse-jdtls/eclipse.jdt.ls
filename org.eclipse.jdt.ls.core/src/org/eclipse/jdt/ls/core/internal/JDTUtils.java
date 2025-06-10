@@ -1163,7 +1163,7 @@ public final class JDTUtils {
 				}
 				resources = resourceFinder.apply(uri);
 			}
-		}		
+		}
 		switch(resources.length) {
 		case 0:
 			return null;
@@ -1171,7 +1171,7 @@ public final class JDTUtils {
 			return resources[0];
 		default://several candidates if a linked resource was created before the real project was configured
 				IResource resource = null;
-				for (IResource f : resources) {	
+				for (IResource f : resources) {
 				//delete linked resource
 				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
 					try {
