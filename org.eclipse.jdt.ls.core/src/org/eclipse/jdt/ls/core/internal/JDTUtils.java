@@ -1916,6 +1916,27 @@ public final class JDTUtils {
 	}
 
 	/**
+	 * Tries to create an {@link IScanner} for the project.
+	 *
+	 * @param project the Java project for which the scanner will be created
+	 * @param tokenizeComments whether comments should be tokenized
+	 * @param tokenizeWhiteSpace whether white spaces should be tokenized
+	 * @param recordLineSeparator whether line separators should be recorded
+	 * @return the scanner, or {@code null} if not available
+	 */
+	public static IScanner createScanner(IJavaProject project, boolean tokenizeComments, boolean tokenizeWhiteSpace, boolean recordLineSeparator) {
+		if (project == null) {
+			return null;
+		}
+
+		final String sourceLevel = project.getOption(JavaCore.COMPILER_SOURCE, true);
+		final String complianceLevel = project.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+		final boolean enablePreview = JavaCore.ENABLED.equals(project.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+
+		return ToolFactory.createScanner(tokenizeComments, tokenizeWhiteSpace, recordLineSeparator, sourceLevel, complianceLevel, enablePreview);
+	}
+
+	/**
 	 * Tries to create an {@link IScanner} for the source of the given compilation unit.
 	 *
 	 * @param compilationUnit the compilation unit

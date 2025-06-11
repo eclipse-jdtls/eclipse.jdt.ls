@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IImportContainer;
 import org.eclipse.jdt.core.IInitializer;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
@@ -52,9 +53,9 @@ public class FoldingRangeHandler {
 
 	private static IScanner fScanner;
 
-	private static IScanner getScanner(CompilationUnit unit) {
+	private static IScanner getScanner(IJavaProject project) {
 		if (fScanner == null) {
-			fScanner = JDTUtils.createScanner(unit);
+			fScanner = JDTUtils.createScanner(project, true, false, false);
 		}
 		return fScanner;
 	}
@@ -89,7 +90,7 @@ public class FoldingRangeHandler {
 			}
 
 			final int shift = range.getOffset();
-			IScanner scanner = getScanner(JDTUtils.getAst(unit, monitor));
+			IScanner scanner = getScanner(unit.getJavaProject());
 			scanner.setSource(contents.toCharArray());
 			scanner.resetTo(shift, shift + range.getLength());
 
