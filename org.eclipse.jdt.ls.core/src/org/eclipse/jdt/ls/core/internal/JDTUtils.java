@@ -1937,40 +1937,6 @@ public final class JDTUtils {
 	}
 
 	/**
-	 * Tries to create an {@link IScanner} for the source of the given compilation unit.
-	 *
-	 * @param compilationUnit the compilation unit
-	 * @return the scanner, or {@code null} if not available
-	 */
-	public static IScanner createScanner(CompilationUnit compilationUnit) {
-		final ITypeRoot typeRoot = compilationUnit.getTypeRoot();
-		if (typeRoot == null) {
-			return null;
-		}
-		final IJavaProject javaProject = typeRoot.getJavaProject();
-		if (javaProject == null) {
-			return null;
-		}
-		final String source;
-		try {
-			source = typeRoot.getSource();
-		} catch (JavaModelException e) {
-			return null;
-		}
-		if (source == null) {
-			return null;
-		}
-
-		final String sourceLevel = javaProject.getOption(JavaCore.COMPILER_SOURCE, true);
-		final String complianceLevel = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
-		final boolean enablePreview = JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
-
-		final IScanner scanner = ToolFactory.createScanner(false, false, false, sourceLevel, complianceLevel, enablePreview);
-		scanner.setSource(source.toCharArray());
-		return scanner;
-	}
-
-	/**
 	 * Get the AST from CoreASTProvider. After getting the AST, it will check if the buffer size is equal to
 	 * the AST's length. If it's not - indicating that the AST is out-of-date. The AST will be disposed and
 	 * request CoreASTProvider to get a new one.

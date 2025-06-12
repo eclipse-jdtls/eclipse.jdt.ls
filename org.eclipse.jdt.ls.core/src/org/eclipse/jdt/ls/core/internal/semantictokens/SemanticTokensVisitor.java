@@ -53,6 +53,7 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.SemanticTokens;
+import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
@@ -62,8 +63,13 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	public SemanticTokensVisitor(CompilationUnit unit) {
 		super(true);
 		this.cu = unit;
-		this.scanner = JDTUtils.createScanner(unit);
 		this.tokens = new ArrayList<>();
+
+		this.scanner = JDTUtils.createScanner(unit.getTypeRoot().getJavaProject(), false, false, false);
+		try {
+			this.scanner.setSource(unit.getTypeRoot().getSource().toCharArray());
+		} catch (Exception __) {}
+
 	}
 
 	private class SemanticToken {

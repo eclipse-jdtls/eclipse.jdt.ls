@@ -55,7 +55,7 @@ public class FoldingRangeHandler {
 
 	private static IScanner getScanner(IJavaProject project) {
 		if (fScanner == null) {
-			fScanner = JDTUtils.createScanner(project, true, false, false);
+			fScanner = JDTUtils.createScanner(project, true, false, true);
 		}
 		return fScanner;
 	}
