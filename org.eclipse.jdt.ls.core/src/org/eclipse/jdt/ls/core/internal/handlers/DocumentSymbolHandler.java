@@ -47,6 +47,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IParent;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
@@ -204,7 +205,7 @@ public class DocumentSymbolHandler {
 				ISourceRange sourceRange = unit.getSourceRange();
 				if (sourceRange != null) {
 					final int shift = sourceRange.getOffset();
-					IScanner scanner = getScanner();
+					IScanner scanner = getScanner(unit.getJavaProject());
 					scanner.setSource(unit.getSource().toCharArray());
 					scanner.resetTo(shift, shift + sourceRange.getLength());
 				}
@@ -240,7 +241,7 @@ public class DocumentSymbolHandler {
 			String name = getName(unit);
 			symbol.setName(name);
 			if (type == PACKAGE_FRAGMENT) {
-				IScanner scanner = getScanner();
+				IScanner scanner = getScanner(root.getJavaProject());
 				int token = 0;
 				int packageStart = -1;
 				int packageEnd = -1;
@@ -312,9 +313,9 @@ public class DocumentSymbolHandler {
 		return symbol;
 	}
 
-	private static IScanner getScanner() {
+	private static IScanner getScanner(IJavaProject project) {
 		if (fScanner == null) {
-			fScanner = ToolFactory.createScanner(true, false, false, true);
+			fScanner = JDTUtils.createScanner(project, true, false, false);
 		}
 		return fScanner;
 	}
