@@ -35,7 +35,6 @@ import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CorrectMainTypeNameProposalCore;
-import org.eclipse.jdt.internal.ui.text.correction.proposals.CorrectPackageDeclarationProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
@@ -88,8 +87,17 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	 * @see org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor#createCorrectPackageDeclarationProposal(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.internal.ui.text.correction.IProblemLocation, int)
 	 */
 	@Override
-	protected ProposalKindWrapper createCorrectPackageDeclarationProposal(ICompilationUnit cu, IProblemLocation problem, int relevance) {
-		return CodeActionHandler.wrap(new CorrectPackageDeclarationProposalCore(cu, problem, relevance), CodeActionKind.QuickFix);
+	protected ProposalKindWrapper createCorrectPackageDeclarationProposal(IProposableFix fix, IInvocationContext context, int relevance) {
+		if (fix != null) {
+			try {
+				CompilationUnitChange change = fix.createChange(null);
+				CUCorrectionProposalCore proposal = new CUCorrectionProposalCore(change.getName(), change.getCompilationUnit(), change, relevance);
+				return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		}
+		return null;
 	}
 
 	/* (non-Javadoc)
