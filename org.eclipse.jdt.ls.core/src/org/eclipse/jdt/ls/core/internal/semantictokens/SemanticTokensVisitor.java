@@ -57,19 +57,28 @@ import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
-	private final IScanner scanner;
+	private IScanner scanner;
 	private List<SemanticToken> tokens;
 
 	public SemanticTokensVisitor(CompilationUnit unit) {
 		super(true);
 		this.cu = unit;
 		this.tokens = new ArrayList<>();
+		this.scanner = null;
 
-		this.scanner = JDTUtils.createScanner(unit.getTypeRoot().getJavaProject(), false, false, false);
-		try {
-			this.scanner.setSource(unit.getTypeRoot().getSource().toCharArray());
-		} catch (Exception __) {}
-
+		if (unit.getTypeRoot() != null && unit.getTypeRoot().getJavaProject() != null) {
+			this.scanner = JDTUtils.createScanner(unit.getTypeRoot().getJavaProject(), false, false, false);
+			try {
+				String source = unit.getTypeRoot().getSource();
+				if (source != null) {
+					this.scanner.setSource(source.toCharArray());
+				} else {
+					this.scanner = null;
+				}
+			} catch (Exception __) {
+				this.scanner = null;
+			}
+		}
 	}
 
 	private class SemanticToken {
