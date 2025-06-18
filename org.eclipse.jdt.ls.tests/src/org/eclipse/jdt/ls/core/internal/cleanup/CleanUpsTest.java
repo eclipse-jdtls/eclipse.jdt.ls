@@ -729,4 +729,31 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		assertEquals(expected, actual);
 	}
 
+	@Test
+	public void testRedundantModifiersCleanup() throws Exception {
+		String contents = """
+				package test1;
+				public abstract interface IFoo {
+					public static final int MAGIC_NUMBER = 646;
+					public abstract int foo ();
+					public int bar (int bazz);
+				}
+				""";
+
+		ICompilationUnit unit = pack1.createCompilationUnit("A.java", contents, false, monitor);
+		String uri = unit.getUnderlyingResource().getLocationURI().toString();
+
+		String expected = """
+				package test1;
+				public interface IFoo {
+					int MAGIC_NUMBER = 646;
+					int foo ();
+					int bar (int bazz);
+				}
+				""";
+		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("redundantModifiers"), monitor);
+		String actual = TextEditUtil.apply(unit, textEdits);
+		assertEquals(expected, actual);
+	}
+
 }

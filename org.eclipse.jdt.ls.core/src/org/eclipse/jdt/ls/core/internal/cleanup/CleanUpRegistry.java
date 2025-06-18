@@ -57,7 +57,13 @@ public class CleanUpRegistry {
 			new LambdaExpressionAndMethodRefCleanUp(),
 			new OrganizeImportsCleanup(),
 			new RenameUnusedLocalVariableCleanup(),
-			new PatternInstanceofToSwitchCleanup());
+			new PatternInstanceofToSwitchCleanup(),
+			new RedundantModifiersCleanUp(),
+			new RedundantSuperCallCleanUp(),
+			new RedundantIfConditionCleanUp(),
+			new RedundantFallingThroughBlockEndCleanUp(),
+			new RedundantComparisonStatementCleanUp()
+		);
 
 		// Store in a Map so that they can be accessed by ID quickly
 		cleanUps = new HashMap<>();
