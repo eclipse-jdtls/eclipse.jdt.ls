@@ -54,6 +54,7 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
+
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
@@ -78,8 +79,10 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.SourceRange;
+import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -103,7 +106,9 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.Type;
+
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
@@ -1908,6 +1913,59 @@ public final class JDTUtils {
 		} catch (JavaModelException e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Tries to create an {@link IScanner} for the project.
+	 *
+	 * @param project the Java project for which the scanner will be created
+	 * @param tokenizeComments whether comments should be tokenized
+	 * @param tokenizeWhiteSpace whether white spaces should be tokenized
+	 * @param recordLineSeparator whether line separators should be recorded
+	 * @return the scanner, or {@code null} if not available
+	 */
+	public static IScanner createScanner(IJavaProject project, boolean tokenizeComments, boolean tokenizeWhiteSpace, boolean recordLineSeparator) {
+		if (project == null) {
+			return null;
+		}
+
+		final String sourceLevel = project.getOption(JavaCore.COMPILER_SOURCE, true);
+		final String complianceLevel = project.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+		final boolean enablePreview = JavaCore.ENABLED.equals(project.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+
+		return ToolFactory.createScanner(tokenizeComments, tokenizeWhiteSpace, recordLineSeparator, sourceLevel, complianceLevel, enablePreview);
+	}
+
+	/**
+	 * Get the AST from CoreASTProvider. After getting the AST, it will check if the buffer size is equal to
+	 * the AST's length. If it's not - indicating that the AST is out-of-date. The AST will be disposed and
+	 * request CoreASTProvider to get a new one.
+	 *
+	 * <p>
+	 * Such inconsistency will happen when a thread is calling getAST(), at the meantime, the
+	 * document has been changed. Though the disposeAST() will be called when document change event
+	 * comes, there is a chance when disposeAST() finishes before getAST(). In that case, an out-of-date
+	 * AST will be cached and be used by other threads.
+	 * </p>
+	 *
+	 */
+	public static CompilationUnit getAst(ITypeRoot typeRoot, IProgressMonitor monitor) {
+		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
+		if (root == null) {
+			return null;
+		}
+		IJavaElement element = root.getJavaElement();
+		if (element instanceof ICompilationUnit cu) {
+			try {
+				if (cu.getBuffer().getLength() != root.getLength()) {
+					CoreASTProvider.getInstance().disposeAST();
+					root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		}
+		return root;
 	}
 
 }
