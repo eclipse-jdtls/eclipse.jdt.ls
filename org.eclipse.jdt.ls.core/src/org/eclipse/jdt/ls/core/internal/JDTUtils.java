@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -70,6 +71,7 @@ import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
@@ -117,6 +119,7 @@ import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.core.NamedMember;
+import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelComposerCore;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
@@ -1182,12 +1185,29 @@ public final class JDTUtils {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 					}
 				}
+
+				//find the resource which has PackageFragmentRoot
 				//find closest project containing that file, in case of nested projects
-					if (resource == null || f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
+				if (resource == null || hasPackageFragmentRoot(f)
+						|| f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
 						resource = f;
 				}
 			}
 				return resource;
+		}
+	}
+
+	private static boolean hasPackageFragmentRoot(IResource resource) {
+		ICompilationUnit unit = resolveCompilationUnit((IFile)resource);
+		try {
+			IPackageFragmentRoot[] packageFragmentRoots = unit.getJavaProject().getPackageFragmentRoots();
+			boolean containsPackageFragmentRoot = Arrays.stream(packageFragmentRoots)
+				.anyMatch(root -> root.getClass().equals(PackageFragmentRoot.class));
+
+			return containsPackageFragmentRoot;
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.log(e);
+			return false;
 		}
 	}
 
