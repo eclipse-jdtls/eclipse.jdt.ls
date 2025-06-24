@@ -1201,10 +1201,16 @@ public final class JDTUtils {
 
 	private static boolean hasPackageFragmentRoot(IResource resource) {
 		ICompilationUnit unit = resolveCompilationUnit((IFile)resource);
-		try {
+		if (unit == null || unit.getJavaProject() == null) {
+			return false;
+		}
+		try {;
+			IPath path = unit.getPath();
+		
 			IPackageFragmentRoot[] packageFragmentRoots = unit.getJavaProject().getPackageFragmentRoots();
 			boolean containsPackageFragmentRoot = Arrays.stream(packageFragmentRoots)
-				.anyMatch(root -> root.getClass().equals(PackageFragmentRoot.class));
+				.anyMatch(root -> root.getClass().equals(PackageFragmentRoot.class)
+					&& packageFragmentRoots[0].getPath().isPrefixOf(path));
 
 			return containsPackageFragmentRoot;
 		} catch (JavaModelException e) {
