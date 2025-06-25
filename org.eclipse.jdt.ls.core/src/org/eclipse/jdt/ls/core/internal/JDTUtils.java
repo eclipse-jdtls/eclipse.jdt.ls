@@ -1219,20 +1219,6 @@ public final class JDTUtils {
 		}
 	}
 
-	private static boolean hasPackageFragmentRoot(IResource resource) {
-		ICompilationUnit unit = resolveCompilationUnit((IFile)resource);
-		try {
-			IPackageFragmentRoot[] packageFragmentRoots = unit.getJavaProject().getPackageFragmentRoots();
-			boolean containsPackageFragmentRoot = Arrays.stream(packageFragmentRoots)
-				.anyMatch(root -> root.getClass().equals(PackageFragmentRoot.class));
-
-			return containsPackageFragmentRoot;
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.log(e);
-			return false;
-		}
-	}
-
 	public static URI toURI(String uriString) {
 		if (uriString == null || uriString.isEmpty()) {
 			return null;
