@@ -18,14 +18,9 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.ITypeRoot;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler.DocumentMonitor;
 import org.eclipse.jdt.ls.core.internal.semantictokens.SemanticTokensVisitor;
@@ -47,7 +42,7 @@ public class SemanticTokensHandler {
 		JobHelpers.waitForJobs(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, monitor);
 		documentMonitor.checkChanged();
 
-		CompilationUnit root = getAst(typeRoot, monitor);
+		CompilationUnit root = JDTUtils.getAst(typeRoot, monitor);
 		documentMonitor.checkChanged();
 		if (root == null || monitor.isCanceled()) {
 			return new SemanticTokens(Collections.emptyList());
@@ -63,38 +58,5 @@ public class SemanticTokensHandler {
 			Arrays.stream(TokenType.values()).map(TokenType::toString).collect(Collectors.toList()),
 			Arrays.stream(TokenModifier.values()).map(TokenModifier::toString).collect(Collectors.toList())
 		);
-	}
-
-	/**
-	 * Get the AST from CoreASTProvider. After getting the AST, it will check if the buffer size is equal to
-	 * the AST's length. If it's not - indicating that the AST is out-of-date. The AST will be disposed and
-	 * request CoreASTProvider to get a new one.
-	 *
-	 * <p>
-	 * Such inconsistency will happen when a thread is calling getAST(), at the meantime, the
-	 * document has been changed. Though the disposeAST() will be called when document change event
-	 * comes, there is a chance when disposeAST() finishes before getAST(). In that case, an out-of-date
-	 * AST will be cached and be used by other threads.
-	 * </p>
-	 *
-	 * TODO: Consider to extract it to a utility and used by other handlers that need AST.
-	 */
-	private static CompilationUnit getAst(ITypeRoot typeRoot, IProgressMonitor monitor) {
-		CompilationUnit root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
-		if (root == null) {
-			return null;
-		}
-		IJavaElement element = root.getJavaElement();
-		if (element instanceof ICompilationUnit cu) {
-			try {
-				if (cu.getBuffer().getLength() != root.getLength()) {
-					CoreASTProvider.getInstance().disposeAST();
-					root = CoreASTProvider.getInstance().getAST(typeRoot, CoreASTProvider.WAIT_YES, monitor);
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.log(e);
-			}
-		}
-		return root;
 	}
 }

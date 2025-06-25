@@ -194,7 +194,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
-		Either<Command, CodeAction> codeAction = findAction(codeActions, "Change package declaration to 'test1'");
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Correct package declaration");
 		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -221,7 +221,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 			return (WorkspaceEdit) c.getArguments().get(0);
 		} else {
-			WorkspaceEdit e = (WorkspaceEdit) codeAction.getRight().getEdit();
+			WorkspaceEdit e = codeAction.getRight().getEdit();
 			assertNotNull(e);
 			return e;
 		}
@@ -249,7 +249,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
-		Either<Command, CodeAction> codeAction = findAction(codeActions, "Change package declaration to 'test1'");
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Correct package declaration");
 		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -274,7 +274,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
-		Either<Command, CodeAction> codeAction = findAction(codeActions, "Remove package declaration 'package test2'");
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Correct package declaration");
 		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("\n");
@@ -297,7 +297,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
 
-		Either<Command, CodeAction> codeAction = findAction(codeActions, "Add package declaration 'test2;'");
+		Either<Command, CodeAction> codeAction = findAction(codeActions, "Correct package declaration");
 		assertNotNull(codeAction);
 		buf = new StringBuilder();
 		buf.append("package test2;\n");
