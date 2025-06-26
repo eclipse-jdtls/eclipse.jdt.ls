@@ -28,7 +28,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -56,7 +55,6 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
-
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
@@ -72,7 +70,6 @@ import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
@@ -110,7 +107,6 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.Type;
-
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
@@ -121,7 +117,6 @@ import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.core.NamedMember;
-import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.internal.core.PackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelComposerCore;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
@@ -1148,7 +1143,7 @@ public final class JDTUtils {
 		if (uri == null || !"file".equals(uri.getScheme())) {
 			return null;
 		}
-		IResource[] resources = resourceFinder.apply(uri);
+ 		IResource[] resources = resourceFinder.apply(uri);
 		if (resources.length == 0) {
 			//On Mac, Linked resources are referenced via the "real" URI, i.e file://USERS/username/...
 			//instead of file://Users/username/..., so we check against that real URI.
@@ -1171,7 +1166,7 @@ public final class JDTUtils {
 				}
 				resources = resourceFinder.apply(uri);
 			}
-		}
+		}		
 		switch(resources.length) {
 		case 0:
 			return null;
@@ -1179,7 +1174,7 @@ public final class JDTUtils {
 			return resources[0];
 		default://several candidates if a linked resource was created before the real project was configured
 				IResource resource = null;
-				for (IResource f : resources) {
+				for (IResource f : resources) {	
 				//delete linked resource
 				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
 					try {
@@ -1191,7 +1186,9 @@ public final class JDTUtils {
 
 				//find the resource which has PackageFragmentRoot
 				//find closest project containing that file, in case of nested projects
-					if (resource == null || f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
+				boolean hasPackageFragmentRoot = hasPackageFragmentRoot(f);
+				if (resource == null  || hasPackageFragmentRoot
+						|| f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
 						resource = f;
 				}
 			}
