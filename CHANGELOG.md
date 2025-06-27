@@ -1,5 +1,21 @@
 # Change Log
 
+# [1.48.0 (June 26th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/141?closed=1)
+ * enhancement - Adopt quick fixes for various modifier corrections. See [#1053](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1053).
+   - `BodyForNativeMethod`, `MethodRequiresBody`, `OuterLocalMustBeEffectivelyFinal`,
+   - `MissingSynchronizedModifierInInheritedMethod`, `MethodCanBeStatic`, `OverridingDeprecatedMethod`
+ * enhancement - Add cleanups for various redundant modifiers/expressions/statements. See [#3473](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3473).
+ * bug fix - Logging to `stdout` may break client/server communication. See [#3469](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3469).
+ * bug fix - Create and use a utility class to share usage of JDT token scanner. See [#2940](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2940).
+ * dependencies - Update target platform to 4.37-I-builds. See [#3467](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3467).
+ * build - Fix build errors relating to `Thread limit exceeded replacing blocked worker`. See [#3446](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3446).
+ * build - Migrate from `groovy-maven-plugin` to `gmavenplus-plugin`. See [#3434](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3434).
+ * build - Add `org.eclipse.jdt.core.javac` bundle to final repository. See [#3463](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3463).
+ * build - Option to only fetch checksums for final gradle releases during build. See [#2917](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2917).
+ * build - Update Maven wrapper script to use Maven 3.9.9. See [#3453](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3453).
+ * build - Bump tycho-version from 4.0.12 to 4.0.13. See [#3456](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3456).
+ * build - Bump org.apache.groovy:groovy from 4.0.26 to 4.0.27. See [#3459](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3459).
+
 # [1.47.0 (May 15th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/140?closed=1)
  * enhancement - Implement methods in newly created type from an inherited sealed class. See [#1570](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/1570).
  * enhancement - Code action for "The left-hand side of an assginment must be a variable". See [#3441](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3441).
