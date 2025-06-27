@@ -1184,12 +1184,11 @@ public final class JDTUtils {
 					}
 				}
 
-				//find the resource which has PackageFragmentRoot
 				//find closest project containing that file, in case of nested projects
-				boolean hasPackageFragmentRoot = hasPackageFragmentRoot(f);
-				if (resource == null  || hasPackageFragmentRoot
-						|| f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
-						resource = f;
+				//ignore files outside a source folder (https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3447)
+				if (hasPackageFragmentRoot(f)
+				    && (resource == null || f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount())) {
+					resource = f;
 				}
 			}
 				return resource;
