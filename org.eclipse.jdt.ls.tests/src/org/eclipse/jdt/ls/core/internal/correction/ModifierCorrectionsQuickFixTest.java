@@ -1351,4 +1351,39 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testCreateMethodInSuperType() throws Exception {
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject.setOptions(options17);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test", false, null);
+		assertNoErrors(fJProject.getResource());
+
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test;\n"
+                + "public class Base {\n"
+                + "}");
+		pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
+
+        buf = new StringBuilder();
+        buf.append("package test;\n"
+                + "public class Common extends Base {\n"
+				+ "    @Override\n"
+				+ "    public void foo() {\n" + "    }\n"
+                + "}");
+		ICompilationUnit cu = pack1.createCompilationUnit("Common.java", buf.toString(), false, null);
+		buf = new StringBuilder();
+		buf.append("package test;\n"
+				+ "public class Base {\n"
+				+ "\n"
+				+ "	public void foo() {\n"
+				+ "		// TODO Auto-generated method stub\n"
+				+ "		throw new UnsupportedOperationException(\"Unimplemented method 'foo'\");\n"
+				+ "	}\n"
+				+ "}");
+
+		Expected e1 = new Expected("Create 'foo()' in super type 'Base'", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
 }

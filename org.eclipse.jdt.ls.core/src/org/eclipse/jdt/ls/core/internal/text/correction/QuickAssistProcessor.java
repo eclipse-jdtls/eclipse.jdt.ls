@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -101,6 +102,7 @@ import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.util.Strings;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.CodeScopeBuilder;
@@ -135,6 +137,7 @@ import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewDefiningMethodProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
@@ -207,7 +210,9 @@ public class QuickAssistProcessor {
 				//				getAddBlockProposals(context, coveringNode, resultingCollections);
 				//				getInvertEqualsProposal(context, coveringNode, resultingCollections);
 				//				getArrayInitializerToArrayCreation(context, coveringNode, resultingCollections);
-				//				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
+			if (!problemExists(locations, List.of(IProblem.MethodMustOverride, IProblem.MethodMustOverrideOrImplement))) {
+				getCreateInSuperClassProposals(context, coveringNode, resultingCollections);
+			}
 				//				getConvertLocalToFieldProposal(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToBlockProposal(context, coveringNode, resultingCollections);
 				//				getChangeLambdaBodyToExpressionProposal(context, coveringNode, resultingCollections);
@@ -1489,5 +1494,28 @@ public class QuickAssistProcessor {
 		resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
 		return true;
 	}
+
+	public static boolean getCreateInSuperClassProposals(IInvocationContext context, ASTNode node, ArrayList<ProposalKindWrapper> resultingCollections) throws CoreException {
+        if (!(node instanceof SimpleName) || !(node.getParent() instanceof MethodDeclaration)) {
+            return false;
+        }
+        MethodDeclaration decl= (MethodDeclaration) node.getParent();
+        if (decl.getName() != node || decl.resolveBinding() == null || Modifier.isPrivate(decl.getModifiers())) {
+            return false;
+        }
+        boolean addOverride = StubUtility2Core.findAnnotation("java.lang.Override", decl.modifiers()) == null; //$NON-NLS-1$
+        return getCreateInSuperClassProposals(context, node, resultingCollections, addOverride);
+    }
+
+    public static boolean getCreateInSuperClassProposals(IInvocationContext context, ASTNode node, ArrayList<ProposalKindWrapper> resultingCollections, boolean addOverride) throws CoreException {
+        Collection<Object> newResults = new LinkedList<>();
+        boolean result = QuickAssistProcessorUtil.getCreateInSuperClassProposals(context, node, newResults);
+        for (Object res : newResults) {
+            if (res instanceof NewDefiningMethodProposalCore proposal) {
+                resultingCollections.add(CodeActionHandler.wrap(proposal, JavaCodeActionKind.QUICK_ASSIST));
+            }
+        }
+        return result;
+    }
 
 }
