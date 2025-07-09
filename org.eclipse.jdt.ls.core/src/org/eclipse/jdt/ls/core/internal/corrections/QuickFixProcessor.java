@@ -491,11 +491,10 @@ public class QuickFixProcessor {
 			// ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.MethodMustOverride:
-			// case IProblem.MethodMustOverrideOrImplement:
-			// ModifierCorrectionSubProcessor.removeOverrideAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.MethodMustOverride:
+			case IProblem.MethodMustOverrideOrImplement:
+				ModifierCorrectionSubProcessor.removeOverrideAnnotationProposal(context, problem, proposals);
+				break;
 			// case IProblem.FieldMissingDeprecatedAnnotation:
 			// case IProblem.MethodMissingDeprecatedAnnotation:
 			// case IProblem.TypeMissingDeprecatedAnnotation:

@@ -27,6 +27,7 @@ import org.eclipse.jdt.internal.ui.text.correction.CorrectionMessages;
 import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessorCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewDefiningMethodProposalCore;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElementsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -93,6 +94,13 @@ public class ModifierCorrectionSubProcessor extends ModifierCorrectionSubProcess
 		new ModifierCorrectionSubProcessor().getSealedMissingModifierProposal(context, problem, proposals);
 	}
 
+	public static void removeOverrideAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		try {
+			new ModifierCorrectionSubProcessor().getRemoveOverrideAnnotationProposal(context, problem, proposals);
+		} catch (CoreException e) {
+		}
+	}
+
 	@Override
 	protected ProposalKindWrapper astRewriteCorrectionProposalToT(ASTRewriteCorrectionProposalCore core, int uid) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
@@ -105,6 +113,11 @@ public class ModifierCorrectionSubProcessor extends ModifierCorrectionSubProcess
 
 	@Override
 	protected ProposalKindWrapper fixCorrectionProposalCoreToT(FixCorrectionProposalCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper newDefiningMethodProposalCoreToT(NewDefiningMethodProposalCore core, int uid) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
 	}
 
