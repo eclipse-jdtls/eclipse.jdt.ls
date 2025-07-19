@@ -18,6 +18,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.Map;
 
+import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
+import org.eclipse.jdt.core.JavaCore;
 import org.junit.Test;
 
 public class GradleUtilsTest {
@@ -34,5 +36,11 @@ public class GradleUtilsTest {
 			File javaHome = GradleUtils.getJdkToLaunchDaemon(k);
 			assertTrue("javaHome=" + javaHome.getAbsolutePath(), javaHome.equals(v));
 		});
+	}
+
+	@Test
+	public void testCompatiblity() {
+		GradleVersion gradleVersion = GradleVersion.version("8.14");
+		assertEquals(JavaCore.VERSION_24, GradleUtils.getHighestSupportedJava(gradleVersion));
 	}
 }
