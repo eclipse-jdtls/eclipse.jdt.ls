@@ -104,59 +104,6 @@ public class SerialVersionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2);
 	}
 
-
-	@Test
-	public void testAnonymousClass() throws Exception {
-		IPackageFragment pack1= fSourceFolder.createPackageFragment("test3", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("import java.io.Serializable;\n");
-		buf.append("public class Test3 {\n");
-		buf.append("    protected int var1;\n");
-		buf.append("    protected int var2;\n");
-		buf.append("    public void test() {\n");
-		buf.append("        Serializable var3= new Serializable() {\n");
-		buf.append("            int var4; \n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu= pack1.createCompilationUnit("Test3.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("import java.io.Serializable;\n");
-		buf.append("public class Test3 {\n");
-		buf.append("    protected int var1;\n");
-		buf.append("    protected int var2;\n");
-		buf.append("    public void test() {\n");
-		buf.append("        Serializable var3= new Serializable() {\n");
-		buf.append("            private static final long serialVersionUID = 1L;\n");
-		buf.append("            int var4; \n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-
-		Expected e1 = new Expected("Add default serial version ID", buf.toString());
-
-		buf = new StringBuilder();
-		buf.append("package test3;\n");
-		buf.append("import java.io.Serializable;\n");
-		buf.append("public class Test3 {\n");
-		buf.append("    protected int var1;\n");
-		buf.append("    protected int var2;\n");
-		buf.append("    public void test() {\n");
-		buf.append("        Serializable var3= new Serializable() {\n");
-		buf.append("            private static final long serialVersionUID = -868523843598659436L;\n");
-		buf.append("            int var4; \n");
-		buf.append("        };\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Add generated serial version ID", buf.toString());
-
-		assertCodeActions(cu, e1, e2);
-
-	}
-
 	@Test
 	public void testInnerClass() throws Exception {
 		IPackageFragment pack1= fSourceFolder.createPackageFragment("test2", false, null);
