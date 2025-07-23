@@ -391,7 +391,15 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
 
         @Override
         void execute(Classpath classpath) {
-            classpath.entries.add(new Library(fileReferenceFactory.fromFile(androidSDKFile)))
+            Library library = new Library(fileReferenceFactory.fromFile(androidSDKFile))
+
+            File platformsDir = androidSDKFile.getParentFile() // android-sdk/platforms/android-XX
+            String platformBasename = platformsDir.getName() // android-XX
+            File sourcesDir = new File(platformsDir.getParentFile().getParentFile(), "sources" + File.separator + platformBasename)
+            if (sourcesDir.exists() && sourcesDir.isDirectory()) {
+                library.setSourcePath(fileReferenceFactory.fromFile(sourcesDir))
+            }
+            classpath.entries.add(library)
         }
     }
 
