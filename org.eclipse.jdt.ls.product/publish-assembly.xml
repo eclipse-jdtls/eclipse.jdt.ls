@@ -22,7 +22,7 @@
         <include>features/**</include>
         <include>plugins/**</include>
       </includes>
-      <fileMode>444</fileMode>
+      <fileMode>644</fileMode>
     </fileSet>
     <fileSet>
       <directory>${basedir}/target/repository</directory>
