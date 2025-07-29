@@ -1,5 +1,18 @@
 # Change Log
 
+# [1.49.0 (July 31st, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/142?closed=1)
+ * enhancement - Add code actions for creating method in base type. See [#3488](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3488).
+ * bug fix - Fix Gradle/Java Compatibility Matrix for recent Java versions. See [#3485](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3485).
+ * bug fix - Permit bundles/features of installation to be owner-writeable. See [#3482](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3482).
+ * dependencies - Update M2E 2.8.0 to 2.9.0. See [#3477](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3477).
+ * dependencies - Update Apache Commons Codec 1.18.0 to 1.19.0. See [#3489](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3489).
+ * dependencies - Update Apache Commons Lang 3 from 3.17.0 to 3.18.0. See [#3481](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3481).
+ * build - Remove test case that is no longer necessary. See [#3487](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3487).
+ * build - Bump `groovy-version` from 4.0.27 to 4.0.28. See [#3492](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3492).
+ * build - Bump `build-helper-maven-plugin` from 3.6.0 to 3.6.1. See [#3480](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3480).
+ * build - Bump `jacoco-maven-plugin` from 0.8.12 to 0.8.13. See [#3479](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3479).
+ * build - Remove unnecessary o.e.equinox.p2.core.feature.source.feature.group. See [#3493](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3493).
+
 # [1.48.0 (June 26th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/141?closed=1)
  * enhancement - Adopt quick fixes for various modifier corrections. See [#1053](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1053).
    - `BodyForNativeMethod`, `MethodRequiresBody`, `OuterLocalMustBeEffectivelyFinal`,
