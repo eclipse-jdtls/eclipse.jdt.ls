@@ -19,7 +19,6 @@
             <unit id="org.eclipse.equinox.core.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.equinox.p2.core.feature.source.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
             <unit id="org.apache.commons.commons-io" version="0.0.0"/>
