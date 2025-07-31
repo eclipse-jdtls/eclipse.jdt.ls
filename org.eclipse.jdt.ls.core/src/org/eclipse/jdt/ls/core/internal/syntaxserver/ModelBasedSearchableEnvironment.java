@@ -29,7 +29,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class ModelBasedSearchableEnvironment extends SearchableEnvironment {
 	public ModelBasedSearchableEnvironment(JavaProject javaProject, WorkingCopyOwner owner, boolean excludeTestCode) throws JavaModelException {
-		super(javaProject, owner, excludeTestCode);
+		super(javaProject, owner, excludeTestCode, JavaProject.NO_RELEASE);
 	}
 
 	@Override
