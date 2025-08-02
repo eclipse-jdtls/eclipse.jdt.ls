@@ -660,8 +660,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertNotNull(androidAppProject);
 			IJavaProject javaProject = JavaCore.create(androidAppProject);
 			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
-			String androidHome = System.getenv("ANDROID_HOME");
-			if (androidHome == null) {
+			if (!isAndroidSdkInstalled()) {
 				// android SDK is not detected, plugin will do nothing
 				assertEquals(2, classpathEntries.length);
 			} else {
@@ -703,8 +702,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertNotNull(androidAppProject);
 			IJavaProject javaProject = JavaCore.create(androidAppProject);
 			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
-			String androidHome = System.getenv("ANDROID_HOME");
-			if (androidHome == null) {
+			if (!isAndroidSdkInstalled()) {
 				// android SDK is not detected, plugin will do nothing
 				assertEquals(2, classpathEntries.length);
 			} else {
@@ -787,5 +785,11 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals((enabled) ? JavaCore.ENABLED : JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 		assertEquals(severity, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+	}
+
+	private boolean isAndroidSdkInstalled() {
+		String androidHome = System.getenv("ANDROID_HOME");
+		String androidSdkRoot = System.getenv("ANDROID_SDK_ROOT");
+		return androidHome != null || androidSdkRoot != null;
 	}
 }
