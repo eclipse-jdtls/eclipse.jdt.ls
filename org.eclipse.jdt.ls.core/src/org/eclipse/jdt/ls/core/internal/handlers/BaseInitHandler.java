@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -32,6 +33,7 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -43,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
+import org.eclipse.lsp4j.ServerInfo;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
@@ -65,6 +68,7 @@ public abstract class BaseInitHandler {
 	public InitializeResult initialize(InitializeParams param) {
 		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
 		InitializeResult result = new InitializeResult();
+		setServerInfo(result);
 		handleInitializationOptions(param);
 		registerCapabilities(result);
 
@@ -73,6 +77,16 @@ public abstract class BaseInitHandler {
 		triggerInitialization(preferenceManager.getPreferences().getRootPaths());
 		return result;
 	}
+
+	 public void setServerInfo(InitializeResult initializeResult) {
+		var rb = ResourceBundle.getBundle("git");
+
+		var serverInfo = new ServerInfo();
+		var name = "JDT Language Server (%s)".formatted(JDTEnvironmentUtils.isSyntaxServer() ? "Syntax" : "Standard");
+		serverInfo.setName(name);
+		serverInfo.setVersion(rb.getString("git.build.version"));
+		initializeResult.setServerInfo(serverInfo);
+	 }
 
 	@SuppressWarnings("unchecked")
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
