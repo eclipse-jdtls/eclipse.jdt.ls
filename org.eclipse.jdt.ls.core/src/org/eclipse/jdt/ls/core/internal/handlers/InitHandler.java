@@ -14,11 +14,13 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,6 +61,7 @@ import org.eclipse.lsp4j.SaveOptions;
 import org.eclipse.lsp4j.SemanticTokensServerFull;
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.ServerInfo;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
@@ -228,7 +231,24 @@ final public class InitHandler extends BaseInitHandler {
 		capabilities.setSemanticTokensProvider(semanticTokensOptions);
 
 		initializeResult.setCapabilities(capabilities);
+
+		setServerInfo(initializeResult);
 	}
+
+	 public void setServerInfo(InitializeResult initializeResult) {
+		try (var propertiesStream = getClass().getResourceAsStream("/git.properties")) {
+			var properties = new Properties();
+			properties.load(propertiesStream);
+
+			var serverInfo = new ServerInfo();
+			serverInfo.setName("JDT Language Server");
+			serverInfo.setVersion(properties.getProperty("git.build.version"));
+			initializeResult.setServerInfo(serverInfo);
+		}
+		catch (IOException ex) {
+			JavaLanguageServerPlugin.logException("Cannot load server info properties", ex);
+		}
+	 }
 
 	@Override
 	public void triggerInitialization(Collection<IPath> roots) {
