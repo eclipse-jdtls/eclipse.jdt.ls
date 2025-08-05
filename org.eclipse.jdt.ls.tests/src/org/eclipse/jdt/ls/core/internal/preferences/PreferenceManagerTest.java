@@ -28,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.settings.Settings;
@@ -43,6 +45,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibraries;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
@@ -310,6 +313,30 @@ public class PreferenceManagerTest {
 			Preferences preferences = new Preferences();
 			preferenceManager.update(preferences);
 			assertNull(getMultipleModuleProjectDirectory());
+		}
+	}
+
+	// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3495
+	@Test
+	public void testReferencedLibrariesSourcesGetExpanded() throws Exception {
+		try {
+			PreferenceManager.initialize();
+			Preferences preferences = new Preferences();
+			preferences.setReferencedLibraries(new ReferencedLibraries(
+					Set.of("~/include/path/lib.jar"),
+					new HashSet<>(),
+					Map.of("~/include/path/lib.jar", "~/include/path/lib-src.jar")));
+			preferenceManager.update(preferences);
+			Set<Map.Entry<String, String>> entries = preferenceManager.getPreferences().getReferencedLibraries().getSources().entrySet();
+			for (Map.Entry<String, String> e : entries) {
+				assertFalse(e.getKey().startsWith("~"));
+				assertFalse(e.getValue().startsWith("~"));
+			}
+		} finally {
+			Preferences preferences = new Preferences();
+			preferenceManager.update(preferences);
+			assertEquals(1, preferenceManager.getPreferences().getReferencedLibraries().getInclude().size());
+			assertTrue(preferenceManager.getPreferences().getReferencedLibraries().getInclude().contains("lib/**"));
 		}
 	}
 
