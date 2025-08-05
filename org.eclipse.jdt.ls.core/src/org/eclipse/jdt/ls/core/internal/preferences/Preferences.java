@@ -844,14 +844,17 @@ public class Preferences {
 			};
 			this.exclude.addAll(exclude);
 			this.sources = new HashMap<>() {
-
 				@Override
 				public String put(String key, String value) {
 					return super.put(ResourceUtils.expandPath(key), ResourceUtils.expandPath(value));
 				}
-
 			};
-			this.sources.putAll(sources);
+
+			// Avoid 'putAll' as it may not call 'put', thus skipping expansion
+			// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3495
+			for (Map.Entry<String, String> e : sources.entrySet()) {
+				this.sources.put(e.getKey(), e.getValue());
+			}
 		}
 
 		public Set<String> getInclude() {
