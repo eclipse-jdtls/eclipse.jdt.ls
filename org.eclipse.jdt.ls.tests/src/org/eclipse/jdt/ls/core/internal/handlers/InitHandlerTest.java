@@ -153,6 +153,15 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testServerInfo() throws Exception {
+		InitializeResult result = initialize(false);
+
+		assertNotNull(result.getServerInfo());
+		assertNotNull(result.getServerInfo().getVersion());
+		assertNotNull(result.getServerInfo().getName());
+	}
+
+	@Test
 	public void testExecuteCommandProviderDynamicRegistration() throws Exception {
 		ClientPreferences mockCapabilies = mock(ClientPreferences.class);
 		when(mockCapabilies.isExecuteCommandDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
