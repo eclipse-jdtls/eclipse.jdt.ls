@@ -83,28 +83,14 @@
 									String wrapperChecksumUrl;
 									String sha256
 								}
-								ExecutorService executor = Executors.newCachedThreadPool()
-								HttpClient client = HttpClient.newBuilder().executor(executor).followRedirects(Redirect.NORMAL).build()
-								def futures = []
+								def checksums = []
 								versions.each {
                                     boolean isNonRelease = it.nightly || it.snapshot || (it.rcFor != "") || it.broken
 									if (it.wrapperChecksumUrl == null || (System.getProperty("eclipse.jdt.ls.onlyGradleReleases") &amp;&amp; isNonRelease)) {
 										return
 									}
-									HttpRequest request = HttpRequest.newBuilder().uri(URI.create(it.wrapperChecksumUrl)).build()
-									futures.add(client.sendAsync(request, BodyHandlers.ofString()).thenApplyAsync({ response ->
-										// Return the body of the original response
-										return new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: response.body())
-									}, executor))
+									checksums.add(new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: it.wrapperChecksum));
 								}
-
-								def checksums = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-										.thenApplyAsync({ v ->
-											futures.stream().map({ f ->
-												f.join()
-											}).collect(Collectors.toList())
-										}, executor).get()
-
 								def json = JsonOutput.toJson(checksums)
 								checksumsFile.write(JsonOutput.prettyPrint(json))
 								println "Wrote to ${checksumsFile}"
