@@ -204,7 +204,6 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Mockito.lenient().when(mockPreferences.getProjectConfigurations()).thenReturn(null);
 		Mockito.lenient().when(preferenceManager.getPreferences()).thenReturn(mockPreferences);
 		Mockito.lenient().when(preferenceManager.getPreferences(Mockito.any())).thenReturn(mockPreferences);
-		Mockito.lenient().when(mockPreferences.getIncompleteClasspathSeverity()).thenReturn(Severity.ignore);
 		Mockito.lenient().when(this.preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		Mockito.lenient().when(clientPreferences.isSupportedCodeActionKind(CodeActionKind.QuickFix)).thenReturn(true);
 		return mockPreferences;

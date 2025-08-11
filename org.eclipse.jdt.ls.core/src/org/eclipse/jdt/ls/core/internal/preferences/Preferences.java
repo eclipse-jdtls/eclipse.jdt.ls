@@ -307,11 +307,6 @@ public class Preferences {
 	public static final String CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY = "java.configuration.updateBuildConfiguration";
 
 	/**
-	 * Preference key for incomplete classpath severity messages.
-	 */
-	public static final String ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY = "java.errors.incompleteClasspath.severity";
-
-	/**
 	 * Preference key for Maven user settings.xml location.
 	 */
 	public static final String MAVEN_USER_SETTINGS_KEY = "java.configuration.maven.userSettings";
@@ -522,7 +517,6 @@ public class Preferences {
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULLBYDEFAULT = "java.compile.nullAnalysis.nonnullbydefault";
 	public static final String JAVA_COMPILE_NULLANALYSIS_MODE = "java.compile.nullAnalysis.mode";
-	public static final String JAVA_COMPLETION_ENGINE = "java.completion.engine";
 
 	public static final String LIFECYCLE_MAPPING_METADATA_SOURCE_NAME = "lifecycle-mapping-metadata.xml";
 
@@ -609,7 +603,6 @@ public class Preferences {
 	private List<String> filesAssociations = new ArrayList<>();
 
 	private Map<String, Object> configuration;
-	private Severity incompleteClasspathSeverity;
 	private FeatureStatus updateBuildConfigurationStatus;
 	private boolean referencesCodeLensEnabled;
 	private boolean importGradleEnabled;
@@ -890,7 +883,6 @@ public class Preferences {
 
 	public Preferences() {
 		configuration = null;
-		incompleteClasspathSeverity = Severity.warning;
 		updateBuildConfigurationStatus = FeatureStatus.interactive;
 		importGradleEnabled = true;
 		importGradleOfflineEnabled = false;
@@ -1028,9 +1020,6 @@ public class Preferences {
 		}
 		Preferences prefs = new Preferences();
 		prefs.configuration = configuration;
-
-		String incompleteClasspathSeverity = getString(configuration, ERRORS_INCOMPLETE_CLASSPATH_SEVERITY_KEY, null);
-		prefs.setIncompleteClasspathSeverity(Severity.fromString(incompleteClasspathSeverity, Severity.warning));
 
 		String updateBuildConfiguration = getString(configuration, CONFIGURATION_UPDATE_BUILD_CONFIGURATION_KEY, null);
 		prefs.setUpdateBuildConfigurationStatus(
@@ -1721,11 +1710,6 @@ public class Preferences {
 		return this;
 	}
 
-	private Preferences setIncompleteClasspathSeverity(Severity severity) {
-		this.incompleteClasspathSeverity = severity;
-		return this;
-	}
-
 	public Preferences setImportOrder(List<String> importOrder) {
 		this.importOrder = (importOrder == null || importOrder.size() == 0) ? JAVA_IMPORT_ORDER_DEFAULT : importOrder;
 		IEclipsePreferences pref = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
@@ -1748,10 +1732,6 @@ public class Preferences {
 	public Preferences setMaxBuildCount(int maxConcurrentBuilds) {
 		this.parallelBuildsCount = maxConcurrentBuilds;
 		return this;
-	}
-
-	public Severity getIncompleteClasspathSeverity() {
-		return incompleteClasspathSeverity;
 	}
 
 	public FeatureStatus getUpdateBuildConfigurationStatus() {
