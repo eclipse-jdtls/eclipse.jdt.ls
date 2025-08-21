@@ -306,12 +306,6 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			public IStatus run(IProgressMonitor monitor) {
 				try {
 					StandardProjectsManager.cleanInvalidJavaProjects(monitor);
-					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
-					workspaceDiagnosticsHandler.addResourceChangeListener();
-					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
-					classpathUpdateHandler.addElementChangeListener();
-					SourceAttachUpdateHandler attachListener = new SourceAttachUpdateHandler(client);
-					attachListener.addElementChangeListener();
 
 					registerCapabilities();
 					// we do not have the user setting initialized yet at this point but we should
@@ -337,7 +331,13 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					debugTrace(">> indexes checked");
 					pm.projectsBuildFinished(monitor);
 					telemetryManager.onBuildFinished(System.currentTimeMillis());
+					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
+					workspaceDiagnosticsHandler.addResourceChangeListener();
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
+					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
+					classpathUpdateHandler.addElementChangeListener();
+					SourceAttachUpdateHandler attachListener = new SourceAttachUpdateHandler(client);
+					attachListener.addElementChangeListener();
 				} catch (OperationCanceledException | CoreException e) {
 					logException(e.getMessage(), e);
 					pm.projectsBuildFinished(monitor);
