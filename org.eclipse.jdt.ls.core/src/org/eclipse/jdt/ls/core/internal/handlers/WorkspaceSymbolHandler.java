@@ -65,6 +65,7 @@ public class WorkspaceSymbolHandler {
 			String tQuery = query.trim();
 			String qualifierName = null;
 			String typeName = tQuery;
+			String fuzzyCamelName = null;
 			int qualifierMatchRule = SearchPattern.R_PATTERN_MATCH;
 
 			int qualIndex = tQuery.lastIndexOf('.');
@@ -73,6 +74,22 @@ public class WorkspaceSymbolHandler {
 				typeName = tQuery.substring(qualIndex + 1);
 				if (!qualifierName.contains("*") && !qualifierName.contains("?")) {
 					qualifierName = String.format("*%s*", qualifierName);
+				}
+			} else {
+				// Handle fuzzy camel case search
+				StringBuilder fuzzyCamelTerm = new StringBuilder();
+				Character prevC = null;
+				for (char c : tQuery.toCharArray()) {
+					if (prevC != null) {
+						if ((Character.isLowerCase(prevC) && Character.isUpperCase(c))) {
+							fuzzyCamelTerm.append("*");
+						}
+					}
+					fuzzyCamelTerm.append(c);
+					prevC = c;
+				}
+				if (!tQuery.equals(fuzzyCamelTerm.toString())) {
+					fuzzyCamelName = String.format("*%s*", fuzzyCamelTerm.toString());
 				}
 			}
 
@@ -89,7 +106,7 @@ public class WorkspaceSymbolHandler {
 			WorkspaceSymbolTypeRequestor typeRequestor = new WorkspaceSymbolTypeRequestor(symbols, maxResults, sourceOnly, isSymbolTagSupported, monitor);
 			if (!typeName.isEmpty()) {
 				// search for qualifier = qualifierName, type = typeName
-				engine.searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope,typeRequestor , IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
+				engine.searchAllTypeNames(qualifierName == null ? null : qualifierName.toCharArray(), qualifierMatchRule, fuzzyCamelName != null ? fuzzyCamelName.toCharArray() : typeName.toCharArray(), typeMatchRule, IJavaSearchConstants.TYPE, searchScope,typeRequestor , IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 			}
 			// search for qualifier = qualiferName.typeName, type = null
 			engine.searchAllTypeNames(tQuery.toCharArray(), qualifierMatchRule, null, typeMatchRule, IJavaSearchConstants.TYPE, searchScope, typeRequestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
