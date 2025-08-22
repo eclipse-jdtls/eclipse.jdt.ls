@@ -43,7 +43,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 public class FernFlowerDecompiler extends DecompilerImpl {
-	public static final String DECOMPILER_HEADER = "// Source code is decompiled from a .class file using FernFlower decompiler.\n";
+	public static final String DECOMPILER_HEADER = "// Source code is decompiled from a .class file using FernFlower decompiler (from Intellij IDEA).\n";
 
 	public static boolean isDecompiledContents(String contents) {
 		return contents != null && contents.startsWith(DECOMPILER_HEADER);
