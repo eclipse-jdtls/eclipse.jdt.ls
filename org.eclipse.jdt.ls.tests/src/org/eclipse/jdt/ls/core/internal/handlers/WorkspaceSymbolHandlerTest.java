@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -127,11 +128,24 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testCamelCaseSearch() {
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("NPE", monitor);
-		assertNotNull(results);
+		assertTrue(results.size() > 0);
 		assertTrue(results.stream().anyMatch(s -> s.getName().equals("NullPointerException")));
 
 		results = WorkspaceSymbolHandler.search("HaMa", monitor);
 		String className = "HashMap";
+		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
+		assertTrue("Did not find " + className, foundClass);
+	}
+
+	@Test
+	public void testCamelCaseFuzzySearch() {
+		Set<String> expected = new HashSet<>(Arrays.asList("BufferedInputStream", "BufferedOutputStream", "StringBufferInputStream"));
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("BuffStream", monitor);
+		assertTrue(results.size() > 0);
+		assertTrue(results.stream().allMatch(s -> expected.contains(s.getName())));
+
+		results = WorkspaceSymbolHandler.search("inkSet", monitor);
+		String className = "LinkedHashSet";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
 		assertTrue("Did not find "+className, foundClass);
 	}
