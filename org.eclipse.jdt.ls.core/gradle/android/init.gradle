@@ -45,11 +45,11 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
         if (!project.hasProperty(ECLIPSE_PROPERTY)) {
             return
         }
-        File androidSDKFile = getAndroidSDKFile(project)
-        if (androidSDKFile == null) {
-            return
-        }
         project.afterEvaluate {
+            File androidSDKFile = getAndroidSDKFile(project)
+            if (androidSDKFile == null) {
+                return
+            }
             List<Object> variants = getAndroidDebuggableVariants(project)
             EclipseModel eclipseModel = (EclipseModel) project.property(ECLIPSE_PROPERTY)
             // eclipseModel.synchronizationTasks() is available since Gradle 5.4
