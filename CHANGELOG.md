@@ -1,5 +1,17 @@
 # Change Log
 
+# [1.50.0 (September 4th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/143?closed=1)
+ * performance - Delay registration of resource/element listeners. See [#3510](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3510).
+ * bug fix - Path expansion is not working for the `sources` field in `referencedLibraries`. See [#3495](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3495).
+ * bug fix - Send LSP server version with `InitializeResult`. See [#3484](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3484).
+ * bug fix - Update the decompiler header for FernFlower. See [#3512](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3512).
+ * bug fix - Remove unused options for completion & incomplete classpath severity. See [#3506](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3506).
+ * dependencies - Bump `tycho-version` from 4.0.13 to 5.0.0. See [#3517](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3517).
+ * dependencies - Bump `groovy-version` from 4.0.28 to 5.0.0. See [#3515](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3515).
+ * dependencies - Bump `io.github.git-commit-id:git-commit-id-maven-plugin` from 9.0.1 to 9.0.2. See [#3507](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3507).
+ * build - Add `extensions.json`. See [#3501](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3501).
+ * build - Use wrapper checksums from versions/all for checksums.json. See [#3504](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3504).
+
 # [1.49.0 (July 31st, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/142?closed=1)
  * enhancement - Add code actions for creating method in base type. See [#3488](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3488).
  * bug fix - Fix Gradle/Java Compatibility Matrix for recent Java versions. See [#3485](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3485).
