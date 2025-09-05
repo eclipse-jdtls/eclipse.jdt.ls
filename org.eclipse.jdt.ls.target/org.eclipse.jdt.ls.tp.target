@@ -12,7 +12,7 @@
             <unit id="org.eclipse.m2e.core" version="0.0.0"/>
             <unit id="org.eclipse.m2e.maven.runtime" version="0.0.0"/>
             <unit id="org.eclipse.m2e.workspace.cli" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/technology/m2e/releases/2.9.0"/>
+            <repository location="https://download.eclipse.org/technology/m2e/releases/2.9.1"/>
         </location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
             <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
