@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -78,62 +79,8 @@ public final class ParentProcessWatcher implements Runnable, Function<MessageCon
 		if (pid == 0 || lastActivityTime > (System.currentTimeMillis() - INACTIVITY_DELAY_SECS)) {
 			return true;
 		}
-
-		try {
-			return ProcessHandle.of(pid).isPresent();
-		} catch (UnsupportedOperationException | SecurityException e) {
-			JavaLanguageServerPlugin.logException("Unable to determine process state, fallback behaviour", e);
-			// Unable to determine process state, fallback behaviour
-		}
-
-		String command;
-		if (Platform.OS_WIN32.equals(Platform.getOS())) {
-			command = String.format("cmd /c \"tasklist /FI \"PID eq %1$d\" | findstr %1$d\"", pid);
-		} else {
-			command = String.format("kill -0 %d", pid);
-		}
-		Process process = null;
-		boolean finished = false;
-		try {
-			process = Runtime.getRuntime().exec(command);
-			finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS);
-			if (!finished) {
-				process.destroy();
-				finished = process.waitFor(POLL_DELAY_SECS, TimeUnit.SECONDS); // wait for the process to stop
-			}
-			if (Platform.OS_WIN32.equals(Platform.getOS()) && finished && process.exitValue() > 1) {
-				// the tasklist command should return 0 (parent process exists) or 1 (parent process doesn't exist)
-				JavaLanguageServerPlugin.logInfo("The tasklist command: '" + command + "' returns " + process.exitValue());
-				return true;
-			}
-			return !finished || process.exitValue() == 0;
-		} catch (IOException | InterruptedException e) {
-			JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			return true;
-		} finally {
-			if (process != null) {
-				if (!finished) {
-					process.destroyForcibly();
-				}
-				// Terminating or destroying the Process doesn't close the process handle on Windows.
-				// It is only closed when the Process object is garbage collected (in its finalize() method).
-				// On Windows, when the Java LS is idle, we need to explicitly request a GC,
-				// to prevent an accumulation of zombie processes, as finalize() will be called.
-				if (Platform.OS_WIN32.equals(Platform.getOS())) {
-					// Java >= 9 doesn't close the handle when the process is garbage collected
-					// We need to close the opened streams
-					if (!isJava1x) {
-						Closeables.closeQuietly(process.getInputStream());
-						Closeables.closeQuietly(process.getErrorStream());
-						try {
-							Closeables.close(process.getOutputStream(), false);
-						} catch (IOException e) {
-						}
-					}
-					System.gc();
-				}
-			}
-		}
+		Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+		return processHandle.isPresent() && processHandle.get().isAlive();
 	}
 
 	@Override
