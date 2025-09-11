@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,12 +22,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
+import org.eclipse.jdt.ls.core.internal.commands.DiagnosticInfoCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntries;
-import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntry;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.GetAllProjectOptions;
@@ -213,6 +211,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return new SmartDetectionHandler(smartDetectionParams).getLocation(monitor);
 				case VmCommand.GET_ALL_INSTALL_COMMAND_ID:
 					return VmCommand.getAllVmInstalls();
+				case DiagnosticInfoCommand.GET_DIAGNOSTIC_INFO_COMMAND_ID:
+					return DiagnosticInfoCommand.getDiagnosticInfo();
 				case "java.project.resolveText":
 					return PasteEventHandler.handleFilePasteEvent((String) arguments.get(0), (String) arguments.get(1), monitor);
 				default:
