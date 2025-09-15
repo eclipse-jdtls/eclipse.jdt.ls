@@ -690,7 +690,6 @@ public class StandardProjectsManager extends ProjectsManager {
 		protobufSupport.onDidProjectsImported(monitor);
 		IFrameworkSupport androidSupport = new AndroidSupport();
 		androidSupport.onDidProjectsImported(monitor);
-		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 	}
 
 	public static void cleanInvalidJavaProjects(IProgressMonitor monitor) {
@@ -722,6 +721,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			}
 			this.shouldUpdateProjects = false;
 		}
+		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 	}
 
 	@Override
