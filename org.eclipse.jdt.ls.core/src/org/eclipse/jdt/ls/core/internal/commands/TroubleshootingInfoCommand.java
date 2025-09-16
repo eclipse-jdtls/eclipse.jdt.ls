@@ -25,28 +25,28 @@ import org.eclipse.m2e.core.embedder.IMavenConfiguration;
  * the language server is only used as a start, with additional detection and configuration going on inside the
  * tools like maven, etc.
  */
-public class DiagnosticInfoCommand {
+public class TroubleshootingInfoCommand {
 
-	private DiagnosticInfoCommand() {
+	private TroubleshootingInfoCommand() {
 	}
 
-	public static final String GET_DIAGNOSTIC_INFO_COMMAND_ID = "java.getDiagnosticInfo";
+	public static final String GET_TROUBLESHOOTING_INFO_COMMAND = "java.getTroubleshootingInfo";
 
 	/**
 	 * Return Diagnostic Info
 	 */
-	public static final DiagnosticInfo getDiagnosticInfo() {
-		return new DiagnosticInfo();
+	public static final TroubleshootingInfo getTroubleshootingInfo() {
+		return new TroubleshootingInfo();
 	}
 
-	public static final class DiagnosticInfo {
+	public static final class TroubleshootingInfo {
 		public String mavenUserSettings;
 		public String mavenGlobalSettings;
 		public String gradleJavaHome;
 		public String gradleUserHome;
 		public String[] activeImporters;
 
-		public DiagnosticInfo() {
+		public TroubleshootingInfo() {
 			IMavenConfiguration config = IMavenConfiguration.getWorkspaceConfiguration();
 			File userSettings = config.getSettingsLocations().userSettings();
 			if (userSettings != null) {
