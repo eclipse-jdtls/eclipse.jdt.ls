@@ -2463,10 +2463,12 @@ public class Preferences {
 	}
 
 	private boolean updateAnnotationNullAnalysisOptions(boolean enabled) {
+		long start = System.currentTimeMillis();
 		boolean isChanged = false;
 		for (IJavaProject javaProject : ProjectUtils.getJavaProjects()) {
 			isChanged |= updateAnnotationNullAnalysisOptions(javaProject, enabled);
 		}
+		JavaLanguageServerPlugin.debugTrace("updateAnnotationNullAnalysisOptions (" + enabled + ") Took:" + (System.currentTimeMillis() - start));
 		return isChanged;
 	}
 
@@ -2486,12 +2488,29 @@ public class Preferences {
 		}
 		Map<String, String> projectNullAnalysisOptions;
 		if (enabled) {
-			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
-			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-			String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage);
-			if (nonnullbydefaultTypes == null && nonnullType != null && nullableType != null) {
-				// there is not NonNullByDefault in org.jetbrains:annotations
-				nonnullbydefaultTypes = "org.eclipse.jdt.annotation.NonNullByDefault";
+			String nonnullType;
+			String nullableType;
+			String nonnullbydefaultTypes;
+			if (!this.nonnullTypes.isEmpty() || !this.nullableTypes.isEmpty() || !this.nonnullbydefaultTypes.isEmpty()) {
+				try {
+					ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
+					nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage, result);
+					nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage, result);
+					nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage, result);
+					if (nonnullbydefaultTypes == null && nonnullType != null && nullableType != null) {
+						// there is not NonNullByDefault in org.jetbrains:annotations
+						nonnullbydefaultTypes = "org.eclipse.jdt.annotation.NonNullByDefault";
+					}
+				} catch (CoreException | URISyntaxException e) {
+					JavaLanguageServerPlugin.logException(e);
+					nonnullType = null;
+					nullableType = null;
+					nonnullbydefaultTypes = null;
+				}
+			} else {
+				nonnullType = null;
+				nullableType = null;
+				nonnullbydefaultTypes = null;
 			}
 			projectNullAnalysisOptions = generateProjectNullAnalysisOptions(nonnullType, nullableType, nonnullbydefaultTypes);
 		} else {
@@ -2519,20 +2538,24 @@ public class Preferences {
 			if (javaProject.getElementName().equals(ProjectsManager.DEFAULT_PROJECT_NAME)) {
 				continue;
 			}
-			String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage);
-			String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage);
-			String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage);
-			if (nonnullType != null && nullableType != null && nonnullbydefaultTypes != null) {
-				return true;
+			try {
+				ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
+				String nonnullType = getAnnotationType(javaProject, this.nonnullTypes, nonnullClasspathStorage, result);
+				String nullableType = getAnnotationType(javaProject, this.nullableTypes, nullableClasspathStorage, result);
+				String nonnullbydefaultTypes = getAnnotationType(javaProject, this.nonnullbydefaultTypes, nonnullbydefaultClasspathStorage, result);
+				if (nonnullType != null && nullableType != null && nonnullbydefaultTypes != null) {
+					return true;
+				}
+			} catch (CoreException | URISyntaxException e) {
+				JavaLanguageServerPlugin.logException(e);
 			}
 		}
 		return false;
 	}
 
-	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage) {
+	private String getAnnotationType(IJavaProject javaProject, List<String> annotationTypes, Map<String, List<String>> classpathStorage, ClasspathResult result) {
 		if (!annotationTypes.isEmpty()) {
 			try {
-				ClasspathResult result = ProjectCommand.getClasspathsFromJavaProject(javaProject, new ProjectCommand.ClasspathOptions());
 				for (String annotationType : annotationTypes) {
 					if (classpathStorage.keySet().contains(annotationType)) {
 						// for known types, check the classpath to achieve a better performance
@@ -2563,7 +2586,7 @@ public class Preferences {
 						}
 					}
 				}
-			} catch (CoreException | URISyntaxException e) {
+			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e);
 			}
 		}
