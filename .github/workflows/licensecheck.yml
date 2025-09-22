@@ -4,10 +4,10 @@ name: License vetting status check
 
 on:
   push:
-    branches: 
+    branches:
       - 'main'
   pull_request:
-    branches: 
+    branches:
      - 'main'
   issue_comment:
     types: [created]
@@ -20,6 +20,6 @@ jobs:
     with:
       projectId: eclipse.jdt.ls
       submodules: recursive
-      javaVersion: '24'
+      javaVersion: '25'
     secrets:
       gitlabAPIToken: ${{ secrets.ECLIPSE_GITLAB_API_TOKEN }}

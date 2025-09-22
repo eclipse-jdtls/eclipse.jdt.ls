@@ -396,6 +396,17 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	}
 
 	@Test
+	public void testJava25Project() throws Exception {
+		IProject project = importMavenProject("salut-java25");
+		assertIsJavaProject(project);
+		assertEquals("25", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertNoErrors(project);
+	}
+
+	@Test
 	public void testAnnotationProcessing() throws Exception {
 		IProject project = importMavenProject("autovalued");
 		assertIsJavaProject(project);
