@@ -77,7 +77,7 @@
 								<configuration>
 									<toolchains>
 										<jdk>
-											<id>JavaSE-23</id>
+											<id>JavaSE-25</id>
 										</jdk>
 									</toolchains>
 								</configuration>
