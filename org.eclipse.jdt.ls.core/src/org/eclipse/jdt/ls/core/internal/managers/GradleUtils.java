@@ -84,7 +84,9 @@ public class GradleUtils {
 		GradleVersion baseVersion = gradleVersion.getBaseVersion();
 		try {
 			// https://docs.gradle.org/current/userguide/compatibility.html
-			if (baseVersion.compareTo(GradleVersion.version("8.14")) >= 0) {
+			if(baseVersion.compareTo(GradleVersion.versoin("9.1.0")) >= 0) {
+				return JavaCore.VERSION_25;
+			} else if (baseVersion.compareTo(GradleVersion.version("8.14")) >= 0) {
 				return JavaCore.VERSION_24;
 			} else if (baseVersion.compareTo(GradleVersion.version("8.10")) >= 0) {
 				return JavaCore.VERSION_23;
