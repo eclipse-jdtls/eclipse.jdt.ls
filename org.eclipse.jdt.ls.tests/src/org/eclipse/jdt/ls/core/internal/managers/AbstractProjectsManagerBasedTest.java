@@ -179,7 +179,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		projectsManager = new StandardProjectsManager(preferenceManager);
+		projectsManager = new StandardProjectsManager(preferenceManager, new TelemetryManager());
 		ProgressReporterManager progressManager = new ProgressReporterManager(this.client, preferenceManager);
 		progressManager.setReportThrottle(0);//disable throttling to ensure we capture all events
 		Job.getJobManager().setProgressProvider(progressManager);

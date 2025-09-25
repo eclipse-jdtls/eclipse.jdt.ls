@@ -42,9 +42,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 public class TelemetryManager {
-
-	private static final String JAVA_PROJECT_BUILD = "java.workspace.initialized";
-
 	private JavaLanguageClient client;
 	private PreferenceManager prefs;
 	private ProjectsManager projectsManager;
@@ -52,10 +49,6 @@ public class TelemetryManager {
 	private long serviceReadyTime;
 	private long projectsInitializedTime;
 	private boolean firstTimeInitialization;
-	public TelemetryManager(JavaLanguageClient client, PreferenceManager prefs) {
-		this.client = client;
-		this.prefs = prefs;
-	}
 
 	public TelemetryManager() {
 	}
@@ -189,7 +182,7 @@ public class TelemetryManager {
 		properties.addProperty("dependency.count", Integer.toString(indexCount));
 		properties.addProperty("dependency.size", Long.toString(librarySize));
 
-		telemetryEvent(JAVA_PROJECT_BUILD, properties);
+		telemetryEvent(TelemetryEvent.JAVA_PROJECT_BUILD, properties);
 	}
 
 	/**
@@ -250,10 +243,14 @@ public class TelemetryManager {
 	}
 
 	private void telemetryEvent(String name, JsonObject properties) {
-		boolean telemetryEnabled = prefs.getPreferences().isTelemetryEnabled();
-		if (telemetryEnabled) {
-			client.telemetryEvent(new TelemetryEvent(name, properties));
+		this.sendEvent(new TelemetryEvent(name, properties));
+	}
+
+	public void sendEvent(TelemetryEvent event) {
+		if (prefs == null  || !prefs.getPreferences().isTelemetryEnabled()) {
+			return;
 		}
+		client.telemetryEvent(event);
 	}
 
 }
