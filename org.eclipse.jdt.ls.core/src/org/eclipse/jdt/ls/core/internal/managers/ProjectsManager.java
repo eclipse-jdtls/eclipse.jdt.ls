@@ -171,15 +171,17 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 						importer.initialize(rootFolder);
 						if (importer.applies(subMonitor.split(1))) {
 							importer.importToWorkspace(subMonitor.split(70));
-							if (importer.isResolved(rootFolder)) {
+							boolean resolved = importer.isResolved(rootFolder);
+							properties.addProperty("resolved", resolved);
+							this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+							if (resolved) {
 								break;
 							}
 						}
 					} catch (CoreException e) {
 						TelemetryEvent.addLogEntryProperties(properties, LogEntry.from(e.getStatus()));
-						throw e;
-					} finally {
 						this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+						throw e;
 					}
 				}
 			} catch (CoreException e) {
@@ -209,12 +211,12 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 						if (importer.applies(buildFiles, subMonitor.split(1))) {
 							importer.importToWorkspace(subMonitor.split(70));
 							buildFiles = removeImportedConfigurations(buildFiles, importer);
+							this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
 						}
 					} catch (CoreException e) {
 						TelemetryEvent.addLogEntryProperties(properties, LogEntry.from(e.getStatus()));
-						throw e;
-					} finally {
 						this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+						throw e;
 					}
 				}
 			} catch (CoreException e) {
