@@ -1013,5 +1013,107 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		preferences.setJavaFormatOnTypeEnabled(false);
 	}
 
+	@Test
+	public void testNotebook() throws Exception {
+		String text = """
+				import java.math.  BigDecimal;
+
+				BigDecimal   n1 = new
+				   BigDecimal("0");
+				System.  out.  println(n1);
+				""";
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		List<TextEdit> edits = new FormatterHandler(preferenceManager).formatJavaCode(text, options, null, monitor);
+		assertNotNull(edits);
+		assertEquals(1, edits.size());
+		String newText = """
+				import java.math.BigDecimal;
+
+				BigDecimal n1 = new BigDecimal("0");
+				System.out.println(n1);
+				""";
+		assertEquals(newText, edits.get(0).getNewText());
+	}
+
+	@Test
+	public void testNotebookRange() throws Exception {
+		String text = """
+				import java.math.BigDecimal;
+
+				BigDecimal n1
+				= new BigDecimal("0");
+				System.out.println(n1);
+
+				System.out.  println();
+
+				""";
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		Range range = new Range(new Position(2, 0), new Position(4, 23));
+		List<TextEdit> edits = new FormatterHandler(preferenceManager).formatJavaCode(text, options, range, monitor);
+		assertNotNull(edits);
+		assertEquals(1, edits.size());
+		String newText = """
+				import java.math.BigDecimal;
+
+				BigDecimal n1 = new BigDecimal("0");
+				System.out.println(n1);
+
+				System.out.  println();
+
+				""";
+		assertEquals(newText, edits.get(0).getNewText());
+	}
+
+	@Test
+	public void testNotebookClass() throws Exception {
+		String text = """
+				import java.math.BigDecimal;
+
+				public class Test {
+					public static void main(String[] args) {
+						BigDecimal n1 =
+						new BigDecimal("0");
+						System.out  .println(n1);
+					}
+				}
+				""";
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		List<TextEdit> edits = new FormatterHandler(preferenceManager).formatJavaCode(text, options, null, monitor);
+		assertNotNull(edits);
+		assertEquals(1, edits.size());
+		String newText = """
+				import java.math.BigDecimal;
+
+				public class Test {
+					public static void main(String[] args) {
+						BigDecimal n1 = new BigDecimal("0");
+						System.out.println(n1);
+					}
+				}
+				""";
+		assertEquals(newText, edits.get(0).getNewText());
+	}
+
+	@Test
+	public void testNotebookMalformed() throws Exception {
+		String text = """
+				void test() {
+				System.out.  println("test");
+
+				test();
+				""";
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		List<TextEdit> edits = new FormatterHandler(preferenceManager).formatJavaCode(text, options, null, monitor);
+		assertNotNull(edits);
+		assertEquals(1, edits.size());
+		//@formatter:off
+		String newText = "void test() {\n"
+				+ "	System.out.println(\"test\");\n"
+				+ "\n"
+				+ "	test();\n"
+				+ "	\n";
+		//@formatter:on
+		assertEquals(newText, edits.get(0).getNewText());
+	}
 
 }

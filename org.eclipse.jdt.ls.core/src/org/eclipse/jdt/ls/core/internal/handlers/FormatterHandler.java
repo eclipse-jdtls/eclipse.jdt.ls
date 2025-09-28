@@ -14,11 +14,14 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static java.util.stream.Collectors.toMap;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -38,6 +41,7 @@ import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
 import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileVersionerCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences.NonStandardJavaFormatting;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
@@ -53,6 +57,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
 import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.MultiTextEdit;
 import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
@@ -82,8 +87,21 @@ public class FormatterHandler {
 		return format(params.getTextDocument().getUri(), params.getOptions(), params.getRange(), monitor);
 	}
 
-	private List<org.eclipse.lsp4j.TextEdit> format(String uri, FormattingOptions options, Range range, IProgressMonitor monitor) {
+	private List<org.eclipse.lsp4j.TextEdit> format(String uriString, FormattingOptions options, Range range, IProgressMonitor monitor) {
 		if (!preferenceManager.getPreferences().isJavaFormatEnabled()) {
+			return Collections.emptyList();
+		}
+		URI uri = JDTUtils.toURI(uriString);
+		if (uri == null) {
+			return Collections.emptyList();
+		}
+		NonStandardJavaFormatting nonStandardJavaFormatting = preferenceManager.getClientPreferences().getNonStandardJavaFormatting();
+		if (nonStandardJavaFormatting != null && nonStandardJavaFormatting.isValid() && nonStandardJavaFormatting.getSchemes().contains(uri.getScheme())) {
+			Object[] params = { uriString };
+			Object o = JavaLanguageServerPlugin.getInstance().getClientConnection().executeClientCommand(nonStandardJavaFormatting.getGetContentCallback(), params);
+			if (o instanceof String text && !text.isBlank()) {
+				return formatJavaCode(text, options, range, monitor);
+			}
 			return Collections.emptyList();
 		}
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
@@ -105,6 +123,135 @@ public class FormatterHandler {
 		}
 
 		return format(cu, document, region, options, preferenceManager.getPreferences().isJavaFormatComments(), monitor);
+	}
+
+	/**
+	 * public only for testing purpose
+	 */
+	public List<org.eclipse.lsp4j.TextEdit> formatJavaCode(String text, FormattingOptions options, Range range, IProgressMonitor monitor) {
+		String startText = "";
+		String endText = "";
+		String originalText = text;
+		if (range != null) {
+			Document document = new Document(text);
+			IRegion region = getRegion(range, document);
+			if (region == null) {
+				return Collections.emptyList();
+			}
+			if (region.getOffset() > 0 || region.getLength() < document.getLength()) {
+				if (region.getOffset() > 0) {
+					startText = text.substring(0, region.getOffset());
+				}
+				endText = text.substring(region.getOffset() + region.getLength() + 1, document.getLength());
+				try {
+					text = document.get(region.getOffset(), region.getLength());
+				} catch (BadLocationException e) {
+					return Collections.emptyList();
+				}
+			}
+		}
+		String formatted = formatString(text, options, monitor);
+		if (formatted == null) {
+			// check imports
+			Pattern importPattern = Pattern.compile("^(import\\s+.*?);", Pattern.MULTILINE);
+			Matcher importMatcher = importPattern.matcher(text);
+			StringBuilder builder = new StringBuilder();
+			int importEnd = 0;
+			String lineDelimiter = TextUtilities.determineLineDelimiter(text, "\n");
+			while (importMatcher.find()) {
+				builder.append(importMatcher.group()).append(lineDelimiter);
+				importEnd = importMatcher.end();
+			}
+			String imports = builder.toString();
+			builder = new StringBuilder();
+			if (!imports.isBlank()) {
+				String res = formatString(imports, options, monitor);
+				if (res != null) {
+					builder.append(res);
+				} else {
+					builder.append(imports);
+				}
+				builder.append(lineDelimiter);
+			}
+			String remaining = text.substring(importEnd);
+			if (!remaining.trim().isBlank()) {
+				String res = formatString(remaining.trim(), options, monitor);
+				if (res != null) {
+					builder.append(res);
+				} else {
+					builder.append(remaining);
+				}
+			}
+			formatted = builder.toString();
+		}
+		if (formatted != null) {
+			text = originalText;
+			formatted = startText + formatted + endText;
+			Document document = new Document(text);
+			org.eclipse.lsp4j.TextEdit edit = new org.eclipse.lsp4j.TextEdit(new Range(createPosition(document, 0), createPosition(document, document.getLength())), formatted);
+			List<org.eclipse.lsp4j.TextEdit> list = Collections.singletonList(edit);
+			return list;
+		}
+		return Collections.emptyList();
+	}
+
+	private String formatString(String text, FormattingOptions options, IProgressMonitor monitor) {
+		String formatted = format(text, "", "", options, monitor);
+		if (formatted == null) {
+			String prefix = "// PREFIX\npublic class Temporary { {\n";
+			String suffix = "// SUFFIX\n} }";
+			formatted = format(text, prefix, suffix, options, monitor);
+			if (formatted == null) {
+				prefix = "// PREFIX\npublic class Temporary { public void run() {\n";
+				suffix = "// SUFFIX\n} }";
+				formatted = format(text, prefix, suffix, options, monitor);
+				if (formatted == null) {
+					prefix = "// PREFIX\npublic class Temporary {\n";
+					suffix = "// SUFFIX\n}";
+					formatted = format(text, prefix, suffix, options, monitor);
+				}
+			}
+		}
+		return formatted;
+	}
+
+	private String format(String text, String prefix, String suffix, FormattingOptions options, IProgressMonitor monitor) {
+		String content = prefix + text + suffix;
+		IDocument document = new Document();
+		document.set(content);
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(options);
+		int kind = CodeFormatter.K_COMPILATION_UNIT;
+		if (preferenceManager.getPreferences().isJavaFormatComments()) {
+			kind = kind | CodeFormatter.F_INCLUDE_COMMENTS;
+		}
+		TextEdit format = formatter.format(kind, content, prefix.length(), text.length(), 0, TextUtilities.getDefaultLineDelimiter(document));
+		if (format == null || format.getChildren().length == 0 || monitor.isCanceled()) {
+			return null;
+		}
+		try {
+			format.apply(document);
+		} catch (MalformedTreeException | BadLocationException e) {
+			JavaLanguageServerPlugin.logException(e);
+			return null;
+		}
+		text = document.get();
+		text = text.replace(suffix, "");
+		text = text.replace(prefix, "");
+		int indent = 0;
+		while (indent < text.length() && (text.charAt(indent) == ' ' || text.charAt(indent) == '\t')) {
+			indent++;
+		}
+		String[] lines = text.split("\n");
+		StringBuilder builder = new StringBuilder();
+		for (String line : lines) {
+			if (line.length() > 0 && line.length() >= indent && (line.charAt(0) == ' ' || line.charAt(0) == '\t')) {
+				builder.append(line.substring(indent)).append("\n");
+			} else {
+				builder.append(line).append("\n");
+			}
+		}
+		text = builder.toString();
+		return text;
 	}
 
 	private List<org.eclipse.lsp4j.TextEdit> format(ICompilationUnit cu, IDocument document, IRegion region, FormattingOptions options, boolean includeComments, IProgressMonitor monitor) {
