@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.DiagnosticsTagSupport;
 import org.eclipse.lsp4j.DynamicRegistrationCapabilities;
@@ -39,6 +40,35 @@ public class ClientPreferences {
 	private final ClientCapabilities capabilities;
 	private final boolean v3supported;
 	private Map<String, Object> extendedClientCapabilities;
+
+	public static class NonStandardJavaFormatting {
+		List<String> schemes;
+		List<String> extensions;
+		String contentCallback;
+
+		public NonStandardJavaFormatting(List<String> schemes, List<String> extensions, String getContentCallback) {
+			this.schemes = schemes;
+			this.extensions = extensions;
+			this.contentCallback = getContentCallback;
+		}
+
+		public List<String> getSchemes() {
+			return schemes;
+		}
+
+		public List<String> getExtensions() {
+			return extensions;
+		}
+
+		public String getGetContentCallback() {
+			return contentCallback;
+		}
+
+		public boolean isValid() {
+			return getSchemes() != null && !getSchemes().isEmpty() && contentCallback != null && !contentCallback.isBlank();
+		}
+
+	}
 
 	public ClientPreferences(ClientCapabilities caps) {
 		this(caps, null);
@@ -503,5 +533,27 @@ public class ClientPreferences {
 
 	public boolean skipTextEventPropagation() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("skipTextEventPropagation", "false").toString());
+	}
+
+	@SuppressWarnings("unchecked")
+	public NonStandardJavaFormatting getNonStandardJavaFormatting() {
+		Object object = extendedClientCapabilities.getOrDefault("nonStandardJavaFormatting", null);
+		if (object instanceof Map<?, ?> map) {
+			Object s = map.getOrDefault("schemes", null);
+			if (s instanceof List<?> schemes) {
+				Object e = map.getOrDefault("extensions", null);
+				if (e instanceof List<?> extensions) {
+					Object c = map.getOrDefault("getContentCallback", null);
+					if (c instanceof String getContentCallback) {
+						try {
+							return new NonStandardJavaFormatting((List<String>) schemes, ((List<String>) extensions), getContentCallback);
+						} catch (Exception e1) {
+							JavaLanguageServerPlugin.logException(e1);
+						}
+					}
+				}
+			}
+		}
+		return null;
 	}
 }
