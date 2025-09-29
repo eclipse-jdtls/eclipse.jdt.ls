@@ -44,8 +44,12 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 
 	@Before
 	public void setup() throws Exception{
-		importProjects("eclipse/hello");
-		project = WorkspaceHelper.getProject("hello");
+		setupEclipseProject("hello");
+	}
+
+	public void setupEclipseProject(String projectName) throws Exception {
+		importProjects("eclipse/" + projectName);
+		project = WorkspaceHelper.getProject(projectName);
 		wcOwner = new LanguageServerWorkingCopyOwner(connection);
 		server= new JDTLanguageServer(projectsManager, preferenceManager);
 		JavaCore.initializeAfterLoad(null);

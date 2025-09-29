@@ -502,6 +502,7 @@ public class Preferences {
 	 */
 	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED = "java.inlayHints.parameterNames.enabled";
 
+	public static final String JAVA_INLAYHINTS_VARIABLETYPES_ENABLED = "java.inlayHints.variableTypes.enabled";
 	/**
 	 * Preference key for the inlay hints exclusion list
 	 */
@@ -694,6 +695,7 @@ public class Preferences {
 	private int tabSize;
 	private InlayHintsParameterMode inlayHintsParameterMode;
 	private List<String> inlayHintsExclusionList;
+	private boolean inlayHintsVariableTypesEnabled;
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
@@ -954,6 +956,7 @@ public class Preferences {
 		mavenNotCoveredPluginExecutionSeverity = IGNORE;
 		mavenDefaultMojoExecutionAction = IGNORE;
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
+		inlayHintsVariableTypesEnabled = false;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
 		javacEnabled = false;
@@ -1326,6 +1329,8 @@ public class Preferences {
 		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
 		List<String> inlayHintsExclusionList = getList(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS, Collections.emptyList());
 		prefs.setInlayHintsExclusionList(inlayHintsExclusionList);
+		boolean inlayHintsVariableTypesEnabled = getBoolean(configuration, JAVA_INLAYHINTS_VARIABLETYPES_ENABLED, false);
+		prefs.setInlayHintsVariableTypesEnabled(inlayHintsVariableTypesEnabled);
 		String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
 		prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, ProjectEncodingMode.IGNORE));
 		boolean avoidVolatileChanges = getBoolean(configuration, JAVA_CODEACTION_SORTMEMBER_AVOIDVOLATILECHANGES, true);
@@ -1383,6 +1388,10 @@ public class Preferences {
 		prefs.setSearchScope(SearchScope.fromString(searchScope, SearchScope.all));
 
 		return prefs;
+	}
+
+	public void setInlayHintsVariableTypesEnabled(boolean inlayHintsVariableTypesEnabled) {
+		this.inlayHintsVariableTypesEnabled = inlayHintsVariableTypesEnabled;
 	}
 
 	private static boolean validateFilePattern(String filename) {
@@ -2324,6 +2333,10 @@ public class Preferences {
 
 	public InlayHintsParameterMode getInlayHintsParameterMode() {
 		return inlayHintsParameterMode;
+	}
+
+	public boolean isInlayHintsVariableTypesEnabled() {
+		return inlayHintsVariableTypesEnabled;
 	}
 
 	public void setInlayHintsParameterMode(InlayHintsParameterMode inlayHintsParameterMode) {
