@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.BooleanLiteral;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
@@ -31,6 +33,7 @@ import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
@@ -38,7 +41,10 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.InlayHint;
@@ -51,14 +57,16 @@ class InlayHintVisitor extends ASTVisitor {
 	private int startOffset;
 	private int endOffset;
 	private ITypeRoot typeRoot;
-	private PreferenceManager preferenceManager;
+	private boolean isVariableTypeHintsEnabled;
+	private InlayHintsParameterMode inlayHintsParameterMode;
 
 	InlayHintVisitor(int startOffset, int endOffset, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
 		this.startOffset = startOffset;
 		this.endOffset = endOffset;
 		this.typeRoot = typeRoot;
 		this.hints = new ArrayList<>();
-		this.preferenceManager = preferenceManager;
+		this.isVariableTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsVariableTypesEnabled();
+		this.inlayHintsParameterMode = preferenceManager.getPreferences().getInlayHintsParameterMode();
 	}
 
 	@Override
@@ -66,7 +74,7 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveConstructorBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveConstructorBinding(), node.arguments());
 		return true;
 	}
 
@@ -75,7 +83,7 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveConstructorBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveConstructorBinding(), node.arguments());
 		return true;
 	}
 
@@ -84,7 +92,7 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveMethodBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveMethodBinding(), node.arguments());
 		return true;
 	}
 
@@ -93,7 +101,7 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveMethodBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveMethodBinding(), node.arguments());
 		return true;
 	}
 
@@ -102,7 +110,7 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveConstructorBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveConstructorBinding(), node.arguments());
 		return true;
 	}
 
@@ -111,10 +119,62 @@ class InlayHintVisitor extends ASTVisitor {
 		if (isOutOfRange(node) || isGenerated(node)) {
 			return true;
 		}
-		resolveInlayHints(node.resolveConstructorBinding(), node.arguments());
+		resolveParameterInlayHints(node.resolveConstructorBinding(), node.arguments());
 		return true;
 	}
 
+	@Override
+	public boolean visit(VariableDeclarationStatement node) {
+		if (!isVariableTypeHintsEnabled ||
+			isOutOfRange(node) ||
+			isGenerated(node) ||
+			!node.getType().isVar()) {
+			return true;
+		}
+		List<VariableDeclarationFragment> fragments = node.fragments();
+		for (VariableDeclarationFragment fragment : fragments) {
+			IVariableBinding binding = fragment.resolveBinding();
+			if (binding == null) {
+				continue;
+			}
+			Expression initializer = fragment.getInitializer();
+			// Skip hints for direct assignment of primitives, String, new object, array, or any cast
+			if (isUninterestingExpression(initializer)) {
+				continue;
+			}
+			String inferredType = binding.getType() != null ? binding.getType().getName() : null;
+			if (inferredType == null || inferredType.isEmpty()) {
+				continue;
+			}
+			// Place the hint after the variable name
+			var varName = fragment.getName();
+			int nameStart = varName.getStartPosition();
+			int nameLength = varName.getLength();
+			try {
+				int[] lineAndColumn = JsonRpcHelpers.toLine(typeRoot.getBuffer(), nameStart + nameLength);
+				String label = ": " + inferredType;
+				InlayHint hint = new InlayHint(new Position(lineAndColumn[0], lineAndColumn[1]), Either.forLeft(label));
+				hint.setPaddingLeft(true);
+				hints.add(hint);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+		return true;
+	}
+
+
+	private boolean isUninterestingExpression(Expression initializer) {
+		return initializer == null ||
+				initializer instanceof NumberLiteral ||
+				initializer instanceof BooleanLiteral ||
+				initializer instanceof CharacterLiteral ||
+				initializer instanceof StringLiteral ||
+				initializer instanceof ClassInstanceCreation ||
+				initializer instanceof ArrayCreation ||
+				initializer instanceof ArrayInitializer ||
+				initializer instanceof CastExpression;
+	}
 	/**
 	 * Return the inlay hints after this visitor visits the AST. An empty list
 	 * will be returned when there is no inlay hints to show or the results is
@@ -149,12 +209,14 @@ class InlayHintVisitor extends ASTVisitor {
 	}
 
 	/**
-	 * Resolve inlay hints. The results can be got by calling {@link #getInlayHints()}.
+	 * Resolve parameter inlay hints. The results can be got by calling
+	 * {@link #getInlayHints()}.
+	 *
 	 * @param methodBinding
 	 * @param arguments
 	 */
-	private void resolveInlayHints(IMethodBinding methodBinding, List<Expression> arguments) {
-		if (methodBinding == null) {
+	private void resolveParameterInlayHints(IMethodBinding methodBinding, List<Expression> arguments) {
+		if (methodBinding == null || inlayHintsParameterMode == InlayHintsParameterMode.NONE) {
 			return;
 		}
 
@@ -255,7 +317,7 @@ class InlayHintVisitor extends ASTVisitor {
 	 * </p>
 	 */
 	private boolean acceptArgument(Expression argument, String paramName) {
-		if (InlayHintsParameterMode.LITERALS.equals(preferenceManager.getPreferences().getInlayHintsParameterMode())) {
+		if (InlayHintsParameterMode.LITERALS.equals(inlayHintsParameterMode)) {
 			if (!isLiteral(argument)) {
 				return false;
 			}
@@ -294,4 +356,5 @@ class InlayHintVisitor extends ASTVisitor {
 		String argName = ((SimpleName) argument).getIdentifier();
 		return Objects.equals(argName, paramName);
 	}
+
 }

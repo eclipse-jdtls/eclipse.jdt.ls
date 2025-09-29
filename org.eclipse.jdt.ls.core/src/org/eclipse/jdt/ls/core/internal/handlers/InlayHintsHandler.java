@@ -44,7 +44,8 @@ public class InlayHintsHandler {
 	 * @return inlay hints.
 	 */
 	public List<InlayHint> inlayHint(InlayHintParams params, IProgressMonitor monitor) {
-		if (InlayHintsParameterMode.NONE.equals(preferenceManager.getPreferences().getInlayHintsParameterMode())) {
+		var prefs = preferenceManager.getPreferences();
+		if (InlayHintsParameterMode.NONE.equals(prefs.getInlayHintsParameterMode()) && !prefs.isInlayHintsVariableTypesEnabled()) {
 			return Collections.emptyList();
 		}
 

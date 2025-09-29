@@ -507,4 +507,65 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(5, inlayHints.get(0).getPosition().getLine());
 		assertEquals(16, inlayHints.get(0).getPosition().getCharacter());
 	}
+
+	@Test
+	public void testVariableTypeHints() throws Exception {
+		setupEclipseProject("java11");
+		preferences.setInlayHintsVariableTypesEnabled(true);
+		ICompilationUnit unit = getWorkingCopy("src/Foo.java", """
+				public class Foo {
+
+					@SuppressWarnings("unused")
+				    public void varImplicitTypes() {
+				        //Should show var inlayhints
+				        var _greeting= getGreeting();
+				        var _string = "foo" + "1";
+
+				        //Should NOT show var inlayhints
+				        var _int = 1;
+				        var _boolean = true;
+				        var _double = 1.0;
+				        var _float = 1.0f;
+				        var _char = 'a';
+				        var _long = 1L;
+				        var _object = new Object();
+				        var _exception= new RuntimeException("Foo");
+				        var _castString= (String) getGreeting();
+				        var _byte= (byte) 1;
+				        var _short = (short) 1;
+				        var _array = new int[1];
+				        var _arrayInit = new int[] {1, 2, 3};
+					}
+
+				    private String getGreeting() {
+				        return "Hello";
+				    }
+				}
+				""");
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(28, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show inlay hints for _greeting and _string only
+		assertEquals(2, inlayHints.size());
+		boolean foundGreeting = false;
+		boolean foundString = false;
+		for (InlayHint hint : inlayHints) {
+			String label = hint.getLabel().getLeft();
+			Position pos = hint.getPosition();
+			if (label != null && label.contains(": String")) {
+				// _greeting or _string
+				if (pos.getLine() == 5) {
+					foundGreeting = true; // var _greeting= getGreeting();
+				}
+				if (pos.getLine() == 6) {
+					foundString = true;   // var _string = "foo" + "1";
+				}
+			}
+		}
+		assertTrue("Should find inlay hint for _greeting", foundGreeting);
+		assertTrue("Should find inlay hint for _string", foundString);
+	}
 }
