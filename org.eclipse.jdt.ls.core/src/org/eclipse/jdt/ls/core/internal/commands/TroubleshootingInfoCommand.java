@@ -20,7 +20,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 
 /**
- * This command collects some diagnostic info to displaying to the use in case of issues during project import.¨
+ * This command collects some diagnostic info to display to the user in case of issues during project import.
  * The purpose of this info is to display the effective values being used: many times, the configuration passed to
  * the language server is only used as a start, with additional detection and configuration going on inside the
  * tools like maven, etc.
