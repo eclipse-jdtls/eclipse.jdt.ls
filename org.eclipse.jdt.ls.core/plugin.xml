@@ -142,6 +142,9 @@
             <command
                   id="java.vm.getAllInstalls">
             </command>
+			<command
+				  id="java.getTroubleshootingInfo">
+	 		</command>
              <command
                   id="java.project.resolveText">
             </command>
