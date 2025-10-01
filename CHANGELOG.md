@@ -1,5 +1,22 @@
 # Change Log
 
+# [1.51.0 (October 2nd, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/144?closed=1)
+ * performance - Improve Null Analysis by reducing & deferring expensive calls. See [#3531](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3531).
+ * enhancement - Support Java 25. See [#3527](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3527), [#3538](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3538).
+ * enhancement - Support fuzzy camel case search for workspace symbols. See [#3513](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3513).
+ * enhancement - Enable formatting Java in Jupyter Notebook. See [#3548](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3548).
+ * enhancement - Add `getTroubleshootingInfo` command. See [#3528](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3528).
+ * enhancement - Support inlay hints for var declarations. See [#3549](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3549).
+ * bug fix - Fix Android Support with recent AGP versions. See [#3181](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3181).
+ * bug fix - Ensure Gradle 9.1.0 requires JDK >= 25. See [#3540](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3540).
+ * bug fix - Data folder should be created in OS cache directory. See [#3516](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3516).
+ * dependencies - Use the Eclipse 4.37 platform release repository. See [#3526](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3526).
+ * dependencies - Update M2E 2.9.0 to 2.9.1. See [#3520](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3520).
+ * dependencies - Bump `org.codehaus.gmavenplus:gmavenplus-plugin` from 4.2.0 to 4.2.1. See [#3535](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3535).
+ * dependencies - Bump `groovy-version` from 5.0.0 to 5.0.1. See [#3529](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3529).
+ * dependencies - Update `maven-wrapper` to 3.9.11. See [#3522](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3522).
+ * debt - Simplify logic for `ParentProcessWatcher`. See [#3524](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3524).
+
 # [1.50.0 (September 4th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/143?closed=1)
  * performance - Delay registration of resource/element listeners. See [#3510](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3510).
  * bug fix - Path expansion is not working for the `sources` field in `referencedLibraries`. See [#3495](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3495).
