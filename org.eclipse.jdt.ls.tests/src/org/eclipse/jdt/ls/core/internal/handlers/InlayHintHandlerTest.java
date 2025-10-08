@@ -509,6 +509,84 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testDisabledLambdaParameterTypeHints() throws Exception {
+		setupEclipseProject("java11");
+		preferences.setInlayHintsParameterTypesEnabled(false);
+		ICompilationUnit unit = getWorkingCopy("src/Foo.java",
+		"""
+			import java.util.stream.Stream;
+			public class Foo {
+				void bar() {
+					Stream.of(2, 3, 5, 7).map(n -> n * 2);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		assertEquals(inlayHints.toString(), 0, inlayHints.size());
+	}
+
+	@Test
+	public void testLambdaParameterTypeHints() throws Exception {
+		setupEclipseProject("java11");
+		preferences.setInlayHintsParameterTypesEnabled(true);
+		ICompilationUnit unit = getWorkingCopy("src/Foo.java",
+		"""
+			import java.util.Map;
+			import java.util.HashMap;
+			public class Foo {
+				void bar() {
+					Map<String, Integer> map = new HashMap<>();
+					map.forEach((key, value) -> System.out.println(key + value));
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		assertEquals(inlayHints.toString(), 2, inlayHints.size());
+		// Should show type hints for lambda parameters only (no 'action:' parameter hint)
+		assertEquals("String", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("Integer", inlayHints.get(1).getLabel().getLeft());
+	}
+
+	@Test
+	public void testLambdaExplicitTypeNoHints() throws Exception {
+		setupEclipseProject("java11");
+		preferences.setInlayHintsParameterTypesEnabled(true);
+		ICompilationUnit unit = getWorkingCopy("src/Foo.java",
+		"""
+			import java.util.stream.Stream;
+			public class Foo {
+				void bar() {
+					// Explicit type - should not show inlay hint
+					Stream.of(2, 3, 5, 7).map((Integer n) -> n * 2);
+					// Implicit type - should show inlay hint
+					Stream.of(2, 3, 5, 7).map(x -> x * 2);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(9, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		assertEquals(1, inlayHints.size());
+		// Should only show hint for the implicit type lambda parameter
+		assertEquals("Integer", inlayHints.get(0).getLabel().getLeft());
+		assertEquals(6, inlayHints.get(0).getPosition().getLine());
+	}
+
+	@Test
 	public void testVariableTypeHints() throws Exception {
 		setupEclipseProject("java11");
 		preferences.setInlayHintsVariableTypesEnabled(true);
@@ -568,4 +646,5 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue("Should find inlay hint for _greeting", foundGreeting);
 		assertTrue("Should find inlay hint for _string", foundString);
 	}
+
 }

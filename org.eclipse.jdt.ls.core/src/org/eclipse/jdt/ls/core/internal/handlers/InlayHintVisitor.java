@@ -33,16 +33,19 @@ import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
-import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -58,6 +61,7 @@ class InlayHintVisitor extends ASTVisitor {
 	private int endOffset;
 	private ITypeRoot typeRoot;
 	private boolean isVariableTypeHintsEnabled;
+	private boolean isParameterTypeHintsEnabled;
 	private InlayHintsParameterMode inlayHintsParameterMode;
 
 	InlayHintVisitor(int startOffset, int endOffset, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
@@ -66,6 +70,7 @@ class InlayHintVisitor extends ASTVisitor {
 		this.typeRoot = typeRoot;
 		this.hints = new ArrayList<>();
 		this.isVariableTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsVariableTypesEnabled();
+		this.isParameterTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsParameterTypesEnabled();
 		this.inlayHintsParameterMode = preferenceManager.getPreferences().getInlayHintsParameterMode();
 	}
 
@@ -120,6 +125,62 @@ class InlayHintVisitor extends ASTVisitor {
 			return true;
 		}
 		resolveParameterInlayHints(node.resolveConstructorBinding(), node.arguments());
+		return true;
+	}
+
+	@Override
+	public boolean visit(LambdaExpression node) {
+		if (isOutOfRange(node) || isGenerated(node) || !isParameterTypeHintsEnabled) {
+			return true;
+		}
+
+		// Get the method binding for the lambda to understand parameter types
+		IMethodBinding methodBinding = node.resolveMethodBinding();
+		if (methodBinding == null) {
+			return true;
+		}
+
+		// Get parameter types from the functional interface
+		ITypeBinding[] parameterTypes = methodBinding.getParameterTypes();
+		List<?> parameters = node.parameters();
+
+		if (parameters.size() != parameterTypes.length) {
+			return true;
+		}
+
+		try {
+			for (int i = 0; i < parameters.size(); i++) {
+				Object param = parameters.get(i);
+				if (param instanceof SingleVariableDeclaration) {
+					// Explicit type lambda parameter (e.g., (Integer n) -> n * 2)
+					// Skip showing hint since type is already visible.
+					// And since mixing implicit and explicit parameter types is forbidden,
+					// there's no need to keep processing parameters any further.
+					return true;
+				}
+
+				SimpleName paramName = null;
+
+				if (param instanceof SimpleName) {
+					// Implicit type lambda parameter (e.g., n -> n * 2)
+					paramName = (SimpleName) param;
+				} else if (param instanceof VariableDeclaration) {
+					// Other variable declarations
+					paramName = ((VariableDeclaration) param).getName();
+				}
+
+				if (paramName != null) {
+					String typeName = parameterTypes[i].getName();
+					int[] lineAndColumn = JsonRpcHelpers.toLine(typeRoot.getBuffer(), paramName.getStartPosition());
+					InlayHint hint = new InlayHint(new Position(lineAndColumn[0], lineAndColumn[1]), Either.forLeft(typeName));
+					hint.setPaddingRight(true);
+					hints.add(hint);
+				}
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+
 		return true;
 	}
 
@@ -220,7 +281,7 @@ class InlayHintVisitor extends ASTVisitor {
 			return;
 		}
 
-		if (arguments.size() == 0) {
+		if (arguments.isEmpty()) {
 			return;
 		}
 
@@ -254,6 +315,7 @@ class InlayHintVisitor extends ASTVisitor {
 
 				int[] lineAndColumn = JsonRpcHelpers.toLine(typeRoot.getBuffer(), arg.getStartPosition());
 				InlayHint hint = new InlayHint(new Position(lineAndColumn[0], lineAndColumn[1]), Either.forLeft(label));
+				hint.setPaddingRight(true);
 				hints.add(hint);
 			}
 		} catch (JavaModelException e) {
@@ -313,6 +375,7 @@ class InlayHintVisitor extends ASTVisitor {
 	 * <ul>
 	 *   <li>It's in literal mode but the given argument is not a literal</li>
 	 *   <li>Argument name and parameter names are same</li>
+	 *   <li>Argument is a lambda expression (lambda parameters provide their own type hints)</li>
 	 * </ul>
 	 * </p>
 	 */
@@ -321,6 +384,11 @@ class InlayHintVisitor extends ASTVisitor {
 			if (!isLiteral(argument)) {
 				return false;
 			}
+		}
+
+		// Skip parameter hints for lambda expressions since they have their own type hints
+		if (argument instanceof LambdaExpression) {
+			return false;
 		}
 
 		return !isSameName(argument, paramName);
