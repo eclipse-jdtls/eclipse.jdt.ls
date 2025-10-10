@@ -502,9 +502,12 @@ public class Preferences {
 	 */
 	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED = "java.inlayHints.parameterNames.enabled";
 
+	public static final String JAVA_INLAYHINTS_PARAMETERNAMES_SUPPRESS_WHEN_SAME_NAME_NUMBERED = "java.inlayHints.parameterNames.suppressWhenSameNameNumbered";
+
 	public static final String JAVA_INLAYHINTS_VARIABLETYPES_ENABLED = "java.inlayHints.variableTypes.enabled";
 
 	public static final String JAVA_INLAYHINTS_PARAMETERTYPES_ENABLED = "java.inlayHints.parameterTypes.enabled";
+
 	/**
 	 * Preference key for the inlay hints exclusion list
 	 */
@@ -716,6 +719,7 @@ public class Preferences {
 	private boolean chainCompletionEnabled;
 	private List<String> diagnosticFilter;
 	private SearchScope searchScope;
+	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -1331,6 +1335,8 @@ public class Preferences {
 		prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
 		String inlayHintsParameterMode = getString(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED, null);
 		prefs.setInlayHintsParameterMode(InlayHintsParameterMode.fromString(inlayHintsParameterMode, InlayHintsParameterMode.LITERALS));
+		boolean inlayHintsSuppressedWhenSameNameNumberedParameter = getBoolean(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_SUPPRESS_WHEN_SAME_NAME_NUMBERED, true);
+		prefs.setInlayHintsSuppressedWhenSameNameNumberedParameter(inlayHintsSuppressedWhenSameNameNumberedParameter);
 		List<String> inlayHintsExclusionList = getList(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_EXCLUSIONS, Collections.emptyList());
 		prefs.setInlayHintsExclusionList(inlayHintsExclusionList);
 		boolean inlayHintsVariableTypesEnabled = getBoolean(configuration, JAVA_INLAYHINTS_VARIABLETYPES_ENABLED, false);
@@ -2357,6 +2363,14 @@ public class Preferences {
 
 	public void setInlayHintsParameterMode(InlayHintsParameterMode inlayHintsParameterMode) {
 		this.inlayHintsParameterMode = inlayHintsParameterMode;
+	}
+
+	public boolean isInlayHintsSuppressedWhenSameNameNumberedParameter() {
+		return inlayHintsSuppressedWhenSameNameNumberedParameter;
+	}
+
+	public void setInlayHintsSuppressedWhenSameNameNumberedParameter(boolean inlayHintsSuppressedWhenSameNameNumberedParameter) {
+		this.inlayHintsSuppressedWhenSameNameNumberedParameter = inlayHintsSuppressedWhenSameNameNumberedParameter;
 	}
 
 	public Preferences setProjectEncoding(ProjectEncodingMode projectEncoding) {

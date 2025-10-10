@@ -25,7 +25,8 @@ public class InlayHintsPreferenceChangeListener implements IPreferencesChangeLis
     public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
 		if (!Objects.equals(oldPreferences.getInlayHintsParameterMode(), newPreferences.getInlayHintsParameterMode())
 		|| oldPreferences.isInlayHintsVariableTypesEnabled() != newPreferences.isInlayHintsVariableTypesEnabled()
-		|| oldPreferences.isInlayHintsParameterTypesEnabled() != newPreferences.isInlayHintsParameterTypesEnabled()) {
+		|| oldPreferences.isInlayHintsParameterTypesEnabled() != newPreferences.isInlayHintsParameterTypesEnabled()
+		|| oldPreferences.isInlayHintsSuppressedWhenSameNameNumberedParameter() != newPreferences.isInlayHintsSuppressedWhenSameNameNumberedParameter()) {
             refresh();
         }
 

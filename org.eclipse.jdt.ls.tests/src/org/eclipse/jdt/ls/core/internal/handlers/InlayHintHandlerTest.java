@@ -31,9 +31,15 @@ import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.junit.Before;
 import org.junit.Test;
 
 public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
+
+	@Before
+	public void initPreferences() throws Exception{
+		preferences.setInlayHintsSuppressedWhenSameNameNumberedParameter(true);
+	}
 
 	@Test
 	public void testNoneMode() throws JavaModelException {
@@ -645,6 +651,224 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		}
 		assertTrue("Should find inlay hint for _greeting", foundGreeting);
 		assertTrue("Should find inlay hint for _string", foundString);
+	}
+
+	@Test
+	public void testSamePrefixParameterFilter() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			import java.util.stream.Stream;
+			class Foo {
+				public static void process(String s1, String s2, String s3) {}
+				public static void main(String[] args) {
+					print("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
+		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterLongerPrefix() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void process(String param1, String param2, String param3) {}
+				void bar() {
+					process("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
+		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterMixed() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void mixedParams(String s1, String description, String s2) {}
+				void descriptiveParams(String name, String description, String value) {}
+				void bar() {
+					mixedParams("first", "desc", "second");
+					descriptiveParams("name", "desc", "value");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show hints for both methods since neither has ALL parameters following same prefix+number pattern
+		assertEquals(6, inlayHints.size());
+		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("description:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("s2:", inlayHints.get(2).getLabel().getLeft());
+		assertEquals("name:", inlayHints.get(3).getLabel().getLeft());
+		assertEquals("description:", inlayHints.get(4).getLabel().getLeft());
+		assertEquals("value:", inlayHints.get(5).getLabel().getLeft());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterSingleParam() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void singleParam(String s1) {}
+				void bar() {
+					singleParam("test");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show hints for single parameter methods (filter only applies to methods with 2+ params)
+		assertEquals(1, inlayHints.size());
+		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterDifferentPrefixes() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void differentPrefixes(String s1, String t1, String u1) {}
+				void bar() {
+					differentPrefixes("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show hints since parameters have different prefixes (s, t, u)
+		assertEquals(3, inlayHints.size());
+		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("t1:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("u1:", inlayHints.get(2).getLabel().getLeft());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterNotStartingWithOne() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void startingWithZero(String s0, String s1, String s2) {}
+				void startingWithTwo(String s2, String s3, String s4) {}
+				void bar() {
+					startingWithZero("first", "second", "third");
+					startingWithTwo("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show hints since parameters don't start with 1
+		assertEquals(6, inlayHints.size());
+		assertEquals("s0:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("s1:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("s2:", inlayHints.get(2).getLabel().getLeft());
+		assertEquals("s2:", inlayHints.get(3).getLabel().getLeft());
+		assertEquals("s3:", inlayHints.get(4).getLabel().getLeft());
+		assertEquals("s4:", inlayHints.get(5).getLabel().getLeft());
+	}
+
+	@Test
+	public void testSamePrefixParameterFilterNonConsecutive() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void nonConsecutive(String s1, String s3, String s5) {}
+				void bar() {
+					nonConsecutive("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+
+		// Should show hints since parameters are not consecutive (1, 3, 5)
+		assertEquals(3, inlayHints.size());
+		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("s3:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("s5:", inlayHints.get(2).getLabel().getLeft());
+	}
+
+	@Test
+	public void testDisableSameNamedNumberedParameterFilter() throws JavaModelException {
+		preferences.setInlayHintsParameterMode(InlayHintsParameterMode.ALL);
+		preferences.setInlayHintsSuppressedWhenSameNameNumberedParameter(false);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void samePrefixParameter(String s1, String s2, String s3) {}
+				void bar() {
+					samePrefixParameter("first", "second", "third");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		assertEquals(3, inlayHints.size());
+		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
+		assertEquals("s2:", inlayHints.get(1).getLabel().getLeft());
+		assertEquals("s3:", inlayHints.get(2).getLabel().getLeft());
 	}
 
 }

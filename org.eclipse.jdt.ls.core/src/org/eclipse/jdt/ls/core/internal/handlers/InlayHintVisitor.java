@@ -16,6 +16,8 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -63,6 +65,7 @@ class InlayHintVisitor extends ASTVisitor {
 	private boolean isVariableTypeHintsEnabled;
 	private boolean isParameterTypeHintsEnabled;
 	private InlayHintsParameterMode inlayHintsParameterMode;
+	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
 
 	InlayHintVisitor(int startOffset, int endOffset, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
 		this.startOffset = startOffset;
@@ -72,6 +75,7 @@ class InlayHintVisitor extends ASTVisitor {
 		this.isVariableTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsVariableTypesEnabled();
 		this.isParameterTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsParameterTypesEnabled();
 		this.inlayHintsParameterMode = preferenceManager.getPreferences().getInlayHintsParameterMode();
+		this.inlayHintsSuppressedWhenSameNameNumberedParameter = preferenceManager.getPreferences().isInlayHintsSuppressedWhenSameNameNumberedParameter();
 	}
 
 	@Override
@@ -300,6 +304,11 @@ class InlayHintVisitor extends ASTVisitor {
 			return;
 		}
 
+		// Filter out methods with parameters that follow  prefix + incremented number pattern
+		if (inlayHintsSuppressedWhenSameNameNumberedParameter && hasNumberedParameterPattern(parameterNames)) {
+			return;
+		}
+
 		try {
 			int paramNum = Math.min(parameterNames.length, arguments.size());
 			for (int i = 0; i < paramNum; i++) {
@@ -423,6 +432,45 @@ class InlayHintVisitor extends ASTVisitor {
 
 		String argName = ((SimpleName) argument).getIdentifier();
 		return Objects.equals(argName, paramName);
+	}
+
+	/**
+	 * Pattern to validate first parameter and extract prefix (e.g., s1 -> "s", param_1 -> "param_").
+	 * Group 1: prefix (any non-digit characters, no numbers allowed)
+	 */
+	private static final Pattern FIRST_PARAM_PATTERN = Pattern.compile("^([^\\d]+)1$");
+
+	/**
+	 * Check if the method has parameters that follow the pattern of same prefix + consecutive numbers
+	 * starting from 1 (e.g., s1, s2, s3 or param1, param2, param3). Methods with such parameter
+	 * patterns typically don't benefit from inlay hints as the parameter names are not descriptive.
+	 *
+	 * @param parameterNames the parameter names to check
+	 * @return true if all parameters follow the same prefix+consecutive number pattern starting from 1
+	 */
+	private boolean hasNumberedParameterPattern(String[] parameterNames) {
+		if (parameterNames == null || parameterNames.length < 2 || parameterNames[0] == null) {
+			return false;
+		}
+
+		String firstParam = parameterNames[0];
+
+		Matcher matcher = FIRST_PARAM_PATTERN.matcher(firstParam);
+		if (!matcher.matches()) {
+			return false;
+		}
+
+		String prefix = matcher.group(1);
+
+		// Check remaining parameters using simple string concatenation
+		for (int i = 1; i < parameterNames.length; i++) {
+			String expectedParam = prefix + (i + 1);
+			if (!expectedParam.equals(parameterNames[i])) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 }
