@@ -72,6 +72,7 @@ public class FormatterHandler {
 	private static final char COMMA = ',';
 	private static final String SPACE = " ";
 	private static final String TAB = "\t";
+	private static final String EMPTY = "";
 
 	private PreferenceManager preferenceManager;
 
@@ -129,8 +130,8 @@ public class FormatterHandler {
 	 * public only for testing purpose
 	 */
 	public List<org.eclipse.lsp4j.TextEdit> formatJavaCode(String text, FormattingOptions options, Range range, IProgressMonitor monitor) {
-		String startText = "";
-		String endText = "";
+		String startText = EMPTY;
+		String endText = EMPTY;
 		String originalText = text;
 		if (range != null) {
 			Document document = new Document(text);
@@ -150,7 +151,7 @@ public class FormatterHandler {
 				}
 			}
 		}
-		String formatted = formatString(text, options, monitor);
+		String formatted = format(text, EMPTY, EMPTY, CodeFormatter.K_STATEMENTS, options, monitor);
 		if (formatted == null) {
 			// check imports
 			Pattern importPattern = Pattern.compile("^(import\\s+.*?);", Pattern.MULTILINE);
@@ -165,7 +166,7 @@ public class FormatterHandler {
 			String imports = builder.toString();
 			builder = new StringBuilder();
 			if (!imports.isBlank()) {
-				String res = formatString(imports, options, monitor);
+				String res = format(imports, EMPTY, EMPTY, CodeFormatter.K_UNKNOWN, options, monitor);
 				if (res != null) {
 					builder.append(res);
 				} else {
@@ -196,31 +197,31 @@ public class FormatterHandler {
 	}
 
 	private String formatString(String text, FormattingOptions options, IProgressMonitor monitor) {
-		String formatted = format(text, "", "", options, monitor);
+		String formatted = format(text, EMPTY, EMPTY, CodeFormatter.K_STATEMENTS, options, monitor);
 		if (formatted == null) {
-			String prefix = "// PREFIX\npublic class Temporary { {\n";
+			String prefix = "// PREFIX\npublic class Temporary { public void run() {\n";
 			String suffix = "// SUFFIX\n} }";
-			formatted = format(text, prefix, suffix, options, monitor);
+			formatted = format(text, prefix, suffix, CodeFormatter.K_COMPILATION_UNIT, options, monitor);
 			if (formatted == null) {
-				prefix = "// PREFIX\npublic class Temporary { public void run() {\n";
+				prefix = "// PREFIX\npublic class Temporary { {\n";
 				suffix = "// SUFFIX\n} }";
-				formatted = format(text, prefix, suffix, options, monitor);
+				formatted = format(text, prefix, suffix, CodeFormatter.K_COMPILATION_UNIT, options, monitor);
 				if (formatted == null) {
 					prefix = "// PREFIX\npublic class Temporary {\n";
 					suffix = "// SUFFIX\n}";
-					formatted = format(text, prefix, suffix, options, monitor);
+					formatted = format(text, prefix, suffix, CodeFormatter.K_COMPILATION_UNIT, options, monitor);
 				}
 			}
 		}
 		return formatted;
 	}
 
-	private String format(String text, String prefix, String suffix, FormattingOptions options, IProgressMonitor monitor) {
+	private String format(String text, String prefix, String suffix, int type, FormattingOptions options, IProgressMonitor monitor) {
 		String content = prefix + text + suffix;
 		IDocument document = new Document();
 		document.set(content);
-		CodeFormatter formatter = ToolFactory.createCodeFormatter(options);
-		int kind = CodeFormatter.K_COMPILATION_UNIT;
+		CodeFormatter formatter = ToolFactory.createCodeFormatter(getOptions(options, null));
+		int kind = type;
 		if (preferenceManager.getPreferences().isJavaFormatComments()) {
 			kind = kind | CodeFormatter.F_INCLUDE_COMMENTS;
 		}
@@ -235,8 +236,8 @@ public class FormatterHandler {
 			return null;
 		}
 		text = document.get();
-		text = text.replace(suffix, "");
-		text = text.replace(prefix, "");
+		text = text.replace(suffix, EMPTY);
+		text = text.replace(prefix, EMPTY);
 		int indent = 0;
 		while (indent < text.length() && (text.charAt(indent) == ' ' || text.charAt(indent) == '\t')) {
 			indent++;
@@ -245,9 +246,9 @@ public class FormatterHandler {
 		StringBuilder builder = new StringBuilder();
 		for (String line : lines) {
 			if (line.length() > 0 && line.length() >= indent && (line.charAt(0) == ' ' || line.charAt(0) == '\t')) {
-				builder.append(line.substring(indent)).append("\n");
+				builder.append(line.substring(indent)).append(NEW_LINE);
 			} else {
-				builder.append(line).append("\n");
+				builder.append(line).append(NEW_LINE);
 			}
 		}
 		text = builder.toString();
@@ -328,7 +329,7 @@ public class FormatterHandler {
 	}
 
 	public static Map<String, String> getOptions(FormattingOptions options, ICompilationUnit cu) {
-		Map<String, String> eclipseOptions = cu.getOptions(true);
+		Map<String, String> eclipseOptions = cu == null ? JavaCore.getOptions() : cu.getOptions(true);
 
 		Map<String, String> customOptions = options.entrySet().stream().filter(map -> chekIfValueIsNotNull(map.getValue())).collect(toMap(e -> e.getKey(), e -> getOptionValue(e.getValue())));
 

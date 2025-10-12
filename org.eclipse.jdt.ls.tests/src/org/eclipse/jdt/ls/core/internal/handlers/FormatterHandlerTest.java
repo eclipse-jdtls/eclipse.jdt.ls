@@ -1036,6 +1036,62 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testNotebook2() throws Exception {
+		String text = """
+				import static smile.plot.vega.Predicate.*;
+
+				var bar = new View("2D Histogram Heatmap").width(300).height(200);
+				    bar.mark("rect");
+				bar.viewConfig()
+				        .stroke("transparent");
+				bar.data().values(new DatasetLoader().loadAsJson("movies").toPrettyString());
+				bar.encode("x", "IMDB Rating")
+				            .type("quantitative")
+				        .title("IMDB Rating")
+				            .bin(new BinParams().maxBins(60));
+				bar.encode("y", "Rotten Tomatoes Rating")
+				        .type("quantitative")
+				        .bin(new BinParams().maxBins(40));
+				bar.encode("color", null)
+				        .type("quantitative")
+				        .aggregate("count");
+				bar.transform()
+				        .filter(and(valid("IMDB Rating"), valid("Rotten Tomatoes Rating")));
+
+				display(bar.toPrettyString(), "application/vnd.vegalite.v5+json");
+
+				""";
+		FormattingOptions options = new FormattingOptions(4, true);// ident == 4 spaces
+		List<TextEdit> edits = new FormatterHandler(preferenceManager).formatJavaCode(text, options, null, monitor);
+		assertNotNull(edits);
+		assertEquals(1, edits.size());
+		String newText = """
+				import static smile.plot.vega.Predicate.*;
+
+				var bar = new View("2D Histogram Heatmap").width(300).height(200);
+				bar.mark("rect");
+				bar.viewConfig()
+				        .stroke("transparent");
+				bar.data().values(new DatasetLoader().loadAsJson("movies").toPrettyString());
+				bar.encode("x", "IMDB Rating")
+				        .type("quantitative")
+				        .title("IMDB Rating")
+				        .bin(new BinParams().maxBins(60));
+				bar.encode("y", "Rotten Tomatoes Rating")
+				        .type("quantitative")
+				        .bin(new BinParams().maxBins(40));
+				bar.encode("color", null)
+				        .type("quantitative")
+				        .aggregate("count");
+				bar.transform()
+				        .filter(and(valid("IMDB Rating"), valid("Rotten Tomatoes Rating")));
+
+				display(bar.toPrettyString(), "application/vnd.vegalite.v5+json");
+				""";
+		assertEquals(newText, edits.get(0).getNewText());
+	}
+
+	@Test
 	public void testNotebookRange() throws Exception {
 		String text = """
 				import java.math.BigDecimal;
@@ -1085,10 +1141,10 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 				import java.math.BigDecimal;
 
 				public class Test {
-					public static void main(String[] args) {
-						BigDecimal n1 = new BigDecimal("0");
-						System.out.println(n1);
-					}
+				    public static void main(String[] args) {
+				        BigDecimal n1 = new BigDecimal("0");
+				        System.out.println(n1);
+				    }
 				}
 				""";
 		assertEquals(newText, edits.get(0).getNewText());
@@ -1107,11 +1163,10 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(edits);
 		assertEquals(1, edits.size());
 		//@formatter:off
-		String newText = "void test() {\n"
-				+ "	System.out.println(\"test\");\n"
+		String newText = "\n    void test() {\n"
+				+ "        System.out.println(\"test\");\n"
 				+ "\n"
-				+ "	test();\n"
-				+ "	\n";
+				+ "        test();\n";
 		//@formatter:on
 		assertEquals(newText, edits.get(0).getNewText());
 	}
