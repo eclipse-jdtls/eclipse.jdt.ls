@@ -41,6 +41,7 @@ import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractQuickFixTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
+import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -445,6 +446,59 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
 		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
 		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }");
+	}
+
+	// https://github.com/redhat-developer/vscode-java/issues/4138
+	@Test
+	public void testCreateMethod() throws Exception {
+		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
+		when(clientPreferences.isWorkspaceSnippetEditSupported()).thenReturn(true);
+		when(clientPreferences.isResolveCodeActionSupported()).thenReturn(true);
+		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		String content = """
+				package test1;
+				import java.util.HashMap;
+				import java.util.Map;
+
+				public class E {
+					private Test test = new Test();
+					private void get() {
+						Map<String,String> user = new HashMap<>();
+						this.test.create(user);
+					}
+					class Test {
+
+					}
+				}
+				""";
+		ICompilationUnit unit = defaultPackage.createCompilationUnit("E.java", content, true, null);
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		final Range range = CodeActionUtil.getRange(unit, "create");
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UndefinedMethod), range)), Collections.singletonList(CodeActionKind.QuickFix));
+		params.setContext(context);
+
+		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
+		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		for (Either<Command, CodeAction> codeAction : quickfixActions) {
+			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
+			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+		}
+
+		Optional<Either<Command, CodeAction>> unresolvedResponse = quickfixActions.stream().filter(codeAction -> {
+			return "Create method 'create(Map<String, String>)' in type 'Test'".equals(codeAction.getRight().getTitle());
+		}).findFirst();
+		Assert.assertTrue("Should return the quickfix \"Create method 'create(Map<String, String>)' in type 'Test'\"", unresolvedResponse.isPresent());
+		CodeAction unresolvedCodeAction = unresolvedResponse.get().getRight();
+
+		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
+		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		SnippetTextEdit snippetTextEdit = (SnippetTextEdit) edits.get(0);
+		String snippet = snippetTextEdit.getSnippet().getValue();
+		assertTrue(snippet.contains("${1:create}(${4|Map<String\\,String>|}"));
 	}
 
 	private Diagnostic getDiagnostic(String code, Range range){

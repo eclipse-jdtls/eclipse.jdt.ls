@@ -143,7 +143,9 @@ public class SnippetUtils {
 					for (int j = 0; j < proposalList.length; j++) {
 						org.eclipse.text.edits.TextEdit editWithText = findReplaceEdit(proposalList[j].computeEdits(0, linkedPosition, '\u0000', 0, new LinkedModeModel()));
 						if (editWithText != null) {
-							snippet.append(((ReplaceEdit) editWithText).getText());
+							// https://github.com/redhat-developer/vscode-java/issues/4138
+							String text = ((ReplaceEdit) editWithText).getText().replaceAll(",", "\\\\,");
+							snippet.append(text);
 							snippet.append(SNIPPET_CHOICE_SEPARATOR);
 						}
 					}
