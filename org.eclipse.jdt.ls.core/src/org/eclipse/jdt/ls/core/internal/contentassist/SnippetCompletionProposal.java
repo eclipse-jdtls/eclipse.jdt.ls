@@ -258,11 +258,18 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	 * <ul>
 	 * <li>The completion is triggered by the trigger character '.'</li>
 	 * <li>The postfix template start with the completion token </li>
+	 * <li>The completion is not in an import declaration context</li>
 	 * </ul>
 	 */
 	private static boolean canResolvePostfix(CompletionContext jdtCtx, IDocument document) throws BadLocationException {
 		char[] token = jdtCtx.getToken();
 		if (token == null) {
+			return false;
+		}
+
+		// Don't trigger postfix completion in import declarations
+		int tokenLocation = jdtCtx.getTokenLocation();
+		if ((tokenLocation & CompletionContext.TL_IN_IMPORT) != 0) {
 			return false;
 		}
 
