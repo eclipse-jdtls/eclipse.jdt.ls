@@ -801,6 +801,19 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		assertFalse(list.getItems().isEmpty());
 	}
 
+	@Test
+	public void testPostfixCompletion_NotInImportDeclaration() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", """
+				package org.sample;
+
+				import static java.util.ArrayList.;
+				public class Test {}
+				""");
+		CompletionList list = requestCompletions(unit, "import static java.util.ArrayList.");
+
+		assertEquals("Postfix completion should not be triggered in import declarations:" + list.getItems(), 0, list.getItems().size());
+	}
+
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
 		return requestCompletions(unit, completeBehind, 0);
 	}
