@@ -83,7 +83,7 @@ public class BuildWorkspaceHandler {
 				WorkspaceDiagnosticsHandler.checkPreviewFeatureValidity(problemMarkers);
 				// for default project, problem markers aren't sent. Add logs here for trouble shooting.
 				String newline = System.getProperty("line.separator");
-				logError("Error occured while building workspace. Details: " + newline + String.join(newline, errors));
+				logError(LogHandler.BUILD_ERROR_MSG_DETAILS + newline + String.join(newline, errors));
 				return BuildWorkspaceStatus.WITH_ERROR;
 			}
 		} catch (CoreException e) {

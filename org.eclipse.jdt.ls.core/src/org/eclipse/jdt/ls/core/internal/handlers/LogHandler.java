@@ -65,6 +65,9 @@ public class LogHandler {
 	private List<IStatus> statusCache = new ArrayList<>();
 	private Set<Integer> knownErrors = new HashSet<>();
 
+	public static String BUILD_ERROR_MSG = "Error occured while building workspace.";
+	public static String BUILD_ERROR_MSG_DETAILS = BUILD_ERROR_MSG + " Details: ";
+	private static int BUILD_ERROR_MSG_DETAILS_LENGTH = BUILD_ERROR_MSG_DETAILS.length();
 	/**
 	 * Equivalent to <code>LogHandler(defaultLogFilter)</code>.
 	 */
@@ -159,12 +162,14 @@ public class LogHandler {
 		}
 		String dateString = this.dateFormat.format(new Date());
 		String message = status.getMessage();
+		String exceptionAsString = null;
 		if (status.getException() != null) {
-			message = message + '\n' + status.getException().getMessage();
 			StringWriter sw = new StringWriter();
 			status.getException().printStackTrace(new PrintWriter(sw));
-			String exceptionAsString = sw.toString();
+			exceptionAsString = sw.toString();
 			message = message + '\n' + exceptionAsString;
+		} else if (message.startsWith(BUILD_ERROR_MSG_DETAILS)) {
+			exceptionAsString = message.substring(BUILD_ERROR_MSG_DETAILS_LENGTH).trim();
 		}
 
 		connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' ' + message);
@@ -175,8 +180,8 @@ public class LogHandler {
 		if (status.getSeverity() == IStatus.ERROR || hasWorkspaceExitedUnsaved) {
 			JsonObject properties = new JsonObject();
 			properties.addProperty("message", redact(status.getMessage()));
-			if (status.getException() != null) {
-				properties.addProperty("exception", message);
+			if (exceptionAsString != null) {
+				properties.addProperty("exception", exceptionAsString);
 			}
 			int hashCode = properties.hashCode();
 			if (!knownErrors.contains(hashCode)) {
@@ -191,8 +196,8 @@ public class LogHandler {
 			return null;
 		}
 
-		if (message.startsWith("Error occured while building workspace.")) {
-			return "Error occured while building workspace.";
+		if (message.startsWith(BUILD_ERROR_MSG)) {
+			return BUILD_ERROR_MSG;
 		}
 
 		return message;
