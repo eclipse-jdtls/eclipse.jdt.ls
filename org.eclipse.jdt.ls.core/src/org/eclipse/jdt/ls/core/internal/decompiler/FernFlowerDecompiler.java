@@ -101,13 +101,17 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 
 		final Map<Integer, Set<Integer>> originalLineMappings = new TreeMap<>();
 		final Map<Integer, Set<Integer>> decompiledLineMappings = new TreeMap<>();
-		for (int i = 0; i + 1 < resultSaver.originalLinesMapping.length; i = i + 2) {
-			int srcLine = resultSaver.originalLinesMapping[i];
-			int decompiledLine = resultSaver.originalLinesMapping[i + 1] + 1; // add one extra line for the header
-			Set<Integer> decompiled = originalLineMappings.computeIfAbsent(srcLine, k -> new TreeSet<>());
-			decompiled.add(decompiledLine);
-			Set<Integer> src = decompiledLineMappings.computeIfAbsent(decompiledLine, k -> new TreeSet<>());
-			src.add(srcLine);
+		if (resultSaver.originalLinesMapping != null) {
+			for (int i = 0; i + 1 < resultSaver.originalLinesMapping.length; i = i + 2) {
+				int srcLine = resultSaver.originalLinesMapping[i];
+				int decompiledLine = resultSaver.originalLinesMapping[i + 1] + 1; // add one extra line for the header
+				Set<Integer> decompiled = originalLineMappings.computeIfAbsent(srcLine, k -> new TreeSet<>());
+				decompiled.add(decompiledLine);
+				Set<Integer> src = decompiledLineMappings.computeIfAbsent(decompiledLine, k -> new TreeSet<>());
+				src.add(srcLine);
+			}
+		} else {
+			JavaLanguageServerPlugin.logInfo("Line mappings not available for decompiled content - decompilation may have failed or line mapping was disabled");
 		}
 
 		List<Integer> originals = new ArrayList<>(originalLineMappings.size() * 2);
