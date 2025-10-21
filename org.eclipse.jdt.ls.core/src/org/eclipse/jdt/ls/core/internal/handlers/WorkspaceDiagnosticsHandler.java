@@ -505,7 +505,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 				}
 				int[] startPos = JsonRpcHelpers.toLine(document, start);
 				int[] endPos = JsonRpcHelpers.toLine(document, end);
-				return new Range(new Position(startPos[0], startPos[1]), new Position(endPos[0], endPos[1]));
+				if (startPos != null && endPos != null) {
+					return new Range(new Position(startPos[0], startPos[1]), new Position(endPos[0], endPos[1]));
+				}
 			}
 			return new Range(new Position(0, 0), new Position(0, 0));
 		}

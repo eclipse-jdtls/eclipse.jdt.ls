@@ -102,7 +102,9 @@ public class DiagnosticsCommand {
 			}
 		} else {
 			CompilationUnit unit = sharedASTProvider.getAST(target, CoreASTProvider.WAIT_YES, monitor);
-			candidates.add((ICompilationUnit) unit.getTypeRoot());
+			if (unit != null && unit.getTypeRoot() != null) {
+				candidates.add((ICompilationUnit) unit.getTypeRoot());
+			}
 		}
 
 		return candidates;
