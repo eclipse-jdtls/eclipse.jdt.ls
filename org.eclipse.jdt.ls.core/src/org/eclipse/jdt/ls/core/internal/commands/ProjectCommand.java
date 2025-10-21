@@ -193,7 +193,7 @@ public class ProjectCommand {
 						for (IClasspathAttribute attribute : entry.getExtraAttributes()) {
 							attributes.put(attribute.getName(), attribute.getValue());
 						}
-						classpathEntries.add(new ProjectClasspathEntry(entryKind, path.toOSString(),
+						classpathEntries.add(new ProjectClasspathEntry(entryKind, path == null ? null : path.toOSString(),
 								output == null ? null : output.toOSString(), attributes));
 					}
 					settings.putIfAbsent(key, classpathEntries);
