@@ -193,9 +193,10 @@ public class SignatureHelpUtils {
 	 * @param context signature help context
 	 */
 	private static int getActiveParameter(int triggerOffset, CompletionProposal proposal, SignatureHelpContext context) {
+		int parameterCount = Signature.getParameterCount(proposal.getSignature());
+
 		if (triggerOffset >= context.completionOffset()) {
 			boolean isVarargs = Flags.isVarargs(proposal.getFlags());
-			int parameterCount = Signature.getParameterCount(proposal.getSignature());
 			// when no argument is written yet but the method has at least one parameter,
 			// return 0 as the active parameter index.
 			if (parameterCount > 0 && context.argumentRanges().isEmpty()) {
@@ -212,7 +213,7 @@ public class SignatureHelpUtils {
 			}
 		}
 
-		return -1;
+		return parameterCount;
 	}
 
 	/**
