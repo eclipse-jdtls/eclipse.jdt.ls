@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -242,6 +243,39 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(type.exists());
 		IMarker[] markers = type.getUnderlyingResource().findMarkers(null, true, IResource.DEPTH_INFINITE);
 		assertEquals(0, markers.length);
+	}
+
+	@Test
+	public void testUnusedLambdaParameterWarningDisabledByDefault() throws Exception {
+		assertEquals("Unused lambda parameter warning should be disabled by default",
+				JavaCore.IGNORE, JavaCore.getOptions().get(JavaCore.COMPILER_PB_UNUSED_LAMBDA_PARAMETER));
+
+		IJavaProject javaProject = newEmptyProject();
+		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+
+		String contents = """
+				package test1;
+				import java.util.Map;
+				public class LambdaWarning {
+				    void foo() {
+				        Map.of("foo", "bar").forEach((key, value) -> {
+				            System.out.println(key);
+				        });
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("LambdaWarning.java", contents, false, null);
+
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, monitor);
+		IProblem[] problems = astRoot.getProblems();
+
+		for (IProblem problem : problems) {
+			var message = problem.getMessage().toLowerCase();
+			assertFalse("Should not have unused lambda parameter warning: " + message,
+					message.contains("lambda parameter")
+					&& message.contains("not used"));
+		}
 	}
 
 }
