@@ -48,8 +48,8 @@ import org.eclipse.lsp4j.FoldingRangeRequestParams;
 
 public class FoldingRangeHandler {
 
-	private static final Pattern REGION_START_PATTERN = Pattern.compile("^//\\s*#?region|^//\\s+<editor-fold.*>");
-	private static final Pattern REGION_END_PATTERN = Pattern.compile("^//\\s*#?endregion|^//\\s+</editor-fold>");
+	private static final Pattern REGION_START_PATTERN = Pattern.compile("^\\h//\\s*#?region|^//\\s+<editor-fold.*>");
+	private static final Pattern REGION_END_PATTERN = Pattern.compile("^\\h//\\s*#?endregion|^//\\s+</editor-fold>");
 
 	private static IScanner fScanner;
 
@@ -301,3 +301,4 @@ public class FoldingRangeHandler {
 		}
 	}
 }
+
