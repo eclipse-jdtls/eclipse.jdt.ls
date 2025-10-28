@@ -273,7 +273,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		if (settings instanceof Map) {
 			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
 			@SuppressWarnings("unchecked")
-			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			Preferences prefs = Preferences.updateFrom(preferenceManager.getPreferences(), (Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
 			preferenceManager.update(prefs);
 		}

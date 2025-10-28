@@ -548,7 +548,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		if (settings instanceof Map) {
 			Collection<IPath> rootPaths = preferenceManager.getPreferences().getRootPaths();
 			@SuppressWarnings("unchecked")
-			Preferences prefs = Preferences.createFrom((Map<String, Object>) settings);
+			Preferences prefs = Preferences.updateFrom(preferenceManager.getPreferences(), (Map<String, Object>) settings);
 			prefs.setRootPaths(rootPaths);
 			boolean nullAnalysisConfigurationsChanged =!prefs.getNullableTypes().equals(preferenceManager.getPreferences().getNullableTypes())
 				|| !prefs.getNonnullTypes().equals(preferenceManager.getPreferences().getNonnullTypes())
