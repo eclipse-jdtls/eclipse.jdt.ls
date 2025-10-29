@@ -1,5 +1,21 @@
 # Change Log
 
+# [1.52.0 (October 30th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/145?closed=1)
+* enhancement - Add inlay hints for lambda parameter types and option to suppress for same-name numbered parameters. See [#3556](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3556), [#3557](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3557).
+* enhancement - Improve detection and setup of `sourcePath` for Android support. See [#3490](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3490).
+* enhancement - Disable unused lambda parameter warning by default. See [#3574](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3574).
+* bug fix - Allow partial configuration updates for `workspace/didChangeConfiguration`. See [#3108](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3108).
+* bug fix - Provide more comprehensive error telemetry. See [#3566](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3566).
+* bug fix - Fix multiple `NullPointerException` reported by telemetry. See [#3570](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3570).
+* bug fix - Fix failure in "Create method" quick assist with parameterized arguments. See [#3560](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3560).
+* bug fix - Prevent incorrect postfix completions on import statements. See [#3565](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3565).
+* bug fix - Resolve poor formatting issues in Jupyter notebooks. See [#3558](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3558).
+* bug fix - Revert change that ignored null unchecked conversion warnings by default. See [#3472](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3472).
+* dependency - Update target platform to Eclipse 2025-09 release. See [#3530](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3530).
+* dependency - Bump `groovy-version` to 5.0.2. See [#3569](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3569).
+* dependency - Bump JaCoCo Maven Plugin to 0.8.14. See [#3561](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3561).
+* dependency - Bump Maven Dependency Plugin to 3.9.0. See [#3552](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3552).
+
 # [1.51.0 (October 2nd, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/144?closed=1)
  * performance - Improve Null Analysis by reducing & deferring expensive calls. See [#3531](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3531).
  * enhancement - Support Java 25. See [#3527](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3527), [#3538](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3538).
