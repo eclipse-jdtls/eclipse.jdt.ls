@@ -51,6 +51,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	private PreferenceManager preferenceManager;
 	private Preferences preferences;
 	private ContentProviderManager provider;
+	private IProject project;
 
 	private static boolean existingDebugFlag = false;
 
@@ -68,7 +69,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	@Before
 	public void createURIs() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("salut");
 		sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "java.math.BigDecimal"));
 		sourcelessClassFile = JDTUtils.resolveClassFile(sourcelessURI);
 		sourceAvailableURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils"));
@@ -114,7 +115,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testOpenMissingFile() throws Exception {
-		URI noSuchURI = JDTUtils.toURI("file://this/is/Missing.class");
+		URI noSuchURI = JDTUtils.toURI("file:///this/is/Missing.class");
 
 		String result = provider.getContent(noSuchURI, monitor);
 		assertNotNull(result);
@@ -234,6 +235,27 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
 		assertTrue("unexpected body content " + result, result.contains("public class BigDecimal extends Number implements Comparable"));
+	}
+
+	@Test
+	public void testDisassembleInnerClass() throws Exception {
+		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("disassemblerContentProvider"));
+
+		sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "java.util.Map"));
+		sourcelessClassFile = JDTUtils.resolveClassFile(sourcelessURI);
+
+		String result = provider.getContent(sourcelessURI, monitor);
+		assertNotNull(result);
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue("unexpected body content " + result, result.contains("interface Entry"));
+
+		sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "java.util.Map$Entry"));
+		// Decompiling the inner class directly should include the outer class code
+		result = provider.getContent(sourcelessURI, monitor);
+		assertNotNull(result);
+		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue("unexpected body content " + result, result.contains("public interface Map<"));
+
 	}
 
 	@Test
