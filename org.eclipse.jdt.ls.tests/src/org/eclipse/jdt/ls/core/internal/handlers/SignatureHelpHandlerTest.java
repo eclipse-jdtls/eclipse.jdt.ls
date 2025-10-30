@@ -644,7 +644,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("F()"));
-		assertEquals(-1, help.getActiveParameter().intValue());
+		assertEquals(0, help.getActiveParameter().intValue());
 	}
 
 	@Test
@@ -794,7 +794,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureHelp help = getSignatureHelp(cu, 4, 4);
 		assertNotNull(help);
 		assertEquals(1, help.getSignatures().size());
-		assertEquals(-1, help.getActiveParameter().intValue());
+		assertEquals(2, help.getActiveParameter().intValue());
 	}
 
 	@Test
@@ -820,7 +820,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("String()"));
-		assertEquals(-1, help.getActiveParameter().intValue());
+		assertEquals(0, help.getActiveParameter().intValue());
 	}
 
 	@Test
@@ -870,7 +870,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		SignatureHelp help = getSignatureHelp(cu, 4, 26);
-		assertEquals(-1, help.getActiveParameter().intValue());
+		assertEquals(1, help.getActiveParameter().intValue());
 
 		help = getSignatureHelp(cu, 4, 30);
 		assertEquals(0, help.getActiveParameter().intValue());
@@ -1290,3 +1290,4 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 }
+
