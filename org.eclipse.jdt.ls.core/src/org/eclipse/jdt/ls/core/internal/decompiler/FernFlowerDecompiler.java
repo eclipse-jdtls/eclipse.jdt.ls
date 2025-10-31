@@ -19,7 +19,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,10 +33,12 @@ import java.util.jar.Manifest;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
-import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.IOrdinaryClassFile;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.DecompilerResult;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -51,12 +55,20 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 
 	@Override
 	protected DecompilerResult decompileContent(URI uri, IProgressMonitor monitor) throws CoreException {
-		return getContent(new BytecodeProvider(uri), monitor);
+		try {
+			return getContent(new BytecodeProvider(uri), monitor);
+		} catch (IOException e) {
+			throw new CoreException(StatusFactory.newErrorStatus("Failed to decompile class file: " + uri, e));
+		}
 	}
 
 	@Override
 	protected DecompilerResult decompileContent(IClassFile classFile, IProgressMonitor monitor) throws CoreException {
-		return getContent(new BytecodeProvider(classFile), monitor);
+		try {
+			return getContent(new BytecodeProvider(classFile), monitor);
+		} catch (IOException e) {
+			throw new CoreException(StatusFactory.newErrorStatus("Failed to decompile class file: " + classFile, e));
+		}
 	}
 
 	@Override
@@ -95,7 +107,10 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 				}
 			}
 		});
-		fernflower.addSource(new File("__Fernflower__.class"));
+		// Add all sources (outer + inner classes) to the decompiler
+		for (File file : provider.getAllClassFiles()) {
+			fernflower.addSource(file);
+		}
 		fernflower.decompileContext();
 		final String decompiledCode = DECOMPILER_HEADER + resultSaver.content;
 
@@ -177,46 +192,175 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 	}
 
 	static class BytecodeProvider implements IBytecodeProvider {
-		private URI uri;
-		private byte[] classBytes;
+		private Map<String, byte[]> bytecodeMap = new HashMap<>();
+		private List<File> classFiles = new ArrayList<>();
 
-		public BytecodeProvider(URI uri) {
-			this.uri = uri;
+		public BytecodeProvider(URI uri) throws CoreException, IOException {
+			collectClassFiles(uri);
 		}
 
-		public BytecodeProvider(IClassFile classFile) {
-			try {
-				classBytes = readClassFileBytes(classFile);
-			} catch (IOException e) {
-				// do nothing
-			}
+		public BytecodeProvider(IClassFile classFile) throws CoreException, IOException {
+			collectClassFiles(classFile);
+		}
+
+		public List<File> getAllClassFiles() {
+			return classFiles;
 		}
 
 		@Override
 		public byte[] getBytecode(String externalPath, String internalPath) throws IOException {
-			if (classBytes != null) {
-				return classBytes;
-			} else if (uri == null) {
-				return null;
+			byte[] bytes = bytecodeMap.get(externalPath);
+			if (bytes == null) {
+				throw new IOException("Class file not found: " + externalPath +
+					" (available: " + bytecodeMap.keySet() + ")");
 			}
-
-			classBytes = readClassFileBytes(JDTUtils.resolveClassFile(uri));
-			if (classBytes == null) {
-				classBytes = Files.readAllBytes(Paths.get(uri));
-			}
-			return classBytes;
+			return bytes;
 		}
 
-		private byte[] readClassFileBytes(IClassFile classFile) throws IOException {
-			if (classFile == null) {
-				return null;
+		//-----------------------------------------------------------
+		// Collect all class files from a URI - File-based detection
+		//-----------------------------------------------------------
+		private void collectClassFiles(URI uri) throws CoreException, IOException {
+			IClassFile classFile = JDTUtils.resolveClassFile(uri);
+			if (classFile != null) {
+				collectClassFiles(classFile);
+				return;
 			}
 
-			try {
-				return classFile.getBytes();
-			} catch (JavaModelException e) {
-				throw new IOException(e);
+			// File-based approach
+			java.nio.file.Path classPath = Paths.get(uri);
+			if (!Files.exists(classPath)) {
+				throw new IOException("Class file does not exist: " + classPath);
+			}
+
+			File file = classPath.toFile();
+
+			// 1. Find the top-level class file
+			File topLevelFile = findTopLevelClassFile(file);
+
+			// 2. Scan all matching classes (top-level + inner classes)
+			Set<File> allClassFiles = new LinkedHashSet<>();
+			scanClassFiles(topLevelFile, allClassFiles);
+
+			// 3. Process all classes found
+			for (File classFileToProcess : allClassFiles) {
+				processClassFile(classFileToProcess);
 			}
 		}
+
+		private File findTopLevelClassFile(File file) throws IOException {
+			String fileName = file.getName();
+			if (!fileName.endsWith(".class")) {
+				return file;
+			}
+
+			String baseName = fileName.substring(0, fileName.length() - 6);
+			int dollarIndex = baseName.indexOf('$');
+
+			if (dollarIndex > 0) {
+				// Check if this might be an inner class
+				String topLevelBaseName = baseName.substring(0, dollarIndex);
+				File parentDir = file.getParentFile();
+				if (parentDir != null) {
+					File topLevelFile = new File(parentDir, topLevelBaseName + ".class");
+					if (topLevelFile.exists()) {
+						// Found the parent class, so this is indeed an inner class
+						return topLevelFile;
+					}
+					// Parent class doesn't exist - treat this as a top-level class
+					// (e.g., a class with $ in its name, though uncommon)
+				}
+			}
+
+			return file;
+		}
+
+		private void scanClassFiles(File topLevelFile, Set<File> result) {
+			// Add the top-level class
+			result.add(topLevelFile);
+
+			// Find all inner classes
+			String fileName = topLevelFile.getName();
+			if (fileName.endsWith(".class")) {
+				String baseName = fileName.substring(0, fileName.length() - 6);
+				String mask = baseName + "$";
+
+				File parentDir = topLevelFile.getParentFile();
+				if (parentDir != null && parentDir.isDirectory()) {
+					File[] innerClasses = parentDir.listFiles((dir, name) ->
+						name.startsWith(mask) && name.endsWith(".class"));
+					if (innerClasses != null) {
+						Arrays.stream(innerClasses).forEach(result::add);
+					}
+				}
+			}
+		}
+
+		private void processClassFile(File file) throws IOException {
+			String path = file.getPath();
+			classFiles.add(file);
+			bytecodeMap.put(path, Files.readAllBytes(file.toPath()));
+		}
+
+		//-----------------------------------------------------------
+		// Collect all class files from an IClassFile
+		//-----------------------------------------------------------
+		private void collectClassFiles(IClassFile classFile) throws CoreException {
+			// 1. Find the top-level class file
+			IClassFile topLevelClassFile = findTopLevelClassFile(classFile);
+
+			// 2. Scan all matching IClassFile (top-level + inner classes)
+			Set<IClassFile> allClassFiles = new LinkedHashSet<>();
+			scanClassFiles(topLevelClassFile, allClassFiles);
+
+			// 3. Process all classes found
+			for (IClassFile cf : allClassFiles) {
+				processClassFile(cf);
+			}
+		}
+
+		private IClassFile findTopLevelClassFile(IClassFile classFile) throws CoreException {
+			IClassFile topLevelClassFile = classFile;
+			if (classFile instanceof IOrdinaryClassFile ordinaryClassFile) {
+				IType type = ordinaryClassFile.getType();
+				// Navigate up to the top-level type
+				IType topLevelType = type;
+				while (topLevelType.getDeclaringType() != null) {
+					topLevelType = topLevelType.getDeclaringType();
+				}
+				// Get the class file for the top-level type
+				if (topLevelType != type) {
+					topLevelClassFile = topLevelType.getClassFile();
+				}
+			}
+			return topLevelClassFile;
+		}
+
+		private void scanClassFiles(IClassFile classFile, Set<IClassFile> result) throws CoreException {
+			if (classFile instanceof IOrdinaryClassFile ordinaryClassFile) {
+				if (!result.add(classFile)) {
+					return;
+				}
+
+				// Collect declared member types (inner classes/interfaces)
+				IType type = ordinaryClassFile.getType();
+				IType[] innerTypes = type.getTypes();
+				for (IType innerType : innerTypes) {
+					IClassFile innerClassFile = innerType.getClassFile();
+					if (innerClassFile != null) {
+						// Recursive call to handle nested inner classes
+						scanClassFiles(innerClassFile, result);
+					}
+				}
+			}
+		}
+
+		private void processClassFile(IClassFile classFile) throws CoreException {
+			File file = new File(classFile.getElementName()).getAbsoluteFile();
+			byte[] classBytes = classFile.getBytes();
+			classFiles.add(file);
+			bytecodeMap.put(file.getPath(), classBytes);
+		}
+
 	}
 }

@@ -40,10 +40,20 @@ public final class ClassFileUtil {
 		Assert.isNotNull(fqcn, "FQCN can't be null");
 
 		IJavaProject javaProject = JavaCore.create(project);
-		int lastDot = fqcn.lastIndexOf(".");
-		String packageName = lastDot > 0? fqcn.substring(0, lastDot):"";
-		String className = lastDot > 0? fqcn.substring(lastDot+1):fqcn;
-		ClassUriExtractor extractor = new ClassUriExtractor();
+
+		// Handle inner classes (e.g., java.util.Map$Entry)
+		String searchFqcn = fqcn;
+		String innerClassName = null;
+		int dollarIndex = fqcn.indexOf('$');
+		if (dollarIndex > 0) {
+			searchFqcn = fqcn.substring(0, dollarIndex);
+			innerClassName = fqcn.substring(dollarIndex + 1);
+		}
+
+		int lastDot = searchFqcn.lastIndexOf(".");
+		String packageName = lastDot > 0? searchFqcn.substring(0, lastDot):"";
+		String className = lastDot > 0? searchFqcn.substring(lastDot+1):searchFqcn;
+		ClassUriExtractor extractor = new ClassUriExtractor(innerClassName);
 		new SearchEngine().searchAllTypeNames(packageName.toCharArray(),SearchPattern.R_EXACT_MATCH,
 				className.toCharArray(), SearchPattern.R_EXACT_MATCH,
 				IJavaSearchConstants.TYPE,
@@ -57,17 +67,36 @@ public final class ClassFileUtil {
 	private static class ClassUriExtractor extends TypeNameMatchRequestor {
 
 		String uri;
+		private final String innerClassName;
+
+		public ClassUriExtractor(String innerClassName) {
+			this.innerClassName = innerClassName;
+		}
 
 		@Override
 		public void acceptTypeNameMatch(TypeNameMatch match) {
 			try {
-				if (match.getType().isBinary()) {
-					Location location = JDTUtils.toLocation(match.getType().getClassFile());
+				var type = match.getType();
+
+				// If looking for an inner class, navigate to it
+				if (innerClassName != null && !innerClassName.isEmpty()) {
+					// Handle nested inner classes (e.g., Map$Entry$InnerClass)
+					String[] innerParts = innerClassName.split("\\$");
+					for (String innerPart : innerParts) {
+						type = type.getType(innerPart);
+						if (type == null || !type.exists()) {
+							return; // Inner class not found
+						}
+					}
+				}
+
+				if (type.isBinary()) {
+					Location location = JDTUtils.toLocation(type.getClassFile());
 					if (location != null) {
 						uri = location.getUri();
 					}
 				}  else {
-					uri = match.getType().getResource().getLocationURI().toString();
+					uri = type.getResource().getLocationURI().toString();
 				}
 			} catch (Exception e) {
 				throw new RuntimeException(e);
