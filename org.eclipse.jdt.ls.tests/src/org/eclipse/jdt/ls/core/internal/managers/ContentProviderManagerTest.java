@@ -33,7 +33,9 @@ import org.eclipse.jdt.ls.core.internal.decompiler.FernFlowerDecompiler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 // Note: this test depends on the contentProvider extensions configured in plugin.xml
@@ -49,6 +51,19 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	private PreferenceManager preferenceManager;
 	private Preferences preferences;
 	private ContentProviderManager provider;
+
+	private static boolean existingDebugFlag = false;
+
+	@BeforeClass
+	public static void setupOnce() throws Exception {
+		existingDebugFlag = Boolean.getBoolean("jdt.ls.debug");
+		System.setProperty("jdt.ls.debug", "true");
+	}
+
+	@AfterClass
+	public static void cleanUpOnce() throws Exception {
+		System.setProperty("jdt.ls.debug", Boolean.toString(existingDebugFlag));
+	}
 
 	@Before
 	public void createURIs() throws Exception {
@@ -183,23 +198,23 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	@Test
-	public void testPreferNonexistingProviderClass() {
+	public void testPreferNonExistingProviderClass() {
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("placeholderContentProvider"));
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
-		expectLoggedError("Unable to load IContentProvider class for placeholderContentProvider");
+		expectLoggedInfo("placeholderContentProvider doesn't match IContentProvider. Skipping.");
 	}
 
 	@Test
-	public void testDecompilePreferNonexistingProviderClass() {
+	public void testDecompilePreferNonExistingProviderClass() {
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("placeholderContentProvider"));
 
 		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
 		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
-		expectLoggedError("Unable to load IDecompiler class for placeholderContentProvider");
+		expectLoggedInfo("placeholderContentProvider doesn't match IDecompiler. Skipping.");
 	}
 
 	@Test
@@ -266,5 +281,9 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	private void expectLoggedError(String expected) {
 		assertTrue("expected error " + expected, logListener.getErrors().stream().filter(e -> e.contains(expected)).findAny().isPresent());
+	}
+
+	private void expectLoggedInfo(String expected) {
+		assertTrue("expected info " + expected, logListener.getInfos().stream().filter(e -> e.contains(expected)).findAny().isPresent());
 	}
 }
