@@ -105,7 +105,7 @@ public class ContentProviderManager {
 		for (ContentProviderDescriptor match : matches) {
 			IContentProvider contentProvider = match.getContentProvider();
 			if (!providerType.isInstance(contentProvider)) {
-				JavaLanguageServerPlugin.logError("Unable to load " + providerType.getSimpleName() + " class for " + match.id);
+				JavaLanguageServerPlugin.debugTrace(match.id + " doesn't match " + providerType.getSimpleName() + ". Skipping.");
 				continue;
 			}
 
