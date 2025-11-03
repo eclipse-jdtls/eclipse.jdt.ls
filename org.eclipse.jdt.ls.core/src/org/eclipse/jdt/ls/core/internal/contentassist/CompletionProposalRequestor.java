@@ -514,6 +514,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				return CompletionItemKind.Constant;
 			}
 			return CompletionItemKind.Field;
+		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
 		case CompletionProposal.FIELD_REF_WITH_CASTED_RECEIVER:
 			return CompletionItemKind.Field;
 		case CompletionProposal.KEYWORD:
@@ -531,8 +532,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		case CompletionProposal.LAMBDA_EXPRESSION:
 			return CompletionItemKind.Method;
 			//text
-		case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
-			return CompletionItemKind.Property;
 		case CompletionProposal.JAVADOC_BLOCK_TAG:
 		case CompletionProposal.JAVADOC_FIELD_REF:
 		case CompletionProposal.JAVADOC_INLINE_TAG:
