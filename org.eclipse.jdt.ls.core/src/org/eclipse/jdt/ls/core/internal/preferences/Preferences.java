@@ -1043,6 +1043,7 @@ public class Preferences {
 	 *
 	 * @return a new Preferences object with the same values as this one
 	 */
+	@Override
 	public Preferences clone() {
 		Preferences prefs = new Preferences();
 
@@ -2499,6 +2500,9 @@ public class Preferences {
 	}
 
 	public String getMavenLifecycleMappings() {
+		if (mavenLifecycleMappings == null) {
+			setMavenLifecycleMappings(null);
+		}
 		return mavenLifecycleMappings;
 	}
 
