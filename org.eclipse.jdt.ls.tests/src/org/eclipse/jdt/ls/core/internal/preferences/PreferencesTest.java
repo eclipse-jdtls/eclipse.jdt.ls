@@ -290,4 +290,18 @@ public class PreferencesTest {
 		assertFalse("Completion should still be disabled", updated.isCompletionEnabled());
 	}
 
+	@Test
+	public void testMavenLifecycleMappings() {
+		// Create initial preferences
+		Map<String, Object> initialConfig = new HashMap<>();
+		Map<String, Object> java = new HashMap<>();
+		initialConfig.put("java", java);
+		Preferences initial = Preferences.createFrom(initialConfig);
+		assertNotNull(initial.getMavenLifecycleMappings());
+		// Send empty partial update
+		Map<String, Object> emptyConfig = new HashMap<>();
+		Preferences updated = Preferences.updateFrom(initial, emptyConfig);
+		assertNotNull(updated.getMavenLifecycleMappings());
+	}
+
 }
