@@ -201,7 +201,7 @@ public final class JobHelpers {
 			try {
 				Thread.sleep(POLLING_DELAY);
 			} catch(InterruptedException e) {
-				// ignore and keep waiting
+				Thread.currentThread().interrupt();
 			}
 		}
 	}
@@ -246,6 +246,10 @@ public final class JobHelpers {
 		waitForJobs(RepositoryRegistryUpdateJobMatcher.INSTANCE, MAX_TIME_MILLIS);
 	}
 
+	public static void waitForUpdateJobs(int maxTimeMillis) {
+		waitForJobs(UpdateJobMatcher.INSTANCE, maxTimeMillis);
+	}
+
 	// copied from ./org.eclipse.jdt.core.tests.performance/src/org/eclipse/jdt/core/tests/performance/FullSourceWorkspaceTests.java
 	public static void waitUntilIndexesReady() {
 		// dummy query for waiting until the indexes are ready
@@ -266,6 +270,17 @@ public final class JobHelpers {
 	interface IJobMatcher {
 
 		boolean matches(Job job);
+
+	}
+
+	static class UpdateJobMatcher implements IJobMatcher {
+
+		public static final IJobMatcher INSTANCE = new UpdateJobMatcher();
+
+		@Override
+		public boolean matches(Job job) {
+			return job.belongsTo(IConstants.UPDATE_PROJECT_FAMILY);
+		}
 
 	}
 

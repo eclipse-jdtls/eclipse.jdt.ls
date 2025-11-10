@@ -330,6 +330,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					pm.checkIndexes();
 					debugTrace(">> indexes checked");
 					pm.projectsBuildFinished(monitor);
+
+					JobHelpers.waitForUpdateJobs(60 * 60 * 1000);
+					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+
 					telemetryManager.onBuildFinished(System.currentTimeMillis());
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
