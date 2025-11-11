@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.junit.Test;
 
@@ -302,6 +305,37 @@ public class PreferencesTest {
 		Map<String, Object> emptyConfig = new HashMap<>();
 		Preferences updated = Preferences.updateFrom(initial, emptyConfig);
 		assertNotNull(updated.getMavenLifecycleMappings());
+	}
+
+	@Test
+	public void testMavenDisableTestClasspathFlag() {
+		PreferenceManager preferenceManager = new StandardPreferenceManager();
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		boolean mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+		try {
+			assertFalse(mavenDisableTestClasspathFlag);
+			Map<String, Object> configMap = new HashMap<>();
+			Map<String, Object> java = new HashMap<>();
+			configMap.put("java", java);
+			// java.import.maven.disableTestClasspathFlag
+			java.put("import", Map.of("maven", Map.of("disableTestClasspathFlag", true)));
+			Preferences preferences = Preferences.createFrom(configMap);
+			preferenceManager.update(preferences);
+			assertTrue(preferences.isMavenDisableTestClasspathFlag());
+			mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+			assertTrue(mavenDisableTestClasspathFlag);
+			java = new HashMap<>();
+			configMap.put("java", java);
+			// java.import.maven.disableTestClasspathFlag
+			java.put("import", Map.of("maven", Map.of("disableTestClasspathFlag", false)));
+			preferences = Preferences.createFrom(configMap);
+			preferenceManager.update(preferences);
+			assertFalse(preferences.isMavenDisableTestClasspathFlag());
+			mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+			assertFalse(mavenDisableTestClasspathFlag);
+		} finally {
+			prefs.putBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, mavenDisableTestClasspathFlag);
+		}
 	}
 
 }
