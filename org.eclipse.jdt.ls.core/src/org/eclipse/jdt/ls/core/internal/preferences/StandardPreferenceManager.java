@@ -170,6 +170,13 @@ public class StandardPreferenceManager extends PreferenceManager {
 				} catch (BackingStoreException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				}
+			} else if (oldDisableTest != preferences.isMavenDisableTestClasspathFlag()) {
+				prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
+				try {
+					prefs.flush();
+				} catch (BackingStoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
 			}
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException(e);
