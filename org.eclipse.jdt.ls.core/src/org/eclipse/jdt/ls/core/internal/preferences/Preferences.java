@@ -1002,6 +1002,10 @@ public class Preferences {
 
 		nonnullClasspathStorage.put("org.jetbrains.annotations.NotNull", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
 		nullableClasspathStorage.put("org.jetbrains.annotations.Nullable", getClasspathSubStringFromArtifact("org.jetbrains:annotations"));
+
+		nonnullClasspathStorage.put("org.jspecify.annotations.NonNull", getClasspathSubStringFromArtifact("org.jspecify:jspecify"));
+		nullableClasspathStorage.put("org.jspecify.annotations.Nullable", getClasspathSubStringFromArtifact("org.jspecify:jspecify"));
+		nonnullbydefaultClasspathStorage.put("org.jspecify.annotations.NullMarked", getClasspathSubStringFromArtifact("org.jspecify:jspecify"));
 	}
 
 	private static List<String> getClasspathSubStringFromArtifact(String artifact) {
