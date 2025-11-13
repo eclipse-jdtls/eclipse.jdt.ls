@@ -80,6 +80,7 @@ import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ChangeMethodSignatureProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ConstructorFromSuperclassProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateNewObjectProposalCore;
@@ -919,6 +920,11 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	@Override
 	protected ProposalKindWrapper newLocalVariableCorrectionProposalToT(NewLocalVariableCorrectionProposalCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper assignToVariableAssistProposalToT(AssignToVariableAssistProposalCore core) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
 	}
 
