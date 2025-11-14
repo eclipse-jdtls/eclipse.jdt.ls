@@ -257,6 +257,7 @@ public class JavadocContentAccess2 {
 			@Override
 			public String getHTMLContent(IPackageFragment packageFragment) throws CoreException {
 				String content = readHTMLContent(packageFragment);
+				JavaLanguageServerPlugin.logInfo("getHTML\n" + content);
 				return sanitizePackageJavadoc(content);
 			}
 
@@ -437,21 +438,39 @@ public class JavadocContentAccess2 {
 			handleText(markSnippet(text, isInSnippet));
 		}
 
+
 		@Override
 		protected void handleBlockTags(String title, List<TagElement> tags) {
-			super.handleBlockTags(title, tags);
+			if (tags.isEmpty()) {
+				return;
+			}
+			handleBlockTagTitle(title);
+			fBuf.append(getBlockTagStart());
+			for (TagElement tag : tags) {
+				handleSingleTag(tag);
+			}
+			fBuf.append(getBlockTagEnd());
+			fBuf.append(getBlockTagEntryEnd());
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		protected void handleSingleTag(TagElement tag) {
+			fBuf.append(getBlockTagEntryStart());
+			if (TagElement.TAG_SEE.equals(tag.getTagName())) {
+				handleSeeTag(tag);
+			} else {
+				handleContentElements(tag.fragments());
+			}
 			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
-		protected void handleSingleTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleTag(tag);
-			fBuf.append(getBlockTagEnd());
-		}
-
-		@Override
 		protected void handleReturnTagBody(TagElement tag, CharSequence returnDescription) {
+			// Only add ul tags if there's a return description
+			if (tag == null) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleReturnTagBody(tag, returnDescription);
 			fBuf.append(getBlockTagEnd());
@@ -479,6 +498,10 @@ public class JavadocContentAccess2 {
 
 		@Override
 		protected void handleExceptionTagsBody(List<TagElement> tags, List<String> exceptionNames, CharSequence[] exceptionDescriptions) {
+			// Only add ul tags if there are exceptions to document
+			if (tags.isEmpty() && (exceptionNames == null || exceptionNames.isEmpty())) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleExceptionTagsBody(tags, exceptionNames, exceptionDescriptions);
 			fBuf.append(getBlockTagEnd());
@@ -486,11 +509,30 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
-		protected void handleSingleParameterTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleParameterTag(tag);
-			fBuf.append(getBlockTagEnd());
+		protected void handleParameterTags(List<TagElement> tags, List<String> parameterNames, CharSequence[] parameterDescriptions, boolean isTypeParameters) {
+			if (tags.isEmpty() && containsOnlyNull(parameterNames)) {
+				return;
+			}
+
+			String tagTitle = isTypeParameters ? "Type Parameters:" : "Parameters:";
+			handleBlockTagTitle(tagTitle);
+			// Only add ul tags if there are actually tags to process
+			if (!tags.isEmpty()) {
+				fBuf.append(getBlockTagStart());
+				for (TagElement tag : tags) {
+					handleSingleParameterTag(tag);
+				}
+				fBuf.append(getBlockTagEnd());
+			}
+			for (int i = 0; i < parameterDescriptions.length; i++) {
+				CharSequence description = parameterDescriptions[i];
+				String name = parameterNames.get(i);
+				if (name != null) {
+					handleSingleParameterDescription(name, description, isTypeParameters);
+				}
+			}
 		}
+
 
 		@Override
 		protected void handleSingleParameterDescription(String name, CharSequence description, boolean isTypeParameters) {
@@ -551,6 +593,16 @@ public class JavadocContentAccess2 {
 		@Override
 		protected String getBlockTagEntryEnd() {
 			return "</li>";
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocAccessImpl#toHTML()
+		 */
+		@Override
+		public String toHTML() {
+			var html = super.toHTML();
+			JavaLanguageServerPlugin.logInfo(html);
+			return html;
 		}
 
 	}
