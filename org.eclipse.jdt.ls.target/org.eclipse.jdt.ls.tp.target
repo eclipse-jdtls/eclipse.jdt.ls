@@ -50,7 +50,7 @@
 			    <dependency>
 				    <groupId>commons-codec</groupId>
 				    <artifactId>commons-codec</artifactId>
-				    <version>1.19.0</version>
+				    <version>1.20.0</version>
 				    <type>jar</type>
 			    </dependency>
 			    <dependency>
@@ -66,7 +66,7 @@
 			    <dependency>
 				    <groupId>jakarta.servlet</groupId>
 				    <artifactId>jakarta.servlet-api</artifactId>
-				    <version>6.1.0</version>
+				    <version>6.2.0-M1</version>
 				    <type>jar</type>
 			    </dependency>
 		    </dependencies>
