@@ -1,5 +1,17 @@
 # Change Log
 
+# [1.53.0 (November 20th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/146?closed=1)
+* performance - Avoid unnecessary Maven project rebuild when the window is reloaded. See [#3587](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3587).
+* performance - Prevent unnecessary Maven project rebuild when configuring test classpath flag. See [#3590](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3590).
+* enhancement - Add support for JSpecify annotations in classpath configuration. See [#3592](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3592).
+* enhancement - Improve code completion type for annotation attributes (now using `Field` kind). See [#3584](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3584).
+* bug fix - Inner classes are now correctly shown/decompiled via Fernflower. See [#2815](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2815).
+* bug fix - Ensure accurate 'build finished' status by waiting for all background processes. See [#3589](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3589).
+* bug fix - Fix implementation for 'Assign to variable' code assist proposals. See [#3596](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3596).
+* bug fix - Suppress incorrect error logging related to content providers and decompiler checks. See [#3582](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3582).
+* bug fix - Fix incorrect `activeParameter` value in `signatureHelp` requests. See [#2434](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2434).
+* dependencies - Bump `eclipse-jarsigner-plugin` to 1.5.3. See [#3593](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3593).
+
 # [1.52.0 (October 30th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/145?closed=1)
 * enhancement - Add inlay hints for lambda parameter types and option to suppress for same-name numbered parameters. See [#3556](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3556), [#3557](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3557).
 * enhancement - Improve detection and setup of `sourcePath` for Android support. See [#3490](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3490).
