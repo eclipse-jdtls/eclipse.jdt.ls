@@ -79,6 +79,7 @@ import org.eclipse.jdt.internal.corext.fix.ConvertLoopFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
@@ -103,6 +104,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ui.cleanup.CleanUpContext;
@@ -1184,9 +1186,30 @@ public class RefactorProcessor {
 	}
 
 	private boolean getMakeMethodStaticRefactoringProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> proposals, IProgressMonitor monitor) {
-		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(context.getCompilationUnit(), context.getSelectionOffset(), context.getSelectionLength());
+		ASTNode methodNode = CodeActionUtility.inferASTNode(coveringNode, MethodDeclaration.class);
+		if (!(methodNode instanceof MethodDeclaration methodDeclaration)) {
+			return false;
+		}
+		IMethodBinding methodBinding = methodDeclaration.resolveBinding();
+		if (methodBinding == null) {
+			return false;
+		}
+		IJavaElement element = methodBinding.getJavaElement();
+
 		try {
-			if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			if (!Checks.isAvailable(element)) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+		if (!(element instanceof IMethod method)){
+			return false;
+		}
+
+		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(method);
+		try {
+			if (refactoring.checkInitialConditions(monitor).isOK()) {
 				String label = RefactoringCoreMessages.MakeStaticRefactoring_name;
 				int relevance = IProposalRelevance.CHANGE_METHOD_SIGNATURE;
 				ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, relevance) {
@@ -1210,5 +1233,4 @@ public class RefactorProcessor {
 		}
 		return true;
 	}
-
 }

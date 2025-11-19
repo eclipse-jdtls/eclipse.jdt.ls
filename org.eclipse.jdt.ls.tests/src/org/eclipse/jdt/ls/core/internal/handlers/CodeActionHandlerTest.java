@@ -387,6 +387,30 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCodeAction_NPEOnInvalidMethodCall() throws Exception {
+		ICompilationUnit unit = getWorkingCopy(
+				"src/App.java",
+				"""
+				public class App {
+					String foo = App.test(); // compilation error, test() doesn't exist
+				}
+				"""
+				);
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		String source = unit.getSource();
+		int appIndex = source.indexOf("App.test()");
+		final Range range = JDTUtils.toRange(unit, appIndex, "App".length());
+		params.setRange(range);
+		CodeActionContext context = new CodeActionContext(Collections.emptyList());
+		params.setContext(context);
+		// This should not throw NPE
+		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
+		Assert.assertNotNull("Code actions should not be null", codeActions);
+		// Code actions may be empty, but should not throw an exception
+	}
+
+	@Test
 	public void testCodeAction_refreshDiagnosticsCommandInNewCUProposal() throws Exception {
 		when(clientPreferences.isResolveCodeActionSupported()).thenReturn(true);
 		preferences.setValidateAllOpenBuffersOnChanges(false);
