@@ -1,6 +1,6 @@
 # Change Log
 
-# [1.53.0 (November 20th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/146?closed=1)
+# [1.53.0 (November 19th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/146?closed=1)
 * performance - Avoid unnecessary Maven project rebuild when the window is reloaded. See [#3587](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3587).
 * performance - Prevent unnecessary Maven project rebuild when configuring test classpath flag. See [#3590](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3590).
 * enhancement - Add support for JSpecify annotations in classpath configuration. See [#3592](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3592).
