@@ -381,8 +381,20 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		new LocalCorrectionsSubProcessor().getUnnecessaryCastProposal(context, problem, proposals);
 	}
 
+	public static void addUnnecessaryThrownExceptionProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getUnnecessaryThrownExceptionProposal(context, problem, proposals, new JavadocTagsSubProcessor());
+	}
+
 	public static void addUnqualifiedFieldAccessProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new LocalCorrectionsSubProcessor().getUnqualifiedFieldAccessProposal(context, problem, proposals);
+	}
+
+	public static void getInvalidOperatorProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getInvalidOperatorProposalsBase(context, problem, proposals);
+	}
+
+	public static void addRemoveRedundantTypeArgumentsProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getRemoveRedundantTypeArgumentsProposals(context, problem, proposals);
 	}
 
 	/*

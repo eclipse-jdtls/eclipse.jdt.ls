@@ -371,13 +371,12 @@ public class QuickFixProcessor {
 			case IProblem.UnnecessaryInstanceof:
 				LocalCorrectionsSubProcessor.addUnnecessaryInstanceofProposal(context, problem, proposals);
 				break;
-			// case IProblem.UnusedMethodDeclaredThrownException:
-			// case IProblem.UnusedConstructorDeclaredThrownException:
-			// LocalCorrectionsSubProcessor.addUnnecessaryThrownExceptionProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedMethodDeclaredThrownException:
+			case IProblem.UnusedConstructorDeclaredThrownException:
+				LocalCorrectionsSubProcessor.addUnnecessaryThrownExceptionProposal(context, problem, proposals);
+				break;
 			case IProblem.UnqualifiedFieldAccess:
-				// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
+				GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
 				LocalCorrectionsSubProcessor.addUnqualifiedFieldAccessProposal(context, problem, proposals);
 				break;
 			// case IProblem.Task:
@@ -426,10 +425,9 @@ public class QuickFixProcessor {
 			case IProblem.NoMessageSendOnArrayType:
 				UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
 				break;
-			// case IProblem.InvalidOperator:
-			// LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.InvalidOperator:
+				LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingSerialVersion:
 				SerialVersionSubProcessor.getSerialVersionProposals(context, problem, proposals);
 				break;
@@ -542,16 +540,15 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addTypePrametersToRawTypeReference(context,
 			// problem, proposals);
 			// break;
-			// case IProblem.RedundantSpecificationOfTypeArguments:
-			// LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.RedundantSpecificationOfTypeArguments:
+				LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context, problem, proposals);
+				break;
 			case IProblem.FallthroughCase:
 				LocalCorrectionsSubProcessor.addFallThroughProposals(context, problem, proposals);
 				break;
-			// case IProblem.UnhandledWarningToken:
-			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
-			// break;
+			case IProblem.UnhandledWarningToken:
+				SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
+				break;
 			case IProblem.ProblemNotAnalysed:
 			case IProblem.UnusedWarningToken:
 				SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context, problem, proposals);

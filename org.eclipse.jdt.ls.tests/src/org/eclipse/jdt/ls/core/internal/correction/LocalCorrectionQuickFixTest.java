@@ -1896,7 +1896,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 
-		String[] expected = new String[1];
 		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("public class E {\n");
@@ -2776,6 +2775,310 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 				+ "}");
 		Expected e1 = new Expected("Create local variable using expression", buf.toString());
 		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    public void foo(String b) throws IOException {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+
+				public class E {
+				    public void foo(String b) {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+					 * @throws IOException \s
+					 */
+				    public void foo(String b) throws IOException {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     * @throws ParseException\s
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION_INCLUDE_DOC_COMMENT_REFERENCE, JavaCore.DISABLED);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @param i
+				     * @throws IOException
+				     * @throws ParseException
+				     */
+				    public void foo(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+				     * @param i
+				     * @throws IOException
+				     */
+				    public void foo(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Remove thrown exception", str1);
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException4() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     * @throws ParseException\s
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testSetParenteses1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    public void foo(Object x) {
+				        if (!x instanceof Runnable) {
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public class E {
+				    public void foo(Object x) {
+				        if (!(x instanceof Runnable)) {
+				        }
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Put 'instanceof' in parentheses", str1);
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testSetParenteses2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    public boolean foo(int x) {
+				        return !x instanceof Runnable || true;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public class E {
+				    public boolean foo(int x) {
+				        return !(x instanceof Runnable) || true;
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Put 'instanceof' in parentheses", str1);
+		assertCodeActions(cu, e1);
 	}
 
 }
