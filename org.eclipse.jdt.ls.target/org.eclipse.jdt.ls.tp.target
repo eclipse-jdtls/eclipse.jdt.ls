@@ -14,8 +14,15 @@
             <unit id="org.eclipse.m2e.workspace.cli" version="0.0.0"/>
             <repository location="https://download.eclipse.org/technology/m2e/releases/2.9.1"/>
         </location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
+			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
+			<unit id="org.eclipse.jdt.junit.core" version="3.14.0.v20251027-1451" />
+			<unit id="org.eclipse.jdt.junit.runtime" version="3.7.600.v20250118-1031" />
+			<repository location="https://download.eclipse.org/eclipse/updates/4.38-I-builds/I20251029-1800/"/>
+		</location>
         <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
+			<unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.core.sdk.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
             <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
@@ -23,8 +30,6 @@
             <unit id="org.mockito.mockito-core" version="0.0.0"/>
             <unit id="org.apache.commons.commons-io" version="0.0.0"/>
             <unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0"/>
-			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
-			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
 			<unit id="org.eclipse.jdt.core" version="0.0.0"/>
