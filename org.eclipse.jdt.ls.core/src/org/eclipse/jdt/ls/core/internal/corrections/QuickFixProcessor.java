@@ -534,12 +534,10 @@ public class QuickFixProcessor {
 			case IProblem.RawTypeReference:
 			case IProblem.UnsafeRawMethodInvocation:
 				LocalCorrectionsSubProcessor.addDeprecatedFieldsToMethodsProposals(context, problem, proposals);
+				//$FALL-THROUGH$
+			case IProblem.UnsafeElementTypeConversion:
+				LocalCorrectionsSubProcessor.addTypeParametersToRawTypeReference(context, problem, proposals);
 				break;
-			// //$FALL-THROUGH$
-			// case IProblem.UnsafeElementTypeConversion:
-			// LocalCorrectionsSubProcessor.addTypePrametersToRawTypeReference(context,
-			// problem, proposals);
-			// break;
 			case IProblem.RedundantSpecificationOfTypeArguments:
 				LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context, problem, proposals);
 				break;

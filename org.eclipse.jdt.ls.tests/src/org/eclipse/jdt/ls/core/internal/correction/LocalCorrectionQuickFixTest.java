@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -3079,6 +3080,221 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 				""";
 		Expected e1 = new Expected("Put 'instanceof' in parentheses", str1);
 		assertCodeActions(cu, e1);
+	}
+
+	public void testUncheckedConversionVariableDeclaration() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map = new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionMethodArgument() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo(Map<String, String> map) {
+			    }
+			    public void bar() {
+			        foo(new HashMap());
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo(Map<String, String> map) {
+			    }
+			    public void bar() {
+			        foo(new HashMap<>());
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionReturnStatement() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public Map<String, String> foo() {
+			        return new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public Map<String, String> foo() {
+			        return new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionAssignment() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map;
+			        map = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map;
+			        map = new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionList() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List<String> list = new ArrayList();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List<String> list = new ArrayList<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'ArrayList'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionExplicitTypeArguments() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        HashMap<Character, Integer> asdf = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        HashMap<Character, Integer> asdf = new HashMap<Character, Integer>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Change type to 'HashMap<Character, Integer>'", after);
+
+		assertCodeActionExists(cu, e1);
 	}
 
 }
