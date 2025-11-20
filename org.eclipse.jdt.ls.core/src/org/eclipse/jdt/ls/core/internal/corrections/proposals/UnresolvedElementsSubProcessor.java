@@ -25,11 +25,22 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.TypeKinds;
+import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
+import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
+import org.eclipse.jdt.internal.corext.util.Messages;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
@@ -318,5 +329,28 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 		if (!isUnnamedClass) {
 			super.collectTypeProposals(context, wrap, proposals);
 		}
+	}
+
+	public static ProposalKindWrapper getTypeRefChangeFullProposal(ICompilationUnit cu, ITypeBinding binding, ASTNode node, int relevance, ImportRewrite.TypeLocation location) {
+		UnresolvedElementsSubProcessor processor = new UnresolvedElementsSubProcessor();
+		return processor.createTypeRefChangeFullProposal(cu, binding, node, relevance, location);
+	}
+
+	@Override
+	protected ProposalKindWrapper createTypeRefChangeFullProposal(ICompilationUnit cu, ITypeBinding binding, ASTNode node, int relevance, TypeLocation typeLocation) {
+		ASTRewrite rewrite = ASTRewrite.create(node.getAST());
+		String label = Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_change_full_type_description, BindingLabelProviderCore.getBindingLabel(binding, JavaElementLabelsCore.ALL_DEFAULT));
+
+		ASTRewriteCorrectionProposalCore proposal = new ASTRewriteCorrectionProposalCore(label, cu, rewrite, relevance);
+
+		ImportRewrite imports = proposal.createImportRewrite((CompilationUnit) node.getRoot());
+
+		ImportRewriteContext context = new ContextSensitiveImportRewriteContext(node, imports);
+
+		Type type = imports.addImport(binding, node.getAST(), context, typeLocation);
+
+		rewrite.replace(node, type, null);
+
+		return rewriteProposalToT(proposal, 0);
 	}
 }
