@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.ChainCompletionProposalCom
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalRequestor;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
+import org.eclipse.jdt.ls.core.internal.contentassist.ResourceBundleCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -298,6 +299,9 @@ public class CompletionHandler{
 						proposals.addAll(SnippetCompletionProposal.getSnippets(unit, collector, subMonitor));
 					}
 					proposals.addAll(new JavadocCompletionProposal().getProposals(unit, offset, collector, subMonitor));
+					if (manager.getPreferences().isResourceBundleCompletionEnabled()) {
+						proposals.addAll(new ResourceBundleCompletionProposal().getProposals(unit, offset, collector, subMonitor));
+					}
 				} catch (OperationCanceledException e) {
 					monitor.setCanceled(true);
 				}
@@ -307,6 +311,7 @@ public class CompletionHandler{
 		List<CompletionItem> tempProposals = proposals.stream().filter(prop -> prop.getKind() == CompletionItemKind.Keyword || prop.getKind() == CompletionItemKind.Snippet).collect(Collectors.toList());
 		tempProposals.sort(LABEL_COMPARATOR);
 		int newSortText = SortTextHelper.CEILING;
+		boolean foundMatch = false;
 		for (int i = 0; i < tempProposals.size() - 1; i++) {
 			CompletionItem currentItem = tempProposals.get(i);
 			CompletionItem nextItem = tempProposals.get(i + 1);
@@ -319,10 +324,11 @@ public class CompletionHandler{
 				}
 				if (tempSortText < newSortText) {
 					newSortText = tempSortText;
+					foundMatch = true;
 				}
 			}
 		}
-		if (newSortText != -1) {
+		if (foundMatch) {
 			String finalSortText = Integer.toString(newSortText);
 			tempProposals.stream().filter(prop -> prop.getKind() == CompletionItemKind.Snippet).forEach(p -> p.setSortText(finalSortText));
 		}
