@@ -260,6 +260,11 @@ public class Preferences {
 	public static final String SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY = "java.signatureHelp.description.enabled";
 
 	/**
+	 * Preference key to enable/disable Javadoc on hover.
+	 */
+	public static final String JAVA_HOVER_JAVADOC_ENABLED_KEY = "java.hover.javadoc.enabled";
+
+	/**
 	 * Preference key to enable/disable rename.
 	 */
 	public static final String RENAME_ENABLED_KEY = "java.rename.enabled";
@@ -634,6 +639,7 @@ public class Preferences {
 	private boolean javaSaveActionsOrganizeImportsEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean signatureHelpDescriptionEnabled;
+	private boolean hoverJavadocEnabled;
 	private boolean renameEnabled;
 	private boolean executeCommandEnabled;
 	private boolean autobuildEnabled;
@@ -917,6 +923,7 @@ public class Preferences {
 		javaSaveActionsOrganizeImportsEnabled = false;
 		signatureHelpEnabled = false;
 		signatureHelpDescriptionEnabled = false;
+		hoverJavadocEnabled = true;
 		renameEnabled = true;
 		executeCommandEnabled = true;
 		autobuildEnabled = true;
@@ -1082,6 +1089,7 @@ public class Preferences {
 		prefs.javaSaveActionsOrganizeImportsEnabled = this.javaSaveActionsOrganizeImportsEnabled;
 		prefs.signatureHelpEnabled = this.signatureHelpEnabled;
 		prefs.signatureHelpDescriptionEnabled = this.signatureHelpDescriptionEnabled;
+		prefs.hoverJavadocEnabled = this.hoverJavadocEnabled;
 		prefs.renameEnabled = this.renameEnabled;
 		prefs.executeCommandEnabled = this.executeCommandEnabled;
 		prefs.autobuildEnabled = this.autobuildEnabled;
@@ -1343,6 +1351,11 @@ public class Preferences {
 		if (getValue(configuration, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY) != null) {
 			boolean signatureDescriptionEnabled = getBoolean(configuration, SIGNATURE_HELP_DESCRIPTION_ENABLED_KEY, existing.signatureHelpDescriptionEnabled);
 			prefs.setSignatureHelpDescriptionEnabled(signatureDescriptionEnabled);
+		}
+
+		if (getValue(configuration, JAVA_HOVER_JAVADOC_ENABLED_KEY) != null) {
+			boolean hoverJavadocEnabled = getBoolean(configuration, JAVA_HOVER_JAVADOC_ENABLED_KEY, existing.hoverJavadocEnabled);
+			prefs.setHoverJavadocEnabled(hoverJavadocEnabled);
 		}
 
 		if (getValue(configuration, RENAME_ENABLED_KEY) != null) {
@@ -2032,6 +2045,11 @@ public class Preferences {
 		this.signatureHelpDescriptionEnabled = signatureHelpDescriptionEnabled;
 	}
 
+	private Preferences setHoverJavadocEnabled(boolean enabled) {
+		this.hoverJavadocEnabled = enabled;
+		return this;
+	}
+
 	private Preferences setImplementationCodelens(String implementationCodeLensOption) {
 		this.implementationsCodeLens = implementationCodeLensOption;
 		return this;
@@ -2383,6 +2401,10 @@ public class Preferences {
 
 	public boolean isSignatureHelpDescriptionEnabled() {
 		return signatureHelpDescriptionEnabled;
+	}
+
+	public boolean isHoverJavadocEnabled() {
+		return hoverJavadocEnabled;
 	}
 
 	public boolean isRenameEnabled() {
