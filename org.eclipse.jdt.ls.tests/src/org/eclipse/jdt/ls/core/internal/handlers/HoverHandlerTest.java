@@ -17,6 +17,7 @@ import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -804,6 +806,37 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String payload = createHoverRequest(cu, line, character);
 		TextDocumentPositionParams position = getParams(payload);
 		return handler.hover(position, monitor);
+	}
+
+	@Test
+	public void testHoverJavadocDisabled() throws Exception {
+		// given - preference is disabled via configuration
+		Preferences prefs =  Preferences.createFrom(Map.of(Preferences.JAVA_HOVER_JAVADOC_ENABLED_KEY, false));
+		assertFalse("Javadoc should be disabled", prefs.isHoverJavadocEnabled());
+		when(preferenceManager.getPreferences()).thenReturn(prefs);
+		handler = new HoverHandler(preferenceManager);
+
+		// when - hover on a class with Javadoc
+		String payload = createHoverRequest("src/java/Foo.java", 5, 15);
+		TextDocumentPositionParams position = getParams(payload);
+		Hover hoverResult = handler.hover(position, monitor);
+
+		// then - hover should be null
+		assertNull("Hover should be null when Javadoc is disabled", hoverResult);
+
+		// when - enable preference and hover again
+		prefs =  Preferences.createFrom(Map.of(Preferences.JAVA_HOVER_JAVADOC_ENABLED_KEY, true));
+		when(preferenceManager.getPreferences()).thenReturn(prefs);
+		handler = new HoverHandler(preferenceManager);
+		Hover hoverResultEnabled = handler.hover(position, monitor);
+
+		// then - hover should now include Javadoc
+		assertNotNull(hoverResultEnabled);
+		assertTrue("Hover should contain content when Javadoc is enabled", hoverResultEnabled.getContents().getLeft().size() > 0);
+		if (hoverResultEnabled.getContents().getLeft().size() > 1) {
+			String doc = hoverResultEnabled.getContents().getLeft().get(1).getLeft();
+			assertEquals("Unexpected hover " + doc, "This is foo", doc);
+		}
 	}
 
 }
