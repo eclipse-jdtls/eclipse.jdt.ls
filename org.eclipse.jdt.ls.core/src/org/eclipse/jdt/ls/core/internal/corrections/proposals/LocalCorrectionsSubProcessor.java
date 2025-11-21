@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
@@ -47,8 +48,11 @@ import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
@@ -56,6 +60,7 @@ import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.SwitchExpression;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.ThrowStatement;
+import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
@@ -65,12 +70,14 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecker;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.Java50FixCore;
 import org.eclipse.jdt.internal.corext.fix.RenameUnusedVariableFixCore;
 import org.eclipse.jdt.internal.corext.fix.SealedClassFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
@@ -466,6 +473,86 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	public static void addDeprecatedFieldsToMethodsProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new LocalCorrectionsSubProcessor().getDeprecatedFieldsToMethodsProposals(context, problem, proposals);
+	}
+
+	public static void addTypeParametersToRawTypeReference(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getTypeParametersToRawTypeReference(context, problem, proposals);
+	}
+
+	private void getTypeParametersToRawTypeReference(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		IProposableFix fix = Java50FixCore.createRawTypeReferenceFix(context.getASTRoot(), problem);
+		if (fix != null) {
+			FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, null, IProposalRelevance.CHANGE_VARIABLE, context);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+		}
+		addTypeArgumentsFromContext(context, problem, proposals);
+	}
+
+	private static void addTypeArgumentsFromContext(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		ICompilationUnit cu = context.getCompilationUnit();
+		CompilationUnit root = context.getASTRoot();
+		ASTNode selectedNode = problem.getCoveringNode(root);
+		if (selectedNode == null) {
+			return;
+		}
+
+		while (selectedNode.getLocationInParent() == QualifiedName.NAME_PROPERTY) {
+			selectedNode = selectedNode.getParent();
+		}
+
+		Name node = null;
+		if (selectedNode instanceof SimpleType simpleType) {
+			node = simpleType.getName();
+		} else if (selectedNode instanceof NameQualifiedType nameQualifiedType) {
+			node = nameQualifiedType.getName();
+		} else if (selectedNode instanceof ArrayType arrayType) {
+			Type elementType = arrayType.getElementType();
+			if (elementType.isSimpleType()) {
+				node = ((SimpleType) elementType).getName();
+			} else if (elementType.isNameQualifiedType()) {
+				node = ((NameQualifiedType) elementType).getName();
+			} else {
+				return;
+			}
+		} else if (selectedNode instanceof Name name) {
+			node = name;
+		} else {
+			return;
+		}
+
+		// try to resolve type in context
+		ITypeBinding binding = ASTResolving.guessBindingForTypeReference(node);
+		if (binding != null) {
+			ASTNode parent = node.getParent();
+			if (parent instanceof Type && parent.getLocationInParent() == ClassInstanceCreation.TYPE_PROPERTY && binding.isInterface()) { //bug 351853
+				return;
+			}
+			ITypeBinding simpleBinding = binding;
+			if (simpleBinding.isArray()) {
+				simpleBinding = simpleBinding.getElementType();
+			}
+			simpleBinding = simpleBinding.getTypeDeclaration();
+
+			if (!simpleBinding.isRecovered()) {
+				if (binding.isParameterizedType() && (node.getParent() instanceof SimpleType || node.getParent() instanceof NameQualifiedType) && !(node.getParent().getParent() instanceof Type)) {
+					ProposalKindWrapper proposal = UnresolvedElementsSubProcessor.getTypeRefChangeFullProposal(cu, binding, node, IProposalRelevance.TYPE_ARGUMENTS_FROM_CONTEXT, TypeLocation.TYPE_ARGUMENT);
+					if (proposal != null) {
+						proposals.add(proposal);
+					}
+				}
+			}
+		} else {
+			ASTNode normalizedNode = ASTNodes.getNormalizedNode(node);
+			if (!(normalizedNode.getParent() instanceof Type) && node.getParent() != normalizedNode) {
+				ITypeBinding normBinding = ASTResolving.guessBindingForTypeReference(normalizedNode);
+				if (normBinding != null && !normBinding.isRecovered()) {
+					ProposalKindWrapper proposal = UnresolvedElementsSubProcessor.getTypeRefChangeFullProposal(cu, normBinding, normalizedNode, IProposalRelevance.TYPE_ARGUMENTS_FROM_CONTEXT, TypeLocation.TYPE_ARGUMENT);
+					if (proposal != null) {
+						proposals.add(proposal);
+					}
+				}
+			}
+		}
 	}
 
 	public static void addRemoveDefaultCaseProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
