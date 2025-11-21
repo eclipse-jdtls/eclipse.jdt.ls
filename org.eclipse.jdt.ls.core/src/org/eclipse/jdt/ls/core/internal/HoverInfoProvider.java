@@ -94,6 +94,9 @@ public class HoverInfoProvider {
 
 	public List<Either<String, MarkedString>> computeHover(int line, int column, IProgressMonitor monitor) {
 		List<Either<String, MarkedString>> res = new LinkedList<>();
+		if (preferenceManager != null && !preferenceManager.getPreferences().isHoverJavadocEnabled()) {
+			return res;
+		}
 		try {
 			if (monitor.isCanceled()) {
 				return cancelled(res);
