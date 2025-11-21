@@ -513,6 +513,13 @@ public class ClientPreferences {
 			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport().booleanValue();
 	}
 
+	public boolean isCodeLensRefreshSupported() {
+		return v3supported
+			&& capabilities.getWorkspace().getCodeLens() != null
+			&& capabilities.getWorkspace().getCodeLens().getRefreshSupport() != null
+			&& capabilities.getWorkspace().getCodeLens().getRefreshSupport().booleanValue();
+	}
+
 	public Collection<String> excludedMarkerTypes() {
 		Object list = extendedClientCapabilities.getOrDefault("excludedMarkerTypes", null);
 		return list instanceof Collection<?> excludedMarkerTypes //

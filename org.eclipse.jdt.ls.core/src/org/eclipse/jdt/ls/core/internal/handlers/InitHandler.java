@@ -275,6 +275,7 @@ final public class InitHandler extends BaseInitHandler {
 					resetBuildState.run();
 					projectsManager.registerListeners();
 					preferenceManager.addPreferencesChangeListener(new InlayHintsPreferenceChangeListener());
+					preferenceManager.addPreferencesChangeListener(new CodeLensPreferenceChangeListener());
 				}
 				return Status.OK_STATUS;
 			}
