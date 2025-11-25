@@ -108,18 +108,19 @@ public abstract class BaseInitHandler {
 				}
 			}
 		} else {
-			String rootPath = param.getRootUri();
-			if (rootPath == null) {
-				rootPath = param.getRootPath();
+			IPath filePath = null;
+			String rootUri = param.getRootUri();
+			if (rootUri != null) {
+				filePath = ResourceUtils.canonicalFilePathFromURI(rootUri);
+			} else {
+				String rootPath = param.getRootPath();
 				if (rootPath != null) {
 					logInfo("In LSP 3.0, InitializeParams.rootPath is deprecated in favour of InitializeParams.rootUri!");
+					filePath = IPath.fromOSString(rootPath);
 				}
 			}
-			if (rootPath != null) {
-				IPath filePath = ResourceUtils.canonicalFilePathFromURI(rootPath);
-				if (filePath != null) {
-					rootPaths.add(filePath);
-				}
+			if (filePath != null) {
+				rootPaths.add(filePath);
 			}
 		}
 		if (rootPaths.isEmpty()) {
