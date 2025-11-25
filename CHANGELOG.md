@@ -1,5 +1,15 @@
 # Change Log
 
+# [1.54.0 (November 26th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
+ * enhancement - Add preference to disable returning Javadoc on hover. See [#3610](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3610).
+ * enhancement - Adopt quick fixes for the following problems. See [#3609](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3609).
+	- `UnusedMethodDeclaredThrownException`,
+	- `InvalidOperator`,
+	- `RedundantSpecificationOfTypeArguments`
+ * enhancement - Support for `refreshCodeLenses`. See [#3047](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3047).
+ * bug fix - Temporary rollback of JUnit bundles to fix JUnit 6 support. See [#3605](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3605).
+ * bug fix - NPE thrown when computing Code Actions on invalid code. See [#3602](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3602).
+
 # [1.53.0 (November 19th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/146?closed=1)
 * performance - Avoid unnecessary Maven project rebuild when the window is reloaded. See [#3587](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3587).
 * performance - Prevent unnecessary Maven project rebuild when configuring test classpath flag. See [#3590](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3590).
