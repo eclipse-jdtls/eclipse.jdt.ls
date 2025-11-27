@@ -45,10 +45,8 @@ import org.eclipse.lsp4j.extended.ProjectBuildParams;
  *
  */
 public class BuildWorkspaceHandler {
-	private final ProjectsManager projectsManager;
 
-	public BuildWorkspaceHandler(ProjectsManager projectsManager) {
-		this.projectsManager = projectsManager;
+	public BuildWorkspaceHandler(ProjectsManager _projectsManager) {
 	}
 
 	public BuildWorkspaceStatus buildWorkspace(boolean forceReBuild, IProgressMonitor monitor) {

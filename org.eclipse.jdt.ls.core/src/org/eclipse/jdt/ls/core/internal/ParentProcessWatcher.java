@@ -14,7 +14,6 @@ package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logInfo;
 
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -22,10 +21,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.jsonrpc.MessageConsumer;
-
-import com.google.common.io.Closeables;
 
 /**
  * Watches the parent process PID and invokes exit if it is no longer available.
@@ -34,7 +30,6 @@ import com.google.common.io.Closeables;
 public final class ParentProcessWatcher implements Runnable, Function<MessageConsumer, MessageConsumer>{
 
 	private static final long INACTIVITY_DELAY_SECS = 30 *1000;
-	private static final boolean isJava1x = System.getProperty("java.version").startsWith("1.");
 	private static final int POLL_DELAY_SECS = 10;
 	private volatile long lastActivityTime;
 	private final LanguageServerApplication server;

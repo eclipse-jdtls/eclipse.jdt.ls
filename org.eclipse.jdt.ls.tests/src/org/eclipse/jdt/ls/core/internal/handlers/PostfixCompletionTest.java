@@ -26,7 +26,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -45,7 +44,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 
-	private JavaClientConnection javaClient;
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
@@ -67,7 +65,6 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		mockLSP3Client();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
-		javaClient = new JavaClientConnection(client);
 		preferences.setPostfixCompletionEnabled(true);
 	}
 

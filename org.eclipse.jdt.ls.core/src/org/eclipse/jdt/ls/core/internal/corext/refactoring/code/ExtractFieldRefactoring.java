@@ -1211,10 +1211,6 @@ public class ExtractFieldRefactoring extends Refactoring {
 			return fLocalReferencesToEnclosing;
 		}
 
-		public boolean getClassTypeVariablesUsed() {
-			return fClassTypeVariablesUsed;
-		}
-
 		@Override
 		public boolean visit(SimpleName node) {
 			ITypeBinding typeBinding = node.resolveTypeBinding();

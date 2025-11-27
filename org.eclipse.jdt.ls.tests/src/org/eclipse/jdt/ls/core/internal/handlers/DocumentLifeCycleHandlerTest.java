@@ -62,7 +62,6 @@ import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler.Do
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.jdt.ls.core.internal.preferences.Preferences.Severity;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
