@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Hashtable;
@@ -123,8 +124,8 @@ class TestVMInstall extends AbstractVMInstall {
 		setNotify(false);
 		setInstallLocation(new File(TestVMType.getFakeJDKsLocation(), id));
 		try {
-			javadoc = new URL("https://docs.oracle.com/javase/" + id.replace("1.", "") + "/docs/api/");
-		} catch (MalformedURLException e) {
+			javadoc = new URI("https://docs.oracle.com/javase/" + id.replace("1.", "") + "/docs/api/").toURL();
+		} catch (MalformedURLException | URISyntaxException e) {
 			JavaLanguageServerPlugin.logException(e.getMessage(), e);
 		}
 	}
