@@ -18,16 +18,6 @@
 				<configuration>
 					<artifactItems>
 						<artifactItem>
-							<groupId>com.kotcrab.remark</groupId>
-							<artifactId>remark</artifactId>
-							<version>1.2.0</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.jsoup</groupId>
-							<artifactId>jsoup</artifactId>
-							<version>1.14.2</version>
-						</artifactItem>
-						<artifactItem>
 							<groupId>com.jetbrains.intellij.java</groupId>
 							<artifactId>java-decompiler-engine</artifactId>
 							<version>231.9011.34</version>

@@ -64,9 +64,7 @@ public class JavaDoc2PlainTextConverterTest extends AbstractJavadocConverterTest
 	public void testBoundaries() throws IOException {
 		assertTrue(new JavaDoc2PlainTextConverter("").getAsString().isEmpty());
 		assertNull(new JavaDoc2PlainTextConverter((Reader) null).getAsString());
-		assertNull(new JavaDoc2PlainTextConverter((Reader) null).getAsReader());
 		assertNull(new JavaDoc2PlainTextConverter((String) null).getAsString());
-		assertNull(new JavaDoc2PlainTextConverter((String) null).getAsReader());
 	}
 
 	@Test
@@ -76,11 +74,4 @@ public class JavaDoc2PlainTextConverterTest extends AbstractJavadocConverterTest
 				Util.convertToIndependentLineDelimiter(result));
 	}
 
-	@Test
-	public void testGetAsReader() throws IOException {
-		JavaDoc2PlainTextConverter converter = new JavaDoc2PlainTextConverter(RAW_JAVADOC_0);
-		Reader reader1 = converter.getAsReader();
-		Reader reader2 = converter.getAsReader();
-		assertNotSame(reader1, reader2);
-	}
 }

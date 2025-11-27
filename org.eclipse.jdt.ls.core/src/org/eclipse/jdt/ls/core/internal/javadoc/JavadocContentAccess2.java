@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -45,6 +44,7 @@ import org.eclipse.jdt.core.dom.MethodRefParameter;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TagElement;
+import org.eclipse.jdt.core.dom.TagProperty;
 import org.eclipse.jdt.core.dom.TextElement;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavaDocSnippetStringEvaluator;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocAccess;
@@ -73,11 +73,11 @@ import org.eclipse.lsp4j.Location;
 public class JavadocContentAccess2 {
 	public static final String SNIPPET = "SNIPPET";
 
-	public static Reader getPlainTextContentReader(IMember member) throws JavaModelException {
+	public static String getPlainTextContent(IMember member) throws JavaModelException {
 		Reader contentReader = CoreJavadocContentAccessUtility.getHTMLContentReader(member, true, true);
 		if (contentReader != null) {
 			try {
-				return new JavaDoc2PlainTextConverter(contentReader).getAsReader();
+				return new JavaDoc2PlainTextConverter(contentReader).getAsString();
 			} catch (IOException e) {
 				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
 			}
@@ -85,7 +85,7 @@ public class JavadocContentAccess2 {
 		return null;
 	}
 
-	public static Reader getMarkdownContentReader(IJavaElement element) {
+	public static String getMarkdownContent(IJavaElement element) {
 
 		CoreJavadocAccess access = createJdtLsJavadocAccess();
 		try {
@@ -133,11 +133,10 @@ public class JavadocContentAccess2 {
 					}
 				}
 
-				return buf.length() > 0 ? new StringReader(buf.substring(1)) : new StringReader(content);
+				return buf.length() > 0 ? buf.substring(1) : content;
 			} else {
 				String rawHtml = access.getHTMLContent(element, true);
-				Reader markdownReader = new JavaDoc2MarkdownConverter(rawHtml).getAsReader();
-				return markdownReader;
+				return new JavaDoc2MarkdownConverter(rawHtml).getAsString();
 			}
 		} catch (IOException | CoreException e) {
 
@@ -252,7 +251,6 @@ public class JavadocContentAccess2 {
 	 * @return
 	 */
 	private static CoreJavadocAccess createJdtLsJavadocAccess() {
-		// TODO Auto-generated method stub
 		return new CoreJavadocAccess(JDT_LS_JAVADOC_CONTENT_FACTORY) {
 			@Override
 			public String getHTMLContent(IPackageFragment packageFragment) throws CoreException {
@@ -339,7 +337,6 @@ public class JavadocContentAccess2 {
 		 */
 		public JdtLsJavadocAccessImpl(IJavaElement element, Javadoc javadoc, String source) {
 			super(element, javadoc, source);
-			// TODO Auto-generated constructor stub
 		}
 
 		/**
@@ -409,6 +406,97 @@ public class JavadocContentAccess2 {
 			};
 		}
 
+		//Overridden to decrement fLiteralContent when isSummary || isIndex
+		@Override
+		protected void handleInlineTagElement(TagElement node) {
+			String name = node.getTagName();
+			if (TagElement.TAG_VALUE.equals(name) && handleValueTag(node)) {
+				return;
+			}
+
+			boolean isLink = TagElement.TAG_LINK.equals(name);
+			boolean isLinkplain = TagElement.TAG_LINKPLAIN.equals(name);
+			boolean isCode = TagElement.TAG_CODE.equals(name);
+			boolean isLiteral = TagElement.TAG_LITERAL.equals(name);
+			boolean isSummary = TagElement.TAG_SUMMARY.equals(name);
+			boolean isIndex = TagElement.TAG_INDEX.equals(name);
+			boolean isSnippet = TagElement.TAG_SNIPPET.equals(name);
+			boolean isReturn = TagElement.TAG_RETURN.equals(name);
+
+			if (isLiteral || isCode || isSummary || isIndex) {
+				fLiteralContent++;
+			}
+			if (isCode || (isLink && addCodeTagOnLink())) {
+				if (isCode && fPreCounter > 0 && fBuf.lastIndexOf("<pre>") == fBuf.length() - 5) { //$NON-NLS-1$
+					fInPreCodeCounter = fPreCounter - 1;
+				}
+				fBuf.append("<code>"); //$NON-NLS-1$
+			}
+			if (isReturn) {
+				fBuf.append("Returns");
+			}
+
+			if (isLink || isLinkplain) {
+				handleLink(node.fragments());
+			} else if (isSummary) {
+				handleSummary(node.fragments());
+			} else if (isIndex) {
+				handleIndex(node.fragments());
+			} else if (isCode || isLiteral) {
+				handleContentElements(node.fragments(), true, node);
+			} else if (isReturn) {
+				handleContentElements(node.fragments(), false, node);
+			} else if (isSnippet) {
+				handleSnippet(node);
+			} else if (handleInheritDoc(node) || handleDocRoot(node)) {
+				// Handled
+			} else {
+				//print uninterpreted source {@tagname ...} for unknown tags
+				int start = node.getStartPosition();
+				String text = fSource.substring(start, start + node.getLength());
+				fBuf.append(removeDocLineIntros(text));
+			}
+
+			if (isReturn) {
+				fBuf.append(".");
+			}
+			if (isCode || (isLink && addCodeTagOnLink())) {
+				fBuf.append("</code>"); //$NON-NLS-1$
+			}
+			if (isSnippet) {
+				fBuf.append("</code></pre>"); //$NON-NLS-1$
+			}
+			// This is a bug upstream, isSummary || isIndex are missing
+			if (isLiteral || isCode || isSummary || isIndex) {
+				fLiteralContent--;
+			}
+
+		}
+
+		@Override
+		protected void handleSnippet(TagElement node) {
+			if (node != null) {
+				Object val = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_IS_VALID);
+				Object valError = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_ERROR);
+				if (val instanceof Boolean && ((Boolean) val).booleanValue() && valError == null) {
+					int fs = node.fragments().size();
+					if (fs > 0) {
+						fBuf.append("<pre>"); //$NON-NLS-1$
+						Object valID = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_ID);
+						if (valID instanceof String && !valID.toString().isBlank()) {
+							fBuf.append("<code id=" + valID.toString() + ">"); //$NON-NLS-1$ //$NON-NLS-2$
+						} else {
+							fBuf.append("<code>");//$NON-NLS-1$
+						}
+						// Don't surround snippet content with additional code tags
+						fSnippetStringEvaluator.AddTagElementString(node, fBuf);
+					}
+				} else {
+					handleInvalidSnippet(node);
+				}
+			}
+		}
+
 		@Override
 		protected void handleInLineTextElement(TextElement te, boolean skipLeadingWhitespace, TagElement tagElement, ASTNode previousNode) {
 			// Following lines available in jdtls
@@ -427,6 +515,24 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
+		protected void handleLink(List<? extends ASTNode> fragments) {
+			if (fragments == null || fragments.isEmpty()) {
+				return;
+			}
+			// Special handling for references starting with ## (anchors to the same page), we want to get rid of them
+			if (fragments.get(0) instanceof TextElement textElement) {
+				String text = textElement.getText();
+				if (text.contains("##")) {
+					// Remove the first ##word (## followed by word characters)
+					String interestingPart = text.replaceFirst("##\\w+\\s*", "");
+					handleText(interestingPart);
+					return;
+				}
+			}
+			super.handleLink(fragments);
+		}
+
+		@Override
 		protected boolean addCodeTagOnLink() {
 			return false;
 		}
@@ -437,21 +543,39 @@ public class JavadocContentAccess2 {
 			handleText(markSnippet(text, isInSnippet));
 		}
 
+
 		@Override
 		protected void handleBlockTags(String title, List<TagElement> tags) {
-			super.handleBlockTags(title, tags);
+			if (tags.isEmpty()) {
+				return;
+			}
+			handleBlockTagTitle(title);
+			fBuf.append(getBlockTagStart());
+			for (TagElement tag : tags) {
+				handleSingleTag(tag);
+			}
+			fBuf.append(getBlockTagEnd());
+			fBuf.append(getBlockTagEntryEnd());
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		protected void handleSingleTag(TagElement tag) {
+			fBuf.append(getBlockTagEntryStart());
+			if (TagElement.TAG_SEE.equals(tag.getTagName())) {
+				handleSeeTag(tag);
+			} else {
+				handleContentElements(tag.fragments());
+			}
 			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
-		protected void handleSingleTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleTag(tag);
-			fBuf.append(getBlockTagEnd());
-		}
-
-		@Override
 		protected void handleReturnTagBody(TagElement tag, CharSequence returnDescription) {
+			// Only add ul tags if there's a return description
+			if (tag == null) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleReturnTagBody(tag, returnDescription);
 			fBuf.append(getBlockTagEnd());
@@ -479,6 +603,10 @@ public class JavadocContentAccess2 {
 
 		@Override
 		protected void handleExceptionTagsBody(List<TagElement> tags, List<String> exceptionNames, CharSequence[] exceptionDescriptions) {
+			// Only add ul tags if there are exceptions to document
+			if (tags.isEmpty() && (exceptionNames == null || exceptionNames.isEmpty())) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleExceptionTagsBody(tags, exceptionNames, exceptionDescriptions);
 			fBuf.append(getBlockTagEnd());
@@ -486,11 +614,30 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
-		protected void handleSingleParameterTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleParameterTag(tag);
-			fBuf.append(getBlockTagEnd());
+		protected void handleParameterTags(List<TagElement> tags, List<String> parameterNames, CharSequence[] parameterDescriptions, boolean isTypeParameters) {
+			if (tags.isEmpty() && containsOnlyNull(parameterNames)) {
+				return;
+			}
+
+			String tagTitle = isTypeParameters ? "Type Parameters:" : "Parameters:";
+			handleBlockTagTitle(tagTitle);
+			// Only add ul tags if there are actually tags to process
+			if (!tags.isEmpty()) {
+				fBuf.append(getBlockTagStart());
+				for (TagElement tag : tags) {
+					handleSingleParameterTag(tag);
+				}
+				fBuf.append(getBlockTagEnd());
+			}
+			for (int i = 0; i < parameterDescriptions.length; i++) {
+				CharSequence description = parameterDescriptions[i];
+				String name = parameterNames.get(i);
+				if (name != null) {
+					handleSingleParameterDescription(name, description, isTypeParameters);
+				}
+			}
 		}
+
 
 		@Override
 		protected void handleSingleParameterDescription(String name, CharSequence description, boolean isTypeParameters) {

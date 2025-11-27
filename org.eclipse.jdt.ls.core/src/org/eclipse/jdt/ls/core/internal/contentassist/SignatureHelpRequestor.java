@@ -16,7 +16,6 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.fix83600;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLowerBound;
 
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -50,7 +49,6 @@ import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
 
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 
@@ -214,8 +212,7 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 							String javadoc = null;
 							try {
 								javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-									Reader reader = JavadocContentAccess2.getPlainTextContentReader(method);
-									return reader == null ? null : CharStreams.toString(reader);
+									return JavadocContentAccess2.getPlainTextContent(method);
 								}, 500, TimeUnit.MILLISECONDS);
 							} catch (UncheckedTimeoutException tooSlow) {
 							} catch (Exception e) {
