@@ -100,6 +100,7 @@ public class CodeActionUtility {
 			}
 		} else if (node instanceof FieldDeclaration fieldDecl) {
 			List<String> names = new ArrayList<>();
+			@SuppressWarnings("unchecked")
 			List<VariableDeclarationFragment> fragments = fieldDecl.fragments();
 			for (VariableDeclarationFragment fragment : fragments) {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
@@ -123,6 +124,7 @@ public class CodeActionUtility {
 			}
 		} else if (node instanceof VariableDeclarationStatement variableDecl) {
 			List<String> names = new ArrayList<>();
+			@SuppressWarnings("unchecked")
 			List<VariableDeclarationFragment> fragments = variableDecl.fragments();
 			for (VariableDeclarationFragment fragment : fragments) {
 				names.addAll(CodeActionUtility.getFieldNamesFromASTNode(fragment));
@@ -140,7 +142,7 @@ public class CodeActionUtility {
 		return null;
 	}
 
-	public static boolean hasMethod(IType type, String methodName, Class... parameterTypes) {
+	public static boolean hasMethod(IType type, String methodName, Class<?>... parameterTypes) {
 		if (type == null) {
 			return false;
 		}

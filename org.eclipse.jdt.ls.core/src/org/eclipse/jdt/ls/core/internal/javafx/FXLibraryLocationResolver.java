@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.javafx;
 import static org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin.logError;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 
 import org.eclipse.core.runtime.IPath;
@@ -65,7 +66,7 @@ public class FXLibraryLocationResolver implements ILibraryLocationResolver {
 					return javaDoc.toURI().toURL();
 				}
 
-				return new URL(BuildPathSupport.WEB_JAVADOC_LOCATION);
+				return new URI(BuildPathSupport.WEB_JAVADOC_LOCATION).toURL();
 			} catch (Exception e) {
 				logError("Failure while trying to detect JavaFX8 JavaDoc: " + e.getMessage());
 			}

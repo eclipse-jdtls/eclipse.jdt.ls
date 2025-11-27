@@ -132,7 +132,6 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertTrue(vm instanceof IVMInstall2);
 			String version = ((IVMInstall2) vm).getJavaVersion();
 			assertTrue(version.startsWith(JavaCore.VERSION_21));
-			StandardVMType svt = (StandardVMType) vm.getVMInstallType();
 			LibraryLocation[] libs = vm.getLibraryLocations();
 			assertNotNull(libs);
 			for (LibraryLocation lib : libs) {

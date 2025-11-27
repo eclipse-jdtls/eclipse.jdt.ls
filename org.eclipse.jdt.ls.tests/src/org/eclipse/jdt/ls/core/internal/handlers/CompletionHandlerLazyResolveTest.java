@@ -28,7 +28,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.codeassist.impl.AssistOptions;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.CompletionItem;
@@ -47,7 +46,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBasedTest {
 
-	private JavaClientConnection javaClient;
 	private static String COMPLETION_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
@@ -69,7 +67,6 @@ public class CompletionHandlerLazyResolveTest extends AbstractCompilationUnitBas
 		mockLSP3Client();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
-		javaClient = new JavaClientConnection(client);
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setCompletionLazyResolveTextEditEnabled(true);
 	}

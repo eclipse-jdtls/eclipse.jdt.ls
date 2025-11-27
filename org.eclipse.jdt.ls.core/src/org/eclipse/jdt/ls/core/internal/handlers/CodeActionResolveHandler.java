@@ -32,6 +32,7 @@ public class CodeActionResolveHandler {
 	public static final String DATA_FIELD_PROPOSAL_ID = "pid";
 
 	public CodeAction resolve(CodeAction params, IProgressMonitor monitor) {
+		@SuppressWarnings("unchecked")
 		Map<String, String> data = JSONUtility.toModel(params.getData(), Map.class);
 		// clean resolve data
 		params.setData(null);

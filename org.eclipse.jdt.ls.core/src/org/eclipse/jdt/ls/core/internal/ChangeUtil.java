@@ -31,8 +31,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -49,7 +47,6 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.AnnotatedTextEdit;
@@ -362,23 +359,6 @@ public class ChangeUtil {
 		return StringUtils.isEmpty(textEdit.getNewText())
 			&& start.getCharacter() == end.getCharacter()
 			&& start.getLine() == end.getLine();
-	}
-
-	private static ICompilationUnit getNewCompilationUnit(IType type, String newName) {
-		ICompilationUnit cu = type.getCompilationUnit();
-		if (isPrimaryType(type)) {
-			IPackageFragment parent = type.getPackageFragment();
-			String renamedCUName = JavaModelUtil.getRenamedCUName(cu, newName);
-			return parent.getCompilationUnit(renamedCUName);
-		} else {
-			return cu;
-		}
-	}
-
-	private static boolean isPrimaryType(IType type) {
-		String cuName = type.getCompilationUnit().getElementName();
-		String typeName = type.getElementName();
-		return type.getDeclaringType() == null && JavaCore.removeJavaLikeExtension(cuName).equals(typeName);
 	}
 
 	private static void convertPackageUpdateEdit(ICompilationUnit[] cus, String newPkgName, WorkspaceEdit rootEdit, String annotationId) throws JavaModelException {

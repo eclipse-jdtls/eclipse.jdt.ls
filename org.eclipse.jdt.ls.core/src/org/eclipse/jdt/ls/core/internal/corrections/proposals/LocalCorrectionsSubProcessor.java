@@ -362,6 +362,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 			ASTNode moveTarget;
 			if ((parent instanceof Block || parent instanceof SwitchStatement) && replacement instanceof Block block) {
 				ListRewrite listRewrite = rewrite.getListRewrite(replacement, Block.STATEMENTS_PROPERTY);
+				@SuppressWarnings("unchecked")
 				List<Statement> list = block.statements();
 				int lastIndex = list.size() - 1;
 				moveTarget = listRewrite.createMoveTarget(list.get(0), list.get(lastIndex));
@@ -597,6 +598,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		JavadocTagsSubProcessor.getUnusedAndUndocumentedParameterOrExceptionProposals(context, problem, proposals);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void getMissingEnumConstantCaseProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		for (ProposalKindWrapper proposal : proposals) {
 			if (CorrectionMessages.LocalCorrectionsSubProcessor_add_missing_cases_description.equals(proposal.getProposal().getName())) {
@@ -651,6 +653,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 			Statement curr = statements.get(i);
 			if (curr instanceof SwitchCase switchCase) {
 				if (ASTHelper.isSwitchCaseExpressionsSupportedInAST(switchCase.getAST())) {
+					@SuppressWarnings("unchecked")
 					List<Expression> expressions = switchCase.expressions();
 					if (expressions.size() == 0) {
 						hasDefault = true;
@@ -674,7 +677,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		return hasDefault;
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	public static void createMissingCaseProposals(IInvocationContext context, ASTNode parent, ArrayList<String> enumConstNames, Collection<ProposalKindWrapper> proposals) {
 		List<Statement> statements;
 		Expression expression;
@@ -801,6 +804,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		return newThrowStatement;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void addMissingDefaultCaseProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		ASTNode selectedNode = problem.getCoveringNode(context.getASTRoot());
 		if (selectedNode instanceof Expression) {
@@ -825,7 +829,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		}
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	private static void createMissingDefaultProposal(IInvocationContext context, ASTNode parent, Collection<ProposalKindWrapper> proposals) {
 		List<Statement> statements;
 		Expression expression;

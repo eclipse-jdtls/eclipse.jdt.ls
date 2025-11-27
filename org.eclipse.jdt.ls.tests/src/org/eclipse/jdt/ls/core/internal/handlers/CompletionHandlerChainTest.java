@@ -14,7 +14,6 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.JavaManipulation;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CompletionItem;
@@ -28,8 +27,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest {
-	private DocumentLifeCycleHandler lifeCycleHandler;
-	private JavaClientConnection javaClient;
 
 	private static String COMPLETION_TEMPLATE = """
 			{
@@ -55,8 +52,6 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 		mockLSP3Client();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
-		javaClient = new JavaClientConnection(client);
-		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, true);
 		preferences.setPostfixCompletionEnabled(false);
 		preferences.setChainCompletionEnabled(true);
 		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
@@ -82,10 +77,6 @@ public class CompletionHandlerChainTest extends AbstractCompilationUnitBasedTest
 
 	private void mockLSP3Client() {
 		mockLSPClient(true, true);
-	}
-
-	private void mockLSP2Client() {
-		mockLSPClient(false, false);
 	}
 
 	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSuported) {

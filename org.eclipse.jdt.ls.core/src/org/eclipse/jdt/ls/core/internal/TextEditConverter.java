@@ -80,8 +80,7 @@ public class TextEditConverter extends TextEditVisitor {
 
 	public TextDocumentEdit convertToTextDocumentEdit(int version) {
 		String uri = JDTUtils.toURI(compilationUnit);
-		VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(version);
-		identifier.setUri(uri);
+		VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, version);
 		return new TextDocumentEdit(identifier, this.convert());
 	}
 
