@@ -375,6 +375,7 @@ public class QuickAssistProcessor {
 		if (methodDecl.getBody() == null) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		List<SingleVariableDeclaration> parameters = methodDecl.parameters();
 		if (parameters.size() <= 1) {
 			return false;
@@ -480,6 +481,7 @@ public class QuickAssistProcessor {
 	 *             if an exception occurs while accessing the Java element
 	 *             corresponding to the <code>functionalMethod</code>
 	 */
+	@SuppressWarnings("unchecked")
 	public static LambdaExpression convertMethodRefernceToLambda(MethodReference methodReference, IMethodBinding functionalMethod, CompilationUnit astRoot, ASTRewrite rewrite, LinkedProposalModelCore linkedProposalModel,
 			boolean createBlockBody) throws JavaModelException {
 
@@ -487,6 +489,7 @@ public class QuickAssistProcessor {
 		LambdaExpression lambda = ast.newLambdaExpression();
 
 		String[] lambdaParamNames = getUniqueParameterNames(methodReference, functionalMethod);
+		@SuppressWarnings("unchecked")
 		List<VariableDeclaration> lambdaParameters = lambda.parameters();
 		for (int i = 0; i < lambdaParamNames.length; i++) {
 			String paramName = lambdaParamNames[i];
@@ -804,6 +807,7 @@ public class QuickAssistProcessor {
 				removeCatchBlock(rewrite, catchClause);
 				if (type.isUnionType()) {
 					UnionType unionType = (UnionType) type;
+					@SuppressWarnings("unchecked")
 					List<Type> types = unionType.types();
 					for (Type elementType : types) {
 						if (!(elementType instanceof SimpleType || elementType instanceof NameQualifiedType)) {
@@ -839,6 +843,7 @@ public class QuickAssistProcessor {
 
 	private static void removeException(ASTRewrite rewrite, UnionType unionType, Type exception) {
 		ListRewrite listRewrite = rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
+		@SuppressWarnings("unchecked")
 		List<Type> types = unionType.types();
 		for (Iterator<Type> iterator = types.iterator(); iterator.hasNext();) {
 			Type type = iterator.next();
@@ -848,6 +853,7 @@ public class QuickAssistProcessor {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void addExceptionToThrows(AST ast, MethodDeclaration methodDeclaration, ASTRewrite rewrite, Type type2) {
 		ITypeBinding binding = type2.resolveBinding();
 		if (binding == null || isNotYetThrown(binding, methodDeclaration.thrownExceptionTypes())) {
@@ -864,6 +870,7 @@ public class QuickAssistProcessor {
 			rewrite.remove(catchClause, null);
 		} else {
 			Block block = tryStatement.getBody();
+			@SuppressWarnings("unchecked")
 			List<Statement> statements = block.statements();
 			int nStatements = statements.size();
 			if (nStatements == 1) {
@@ -954,6 +961,7 @@ public class QuickAssistProcessor {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		ASTNode parentStatement = ASTResolving.findAncestor(node, ASTNode.VARIABLE_DECLARATION_STATEMENT);
 		if (!(parentStatement instanceof VariableDeclarationStatement) && !(parentStatement instanceof ExpressionStatement) && !(node instanceof SimpleName) && (coveredNodes == null || coveredNodes.isEmpty())) {
@@ -1190,6 +1198,7 @@ public class QuickAssistProcessor {
 
 	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (covering instanceof Block block) {
+			@SuppressWarnings("unchecked")
 			List<Statement> statements = block.statements();
 			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
 			if (startIndex == -1 || startIndex >= statements.size()) {
@@ -1503,7 +1512,8 @@ public class QuickAssistProcessor {
         if (decl.getName() != node || decl.resolveBinding() == null || Modifier.isPrivate(decl.getModifiers())) {
             return false;
         }
-        boolean addOverride = StubUtility2Core.findAnnotation("java.lang.Override", decl.modifiers()) == null; //$NON-NLS-1$
+        @SuppressWarnings("unchecked")
+		boolean addOverride = StubUtility2Core.findAnnotation("java.lang.Override", decl.modifiers()) == null; //$NON-NLS-1$
         return getCreateInSuperClassProposals(context, node, resultingCollections, addOverride);
     }
 

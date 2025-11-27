@@ -141,7 +141,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 	private String fFieldName;
 	private int fVisibility;
 	private int fInitializeIn;
-	private Map fFormatterOptions;
+	private Map<String, String> fFormatterOptions;
 	private boolean fInitializerUsesLocalTypes;
 	private boolean fDeclareStatic;
 
@@ -504,6 +504,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 			if (parent instanceof ForStatement) {
 				ForStatement forStmt = (ForStatement) parent;
 				if (forStmt.initializers().contains(current) || forStmt.updaters().contains(current) || forStmt.getExpression() == current) {
+					@SuppressWarnings("unchecked")
 					List<Expression> initializers = forStmt.initializers();
 					if (initializers.size() == 1 && initializers.get(0) instanceof VariableDeclarationExpression) {
 						List<IVariableBinding> forInitializerVariables = getForInitializedVariables((VariableDeclarationExpression) initializers.get(0));
@@ -798,6 +799,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 	}
 
 	private int computeInsertIndexForNewConstructor(AbstractTypeDeclaration declaration) {
+		@SuppressWarnings("unchecked")
 		List<BodyDeclaration> declarations = declaration.bodyDeclarations();
 		if (declarations.isEmpty()) {
 			return 0;
@@ -824,6 +826,7 @@ public class ExtractFieldRefactoring extends Refactoring {
 		if (constructor.getBody() == null) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		List<Statement> statements = constructor.getBody().statements();
 		if (statements == null) {
 			return false;

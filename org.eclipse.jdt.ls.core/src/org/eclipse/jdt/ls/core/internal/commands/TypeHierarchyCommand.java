@@ -95,6 +95,7 @@ public class TypeHierarchyCommand {
 					targetMethod = (IMethod) member;
 				}
 			} else {
+				@SuppressWarnings("unchecked")
 				Map<String, String> data = JSONUtility.toModel(itemInput.getData(), Map.class);
 				String handleIdentifier = data.get("element");
 				IJavaElement element = JavaCore.create(handleIdentifier);

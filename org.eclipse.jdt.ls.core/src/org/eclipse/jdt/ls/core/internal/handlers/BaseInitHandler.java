@@ -83,7 +83,7 @@ public abstract class BaseInitHandler {
 		initializeResult.setServerInfo(serverInfo);
 	 }
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "deprecation" })
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
 		Map<?, ?> initializationOptions = this.getInitializationOptions(param);
 		Map<String, Object> extendedClientCapabilities = getInitializationOption(initializationOptions, "extendedClientCapabilities", Map.class);
