@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -72,8 +73,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.google.common.io.Files;
 
 /**
  * @author Fred Bricon
@@ -192,7 +191,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		String gradleUserHomePreference = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleUserHome();
 		File gradleUserHome = null;
 		try {
-			gradleUserHome = Files.createTempDir();
+			gradleUserHome = Files.createTempDirectory("gradleUserHome").toFile();
 			gradleUserHome.deleteOnExit();
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleUserHome(gradleUserHome.getAbsolutePath());
 			List<IProject> projects = importProjects("gradle/simple-gradle");

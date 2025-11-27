@@ -592,13 +592,14 @@ public final class JDTUtils {
 							return false;
 						}
 					}
-					List astParameters = node.parameters();
+					@SuppressWarnings("unchecked")
+					List<SingleVariableDeclaration> astParameters = node.parameters();
 					if (parameters.length == astParameters.size()) {
 						int size = astParameters.size();
 						String[] astParameterTypes = new String[size];
-						Iterator iterator = astParameters.iterator();
+						Iterator<SingleVariableDeclaration> iterator = astParameters.iterator();
 						for (int i = 0; i < size; i++) {
-							SingleVariableDeclaration parameter = (SingleVariableDeclaration) iterator.next();
+							SingleVariableDeclaration parameter = iterator.next();
 							String typeSig = getSignature(parameter.getType());
 							int extraDimensions = parameter.getExtraDimensions();
 							if (node.isVarargs() && i == size - 1) {

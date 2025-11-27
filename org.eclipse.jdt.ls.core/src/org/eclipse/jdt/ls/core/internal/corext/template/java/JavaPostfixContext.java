@@ -209,6 +209,7 @@ public class JavaPostfixContext extends JavaContext {
 		return te;
 	}
 
+	@SuppressWarnings("unchecked")
 	private VariableDeclarationFragment addFieldDeclaration(ASTRewrite rewrite, ASTNode newTypeDecl, int modifiers, String varName, String qualifiedName, String value) {
 		ChildListPropertyDescriptor property= ASTNodes.getBodyDeclarationsProperty(newTypeDecl);
 		List<BodyDeclaration> decls= ASTNodes.getBodyDeclarations(newTypeDecl);
@@ -389,6 +390,7 @@ public class JavaPostfixContext extends JavaContext {
 				String[] typeArguments= Signature.getTypeArguments(typeSig);
 				if (typeArguments.length > 0) {
 					ParameterizedType type= ast.newParameterizedType(baseType);
+					@SuppressWarnings("unchecked")
 					List<Type> argNodes= type.typeArguments();
 					for (String curr : typeArguments) {
 						if (containsNestedCapture(curr)) {

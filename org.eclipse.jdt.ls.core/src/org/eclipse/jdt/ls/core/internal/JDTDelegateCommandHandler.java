@@ -58,6 +58,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler#executeCommand(java.lang.String, java.util.List, org.eclipse.core.runtime.IProgressMonitor)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object executeCommand(String commandId, List<Object> arguments, IProgressMonitor monitor) throws Exception {
 		if (!StringUtils.isBlank(commandId)) {

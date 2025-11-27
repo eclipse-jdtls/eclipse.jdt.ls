@@ -407,6 +407,7 @@ public class CodeActionHandler {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static IProblemLocation[] getProblemLocationCores(ICompilationUnit unit, List<Diagnostic> diagnostics) {
 		IProblemLocation[] locations = new IProblemLocation[diagnostics.size()];
 		for (int i = 0; i < diagnostics.size(); i++) {
