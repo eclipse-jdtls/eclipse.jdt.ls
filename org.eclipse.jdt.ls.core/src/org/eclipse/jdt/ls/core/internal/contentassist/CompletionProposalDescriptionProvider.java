@@ -328,7 +328,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @param item to update
 	 */
 	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
-		StringBuilder description = this.createMethodProposalDescription(methodProposal);
+		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(methodProposal);
 		String proposalName = String.valueOf(methodProposal.getName());
 		boolean skipDetail = false;
 		if (isCompletionItemLabelDetailsSupport()){

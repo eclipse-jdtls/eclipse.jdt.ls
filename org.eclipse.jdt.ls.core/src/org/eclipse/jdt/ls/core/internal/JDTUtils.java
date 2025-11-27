@@ -287,7 +287,7 @@ public final class JDTUtils {
 		} catch (Exception e) {
 			// continue
 		}
-		IProject project = JavaLanguageServerPlugin.getProjectsManager().getDefaultProject();
+		IProject project = ProjectsManager.getDefaultProject();
 		if (project == null || !project.isAccessible()) {
 			String fileName = path.getFileName().toString();
 			if (isJavaFile(fileName) || fileName.endsWith(".class")) {
@@ -1175,7 +1175,7 @@ public final class JDTUtils {
 				IResource resource = null;
 				for (IResource f : resources) {
 				//delete linked resource
-				if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(f.getProject())) {
+				if (ProjectsManager.getDefaultProject().equals(f.getProject())) {
 					try {
 						f.delete(true, null);
 					} catch (CoreException e) {
@@ -1262,14 +1262,14 @@ public final class JDTUtils {
 	}
 
 	public static boolean isOnClassPath(ICompilationUnit unit) {
-		if (unit != null && unit.getJavaProject() != null && !unit.getJavaProject().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject())) {
+		if (unit != null && unit.getJavaProject() != null && !unit.getJavaProject().getProject().equals(ProjectsManager.getDefaultProject())) {
 			return unit.getJavaProject().isOnClasspath(unit);
 		}
 		return false;
 	}
 
 	public static boolean isDefaultProject(ICompilationUnit unit) {
-		return unit != null && unit.getResource() != null && unit.getResource().getProject().equals(JavaLanguageServerPlugin.getProjectsManager().getDefaultProject());
+		return unit != null && unit.getResource() != null && unit.getResource().getProject().equals(ProjectsManager.getDefaultProject());
 	}
 
 	public static void setCompatibleVMs(String id) {

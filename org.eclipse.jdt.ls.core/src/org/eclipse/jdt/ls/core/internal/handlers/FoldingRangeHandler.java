@@ -64,7 +64,7 @@ public class FoldingRangeHandler {
 		List<FoldingRange> $ = new ArrayList<>();
 		ITypeRoot unit = null;
 		try {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
 			unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri(), returnCompilationUnit, monitor);
 			if (unit == null || (monitor != null && monitor.isCanceled())) {

@@ -13,13 +13,12 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
 public class DefaultProjectBuildSupport extends EclipseBuildSupport {
 
 	@Override
 	public boolean applies(IProject project) {
-		return JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(project);
+		return ProjectsManager.getDefaultProject().equals(project);
 	}
 
 	@Override

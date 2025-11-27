@@ -158,7 +158,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 		if (resource.getType() == IResource.PROJECT) {
 			// ignore problems caused by standalone files (problems in the default project)
-			if (JavaLanguageServerPlugin.getProjectsManager().getDefaultProject().equals(resource.getProject())) {
+			if (ProjectsManager.getDefaultProject().equals(resource.getProject())) {
 				return false;
 			}
 			IProject project = (IProject) resource;
