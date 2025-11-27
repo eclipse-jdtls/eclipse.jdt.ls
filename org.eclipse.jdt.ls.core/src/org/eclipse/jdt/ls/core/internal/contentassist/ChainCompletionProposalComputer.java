@@ -14,11 +14,9 @@ package org.eclipse.jdt.ls.core.internal.contentassist;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -54,7 +52,6 @@ import org.eclipse.jdt.internal.ui.text.ChainElementAnalyzer;
 import org.eclipse.jdt.internal.ui.text.ChainFinder;
 import org.eclipse.jdt.internal.ui.text.ChainType;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
-import org.eclipse.lsp4j.TextEdit;
 
 public class ChainCompletionProposalComputer {
 
@@ -67,8 +64,6 @@ public class ChainCompletionProposalComputer {
 	private ICompilationUnit cu;
 
 	private CompletionProposalRequestor coll;
-
-	private Map<String, List<TextEdit>> additionalEdits = new HashMap<>();
 
 	private boolean snippetStringSupported;
 

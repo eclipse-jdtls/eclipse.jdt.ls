@@ -53,7 +53,6 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.SemanticTokens;
-import org.jsoup.select.NodeVisitor;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;

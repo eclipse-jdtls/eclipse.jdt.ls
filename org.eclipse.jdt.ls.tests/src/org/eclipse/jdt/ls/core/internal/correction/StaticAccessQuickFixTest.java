@@ -16,7 +16,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,7 +36,7 @@ public class StaticAccessQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testNonStaticAccessToStaticField() throws Exception {
-		int problem = IProblem.NonStaticAccessToStaticField;
+		//Testing IProblem.NonStaticAccessToStaticField;
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuilder bufA = new StringBuilder();
@@ -85,7 +84,7 @@ public class StaticAccessQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testNonStaticAccessToStaticMethod() throws Exception {
-		int problem = IProblem.NonStaticAccessToStaticMethod;
+		//Testing IProblem.NonStaticAccessToStaticMethod;
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
 		// Referenced from: https://www.intertech.com/Blog/a-static-method-should-be-accessed-in-a-static-way/
@@ -135,7 +134,7 @@ public class StaticAccessQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testNonStaticOrAlienTypeReceiver() throws Exception {
-		int problem = IProblem.NonStaticOrAlienTypeReceiver;
+		//Testing IProblem.NonStaticOrAlienTypeReceiver;
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuilder bufA = new StringBuilder();
@@ -177,7 +176,7 @@ public class StaticAccessQuickFixTest extends AbstractQuickFixTest {
 		// Cannot get code action to trigger, same in Eclipse
 		// Same with IProblem.IndirectAccessToStaticMethod
 		// To test, uncomment assert at bottom
-		int problem = IProblem.IndirectAccessToStaticField;
+		//Testing IProblem.IndirectAccessToStaticField;
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("foo", false, null);
 
 		StringBuilder bufA = new StringBuilder();

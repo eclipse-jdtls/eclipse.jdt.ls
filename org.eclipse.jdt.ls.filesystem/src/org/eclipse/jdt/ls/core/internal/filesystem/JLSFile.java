@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.filesystem.local.LocalFile;
-import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -37,7 +36,7 @@ public class JLSFile extends LocalFile {
 
     /**
      * {@inheritDoc}
-     * 
+     *
      * <p>
      * Since the metadata files may be redirected into the workspace,
      * we override the method to make sure those files are not missed.

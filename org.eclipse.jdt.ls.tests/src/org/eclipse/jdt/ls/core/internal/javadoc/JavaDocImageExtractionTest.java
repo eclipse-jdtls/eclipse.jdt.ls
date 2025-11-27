@@ -94,6 +94,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		//@formatter:off
 		// We don't use this. Just to show what it should look like
+		@SuppressWarnings("unused")
 		String expectedOutput =
 				"Create a [Mono](jdt://contents/reactor-core-3.2.10.RELEASE.jar/reactor.core.publisher/Mono.class?=javadoctest/%5C/home%5C/nkomonen%5C/.m2%5C/repository%5C/io%5C/projectreactor%5C/reactor-core%5C/3.2.10.RELEASE%5C/reactor-core-3.2.10.RELEASE.jar%3Creactor.core.publisher%28Mono.class#101) that terminates with the specified error immediately after being subscribed to.\n" +
 				"\n" +
