@@ -155,7 +155,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 									// ignore
 								}
 							}
-							if (scanner.isModifier(previous)) {
+							if (TokenScanner.isModifier(previous)) {
 								return false;
 							}
 						} catch (CoreException e) {

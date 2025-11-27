@@ -39,7 +39,7 @@ public class FindLinksHandler {
 		}
 		ITypeRoot unit = null;
 		try {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
 			unit = JDTUtils.resolveTypeRoot(position.getTextDocument().getUri(), returnCompilationUnit, monitor);
 			if (unit != null && !monitor.isCanceled()) {
