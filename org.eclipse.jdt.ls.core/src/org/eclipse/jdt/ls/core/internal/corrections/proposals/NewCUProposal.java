@@ -38,8 +38,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParameterizedType;
-import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -524,14 +522,6 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		}
 		buf.append('}').append(lineDelimiter);
 		return buf.toString();
-	}
-
-	private static String getSimpleName(Name name) {
-		if (name.isQualifiedName()) {
-			return ((QualifiedName) name).getName().getIdentifier();
-		} else {
-			return ((SimpleName) name).getIdentifier();
-		}
 	}
 
 	private static String getCompilationUnitName(String typeName) {

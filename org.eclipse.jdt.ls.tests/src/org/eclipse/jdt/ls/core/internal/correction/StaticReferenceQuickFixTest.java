@@ -16,7 +16,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.lsp4j.Range;
 import org.junit.Before;
@@ -39,8 +38,7 @@ public class StaticReferenceQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testStaticMethodRequested() throws Exception {
-		// Problem we are testing
-		int problem = IProblem.StaticMethodRequested;
+		// Testing IProblem.StaticMethodRequested;
 
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -74,8 +72,7 @@ public class StaticReferenceQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testNonStaticFieldFromStaticInvocation() throws Exception {
-		// Problem we are testing
-		int problem = IProblem.NonStaticFieldFromStaticInvocation;
+		// Testing IProblem.NonStaticFieldFromStaticInvocation;
 
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -105,8 +102,7 @@ public class StaticReferenceQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testInstanceMethodDuringConstructorInvocation() throws Exception {
-		// Problem we are testing
-		int problem = IProblem.NonStaticFieldFromStaticInvocation;
+		// Testing IProblem.NonStaticFieldFromStaticInvocation;
 
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -142,8 +138,7 @@ public class StaticReferenceQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testInstanceFieldDuringConstructorInvocation() throws Exception {
-		// Problem we are testing
-		int problem = IProblem.NonStaticFieldFromStaticInvocation;
+		// Testing IProblem.NonStaticFieldFromStaticInvocation;
 
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
