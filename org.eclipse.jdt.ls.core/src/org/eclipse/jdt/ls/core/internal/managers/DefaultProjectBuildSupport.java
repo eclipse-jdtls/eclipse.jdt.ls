@@ -15,7 +15,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 
-public class DefaultProjectBuildSupport extends EclipseBuildSupport implements IBuildSupport {
+public class DefaultProjectBuildSupport extends EclipseBuildSupport {
 
 	@Override
 	public boolean applies(IProject project) {

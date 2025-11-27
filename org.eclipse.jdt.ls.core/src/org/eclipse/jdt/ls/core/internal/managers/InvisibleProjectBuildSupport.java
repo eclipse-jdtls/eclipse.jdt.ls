@@ -34,7 +34,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences.ReferencedLibrar
  * @author Fred Bricon
  *
  */
-public class InvisibleProjectBuildSupport extends EclipseBuildSupport implements IBuildSupport {
+public class InvisibleProjectBuildSupport extends EclipseBuildSupport {
 
 	private static IPreferencesChangeListener listener = new InvisibleProjectPreferenceChangeListener();
 
