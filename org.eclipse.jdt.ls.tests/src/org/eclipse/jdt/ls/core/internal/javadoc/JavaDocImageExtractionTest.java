@@ -16,8 +16,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -89,15 +89,16 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		IJavaElement javaElement = JDTUtils.findElementAtSelection(cu, 10, 12, null, new NullProgressMonitor());
 
-		File testExportFile = JavaDocHTMLPathHandler.EXTRACTED_JAR_IMAGES_FOLDER.append("reactor-core-3.2.10.RELEASE/error.svg").toFile();
-		String testExportPath = testExportFile.toURI().toString();
+		String testExportFile = JavaDocHTMLPathHandler.EXTRACTED_JAR_IMAGES_FOLDER.append("reactor-core-3.2.10.RELEASE/error.svg").toOSString();
+		Path exportedFileLocation = Paths.get(testExportFile);
+		String testExportPath = exportedFileLocation.toUri().toString();
 
 		//@formatter:off
 		// We don't use this. Just to show what it should look like
 		String expectedOutput =
 				"Create a [Mono](jdt://contents/reactor-core-3.2.10.RELEASE.jar/reactor.core.publisher/Mono.class?=javadoctest/%5C/home%5C/nkomonen%5C/.m2%5C/repository%5C/io%5C/projectreactor%5C/reactor-core%5C/3.2.10.RELEASE%5C/reactor-core-3.2.10.RELEASE.jar%3Creactor.core.publisher%28Mono.class#101) that terminates with the specified error immediately after being subscribed to.\n" +
 				"\n" +
-				"![Image](" + testExportPath + ")\n" +
+				"![](" + testExportPath + ")\n" +
 				"\n" +
 				" *  **Type Parameters:**\n" +
 				"    \n" +
@@ -110,13 +111,13 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 				"     *  a failing [Mono](jdt://contents/reactor-core-3.2.10.RELEASE.jar/reactor.core.publisher/Mono.class?=javadoctest/%5C/home%5C/nkomonen%5C/.m2%5C/repository%5C/io%5C/projectreactor%5C/reactor-core%5C/3.2.10.RELEASE%5C/reactor-core-3.2.10.RELEASE.jar%3Creactor.core.publisher%28Mono.class#101)";
 		//@formatter:on
 
-		String expectedImageMarkdown = "![Image](" + testExportPath + ")";
+		String expectedImageMarkdown = "![](" + testExportPath + ")";
 
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
 		assertTrue("Does finalString=\n\t\"" + finalString + "\"\nContain expectedImageMarkdown=\n\t\"" + expectedImageMarkdown + "\"", finalString.contains(expectedImageMarkdown));
 
-		assertTrue(testExportFile.exists());
+		assertTrue(Files.exists(exportedFileLocation));
 	}
 
 	@Test
@@ -132,9 +133,9 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 		IJavaElement javaElement = JDTUtils.findElementAtSelection(cu, 12, 22, null, new NullProgressMonitor());
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
-		String expectedImageMarkdown = "![Image]()";
+		String expectedImageMarkdown = "![](this/does/not/exist.png)";
 
-		assertTrue(finalString.contains(expectedImageMarkdown));
+		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
 
 	}
 
@@ -161,11 +162,11 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		String absoluteExportPath = parentExportPath + relativeExportPath;
 
-		String expectedImageMarkdown = "![Image](file:" + absoluteExportPath + ")";
+		String expectedImageMarkdown = "![](file://" + absoluteExportPath + ")";
 
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
-		assertTrue(finalString.contains(expectedImageMarkdown));
+		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
 
 	}
 
@@ -182,9 +183,9 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 		IJavaElement javaElement = JDTUtils.findElementAtSelection(cu, 14, 22, null, new NullProgressMonitor());
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
-		String expectedImageMarkdown = "![Image](https://www.redhat.com/cms/managed-files/Logo-redhat-color-375.png)";
+		String expectedImageMarkdown = "![](https://www.redhat.com/cms/managed-files/Logo-redhat-color-375.png)";
 
-		assertTrue(finalString.contains(expectedImageMarkdown));
+		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
 	}
 
 	@Test

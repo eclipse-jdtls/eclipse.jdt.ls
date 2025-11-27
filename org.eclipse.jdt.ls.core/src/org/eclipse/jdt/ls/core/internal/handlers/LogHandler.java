@@ -135,6 +135,10 @@ public class LogHandler {
 	}
 
 	private void processLogMessage(LogEntry entry) {
+		// Skip sending to client if current thread is interrupted as that would close the LSP connection to the client !!!
+		if (Thread.currentThread().isInterrupted() || connection == null) {
+			return;
+		}
 		String dateString = this.dateFormat.format(entry.getDate());
 		String message = entry.getMessage() + '\n' + entry.getStack();
 
@@ -158,6 +162,10 @@ public class LogHandler {
 	private void processLogMessage(IStatus status) {
 		if ((filter != null && !filter.test(status)) || !status.matches(this.logLevelMask)) {
 			//no op;
+			return;
+		}
+		// Skip sending to client if current thread is interrupted as that would close the LSP connection to the client !!!
+		if (Thread.currentThread().isInterrupted() || connection == null) {
 			return;
 		}
 		String dateString = this.dateFormat.format(new Date());

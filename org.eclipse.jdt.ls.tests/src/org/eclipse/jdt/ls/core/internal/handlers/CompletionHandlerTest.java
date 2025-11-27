@@ -2846,7 +2846,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNotNull(resolvedItem.getDocumentation().getRight());
 		String doc = resolvedItem.getDocumentation().getRight().getValue();
-		assertTrue("Unexpected documentation content in " + doc, doc.contains("*  [Baz](file:/"));
+		assertTrue("Unexpected documentation content in " + doc, doc.contains("* [Baz](file:/"));
 	}
 
 	@Test
