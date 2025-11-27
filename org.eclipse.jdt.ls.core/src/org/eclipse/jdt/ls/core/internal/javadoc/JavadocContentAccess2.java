@@ -37,6 +37,7 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.IDocElement;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MemberRef;
 import org.eclipse.jdt.core.dom.MethodRef;
@@ -145,6 +146,7 @@ public class JavadocContentAccess2 {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void collectTagElements(String content, IJavaElement element, TagElement tag, StringBuilder buf) {
 		Deque<ASTNode> queue = new LinkedList<>();
 		queue.addAll(tag.fragments());
@@ -181,7 +183,8 @@ public class JavadocContentAccess2 {
 	}
 
 	private static void collectLinkedTag(IJavaElement element, TagElement t, StringBuilder buf) {
-		List children = t.fragments();
+		@SuppressWarnings("unchecked")
+		List<IDocElement> children = t.fragments();
 		if (t.fragments().size() > 0) {
 			try {
 				String[] res;
@@ -221,6 +224,7 @@ public class JavadocContentAccess2 {
 			Name qualifier = methodRef.getQualifier();
 			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName = methodRef.getName().getIdentifier();
+			@SuppressWarnings("unchecked")
 			List<MethodRefParameter> params = methodRef.parameters();
 			int ps = params.size();
 			refMethodParamTypes = new String[ps];
@@ -582,6 +586,7 @@ public class JavadocContentAccess2 {
 			fBuf.append(getBlockTagEntryEnd());
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		protected void handleBlockTagBody(TagElement tag) {
 			List fragments = tag.fragments();

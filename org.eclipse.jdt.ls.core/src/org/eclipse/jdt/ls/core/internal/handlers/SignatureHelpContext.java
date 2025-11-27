@@ -321,6 +321,7 @@ public class SignatureHelpContext {
 	 * Get the argument list of the input method-like node.
 	 * @param node
 	 */
+	@SuppressWarnings("unchecked")
 	private List<Expression> resolveArguments(ASTNode node) {
 		if (node == null) {
 			return null;

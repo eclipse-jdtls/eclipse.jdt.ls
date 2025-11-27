@@ -81,7 +81,7 @@ public class GetRefactorEditHandler {
 		String positionKey = DEFAULT_POSITION_KEY;
 
 		try {
-			Map formatterOptions = params.options == null ? null : FormatterHandler.getOptions(params.options, unit);
+			Map<String, String> formatterOptions = params.options == null ? null : FormatterHandler.getOptions(params.options, unit);
 			ProposalKindWrapper proposal = null;
 			if (RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(params.command) || RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(params.command)
 					|| RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(params.command)) {
@@ -253,7 +253,7 @@ public class GetRefactorEditHandler {
 		return targetPosition;
 	}
 
-	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions) throws CoreException {
+	private static ProposalKindWrapper getExtractVariableProposal(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map<String, String> formatterOptions) throws CoreException {
 		if (RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(refactorType)) {
 			return RefactorProposalUtility.getExtractVariableAllOccurrenceProposal(params, context, problemsAtLocation, formatterOptions, false);
 		}
@@ -269,7 +269,7 @@ public class GetRefactorEditHandler {
 		return null;
 	}
 
-	private static ProposalKindWrapper getAssignVariableProposal(GetRefactorEditParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map formatterOptions, IProblemLocation[] locations)
+	private static ProposalKindWrapper getAssignVariableProposal(GetRefactorEditParams params, IInvocationContext context, boolean problemsAtLocation, String refactorType, Map<String, String> formatterOptions, IProblemLocation[] locations)
 			throws CoreException {
 		String declsToFinal = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getCodeGenerationAddFinalForNewDeclaration();
 
@@ -282,7 +282,7 @@ public class GetRefactorEditHandler {
 		return null;
 	}
 
-	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map formatterOptions) throws CoreException {
+	private static ProposalKindWrapper getExtractMethodProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Map<String, String> formatterOptions) throws CoreException {
 		return RefactorProposalUtility.getExtractMethodProposal(params, context, coveringNode, problemsAtLocation, formatterOptions, false);
 	}
 

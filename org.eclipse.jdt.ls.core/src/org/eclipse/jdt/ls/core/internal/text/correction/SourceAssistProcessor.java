@@ -554,7 +554,7 @@ public class SourceAssistProcessor {
 			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
 			codeAction.setCommand(command);
 			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_DELEGATE_METHOD_PRIORITY));
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
@@ -585,6 +585,7 @@ public class SourceAssistProcessor {
 		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<ASTNode> getPossibleASTNodesForFinalModifier(List<ASTNode> targetNodes) {
 		List<ASTNode> results = new ArrayList<>();
 		for (ASTNode targetNode : targetNodes) {
@@ -695,7 +696,7 @@ public class SourceAssistProcessor {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(kind);
 			codeAction.setData(new CodeActionData(proposal, priority));
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		}
 

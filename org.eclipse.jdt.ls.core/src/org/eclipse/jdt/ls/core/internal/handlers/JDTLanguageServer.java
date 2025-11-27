@@ -450,6 +450,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				Object commandResult = JavaLanguageServerPlugin.getInstance()
 					.getClientConnection().executeClientCommand("_java.reloadBundles.command");
 				if (commandResult instanceof List<?> list) {
+					@SuppressWarnings("unchecked")
 					List<String> bundlesToRefresh = (List<String>) list;
 					if (bundlesToRefresh.size() > 0) {
 						BundleUtils.loadBundles(bundlesToRefresh);

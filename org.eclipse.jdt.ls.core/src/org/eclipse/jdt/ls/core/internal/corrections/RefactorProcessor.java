@@ -699,6 +699,7 @@ public class RefactorProcessor {
 				node = node.getParent();
 			}
 			if (node instanceof VariableDeclarationStatement variableDeclStatement) {
+				@SuppressWarnings("unchecked")
 				List<VariableDeclarationFragment> fragments = variableDeclStatement.fragments();
 				if (fragments.size() > 0) {
 					// var is not allowed in a compound declaration

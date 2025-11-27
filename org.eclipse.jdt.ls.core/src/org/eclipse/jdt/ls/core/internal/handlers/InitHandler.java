@@ -95,6 +95,7 @@ final public class InitHandler extends BaseInitHandler {
 		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
 
 		try {
+			@SuppressWarnings("unchecked")
 			Collection<String> bundleList = getInitializationOption(initializationOptions, BUNDLES_KEY, Collection.class);
 			BundleUtils.loadBundles(bundleList);
 		} catch (CoreException e) {
@@ -283,7 +284,6 @@ final public class InitHandler extends BaseInitHandler {
 			/* (non-Javadoc)
 			 * @see org.eclipse.core.runtime.jobs.Job#belongsTo(java.lang.Object)
 			 */
-			@SuppressWarnings("unchecked")
 			@Override
 			public boolean belongsTo(Object family) {
 				Collection<IPath> rootPathsSet = roots.stream().collect(Collectors.toSet());
