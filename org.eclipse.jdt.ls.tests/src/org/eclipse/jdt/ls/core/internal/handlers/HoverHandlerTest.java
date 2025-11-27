@@ -67,21 +67,21 @@ import org.junit.Test;
  */
 public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	private static String HOVER_TEMPLATE =
-			"{\n" +
-					"    \"id\": \"1\",\n" +
-					"    \"method\": \"textDocument/hover\",\n" +
-					"    \"params\": {\n" +
-					"        \"textDocument\": {\n" +
-					"            \"uri\": \"${file}\"\n" +
-					"        },\n" +
-					"        \"position\": {\n" +
-					"            \"line\": ${line},\n" +
-					"            \"character\": ${char}\n" +
-					"        }\n" +
-					"    },\n" +
-					"    \"jsonrpc\": \"2.0\"\n" +
-					"}";
+	private static String HOVER_TEMPLATE = """
+			{
+			    "id": "1",
+			    "method": "textDocument/hover",
+			    "params": {
+			        "textDocument": {
+			            "uri": "${file}"
+			        },
+			        "position": {
+			            "line": ${line},
+			            "character": ${char}
+			        }
+			    },
+			    "jsonrpc": "2.0"
+			}""";
 
 	private HoverHandler handler;
 
@@ -303,8 +303,14 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(1).getLeft();//
 		result = ResourceUtils.dos2Unix(result);
-		String t1 = "**Overrides:** foo(...) in Foo\n\n";
-		String expected = "This method comes from Foo\n" + "\n" + t1 + " *  **Parameters:**\n" + "    \n" + "     *  **input** an input String";
+		// @formatter:off
+		String expected = """
+				This method comes from Foo\s\s
+				**Overrides:** foo(...) in Foo
+
+				* **Parameters:**
+				  * **input** an input String""";
+		// @formatter:on
 		assertEquals("Unexpected hover ", expected, result);
 	}
 
@@ -395,7 +401,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
 		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
-		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or return ShortCollections"));
+		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or\nreturn ShortCollections"));
 		assertTrue("Unexpected hover :\n" + content, content.contains("**Author:**"));
 	}
 
@@ -476,32 +482,26 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		//@formatter:off
 		String expectedJavadoc =
-				"This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)\n" +
-				"\n" +
-				" \\*  \\*\\*Parameters:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\*\\*someString\\*\\* the string to enter\n" +
-				" \\*  \\*\\*Returns:\\*\\*\n" +
-				"    \n" +
-				"     \\*  String\n" +
-				" \\*  \\*\\*Throws:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\[IOException\\]\\(jdt:/.*\\)\n" +
-				" \\*  \\*\\*Since:\\*\\*\n" +
-				"    \n" +
-				"     \\*  0.0.1\n" +
-				" \\*  \\*\\*Version:\\*\\*\n" +
-				"    \n" +
-				"     \\*  0.0.1\n" +
-				" \\*  \\*\\*Author:\\*\\*\n" +
-				"    \n" +
-				"     \\*  jpinkney\n" +
-				" \\*  \\*\\*See Also:\\*\\*\n" +
-				"    \n" +
-				"     \\*  \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)\n" +
-				" \\*  \\*\\*API Note:\\*\\*\n" +
-				"    \n" +
-				"     \\*  This is a note";
+				"""
+			This Javadoc contains a link to \\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)
+
+			\\* \\*\\*Parameters:\\*\\*
+			  \\* \\*\\*someString\\*\\* the string to enter
+			\\* \\*\\*Returns:\\*\\*
+			  \\* String
+			\\* \\*\\*Throws:\\*\\*
+			  \\* \\[IOException\\]\\(jdt:/.*\\)
+			\\* \\*\\*Since:\\*\\*
+			  \\* 0.0.1
+			\\* \\*\\*Version:\\*\\*
+			  \\* 0.0.1
+			\\* \\*\\*Author:\\*\\*
+			  \\* jpinkney
+			\\* \\*\\*See Also:\\*\\*
+			  \\* \\[Online docs for java\\]\\(https://docs.oracle.com/javase/7/docs/api/\\)
+			\\* \\*\\*API Note:\\*\\*
+			  \\* This is a note""";
+
 
 		//@formatter:on
 		assertMatches(expectedJavadoc, ResourceUtils.dos2Unix(content));
@@ -524,46 +524,55 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
 		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
-		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
+		assertMatches("This link doesnt work \\[LinkToSomethingNotFound\\]\\(\\)", content);
 	}
 
 	@Test
 	public void testHoverJavadocWithExtraTags() throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		//@formatter:off
-		buf.append("package test1;\n");
-		buf.append("/**\n" +
-				" * Some text.\n" +
-				" *\n" +
-				" * @uses java.sql.Driver\n" +
-				" *\n" +
-				" * @moduleGraph\n" +
-				" * @since 9\n" +
-				" */\n");
-		buf.append("public class Meh {}\n");
+		String content = """
+				package test1;
+				/**
+				 * Some text.
+				 *
+				 * @uses java.sql.Driver
+				 *
+				 * @moduleGraph
+				 * @since 9
+				 */
+				public class Meh {}
+				""";
 		//@formatter:on
-		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", buf.toString(), false, null);
+		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", content, false, null);
 		Hover hover = getHover(cu, 9, 15);
 		assertNotNull(hover);
 		assertEquals(2, hover.getContents().getLeft().size());
 
 		//@formatter:off
-		String expectedJavadoc = "Some text.\n" +
-				"\n" +
-				" *  **Since:**\n" +
-				"    \n" +
-				"     *  9\n" +
-				" *  **Uses:**\n" +
-				"    \n" +
-				"     *  java.sql.Driver\n" +
-				" *  **@moduleGraph**";
+		String expectedJavadoc = """
+			Some text.
+
+			* **Since:**
+			  * 9
+			* **Uses:**
+			  * java.sql.Driver
+			* **@moduleGraph**""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals("Unexpected hover ", expectedJavadoc, actual);
 	}
 
+	/**
+	 * A simple program.
+	 * {@snippet :
+	 * class HelloWorld {
+	 * 	public static void main(String... args) {
+	 * 		System.out.println("Hello World!");      // @highlight substring="println"
+	 * 	}
+	 * }
+	 * }
+	 */
 	@Test
 	public void testHoverJavadocSnippet() throws Exception {
 		String name = "java18";
@@ -574,19 +583,21 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		//@formatter:off
-		buf.append("package test1;\n"
-				+ "/**\n"
-				+ " * A simple program.\n"
-				+ " * {@snippet :\n"
-				+ " * class HelloWorld {\n"
-				+ " *     public static void main(String... args) {\n"
-				+ " *         System.out.println(\"Hello World!\");      // @highlight substring=\"println\"\n"
-				+ " *     }\n"
-				+ " * }\n"
-				+ " * }\n"
-				+ " */\n"
-				+ "public class Test {\n"
-				+ "}\n");
+		buf.append("""
+			package test1;
+			/**
+			 * A simple program.
+			 * {@snippet :
+			 * class HelloWorld {
+			 *     public static void main(String... args) {
+			 *         System.out.println("Hello World!");    // @highlight substring="println"
+			 *     }
+			 * }
+			 * }
+			 */
+			public class Test {
+			}
+			""");
 		//@formatter:on
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 11, 15);
@@ -594,14 +605,191 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, hover.getContents().getLeft().size());
 
 		//@formatter:off
-		String expectedJavadoc = "A simple program.  \n"
-				+ "  \n"
-				+ "&nbsp;class HelloWorld {  \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) {  \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**(\"Hello World!\");        \n"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}  \n"
-				+ "&nbsp;}  \n"
-				+ "  \n";
+		String expectedJavadoc = """
+			A simple program.
+
+			&nbsp;class HelloWorld { \s
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) { \s
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**("Hello World!");   \s
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}\s\s
+			&nbsp;} \s
+			  \s
+			""";
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
+
+	@Test
+	public void testHoverJavadocSnippet2() throws Exception {
+		String name = "java18";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("""
+			package test1;
+			/**
+			 * A simple program.
+			 * {@snippet :
+			 *   int x = 1;
+			 * }
+			 */
+			public class Test {
+			}
+			""");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 7, 15);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = """
+			A simple program.
+
+			&nbsp;&nbsp;&nbsp;int x = 1;\s\s
+			  \s
+			""";
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
+
+	@Test
+	public void testHoverJavadocLinkPlain() throws Exception {
+		String name = "java18";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("""
+			package test1;
+			/**
+			 * <h4><a id="special_cases_constructor">Special cases</a></h4>
+			 * A simple mention of {@linkplain ##special_cases_constructor Special Cases}.
+			 * <p> A link to {@linkplain String}
+			 */
+			public class Test {
+			}
+			""");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 6, 15);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = """
+			#### Special cases
+
+			A simple mention of Special Cases.
+
+			A link to [String](jdt://contents/rtstubs.jar/java.lang/String.class)""";
+		//@formatter:on
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+
+		// remove everything after the first .class in links, till the first closing parenthesis
+		// so [String](jdt://contents/rtstubs.jar/java.lang/String.class?=...) would be converted to [String](jdt://contents/rtstubs.jar/java.lang/String.class)
+		actual = actual.replaceAll("(\\]\\(jdt://[^\\)]*?\\.class)[^\\)]*\\)", "$1)");
+
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
+
+	@Test
+	public void testHoverJavadocDlDtDd() throws Exception {
+		String name = "java18";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("""
+			package test1;
+			/**
+			 * <dl>
+			 *   <dt><a id="def_language"><b>language</b></a></dt>
+			 *
+			 *   <dd>ISO 639 alpha-2 or alpha-3 language code, or registered
+			 *   language subtags up to 8 alpha letters (for future enhancements).
+			 *   When a language has both an alpha-2 code and an alpha-3 code, the
+			 *   alpha-2 code must be used.  You can find a full list of valid
+			 *   language codes in the IANA Language Subtag Registry (search for
+			 *   "Type: language").  The language field is case insensitive, but
+			 *   {@code Locale} always canonicalizes to lower case.</dd>
+			 *
+			 *   <dd>Well-formed language values have the form
+			 *   <code>[a-zA-Z]{2,8}</code>.  Note that this is not the full
+			 *   BCP47 language production, since it excludes extlang.  They are
+			 *   not needed since modern three-letter language codes replace
+			 *   them.</dd>
+			 *
+			 *   <dd>Example: "en" (English), "ja" (Japanese), "kok" (Konkani)</dd>
+			 *
+			 *   <dt><a id="def_script"><b>script</b></a></dt>
+			 *
+			 *   <dd>ISO 15924 alpha-4 script code.  You can find a full list of
+			 *   valid script codes in the IANA Language Subtag Registry (search
+			 *   for "Type: script").  The script field is case insensitive, but
+			 *   {@code Locale} always canonicalizes to title case (the first
+			 *   letter is upper case and the rest of the letters are lower
+			 *   case).</dd>
+			 *
+			 *   <dd>Well-formed script values have the form
+			 *   <code>[a-zA-Z]{4}</code></dd>
+			 *
+			 *   <dd>Example: "Latn" (Latin), "Cyrl" (Cyrillic)</dd>
+			 *
+			 * </dl>
+			 */
+			public class Test {
+			}
+			""");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 37, 15);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = """
+			**language** \s
+			ISO 639 alpha-2 or alpha-3 language code, or registered
+			    language subtags up to 8 alpha letters (for future enhancements).
+			    When a language has both an alpha-2 code and an alpha-3 code, the
+			    alpha-2 code must be used. You can find a full list of valid
+			    language codes in the IANA Language Subtag Registry (search for
+			    "Type: language"). The language field is case insensitive, but
+			    `Locale` always canonicalizes to lower case. \s
+			Well-formed language values have the form
+			    `[a-zA-Z]{2,8}`. Note that this is not the full
+			    BCP47 language production, since it excludes extlang. They are
+			    not needed since modern three-letter language codes replace
+			    them. \s
+			Example: "en" (English), "ja" (Japanese), "kok" (Konkani) \s
+
+			**script** \s
+			ISO 15924 alpha-4 script code. You can find a full list of
+			    valid script codes in the IANA Language Subtag Registry (search
+			    for "Type: script"). The script field is case insensitive, but
+			    `Locale` always canonicalizes to title case (the first
+			    letter is upper case and the rest of the letters are lower
+			    case). \s
+			Well-formed script values have the form
+			    `[a-zA-Z]{4}` \s
+			Example: "Latn" (Latin), "Cyrl" (Cyrillic) \s""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
@@ -708,7 +896,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testNoLinkWhenClassContentUnsupported() throws Exception {
 		initPreferenceManager(false);
-		testClassContentSupport("Uses WordUtils");
+		testClassContentSupport("Uses \\[WordUtils\\]\\(\\)");
 	}
 
 	@Test
@@ -839,4 +1027,27 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	@Test
+	public void testHoverJavadocWithIndexTag() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				/**
+				 * Some <dfn>{@index "locale-sensitive"}</dfn> text.
+				 */
+				public class Meh {}
+				""";
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Meh.java", content, false, null);
+		Hover hover = getHover(cu, 4, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = "Some _\"locale-sensitive\"_ text.";
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+	}
 }

@@ -436,7 +436,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	}
 
 	protected void assertMatches(String pattern, String value) {
-		assertTrue(value + " doesn't match pattern: " + pattern, Pattern.matches(pattern, value));
+		assertTrue(value + "\n doesn't match pattern:\n" + pattern, Pattern.matches(pattern, value));
 	}
 
 	protected String getBundle(String folder, String bundleName) {
