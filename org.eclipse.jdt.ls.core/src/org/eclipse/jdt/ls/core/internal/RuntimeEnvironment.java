@@ -136,8 +136,8 @@ public class RuntimeEnvironment {
 		}
 		URL url;
 		try {
-			url = new URL(javadoc);
-		} catch (MalformedURLException e) {
+			url = new URI(javadoc).toURL();
+		} catch (Exception e) {
 			File file = new File(javadoc);
 			if (file.exists() && file.isAbsolute()) {
 				try {
