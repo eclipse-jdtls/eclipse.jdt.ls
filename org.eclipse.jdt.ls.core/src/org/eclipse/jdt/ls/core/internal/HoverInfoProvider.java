@@ -12,8 +12,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.io.IOException;
-import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +54,6 @@ import org.eclipse.jface.text.Region;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
-import com.google.common.io.CharStreams;
-
 public class HoverInfoProvider {
 
 	private static final long LABEL_FLAGS=
@@ -78,10 +74,6 @@ public class HoverInfoProvider {
 			| JavaElementLabelsCore.T_FULLY_QUALIFIED | JavaElementLabelsCore.M_FULLY_QUALIFIED;
 
 	private static final String LANGUAGE_ID = "java";
-
-	private static final String MARKDOWN_SPACE = "&nbsp;";
-
-	private static final String MARKDOWN_LINEBREAK = "  \n";
 
 	private final ITypeRoot unit;
 
@@ -152,7 +144,6 @@ public class HoverInfoProvider {
 				MarkedString javadoc = computeJavadoc(curr);
 				String value = javadoc == null ? null : javadoc.getValue();
 				if (value != null && !value.isBlank()) {
-					value = fixSnippet(value);
 					res.add(Either.forLeft(value));
 				}
 			}
@@ -163,34 +154,6 @@ public class HoverInfoProvider {
 			return cancelled(res);
 		}
 		return res;
-	}
-
-	private String fixSnippet(String value) {
-		if (value.contains(JavadocContentAccess2.SNIPPET)) {
-			StringBuilder builder = new StringBuilder();
-			value.lines().forEach((line) -> {
-				if (line.contains(JavadocContentAccess2.SNIPPET)) {
-					line = line.stripLeading();
-					if (line.startsWith(JavadocContentAccess2.SNIPPET)) {
-						line = line.replaceFirst(JavadocContentAccess2.SNIPPET, "");
-						line = replaceLeadingSpaces(line);
-					}
-				}
-				builder.append(line);
-				builder.append(MARKDOWN_LINEBREAK);
-			});
-			value = builder.toString();
-		}
-		return value;
-	}
-
-	private static String replaceLeadingSpaces(String str) {
-		int i = 0;
-		while (str.length() > i + 1 && str.charAt(i) == ' ') {
-			str = str.replaceFirst(" ", MARKDOWN_SPACE);
-			i += MARKDOWN_SPACE.length();
-		}
-		return str;
 	}
 
 	private List<Either<String, MarkedString>> cancelled(List<Either<String, MarkedString>> res) {
@@ -302,16 +265,10 @@ public class HoverInfoProvider {
 		} else if (element instanceof IMember memberElement) {
 			member = memberElement;
 		} else if (element instanceof IPackageFragment) {
-			Reader r = JavadocContentAccess2.getMarkdownContentReader(element);
-			if (r != null) {
-				result = getString(r);
-			}
+			result = JavadocContentAccess2.getMarkdownContent(element);
 		}
 		if (member != null) {
-			Reader r = JavadocContentAccess2.getMarkdownContentReader(member);
-			if (r != null) {
-				result = getString(r);
-			}
+			result = JavadocContentAccess2.getMarkdownContent(member);
 			if (member instanceof IMethod method) {
 				String defaultValue = getDefaultValue(method);
 				if (defaultValue != null) {
@@ -332,14 +289,6 @@ public class HoverInfoProvider {
 	 * @param reader the reader
 	 * @return the reader content as string
 	 */
-	private static String getString(Reader reader) {
-		try {
-			return CharStreams.toString(reader);
-		} catch (IOException ignored) {
-			//meh
-		}
-		return null;
-	}
 
 	private class HoverException extends CoreException {
 

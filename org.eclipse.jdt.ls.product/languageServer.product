@@ -65,6 +65,30 @@
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
+      <plugin id="org.jsoup"/>
+      <!-- flexmark -->
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-html2md-converter" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-emoji" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-ast" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-builder" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-collection" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-data" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-dependency" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-format" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-html" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-misc" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-options" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-sequence" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-util-visitor" />
+      <plugin id="wrapped.org.jetbrains.annotations"/>
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-jira-converter" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-gfm-strikethrough" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-tables" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-wikilink" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-ins" />
+      <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-superscript" />
    </plugins>
 
    <configurations>
