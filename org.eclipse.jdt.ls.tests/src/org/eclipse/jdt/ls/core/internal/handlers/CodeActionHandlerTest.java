@@ -157,10 +157,11 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertTrue(codeActions.size() >= 4);
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(1).getRight().getKind(), CodeActionKind.QuickFix);
-		Assert.assertEquals(codeActions.get(2).getRight().getKind(), JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(codeActions.get(3).getRight().getKind(), CodeActionKind.SourceOrganizeImports);
+		Assert.assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
+		Assert.assertEquals(CodeActionKind.QuickFix, codeActions.get(1).getRight().getKind());
+		Assert.assertEquals(JavaCodeActionKind.QUICK_ASSIST, codeActions.get(2).getRight().getKind());
+		Assert.assertEquals(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, codeActions.get(3).getRight().getKind());
+		Assert.assertEquals(CodeActionKind.SourceOrganizeImports, codeActions.get(4).getRight().getKind());
 		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
 		Assert.assertNotNull(w);
 	}
@@ -467,7 +468,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse(codeActions.isEmpty());
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
 		WorkspaceEdit e = codeActions.get(0).getRight().getEdit();
 		Assert.assertNotNull(e);
 	}
@@ -491,7 +492,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertFalse(codeActions.isEmpty());
-		Assert.assertEquals(codeActions.get(0).getRight().getKind(), CodeActionKind.QuickFix);
+		Assert.assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
 		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
 		Assert.assertNotNull(w);
 	}
@@ -537,7 +538,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		Assert.assertNotNull(codeActions);
 		Assert.assertEquals(1, codeActions.size());
-		Assert.assertEquals(codeActions.get(0), CodeActionKind.QuickFix);
+		Assert.assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
 		WorkspaceEdit we = codeActions.get(0).getRight().getEdit();
 		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.toURI(unit));
 		Assert.assertEquals(1, edits.size());
@@ -766,7 +767,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Organize imports");
+		Assert.assertEquals("Organize imports", CodeActionHandlerTest.getTitle(quickAssistActions.get(0)));
 	}
 
 	@Test
@@ -783,10 +784,10 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Generate Getter and Setter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(1)), "Generate Getter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(2)), "Generate Setter for 'name'");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(3)), "Generate Constructors...");
+		Assert.assertEquals("Generate Getter and Setter for 'name'", CodeActionHandlerTest.getTitle(quickAssistActions.get(0)));
+		Assert.assertEquals("Generate Getter for 'name'", CodeActionHandlerTest.getTitle(quickAssistActions.get(1)));
+		Assert.assertEquals("Generate Setter for 'name'", CodeActionHandlerTest.getTitle(quickAssistActions.get(2)));
+		Assert.assertEquals("Generate Constructors...", CodeActionHandlerTest.getTitle(quickAssistActions.get(3)));
 	}
 
 	@Test
@@ -803,13 +804,13 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
 		Assert.assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(0)), "Generate Getters and Setters");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(1)), "Generate Getters");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(2)), "Generate Setters");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(3)), "Generate Constructors...");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(4)), "Generate hashCode() and equals()...");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(5)), "Generate toString()...");
-		Assert.assertEquals(CodeActionHandlerTest.getTitle(quickAssistActions.get(6)), "Override/Implement Methods...");
+		Assert.assertEquals("Generate Getters and Setters", CodeActionHandlerTest.getTitle(quickAssistActions.get(0)));
+		Assert.assertEquals("Generate Getters", CodeActionHandlerTest.getTitle(quickAssistActions.get(1)));
+		Assert.assertEquals("Generate Setters", CodeActionHandlerTest.getTitle(quickAssistActions.get(2)));
+		Assert.assertEquals("Generate Constructors...", CodeActionHandlerTest.getTitle(quickAssistActions.get(3)));
+		Assert.assertEquals("Generate hashCode() and equals()...", CodeActionHandlerTest.getTitle(quickAssistActions.get(4)));
+		Assert.assertEquals("Generate toString()...", CodeActionHandlerTest.getTitle(quickAssistActions.get(5)));
+		Assert.assertEquals("Override/Implement Methods...", CodeActionHandlerTest.getTitle(quickAssistActions.get(6)));
 	}
 
 	private List<Either<Command, CodeAction>> getCodeActions(CodeActionParams params) {
