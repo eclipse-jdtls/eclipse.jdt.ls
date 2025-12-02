@@ -122,13 +122,16 @@ public class SourceAssistProcessor {
 		IType type = getSelectionType(context);
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
 		ASTNode coveringNode = context.getCoveringNode();
-		boolean isInFieldDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, FieldDeclaration.class) != null;
+		FieldDeclaration fieldDeclaration = (FieldDeclaration) CodeActionUtility.findASTNode(coveredNodes, coveringNode, FieldDeclaration.class);
+		boolean isInFieldDeclaration = fieldDeclaration != null;
+		boolean isInStaticFieldDeclaration = isInFieldDeclaration && Modifier.isStatic(fieldDeclaration.getModifiers());
+
 		ASTNode typeDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, TypeDeclaration.class);
 		boolean isInTypeDeclaration =  typeDeclaration != null;
 		boolean isInImportDeclaration =  CodeActionUtility.findASTNode(coveredNodes, coveringNode, ImportDeclaration.class) != null;
 
 		// Generate Constructor QuickAssist
-		if (isInFieldDeclaration || isInTypeDeclaration) {
+		if (isInFieldDeclaration && !isInStaticFieldDeclaration || isInTypeDeclaration) {
 			Optional<Either<Command, CodeAction>> quickAssistGenerateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
 			addSourceActionCommand($, params.getContext(), quickAssistGenerateConstructors);
 		}
@@ -503,12 +506,6 @@ public class SourceAssistProcessor {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
 			}
-
-			boolean hasNonStaticField = hasFields(type, false);
-			if (!hasNonStaticField) {
-				return Optional.empty();
-			}
-
 		} catch (JavaModelException e) {
 			return Optional.empty();
 		}
