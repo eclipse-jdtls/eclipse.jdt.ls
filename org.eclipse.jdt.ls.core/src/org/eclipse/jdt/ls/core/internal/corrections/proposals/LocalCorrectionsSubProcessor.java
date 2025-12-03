@@ -94,11 +94,14 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateNewObjectProp
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateObjectReferenceProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CreateVariableReferenceProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.GenerateForLoopAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedNamesAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.MissingAnnotationAttributesProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ModifierChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewLocalVariableCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewMethodCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.NewProviderMethodDeclarationCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
@@ -1024,6 +1027,21 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	@Override
 	protected ProposalKindWrapper assignToVariableAssistProposalToT(AssignToVariableAssistProposalCore core) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper newProviderMethodDeclarationProposalToT(NewProviderMethodDeclarationCore core, int uid) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper generateForLoopAssistProposalToT(GenerateForLoopAssistProposalCore core) {
+		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
+	}
+
+	@Override
+	protected ProposalKindWrapper linkedNamesAssistProposalToT(LinkedNamesAssistProposalCore core) {
 		return CodeActionHandler.wrap(core, CodeActionKind.QuickFix);
 	}
 
