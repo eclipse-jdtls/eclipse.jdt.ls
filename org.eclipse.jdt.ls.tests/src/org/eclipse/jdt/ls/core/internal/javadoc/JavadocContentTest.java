@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaProject;
@@ -132,5 +133,15 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 		// @formatter:on
 		assertEquals(expectedJavadoc, javadoc.getValue());
 
+	}
+
+	@Test
+	public void testNullJavadoc() throws Exception {
+		IType type = project.findType("org.sample.TestJavadoc");
+		assertNotNull(type);
+		IType inner = type.getType("Inner");
+		assertNotNull(inner);
+		assertNull(JavadocContentAccess2.getMarkdownContentReader(inner));
+		assertNull(JavadocContentAccess2.getMarkdownContent(inner));
 	}
 }

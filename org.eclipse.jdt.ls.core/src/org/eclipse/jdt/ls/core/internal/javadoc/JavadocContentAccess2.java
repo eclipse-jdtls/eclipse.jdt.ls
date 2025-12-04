@@ -77,12 +77,14 @@ public class JavadocContentAccess2 {
 
 	@Deprecated
 	public static Reader getPlainTextContentReader(IMember member) throws JavaModelException {
-		return new StringReader(getPlainTextContent(member));
+		String content = getPlainTextContent(member);
+		return content == null ? null : new StringReader(content);
 	}
 
 	@Deprecated
 	public static Reader getMarkdownContentReader(IJavaElement member) throws JavaModelException {
-		return new StringReader(getMarkdownContent(member));
+		String content = getMarkdownContent(member);
+		return content == null ? null : new StringReader(content);
 	}
 
 	public static String getPlainTextContent(IMember member) throws JavaModelException {
