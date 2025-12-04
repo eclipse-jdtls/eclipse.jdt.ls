@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -73,6 +74,16 @@ import org.eclipse.lsp4j.Location;
  */
 public class JavadocContentAccess2 {
 	public static final String SNIPPET = "SNIPPET";
+
+	@Deprecated
+	public static Reader getPlainTextContentReader(IMember member) throws JavaModelException {
+		return new StringReader(getPlainTextContent(member));
+	}
+
+	@Deprecated
+	public static Reader getMarkdownContentReader(IJavaElement member) throws JavaModelException {
+		return new StringReader(getMarkdownContent(member));
+	}
 
 	public static String getPlainTextContent(IMember member) throws JavaModelException {
 		Reader contentReader = CoreJavadocContentAccessUtility.getHTMLContentReader(member, true, true);
