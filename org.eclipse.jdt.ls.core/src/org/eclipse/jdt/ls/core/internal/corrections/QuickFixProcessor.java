@@ -530,7 +530,7 @@ public class QuickFixProcessor {
 				}
 				break;
 			case IProblem.UsingDeprecatedField:
-				ASTNode deprecatedFieldNode = context.getCoveredNode();
+				ASTNode deprecatedFieldNode = problem.getCoveredNode(context.getASTRoot());
 				if (deprecatedFieldNode != null && !(deprecatedFieldNode instanceof QualifiedName)
 						&& !(deprecatedFieldNode instanceof FieldAccess)
 						&& !(deprecatedFieldNode instanceof SuperFieldAccess)) {
