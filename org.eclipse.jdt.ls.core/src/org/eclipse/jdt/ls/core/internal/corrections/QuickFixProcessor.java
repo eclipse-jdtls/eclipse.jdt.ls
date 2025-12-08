@@ -28,7 +28,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,12 +41,20 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.InlineMethodFixCore;
+import org.eclipse.jdt.internal.corext.fix.ReplaceDeprecatedFieldFixCore;
+import org.eclipse.jdt.internal.ui.fix.ReplaceDeprecatedFieldCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
@@ -62,6 +72,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElements
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -515,6 +526,32 @@ public class QuickFixProcessor {
 					if (fix != null) {
 						proposals.add(CodeActionHandler.wrap(null, CodeActionKind.QuickFix));
 						new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context);
+					}
+				}
+				break;
+			case IProblem.UsingDeprecatedField:
+				ASTNode deprecatedFieldNode = context.getCoveredNode();
+				if (deprecatedFieldNode != null && !(deprecatedFieldNode instanceof QualifiedName)
+						&& !(deprecatedFieldNode instanceof FieldAccess)
+						&& !(deprecatedFieldNode instanceof SuperFieldAccess)) {
+					ASTNode originalNode = deprecatedFieldNode;
+					deprecatedFieldNode = ASTNodes.getFirstAncestorOrNull(deprecatedFieldNode, QualifiedName.class, FieldAccess.class, SuperFieldAccess.class);
+					if (deprecatedFieldNode == null && originalNode instanceof SimpleName) {
+						deprecatedFieldNode = originalNode;
+					}
+				}
+				if (deprecatedFieldNode != null) {
+					String replacement = QuickAssistProcessorUtil.getDeprecatedFieldReplacement(deprecatedFieldNode);
+					if (replacement != null) {
+						IProposableFix fix = ReplaceDeprecatedFieldFixCore.create(FixMessages.ReplaceDeprecatedField_msg, replacement, (CompilationUnit)deprecatedFieldNode.getRoot(), deprecatedFieldNode);
+						if (fix != null) {
+							Map<String, String> options = new Hashtable<>();
+							options.put(CleanUpConstants.REPLACE_DEPRECATED_FIELDS, CleanUpOptions.TRUE);
+							proposals.add(CodeActionHandler.wrap(
+								new FixCorrectionProposalCore(fix, new ReplaceDeprecatedFieldCleanUpCore(options), IProposalRelevance.REPLACE_DEPRECATED_FIELD, context),
+								CodeActionKind.QuickFix)
+							);
+						}
 					}
 				}
 				break;
