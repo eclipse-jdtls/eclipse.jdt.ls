@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import java.util.Hashtable;
+import java.util.Map;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
@@ -34,7 +34,7 @@ public class DeprecatedFieldQuickFixTest extends AbstractQuickFixTest {
     @Before
     public void setup() throws Exception {
         fJProject = newEmptyProject();
-        Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		Map<String, String> options = TestOptions.getDefaultOptions();
         options.put(JavaCore.COMPILER_PB_DEPRECATION, JavaCore.WARNING);
         fJProject.setOptions(options);
         fSourceFolder = fJProject.getPackageFragmentRoot(fJProject.getProject().getFolder("src"));

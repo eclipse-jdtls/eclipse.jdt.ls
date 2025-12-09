@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -545,8 +544,7 @@ public class QuickFixProcessor {
 					if (replacement != null) {
 						IProposableFix fix = ReplaceDeprecatedFieldFixCore.create(FixMessages.ReplaceDeprecatedField_msg, replacement, (CompilationUnit)deprecatedFieldNode.getRoot(), deprecatedFieldNode);
 						if (fix != null) {
-							Map<String, String> options = new Hashtable<>();
-							options.put(CleanUpConstants.REPLACE_DEPRECATED_FIELDS, CleanUpOptions.TRUE);
+							Map<String, String> options = Map.of(CleanUpConstants.REPLACE_DEPRECATED_FIELDS, CleanUpOptions.TRUE);
 							proposals.add(CodeActionHandler.wrap(
 								new FixCorrectionProposalCore(fix, new ReplaceDeprecatedFieldCleanUpCore(options), IProposalRelevance.REPLACE_DEPRECATED_FIELD, context),
 								CodeActionKind.QuickFix)
