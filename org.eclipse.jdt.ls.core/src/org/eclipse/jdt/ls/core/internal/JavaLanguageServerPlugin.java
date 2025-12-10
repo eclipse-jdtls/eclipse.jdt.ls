@@ -136,6 +136,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private ExecutorService executorService;
 	private CompletionContributionService completionContributionService;
 	private LogHandler logHandler;
+	private final TelemetryManager telemetryManager;
 
 	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
@@ -143,6 +144,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	public static BundleContext getBundleContext() {
 		return JavaLanguageServerPlugin.context;
+	}
+
+	public JavaLanguageServerPlugin() {
+		this.telemetryManager = new TelemetryManager();
 	}
 
 	/*
@@ -162,10 +167,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 		if (JDTEnvironmentUtils.isSyntaxServer()) {
 			disableServices();
 			preferenceManager = new PreferenceManager();
-			projectsManager = new SyntaxProjectsManager(preferenceManager);
+			projectsManager = new SyntaxProjectsManager(preferenceManager, telemetryManager);
 		} else {
 			preferenceManager = new StandardPreferenceManager();
-			projectsManager = new StandardProjectsManager(preferenceManager);
+			projectsManager = new StandardProjectsManager(preferenceManager, telemetryManager);
 		}
 		digestStore = new DigestStore(getStateLocation().toFile());
 		try {
@@ -367,7 +372,6 @@ public class JavaLanguageServerPlugin extends Plugin {
 	}
 
 	private void startConnection() throws IOException {
-		TelemetryManager telemetryManager = new TelemetryManager();
 		boolean firstTimeInitialization = ProjectUtils.getAllProjects().length == 0;
 		telemetryManager.onLanguageServerStart(System.currentTimeMillis(), firstTimeInitialization);
 		Launcher<JavaLanguageClient> launcher;
