@@ -13,10 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,7 +31,7 @@ import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -383,9 +384,11 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	@Test(expected = CoreException.class)
-	public void testLoadThrowCoreException() throws Exception {
-		BundleUtils.loadBundles(Arrays.asList(new String[] { "Fakedlocation" }));
+	@Test
+	void testLoadThrowCoreException() {
+		assertThrows(CoreException.class, () -> {
+			BundleUtils.loadBundles(Arrays.asList(new String[] { "Fakedlocation" }));
+		});
 	}
 
 	private String getBundle() {
@@ -398,7 +401,7 @@ public class BundleUtilsTest extends AbstractProjectsManagerBasedTest {
 
 	private String getBundleExtensionResult() {
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXTENSIONPOINT_ID);
-		assertEquals("Expect one extension point", 1, elements.length);
+		assertEquals(1, elements.length, "Expect one extension point");
 		final String[] resultValues = new String[] { "" };
 		for (IConfigurationElement e : elements) {
 			if ("java".equals(e.getAttribute("type"))) {

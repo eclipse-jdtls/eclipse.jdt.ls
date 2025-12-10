@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
@@ -39,19 +39,19 @@ import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.SemanticTokensLegend;
 import org.eclipse.lsp4j.SemanticTokensParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IJavaProject semanticTokensProject;
 	private IPackageFragment fooPackage;
 	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsemantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
 	private String moduleInfoUri;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/semantic-tokens");
 		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("semantic-tokens"));
@@ -522,9 +522,9 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 		 */
 		public static TokenAssertionHelper beginAssertion(String uri, String... tokenTypeFilter) throws JavaModelException {
 			SemanticTokens semanticTokens = SemanticTokensHandler.full(new NullProgressMonitor(), new SemanticTokensParams(new TextDocumentIdentifier(uri)), mock(DocumentMonitor.class));
-			assertNotNull("Provided semantic tokens should not be null", semanticTokens);
-			assertNotNull("Semantic tokens data should not be null", semanticTokens.getData());
-			assertTrue("Semantic tokens data should contain 5 integers per token", semanticTokens.getData().size() % 5 == 0);
+			assertNotNull(semanticTokens, "Provided semantic tokens should not be null");
+			assertNotNull(semanticTokens.getData(), "Semantic tokens data should not be null");
+			assertTrue(semanticTokens.getData().size() % 5 == 0, "Semantic tokens data should contain 5 integers per token");
 			return new TokenAssertionHelper(JDTUtils.resolveTypeRoot(uri).getBuffer(), semanticTokens.getData(), Arrays.asList(tokenTypeFilter));
 		}
 
@@ -537,8 +537,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 		 * @return Itself.
 		 */
 		public TokenAssertionHelper assertNextToken(String expectedText, String expectedType, String... expectedModifiers) {
-			assertTrue("Token of type '" + expectedType + "' should be present in the semantic tokens data",
-				currentDataIndex < semanticTokensData.size());
+			assertTrue(currentDataIndex < semanticTokensData.size(), "Token of type '" + expectedType + "' should be present in the semantic tokens data");
 
 			int deltaLine = semanticTokensData.get(currentDataIndex);
 			int deltaColumn = semanticTokensData.get(currentDataIndex + 1);
@@ -546,9 +545,9 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			int typeIndex = semanticTokensData.get(currentDataIndex + 3);
 			int encodedModifiers = semanticTokensData.get(currentDataIndex + 4);
 
-			assertTrue("Token deltaLine should not be negative", deltaLine >= 0);
-			assertTrue("Token deltaColumn should not be negative", deltaColumn >= 0);
-			assertTrue("Token length should be greater than zero", length > 0);
+			assertTrue(deltaLine >= 0, "Token deltaLine should not be negative");
+			assertTrue(deltaColumn >= 0, "Token deltaColumn should not be negative");
+			assertTrue(length > 0, "Token length should be greater than zero");
 
 			if (deltaLine == 0) {
 				currentColumn += deltaColumn;
@@ -578,16 +577,13 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 		 */
 		public void endAssertion() {
 			if (tokenTypeFilter.isEmpty()) {
-				assertTrue("There should be no more tokens", currentDataIndex == semanticTokensData.size());
+				assertEquals(semanticTokensData.size(), currentDataIndex, "There should be no more tokens");
 			}
 			else {
 				while (currentDataIndex < semanticTokensData.size()) {
 					int currentTypeIndex = semanticTokensData.get(currentDataIndex + 3);
 					String currentType = LEGEND.getTokenTypes().get(currentTypeIndex);
-					assertFalse(
-						"There should be no more tokens matching the filter, but found '" + currentType + "' token",
-						tokenTypeFilter.contains(currentType)
-					);
+					assertFalse(tokenTypeFilter.contains(currentType), "There should be no more tokens matching the filter, but found '" + currentType + "' token");
 					currentDataIndex += 5;
 				}
 			}
@@ -595,11 +591,11 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 		private void assertTextMatchInBuffer(int length, String expectedText) {
 			String tokenTextInBuffer = buffer.getText(JsonRpcHelpers.toOffset(buffer, currentLine, currentColumn), length);
-			assertEquals("Token text should match the token text range in the buffer.", expectedText, tokenTextInBuffer);
+			assertEquals(expectedText, tokenTextInBuffer, "Token text should match the token text range in the buffer.");
 		}
 
 		private void assertTokenType(int typeIndex, String expectedType) {
-			assertEquals("Token type should be correct.", expectedType, LEGEND.getTokenTypes().get(typeIndex));
+			assertEquals(expectedType, LEGEND.getTokenTypes().get(typeIndex), "Token type should be correct.");
 		}
 
 		private void assertTokenModifiers(int encodedModifiers, List<String> expectedModifiers) {
@@ -609,10 +605,10 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 				boolean modifierIsExpected = expectedModifiers.contains(modifier);
 
 				assertTrue(
+					modifierIsExpected == modifierIsEncoded,
 					modifierIsExpected
 						? "Expected modifier '" + modifier + "' to be encoded"
-						: "Did not expect modifier '" + modifier + "' to be encoded",
-					modifierIsExpected == modifierIsEncoded
+						: "Did not expect modifier '" + modifier + "' to be encoded"
 				);
 			}
 		}

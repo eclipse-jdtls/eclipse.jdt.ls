@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URI;
@@ -52,7 +52,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * ProjectCommandTest
@@ -121,7 +121,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		List<String> settingKeys = Arrays.asList(ProjectCommand.SOURCE_PATHS);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
 		String[] actualSourcePaths = (String[]) options.get(ProjectCommand.SOURCE_PATHS);
-		assertTrue(actualSourcePaths.length == 2);
+		assertEquals(2, actualSourcePaths.length);
 		assertTrue(Arrays.stream(actualSourcePaths).anyMatch(sourcePath -> {
 			return sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("src").getLocation().toOSString())
 					|| sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("test").getLocation().toOSString());
@@ -147,7 +147,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
 		String[] actualReferencedLibraryPaths = (String[]) options.get(ProjectCommand.REFERENCED_LIBRARIES);
 		String expectedReferencedLibraryPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("lib").getFile("mylib.jar").getLocation().toOSString();
-		assertTrue(actualReferencedLibraryPaths.length == 1);
+		assertEquals(1, actualReferencedLibraryPaths.length);
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
 			IPath expected = new Path(expectedReferencedLibraryPath);
 			IPath actual = new Path(actualReferencedLibraryPaths[0]);
@@ -249,11 +249,11 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		IProject project = WorkspaceHelper.getProject("salut");
 		String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
-		assertNotNull("Can get project from java file uri", javaProject);
+		assertNotNull(javaProject, "Can get project from java file uri");
 
 		String projectUri = project.getLocationURI().toString();
 		javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
-		assertNotNull("Can get project from project uri", javaProject);
+		assertNotNull(javaProject, "Can get project from project uri");
 	}
 
 	@Test
@@ -274,7 +274,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(linkedFolder);
-		assertNotNull("Can get project from linked folder uri", javaProject);
+		assertNotNull(javaProject, "Can get project from linked folder uri");
 	}
 
 	@Test

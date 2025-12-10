@@ -14,7 +14,7 @@
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -33,7 +33,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 

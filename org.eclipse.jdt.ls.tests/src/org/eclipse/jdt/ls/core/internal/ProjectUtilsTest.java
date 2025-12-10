@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 	@Test

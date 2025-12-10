@@ -12,14 +12,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CompletionRankingAggregationTest {
 	@Test

@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -23,15 +23,15 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NavigateToDeclarationHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private NavigateToDeclarationHandler handler;
 	private IProject project;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		handler = new NavigateToDeclarationHandler(preferenceManager);
 	}

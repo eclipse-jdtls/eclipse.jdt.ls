@@ -13,7 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,14 +30,14 @@ import org.eclipse.lsp4j.FoldingRange;
 import org.eclipse.lsp4j.FoldingRangeKind;
 import org.eclipse.lsp4j.FoldingRangeRequestParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IProject project;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/foldingRange"));
 		project = WorkspaceHelper.getProject("foldingRange");
@@ -53,7 +54,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testTypes() throws Exception {
 		String className = "org.sample.SimpleFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 8);
+		assertEquals(8, foldingRanges.size());
 		assertHasFoldingRange(2, 3, FoldingRangeKind.Imports, foldingRanges);
 		assertHasFoldingRange(5, 7, FoldingRangeKind.Comment, foldingRanges);
 		assertHasFoldingRange(8, 26, null, foldingRanges);
@@ -67,7 +68,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testErrorTypes() throws Exception {
 		String className = "org.sample.UnmatchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 3);
+		assertEquals(3, foldingRanges.size());
 		assertHasFoldingRange(2, 12, null, foldingRanges);
 		assertHasFoldingRange(3, 10, null, foldingRanges);
 		assertHasFoldingRange(5, 7, null, foldingRanges);
@@ -77,7 +78,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testInvalidInput() throws Exception {
 		String className = "org.sample.InvalidInputRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 3);
+		assertEquals(3, foldingRanges.size());
 		assertHasFoldingRange(2, 4, "comment", foldingRanges);
 		assertHasFoldingRange(5, 10, null, foldingRanges);
 		assertHasFoldingRange(7, 9, null, foldingRanges);
@@ -87,7 +88,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testRegionFoldingRanges() throws Exception {
 		String className = "org.sample.RegionFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 7);
+		assertEquals(7, foldingRanges.size());
 		assertHasFoldingRange(7, 15, FoldingRangeKind.Region, foldingRanges);
 		assertHasFoldingRange(17, 23, FoldingRangeKind.Region, foldingRanges);
 		assertHasFoldingRange(18, 20, FoldingRangeKind.Region, foldingRanges);
@@ -97,7 +98,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testStatementFoldingRanges() throws Exception {
 		String className = "org.sample.StatementFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 18);
+		assertEquals(18, foldingRanges.size());
 		assertHasFoldingRange(2, 4, FoldingRangeKind.Comment, foldingRanges);
 		assertHasFoldingRange(5, 53, null, foldingRanges);
 		assertHasFoldingRange(7, 52, null, foldingRanges);
@@ -128,7 +129,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testNestedSwitchFoldingRanges() throws Exception {
 		String className = "org.sample.NestedSwitchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 10);
+		assertEquals(10, foldingRanges.size());
 		assertHasFoldingRange(2, 32, null, foldingRanges);
 		assertHasFoldingRange(11, 31, null, foldingRanges);
 
@@ -148,7 +149,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testCurlyBracesOwnLine() throws Exception {
 		String className = "org.sample.NestedSwitchFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 10);
+		assertEquals(10, foldingRanges.size());
 		assertHasFoldingRange(4, 9, null, foldingRanges);
 		assertHasFoldingRange(7, 8, null, foldingRanges);
 	}
@@ -157,7 +158,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testStaticBlockFoldingRange() throws Exception {
 		String className = "org.sample.StaticBlockFoldingRange";
 		List<FoldingRange> foldingRanges = getFoldingRanges(className);
-		assertTrue(foldingRanges.size() == 5);
+		assertEquals(5, foldingRanges.size());
 		assertHasFoldingRange(2, 18, null, foldingRanges);
 		assertHasFoldingRange(4, 5, null, foldingRanges);
 		assertHasFoldingRange(7, 12, null, foldingRanges);
@@ -167,7 +168,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private void testClassForValidRange(String className, List<FoldingRange> foldingRanges) throws CoreException {
 		for (FoldingRange range : foldingRanges) {
-			assertTrue("Class: " + className + ", FoldingRange:" + range.getKind() + " - invalid location.", isValid(range));
+			assertTrue(isValid(range), "Class: " + className + ", FoldingRange:" + range.getKind() + " - invalid location.");
 		}
 	}
 
@@ -185,6 +186,6 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private void assertHasFoldingRange(int startLine, int endLine, String expectedKind, Collection<FoldingRange> foldingRanges) {
 		Optional<FoldingRange> range = foldingRanges.stream().filter(s -> s.getStartLine() == startLine && s.getEndLine() == endLine).findFirst();
-		assertTrue("Expected type" + expectedKind, range.get().getKind() == expectedKind);
+		assertEquals(expectedKind, range.get().getKind(), "Expected type" + expectedKind);
 	}
 }

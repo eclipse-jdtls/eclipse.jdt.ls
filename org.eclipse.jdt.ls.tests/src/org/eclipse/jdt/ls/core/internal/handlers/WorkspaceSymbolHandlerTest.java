@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -33,15 +33,15 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Fred Bricon
  */
 public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");//We need at least 1 project
 	}
@@ -68,7 +68,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		//No classes from binaries can be found
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Array", monitor);
 		assertNotNull(results);
-		assertEquals("Unexpected results", 0, results.size());
+		assertEquals(0, results.size(), "Unexpected results");
 
 		//... but workspace classes can still be found
 		testWorkspaceSearchOnFileInWorkspace();
@@ -79,16 +79,16 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "Array";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Unexpected results", 11, results.size());
+		assertEquals(11, results.size(), "Unexpected results");
 		Range defaultRange = JDTUtils.newRange();
 		for (SymbolInformation symbol : results) {
-			assertNotNull("Kind is missing", symbol.getKind());
-			assertNotNull("ContainerName is missing", symbol.getContainerName());
+			assertNotNull(symbol.getKind(), "Kind is missing");
+			assertNotNull(symbol.getContainerName(), "ContainerName is missing");
 			assertTrue(symbol.getName().startsWith(query));
 			Location location = symbol.getLocation();
 			assertEquals(defaultRange, location.getRange());
 			//No class in the workspace project starts with Array, so everything comes from the JDK
-			assertTrue("Unexpected uri "+ location.getUri(), location.getUri().startsWith("jdt://"));
+			assertTrue(location.getUri().startsWith("jdt://"), "Unexpected uri "+ location.getUri());
 		}
 	}
 
@@ -98,14 +98,14 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
 		Range defaultRange = JDTUtils.newRange();
-		assertEquals("Unexpected results", 2, results.size());
+		assertEquals(2, results.size(), "Unexpected results");
 		for (SymbolInformation symbol : results) {
-			assertNotNull("Kind is missing", symbol.getKind());
-			assertNotNull("ContainerName is missing", symbol.getContainerName());
+			assertNotNull(symbol.getKind(), "Kind is missing");
+			assertNotNull(symbol.getContainerName(), "ContainerName is missing");
 			assertTrue(symbol.getName().startsWith(query));
 			Location location = symbol.getLocation();
-			assertNotEquals("Range should not equal the default range", defaultRange, location.getRange());
-			assertTrue("Unexpected uri " + location.getUri(), location.getUri().startsWith("file://"));
+			assertNotEquals(defaultRange, location.getRange(), "Range should not equal the default range");
+			assertTrue(location.getUri().startsWith("file://"), "Unexpected uri " + location.getUri());
 		}
 	}
 
@@ -114,15 +114,15 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "IFoo";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + " results", 2, results.size());
+		assertEquals(2, results.size(), "Found " + results.size() + " results");
 		assertTrue(results.stream().anyMatch(s -> "org.sample".equals(s.getContainerName())));
 		assertTrue(results.stream().anyMatch(s -> "java".equals(s.getContainerName())));
 		SymbolInformation symbol = results.get(0);
 		assertEquals(SymbolKind.Interface, symbol.getKind());
 		assertEquals(query, symbol.getName());
 		Location location = symbol.getLocation();
-		assertNotEquals("Range should not equal the default range", JDTUtils.newRange(), location.getRange());
-		assertTrue("Unexpected uri "+ location.getUri(), location.getUri().endsWith("Foo.java"));
+		assertNotEquals(JDTUtils.newRange(), location.getRange(), "Range should not equal the default range");
+		assertTrue(location.getUri().endsWith("Foo.java"), "Unexpected uri "+ location.getUri());
 	}
 
 	@Test
@@ -134,7 +134,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		results = WorkspaceSymbolHandler.search("HaMa", monitor);
 		String className = "HashMap";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
-		assertTrue("Did not find " + className, foundClass);
+		assertTrue(foundClass, "Did not find " + className);
 	}
 
 	@Test
@@ -147,7 +147,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		results = WorkspaceSymbolHandler.search("inkSet", monitor);
 		String className = "LinkedHashSet";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
-		assertTrue("Did not find "+className, foundClass);
+		assertTrue(foundClass, "Did not find "+className);
 	}
 
 	@Test
@@ -155,10 +155,10 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "B*";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + "result", 6, results.size());
+		assertEquals(6, results.size(), "Found " + results.size() + "result");
 		String className = "BaseTest";
 		boolean foundClass = results.stream().filter(s -> className.equals(s.getName())).findFirst().isPresent();
-		assertTrue("Did not find " + className, foundClass);
+		assertTrue(foundClass, "Did not find " + className);
 	}
 
 	@Test
@@ -166,7 +166,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "B*";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 2, "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + "result", 2, results.size());
+		assertEquals( 2, results.size(),"Found " + results.size() + "result");
 	}
 
 	@Test
@@ -177,9 +177,9 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		String query = "Mono";
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 0, "reactor", false, monitor);
 		assertNotNull(results);
-		assertEquals("Found ", 119, results.size());
+		assertEquals(119, results.size(), "Found ");
 		boolean hasEmptyName = results.stream().filter(s -> (s.getName() == null || s.getName().isEmpty())).findFirst().isPresent();
-		assertFalse("Found empty name", hasEmptyName);
+		assertFalse(hasEmptyName, "Found empty name");
 	}
 
 	@Test
@@ -238,16 +238,16 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		preferences.setIncludeSourceMethodDeclarations(true);
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("deleteSomething", "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + " result", 1, results.size());
+		assertEquals(1, results.size(), "Found " + results.size() + " result");
 		SymbolInformation res = results.get(0);
 		assertEquals(SymbolKind.Method, res.getKind());
 		assertEquals(res.getContainerName(), "org.sample.Baz");
 
 		results = WorkspaceSymbolHandler.search("main", "hello", true, monitor);
 		assertNotNull(results);
-		assertEquals("Found " + results.size() + " result", 11, results.size());
+		assertEquals(11, results.size(), "Found " + results.size() + " result");
 		boolean allMethods = results.stream().allMatch(s -> s.getKind() == SymbolKind.Method);
-		assertTrue("Found a non-method symbol", allMethods);
+		assertTrue(allMethods, "Found a non-method symbol");
 		preferences.setIncludeSourceMethodDeclarations(false);
 	}
 
@@ -264,7 +264,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 		assertNotNull(deprecated);
 		assertNotNull(deprecated.getTags());
-		assertTrue("Should have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+		assertTrue(deprecated.getTags().contains(SymbolTag.Deprecated), "Should have deprecated tag");
 
 		SymbolInformation notDeprecated = results.stream()
 			.filter(symbol -> symbol.getContainerName().equals("java.security.cert"))
@@ -272,7 +272,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 		assertNotNull(notDeprecated);
 		if (notDeprecated.getTags() != null) {
-			assertFalse("Should not have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+			assertFalse(notDeprecated.getTags().contains(SymbolTag.Deprecated), "Should not have deprecated tag");
 		}
 	}
 
@@ -289,7 +289,7 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 
 		assertNotNull(deprecated);
 		assertNotNull(deprecated.getDeprecated());
-		assertTrue("Should be deprecated", deprecated.getDeprecated());
+		assertTrue(deprecated.getDeprecated(), "Should be deprecated");
 	}
 
 	@Test
@@ -298,10 +298,10 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 		//Classes will be found with jar container path.
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Array", monitor);
 		assertNotNull(results);
-		assertNotEquals("Unexpected results", 0, results.size());
+		assertNotEquals(0, results.size(), "Unexpected results");
 		// sample just the first symbol
-		assertNotNull("Location is null", results.get(0).getLocation());
-		assertNotNull("Location URI is null", results.get(0).getLocation().getUri());
-		assertTrue("Wrong location URI", results.get(0).getLocation().getUri().contains("rtstubs.jar/"));
+		assertNotNull(results.get(0).getLocation(), "Location is null");
+		assertNotNull(results.get(0).getLocation().getUri(), "Location URI is null");
+		assertTrue(results.get(0).getLocation().getUri().contains("rtstubs.jar/"), "Wrong location URI");
 	}
 }

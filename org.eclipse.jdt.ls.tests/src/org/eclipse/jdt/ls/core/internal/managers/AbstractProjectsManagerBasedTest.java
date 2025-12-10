@@ -12,10 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -89,9 +90,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -139,7 +140,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 	});
 
-	@BeforeClass
+	@BeforeAll
 	public static void initJVMs() {
 		JobHelpers.waitForLookupJDKToolchainsJob(600000);
 		CorePlugin.publishedGradleVersions().getVersions();
@@ -161,7 +162,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void initProjectManager() throws Exception {
 		clientRequests.clear();
 
@@ -306,7 +307,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 		return dir;
 	}
 
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		JavaLanguageServerPlugin.setPreferencesManager(oldPreferenceManager);
 		projectsManager = null;
@@ -345,12 +346,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected void assertIsJavaProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() +" is missing the Java nature", ProjectUtils.isJavaProject(project));
+		assertTrue(ProjectUtils.isJavaProject(project), project.getName() +" is missing the Java nature");
 	}
 
 	protected void assertHasErrors(IProject project) {
 		try {
-			assertTrue(project.getName() + " has no errors", ResourceUtils.getErrorMarkers(project).size() > 0);
+			assertNotEquals(0, ResourceUtils.getErrorMarkers(project).size(), project.getName() + " has no errors");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -362,7 +363,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 			String allErrors = ResourceUtils.toString(markers);
 			for (String expectedError : expectedErrorsLike) {
 				boolean hasError = markers.stream().map(ResourceUtils::getMessage).filter(Objects::nonNull).filter(m -> m.contains(expectedError)).findFirst().isPresent();
-				assertTrue(expectedError + " was not found in: \n" + allErrors, hasError);
+				assertTrue(hasError, expectedError + " was not found in: \n" + allErrors);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -389,7 +390,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 	protected void assertNoErrors(IResource resource) {
 		try {
 			List<IMarker> markers = ResourceUtils.getErrorMarkers(resource);
-			assertEquals(resource.getName() + " has errors: \n" + ResourceUtils.toString(markers), 0, markers.size());
+			assertEquals(0, markers.size(), resource.getName() + " has errors: \n" + ResourceUtils.toString(markers));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -416,7 +417,7 @@ public abstract class AbstractProjectsManagerBasedTest {
 
 	protected void assertTaskCompleted(String taskName) {
 		List<Object> progressReports = clientRequests.get("sendProgressReport");
-		assertNotNull("No progress report were sent to the client", progressReports);
+		assertNotNull(progressReports, "No progress report were sent to the client");
 		boolean completedTask = false;
 		Set<String> tasks = new LinkedHashSet<>(progressReports.size());
 		String taskId = null;
@@ -431,12 +432,12 @@ public abstract class AbstractProjectsManagerBasedTest {
 				completedTask = true;
 			}
 		}
-		assertNotNull("'" + taskName + "' was not found among " + tasks, taskId);
-		assertTrue("'" + taskName + "' was not completed", completedTask);
+		assertNotNull(taskId, "'" + taskName + "' was not found among " + tasks);
+		assertTrue(completedTask, "'" + taskName + "' was not completed");
 	}
 
 	protected void assertMatches(String pattern, String value) {
-		assertTrue(value + "\n doesn't match pattern:\n" + pattern, Pattern.matches(pattern, value));
+		assertTrue(Pattern.matches(pattern, value), value + "\n doesn't match pattern:\n" + pattern);
 	}
 
 	protected String getBundle(String folder, String bundleName) {

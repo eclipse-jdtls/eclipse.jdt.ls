@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,7 +59,6 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
 
 public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
@@ -83,17 +82,17 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 	protected void assertCodeActionExists(ICompilationUnit cu, String label) throws Exception {
 		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu);
-		assertTrue("'" + label + "' should exist within the code actions", codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent());
+		assertTrue(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should exist within the code actions");
 	}
 
 	protected void assertCodeActionNotExists(ICompilationUnit cu, String label) throws Exception {
 		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu);
-		assertFalse("'" + label + "' should not be added to the code actions", codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent());
+		assertFalse(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should not be added to the code actions");
 	}
 
 	protected void assertCodeActionNotExists(ICompilationUnit cu, Range range, String label) throws Exception {
 		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu, range);
-		assertFalse("'" + label + "' should not be added to the code actions", codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent());
+		assertFalse(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should not be added to the code actions");
 	}
 
 	protected void assertCodeActions(ICompilationUnit cu, Collection<Expected> expected) throws Exception {
@@ -117,7 +116,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	protected void assertCodeActions(List<Either<Command, CodeAction>> codeActions, Expected... expecteds) throws Exception {
 		if (codeActions.size() < expecteds.length) {
 			String res = codeActions.stream().map(a -> ("'" + getTitle(a) + "'")).collect(Collectors.joining(","));
-			assertEquals("Number of code actions: " + res, expecteds.length, codeActions.size());
+			assertEquals(expecteds.length, codeActions.size(), "Number of code actions: " + res);
 		}
 
 		Map<String, Expected> expectedActions = Stream.of(expecteds).collect(Collectors.toMap(Expected::getName, Function.identity()));
@@ -125,7 +124,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 		for (Expected expected : expecteds) {
 			Either<Command, CodeAction> action = actualActions.get(expected.name);
-			assertNotNull("Should prompt code action: " + expected.name, action);
+			assertNotNull(action, "Should prompt code action: " + expected.name);
 			expected.assertEquivalent(action);
 		}
 
@@ -214,14 +213,14 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		 */
 		public void assertEquivalent(Either<Command, CodeAction> action) throws Exception {
 			String title = getTitle(action);
-			assertEquals("Unexpected command :", name, title);
+			assertEquals(name, title, "Unexpected command :");
 			if (!ALL_KINDS.equals(kind) && action.isRight()) {
-				assertEquals(title + " has the wrong kind ", kind, action.getRight().getKind());
+				assertEquals(kind, action.getRight().getKind(), title + " has the wrong kind ");
 			}
 			String actionContent = evaluateCodeActionCommand(action);
 			actionContent = ResourceUtils.dos2Unix(actionContent);
 			content = ResourceUtils.dos2Unix(content);
-			assertEquals(title + " has the wrong content ", content, actionContent);
+			assertEquals(content, actionContent, title + " has the wrong content ");
 		}
 	}
 
@@ -280,7 +279,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			for (Either<Command, CodeAction> codeAction : codeActions) {
 				Stream<String> acceptedActionKinds = onlyKinds.stream();
 				String kind = codeAction.getRight().getKind();
-				assertTrue(codeAction.getRight().getTitle() + " has kind " + kind + " but only " + onlyKinds + " are accepted", acceptedActionKinds.filter(k -> kind != null && kind.startsWith(k)).findFirst().isPresent());
+				assertTrue(acceptedActionKinds.filter(k -> kind != null && kind.startsWith(k)).findFirst().isPresent(), codeAction.getRight().getTitle() + " has kind " + kind + " but only " + onlyKinds + " are accepted");
 			}
 		}
 
@@ -316,9 +315,9 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
 		if (c != null) {
-			Assert.assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			Assert.assertNotNull(c.getArguments());
-			Assert.assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
+			assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
+			assertNotNull(c.getArguments());
+			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
 			WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
 			return evaluateWorkspaceEdit(we);
 		} else {
@@ -343,9 +342,9 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
 	public static String evaluateChanges(List<Either<TextDocumentEdit, ResourceOperation>> documentChanges) throws BadLocationException, JavaModelException {
 		List<TextDocumentEdit> changes = documentChanges.stream().filter(e -> e.isLeft()).map(e -> e.getLeft()).collect(Collectors.toList());
-		assertFalse("No edits generated", changes.isEmpty());
+		assertFalse(changes.isEmpty(), "No edits generated");
 		Set<String> uris = changes.stream().map(tde -> tde.getTextDocument().getUri()).distinct().collect(Collectors.toSet());
-		assertEquals("Only one resource should be modified", 1, uris.size());
+		assertEquals(1, uris.size(), "Only one resource should be modified");
 		String uri = uris.iterator().next();
 		List<TextEdit> edits = changes.stream().flatMap(e -> e.getEdits().stream()).collect(Collectors.toList());
 		return ResourceUtils.dos2Unix(evaluateChanges(uri, edits));
@@ -354,15 +353,15 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	public static String evaluateChanges(Map<String, List<TextEdit>> changes) throws BadLocationException, JavaModelException {
 		Iterator<Entry<String, List<TextEdit>>> editEntries = changes.entrySet().iterator();
 		Entry<String, List<TextEdit>> entry = editEntries.next();
-		assertNotNull("No edits generated", entry);
-		assertEquals("More than one resource modified", false, editEntries.hasNext());
+		assertNotNull(entry, "No edits generated");
+		assertEquals(false, editEntries.hasNext(), "More than one resource modified");
 		return ResourceUtils.dos2Unix(evaluateChanges(entry.getKey(), entry.getValue()));
 	}
 
 	private static String evaluateChanges(String uri, List<TextEdit> edits) throws BadLocationException, JavaModelException {
-		assertFalse("No edits generated: " + edits, edits == null || edits.isEmpty());
+		assertFalse(edits == null || edits.isEmpty(), "No edits generated: " + edits);
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri);
-		assertNotNull("CU not found: " + uri, cu);
+		assertNotNull(cu, "CU not found: " + uri);
 		Document doc = new Document();
 		if (cu.exists()) {
 			doc.set(cu.getSource());

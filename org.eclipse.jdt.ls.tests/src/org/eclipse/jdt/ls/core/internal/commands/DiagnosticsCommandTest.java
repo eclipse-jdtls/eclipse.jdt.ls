@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -37,15 +37,15 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 	private JavaClientConnection javaClient;
 	private DocumentLifeCycleHandler lifeCycleHandler;
@@ -53,7 +53,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 	private ClientPreferences clientPreferences;
 	private ErrorLevel originalGlobalErrorLevel;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		mockPreferences();
 		javaClient = new JavaClientConnection(client);
@@ -63,7 +63,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(ErrorLevel.SYNTAX_ERROR);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(originalGlobalErrorLevel);
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);

@@ -13,17 +13,17 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.toGlobPattern;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.lsp4j.RelativePattern;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ResourceUtilsTest {
 
@@ -71,7 +71,8 @@ public class ResourceUtilsTest {
 		IPath path = ResourceUtils.canonicalFilePathFromURI(uriStr);
 		String expected = Path.fromOSString("/home/user/vscode").toString();
 		String result = path.toString();
-		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+		String os = Platform.getOS();
+		if (Platform.OS_WIN32.equals(os) || Platform.OS_MACOSX.equals(os)) {
 			assertTrue(result.endsWith(expected));
 		} else {
 			assertEquals(expected, result);

@@ -6,7 +6,19 @@ Bundle-SymbolicName: org.eclipse.jdt.ls.tests;singleton:=true
 Bundle-Version: 1.55.0.qualifier
 Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
-Import-Package: org.osgi.framework;version="1.3.0"
+Import-Package: org.junit.jupiter.api;version="[5.14.0,6.0.0)",
+ org.junit.jupiter.api.extension;version="[5.14.0,6.0.0)",
+ org.junit.jupiter.api.function;version="[5.14.0,6.0.0)",
+ org.junit.jupiter.params;version="[5.14.0,6.0.0)",
+ org.junit.jupiter.params.provider;version="[5.14.0,6.0.0)",
+ org.mockito;version="[5.20.0,6.0.0)",
+ org.mockito.invocation;version="[5.20.0,6.0.0)",
+ org.mockito.junit.jupiter;version="[5.20.0,6.0.0)",
+ org.mockito.quality;version="[5.20.0,6.0.0)",
+ org.mockito.stubbing;version="[5.20.0,6.0.0)",
+ org.mockito.verification;version="[5.20.0,6.0.0)",
+ org.opentest4j;version="[1.3.0,2.0.0)",
+ org.osgi.framework;version="1.3.0"
 Bundle-Localization: plugin
 Bundle-ActivationPolicy: lazy
 Require-Bundle: org.eclipse.jdt.ls.core,
@@ -21,7 +33,6 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.m2e.core,
  org.eclipse.m2e.maven.runtime,
  org.eclipse.m2e.jdt,
- org.junit;bundle-version="4.12.0",
  org.apache.commons.commons-io;bundle-version="2.2.0",
  org.eclipse.buildship.core;bundle-version="1.0.18",
  org.apache.commons.lang3;bundle-version="3.1.0",
@@ -34,7 +45,6 @@ Require-Bundle: org.eclipse.jdt.ls.core,
  org.eclipse.jdt.apt.pluggable.core,
  org.eclipse.m2e.apt.core,
  org.eclipse.buildship.core,
- org.mockito.mockito-core;bundle-version="4.3.1",
  org.eclipse.jdt.ls.filesystem;bundle-version="1.0.0"
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Activator: org.eclipse.jdt.ls.core.internal.JavaLanguageServerTestPlugin

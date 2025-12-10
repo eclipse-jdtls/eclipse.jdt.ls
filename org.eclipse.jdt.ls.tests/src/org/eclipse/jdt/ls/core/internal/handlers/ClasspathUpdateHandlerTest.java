@@ -13,9 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,38 +41,38 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTe
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTest {
 	@Mock
 	private JavaClientConnection connection;
 
 	private ClasspathUpdateHandler handler;
 
-	@BeforeClass
+	@BeforeAll
 	public static void download() throws FileNotFoundException, CoreException {
 		File commonsLang3Archive = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.6");
-		assertNotNull("commons-lang-3.6-sources.jar not found", commonsLang3Archive);
+		assertNotNull(commonsLang3Archive, "commons-lang-3.6-sources.jar not found");
 		commonsLang3Archive = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5");
-		assertNotNull("commons-lang-3.5-sources.jar not found", commonsLang3Archive);
+		assertNotNull(commonsLang3Archive, "commons-lang-3.5-sources.jar not found");
 	}
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		handler = new ClasspathUpdateHandler(connection);
 		handler.addElementChangeListener();
 		preferences.setUpdateBuildConfigurationStatus(FeatureStatus.automatic);
 	}
 
-	@After
+	@AfterEach
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();

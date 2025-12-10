@@ -13,10 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,8 +42,8 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest {
 
@@ -52,7 +53,7 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 
 	private OrganizeImportsCommand command = new OrganizeImportsCommand();
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -67,11 +68,13 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		fSourceFolder = fJProject1.getPackageFragmentRoot(fJProject1.getProject().getFolder("src/main/java"));
 	}
 
-	@Test(expected = CoreException.class)
-	public void testGenericOrganizeImportsCall_InvalidFile() throws Exception {
-		importProjects("eclipse/hello");
-		OrganizeImportsCommand command = new OrganizeImportsCommand();
-		command.organizeImports(Arrays.asList("no/such/file.java"));
+	@Test
+	void testGenericOrganizeImportsCall_InvalidFile() {
+		assertThrows(CoreException.class, () -> {
+			importProjects("eclipse/hello");
+			OrganizeImportsCommand command = new OrganizeImportsCommand();
+			command.organizeImports(Arrays.asList("no/such/file.java"));
+		});
 	}
 
 	@Test

@@ -11,17 +11,17 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ResolveSourceMappingHandlerTest extends AbstractProjectsManagerBasedTest {
 
-    @Before
+    @BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/quickstart2");
     }

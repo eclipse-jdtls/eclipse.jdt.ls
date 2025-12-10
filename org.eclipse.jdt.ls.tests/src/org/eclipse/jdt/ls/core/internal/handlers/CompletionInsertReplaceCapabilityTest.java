@@ -13,8 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertPosition;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -25,13 +25,13 @@ import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.InsertReplaceEdit;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CompletionInsertReplaceCapabilityTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
@@ -50,7 +50,7 @@ public class CompletionInsertReplaceCapabilityTest extends AbstractCompilationUn
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		mockClient();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();

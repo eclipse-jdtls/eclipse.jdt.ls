@@ -12,50 +12,40 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * @author siarhei_leanavets1
  *
  */
-@RunWith(Parameterized.class)
 public class JDTUtilsTestParametrized {
-
-	@Parameters
-	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] {
-			{ "file:///home/some/excluded/path/build.gradle", true },
-			{ "file:///home/some/path/build.excluded", true },
-			{ "file:///home/some/path/build.gradle", false },
-			{ "file:///C:/abc/.excluded", true },
-			{ "file:///C:/abc/.included", false },
-		});
-	}
 
 	private static List<String> patterns = Arrays.asList(
 		"**/some/excluded/path/**",
 		"**/*.excluded"
 	);
 
-	private String filePath;
-	private boolean isExcluded;
-
-	public JDTUtilsTestParametrized(String filePath, boolean isExcluded) {
-		this.filePath = filePath;
-		this.isExcluded = isExcluded;
+	static Stream<Arguments> data() {
+		return Stream.of(
+			Arguments.of("file:///home/some/excluded/path/build.gradle", true),
+			Arguments.of("file:///home/some/path/build.excluded", true),
+			Arguments.of("file:///home/some/path/build.gradle", false),
+			Arguments.of("file:///C:/abc/.excluded", true),
+			Arguments.of("file:///C:/abc/.included", false)
+		);
 	}
 
-	@Test
-	public void testIsExcludedFile() {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testIsExcludedFile(String filePath, boolean isExcluded) {
 		assertEquals(JDTUtils.isExcludedFile(patterns, filePath), isExcluded);
 	}
 }

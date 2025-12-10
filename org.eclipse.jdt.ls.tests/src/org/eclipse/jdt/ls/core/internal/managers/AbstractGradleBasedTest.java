@@ -14,9 +14,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -43,7 +43,7 @@ public abstract class AbstractGradleBasedTest extends AbstractProjectsManagerBas
 
 	protected void assertIsGradleProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() + " is missing the Gradle nature", ProjectUtils.isGradleProject(project));
+		assertTrue(ProjectUtils.isGradleProject(project), project.getName() + " is missing the Gradle nature");
 	}
 
 }

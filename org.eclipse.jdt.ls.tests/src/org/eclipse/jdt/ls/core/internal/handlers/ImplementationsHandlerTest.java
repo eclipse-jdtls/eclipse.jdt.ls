@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -33,8 +33,8 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * ImplementationsHandlerTest
@@ -45,7 +45,7 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 	private IProject project;
 
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception{
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
@@ -61,7 +61,7 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setTextDocument(new TextDocumentIdentifier("/foo/bar"));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
 		assertNotNull(implementations);
-		assertTrue("implementations are not empty", implementations.isEmpty());
+		assertTrue(implementations.isEmpty(), "implementations are not empty");
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(2, 20)); //Position over IFoo
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
+		assertNotNull(implementations, "findImplementations should not return null");
 		assertEquals(2, implementations.size());
 
 		Location foo2 = implementations.stream().filter(i -> i.getUri().contains("org/sample/Foo2.java")).findFirst().get();
@@ -90,10 +90,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(2, 14)); //Position over Foo2
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(),implementations.toString());
 		Location foo3 = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo3.getUri(), foo3.getUri().contains("org/sample/Foo3.java"));
+		assertTrue(foo3.getUri().contains("org/sample/Foo3.java"), "Unexpected implementation : " + foo3.getUri());
 		assertEquals(JDTUtils.newLineRange(5, 13, 17), foo3.getRange());
 	}
 
@@ -106,10 +106,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(4, 14)); //Position over IFoo#someMethod
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(), implementations.toString());
 		Location foo2 = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo2.getUri(), foo2.getUri().contains("org/sample/Foo2.java"));
+		assertTrue(foo2.getUri().contains("org/sample/Foo2.java"), "Unexpected implementation : " + foo2.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(4, 16), foo2.getRange().getStart());
 		assertEquals(new Position(4, 26), foo2.getRange().getEnd());
@@ -124,10 +124,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(6, 14)); //Position over foo.someMethod
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(), implementations.toString());
 		Location foo2 = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo2.getUri(), foo2.getUri().contains("org/sample/Foo2.java"));
+		assertTrue(foo2.getUri().contains("org/sample/Foo2.java"), "Unexpected implementation : " + foo2.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(4, 16), foo2.getRange().getStart());
 		assertEquals(new Position(4, 26), foo2.getRange().getEnd());
@@ -142,10 +142,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(5, 14)); //Position over super.someMethod
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(), implementations.toString());
 		Location foo = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/Foo.java"));
+		assertTrue(foo.getUri().contains("org/sample/Foo.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(8, 13), foo.getRange().getStart());
 		assertEquals(new Position(8, 23), foo.getRange().getEnd());
@@ -160,15 +160,15 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(10, 20)); //Position over new Foo()
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 2, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(2, implementations.size(), implementations.toString());
 		Location foo = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/Foo.java"));
+		assertTrue(foo.getUri().contains("org/sample/Foo.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to Foo class declaration position
 		assertEquals(new Position(2, 13), foo.getRange().getStart());
 		assertEquals(new Position(2, 16), foo.getRange().getEnd());
 		foo = implementations.get(1);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/FooChild.java"));
+		assertTrue(foo.getUri().contains("org/sample/FooChild.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to FooChild class declaration position
 		assertEquals(new Position(2, 13), foo.getRange().getStart());
 		assertEquals(new Position(2, 21), foo.getRange().getEnd());
@@ -183,15 +183,15 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(11, 13)); //Position over someMethod()
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 2, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(2, implementations.size(), implementations.toString());
 		Location foo = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/Foo.java"));
+		assertTrue(foo.getUri().contains("org/sample/Foo.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(8, 13), foo.getRange().getStart());
 		assertEquals(new Position(8, 23), foo.getRange().getEnd());
 		foo = implementations.get(1);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/FooChild.java"));
+		assertTrue(foo.getUri().contains("org/sample/FooChild.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(4, 13), foo.getRange().getStart());
 		assertEquals(new Position(4, 23), foo.getRange().getEnd());
@@ -206,10 +206,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(14, 13)); //Position over AbstractFoo.
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(), implementations.toString());
 		Location foo = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/AbstractFoo.java"));
+		assertTrue(foo.getUri().contains("org/sample/AbstractFoo.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to AbstractFoo class declaration position
 		assertEquals(new Position(2, 22), foo.getRange().getStart());
 		assertEquals(new Position(2, 33), foo.getRange().getEnd());
@@ -224,10 +224,10 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(15, 13)); //Position over someMethod()
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 1, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(1, implementations.size(), implementations.toString());
 		Location foo = implementations.get(0);
-		assertTrue("Unexpected implementation : " + foo.getUri(), foo.getUri().contains("org/sample/AbstractFoo.java"));
+		assertTrue(foo.getUri().contains("org/sample/AbstractFoo.java"), "Unexpected implementation : " + foo.getUri());
 		//check range points to someMethod() position
 		assertEquals(new Position(4, 15), foo.getRange().getStart());
 		assertEquals(new Position(4, 25), foo.getRange().getEnd());
@@ -237,8 +237,8 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 	public void testImplementationFromBinaryTypeWithoutClassContentSupport() {
 		//Only workspace implementation returned
 		List<? extends Location> implementations = getRunnableImplementations();
-		assertEquals(implementations.toString(), 1, implementations.size());
-		assertTrue("Unexpected implementation : " + implementations.get(0).getUri(), implementations.get(0).getUri().contains("org/sample/RunnableTest.java"));
+		assertEquals(1, implementations.size(), implementations.toString());
+		assertTrue(implementations.get(0).getUri().contains("org/sample/RunnableTest.java"), "Unexpected implementation : " + implementations.get(0).getUri());
 		assertEquals(JDTUtils.newLineRange(2, 13, 25), implementations.get(0).getRange());
 	}
 
@@ -248,17 +248,16 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		//workspace + binary implementations returned
 		List<? extends Location> implementations = getRunnableImplementations();
 		// only jdk classes are expected to implement Runnable
-		assertEquals(implementations.toString(), 8, implementations.size());
+		assertEquals(8, implementations.size(), implementations.toString());
 		Range defaultRange = JDTUtils.newRange();
 
 		boolean containsRunnableTest = implementations.stream().anyMatch(i -> i.getUri().contains("org/sample/RunnableTest.java"));
-		assertTrue("Implementation not found : org/sample/RunnableTest.java", containsRunnableTest);
+		assertTrue(containsRunnableTest, "Implementation not found : org/sample/RunnableTest.java");
 
 		List<? extends Location> implementainsNotRunnableTest = implementations.stream().filter(i -> !i.getUri().contains("org/sample/RunnableTest.java")).toList();
-		for (int i = 0; i < implementainsNotRunnableTest.size(); i++) {
-			Location implem = implementainsNotRunnableTest.get(i);
-			assertTrue("Unexpected implementation : " + implem.getUri(), implem.getUri().contains("rtstubs.jar"));
-			assertEquals("Expected default location ", defaultRange, implem.getRange());//no jdk sources available
+		for (Location implem : implementainsNotRunnableTest) {
+			assertTrue(implem.getUri().contains("rtstubs.jar"), "Unexpected implementation : " + implem.getUri());
+			assertEquals(defaultRange, implem.getRange(), "Expected default location ");//no jdk sources available
 		}
 	}
 
@@ -270,7 +269,7 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(2, 42));//implementations of java.lang.Runnable
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
+		assertNotNull(implementations, "findImplementations should not return null");
 		return implementations;
 	}
 
@@ -283,8 +282,8 @@ public class ImplementationsHandlerTest extends AbstractProjectsManagerBasedTest
 		param.setPosition(new Position(3, 34)); //Position over T
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<? extends Location> implementations = handler.findImplementations(param, monitor);
-		assertNotNull("findImplementations should not return null", implementations);
-		assertEquals(implementations.toString(), 0, implementations.size());
+		assertNotNull(implementations, "findImplementations should not return null");
+		assertEquals(0, implementations.size(), implementations.toString());
 	}
 
 }

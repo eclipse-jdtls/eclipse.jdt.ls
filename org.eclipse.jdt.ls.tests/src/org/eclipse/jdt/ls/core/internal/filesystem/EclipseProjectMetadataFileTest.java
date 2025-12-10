@@ -14,13 +14,12 @@
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.FileUtil;
@@ -33,30 +32,24 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBasedTest {
-	@Parameter
-	public String fsMode;
 
-	@Parameters
-	public static Collection<String> data(){
-		return Arrays.asList("false", "true");
+	static Stream<Arguments> data() {
+		return Stream.of(
+			Arguments.of("false"),
+			Arguments.of("true")
+		);
 	}
 
-	@Before
-	public void setUp() {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileLocation(String fsMode) throws Exception {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
-	}
-
-	@Test
-	public void testMetadataFileLocation() throws Exception {
 		String name = "hello";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
@@ -81,8 +74,10 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		assertTrue(project.getLocation().isPrefixOf(preferencesPath));
 	}
 
-	@Test
-	public void testDeleteClasspath() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testDeleteClasspath(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "classpath2";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
@@ -100,8 +95,10 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		assertFalse(bin.getRawLocation().toFile().exists());
 	}
 
-	@Test
-	public void testDeleteNonMetadataClasspath() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testDeleteNonMetadataClasspath(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "classpath3";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);

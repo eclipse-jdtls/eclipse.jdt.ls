@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,7 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.MavenBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 

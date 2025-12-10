@@ -50,9 +50,6 @@
 					<configuration>
 						<argLine>${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
 						<runOrder>random</runOrder>
-						<providerProperties>
-							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
-						</providerProperties>
 					</configuration>
 
 				</plugin>

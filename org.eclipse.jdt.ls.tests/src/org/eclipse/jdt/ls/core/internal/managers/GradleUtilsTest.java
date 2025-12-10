@@ -12,15 +12,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.Map;
 
 import org.eclipse.buildship.core.internal.util.gradle.GradleVersion;
 import org.eclipse.jdt.core.JavaCore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GradleUtilsTest {
 	@Test
@@ -34,7 +33,7 @@ public class GradleUtilsTest {
 		Map<String, File> vmInstalls = GradleUtils.getAllVmInstalls();
 		vmInstalls.forEach((k, v) -> {
 			File javaHome = GradleUtils.getJdkToLaunchDaemon(k);
-			assertTrue("javaHome=" + javaHome.getAbsolutePath(), javaHome.equals(v));
+			assertEquals(v, javaHome, "javaHome=" + javaHome.getAbsolutePath());
 		});
 	}
 

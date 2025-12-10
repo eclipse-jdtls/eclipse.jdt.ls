@@ -14,13 +14,13 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static java.util.Map.entry;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -81,15 +81,15 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private CoreASTProvider sharedASTProvider;
@@ -101,7 +101,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 	@Mock
 	private ClientPreferences clientPreferences;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		mockPreferences();
 
@@ -115,7 +115,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(true);
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
@@ -169,7 +169,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(cu);
 		boolean hasCodeAction = codeActions.stream().anyMatch(codeAction -> "Remove (including condition)".equals(codeAction.getRight().getTitle()));
-		assertTrue("Code action to remove dead code not found", hasCodeAction);
+		assertTrue(hasCodeAction, "Code action to remove dead code not found");
 	}
 
 	protected List<Either<Command, CodeAction>> getCodeActions(ICompilationUnit cu) throws JavaModelException {
@@ -619,7 +619,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
-		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 2, diagParam.getDiagnostics().size());
+		assertEquals(2, diagParam.getDiagnostics().size(), "Unexpected number of errors " + diagParam.getDiagnostics());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
 		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 		assertRange(0, 0, 1, d.getRange());
@@ -656,7 +656,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 
-		assertEquals("Unexpected number of errors " + diagParam.getDiagnostics(), 4, diagParam.getDiagnostics().size());
+		assertEquals(4, diagParam.getDiagnostics().size(), "Unexpected number of errors " + diagParam.getDiagnostics());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
 		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
 		assertRange(0, 0, 1, d.getRange());
@@ -711,7 +711,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		openDocument(cu, cu.getSource(), 1);
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		IProblem[] problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 0, problems.length);
+		assertEquals(0, problems.length, "Unexpected number of errors");
 		String source = cu.getSource();
 		int length = source.length();
 		source = source.replace("org", "org.eclipse");
@@ -721,7 +721,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 0, problems.length);
+		assertEquals(0, problems.length, "Unexpected number of errors");
 	}
 
 	@Test
@@ -748,7 +748,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		Files.writeString(file.toPath(), barContent);
 		ICompilationUnit bar = JDTUtils.resolveCompilationUnit(file.toURI());
 		bar.getResource().refreshLocal(IResource.DEPTH_ONE, null);
-		assertNotNull("Bar doesn't exist", javaProject.findType("org.Bar"));
+		assertNotNull(javaProject.findType("org.Bar"), "Bar doesn't exist");
 		file = new File(org, "Foo.java");
 		file.createNewFile();
 		URI uri = file.toURI();
@@ -760,7 +760,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		closeDocument(unit);
 		CompilationUnit astRoot = sharedASTProvider.getAST(bar, CoreASTProvider.WAIT_YES, null);
 		IProblem[] problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 0, problems.length);
+		assertEquals(0, problems.length, "Unexpected number of errors");
 	}
 
 	@Test
@@ -780,7 +780,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		openDocument(cu, cu.getSource(), 1);
 		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		IProblem[] problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 0, problems.length);
+		assertEquals(0, problems.length, "Unexpected number of errors");
 
 		String source = cu.getSource();
 		int length = source.length();
@@ -791,7 +791,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 0, problems.length);
+		assertEquals(0, problems.length, "Unexpected number of errors");
 
 		source = cu.getSource();
 		length = source.length();
@@ -802,7 +802,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		cu = JDTUtils.resolveCompilationUnit(uri);
 		astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		problems = astRoot.getProblems();
-		assertEquals("Unexpected number of errors", 1, problems.length);
+		assertEquals(1, problems.length, "Unexpected number of errors");
 	}
 
 	@Test
@@ -838,7 +838,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		changeDocumentFull(cu1, buf2.toString(), 2);
 		File file = cu1.getResource().getRawLocation().toFile();
 		boolean deleted = file.delete();
-		assertTrue(file.getAbsolutePath() + " hasn't been deleted", deleted);
+		assertTrue(deleted, file.getAbsolutePath() + " hasn't been deleted");
 		closeDocument(cu1);
 
 		assertEquals(false, cu1.isWorkingCopy());
@@ -1080,7 +1080,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 				for (Diagnostic d : diag.getDiagnostics()) {
 					message += d.getMessage() + ", ";
 				}
-				assertEquals(message, expected.problemCount, diag.getDiagnostics().size());
+				assertEquals(expected.problemCount, diag.getDiagnostics().size(), message);
 			}
 		}
 		diags.clear();
@@ -1106,14 +1106,14 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 			Files.writeString(filePath, content);
 			lifeCycleHandler.didOpen(new DidOpenTextDocumentParams(new TextDocumentItem(filePath.toUri().toString(), "java", 0, content)));
 			List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
-			assertFalse("No diagnostics sent on open", diagnosticReports.isEmpty());
+			assertFalse(diagnosticReports.isEmpty(), "No diagnostics sent on open");
 			List<Diagnostic> diagnostics = diagnosticReports.get(0).getDiagnostics();
-			assertTrue("First diagnostics not sent", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")));
+			assertTrue(diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")), "First diagnostics not sent");
 			lifeCycleHandler.didChange(new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(filePath.toUri().toString(), 0), List.of(new TextDocumentContentChangeEvent(new Range(new Position(0, 0), new Position(0, 0)), "another"))));
 			diagnosticReports = getClientRequests("publishDiagnostics");
-			assertEquals("No diagnostics sent on change", 2, diagnosticReports.size());
+			assertEquals(2, diagnosticReports.size(), "No diagnostics sent on change");
 			diagnostics = diagnosticReports.get(1).getDiagnostics();
-			assertTrue("diagnostics not updated upon edit", diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")));
+			assertTrue(diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")), "diagnostics not updated upon edit");
 		} finally {
 			Files.delete(filePath);
 			Files.delete(filePath.getParent());

@@ -13,6 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Hashtable;
@@ -36,15 +39,14 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AdvancedExtractTest extends AbstractSelectionTest {
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -77,41 +79,41 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
 		List<Either<Command, CodeAction>> extractCodeActions = codeActions.stream().filter(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.RefactorExtract)).collect(Collectors.toList());
-		Assert.assertEquals(5, extractCodeActions.size());
+		assertEquals(5, extractCodeActions.size());
 		Command extractConstantCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(3));
-		Assert.assertNotNull(extractConstantCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractConstantCommand.getCommand());
-		Assert.assertNotNull(extractConstantCommand.getArguments());
-		Assert.assertEquals(2, extractConstantCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, extractConstantCommand.getArguments().get(0));
+		assertNotNull(extractConstantCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractConstantCommand.getCommand());
+		assertNotNull(extractConstantCommand.getArguments());
+		assertEquals(2, extractConstantCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, extractConstantCommand.getArguments().get(0));
 
 		Command extractFieldCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(1));
-		Assert.assertNotNull(extractFieldCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractFieldCommand.getCommand());
-		Assert.assertNotNull(extractFieldCommand.getArguments());
-		Assert.assertEquals(3, extractFieldCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, extractFieldCommand.getArguments().get(0));
+		assertNotNull(extractFieldCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractFieldCommand.getCommand());
+		assertNotNull(extractFieldCommand.getArguments());
+		assertEquals(3, extractFieldCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, extractFieldCommand.getArguments().get(0));
 
 		Command extractMethodCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(4));
-		Assert.assertNotNull(extractMethodCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
-		Assert.assertNotNull(extractMethodCommand.getArguments());
-		Assert.assertEquals(2, extractMethodCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
+		assertNotNull(extractMethodCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
+		assertNotNull(extractMethodCommand.getArguments());
+		assertEquals(2, extractMethodCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
 
 		Command extractVariableAllCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(0));
-		Assert.assertNotNull(extractVariableAllCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableAllCommand.getCommand());
-		Assert.assertNotNull(extractVariableAllCommand.getArguments());
-		Assert.assertEquals(2, extractVariableAllCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, extractVariableAllCommand.getArguments().get(0));
+		assertNotNull(extractVariableAllCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableAllCommand.getCommand());
+		assertNotNull(extractVariableAllCommand.getArguments());
+		assertEquals(2, extractVariableAllCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, extractVariableAllCommand.getArguments().get(0));
 
 		Command extractVariableCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(2));
-		Assert.assertNotNull(extractVariableCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableCommand.getCommand());
-		Assert.assertNotNull(extractVariableCommand.getArguments());
-		Assert.assertEquals(2, extractVariableCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, extractVariableCommand.getArguments().get(0));
+		assertNotNull(extractVariableCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableCommand.getCommand());
+		assertNotNull(extractVariableCommand.getArguments());
+		assertEquals(2, extractVariableCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, extractVariableCommand.getArguments().get(0));
 	}
 
 	@Test
@@ -138,15 +140,15 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> extractMethodAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_EXTRACT_METHOD);
-		Assert.assertNotNull(extractMethodAction);
+		assertNotNull(extractMethodAction);
 		Command extractMethodCommand = CodeActionHandlerTest.getCommand(extractMethodAction);
-		Assert.assertNotNull(extractMethodCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
-		Assert.assertNotNull(extractMethodCommand.getArguments());
-		Assert.assertEquals(2, extractMethodCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
+		assertNotNull(extractMethodCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
+		assertNotNull(extractMethodCommand.getArguments());
+		assertEquals(2, extractMethodCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
 	}
 
 	@Test
@@ -163,17 +165,17 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
-		Assert.assertNotNull(moveAction);
+		assertNotNull(moveAction);
 		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
-		Assert.assertNotNull(moveCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
-		Assert.assertNotNull(moveCommand.getArguments());
-		Assert.assertEquals(3, moveCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.MOVE_FILE_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveFileInfo);
-		Assert.assertEquals(JDTUtils.toURI(cu), ((RefactorProposalUtility.MoveFileInfo) moveCommand.getArguments().get(2)).uri);
+		assertNotNull(moveCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		assertNotNull(moveCommand.getArguments());
+		assertEquals(3, moveCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.MOVE_FILE_COMMAND, moveCommand.getArguments().get(0));
+		assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveFileInfo);
+		assertEquals(JDTUtils.toURI(cu), ((RefactorProposalUtility.MoveFileInfo) moveCommand.getArguments().get(2)).uri);
 	}
 
 	@Test
@@ -204,17 +206,17 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
-		Assert.assertNotNull(moveAction);
+		assertNotNull(moveAction);
 		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
-		Assert.assertNotNull(moveCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
-		Assert.assertNotNull(moveCommand.getArguments());
-		Assert.assertEquals(3, moveCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.MOVE_INSTANCE_METHOD_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
-		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
+		assertNotNull(moveCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		assertNotNull(moveCommand.getArguments());
+		assertEquals(3, moveCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.MOVE_INSTANCE_METHOD_COMMAND, moveCommand.getArguments().get(0));
+		assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
+		assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
 	}
 
 	@Test
@@ -234,20 +236,20 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
-		Assert.assertNotNull(moveAction);
+		assertNotNull(moveAction);
 		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
-		Assert.assertNotNull(moveCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
-		Assert.assertNotNull(moveCommand.getArguments());
-		Assert.assertEquals(3, moveCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.MOVE_STATIC_MEMBER_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
-		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).projectName);
-		Assert.assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
-		Assert.assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).memberType);
-		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
+		assertNotNull(moveCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		assertNotNull(moveCommand.getArguments());
+		assertEquals(3, moveCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.MOVE_STATIC_MEMBER_COMMAND, moveCommand.getArguments().get(0));
+		assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveMemberInfo);
+		assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).projectName);
+		assertEquals("print()", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).displayName);
+		assertEquals(ASTNode.METHOD_DECLARATION, ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).memberType);
+		assertEquals("test1.E", ((RefactorProposalUtility.MoveMemberInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
 	}
 
 	@Test
@@ -267,19 +269,19 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 		Range selection = getRange(cu, null);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> moveAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_MOVE);
-		Assert.assertNotNull(moveAction);
+		assertNotNull(moveAction);
 		Command moveCommand = CodeActionHandlerTest.getCommand(moveAction);
-		Assert.assertNotNull(moveCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
-		Assert.assertNotNull(moveCommand.getArguments());
-		Assert.assertEquals(3, moveCommand.getArguments().size());
-		Assert.assertEquals(RefactorProposalUtility.MOVE_TYPE_COMMAND, moveCommand.getArguments().get(0));
-		Assert.assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveTypeInfo);
-		Assert.assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).projectName);
-		Assert.assertEquals("Inner", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).displayName);
-		Assert.assertEquals("test1.E", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
-		Assert.assertTrue(((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).isMoveAvaiable());
+		assertNotNull(moveCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, moveCommand.getCommand());
+		assertNotNull(moveCommand.getArguments());
+		assertEquals(3, moveCommand.getArguments().size());
+		assertEquals(RefactorProposalUtility.MOVE_TYPE_COMMAND, moveCommand.getArguments().get(0));
+		assertTrue(moveCommand.getArguments().get(2) instanceof RefactorProposalUtility.MoveTypeInfo);
+		assertEquals(fJProject1.getProject().getName(), ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).projectName);
+		assertEquals("Inner", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).displayName);
+		assertEquals("test1.E", ((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).enclosingTypeName);
+		assertTrue(((RefactorProposalUtility.MoveTypeInfo) moveCommand.getArguments().get(2)).isMoveAvaiable());
 	}
 }

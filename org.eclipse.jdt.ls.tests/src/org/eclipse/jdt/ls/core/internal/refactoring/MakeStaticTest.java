@@ -23,8 +23,8 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MakeStaticTest extends AbstractSelectionTest {
 
@@ -34,7 +34,7 @@ public class MakeStaticTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot testSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		testProject = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

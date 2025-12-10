@@ -12,7 +12,8 @@
 *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -27,8 +28,8 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUnitBasedTest {
 
@@ -37,7 +38,7 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 	private IPackageFragment fPackageP;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
@@ -59,16 +60,16 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'name'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'name'"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "a\";");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'name'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'name'"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "test;");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'test'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'test'"));
 	}
 
 	@Test
@@ -84,8 +85,8 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String name;\r\n	private String name1 = \"b\";");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
 	}
 
 	@Test
@@ -100,12 +101,12 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "b");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'b'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'b'"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "String a, String b");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
 	}
 
 	@Test
@@ -123,16 +124,16 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "c");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'c'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'c'"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "String c = a;\r\n		String d = b;");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "c = a;\r\n		String d = b;");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
 	}
 
 	@Test
@@ -150,15 +151,15 @@ public class GenerateFinalModifiersQuickAssistTest extends AbstractCompilationUn
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "c;");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'c'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'c'"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "String d, e;");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Change modifiers to final"));
 		params = CodeActionUtil.constructCodeActionParams(unit, "d");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'd'"));
+		assertNotNull(codeActions);
+		assertTrue(CodeActionHandlerTest.titleExists(codeActions, "Add final modifier for 'd'"));
 	}
 }
