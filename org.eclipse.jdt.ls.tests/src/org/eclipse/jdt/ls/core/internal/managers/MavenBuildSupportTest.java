@@ -15,12 +15,12 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.getContent;
 import static org.eclipse.jdt.ls.core.internal.ResourceUtils.setContent;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.net.URI;
@@ -52,15 +52,15 @@ import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author Fred Bricon
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 
 	@Test
@@ -130,7 +130,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 	@Test
 	public void testIgnoreInnerPomChanges() throws Exception {
 		IProject project = importMavenProject("archetyped");
-		assertEquals("The inner pom should not have been imported", 1, WorkspaceHelper.getAllProjects().size());
+		assertEquals(1, WorkspaceHelper.getAllProjects().size(), "The inner pom should not have been imported");
 
 		IFile innerPom = project.getFile("src/main/resources/archetype-resources/pom.xml");
 
@@ -148,7 +148,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 			Job.getJobManager().addJobChangeListener(listener);
 			projectsManager.fileChanged(innerPom.getRawLocationURI().toString(), CHANGE_TYPE.CHANGED);
 			waitForBackgroundJobs();
-			assertFalse("Update project should not have been triggered", updateTriggered[0]);
+			assertFalse(updateTriggered[0], "Update project should not have been triggered");
 		} finally {
 			Job.getJobManager().removeJobChangeListener(listener);
 		}
@@ -181,7 +181,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 				JobHelpers.waitForDownloadSourcesJobs(JobHelpers.MAX_TIME_MILLIS);
 				source = new SourceContentProvider().getSource(classFile, new NullProgressMonitor());
 			}
-			assertNotNull("Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"), source);
+			assertNotNull(source, "Couldn't find source for " + type.getFullyQualifiedName() + "(" + file.getAbsolutePath() + (file.exists() ? " exists)" : " is missing)"));
 		} finally {
 			preferences.setMavenDownloadSources(mavenDownloadSources);
 		}

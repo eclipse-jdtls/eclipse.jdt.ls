@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,18 +30,18 @@ import org.eclipse.jdt.ls.core.internal.StatusReport;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.ProgressParams;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author Fred Bricon
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ProgressReporterManagerTest {
 
 	private ProgressReporterManager manager;
@@ -55,7 +55,7 @@ public class ProgressReporterManagerTest {
 	@Mock
 	private ClientPreferences clientPreferences;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		when(preferenceManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isProgressReportSupported()).thenReturn(true);

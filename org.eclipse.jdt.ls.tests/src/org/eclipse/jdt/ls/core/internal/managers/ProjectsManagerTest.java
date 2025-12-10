@@ -14,10 +14,10 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.JobHelpers.waitForJobsToComplete;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -59,9 +59,9 @@ import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.lsp4j.InitializeParams;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 /**
@@ -74,7 +74,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	private JDTLanguageServer server;
 	private boolean autoBuild;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		autoBuild = preferenceManager.getPreferences().isAutobuildEnabled();
 		server = new JDTLanguageServer(projectsManager, preferenceManager);
@@ -82,7 +82,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		server.disconnectClient();
 		server.shutdown();
@@ -105,7 +105,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IProject result = projects.get(0);
 		assertNotNull(result);
 		assertEquals(ProjectsManager.getDefaultProject(), result);
-		assertTrue("the default project doesn't exist", result.exists());
+		assertTrue(result.exists(), "the default project doesn't exist");
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		BuildWorkspaceHandler handler = new BuildWorkspaceHandler(projectsManager);
 		BuildWorkspaceStatus result = handler.buildWorkspace(true, monitor);
 		waitForBackgroundJobs();
-		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), BuildWorkspaceStatus.SUCCEED, result);
+		assertEquals(BuildWorkspaceStatus.SUCCEED, result, String.format("BuildWorkspaceStatus is: %s.", result.toString()));
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		// Job.getResult() returns null if the job has never finished running.
 		// we can verify that the job is gone
 		// assertTrue("the init job hasn't been cancelled, status is: " + initWorkspaceJob.getResult().getSeverity(), initWorkspaceJob.getResult().matches(IStatus.CANCEL));
-		assertEquals("the init job hasn't been stopped, status is: " + initWorkspaceJob.getState(), 0, Job.getJobManager().find(rootPaths).length);
+		assertEquals(0, Job.getJobManager().find(rootPaths).length, "the init job hasn't been stopped, status is: " + initWorkspaceJob.getState());
 	}
 
 	@Test
@@ -156,7 +156,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(IConstants.UPDATE_WORKSPACE_FOLDERS_FAMILY, new NullProgressMonitor());
 		// assertTrue("the update job hasn't been cancelled, status is: " + updateWorkspaceJob.getResult().getSeverity(), updateWorkspaceJob.getResult().matches(IStatus.CANCEL));
-		assertEquals("the init job hasn't been stopped, status is: " + updateWorkspaceJob.getState(), 0, Job.getJobManager().find(addedRootPaths).length);
+		assertEquals(0, Job.getJobManager().find(addedRootPaths).length, "the init job hasn't been stopped, status is: " + updateWorkspaceJob.getState());
 	}
 
 	@Test

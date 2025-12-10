@@ -13,6 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.Hashtable;
 import java.util.List;
 
@@ -32,9 +35,8 @@ import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InferSelectionHandlerTest extends AbstractSelectionTest {
 	private IJavaProject fJProject1;
@@ -42,7 +44,7 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 
 	private static final String VERTICAL_BAR = "/*|*/";
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -76,14 +78,14 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, params);
 		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
-		Assert.assertNotNull(infos);
-		Assert.assertEquals(infos.size(), 3);
-		Assert.assertEquals(infos.get(0).name, "b2");
-		Assert.assertEquals(infos.get(0).length, 2);
-		Assert.assertEquals(infos.get(1).name, "b2 || b3");
-		Assert.assertEquals(infos.get(1).length, 8);
-		Assert.assertEquals(infos.get(2).name, "b1 && (b2 || b3)");
-		Assert.assertEquals(infos.get(2).length, 21);
+		assertNotNull(infos);
+		assertEquals(infos.size(), 3);
+		assertEquals(infos.get(0).name, "b2");
+		assertEquals(infos.get(0).length, 2);
+		assertEquals(infos.get(1).name, "b2 || b3");
+		assertEquals(infos.get(1).length, 8);
+		assertEquals(infos.get(2).name, "b1 && (b2 || b3)");
+		assertEquals(infos.get(2).length, 21);
 	}
 
 	@Test
@@ -111,14 +113,14 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
 		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
-		Assert.assertNotNull(infos);
-		Assert.assertEquals(infos.size(), 3);
-		Assert.assertEquals(infos.get(0).name, "b2");
-		Assert.assertEquals(infos.get(0).length, 2);
-		Assert.assertEquals(infos.get(1).name, "b2 && b1");
-		Assert.assertEquals(infos.get(1).length, 8);
-		Assert.assertEquals(infos.get(2).name, "b3 || b2 && b1");
-		Assert.assertEquals(infos.get(2).length, 19);
+		assertNotNull(infos);
+		assertEquals(infos.size(), 3);
+		assertEquals(infos.get(0).name, "b2");
+		assertEquals(infos.get(0).length, 2);
+		assertEquals(infos.get(1).name, "b2 && b1");
+		assertEquals(infos.get(1).length, 8);
+		assertEquals(infos.get(2).name, "b3 || b2 && b1");
+		assertEquals(infos.get(2).length, 19);
 	}
 
 	@Test
@@ -146,12 +148,12 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, params);
 		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
-		Assert.assertNotNull(infos);
-		Assert.assertEquals(infos.size(), 2);
-		Assert.assertEquals(infos.get(0).name, "true");
-		Assert.assertEquals(infos.get(0).length, 4);
-		Assert.assertEquals(infos.get(1).name, "true || false");
-		Assert.assertEquals(infos.get(1).length, 13);
+		assertNotNull(infos);
+		assertEquals(infos.size(), 2);
+		assertEquals(infos.get(0).name, "true");
+		assertEquals(infos.get(0).length, 4);
+		assertEquals(infos.get(1).name, "true || false");
+		assertEquals(infos.get(1).length, 13);
 	}
 
 	@Test
@@ -174,12 +176,12 @@ public class InferSelectionHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		InferSelectionParams inferParams = new InferSelectionParams(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, params);
 		List<SelectionInfo> infos = InferSelectionHandler.inferSelectionsForRefactor(inferParams);
-		Assert.assertNotNull(infos);
-		Assert.assertEquals(infos.size(), 2);
-		Assert.assertEquals(infos.get(0).name, "this.test");
-		Assert.assertEquals(infos.get(0).length, 14);
-		Assert.assertEquals(infos.get(1).name, "this.test.hashCode()");
-		Assert.assertEquals(infos.get(1).length, 25);
+		assertNotNull(infos);
+		assertEquals(infos.size(), 2);
+		assertEquals(infos.get(0).name, "this.test");
+		assertEquals(infos.get(0).length, 14);
+		assertEquals(infos.get(1).name, "this.test.hashCode()");
+		assertEquals(infos.get(1).length, 25);
 	}
 
 	/**

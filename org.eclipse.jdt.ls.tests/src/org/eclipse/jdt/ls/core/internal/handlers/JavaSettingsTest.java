@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URL;
@@ -40,17 +40,17 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.Bundle;
 
 /**
  * @author snjeza
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 
 	private static final String MISSING_SERIAL_VERSION = JavaCore.COMPILER_PB_MISSING_SERIAL_VERSION;
@@ -58,7 +58,7 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 	private IJavaProject javaProject;
 	private Hashtable<String, String> options;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 		options = JavaCore.getOptions();
@@ -68,7 +68,7 @@ public class JavaSettingsTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		JavaCore.setOptions(options);

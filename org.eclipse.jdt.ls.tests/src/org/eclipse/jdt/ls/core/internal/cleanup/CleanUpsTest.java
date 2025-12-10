@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -35,9 +35,9 @@ import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for clean ups.
@@ -51,7 +51,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 	private IProject project;
 	private IPackageFragment pack1;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/quickstart");
 		project = WorkspaceHelper.getProject("quickstart");
@@ -70,7 +70,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		pack1 = fSourceFolder.createPackageFragment("test1", false, monitor);
 	}
 
-	@After
+	@AfterEach
 	public void teardown() throws Exception {
 		pack1.delete(false, null);
 	}

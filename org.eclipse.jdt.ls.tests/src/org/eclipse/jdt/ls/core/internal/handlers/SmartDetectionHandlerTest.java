@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -23,9 +23,9 @@ import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.lsp4j.Position;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link SmartDetectionHandler}
@@ -34,7 +34,7 @@ public class SmartDetectionHandlerTest extends AbstractSourceTestCase {
 
 	private IPackageFragment fPackageTest;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fPackageTest = fRoot.createPackageFragment("test", true, null);
 	}
@@ -80,7 +80,7 @@ public class SmartDetectionHandlerTest extends AbstractSourceTestCase {
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		CoreASTProvider.getInstance().disposeAST();

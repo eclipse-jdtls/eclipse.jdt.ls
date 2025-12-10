@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -26,13 +26,13 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CompletionResolveHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
@@ -51,7 +51,7 @@ public class CompletionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
@@ -59,7 +59,7 @@ public class CompletionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		when(preferenceManager.getClientPreferences().isCompletionResolveDocumentSupport()).thenReturn(true);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 

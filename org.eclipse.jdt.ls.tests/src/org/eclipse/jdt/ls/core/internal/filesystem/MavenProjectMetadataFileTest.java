@@ -14,15 +14,14 @@
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
@@ -37,34 +36,26 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 
 	private static final String INVALID = "invalid";
 	private static final String MAVEN_INVALID = "maven/invalid";
 
-	@Parameter
-	public String fsMode;
-
-	@Parameters
-	public static Collection<String> data(){
-		return Arrays.asList("false", "true");
+	static Stream<Arguments> data() {
+		return Stream.of(
+			Arguments.of("false"),
+			Arguments.of("true")
+		);
 	}
 
-	@Before
-	public void setup() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileLocation(String fsMode) throws Exception {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
-	}
-
-	@Test
-	public void testMetadataFileLocation() throws Exception {
 		String name = "salut";
 		importProjects("maven/" + name);
 		IProject project = WorkspaceHelper.getProject(name);
@@ -89,8 +80,10 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 	}
 
-	@Test
-	public void testMetadataFileSync() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileSync(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "quickstart2";
 		importProjects("maven/" + name);
 		IProject project = WorkspaceHelper.getProject(name);
@@ -108,8 +101,10 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertTrue(classpathContent.contains("StandardVMType/JavaSE-1.8"));
 	}
 
-	@Test
-	public void testInvalidProject() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testInvalidProject(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		List<IProject> projects = importProjects(MAVEN_INVALID);
 		assertEquals(1, projects.size());
 		IProject invalid = WorkspaceHelper.getProject(INVALID);
@@ -128,8 +123,10 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertIsMavenProject(invalid);
 	}
 
-	@Test
-	public void testDeleteClasspath() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testDeleteClasspath(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "salut";
 		importProjects("maven/" + name);
 		IProject project = getProject(name);
@@ -147,8 +144,10 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertTrue(dotClasspath.exists());
 	}
 
-	@Test
-	public void testFactoryPathFileLocation() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testFactoryPathFileLocation(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "autovalued";
 		importProjects("maven/" + name);
 		IProject project = WorkspaceHelper.getProject(name);
@@ -179,8 +178,10 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertEquals(project.getLocation().isPrefixOf(factoryPathFilePath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 	}
 
-	@Test
-	public void testMultipleMetadataFile() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMultipleMetadataFile(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		if (JLSFsUtils.generatesMetadataFilesAtProjectRoot()) {
 			return;
 		}

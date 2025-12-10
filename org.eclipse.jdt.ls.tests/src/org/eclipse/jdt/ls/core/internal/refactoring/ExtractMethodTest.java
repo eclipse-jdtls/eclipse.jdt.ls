@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -34,8 +34,8 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ExtractMethodTest extends AbstractSelectionTest {
 
@@ -43,7 +43,7 @@ public class ExtractMethodTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

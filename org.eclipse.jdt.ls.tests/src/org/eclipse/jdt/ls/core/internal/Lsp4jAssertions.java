@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -32,19 +32,19 @@ public final class Lsp4jAssertions {
 	}
 
 	public static void assertRange(int expectedLine, int expectedStart, int expectedEnd, Range range) {
-		assertNotNull("Range is null", range);
+		assertNotNull(range, "Range is null");
 		assertPosition(expectedLine, expectedStart, range.getStart());
 		assertPosition(expectedLine, expectedEnd, range.getEnd());
 	}
 
 	public static void assertPosition(int expectedLine, int expectedChar, Position position) {
-		assertNotNull("Position is null", position);
-		assertEquals("Unexpected line position from "+position, expectedLine, position.getLine());
-		assertEquals("Unexpected character position from "+position, expectedChar, position.getCharacter());
+		assertNotNull(position, "Position is null");
+		assertEquals(expectedLine, position.getLine(), "Unexpected line position from "+position);
+		assertEquals(expectedChar, position.getCharacter(), "Unexpected character position from "+position);
 	}
 
 	public static void assertTextEdit(int expectedLine, int expectedStart, int expectedEnd, String expectedText, TextEdit edit){
-		assertNotNull("TextEdit is null", edit);
+		assertNotNull(edit, "TextEdit is null");
 		assertEquals(expectedText, edit.getNewText());
 		assertRange(expectedLine, expectedStart, expectedEnd, edit.getRange());
 

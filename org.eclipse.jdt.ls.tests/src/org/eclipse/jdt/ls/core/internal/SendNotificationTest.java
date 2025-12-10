@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -35,9 +35,9 @@ import org.eclipse.jdt.ls.core.internal.lsp.ExecuteCommandProposedClient;
 import org.eclipse.lsp4j.ExecuteCommandParams;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.services.LanguageServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -48,7 +48,7 @@ public class SendNotificationTest {
 	private ExecuteCommandProposedClient clientConnection;
 	private Closeable[] closeables;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws IOException {
 		this.client = mock(ExecuteCommandProposedClient.class, withSettings().withoutAnnotations());
 
@@ -70,7 +70,7 @@ public class SendNotificationTest {
 		this.clientConnection = serverLauncher.getRemoteProxy();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		for (Closeable closeable : closeables) {
 			try {

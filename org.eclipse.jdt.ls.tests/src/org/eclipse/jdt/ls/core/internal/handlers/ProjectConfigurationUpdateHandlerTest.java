@@ -30,7 +30,7 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.extended.ProjectConfigurationsUpdateParam;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProjectConfigurationUpdateHandlerTest extends AbstractProjectsManagerBasedTest {
 

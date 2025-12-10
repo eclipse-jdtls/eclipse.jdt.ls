@@ -13,7 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -35,14 +39,13 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -51,7 +54,7 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 	private IPackageFragment fPackageP;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
@@ -73,11 +76,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
-		Assert.assertNotNull(generateAccessorsAction);
+		assertNotNull(generateAccessorsAction);
 		WorkspaceEdit generateAccessorsEdit = CodeActionHandlerTest.getEdit(generateAccessorsAction);
-		Assert.assertNotNull(generateAccessorsEdit);
+		assertNotNull(generateAccessorsEdit);
 	}
 
 	@Test
@@ -93,12 +96,12 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
-		Assert.assertNotNull(generateAccessorsAction);
+		assertNotNull(generateAccessorsAction);
 		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
-		Assert.assertNotNull(generateAccessorsCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
+		assertNotNull(generateAccessorsCommand);
+		assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
 	}
 
 	@Test
@@ -112,9 +115,9 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "class A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
-		Assert.assertNull(generateAccessorsAction);
+		assertNull(generateAccessorsAction);
 	}
 
 	@Test
@@ -129,8 +132,8 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS), "The operation is not applicable to interfaces");
 	}
 
 	@Test
@@ -150,12 +153,12 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> generateAccessorsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_ACCESSORS);
-		Assert.assertNotNull(generateAccessorsAction);
+		assertNotNull(generateAccessorsAction);
 		Command generateAccessorsCommand = CodeActionHandlerTest.getCommand(generateAccessorsAction);
-		Assert.assertNotNull(generateAccessorsCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
+		assertNotNull(generateAccessorsCommand);
+		assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEACCESSORSPROMPT, generateAccessorsCommand.getCommand());
 	}
 
 	@Test
@@ -171,11 +174,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
 	}
 
 	@Test
@@ -191,11 +194,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 	}
 
 	@Test
@@ -213,11 +216,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 			//@formatter:on
 			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "public S");
 			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-			Assert.assertNotNull(codeActions);
+			assertNotNull(codeActions);
 			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 		} finally {
 			this.preferences.setJavaQuickFixShowAt(value);
 		}
@@ -238,11 +241,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 			//@formatter:on
 			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, ".lang.");
 			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-			Assert.assertNotNull(codeActions);
+			assertNotNull(codeActions);
 			List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
-			Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+			assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 		} finally {
 			this.preferences.setJavaQuickFixShowAt(value);
 		}
@@ -261,11 +264,11 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name = \"name\";\r\n	public String pet = \"pet\";");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters and Setters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getters"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setters"));
 	}
 
 	@Test
@@ -281,10 +284,10 @@ public class GenerateAccessorsActionTest extends AbstractCompilationUnitBasedTes
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
-		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
+		assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter and Setter for 'name'"));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Getter for 'name'"));
+		assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, "Generate Setter for 'name'"));
 	}
 }

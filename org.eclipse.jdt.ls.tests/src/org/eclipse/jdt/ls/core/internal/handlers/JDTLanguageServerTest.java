@@ -13,8 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -37,19 +37,22 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.DidChangeConfigurationParams;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author Fred Bricon
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class JDTLanguageServerTest {
 
 	private JDTLanguageServer server;
@@ -66,7 +69,7 @@ public class JDTLanguageServerTest {
 	@Mock
 	private ClientPreferences clientPreferences;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		when(prefManager.getClientPreferences()).thenReturn(clientPreferences);
 		when(clientPreferences.isWorkspaceSymbolDynamicRegistered()).thenReturn(Boolean.FALSE);
@@ -81,7 +84,7 @@ public class JDTLanguageServerTest {
 		server.connectClient(client);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		server.disconnectClient();
 		server.shutdown();
@@ -92,12 +95,12 @@ public class JDTLanguageServerTest {
 	public void testAutobuilding() throws Exception {
 		boolean enabled = isAutoBuilding();
 		try {
-			assertTrue("Autobuilding is off", isAutoBuilding());
+			assertTrue(isAutoBuilding(), "Autobuilding is off");
 			Map<String, Object> map = new HashMap<>();
 			map.put(Preferences.AUTOBUILD_ENABLED_KEY, false);
 			DidChangeConfigurationParams params = new DidChangeConfigurationParams(map);
 			server.didChangeConfiguration(params);
-			assertFalse("Autobuilding is on", isAutoBuilding());
+			assertFalse(isAutoBuilding(), "Autobuilding is on");
 		} finally {
 			ProjectsManager.setAutoBuilding(enabled);
 		}

@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -28,9 +28,9 @@ import org.eclipse.jdt.ls.core.internal.handlers.DiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MavenClasspathTest extends AbstractMavenBasedTest {
 
@@ -39,7 +39,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 	private DocumentLifeCycleHandler lifeCycleHandler;
 	private JavaClientConnection javaClient;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
@@ -48,7 +48,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		sharedASTProvider.disposeAST();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
@@ -66,7 +66,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 		final DiagnosticsHandler handler = new DiagnosticsHandler(javaClient, cu);
 		WorkingCopyOwner wcOwner = getWorkingCopy(handler);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
-		assertTrue("There aren't any problems", handler.getProblems().size() == 1);
+		assertEquals(1, handler.getProblems().size(), "There aren't any problems");
 	}
 
 	@Test
@@ -79,7 +79,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 		final DiagnosticsHandler handler = new DiagnosticsHandler(javaClient, cu);
 		WorkingCopyOwner wcOwner = getWorkingCopy(handler);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
-		assertTrue("There is a problem", handler.getProblems().size() == 0);
+		assertEquals(0, handler.getProblems().size(), "There is a problem");
 	}
 
 	@Test
@@ -93,28 +93,28 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 		WorkingCopyOwner wcOwner = getWorkingCopy(handler);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 		long size = handler.getProblems().stream().filter(p -> p.isError()).count();
-		assertTrue("There is an error", size == 0);
+		assertEquals(0, size, "There is an error");
 		String source = cu.getSource();
 		source = source.replace("Test {", "Test { ");
 		cu.getBuffer().setContents(source);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 		size = handler.getProblems().stream().filter(p -> p.isError()).count();
-		assertTrue("There is an error", size == 0);
+		assertEquals(0, size, "There is an error");
 		source = source.replace("Test { ", "Test {  ");
 		cu.getBuffer().setContents(source);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 		size = handler.getProblems().stream().filter(p -> p.isError()).count();
-		assertTrue("There is an error", size == 0);
+		assertEquals(0, size, "There is an error");
 		source = source.replace("Test {  ", "Test {   ");
 		cu.getBuffer().setContents(source);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 		size = handler.getProblems().stream().filter(p -> p.isError()).count();
-		assertTrue("There is an error", size == 0);
+		assertEquals(0, size, "There is an error");
 		source = source.replace("Test {   ", "Test {");
 		cu.getBuffer().setContents(source);
 		cu.reconcile(ICompilationUnit.NO_AST, true, wcOwner, null);
 		size = handler.getProblems().stream().filter(p -> p.isError()).count();
-		assertTrue("There is an error", size == 0);
+		assertEquals(0, size, "There is an error");
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {

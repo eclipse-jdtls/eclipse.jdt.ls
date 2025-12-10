@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,9 +49,9 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ShowAllQuickFixTest extends AbstractQuickFixTest {
@@ -59,7 +59,7 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 	private IPackageFragmentRoot fSourceFolder;
 	private JavaClientConnection javaClient;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		javaClient = new JavaClientConnection(client);
 		mockJDTLanguageServer();
@@ -79,7 +79,7 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 		JavaLanguageServerPlugin.getInstance().setProtocol(server);
 	}
 
-	@After
+	@AfterEach
 	@Override
 	public void cleanUp() throws Exception {
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {

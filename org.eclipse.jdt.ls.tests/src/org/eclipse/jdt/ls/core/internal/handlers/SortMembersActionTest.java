@@ -12,7 +12,8 @@
 *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
@@ -31,8 +32,8 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
@@ -42,7 +43,7 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
@@ -67,11 +68,11 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
-		Assert.assertNotNull(sortMemberAction);
+		assertNotNull(sortMemberAction);
 		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberAction);
-		Assert.assertNotNull(sortMemberEdit);
+		assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -87,9 +88,9 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
-		Assert.assertNull(sortMemberAction);
+		assertNull(sortMemberAction);
 	}
 
 	@Test
@@ -106,11 +107,11 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		this.preferenceManager.getPreferences().setAvoidVolatileChanges(false);
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_SORT_MEMBERS, "Sort Members for 'A.java'");
-		Assert.assertNotNull(sortMemberAction);
+		assertNotNull(sortMemberAction);
 		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberAction);
-		Assert.assertNotNull(sortMemberEdit);
+		assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -127,11 +128,11 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Members for 'A.java'");
-		Assert.assertNotNull(sortMemberQuickAssist);
+		assertNotNull(sortMemberQuickAssist);
 		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberQuickAssist);
-		Assert.assertNotNull(sortMemberEdit);
+		assertNotNull(sortMemberEdit);
 	}
 
 	@Test
@@ -148,10 +149,10 @@ public class SortMembersActionTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "private String getPrivateStr() { return \"private\"; }\r\n\tpublic String publicName;");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> sortMemberQuickAssist = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Sort Selected Members");
-		Assert.assertNotNull(sortMemberQuickAssist);
+		assertNotNull(sortMemberQuickAssist);
 		WorkspaceEdit sortMemberEdit = CodeActionHandlerTest.getEdit(sortMemberQuickAssist);
-		Assert.assertNotNull(sortMemberEdit);
+		assertNotNull(sortMemberEdit);
 	}
 }

@@ -14,12 +14,12 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertRange;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -40,8 +40,8 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /**
@@ -122,7 +122,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private PreferenceManager preferenceManager;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(List.of("eclipse/hello", "eclipse/java21"));
 		project = WorkspaceHelper.getProject("hello");
@@ -142,7 +142,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 3, result.size());
+		assertEquals(3, result.size(), "Found " + result);
 
 		CodeLens cl = result.get(0);
 		Range r = cl.getRange();
@@ -173,11 +173,11 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		String uri = codeLensParams.getTextDocument().getUri();
 		assertFalse(uri.isEmpty());
 		List<CodeLens> lenses = handler.getCodeLensSymbols(uri, monitor);
-		assertEquals("Found " + lenses, 2, lenses.size());
+		assertEquals(2, lenses.size(), "Found " + lenses);
 		List<Object> data = (List<Object>) lenses.get(0).getData();
-		assertTrue("Unexpected type " + data, data.contains(CodeLensHandler.REFERENCES_TYPE));
+		assertTrue(data.contains(CodeLensHandler.REFERENCES_TYPE), "Unexpected type " + data);
 		data = (List<Object>) lenses.get(1).getData();
-		assertTrue("Unexpected type " + data, data.contains(CodeLensHandler.IMPLEMENTATION_TYPE));
+		assertTrue(data.contains(CodeLensHandler.IMPLEMENTATION_TYPE), "Unexpected type " + data);
 	}
 
 	@Test
@@ -462,7 +462,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 4, result.size());
+		assertEquals(4, result.size(), "Found " + result);
 
 		//CodeLens on constructor
 		CodeLens cl = result.get(0);
@@ -491,7 +491,7 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
 
 		//then
-		assertEquals("Found " + result, 2, result.size());
+		assertEquals(2, result.size(), "Found " + result);
 
 		// CodeLens on foo()
 		CodeLens cl = result.get(0);

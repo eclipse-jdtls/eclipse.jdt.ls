@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URL;
@@ -43,24 +43,24 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.Bundle;
 
 /**
  * @author Fred Bricon
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private IJavaProject javaProject;
 
 	private String originalTabChar;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		javaProject = JavaCore.create(project);
 		originalTabChar = javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, true);
@@ -1007,7 +1007,7 @@ public class FormatterHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(DefaultCodeFormatterConstants.END_OF_LINE, JavaCore.getOption(DefaultCodeFormatterConstants.FORMATTER_BRACE_POSITION_FOR_BLOCK));
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		javaProject.setOption(DefaultCodeFormatterConstants.FORMATTER_TAB_CHAR, originalTabChar);
 		preferences.setJavaFormatOnTypeEnabled(false);

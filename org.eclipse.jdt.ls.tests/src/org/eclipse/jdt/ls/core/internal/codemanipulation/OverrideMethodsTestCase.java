@@ -14,8 +14,10 @@
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +38,8 @@ import org.eclipse.jdt.ls.core.internal.codemanipulation.OverrideMethodsOperatio
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * It references the JDT test case
@@ -47,6 +50,7 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 	private IType fClassA, fInterfaceB, fClassC, fClassD, fInterfaceE;
 
 	@Override
+	@BeforeEach
 	public void setUp() throws Exception {
 		super.setUp();
 		ICompilationUnit cu = fCuA;
@@ -379,31 +383,31 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 	private void checkUnimplementedMethods(String[] expected, List<OverridableMethod> methods) {
 		Set<String> methodSet = methods.stream().map((method) -> method.unimplemented ? method.name + "(" + String.join(",", method.parameters) + ")" : "").collect(Collectors.toSet());
 		for (String nExpected : expected) {
-			assertTrue("unimplemented method " + nExpected + " expected", methodSet.contains(nExpected));
+			assertTrue(methodSet.contains(nExpected), "unimplemented method " + nExpected + " expected");
 		}
 	}
 
 	private void checkOverridableMethods(String[] expected, List<OverridableMethod> methods) {
 		Set<String> methodSet = methods.stream().map((method) -> method.unimplemented ? "" : method.name + "(" + String.join(",", method.parameters) + ")").collect(Collectors.toSet());
 		for (String nExpected : expected) {
-			assertTrue("override method " + nExpected + " expected", methodSet.contains(nExpected));
+			assertTrue(methodSet.contains(nExpected), "override method " + nExpected + " expected");
 		}
 	}
 
 	private void checkUnoverridableMethods(String[] expected, List<OverridableMethod> methods) {
 		Set<String> methodSet = methods.stream().map((method) -> method.name + "(" + String.join(",", method.parameters) + ")").collect(Collectors.toSet());
 		for (String nExpected : expected) {
-			assertFalse("cannot override method " + nExpected + " expected", methodSet.contains(nExpected));
+			assertFalse(methodSet.contains(nExpected), "cannot override method " + nExpected + " expected");
 		}
 	}
 
 	private void checkMethods(String[] expected, IMethod[] methods) {
 		int nMethods = methods.length;
 		int nExpected = expected.length;
-		assertTrue("" + nExpected + " methods expected, is " + nMethods, nMethods == nExpected);
+		assertEquals(nExpected, nMethods, "" + nExpected + " methods expected, is " + nMethods);
 		for (int i = 0; i < nExpected; i++) {
 			String methName = expected[i];
-			assertTrue("method " + methName + " expected", nameContained(methName, methods));
+			assertTrue(nameContained(methName, methods), "method " + methName + " expected");
 		}
 	}
 
@@ -421,11 +425,11 @@ public class OverrideMethodsTestCase extends AbstractSourceTestCase {
 			for (int i = 0; i < imports.length; i++) {
 				buf.append(imports[i]).append("\n");
 			}
-			assertTrue(buf.toString(), false);
+			fail(buf.toString());
 		}
 		for (int i = 0; i < nExpected; i++) {
 			String impName = expected[i];
-			assertTrue("import " + impName + " expected", nameContained(impName, imports));
+			assertTrue(nameContained(impName, imports), "import " + impName + " expected");
 		}
 	}
 

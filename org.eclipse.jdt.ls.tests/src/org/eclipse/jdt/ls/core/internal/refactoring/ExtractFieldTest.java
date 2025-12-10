@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Hashtable;
 
@@ -43,8 +43,8 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ExtractFieldTest extends AbstractSelectionTest {
 
@@ -52,7 +52,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -542,8 +542,8 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 		int end = DiagnosticsHelper.getEndOffset(cu, range);
 		ExtractFieldRefactoring refactoring = new ExtractFieldRefactoring(astRoot, start, end - start);
 		RefactoringStatus result = refactoring.checkInitialConditions(new NullProgressMonitor());
-		assertNotNull("precondition was supposed to fail", result);
-		assertEquals("precondition was supposed to fail", false, result.isOK());
+		assertNotNull(result, "precondition was supposed to fail");
+		assertFalse(result.isOK(), "precondition was supposed to fail");
 	}
 
 	protected boolean helper(ICompilationUnit cu, InitializeScope initializeIn, String expected) throws Exception {
@@ -556,7 +556,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 		refactoring.setFieldName(refactoring.guessFieldName());
 
 		RefactoringStatus activationResult = refactoring.checkInitialConditions(new NullProgressMonitor());
-		assertTrue("activation was supposed to be successful", activationResult.isOK());
+		assertTrue(activationResult.isOK(), "activation was supposed to be successful");
 		if (initializeIn != null) {
 			if (initializeIn == InitializeScope.CURRENT_METHOD && !refactoring.canEnableSettingDeclareInMethod()) {
 				return false;
@@ -570,7 +570,7 @@ public class ExtractFieldTest extends AbstractSelectionTest {
 		}
 
 		RefactoringStatus checkInputResult = refactoring.checkFinalConditions(new NullProgressMonitor());
-		assertTrue("precondition was supposed to pass but was " + checkInputResult.toString(), checkInputResult.isOK());
+		assertTrue(checkInputResult.isOK(), "precondition was supposed to pass but was " + checkInputResult.toString());
 
 		Change change = refactoring.createChange(new NullProgressMonitor());
 		WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(change);

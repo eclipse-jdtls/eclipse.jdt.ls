@@ -15,8 +15,8 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.Map;
 
 import org.eclipse.lsp4j.ClientCapabilities;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 /**
  * @author Fred Bricon
@@ -24,13 +24,13 @@ import org.junit.BeforeClass;
  */
 public abstract class AbstractWorkspaceTest {
 
-	@BeforeClass
+	@BeforeAll
 	public static void initWorkspace() throws Exception {
 		JavaLanguageServerPlugin.getPreferencesManager().updateClientPrefences(new ClientCapabilities(), Map.of());
 		WorkspaceHelper.initWorkspace();
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanWorkspace() {
 		WorkspaceHelper.deleteAllProjects();
 	}

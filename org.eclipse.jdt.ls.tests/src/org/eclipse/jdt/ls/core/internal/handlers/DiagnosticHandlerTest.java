@@ -13,10 +13,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Hashtable;
@@ -45,14 +45,14 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DiagnosticTag;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private JavaClientConnection javaClient;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
@@ -247,8 +247,7 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
 	public void testUnusedLambdaParameterWarningDisabledByDefault() throws Exception {
-		assertEquals("Unused lambda parameter warning should be disabled by default",
-				JavaCore.IGNORE, JavaCore.getOptions().get(JavaCore.COMPILER_PB_UNUSED_LAMBDA_PARAMETER));
+		assertEquals(JavaCore.IGNORE, JavaCore.getOptions().get(JavaCore.COMPILER_PB_UNUSED_LAMBDA_PARAMETER), "Unused lambda parameter warning should be disabled by default");
 
 		IJavaProject javaProject = newEmptyProject();
 		IPackageFragmentRoot sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
@@ -272,9 +271,10 @@ public class DiagnosticHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		for (IProblem problem : problems) {
 			var message = problem.getMessage().toLowerCase();
-			assertFalse("Should not have unused lambda parameter warning: " + message,
+			assertFalse(
 					message.contains("lambda parameter")
-					&& message.contains("not used"));
+							&& message.contains("not used"),
+					"Should not have unused lambda parameter warning: " + message);
 		}
 	}
 

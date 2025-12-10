@@ -13,6 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.util.Arrays;
 import java.util.Hashtable;
 
@@ -33,15 +36,14 @@ import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility.
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -68,8 +70,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -82,10 +84,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -107,8 +109,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -121,10 +123,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -144,8 +146,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -158,10 +160,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -183,8 +185,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -197,10 +199,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -220,8 +222,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, Arrays.asList(InitializeScope.CURRENT_METHOD.getName()), params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -235,10 +237,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -258,8 +260,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -273,10 +275,10 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 
 	@Test
@@ -305,8 +307,8 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, selection);
 		GetRefactorEditParams editParams = new GetRefactorEditParams(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, params);
 		RefactorWorkspaceEdit refactorEdit = GetRefactorEditHandler.getEditsForRefactor(editParams);
-		Assert.assertNotNull(refactorEdit);
-		Assert.assertNotNull(refactorEdit.edit);
+		assertNotNull(refactorEdit);
+		assertNotNull(refactorEdit.edit);
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(refactorEdit.edit);
 
 		buf = new StringBuilder();
@@ -332,9 +334,9 @@ public class GetRefactorEditHandlerTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		AbstractSourceTestCase.compareSource(buf.toString(), actual);
 
-		Assert.assertNotNull(refactorEdit.command);
-		Assert.assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
-		Assert.assertNotNull(refactorEdit.command.getArguments());
-		Assert.assertEquals(1, refactorEdit.command.getArguments().size());
+		assertNotNull(refactorEdit.command);
+		assertEquals(GetRefactorEditHandler.RENAME_COMMAND, refactorEdit.command.getCommand());
+		assertNotNull(refactorEdit.command.getArguments());
+		assertEquals(1, refactorEdit.command.getArguments().size());
 	}
 }

@@ -13,11 +13,11 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -50,8 +50,8 @@ import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.TreeTraverser;
 
@@ -63,7 +63,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	private IProject project;
 	private IProject noSourceProject;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/salut", "eclipse/source-attachment"));
 		project = WorkspaceHelper.getProject("salut");
@@ -90,12 +90,9 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		String overloadedMethod2 = "reset()";
 		for (SymbolInformation symbol : symbols) {
 			Location loc = symbol.getLocation();
-			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
-					loc != null && isValid(loc.getRange()));
-			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid name",
-					symbol.getName().startsWith("access$"));
-			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name",
-					symbol.getName().equals("<clinit>"));
+			assertTrue(loc != null && isValid(loc.getRange()), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.");
+			assertFalse(symbol.getName().startsWith("access$"), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid name");
+			assertFalse(symbol.getName().equals("<clinit>"), "Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name");
 			if (overloadedMethod1.equals(symbol.getName())) {
 				overloadedMethod1Found = true;
 			}
@@ -103,8 +100,8 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 				overloadedMethod2Found = true;
 			}
 		}
-		assertTrue("The " + overloadedMethod1 + " method hasn't been found", overloadedMethod1Found);
-		assertTrue("The " + overloadedMethod2 + " method hasn't been found", overloadedMethod2Found);
+		assertTrue(overloadedMethod1Found, "The " + overloadedMethod1 + " method hasn't been found");
+		assertTrue(overloadedMethod2Found, "The " + overloadedMethod2 + " method hasn't been found");
 	}
 
 	@Test
@@ -118,12 +115,9 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		for (DocumentSymbol symbol : symbols) {
 			Range fullRange = symbol.getRange();
 			Range selectionRange = symbol.getSelectionRange();
-			assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
-					fullRange != null && isValid(fullRange) && selectionRange != null && isValid(selectionRange));
-			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid name",
-					symbol.getName().startsWith("access$"));
-			assertFalse("Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name",
-					symbol.getName().equals("<clinit>"));
+			assertTrue(fullRange != null && isValid(fullRange) && selectionRange != null && isValid(selectionRange), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.");
+			assertFalse(symbol.getName().startsWith("access$"), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid name");
+			assertFalse(symbol.getName().equals("<clinit>"), "Class: " + className + ", Symbol:" + symbol.getName() + "- invalid name");
 			if (overloadedMethod1.equals(symbol.getName() + symbol.getDetail())) {
 				overloadedMethod1Found = true;
 			}
@@ -131,8 +125,8 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 				overloadedMethod2Found = true;
 			}
 		}
-		assertTrue("The " + overloadedMethod1 + " method hasn't been found", overloadedMethod1Found);
-		assertTrue("The " + overloadedMethod2 + " method hasn't been found", overloadedMethod2Found);
+		assertTrue(overloadedMethod1Found, "The " + overloadedMethod1 + " method hasn't been found");
+		assertTrue(overloadedMethod2Found, "The " + overloadedMethod2 + " method hasn't been found");
 	}
 
 	@Test
@@ -193,7 +187,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertNotNull(deprecated);
 		assertEquals(SymbolKind.Interface, deprecated.getKind());
 		assertNotNull(deprecated.getTags());
-		assertTrue("Should have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+		assertTrue(deprecated.getTags().contains(SymbolTag.Deprecated), "Should have deprecated tag");
 
 		SymbolInformation notDeprecated = symbols.stream()
 			.filter(symbol -> symbol.getName().equals("MyClass"))
@@ -202,7 +196,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertNotNull(notDeprecated);
 		assertEquals(SymbolKind.Class, notDeprecated.getKind());
 		if (notDeprecated.getTags() != null) {
-			assertFalse("Should not have deprecated tag", deprecated.getTags().contains(SymbolTag.Deprecated));
+			assertFalse(deprecated.getTags().contains(SymbolTag.Deprecated), "Should not have deprecated tag");
 		}
 	}
 
@@ -220,7 +214,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertNotNull(deprecated);
 		assertEquals(SymbolKind.Interface, deprecated.getKind());
 		assertNotNull(deprecated.getDeprecated());
-		assertTrue("Should be deprecated", deprecated.getDeprecated());
+		assertTrue(deprecated.getDeprecated(), "Should be deprecated");
 	}
 
 	@Test
@@ -234,7 +228,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		String className = "org.sample.Test";
 		List<? extends SymbolInformation> symbols = getSymbols(className);
 		//@formatter:on
-		assertFalse("No symbols found for " + className, symbols.isEmpty());
+		assertFalse(symbols.isEmpty(), "No symbols found for " + className);
 		assertHasSymbol("Test", "Test.java", SymbolKind.Class, symbols);
 		Optional<? extends SymbolInformation> method = symbols.stream().filter(s -> (s.getKind() == SymbolKind.Method)).findAny();
 		assertFalse(method.isPresent());
@@ -278,7 +272,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		Optional<? extends SymbolInformation> symbol = symbols.stream()
 															.filter(s -> expectedType.equals(s.getName()) && expectedParent.equals(s.getContainerName()))
 															.findFirst();
-		assertTrue(expectedType + " (" + expectedParent + ")" + " is missing from " + symbols, symbol.isPresent());
+		assertTrue(symbol.isPresent(), expectedType + " (" + expectedParent + ")" + " is missing from " + symbols);
 		assertKind(expectedKind, symbol.get());
 	}
 
@@ -286,22 +280,22 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		Optional<? extends DocumentSymbol> symbol;
 		if (expectedParent != null) {
 			Optional<? extends DocumentSymbol> parent = asStream(symbols).filter(s -> expectedParent.equals(s.getName() + s.getDetail())).findFirst();
-			assertTrue("Cannot find parent with name: " + expectedParent, parent.isPresent());
+			assertTrue(parent.isPresent(), "Cannot find parent with name: " + expectedParent);
 			symbol = asStream(symbols).filter(s -> expectedType.equals(s.getName() + s.getDetail()) && parent.get().getChildren().contains(s)).findFirst();
 		} else {
 			symbol = symbols.stream().filter(s -> expectedType.equals(s.getName())).findFirst();
 		}
-		assertTrue(expectedType + " (" + expectedParent + ")" + " is missing from " + symbols, symbol.isPresent());
+		assertTrue(symbol.isPresent(), expectedType + " (" + expectedParent + ")" + " is missing from " + symbols);
 		assertKind(expectedKind, symbol.get());
 
 	}
 
 	private void assertKind(SymbolKind expectedKind, SymbolInformation symbol) {
-		assertSame("Unexpected SymbolKind in " + symbol.getName(), expectedKind, symbol.getKind());
+		assertSame(expectedKind, symbol.getKind(), "Unexpected SymbolKind in " + symbol.getName());
 	}
 
 	private void assertKind(SymbolKind expectedKind, DocumentSymbol symbol) {
-		assertSame("Unexpected SymbolKind in " + symbol.getName(), expectedKind, symbol.getKind());
+		assertSame(expectedKind, symbol.getKind(), "Unexpected SymbolKind in " + symbol.getName());
 	}
 
 	private Stream<DocumentSymbol> asStream(Collection<? extends DocumentSymbol> symbols) {
@@ -321,16 +315,14 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 			List<? extends SymbolInformation> symbols = getSymbols(className);
 			for (SymbolInformation symbol : symbols) {
 				Location loc = symbol.getLocation();
-				assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
-						loc != null && isValid(loc.getRange()));
+				assertTrue(loc != null && isValid(loc.getRange()), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.");
 			}
 		} else {
 			List<? extends DocumentSymbol> hierarchicalSymbols = getHierarchicalSymbols(className);
 			for (DocumentSymbol symbol : hierarchicalSymbols) {
 				Range fullRange = symbol.getRange();
 				Range selectionRange = symbol.getSelectionRange();
-				assertTrue("Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.",
-						fullRange != null && isValid(fullRange) && selectionRange != null && isValid(selectionRange));
+				assertTrue(fullRange != null && isValid(fullRange) && selectionRange != null && isValid(selectionRange), "Class: " + className + ", Symbol:" + symbol.getName() + " - invalid location.");
 			}
 		}
 	}
@@ -347,7 +339,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 				.documentSymbol(params, monitor).stream()
 				.map(Either::getLeft).collect(toList());
 		//@formatter:on
-		assertFalse("No symbols found for " + className, symbols.isEmpty());
+		assertFalse(symbols.isEmpty(), "No symbols found for " + className);
 		return symbols;
 	}
 

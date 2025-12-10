@@ -13,12 +13,12 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -48,9 +48,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.RelativePattern;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
@@ -58,7 +58,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 	private static final String BAR_PATTERN = "**/bar";
 	private EclipseProjectImporter importer;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		importer = new EclipseProjectImporter();
 	}
@@ -83,12 +83,12 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertIsJavaProject(project);
 		assertNoErrors(project);
 		//1 message sent to the platform logger
-		assertEquals(logListener.getErrors().toString(), 1, logListener.getErrors().size());
+		assertEquals(1, logListener.getErrors().size(), logListener.getErrors().toString());
 		String error = logListener.getErrors().get(0);
-		assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
+		assertTrue(error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"), "Unexpected error: " + error);
 		//but no message sent to the client
 		List<Object> loggedMessages = clientRequests.get("logMessage");
-		assertNull("Unexpected logs " + loggedMessages, loggedMessages);
+		assertNull(loggedMessages, "Unexpected logs " + loggedMessages);
 	}
 
 	@Test
@@ -240,7 +240,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		assertEquals(11, watchers.size());
 		String srcGlobPattern = watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
-		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.endsWith("projectwithrootsource/**"));
+		assertTrue(srcGlobPattern.endsWith("projectwithrootsource/**"), "Unexpected source glob pattern: " + srcGlobPattern);
 	}
 
 	@Test
@@ -287,7 +287,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertFalse(hasUnimportedProjects);
 	}
 
-	@After
+	@AfterEach
 	public void after() {
 		importer = null;
 	}

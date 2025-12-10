@@ -14,10 +14,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -31,15 +31,15 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private NavigateToTypeDefinitionHandler handler;
 	private IProject project;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		handler = new NavigateToTypeDefinitionHandler();
 		importProjects("maven/salut");
@@ -72,7 +72,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		List<? extends Location> definitions = handler.typeDefinition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
 		assertNotNull(definitions);
-		assertEquals("No definition found for " + className, 1, definitions.size());
+		assertEquals(1, definitions.size(), "No definition found for " + className);
 		assertNotNull(definitions.get(0).getUri());
 		assertEquals(3, definitions.get(0).getRange().getStart().getLine());
 		assertEquals(12, definitions.get(0).getRange().getStart().getCharacter());
@@ -103,7 +103,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 		List<? extends Location> definitions = handler
 				.typeDefinition(new TextDocumentPositionParams(identifier, new Position(line, column)), monitor);
 		assertNotNull(definitions);
-		assertEquals("No definition found for " + className, 1, definitions.size());
+		assertEquals(1, definitions.size(), "No definition found for " + className);
 		assertNotNull(definitions.get(0).getUri());
 		assertTrue(definitions.get(0).getRange().getStart().getLine() >= 0);
 	}

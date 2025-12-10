@@ -14,13 +14,13 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -68,23 +68,23 @@ import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author Fred Bricon
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	private static final String GRADLE1_PATTERN = "**/gradle1";
 	private String gradleJavaHome;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		gradleJavaHome = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getGradleJavaHome();
 	}
@@ -99,7 +99,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	 * @see org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest#cleanUp()
 	 */
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
@@ -179,7 +179,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(1, projects.size()); // 1 eclipse project
 			IProject eclipse = WorkspaceHelper.getProject("eclipsegradle");
 			assertNotNull(eclipse);
-			assertTrue(eclipse.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+			assertTrue(ProjectUtils.isGradleProject(eclipse), eclipse.getName() + " does not have the Gradle nature");
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleWrapperEnabled(enabled);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(gradleVersion);
@@ -198,7 +198,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(1, projects.size()); // 1 eclipse project
 			IProject project = WorkspaceHelper.getProject("simple-gradle");
 			assertNotNull(project);
-			assertTrue(project.getName() + " does not have the Gradle nature", ProjectUtils.isGradleProject(project));
+			assertTrue(ProjectUtils.isGradleProject(project), project.getName() + " does not have the Gradle nature");
 			assertTrue(gradleUserHome.exists());
 			ProjectConfiguration projectConfiguration = CorePlugin.configurationManager().loadProjectConfiguration(project);
 			assertEquals(gradleUserHome, projectConfiguration.getBuildConfiguration().getGradleUserHome());
@@ -272,7 +272,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertEquals(1, projects.size()); // 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipse");
 			assertNotNull(eclipse);
-			assertFalse(eclipse.getName() + " has the Gradle nature", ProjectUtils.isGradleProject(eclipse));
+			assertFalse(ProjectUtils.isGradleProject(eclipse), eclipse.getName() + " has the Gradle nature");
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportGradleEnabled(enabled);
 		}
@@ -283,12 +283,12 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		importProjects("gradle/nested");
 		List<IProject> projects = ProjectUtils.getGradleProjects();
 		for (IProject project : projects) {
-			assertTrue(project.getName() + " should synchronize", GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+			assertTrue(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()), project.getName() + " should synchronize");
 		}
 		Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
 		GradleBuildSupport.saveModels();
 		for (IProject project : projects) {
-			assertFalse(project.getName() + " should not synchronize", GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()));
+			assertFalse(GradleProjectImporter.shouldSynchronize(project.getLocation().toFile()), project.getName() + " should not synchronize");
 		}
 		IProject project = WorkspaceHelper.getProject("gradle1");
 		File gradleBuild = new File(project.getLocation().toFile(), "build.gradle");

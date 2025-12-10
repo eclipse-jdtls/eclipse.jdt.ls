@@ -24,8 +24,8 @@ import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AssistQuickFixTest21 extends AbstractQuickFixTest {
 
@@ -33,7 +33,7 @@ public class AssistQuickFixTest21 extends AbstractQuickFixTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		fJProject = newEmptyProject();
 		Map<String, String> options21 = new HashMap<>(fJProject.getOptions(false));

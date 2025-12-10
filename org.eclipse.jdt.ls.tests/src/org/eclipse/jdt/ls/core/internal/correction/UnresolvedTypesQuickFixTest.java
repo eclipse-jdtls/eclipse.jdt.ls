@@ -15,8 +15,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -46,16 +46,16 @@ import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.ResourceOperationKind;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -255,7 +255,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Create type")
+	@Disabled("Create type")
 	public void testTypeInExceptionType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -574,7 +574,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Create type")
+	@Disabled("Create type")
 	public void testTypeInCatchBlock() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -1377,7 +1377,7 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	 * @since 3.9
 	 */
 	@Test
-	@Ignore("Requires Modifier proposals")
+	@Disabled("Requires Modifier proposals")
 	public void testIndirectRefDefaultClass() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);

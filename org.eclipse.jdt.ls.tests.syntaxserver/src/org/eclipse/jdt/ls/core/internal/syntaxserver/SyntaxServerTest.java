@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.syntaxserver;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -69,14 +69,17 @@ import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.TypeDefinitionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 	private SyntaxLanguageServer server;
 	private CoreASTProvider sharedASTProvider;
@@ -84,7 +87,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 	private String oldServerMode = "";
 	private boolean oldBuildStatus = false;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		oldServerMode = System.getProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID);
 		System.setProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID, "true");
@@ -98,7 +101,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		importProjects("maven/salut4");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (oldServerMode == null) {
 			System.clearProperty(JDTEnvironmentUtils.SYNTAX_SERVER_ID);
@@ -297,7 +300,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		CompletionParams params = new CompletionParams(identifier, new Position(loc[0], loc[1]));
 		CompletionList list = server.completion(params).join().getRight();
 		assertNotNull(list);
-		assertFalse("No proposals were found", list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(),"No proposals were found");
 
 		List<CompletionItem> items = list.getItems();
 		for (CompletionItem item : items) {
@@ -340,7 +343,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		CompletionParams params = new CompletionParams(identifier, new Position(loc[0], loc[1]));
 		CompletionList list = server.completion(params).join().getRight();
 		assertNotNull(list);
-		assertFalse("No proposals were found", list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(),"No proposals were found");
 
 		List<CompletionItem> items = list.getItems();
 		for (CompletionItem item : items) {

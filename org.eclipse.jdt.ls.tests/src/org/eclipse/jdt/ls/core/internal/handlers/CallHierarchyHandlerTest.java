@@ -16,19 +16,19 @@ import static org.eclipse.lsp4j.SymbolKind.Class;
 import static org.eclipse.lsp4j.SymbolKind.Constructor;
 import static org.eclipse.lsp4j.SymbolKind.Field;
 import static org.eclipse.lsp4j.SymbolKind.Method;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
@@ -41,15 +41,15 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @see CallHierarchyHandler
  */
 public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("eclipse/hello", "maven/salut"));
 	}

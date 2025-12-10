@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author siarhei_leanavets1
