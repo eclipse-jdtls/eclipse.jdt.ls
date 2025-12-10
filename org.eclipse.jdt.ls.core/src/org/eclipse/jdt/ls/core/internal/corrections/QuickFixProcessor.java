@@ -516,15 +516,16 @@ public class QuickFixProcessor {
 				ModifierCorrectionSubProcessor.addOverridingDeprecatedMethodProposal(context, problem, proposals);
 				break;
 			case IProblem.UsingDeprecatedMethod:
-				ASTNode deprecatedMethodNode = context.getCoveredNode();
+				ASTNode deprecatedMethodNode = problem.getCoveredNode(context.getASTRoot());
 				if (deprecatedMethodNode != null && !(deprecatedMethodNode instanceof MethodInvocation)) {
 					deprecatedMethodNode = deprecatedMethodNode.getParent();
 				}
 				if (deprecatedMethodNode instanceof MethodInvocation methodInvocation && QuickAssistProcessorUtil.isDeprecatedMethodCallWithReplacement(methodInvocation)) {
 					IProposableFix fix = InlineMethodFixCore.create(FixMessages.InlineDeprecatedMethod_msg, (CompilationUnit) methodInvocation.getRoot(), methodInvocation);
 					if (fix != null) {
-						proposals.add(CodeActionHandler.wrap(null, CodeActionKind.QuickFix));
-						new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context);
+						proposals.add(CodeActionHandler.wrap(
+							new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context),
+							CodeActionKind.QuickFix));
 					}
 				}
 				break;
