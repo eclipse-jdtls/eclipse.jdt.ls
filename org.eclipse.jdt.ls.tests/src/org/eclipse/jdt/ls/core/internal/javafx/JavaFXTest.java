@@ -13,8 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.javafx;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,10 +30,9 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.hamcrest.core.IsNull;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 
@@ -67,7 +66,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 					}
 				}
 			}
-			Assume.assumeThat("JavaSE-1.8 VM is not found, skipping test", java8vm, IsNull.notNullValue());
+			Assumptions.assumeFalse(java8vm == null, "JavaSE-1.8 VM is not found, skipping test");
 			// Import JavaFX project and checks it compiles without errors
 			JavaRuntime.setDefaultVMInstall(java8vm, monitor, true);
 			importProjects("eclipse/" + name);
@@ -81,7 +80,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 			List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
 			assertNotEquals(0, errors.size());
 			String errorsStr = ResourceUtils.toString(errors);
-			assertTrue("Unexpected errors:\n " + errorsStr, errorsStr.contains("javafx cannot be resolved"));
+			assertTrue(errorsStr.contains("javafx cannot be resolved"), "Unexpected errors:\n " + errorsStr);
 		} finally {
 			JavaRuntime.setDefaultVMInstall(defaultJRE, monitor, true);
 			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment(JAVA_SE_21);
@@ -93,7 +92,7 @@ public class JavaFXTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		TestVMType.setTestJREAsDefault("21");

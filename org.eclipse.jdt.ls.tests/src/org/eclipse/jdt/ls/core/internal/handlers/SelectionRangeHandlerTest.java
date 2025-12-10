@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,8 +28,8 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SelectionRange;
 import org.eclipse.lsp4j.SelectionRangeParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
@@ -37,7 +37,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 	private static Range TYPE_DECL_RANGE = new Range(new Position(2, 0), new Position(31, 1));
 	private static Range COMP_UNIT_RAGE = new Range(new Position(0, 0), new Position(32, 0));
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/salut"));
 		project = WorkspaceHelper.getProject("salut");

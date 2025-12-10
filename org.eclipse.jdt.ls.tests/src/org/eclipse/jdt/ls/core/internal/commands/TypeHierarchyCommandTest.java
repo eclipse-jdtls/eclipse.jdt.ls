@@ -12,9 +12,9 @@
 *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
@@ -30,15 +30,15 @@ import org.eclipse.lsp4j.legacy.typeHierarchy.ResolveTypeHierarchyItemParams;
 import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyDirection;
 import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyItem;
 import org.eclipse.lsp4j.legacy.typeHierarchy.TypeHierarchyParams;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TypeHierarchyCommandTest extends AbstractInvisibleProjectBasedTest {
 
 	private IProject fJProject;
 	private TypeHierarchyCommand fCommand;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/salut");
 		fJProject = WorkspaceHelper.getProject("salut");

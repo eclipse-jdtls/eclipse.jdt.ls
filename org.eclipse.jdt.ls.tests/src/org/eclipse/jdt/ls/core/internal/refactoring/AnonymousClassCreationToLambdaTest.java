@@ -18,15 +18,15 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());

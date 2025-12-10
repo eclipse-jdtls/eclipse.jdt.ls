@@ -12,11 +12,11 @@
 *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -35,13 +35,16 @@ import org.eclipse.lsp4j.InsertTextMode;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
@@ -60,7 +63,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		mockLSP3Client();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
@@ -68,7 +71,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 		preferences.setPostfixCompletionEnabled(true);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		preferences.setPostfixCompletionEnabled(false);
 	}
@@ -808,7 +811,7 @@ public class PostfixCompletionTest extends AbstractCompilationUnitBasedTest {
 				""");
 		CompletionList list = requestCompletions(unit, "import static java.util.ArrayList.");
 
-		assertEquals("Postfix completion should not be triggered in import declarations:" + list.getItems(), 0, list.getItems().size());
+		assertEquals(0, list.getItems().size(), "Postfix completion should not be triggered in import declarations:" + list.getItems());
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {

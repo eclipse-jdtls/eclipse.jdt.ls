@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaProject;
@@ -26,9 +26,9 @@ import org.eclipse.jdt.ls.core.internal.HoverInfoProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.MarkedString;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for javadoc and signature of java elements
@@ -40,14 +40,14 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 
 	private IJavaProject project;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = JavaCore.create(WorkspaceHelper.getProject("hello"));
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 	}

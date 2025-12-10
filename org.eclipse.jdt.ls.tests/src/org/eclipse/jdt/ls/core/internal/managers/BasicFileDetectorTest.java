@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Fred Bricon
@@ -42,7 +42,7 @@ public class BasicFileDetectorTest {
 		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles"), "buildfile")
 				.includeNested(false);
 		Collection<Path> dirs = detector.scan(null);
-		assertEquals("Found " + dirs, 1, dirs.size());// .metadata is ignored
+		assertEquals(1, dirs.size(), "Found " + dirs);// .metadata is ignored
 		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles"), dirs.iterator().next().toString());
 	}
 
@@ -50,13 +50,13 @@ public class BasicFileDetectorTest {
 	public void testScanBuildFileAtRootIncludingNestedDirs() throws Exception {
 		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/"), "buildfile");
 		Collection<Path> dirs = detector.scan(null);
-		assertEquals("Found " + dirs, 6, dirs.size());
+		assertEquals(6, dirs.size(), "Found " + dirs);
 
 		List<String> missingDirs = separatorsToSystem(list("projects/buildfiles", "projects/buildfiles/parent/1_0/0_2_0",
 				"projects/buildfiles/parent/1_0/0_2_1", "projects/buildfiles/parent/1_1",
 				"projects/buildfiles/parent/1_1/1_2_0", "projects/buildfiles/parent/1_1/1_2_1"));
 		dirs.stream().map(Path::toString).forEach(missingDirs::remove);
-		assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+		assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
 	}
 
 	private List<String> separatorsToSystem(List<String> paths) {
@@ -69,11 +69,11 @@ public class BasicFileDetectorTest {
 		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile")
 				.includeNested(false).maxDepth(3);
 		Collection<Path> dirs = detector.scan(null);
-		assertEquals("Found " + dirs, 3, dirs.size());
+		assertEquals(3, dirs.size(), "Found " + dirs);
 		List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_1",
 				"projects/buildfiles/parent/1_0/0_2_0", "projects/buildfiles/parent/1_0/0_2_1"));
 		dirs.stream().map(Path::toString).forEach(missingDirs::remove);
-		assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+		assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
 	}
 
 	@Test
@@ -89,14 +89,14 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions(), 2, dirs.size());
+			assertEquals(2, dirs.size(), "Found " + dirs + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions());
 			List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_0/0_2_0", "projects/buildfiles/parent/1_0/0_2_1"));
 			dirs.stream().map(Path::toString).forEach(missingDirs::remove);
-			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+			assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 			detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 3, dirs.size());
+			assertEquals(3, dirs.size(), "Found " + dirs);
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}
@@ -115,10 +115,10 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 1, dirs.size());
+			assertEquals(1, dirs.size(), "Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs);
 			List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_0/0_2_0"));
 			dirs.stream().map(Path::toString).forEach(missingDirs::remove);
-			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+			assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}
@@ -137,7 +137,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 0, dirs.size());
+			assertEquals(0, dirs.size(), "Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs);
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}
@@ -154,7 +154,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 2, dirs.size());
+			assertEquals(2, dirs.size(), "Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs);
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}
@@ -171,7 +171,7 @@ public class BasicFileDetectorTest {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportInclusions);
 			BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile").includeNested(false).maxDepth(3);
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs, 0, dirs.size());
+			assertEquals(0, dirs.size(), "Found " + " ,exclusions=" + JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaImportExclusions() + dirs);
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaImportExclusions(javaImportExclusions);
 		}
@@ -183,7 +183,7 @@ public class BasicFileDetectorTest {
 		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile")
 				.includeNested(false).maxDepth(2);
 		Collection<Path> dirs = detector.scan(null);
-		assertEquals("Found " + dirs, 1, dirs.size());
+		assertEquals(1, dirs.size(), "Found " + dirs);
 		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles/parent/1_1"),
 				dirs.iterator().next().toString());
 	}
@@ -200,7 +200,7 @@ public class BasicFileDetectorTest {
 			    .includeNested(false).maxDepth(2);
 
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 1, dirs.size());// .metadata is ignored
+			assertEquals(1, dirs.size(), "Found " + dirs);// .metadata is ignored
 			assertEquals(targetLinkFolder.getAbsolutePath(), dirs.iterator().next().toString());
 		} finally {
 			targetLinkFolder.delete();
@@ -221,13 +221,13 @@ public class BasicFileDetectorTest {
 			BasicFileDetector detector = new BasicFileDetector(Paths.get(tempDirectory.getPath()), "buildfile");
 
 			Collection<Path> dirs = detector.scan(null);
-			assertEquals("Found " + dirs, 6, dirs.size());
+			assertEquals(6, dirs.size(), "Found " + dirs);
 
 			List<String> missingDirs = separatorsToSystem(list("", "parent/1_0/0_2_0",
 					"parent/1_0/0_2_1", "parent/1_1",
 					"parent/1_1/1_2_0", "parent/1_1/1_2_1"));
 			dirs.stream().map(dir -> tempDirectory.toPath().relativize(dir).toString()).forEach(missingDirs::remove);
-			assertEquals("Directories were not detected" + missingDirs, 0, missingDirs.size());
+			assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
 		} finally {
 			circularSymbolicLink.delete();
 			FileUtils.deleteDirectory(tempDirectory);
@@ -240,7 +240,7 @@ public class BasicFileDetectorTest {
 			+ new Random().nextInt(10000));
 		BasicFileDetector detector = new BasicFileDetector(notFoundDirectory.toPath(), "buildfile");
 		Collection<Path> dirs = detector.scan(null);
-		assertEquals("Found " + dirs, 0, dirs.size()); // No uncaught exception occurs
+		assertEquals(0, dirs.size(), "Found " + dirs); // No uncaught exception occurs
 	}
 
 	@SafeVarargs

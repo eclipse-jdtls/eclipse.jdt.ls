@@ -28,16 +28,16 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -2388,7 +2388,7 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Modifier proposals")
+	@Disabled("Modifier proposals")
 	public void testVarParameterAccess() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);

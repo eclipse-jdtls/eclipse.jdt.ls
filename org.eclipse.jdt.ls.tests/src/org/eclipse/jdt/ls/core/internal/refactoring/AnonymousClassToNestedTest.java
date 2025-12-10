@@ -21,8 +21,8 @@ import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AnonymousClassToNestedTest extends AbstractSelectionTest {
 
@@ -31,7 +31,7 @@ public class AnonymousClassToNestedTest extends AbstractSelectionTest {
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());

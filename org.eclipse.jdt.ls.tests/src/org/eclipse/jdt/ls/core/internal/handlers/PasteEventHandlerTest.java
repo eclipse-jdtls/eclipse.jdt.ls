@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -31,8 +31,8 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PasteEventHandler}
@@ -41,7 +41,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 	private IPackageFragment fPackageTest;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fPackageTest = fRoot.createPackageFragment("test", true, null);
 	}
@@ -63,7 +63,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -85,7 +85,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -105,7 +105,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\r\\n\" + //\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\r\\n\" + //\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\r\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\n\" + //\r\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(null, actual);
+		assertEquals(null, actual);
 	}
 
 	@Test
@@ -165,7 +165,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(null, actual);
+		assertEquals(null, actual);
 	}
 
 	@Test
@@ -185,7 +185,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -205,7 +205,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
+		assertEquals(new DocumentPasteEdit("aaa\\n\" + //\n\t\t\t\"aaa"), actual);
 	}
 
 	@Test
@@ -225,7 +225,7 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertEquals(null, actual);
+		assertEquals(null, actual);
 	}
 
 	@Test
@@ -245,8 +245,8 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertNotNull(actual);
-		Assert.assertEquals("你好", actual.getInsertText());
+		assertNotNull(actual);
+		assertEquals("你好", actual.getInsertText());
 	}
 
 	@Test
@@ -266,8 +266,8 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 
 		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
 
-		Assert.assertNotNull(actual);
-		Assert.assertEquals("\\\\u4F60\\\\u597D", actual.getInsertText());
+		assertNotNull(actual);
+		assertEquals("\\\\u4F60\\\\u597D", actual.getInsertText());
 	}
 
 	private static Location createLocation(String uri, int startLine, int startChar, int endLine, int endChar) {

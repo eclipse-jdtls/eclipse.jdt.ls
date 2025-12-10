@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,11 +32,11 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.decompiler.FernFlowerDecompiler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 // Note: this test depends on the contentProvider extensions configured in plugin.xml
 
@@ -55,18 +55,18 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 	private static boolean existingDebugFlag = false;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupOnce() throws Exception {
 		existingDebugFlag = Boolean.getBoolean("jdt.ls.debug");
 		System.setProperty("jdt.ls.debug", "true");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanUpOnce() throws Exception {
 		System.setProperty("jdt.ls.debug", Boolean.toString(existingDebugFlag));
 	}
 
-	@Before
+	@BeforeEach
 	public void createURIs() throws Exception {
 		importProjects("maven/salut");
 		project = WorkspaceHelper.getProject("salut");
@@ -76,7 +76,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		sourceAvailableClassFile = JDTUtils.resolveClassFile(sourceAvailableURI);
 	}
 
-	@Before
+	@BeforeEach
 	public void buildContentProviderManager() {
 		preferenceManager = mock(PreferenceManager.class);
 		preferences = mock(Preferences.class);
@@ -85,14 +85,14 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		provider = new ContentProviderManager(preferenceManager);
 	}
 
-	@Before
-	@After
+	@BeforeEach
+	@AfterEach
 	public void resetFakeContentProvider() {
 		FakeContentProvider.preferences = null;
 		FakeContentProvider.returnValue = null;
 	}
 
-	@Before
+	@BeforeEach
 	public void resetMonitor() {
 		monitor.setCanceled(false);
 	}
@@ -103,14 +103,14 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testOpenSourceCode() throws Exception {
 		String result = provider.getContent(sourceAvailableURI, monitor);
 		assertNotNull(result);
-		assertTrue("unexpected body content " + result, result.contains("Operations on Strings that contain words."));
+		assertTrue(result.contains("Operations on Strings that contain words."), "unexpected body content " + result);
 	}
 
 	@Test
 	public void testDecompileSourceCode() throws Exception {
 		String result = provider.getSource(sourceAvailableClassFile, monitor);
 		assertNotNull(result);
-		assertTrue("unexpected body content " + result, result.contains("Operations on Strings that contain words."));
+		assertTrue(result.contains("Operations on Strings that contain words."), "unexpected body content " + result);
 	}
 
 	@Test
@@ -119,7 +119,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(noSuchURI, monitor);
 		assertNotNull(result);
-		assertTrue("not empty: " + result, result.isEmpty());
+		assertTrue(result.isEmpty(), "not empty: " + result);
 	}
 
 	@Test
@@ -149,7 +149,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		String result = provider.getContent(sourcelessURI, monitor);
 
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedError("Something bad happened here");
 	}
 
@@ -160,7 +160,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		String result = provider.getSource(sourcelessClassFile, monitor);
 
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedError("Something bad happened here");
 	}
 
@@ -168,7 +168,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDefaultOrder() throws Exception {
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedError("You have more than one content provider installed:");
 	}
 
@@ -176,7 +176,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	public void testDecompileDefaultOrder() throws Exception {
 		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedError("You have more than one content provider installed:");
 	}
 
@@ -186,7 +186,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fakeContentProvider", "placeholderContentProvider"));
 
 		assertEquals(FAKE_DECOMPILED_SOURCE, provider.getContent(sourcelessURI, monitor));
-		assertTrue(logListener.getErrors().toString(), logListener.getErrors().isEmpty());
+		assertTrue(logListener.getErrors().isEmpty(), logListener.getErrors().toString());
 	}
 
 	@Test
@@ -195,7 +195,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		when(preferences.getPreferredContentProviderIds()).thenReturn(Arrays.asList("fakeContentProvider", "placeholderContentProvider"));
 
 		assertEquals(FAKE_DECOMPILED_SOURCE, provider.getSource(sourcelessClassFile, monitor));
-		assertTrue(logListener.getErrors().toString(), logListener.getErrors().isEmpty());
+		assertTrue(logListener.getErrors().isEmpty(), logListener.getErrors().toString());
 	}
 
 	@Test
@@ -204,7 +204,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedInfo("placeholderContentProvider doesn't match IContentProvider. Skipping.");
 	}
 
@@ -214,7 +214,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getSource(sourcelessClassFile, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 		expectLoggedInfo("placeholderContentProvider doesn't match IDecompiler. Skipping.");
 	}
 
@@ -224,7 +224,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
 	}
 
 	@Test
@@ -233,8 +233,8 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
-		assertTrue("unexpected body content " + result, result.contains("public class BigDecimal extends Number implements Comparable"));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
+		assertTrue(result.contains("public class BigDecimal extends Number implements Comparable"), "unexpected body content " + result);
 	}
 
 	@Test
@@ -246,15 +246,15 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
-		assertTrue("unexpected body content " + result, result.contains("interface Entry"));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
+		assertTrue(result.contains("interface Entry"), "unexpected body content " + result);
 
 		sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "java.util.Map$Entry"));
 		// Decompiling the inner class directly should include the outer class code
 		result = provider.getContent(sourcelessURI, monitor);
 		assertNotNull(result);
-		assertTrue("disassembler header is missing from " + result, result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER));
-		assertTrue("unexpected body content " + result, result.contains("public interface Map<"));
+		assertTrue(result.startsWith(FernFlowerDecompiler.DECOMPILER_HEADER), "disassembler header is missing from " + result);
+		assertTrue(result.contains("public interface Map<"), "unexpected body content " + result);
 
 	}
 
@@ -283,13 +283,13 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 		String result = provider.getContent(sourcelessURI, monitor);
 		assertTrue(monitor.isCanceled());
 		assertNotNull(result);
-		assertTrue("not empty", result.isEmpty());
+		assertTrue(result.isEmpty(), "not empty");
 	}
 
 	@Test
 	public void testExpectPreferences() {
 		provider.getContent(sourcelessURI, monitor);
-		assertEquals("preferences not set", preferences, FakeContentProvider.preferences);
+		assertEquals(preferences, FakeContentProvider.preferences, "preferences not set");
 	}
 
 	@Test
@@ -302,10 +302,10 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	}
 
 	private void expectLoggedError(String expected) {
-		assertTrue("expected error " + expected, logListener.getErrors().stream().filter(e -> e.contains(expected)).findAny().isPresent());
+		assertTrue(logListener.getErrors().stream().filter(e -> e.contains(expected)).findAny().isPresent(), "expected error " + expected);
 	}
 
 	private void expectLoggedInfo(String expected) {
-		assertTrue("expected info " + expected, logListener.getInfos().stream().filter(e -> e.contains(expected)).findAny().isPresent());
+		assertTrue(logListener.getInfos().stream().filter(e -> e.contains(expected)).findAny().isPresent(), "expected info " + expected);
 	}
 }

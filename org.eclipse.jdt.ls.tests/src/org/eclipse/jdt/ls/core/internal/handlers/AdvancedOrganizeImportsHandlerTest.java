@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCa
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
 import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 

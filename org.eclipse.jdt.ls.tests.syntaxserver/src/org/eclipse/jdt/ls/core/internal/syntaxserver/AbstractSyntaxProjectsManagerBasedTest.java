@@ -54,8 +54,8 @@ import org.eclipse.jdt.ls.core.internal.SimpleLogListener;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
@@ -90,7 +90,7 @@ public abstract class AbstractSyntaxProjectsManagerBasedTest {
 		}
 	});
 
-	@Before
+	@BeforeEach
 	public void initProjectManager() throws Exception {
 		clientRequests.clear();
 
@@ -169,7 +169,7 @@ public abstract class AbstractSyntaxProjectsManagerBasedTest {
 		return dir;
 	}
 
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		JavaLanguageServerPlugin.setPreferencesManager(oldPreferenceManager);
 		projectsManager = null;

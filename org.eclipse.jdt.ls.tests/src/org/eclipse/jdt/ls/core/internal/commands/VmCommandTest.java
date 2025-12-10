@@ -13,14 +13,13 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import org.eclipse.jdt.ls.core.internal.commands.VmCommand.VmInstall;
-import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
-
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import org.junit.Test;
+import org.eclipse.jdt.ls.core.internal.commands.VmCommand.VmInstall;
+import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
+import org.junit.jupiter.api.Test;
 
 public class VmCommandTest extends AbstractInvisibleProjectBasedTest {
 

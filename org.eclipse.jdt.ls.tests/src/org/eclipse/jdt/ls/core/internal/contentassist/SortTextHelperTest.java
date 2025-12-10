@@ -12,14 +12,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Fred Bricon
@@ -37,7 +37,7 @@ public class SortTextHelperTest {
 			if (i > 0) {
 				int prev = i-1;
 				String previous = result.get(prev);
-				assertTrue("relevance "+i +" should be sorted before "+prev+" : "+relevance +" vs "+ previous, relevance.compareTo(previous) < 0);
+				assertTrue(relevance.compareTo(previous) < 0, "relevance " + i + " should be sorted before " + prev + " : " + relevance + " vs " + previous);
 			}
 			result.add(relevance);
 		}

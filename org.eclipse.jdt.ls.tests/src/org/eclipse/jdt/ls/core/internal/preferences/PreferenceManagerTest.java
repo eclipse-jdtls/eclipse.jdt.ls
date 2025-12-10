@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -52,15 +52,18 @@ import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.preferences.MavenPreferenceConstants;
 import org.eclipse.m2e.core.lifecyclemapping.model.PluginExecutionAction;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.osgi.framework.Bundle;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PreferenceManagerTest {
 
 	@Mock
@@ -68,7 +71,7 @@ public class PreferenceManagerTest {
 
 	private StandardPreferenceManager preferenceManager;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		preferenceManager = new StandardPreferenceManager();
 		preferenceManager.setMavenConfiguration(mavenConfig);
@@ -185,12 +188,12 @@ public class PreferenceManagerTest {
 		preferenceManager.addPreferencesChangeListener(listener);
 		Preferences preferences = new Preferences();
 		preferenceManager.update(preferences);
-		assertTrue("No one listener has been called", called[0]);
+		assertTrue(called[0], "No one listener has been called");
 		preferenceManager.removePreferencesChangeListener(listener);
 		called[0] = false;
 		preferences = new Preferences();
 		preferenceManager.update(preferences);
-		assertFalse("A listener has been called", called[0]);
+		assertFalse(called[0], "A listener has been called");
 	}
 
 	@Test

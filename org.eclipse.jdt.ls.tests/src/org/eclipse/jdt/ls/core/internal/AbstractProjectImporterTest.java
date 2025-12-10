@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -29,7 +29,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class AbstractProjectImporterTest {
 	@Test
@@ -40,7 +40,7 @@ public class AbstractProjectImporterTest {
 		configurationPaths.add(FileUtil.toPath(new File("projects", "gradle").toPath().resolve("subprojects/project2/build.gradle").toUri()));
 		configurationPaths.add(FileUtil.toPath(new File("projects", "gradle").toPath().resolve("subprojects/build.gradle").toUri()));
 		configurationPaths.add(FileUtil.toPath(new File("projects", "gradle").toPath().resolve("subprojects/settings.gradle").toUri()));
-		
+
 		Collection<Path> paths = importer.findProjectPath(configurationPaths, Arrays.asList(
 			GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
 			GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR

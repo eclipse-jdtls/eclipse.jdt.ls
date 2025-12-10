@@ -13,11 +13,11 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -51,18 +51,18 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.SymbolInformation;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.Bundle;
 
 /**
  * @author Fred Bricon
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 
 	private static final String ENVIRONMENT_NAME = "JavaSE-21";
@@ -72,14 +72,14 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	private ClientPreferences clientPreferences;
 
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		originalVm = JavaRuntime.getDefaultVMInstall();
 		javaClient = new JavaClientConnection(client);
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		TestVMType.setTestJREAsDefault("21");
@@ -96,7 +96,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 		String javaHome = new File(TestVMType.getFakeJDKsLocation(), "9").getAbsolutePath();
 		boolean changed = JVMConfigurator.configureDefaultVM(javaHome);
 		IVMInstall newDefaultVM = JavaRuntime.getDefaultVMInstall();
-		assertTrue("A VM hasn't been changed", changed);
+		assertTrue(changed, "A VM hasn't been changed");
 		assertNotEquals(originalVm, newDefaultVM);
 		assertEquals("9", newDefaultVM.getId());
 	}
@@ -123,9 +123,9 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 			assertTrue(file != null && file.isDirectory());
 			IVMInstallType installType = JavaRuntime.getVMInstallType(StandardVMType.ID_STANDARD_VM_TYPE);
 			IStatus status = installType.validateInstallLocation(file);
-			assertTrue(status.toString(), status.isOK());
+			assertTrue(status.isOK(), status.toString());
 			boolean changed = JVMConfigurator.configureJVMs(prefs);
-			assertTrue("A VM hasn't been changed", changed);
+			assertTrue(changed, "A VM hasn't been changed");
 			JobHelpers.waitForJobsToComplete();
 			IVMInstall vm = JVMConfigurator.findVM(runtime.getInstallationFile(), ENVIRONMENT_NAME);
 			assertNotNull(vm);

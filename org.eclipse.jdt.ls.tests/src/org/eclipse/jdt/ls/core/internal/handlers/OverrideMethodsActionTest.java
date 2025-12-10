@@ -13,7 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -32,13 +34,13 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OverrideMethodsActionTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -46,7 +48,7 @@ public class OverrideMethodsActionTest extends AbstractCompilationUnitBasedTest 
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
@@ -69,14 +71,14 @@ public class OverrideMethodsActionTest extends AbstractCompilationUnitBasedTest 
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT));
+		assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT));
+		assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_OVERRIDEMETHODSPROMPT));
 	}
 }

@@ -13,11 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.stream.Stream;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.FileUtil;
@@ -30,30 +29,24 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBasedTest {
-	@Parameter
-	public String fsMode;
 
-	@Parameters
-	public static Collection<String> data(){
-		return Arrays.asList("false", "true");
+	static Stream<Arguments> data() {
+		return Stream.of(
+			Arguments.of("false"),
+			Arguments.of("true")
+		);
 	}
 
-	@Before
-	public void setUp() {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileLocation(String fsMode) throws Exception {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
-	}
-
-	@Test
-	public void testMetadataFileLocation() throws Exception {
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		assertTrue(project.exists());
 
@@ -76,8 +69,10 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 	}
 
-	@Test
-	public void testProjectSettings() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testProjectSettings(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		IProject invisibleProject = copyAndImportFolder("singlefile/lesson1", "src/org/samples/HelloWorld.java");
 		assertTrue(invisibleProject.exists());
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
@@ -87,8 +82,10 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 	}
 
 	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
-	@Test
-	public void testPreviewFeaturesSettingsDisabled() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testPreviewFeaturesSettingsDisabled(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
 		try {
 			TestVMType.setTestJREAsDefault("18");
@@ -103,8 +100,10 @@ public class InvisibleProjectMetadataFileTest extends AbstractProjectsManagerBas
 	}
 
 	// https://github.com/eclipse/eclipse.jdt.ls/pull/1863#issuecomment-924395431
-	@Test
-	public void testPreviewFeaturesSettingEnabled() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testPreviewFeaturesSettingEnabled(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String defaultJVM = JavaRuntime.getDefaultVMInstall().getId();
 		try {
 			TestVMType.setTestJREAsDefault("18");

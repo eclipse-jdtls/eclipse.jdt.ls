@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -45,23 +45,23 @@ import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FileEventHandlerTest extends AbstractProjectsManagerBasedTest {
 	private ClientPreferences clientPreferences;
 	private IPackageFragmentRoot sourceFolder;
 	private IJavaProject javaProject;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		javaProject = newEmptyProject();
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		clientPreferences = preferenceManager.getClientPreferences();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {
 			cu.discardWorkingCopy();

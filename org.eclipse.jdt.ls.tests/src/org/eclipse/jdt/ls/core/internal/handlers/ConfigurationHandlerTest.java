@@ -11,13 +11,13 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ConfigurationHandlerTest extends AbstractProjectsManagerBasedTest {
 

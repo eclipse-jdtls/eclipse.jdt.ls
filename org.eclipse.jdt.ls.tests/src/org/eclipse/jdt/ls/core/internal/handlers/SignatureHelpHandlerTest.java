@@ -13,10 +13,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,8 +46,8 @@ import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SignatureInformation;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 
@@ -74,7 +74,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	private IPackageFragmentRoot sourceFolder;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");

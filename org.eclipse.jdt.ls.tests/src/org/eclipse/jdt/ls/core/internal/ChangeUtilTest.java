@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -42,24 +42,27 @@ import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.text.edits.InsertEdit;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author Yan Zhang
  *
  */
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 
 	private ClientPreferences clientPreferences;
 
 	private IPackageFragmentRoot sourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));

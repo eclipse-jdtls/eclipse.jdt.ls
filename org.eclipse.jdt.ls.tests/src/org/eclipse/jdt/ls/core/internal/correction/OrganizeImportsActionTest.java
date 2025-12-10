@@ -23,8 +23,8 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class OrganizeImportsActionTest extends AbstractQuickFixTest {
 
@@ -32,7 +32,7 @@ public class OrganizeImportsActionTest extends AbstractQuickFixTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

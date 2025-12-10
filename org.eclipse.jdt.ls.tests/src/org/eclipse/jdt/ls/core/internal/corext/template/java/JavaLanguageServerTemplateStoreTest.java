@@ -13,13 +13,13 @@
 
 package org.eclipse.jdt.ls.core.internal.corext.template.java;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.text.templates.TemplatePersistenceData;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class JavaLanguageServerTemplateStoreTest {
 
@@ -37,7 +37,7 @@ public class JavaLanguageServerTemplateStoreTest {
 			assertNotNull(templateData);
 			assertEquals(templateData.getTemplate().getName(), snippet.getDisplayName());
 		}
-		
+
 		for (PostfixTemplate postfix : postfixes) {
 			TemplatePersistenceData templateData = store.getTemplateData(postfix.getId());
 			assertNotNull(templateData);

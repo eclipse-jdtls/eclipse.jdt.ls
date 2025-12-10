@@ -12,9 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +55,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.RelativePattern;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedTest {
 
@@ -110,7 +111,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
 		IClasspathEntry[] classpath = javaProject.getRawClasspath();
-		assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+		assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 		assertEquals("foo.jar", classpath[2].getPath().lastSegment());
 		assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 
@@ -118,13 +119,13 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		//watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
 		assertEquals(12, watchers.size()); // basic(9) + project(1) + library(1)
 		String srcGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter("**/src/**"::equals).findFirst().get();
-		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
+		assertTrue(srcGlobPattern.equals("**/src/**"), "Unexpected source glob pattern: " + srcGlobPattern);
 		String projGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(w -> w.endsWith(projectFolder.getName() + "/**"))
 				.findFirst().get();
-		assertTrue("Unexpected project glob pattern: " + projGlobPattern, projGlobPattern.endsWith(projectFolder.getName() + "/**"));
+		assertTrue(projGlobPattern.endsWith(projectFolder.getName() + "/**"), "Unexpected project glob pattern: " + projGlobPattern);
 		String libGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(w -> w.endsWith(projectFolder.getName() + "/lib/**"))
 				.findFirst().get();
-		assertTrue("Unexpected library glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
+		assertTrue(libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"), "Unexpected library glob pattern: " + libGlobPattern);
 	}
 
 	public void automaticJarDetection() throws Exception {
@@ -139,7 +140,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
 		IClasspathEntry[] classpath = javaProject.getRawClasspath();
-		assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+		assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 		assertEquals("foo.jar", classpath[2].getPath().lastSegment());
 		assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 
@@ -147,9 +148,9 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		watchers.sort((a, b) -> a.getGlobPattern().map(Function.identity(), RelativePattern::getPattern).compareTo(b.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
 		assertEquals(10, watchers.size());
 		String srcGlobPattern = watchers.get(7).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
-		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.equals("**/src/**"));
+		assertEquals("**/src/**", srcGlobPattern, "Unexpected source glob pattern: " + srcGlobPattern);
 		String libGlobPattern = watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
-		assertTrue("Unexpected lib glob pattern: " + libGlobPattern, libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"));
+		assertTrue(libGlobPattern.endsWith(projectFolder.getName() + "/lib/**"), "Unexpected lib glob pattern: " + libGlobPattern);
 	}
 
 	@Test
@@ -261,7 +262,7 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 				}
 			}
 		}
-		assertTrue("Output path should be excluded from source path", isOutputExcluded);
+		assertTrue(isOutputExcluded, "Output path should be excluded from source path");
 	}
 
 	@Test
@@ -272,12 +273,14 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		waitForBackgroundJobs();
 	}
 
-	@Test(expected = CoreException.class)
-	public void testSpecifyingAbsoluteOutputPath() throws Exception {
-		Preferences preferences = preferenceManager.getPreferences();
-		preferences.setInvisibleProjectOutputPath(new File("projects").getAbsolutePath());
-		copyAndImportFolder("singlefile/simple", "src/App.java");
-		waitForBackgroundJobs();
+	@Test
+	void testSpecifyingAbsoluteOutputPath() {
+		assertThrows(CoreException.class, () -> {
+			Preferences preferences = preferenceManager.getPreferences();
+			preferences.setInvisibleProjectOutputPath(new File("projects").getAbsolutePath());
+			copyAndImportFolder("singlefile/simple", "src/App.java");
+			waitForBackgroundJobs();
+		});
 	}
 
 	@Test
@@ -385,12 +388,14 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		assertTrue(sourcePaths.contains(""));
 	}
 
-	@Test(expected = CoreException.class)
-	public void testSpecifyingAbsoluteSourcePath() throws Exception {
-		Preferences preferences = preferenceManager.getPreferences();
-		preferences.setInvisibleProjectSourcePaths(Arrays.asList(new File("projects").getAbsolutePath()));
-		copyAndImportFolder("singlefile/simple", "src/App.java");
-		waitForBackgroundJobs();
+	@Test
+	void testSpecifyingAbsoluteSourcePath() {
+		assertThrows(CoreException.class, () -> {
+			Preferences preferences = preferenceManager.getPreferences();
+			preferences.setInvisibleProjectSourcePaths(Arrays.asList(new File("projects").getAbsolutePath()));
+			copyAndImportFolder("singlefile/simple", "src/App.java");
+			waitForBackgroundJobs();
+		});
 	}
 
 	@Test

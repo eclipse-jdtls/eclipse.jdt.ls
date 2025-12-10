@@ -14,9 +14,9 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -53,7 +53,7 @@ public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBase
 
 	protected void assertIsMavenProject(IProject project) {
 		assertNotNull(project);
-		assertTrue(project.getName() + " is missing the Maven nature", ProjectUtils.isMavenProject(project));
+		assertTrue(ProjectUtils.isMavenProject(project), project.getName() + " is missing the Maven nature");
 	}
 
 	protected String comment(String s, String from, String to) {

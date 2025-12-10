@@ -1,95 +1,105 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.8"?>
 <target includeMode="feature" name="Java Language Server Target Definition" sequenceNumber="113">
-    <locations>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.buildship.feature.group" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/buildship/updates/latest-snapshot/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.m2e.jdt" version="0.0.0"/>
-            <unit id="org.eclipse.m2e.apt.core" version="0.0.0"/>
-            <unit id="org.eclipse.m2e.core" version="0.0.0"/>
-            <unit id="org.eclipse.m2e.maven.runtime" version="0.0.0"/>
-            <unit id="org.eclipse.m2e.workspace.cli" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/technology/m2e/releases/2.10.0"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.equinox.core.sdk.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
-            <unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0"/>
-            <unit id="org.mockito.mockito-core" version="0.0.0"/>
-            <unit id="org.apache.commons.commons-io" version="0.0.0"/>
-            <unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0"/>
+	<locations>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.buildship.feature.group" version="0.0.0" />
+			<repository location="https://download.eclipse.org/buildship/updates/latest-snapshot/" />
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.m2e.jdt" version="0.0.0" />
+			<unit id="org.eclipse.m2e.apt.core" version="0.0.0" />
+			<unit id="org.eclipse.m2e.core" version="0.0.0" />
+			<unit id="org.eclipse.m2e.maven.runtime" version="0.0.0" />
+			<unit id="org.eclipse.m2e.workspace.cli" version="0.0.0" />
+			<repository location="https://download.eclipse.org/technology/m2e/releases/2.10.0" />
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.equinox.core.feature.feature.group" version="0.0.0" />
+			<unit id="org.eclipse.equinox.core.sdk.feature.group" version="0.0.0" />
+			<unit id="org.eclipse.equinox.executable.feature.group" version="0.0.0" />
+			<unit id="org.eclipse.platform.feature.group" version="0.0.0" />
+			<unit id="org.eclipse.equinox.sdk.feature.group" version="0.0.0" />
+			<unit id="org.mockito.mockito-core" version="0.0.0" />
+			<unit id="org.apache.commons.commons-io" version="0.0.0" />
+			<unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0" />
 			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
+			<unit id="junit-jupiter-api" version="5.14.1" />
+			<unit id="junit-jupiter-params" version="5.14.1" />
+			<unit id="junit-vintage-engine" version="5.14.1" />
+			<unit id="junit-platform-suite-engine" version="1.14.1" />
 			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
-			<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0"/>
-			<unit id="org.eclipse.jdt.core" version="0.0.0"/>
-			<unit id="org.eclipse.jdt.apt.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/eclipse/updates/4.38/R-4.38-202512010920/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-			<unit id="org.eclipse.jdt.core.javac" version="0.0.0"/>
-            <repository location="https://ci.eclipse.org/ls/job/eclipse.jdt.javac/job/main/lastSuccessfulBuild/artifact/repository/target/repository/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-            <unit id="org.eclipse.xtext.xbase.lib" version="0.0.0"/>
-            <unit id="ch.qos.logback.classic" version="0.0.0"/>
-            <unit id="ch.qos.logback.core" version="0.0.0"/>
-            <repository location="https://download.eclipse.org/releases/2025-12/"/>
-        </location>
-        <location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
-           <repository location="https://download.eclipse.org/lsp4j/updates/releases/0.24.0/"/>
-           <unit id="org.eclipse.lsp4j" version="0.0.0"/>
-        </location>
-	    <location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
-		    <dependencies>
-			    <dependency>
-				    <groupId>commons-codec</groupId>
-				    <artifactId>commons-codec</artifactId>
-				    <version>1.20.0</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
-				    <groupId>org.apache.commons</groupId>
-				    <artifactId>commons-lang3</artifactId>
-				    <version>3.20.0</version>
-				    <type>jar</type>
-			    </dependency>
-		    </dependencies>
-	    </location>
-	    <location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" label="3rd party" missingManifest="generate" type="Maven">
-		    <dependencies>
-			    <dependency>
-				    <groupId>com.vladsch.flexmark</groupId>
-				    <artifactId>flexmark-html2md-converter</artifactId>
-				    <version>0.64.8</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
-				    <groupId>jakarta.servlet</groupId>
-				    <artifactId>jakarta.servlet-api</artifactId>
-				    <version>6.2.0-M1</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
-				    <groupId>org.apache.commons</groupId>
-				    <artifactId>commons-text</artifactId>
-				    <version>1.15.0</version>
-				    <type>jar</type>
-			    </dependency>
-			    <dependency>
-				    <groupId>org.jsoup</groupId>
-				    <artifactId>jsoup</artifactId>
-				    <version>1.19.1</version>
-				    <type>jar</type>
-			    </dependency>
-		    </dependencies>
-		    <exclude>org.jsoup:jsoup:1.15.4</exclude>
-	    </location>
-    </locations>
-    <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-25"/>
+			<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0" />
+			<unit id="org.eclipse.jdt.core" version="0.0.0" />
+			<unit id="org.eclipse.jdt.apt.core" version="0.0.0" />
+			<repository location="https://download.eclipse.org/eclipse/updates/4.38/R-4.38-202512010920/" />
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.jdt.core.javac" version="0.0.0" />
+			<repository location="https://ci.eclipse.org/ls/job/eclipse.jdt.javac/job/main/lastSuccessfulBuild/artifact/repository/target/repository/" />
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<unit id="org.eclipse.xtext.xbase.lib" version="0.0.0" />
+			<unit id="ch.qos.logback.classic" version="0.0.0" />
+			<unit id="ch.qos.logback.core" version="0.0.0" />
+			<repository location="https://download.eclipse.org/releases/2025-12/" />
+		</location>
+		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
+			<repository location="https://download.eclipse.org/lsp4j/updates/releases/0.24.0/" />
+			<unit id="org.eclipse.lsp4j" version="0.0.0" />
+		</location>
+		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>commons-codec</groupId>
+					<artifactId>commons-codec</artifactId>
+					<version>1.20.0</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+					<version>3.20.0</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.mockito</groupId>
+					<artifactId>mockito-junit-jupiter</artifactId>
+					<version>5.20.0</version>
+					<type>jar</type>
+				</dependency>
+			</dependencies>
+		</location>
+		<location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="true" label="3rd party" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>com.vladsch.flexmark</groupId>
+					<artifactId>flexmark-html2md-converter</artifactId>
+					<version>0.64.8</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>jakarta.servlet</groupId>
+					<artifactId>jakarta.servlet-api</artifactId>
+					<version>6.2.0-M1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-text</artifactId>
+					<version>1.15.0</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.jsoup</groupId>
+					<artifactId>jsoup</artifactId>
+					<version>1.19.1</version>
+					<type>jar</type>
+				</dependency>
+			</dependencies>
+			<exclude>org.jsoup:jsoup:1.15.4</exclude>
+		</location>
+	</locations>
+	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-25" />
 </target>

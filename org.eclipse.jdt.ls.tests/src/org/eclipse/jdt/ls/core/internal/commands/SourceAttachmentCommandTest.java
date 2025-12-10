@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -39,8 +39,8 @@ import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand.SourceA
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand.SourceAttachmentRequest;
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand.SourceAttachmentResult;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 
@@ -48,7 +48,7 @@ public class SourceAttachmentCommandTest extends AbstractProjectsManagerBasedTes
 	private static final String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsource-attachment%2Ffoo.jar%3Cfoo%28bar.class";
 	private IProject project;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/source-attachment");
 		project = WorkspaceHelper.getProject("source-attachment");
