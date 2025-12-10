@@ -28,14 +28,14 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		IJavaProject fJProject1 = newEmptyProject();
 		Map<String, String> options = TestOptions.getDefaultOptions();
@@ -4093,7 +4093,7 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 	 * @since 3.9
 	 */
 	@Test
-	@Ignore("Requires ModifierCorrectionSubProcessor")
+	@Disabled("Requires ModifierCorrectionSubProcessor")
 	public void testIndirectProtectedMethod() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);

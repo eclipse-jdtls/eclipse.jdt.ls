@@ -13,17 +13,16 @@
 
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
@@ -43,30 +42,23 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
-	@Parameter
-	public String fsMode;
 
-	@Parameters
-	public static Collection<String> data(){
-		return Arrays.asList("false", "true");
+	static Stream<Arguments> data() {
+		return Stream.of(
+			Arguments.of("false"),
+			Arguments.of("true")
+		);
 	}
 
-	@Before
-	public void setup() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileLocation(String fsMode) throws Exception {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
-	}
-
-	@Test
-	public void testMetadataFileLocation() throws Exception {
 		String name = "sample";
 		importProjects("gradle/" + name);
 		IProject project = WorkspaceHelper.getProject(name);
@@ -106,8 +98,10 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		assertEquals(project.getLocation().isPrefixOf(preferencesPath), JLSFsUtils.generatesMetadataFilesAtProjectRoot());
 	}
 
-	@Test
-	public void testMetadataFileLocation2() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testMetadataFileLocation2(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "metadata";
 		importProjects("gradle/" + name);
 		IProject project = WorkspaceHelper.getProject(name);
@@ -118,8 +112,10 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		assertTrue(markers.isEmpty());
 	}
 
-	@Test
-	public void testSettingsGradle() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testSettingsGradle(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		List<IProject> projects = importProjects("gradle/sample");
 		assertEquals(2, projects.size()); // app, sample
 		IProject root = WorkspaceHelper.getProject("sample");
@@ -140,8 +136,10 @@ public class GradleProjectMetadataFileTest extends AbstractGradleBasedTest {
 		assertNotNull(type);
 	}
 
-	@Test
-	public void testDeleteClasspath() throws Exception {
+	@ParameterizedTest
+	@MethodSource("data")
+	void testDeleteClasspath(String fsMode) throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		FeatureStatus status = preferenceManager.getPreferences().getUpdateBuildConfigurationStatus();
 		try {
 			preferenceManager.getPreferences().setUpdateBuildConfigurationStatus(FeatureStatus.automatic);

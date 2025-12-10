@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.refactoring;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -36,9 +38,8 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MoveTest extends AbstractSelectionTest {
 	private static final String MOVE = ActionMessages.MoveRefactoringAction_label;
@@ -47,7 +48,7 @@ public class MoveTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isMoveRefactoringSupported()).thenReturn(true);
@@ -169,8 +170,8 @@ public class MoveTest extends AbstractSelectionTest {
 	@Override
 	protected String evaluateCodeActionCommand(Either<Command, CodeAction> codeAction) throws BadLocationException, JavaModelException {
 		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, c.getCommand());
-		Assert.assertNotNull(c.getArguments());
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, c.getCommand());
+		assertNotNull(c.getArguments());
 		return "";
 	}
 

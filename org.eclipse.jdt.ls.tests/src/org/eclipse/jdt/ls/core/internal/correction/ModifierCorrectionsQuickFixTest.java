@@ -21,8 +21,8 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author qisun
@@ -33,7 +33,7 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 	private IPackageFragmentRoot fSourceFolder;
 	private static final String proposal = "Remove invalid modifiers";
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());

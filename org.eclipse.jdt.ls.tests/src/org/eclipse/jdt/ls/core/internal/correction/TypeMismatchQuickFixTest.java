@@ -26,16 +26,16 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -307,7 +307,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Requires LocalCorrectionsSubProcessor")
+	@Disabled("Requires LocalCorrectionsSubProcessor")
 	public void testTypeMismatchForInterface2() throws Exception {
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -543,7 +543,7 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Ignore("Requires LocalCorrectionsSubProcessor")
+	@Disabled("Requires LocalCorrectionsSubProcessor")
 	public void testTypeMismatchForParameterizedType() throws Exception {
 		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
 		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);

@@ -14,11 +14,11 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -59,8 +59,8 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Fred Bricon
@@ -91,7 +91,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private PreferenceManager preferenceManager;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
@@ -116,10 +116,10 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().getLeft().get(0).getRight();
-		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "java.Foo", signature.getValue());
+		assertEquals("java", signature.getLanguage(), "Unexpected hover " + signature);
+		assertEquals("java.Foo", signature.getValue(), "Unexpected hover " + signature);
 		String doc = hover.getContents().getLeft().get(1).getLeft();
-		assertEquals("Unexpected hover " + doc, "This is foo", doc);
+		assertEquals("This is foo", doc, "Unexpected hover " + doc);
 	}
 
 	@Test
@@ -137,10 +137,10 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().getLeft().get(0).getRight();
-		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "java.Foo", signature.getValue());
+		assertEquals("java", signature.getLanguage(), "Unexpected hover " + signature);
+		assertEquals("java.Foo", signature.getValue(), "Unexpected hover " + signature);
 		String doc = hover.getContents().getLeft().get(1).getLeft();
-		assertEquals("Unexpected hover " + doc, "This is foo", doc);
+		assertEquals("This is foo", doc, "Unexpected hover " + doc);
 	}
 
 	@Test
@@ -156,9 +156,9 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		// then
 		assertNotNull(hover);
 		String signature = hover.getContents().getLeft().get(0).getRight().getValue();//
-		assertEquals("Unexpected signature ", "java.internal", signature);
+		assertEquals("java.internal", signature, "Unexpected signature ");
 		String result = hover.getContents().getLeft().get(1).getLeft();//
-		assertEquals("Unexpected hover ", "this is a **bold** package!", result);
+		assertEquals("this is a **bold** package!", result, "Unexpected hover ");
 	}
 
 	@Test
@@ -176,7 +176,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		assertEquals(1, hover.getContents().getLeft().size());
-		assertEquals("Should find empty hover for " + payload, "", hover.getContents().getLeft().get(0).getLeft());
+		assertEquals("", hover.getContents().getLeft().get(0).getLeft(), "Should find empty hover for " + payload);
 	}
 
 	@Test
@@ -192,7 +192,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		assertEquals(1, hover.getContents().getLeft().size());
-		assertEquals("Should find empty hover for " + payload, "", hover.getContents().getLeft().get(0).getLeft());
+		assertEquals("", hover.getContents().getLeft().get(0).getLeft(), "Should find empty hover for " + payload);
 	}
 
 	@Test
@@ -252,8 +252,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().getLeft().get(0).getRight();
-		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "String[] args - java.Foo.main(String[])", signature.getValue());
+		assertEquals("java", signature.getLanguage(), "Unexpected hover " + signature);
+		assertEquals("String[] args - java.Foo.main(String[])", signature.getValue(), "Unexpected hover " + signature);
 	}
 
 	@Test
@@ -311,7 +311,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 				* **Parameters:**
 				  * **input** an input String""";
 		// @formatter:on
-		assertEquals("Unexpected hover ", expected, result);
+		assertEquals(expected, result, "Unexpected hover ");
 	}
 
 	@Test
@@ -325,7 +325,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Hover hover = getHover(cu, 1, 8);
 		assertNotNull(hover);
 		assertEquals(1, hover.getContents().getLeft().size());
-		assertEquals("Unexpected hover ", "javax", hover.getContents().getLeft().get(0).getRight().getValue());
+		assertEquals("javax", hover.getContents().getLeft().get(0).getRight().getValue(), "Unexpected hover ");
 	}
 
 	@Test
@@ -342,9 +342,9 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Hover hover = handler.hover(position, monitor);
 		assertNotNull(hover);
 		String result = hover.getContents().getLeft().get(0).getRight().getValue();//
-		assertEquals("Unexpected hover ", "org.apache.commons", result);
+		assertEquals("org.apache.commons", result, "Unexpected hover ");
 
-		assertEquals(logListener.getErrors().toString(), 0, logListener.getErrors().size());
+		assertEquals(0, logListener.getErrors().size(), logListener.getErrors().toString());
 	}
 
 	@Test
@@ -362,7 +362,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		TextDocumentPositionParams params = new TextDocumentPositionParams(textDocument, position);
 		Hover hover = handler.hover(params, monitor);
 		assertNotNull(hover);
-		assertTrue("Unexpected hover ", !hover.getContents().getLeft().isEmpty());
+		assertFalse(hover.getContents().getLeft().isEmpty(), "Unexpected hover ");
 	}
 
 	@Test
@@ -378,13 +378,13 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		// when
 		Hover hover = handler.hover(position, monitor);
 		assertNotNull(hover);
-		assertTrue("Unexpected hover ", hover.getContents().getLeft().isEmpty());
+		assertTrue(hover.getContents().getLeft().isEmpty(), "Unexpected hover ");
 	}
 
 	@Test
 	public void testHoverWithAttachedJavadoc() throws Exception {
 		File commonPrimitivesJdoc = DependencyUtil.getJavadoc("commons-primitives", "commons-primitives", "1.0");
-		assertNotNull("Unable to locate  commons-primitives-1.0-javadoc.jar", commonPrimitivesJdoc);
+		assertNotNull(commonPrimitivesJdoc, "Unable to locate  commons-primitives-1.0-javadoc.jar");
 
 		importProjects("maven/attached-javadoc");
 		project = WorkspaceHelper.getProject("attached-javadoc");
@@ -396,13 +396,13 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
-		assertTrue("Unexpected hover :\n" + content, content.contains("This class consists exclusively of static methods that operate on or\nreturn ShortCollections"));
-		assertTrue("Unexpected hover :\n" + content, content.contains("**Author:**"));
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
+		assertTrue(content.contains("This class consists exclusively of static methods that operate on or\nreturn ShortCollections"), "Unexpected hover :\n" + content);
+		assertTrue(content.contains("**Author:**"), "Unexpected hover :\n" + content);
 	}
 
 	@Test
@@ -416,11 +416,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
 		assertMatches("\\[\"SimpleStringData\"\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#13\\) is a simple String", content);
 	}
 
@@ -435,11 +435,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
 		assertMatches("\\[newMethodBeingLinkedToo\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#23\\)", content);
 	}
 
@@ -455,11 +455,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
 		assertMatches("\\[Foo.linkedFromFoo2\\(\\)\\]\\(file:/.*/salut/src/main/java/java/Foo.java#14\\)", content);
 	}
 
@@ -474,11 +474,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
 
 		//@formatter:off
 		String expectedJavadoc =
@@ -519,11 +519,11 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// when
 		Hover hover = handler.hover(position, monitor);
-		assertNotNull("Hover is null", hover);
-		assertEquals("Unexpected hover contents:\n" + hover.getContents(), 2, hover.getContents().getLeft().size());
+		assertNotNull(hover, "Hover is null");
+		assertEquals(2, hover.getContents().getLeft().size(), "Unexpected hover contents:\n" + hover.getContents());
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
-		assertTrue("javadoc has null content", javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null);
+		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
 		assertMatches("This link doesnt work \\[LinkToSomethingNotFound\\]\\(\\)", content);
 	}
 
@@ -560,7 +560,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	/**
@@ -618,7 +618,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	@Test
@@ -658,7 +658,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	@Test
@@ -703,7 +703,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		actual = actual.replaceAll("(\\]\\(jdt://[^\\)]*?\\.class)[^\\)]*\\)", "$1)");
 
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	@Test
@@ -793,7 +793,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	@Test
@@ -851,7 +851,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//when
 		Hover hover = handler.hover(position, monitor);
 		assertNotNull(hover);
-		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
+		assertNotNull(hover.getContents().getLeft().get(0).getRight(), hover.toString());
 		String javadoc = hover.getContents().getLeft().get(0).getRight().getValue();
 		assertEquals("String java.lang.String.toUpperCase()", javadoc);
 
@@ -872,7 +872,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//when
 		Hover hover = handler.hover(position, monitor);
 		assertNotNull(hover);
-		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
+		assertNotNull(hover.getContents().getLeft().get(0).getRight(), hover.toString());
 		String type = hover.getContents().getLeft().get(0).getRight().getValue();
 		assertEquals("foo.bar.Foo", type);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
@@ -885,7 +885,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//when
 		hover = handler.hover(position, monitor);
 		assertNotNull(hover);
-		assertNotNull(hover.toString(), hover.getContents().getLeft().get(0).getRight());
+		assertNotNull(hover.getContents().getLeft().get(0).getRight(), hover.toString());
 		type = hover.getContents().getLeft().get(0).getRight().getValue();
 		assertEquals("foo.bar.Foo.Bar", type);
 		javadoc = hover.getContents().getLeft().get(1).getLeft();
@@ -931,8 +931,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(hover);
 		assertNotNull(hover.getContents());
 		MarkedString signature = hover.getContents().getLeft().get(0).getRight();
-		assertEquals("Unexpected hover " + signature, "java", signature.getLanguage());
-		assertEquals("Unexpected hover " + signature, "ENUM1", signature.getValue());
+		assertEquals("java", signature.getLanguage(), "Unexpected hover " + signature);
+		assertEquals("ENUM1", signature.getValue(), "Unexpected hover " + signature);
 	}
 
 	@Test
@@ -977,7 +977,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
@@ -1000,7 +1000,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testHoverJavadocDisabled() throws Exception {
 		// given - preference is disabled via configuration
 		Preferences prefs =  Preferences.createFrom(Map.of(Preferences.JAVA_HOVER_JAVADOC_ENABLED_KEY, false));
-		assertFalse("Javadoc should be disabled", prefs.isHoverJavadocEnabled());
+		assertFalse(prefs.isHoverJavadocEnabled(), "Javadoc should be disabled");
 		when(preferenceManager.getPreferences()).thenReturn(prefs);
 		handler = new HoverHandler(preferenceManager);
 
@@ -1010,7 +1010,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Hover hoverResult = handler.hover(position, monitor);
 
 		// then - hover should be null
-		assertNull("Hover should be null when Javadoc is disabled", hoverResult);
+		assertNull(hoverResult, "Hover should be null when Javadoc is disabled");
 
 		// when - enable preference and hover again
 		prefs =  Preferences.createFrom(Map.of(Preferences.JAVA_HOVER_JAVADOC_ENABLED_KEY, true));
@@ -1020,10 +1020,10 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		// then - hover should now include Javadoc
 		assertNotNull(hoverResultEnabled);
-		assertTrue("Hover should contain content when Javadoc is enabled", hoverResultEnabled.getContents().getLeft().size() > 0);
+		assertTrue(hoverResultEnabled.getContents().getLeft().size() > 0, "Hover should contain content when Javadoc is enabled");
 		if (hoverResultEnabled.getContents().getLeft().size() > 1) {
 			String doc = hoverResultEnabled.getContents().getLeft().get(1).getLeft();
-			assertEquals("Unexpected hover " + doc, "This is foo", doc);
+			assertEquals("This is foo", doc, "Unexpected hover " + doc);
 		}
 	}
 
@@ -1048,6 +1048,6 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("Unexpected hover ", expectedJavadoc, actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 }

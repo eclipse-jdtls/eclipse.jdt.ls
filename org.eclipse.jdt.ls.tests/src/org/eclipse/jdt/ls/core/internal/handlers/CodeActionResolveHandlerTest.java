@@ -13,10 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -55,21 +56,20 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.extended.SnippetTextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTest {
 	private IPackageFragment defaultPackage;
 	@Mock
 	private JavaClientConnection connection;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception{
 		IJavaProject fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());
@@ -101,27 +101,27 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
-		Assert.assertNotNull(quickfixActions);
-		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		assertNotNull(quickfixActions);
+		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> removeUnusedResponse = quickfixActions.stream().filter(codeAction -> {
 			return "Remove 'bar' and all assignments".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quickfix \"Remove 'bar' and all assignments\"", removeUnusedResponse.isPresent());
+		assertTrue(removeUnusedResponse.isPresent(), "Should return the quickfix \"Remove 'bar' and all assignments\"");
 		CodeAction unresolvedCodeAction = removeUnusedResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		buf = new StringBuilder();
 		buf.append("public class Foo {\n");
 		buf.append("    void foo() {    }\n");
 		buf.append("}\n");
-		Assert.assertEquals(buf.toString(), actual);
+		assertEquals(buf.toString(), actual);
 	}
 
 	// See https://github.com/redhat-developer/vscode-java/issues/1992
@@ -144,14 +144,14 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
 		assertNotNull(quickfixActions);
-		assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		Optional<Either<Command, CodeAction>> importTest = quickfixActions.stream().filter(codeAction -> {
 			return "Import 'Test' (org.junit.jupiter.api)".equals(codeAction.getRight().getTitle());
 		}).findFirst();
 		CodeAction codeAction = importTest.get().getRight();
 		assertEquals(1, codeAction.getDiagnostics().size());
 		CodeAction resolvedCodeAction = server.resolveCodeAction(codeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		assertTrue(actual.contains("import org.junit.jupiter.api.Test"));
 	}
@@ -188,21 +188,21 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No refactor actions were found", codeActions.isEmpty());
+		assertNotNull(codeActions);
+		assertFalse(codeActions.isEmpty(), "No refactor actions were found");
 		for (Either<Command, CodeAction> codeAction : codeActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> convertToLambdaResponse = codeActions.stream().filter(codeAction -> {
 			return "Convert to lambda expression".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the refactor action 'Convert to lambda expression'", convertToLambdaResponse.isPresent());
+		assertTrue(convertToLambdaResponse.isPresent(), "Should return the refactor action 'Convert to lambda expression'");
 		CodeAction unresolvedCodeAction = convertToLambdaResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		buf = new StringBuilder();
 		buf.append("interface I {\n");
@@ -214,7 +214,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("        bar(() -> System.out.println());\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Assert.assertEquals(buf.toString(), actual);
+		assertEquals(buf.toString(), actual);
 	}
 
 	@Test
@@ -238,21 +238,21 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No quickassist actions were found", codeActions.isEmpty());
+		assertNotNull(codeActions);
+		assertFalse(codeActions.isEmpty(), "No quickassist actions were found");
 		for (Either<Command, CodeAction> codeAction : codeActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> assignToNewFieldResponse = codeActions.stream().filter(codeAction -> {
 			return "Assign parameter to new field".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quick assist 'Convert to method reference'", assignToNewFieldResponse.isPresent());
+		assertTrue(assignToNewFieldResponse.isPresent(), "Should return the quick assist 'Convert to method reference'");
 		CodeAction unresolvedCodeAction = assignToNewFieldResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		buf = new StringBuilder();
 		buf.append("public class E {\n");
@@ -262,7 +262,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("        this.count = count;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Assert.assertEquals(buf.toString(), actual);
+		assertEquals(buf.toString(), actual);
 	}
 
 	@Test
@@ -285,17 +285,17 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No quickassist actions were found", codeActions.isEmpty());
+		assertNotNull(codeActions);
+		assertFalse(codeActions.isEmpty(), "No quickassist actions were found");
 
 		Optional<Either<Command, CodeAction>> assignAllToNewFieldsResponse = codeActions.stream().filter(codeAction -> {
 			return "Assign all parameters to new fields".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quick assist 'Assign all parameters to new fields'", assignAllToNewFieldsResponse.isPresent());
+		assertTrue(assignAllToNewFieldsResponse.isPresent(), "Should return the quick assist 'Assign all parameters to new fields'");
 		CodeAction unresolvedCodeAction = assignAllToNewFieldsResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		buf = new StringBuilder();
 		buf.append("public class App {\n");
@@ -310,7 +310,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("        this.s2 = s2;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Assert.assertEquals(buf.toString(), actual);
+		assertEquals(buf.toString(), actual);
 	}
 
 	@Test
@@ -334,21 +334,21 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No source actions were found", codeActions.isEmpty());
+		assertNotNull(codeActions);
+		assertFalse(codeActions.isEmpty(), "No source actions were found");
 		for (Either<Command, CodeAction> codeAction : codeActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
 		}
 
 		Optional<Either<Command, CodeAction>> generateToStringResponse = codeActions.stream().filter(codeAction -> {
 			return "Generate toString()".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quick assist 'Generate toString()'", generateToStringResponse.isPresent());
+		assertTrue(generateToStringResponse.isPresent(), "Should return the quick assist 'Generate toString()'");
 		CodeAction unresolvedCodeAction = generateToStringResponse.get().getRight();
-		Assert.assertNotNull("Should preserve the data property for the unresolved code action", unresolvedCodeAction.getData());
+		assertNotNull(unresolvedCodeAction.getData(), "Should preserve the data property for the unresolved code action");
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		String actual = AbstractQuickFixTest.evaluateWorkspaceEdit(resolvedCodeAction.getEdit());
 		buf = new StringBuilder();
 		buf.append("public class E {\n");
@@ -360,7 +360,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("        return \"E []\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Assert.assertEquals(buf.toString(), actual);
+		assertEquals(buf.toString(), actual);
 	}
 
 	@Test
@@ -386,23 +386,23 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
-		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> removeUnusedResponse = quickfixActions.stream().filter(codeAction -> {
 			return "Change type of 'test' to 'HashMap'".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quickfix \"Change type of 'test' to 'HashMap'\"", removeUnusedResponse.isPresent());
+		assertTrue(removeUnusedResponse.isPresent(), "Should return the quickfix \"Change type of 'test' to 'HashMap'\"");
 		CodeAction unresolvedCodeAction = removeUnusedResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
-		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
+		assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/3905
@@ -429,23 +429,23 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
-		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> unresolvedResponse = quickfixActions.stream().filter(codeAction -> {
 			return "Add constructor 'SubType(String)'".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quickfix \"Add constructor 'SubType(String)'\"", unresolvedResponse.isPresent());
+		assertTrue(unresolvedResponse.isPresent(), "Should return the quickfix \"Add constructor 'SubType(String)'\"");
 		CodeAction unresolvedCodeAction = unresolvedResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
-		Assert.assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }");
+		assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }");
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/4138
@@ -480,22 +480,22 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		params.setContext(context);
 
 		List<Either<Command, CodeAction>> quickfixActions = server.codeAction(params).join();
-		Assert.assertFalse("No quickfix actions were found", quickfixActions.isEmpty());
+		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
-			Assert.assertNull("Should defer the edit property to the resolveCodeAction request", codeAction.getRight().getEdit());
-			Assert.assertNotNull("Should preserve the data property for the unresolved code action", codeAction.getRight().getData());
+			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
+			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
 		}
 
 		Optional<Either<Command, CodeAction>> unresolvedResponse = quickfixActions.stream().filter(codeAction -> {
 			return "Create method 'create(Map<String, String>)' in type 'Test'".equals(codeAction.getRight().getTitle());
 		}).findFirst();
-		Assert.assertTrue("Should return the quickfix \"Create method 'create(Map<String, String>)' in type 'Test'\"", unresolvedResponse.isPresent());
+		assertTrue(unresolvedResponse.isPresent(), "Should return the quickfix \"Create method 'create(Map<String, String>)' in type 'Test'\"");
 		CodeAction unresolvedCodeAction = unresolvedResponse.get().getRight();
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
-		Assert.assertNotNull("Should resolve the edit property in the resolveCodeAction request", resolvedCodeAction.getEdit());
+		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
 		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		Assert.assertTrue(edits.get(0) instanceof SnippetTextEdit);
+		assertTrue(edits.get(0) instanceof SnippetTextEdit);
 		SnippetTextEdit snippetTextEdit = (SnippetTextEdit) edits.get(0);
 		String snippet = snippetTextEdit.getSnippet().getValue();
 		assertTrue(snippet.contains("${1:create}(${4|Map<String\\,String>|}"));

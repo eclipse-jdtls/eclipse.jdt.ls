@@ -13,7 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -35,14 +38,13 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenerateConstructorsActionTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -50,7 +52,7 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
@@ -74,12 +76,12 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
-		Assert.assertNotNull(constructorAction);
+		assertNotNull(constructorAction);
 		Command constructorCommand = CodeActionHandlerTest.getCommand(constructorAction);
-		Assert.assertNotNull(constructorCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, constructorCommand.getCommand());
+		assertNotNull(constructorCommand);
+		assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT, constructorCommand.getCommand());
 	}
 
 	@Test
@@ -96,16 +98,16 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		// test for field declaration
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertNotNull(quickAssistActions);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
+		assertNotNull(quickAssistActions);
+		assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
 		// test for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
+		assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
 	}
 
 	@Test
@@ -122,18 +124,17 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 			// test for field declaration
 			CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "static String name");
 			List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-			Assert.assertNotNull(codeActions);
+			assertNotNull(codeActions);
 			Either<Command, CodeAction> quickAssistActions = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-			Assert.assertNotNull(quickAssistActions);
-			Assert.assertFalse("Generate constructors quick assist should not be available for a static field",
-					CodeActionHandlerTest.commandExists(List.of(quickAssistActions), SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
+			assertNotNull(quickAssistActions);
+			assertFalse(CodeActionHandlerTest.commandExists(List.of(quickAssistActions), SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT), "Generate constructors quick assist should not be available for a static field");
 			// test for type declaration
 			params = CodeActionUtil.constructCodeActionParams(unit, "class A");
 			codeActions = server.codeAction(params).join();
-			Assert.assertNotNull(codeActions);
+			assertNotNull(codeActions);
 			Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
 			// constructor should not refer to static fields
-			Assert.assertNotNull(constructorAction);
+			assertNotNull(constructorAction);
 
 		}
 
@@ -149,9 +150,9 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "class A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
-		Assert.assertNotNull(constructorAction);
+		assertNotNull(constructorAction);
 
 	}
 
@@ -168,8 +169,8 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS), "The operation is not applicable to interfaces");
 	}
 
 	@Test
@@ -191,8 +192,8 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "run()");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to anonymous", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS), "The operation is not applicable to anonymous");
 	}
 
 	@Test
@@ -216,31 +217,31 @@ public class GenerateConstructorsActionTest extends AbstractCompilationUnitBased
 		// Verify the code action is available
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unitB, "class B");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> constructorAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS);
-		Assert.assertNotNull("Generate constructors action should be available", constructorAction);
+		assertNotNull(constructorAction, "Generate constructors action should be available");
 
 		// Verify quick assist is also available
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue("Quick assist should be available", CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT));
+		assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATECONSTRUCTORSPROMPT), "Quick assist should be available");
 
 		// Generate constructors using the handler and verify they delegate to super
 		GenerateConstructorsHandler.CheckConstructorsResponse response = GenerateConstructorsHandler.checkConstructorsStatus(params);
-		Assert.assertNotNull(response.constructors);
-		Assert.assertEquals("Should have 2 constructors from superclass", 2, response.constructors.length);
-		Assert.assertNotNull(response.fields);
-		Assert.assertEquals("Should have no fields", 0, response.fields.length);
+		assertNotNull(response.constructors);
+		assertEquals(2, response.constructors.length, "Should have 2 constructors from superclass");
+		assertNotNull(response.fields);
+		assertEquals(0, response.fields.length, "Should have no fields");
 
 		CodeGenerationSettings settings = new CodeGenerationSettings();
 		settings.createComments = false;
 		TextEdit edit = GenerateConstructorsHandler.generateConstructors(unitB.findPrimaryType(), response.constructors, response.fields, settings, null, new NullProgressMonitor());
-		Assert.assertNotNull(edit);
+		assertNotNull(edit);
 		JavaModelUtil.applyEdit(unitB, edit, true, null);
 
 		// Verify the generated constructors delegate to super
 		String actual = unitB.getSource();
-		Assert.assertTrue("Should contain B() constructor\n" + actual, actual.contains("public B() {"));
-		Assert.assertTrue("Should contain B(String a) constructor\n" + actual, actual.contains("public B(String a) {"));
-		Assert.assertTrue("Should contain super(a) call\n" + actual, actual.contains("super(a);"));
+		assertTrue(actual.contains("public B() {"), "Should contain B() constructor\n" + actual);
+		assertTrue(actual.contains("public B(String a) {"), "Should contain B(String a) constructor\n" + actual);
+		assertTrue(actual.contains("super(a);"), "Should contain super(a) call\n" + actual);
 	}
 }

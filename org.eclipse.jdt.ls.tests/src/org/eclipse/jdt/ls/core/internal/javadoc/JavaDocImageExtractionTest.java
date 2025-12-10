@@ -12,9 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -36,8 +36,8 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.SourceContentProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * The purpose of this test is that the LS needs to extract images embedded in a
@@ -61,7 +61,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 	private String testFolderName;
 
-	@After
+	@AfterEach
 	public void cleanup() throws Exception {
 		testFolderName = null;
 		project = null;
@@ -116,7 +116,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
-		assertTrue("Does finalString=\n\t\"" + finalString + "\"\nContain expectedImageMarkdown=\n\t\"" + expectedImageMarkdown + "\"", finalString.contains(expectedImageMarkdown));
+		assertTrue(finalString.contains(expectedImageMarkdown), "Does finalString=\n\t\"" + finalString + "\"\nContain expectedImageMarkdown=\n\t\"" + expectedImageMarkdown + "\"");
 
 		assertTrue(Files.exists(exportedFileLocation));
 	}
@@ -136,7 +136,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		String expectedImageMarkdown = "![](this/does/not/exist.png)";
 
-		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
+		assertTrue(finalString.contains(expectedImageMarkdown), "Missing image from " + finalString);
 
 	}
 
@@ -167,7 +167,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		String finalString = HoverInfoProvider.computeJavadoc(javaElement).getValue();
 
-		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
+		assertTrue(finalString.contains(expectedImageMarkdown), "Missing image from " + finalString);
 
 	}
 
@@ -186,7 +186,7 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 		String expectedImageMarkdown = "![](https://www.redhat.com/cms/managed-files/Logo-redhat-color-375.png)";
 
-		assertTrue("Missing image from " + finalString, finalString.contains(expectedImageMarkdown));
+		assertTrue(finalString.contains(expectedImageMarkdown), "Missing image from " + finalString);
 	}
 
 	@Test

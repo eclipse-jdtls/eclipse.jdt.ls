@@ -25,8 +25,8 @@ import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InvertVariableTest extends AbstractSelectionTest {
 
@@ -36,7 +36,7 @@ public class InvertVariableTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot testSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		testProject = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

@@ -23,15 +23,15 @@ import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class DeprecatedFieldQuickFixTest extends AbstractQuickFixTest {
 
     private IJavaProject fJProject;
     private IPackageFragmentRoot fSourceFolder;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         fJProject = newEmptyProject();
 		Map<String, String> options = TestOptions.getDefaultOptions();

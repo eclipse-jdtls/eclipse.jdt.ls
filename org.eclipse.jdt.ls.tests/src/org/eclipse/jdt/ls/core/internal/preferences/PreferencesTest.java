@@ -13,11 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PreferencesTest {
 
@@ -91,12 +91,12 @@ public class PreferencesTest {
 		java.put("import", Map.of("gradle", Map.of("enabled", true)));
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertTrue("Initial autobuild should be enabled", initial.isAutobuildEnabled());
-		assertTrue("Initial completion should be enabled", initial.isCompletionEnabled());
-		assertFalse("Initial completion overwrite should be false", initial.isCompletionOverwrite());
-		assertTrue("Initial format should be enabled", initial.isJavaFormatEnabled());
-		assertFalse("Initial format on type should be disabled", initial.isJavaFormatOnTypeEnabled());
-		assertTrue("Initial Gradle import should be enabled", initial.isImportGradleEnabled());
+		assertTrue(initial.isAutobuildEnabled(), "Initial autobuild should be enabled");
+		assertTrue(initial.isCompletionEnabled(), "Initial completion should be enabled");
+		assertFalse(initial.isCompletionOverwrite(), "Initial completion overwrite should be false");
+		assertTrue(initial.isJavaFormatEnabled(), "Initial format should be enabled");
+		assertFalse(initial.isJavaFormatOnTypeEnabled(), "Initial format on type should be disabled");
+		assertTrue(initial.isImportGradleEnabled(), "Initial Gradle import should be enabled");
 
 		// Now send a partial update that only changes autobuild and completion overwrite
 		Map<String, Object> partialConfig = new HashMap<>();
@@ -112,14 +112,14 @@ public class PreferencesTest {
 		Preferences updated = Preferences.updateFrom(initial, partialConfig);
 
 		// Verify the updated values changed
-		assertFalse("Updated autobuild should be disabled", updated.isAutobuildEnabled());
-		assertTrue("Updated completion overwrite should be true", updated.isCompletionOverwrite());
+		assertFalse(updated.isAutobuildEnabled(), "Updated autobuild should be disabled");
+		assertTrue(updated.isCompletionOverwrite(), "Updated completion overwrite should be true");
 
 		// Verify the non-updated values were preserved
-		assertTrue("Completion enabled should still be true (preserved)", updated.isCompletionEnabled());
-		assertTrue("Format enabled should still be true (preserved)", updated.isJavaFormatEnabled());
-		assertFalse("Format on type should still be false (preserved)", updated.isJavaFormatOnTypeEnabled());
-		assertTrue("Gradle import should still be enabled (preserved)", updated.isImportGradleEnabled());
+		assertTrue(updated.isCompletionEnabled(), "Completion enabled should still be true (preserved)");
+		assertTrue(updated.isJavaFormatEnabled(), "Format enabled should still be true (preserved)");
+		assertFalse(updated.isJavaFormatOnTypeEnabled(), "Format on type should still be false (preserved)");
+		assertTrue(updated.isImportGradleEnabled(), "Gradle import should still be enabled (preserved)");
 	}
 
 	@Test
@@ -132,8 +132,8 @@ public class PreferencesTest {
 		java.put("completion", Map.of("enabled", true));
 
 		Preferences original = Preferences.createFrom(initialConfig);
-		assertTrue("Original autobuild should be enabled", original.isAutobuildEnabled());
-		assertTrue("Original completion should be enabled", original.isCompletionEnabled());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should be enabled");
+		assertTrue(original.isCompletionEnabled(), "Original completion should be enabled");
 
 		// Update with partial config
 		Map<String, Object> partialConfig = new HashMap<>();
@@ -144,12 +144,12 @@ public class PreferencesTest {
 		Preferences updated = Preferences.updateFrom(original, partialConfig);
 
 		// Verify original wasn't modified
-		assertTrue("Original autobuild should still be enabled", original.isAutobuildEnabled());
-		assertTrue("Original completion should still be enabled", original.isCompletionEnabled());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should still be enabled");
+		assertTrue(original.isCompletionEnabled(), "Original completion should still be enabled");
 
 		// Verify updated has the changes
-		assertFalse("Updated autobuild should be disabled", updated.isAutobuildEnabled());
-		assertTrue("Updated completion should be enabled (preserved)", updated.isCompletionEnabled());
+		assertFalse(updated.isAutobuildEnabled(), "Updated autobuild should be disabled");
+		assertTrue(updated.isCompletionEnabled(), "Updated completion should be enabled (preserved)");
 	}
 
 	@Test
@@ -175,25 +175,25 @@ public class PreferencesTest {
 		assertEquals(original.isInsertSpaces(), cloned.isInsertSpaces());
 
 		// Verify it's a different instance
-		assertNotSame("Clone should be a different instance", original, cloned);
+		assertNotSame(original, cloned, "Clone should be a different instance");
 
 		// Verify modifying clone doesn't affect original
 		cloned.setAutobuildEnabled(false);
 		cloned.setTabSize(2);
 
-		assertTrue("Original autobuild should still be true", original.isAutobuildEnabled());
-		assertEquals("Original tab size should still be 4", 4, original.getTabSize());
-		assertFalse("Cloned autobuild should be false", cloned.isAutobuildEnabled());
-		assertEquals("Cloned tab size should be 2", 2, cloned.getTabSize());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should still be true");
+		assertEquals(4, original.getTabSize(), "Original tab size should still be 4");
+		assertFalse(cloned.isAutobuildEnabled(), "Cloned autobuild should be false");
+		assertEquals(2, cloned.getTabSize(), "Cloned tab size should be 2");
 	}
 
 	@Test
 	public void testMultiplePartialUpdates() {
 		// Start with default preferences
 		Preferences prefs = new Preferences();
-		assertTrue("Default autobuild should be enabled", prefs.isAutobuildEnabled());
-		assertTrue("Default completion should be enabled", prefs.isCompletionEnabled());
-		assertTrue("Default format should be enabled", prefs.isJavaFormatEnabled());
+		assertTrue(prefs.isAutobuildEnabled(), "Default autobuild should be enabled");
+		assertTrue(prefs.isCompletionEnabled(), "Default completion should be enabled");
+		assertTrue(prefs.isJavaFormatEnabled(), "Default format should be enabled");
 
 		// First partial update: disable autobuild
 		Map<String, Object> update1 = new HashMap<>();
@@ -202,9 +202,9 @@ public class PreferencesTest {
 		java1.put("autobuild", Map.of("enabled", false));
 
 		prefs = Preferences.updateFrom(prefs, update1);
-		assertFalse("Autobuild should be disabled after update 1", prefs.isAutobuildEnabled());
-		assertTrue("Completion should still be enabled after update 1", prefs.isCompletionEnabled());
-		assertTrue("Format should still be enabled after update 1", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should be disabled after update 1");
+		assertTrue(prefs.isCompletionEnabled(), "Completion should still be enabled after update 1");
+		assertTrue(prefs.isJavaFormatEnabled(), "Format should still be enabled after update 1");
 
 		// Second partial update: disable completion
 		Map<String, Object> update2 = new HashMap<>();
@@ -213,9 +213,9 @@ public class PreferencesTest {
 		java2.put("completion", Map.of("enabled", false));
 
 		prefs = Preferences.updateFrom(prefs, update2);
-		assertFalse("Autobuild should still be disabled after update 2", prefs.isAutobuildEnabled());
-		assertFalse("Completion should be disabled after update 2", prefs.isCompletionEnabled());
-		assertTrue("Format should still be enabled after update 2", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should still be disabled after update 2");
+		assertFalse(prefs.isCompletionEnabled(), "Completion should be disabled after update 2");
+		assertTrue(prefs.isJavaFormatEnabled(), "Format should still be enabled after update 2");
 
 		// Third partial update: disable format
 		Map<String, Object> update3 = new HashMap<>();
@@ -224,9 +224,9 @@ public class PreferencesTest {
 		java3.put("format", Map.of("enabled", false));
 
 		prefs = Preferences.updateFrom(prefs, update3);
-		assertFalse("Autobuild should still be disabled after update 3", prefs.isAutobuildEnabled());
-		assertFalse("Completion should still be disabled after update 3", prefs.isCompletionEnabled());
-		assertFalse("Format should be disabled after update 3", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should still be disabled after update 3");
+		assertFalse(prefs.isCompletionEnabled(), "Completion should still be disabled after update 3");
+		assertFalse(prefs.isJavaFormatEnabled(), "Format should be disabled after update 3");
 	}
 
 	@Test
@@ -245,10 +245,10 @@ public class PreferencesTest {
 		));
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertTrue("Initial format should be enabled", initial.isJavaFormatEnabled());
-		assertTrue("Initial format on type should be enabled", initial.isJavaFormatOnTypeEnabled());
-		assertTrue("Initial completion should be enabled", initial.isCompletionEnabled());
-		assertNotNull("Initial favorite members should not be null", initial.getJavaCompletionFavoriteMembers());
+		assertTrue(initial.isJavaFormatEnabled(), "Initial format should be enabled");
+		assertTrue(initial.isJavaFormatOnTypeEnabled(), "Initial format on type should be enabled");
+		assertTrue(initial.isCompletionEnabled(), "Initial completion should be enabled");
+		assertNotNull(initial.getJavaCompletionFavoriteMembers(), "Initial favorite members should not be null");
 
 		// Partial update: only change format.enabled, leave format.onType untouched
 		Map<String, Object> partialConfig = new HashMap<>();
@@ -260,14 +260,14 @@ public class PreferencesTest {
 		Preferences updated = Preferences.updateFrom(initial, partialConfig);
 
 		// Verify the specific nested property changed
-		assertFalse("Updated format should be disabled", updated.isJavaFormatEnabled());
+		assertFalse(updated.isJavaFormatEnabled(), "Updated format should be disabled");
 
 		// Verify other nested property was preserved
-		assertTrue("Format on type should still be enabled (preserved)", updated.isJavaFormatOnTypeEnabled());
+		assertTrue(updated.isJavaFormatOnTypeEnabled(), "Format on type should still be enabled (preserved)");
 
 		// Verify unrelated properties were preserved
-		assertTrue("Completion should still be enabled (preserved)", updated.isCompletionEnabled());
-		assertNotNull("Favorite members should still be present (preserved)", updated.getJavaCompletionFavoriteMembers());
+		assertTrue(updated.isCompletionEnabled(), "Completion should still be enabled (preserved)");
+		assertNotNull(updated.getJavaCompletionFavoriteMembers(), "Favorite members should still be present (preserved)");
 	}
 
 	@Test
@@ -280,8 +280,8 @@ public class PreferencesTest {
 		java.put("completion", Map.of("enabled", false));
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertFalse("Initial autobuild should be disabled", initial.isAutobuildEnabled());
-		assertFalse("Initial completion should be disabled", initial.isCompletionEnabled());
+		assertFalse(initial.isAutobuildEnabled(), "Initial autobuild should be disabled");
+		assertFalse(initial.isCompletionEnabled(), "Initial completion should be disabled");
 
 		// Send empty partial update
 		Map<String, Object> emptyConfig = new HashMap<>();
@@ -289,8 +289,8 @@ public class PreferencesTest {
 		Preferences updated = Preferences.updateFrom(initial, emptyConfig);
 
 		// Verify everything was preserved
-		assertFalse("Autobuild should still be disabled", updated.isAutobuildEnabled());
-		assertFalse("Completion should still be disabled", updated.isCompletionEnabled());
+		assertFalse(updated.isAutobuildEnabled(), "Autobuild should still be disabled");
+		assertFalse(updated.isCompletionEnabled(), "Completion should still be disabled");
 	}
 
 	@Test

@@ -14,7 +14,9 @@
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,8 +34,7 @@ import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 	private IJavaProject fJavaProject;
@@ -76,7 +77,7 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 		StubUtility.setCodeTemplate(CodeTemplateContextType.CONSTRUCTORSTUB_ID, constructorBody, null);
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		StandardProjectsManager.configureSettings(preferences, true);
 		fJavaProject = newEmptyProject();
@@ -95,9 +96,9 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 				return;
 			}
 			if (actual == null) {
-				Assert.assertTrue("Content not as expected: is 'null' expected: " + expected, false);
+				fail("Content not as expected: is 'null', expected: " + expected);
 			} else {
-				Assert.assertTrue("Content not as expected: expected 'null' is: " + actual, false);
+				fail("Content not as expected: expected 'null', is: " + actual);
 			}
 		}
 
@@ -116,7 +117,7 @@ public class AbstractSourceTestCase extends AbstractProjectsManagerBasedTest {
 				String diffStr = (s1 == null) ? s2 : s1;
 
 				String message = "Content not as expected: Content is: \n" + actual + "\nDiffers at line " + line + ": " + diffStr + "\nExpected contents: \n" + expected;
-				Assert.assertEquals(message, expected, actual);
+				assertEquals(expected, actual, message);
 			}
 			line++;
 		} while (true);

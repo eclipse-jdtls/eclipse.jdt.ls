@@ -13,9 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,13 +37,13 @@ import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand.SourceA
 import org.eclipse.jdt.ls.core.internal.commands.SourceAttachmentCommand.SourceAttachmentResult;
 import org.eclipse.jdt.ls.core.internal.handlers.SourceAttachUpdateHandler.SourceInvalidatedEvent;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SourceAttachUpdateHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Mock
 	private JavaClientConnection connection;

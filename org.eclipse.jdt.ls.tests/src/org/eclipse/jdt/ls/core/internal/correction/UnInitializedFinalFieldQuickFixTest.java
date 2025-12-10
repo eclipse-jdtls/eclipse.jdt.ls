@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -29,15 +29,15 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class UnInitializedFinalFieldQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject javaProject;
 	private IPackageFragmentRoot sourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		javaProject = newEmptyProject();
 		Map<String, String> options = TestOptions.getDefaultOptions();

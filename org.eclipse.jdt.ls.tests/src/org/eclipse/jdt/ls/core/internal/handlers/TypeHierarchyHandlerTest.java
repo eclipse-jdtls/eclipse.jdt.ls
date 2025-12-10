@@ -12,8 +12,8 @@
 *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -29,15 +29,15 @@ import org.eclipse.lsp4j.TypeHierarchyItem;
 import org.eclipse.lsp4j.TypeHierarchyPrepareParams;
 import org.eclipse.lsp4j.TypeHierarchySubtypesParams;
 import org.eclipse.lsp4j.TypeHierarchySupertypesParams;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TypeHierarchyHandlerTest extends AbstractInvisibleProjectBasedTest {
 
 	private IProject fJProject;
 	private TypeHierarchyHandler fHandler;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/salut");
 		fJProject = WorkspaceHelper.getProject("salut");

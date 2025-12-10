@@ -14,10 +14,10 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -42,7 +42,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GenerateToStringHandlerTest extends AbstractSourceTestCase {
 	@Test

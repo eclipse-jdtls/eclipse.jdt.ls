@@ -13,13 +13,13 @@
 
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 public class JLSFsUtilsTest {
 	@Test
@@ -45,7 +45,7 @@ public class JLSFsUtilsTest {
 		assertTrue(JLSFsUtils.isExcluded(path));
 	}
 
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		System.clearProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT);
 	}

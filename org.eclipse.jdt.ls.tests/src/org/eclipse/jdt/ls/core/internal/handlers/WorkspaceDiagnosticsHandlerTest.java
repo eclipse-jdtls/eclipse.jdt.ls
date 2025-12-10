@@ -13,9 +13,9 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.atMost;
@@ -53,7 +53,6 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.eclipse.jdt.ls.tests.Unstable;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
@@ -63,22 +62,26 @@ import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.Messages;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author Fred Bricon
  *
  */
 @SuppressWarnings("restriction")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -93,13 +96,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		return diff;
 	};
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		handler = new WorkspaceDiagnosticsHandler(connection, projectsManager, preferenceManager.getClientPreferences());
 		handler.addResourceChangeListener();
 	}
 
-	@After
+	@AfterEach
 	@Override
 	public void cleanUp() throws Exception {
 		super.cleanUp();
@@ -179,11 +182,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		projectsManager.setConnection(client);
 
 		Optional<PublishDiagnosticsParams> taskDiags = allCalls.stream().filter(p -> p.getUri().endsWith("TaskMarkerTest.java")).findFirst();
-		assertTrue("No TaskMarkerTest.java markers were found", taskDiags.isPresent());
+		assertTrue(taskDiags.isPresent(), "No TaskMarkerTest.java markers were found");
 		List<Diagnostic> diags = taskDiags.get().getDiagnostics();
-		assertEquals("Some marker is missing", 3, diags.size());
+		assertEquals(3, diags.size(), "Some marker is missing");
 		long todoMarkers = diags.stream().filter(p -> p.getMessage().startsWith("TODO")).count();
-		assertEquals("A TODO marker is missing", todoMarkers, 2);
+		assertEquals(2, todoMarkers, "A TODO marker is missing");
 		Collections.sort(diags, new Comparator<Diagnostic>() {
 
 			@Override
@@ -254,11 +257,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		*/
 
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
-		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
+		assertTrue(pomDiags.isPresent(), "No pom.xml errors were found");
 		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
 		// https://github.com/redhat-developer/vscode-java/issues/2857
 		// m2e 2.2.0 returns 3 markers
-		assertEquals(diags.toString(), 3, diags.size());
+		assertEquals(3, diags.size(), diags.toString());
 		Diagnostic diag = diags.stream().filter(d -> d.getMessage().startsWith("Project build error")).findFirst().get();
 		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diag.getMessage());
 	}
@@ -273,16 +276,16 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
 		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/broken"))||p.getUri().endsWith("maven/broken/")).findFirst();
-		assertTrue("No maven/broken errors were found", projectDiags.isPresent());
+		assertTrue(projectDiags.isPresent(), "No maven/broken errors were found");
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
-		assertEquals(diags.toString(), 2, diags.size());
+		assertEquals(2, diags.size(), diags.toString());
 		assertTrue(diags.get(1).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
-		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
+		assertTrue(pomDiags.isPresent(), "No pom.xml errors were found");
 		diags = pomDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
-		assertEquals(diags.toString(), 3, diags.size());
+		assertEquals(3, diags.size(), diags.toString());
 		assertTrue(diags.get(2).getMessage().startsWith("Project build error: "));
 	}
 
@@ -309,7 +312,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Optional<PublishDiagnosticsParams> param = allCalls.stream().filter(p -> p.getUri().equals(uri)).findFirst();
 		assertTrue(param.isPresent());
 		List<Diagnostic> diags = param.get().getDiagnostics();
-		assertEquals(diags.toString(), 2, diags.size());
+		assertEquals(2, diags.size(), diags.toString());
 		Optional<Diagnostic> d = diags.stream().filter(p -> p.getMessage().equals("The type A is already defined")).findFirst();
 		assertTrue(d.isPresent());
 		Diagnostic diag = d.get();
@@ -418,7 +421,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<IMarker> warnings = ResourceUtils.getWarningMarkers(project);
 
 		Optional<IMarker> outOfDateWarning = warnings.stream().filter(w -> Messages.ProjectConfigurationUpdateRequired.equals(ResourceUtils.getMessage(w))).findFirst();
-		assertTrue("No out-of-date warning found", outOfDateWarning.isPresent());
+		assertTrue(outOfDateWarning.isPresent(), "No out-of-date warning found");
 
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
@@ -426,11 +429,11 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		Collections.reverse(allCalls);
 		projectsManager.setConnection(client);
 		Optional<PublishDiagnosticsParams>projectDiags=allCalls.stream().filter(p->(p.getUri().endsWith("maven/salut"))||p.getUri().endsWith("maven/salut/")).findFirst();
-		assertTrue("No maven/salut errors were found", projectDiags.isPresent());
+		assertTrue(projectDiags.isPresent(), "No maven/salut errors were found");
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
-		assertTrue("No pom.xml errors were found", pomDiags.isPresent());
+		assertTrue(pomDiags.isPresent(), "No pom.xml errors were found");
 		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
-		assertEquals(diags.toString(), 1, diags.size());
+		assertEquals(1, diags.size(), diags.toString());
 		Diagnostic diag = diags.get(0);
 		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
@@ -509,13 +512,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 				pomDiags.addAll(diag.getDiagnostics());
 			}
 		}
-		assertTrue("No maven/salut errors were found", projectDiags.size() > 0);
+		assertTrue(projectDiags.size() > 0, "No maven/salut errors were found");
 		Optional<Diagnostic> projectDiag = projectDiags.stream().filter(p -> p.getMessage().contains("references non existing library")).findFirst();
-		assertTrue("No 'references non existing library' diagnostic", projectDiag.isPresent());
+		assertTrue(projectDiag.isPresent(), "No 'references non existing library' diagnostic");
 		assertEquals(projectDiag.get().getSeverity(), DiagnosticSeverity.Error);
-		assertTrue("No pom.xml errors were found", pomDiags.size() > 0);
+		assertTrue(pomDiags.size() > 0, "No pom.xml errors were found");
 		Optional<Diagnostic> pomDiag = pomDiags.stream().filter(p -> p.getMessage().startsWith("Missing artifact")).findFirst();
-		assertTrue("No 'missing artifact' diagnostic", pomDiag.isPresent());
+		assertTrue(pomDiag.isPresent(), "No 'missing artifact' diagnostic");
 		assertTrue(pomDiag.get().getMessage().startsWith("Missing artifact"));
 		assertEquals(pomDiag.get().getRange().getStart().getLine(), 19);
 		assertEquals(pomDiag.get().getRange().getStart().getCharacter(), 3);
@@ -525,7 +528,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	}
 
 	@Test
-	@Category(Unstable.class)
+	@Disabled("This test is unstable")
+	@Tag("unstable")
 	public void testResetPomDiagnostics() throws Exception {
 		//import project
 		importProjects("maven/multimodule");
@@ -557,8 +561,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 
 		List<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml") && !p.getDiagnostics().isEmpty()).collect(Collectors.toList());
-		assertEquals("No pom.xml errors were found", 3, pomDiags.size());
-		assertTrue(pomDiags.get(0).getUri(), pomDiags.get(0).getUri().endsWith("childmodule/pom.xml"));
+		assertEquals(3, pomDiags.size(), "No pom.xml errors were found");
+		assertTrue(pomDiags.get(0).getUri().endsWith("childmodule/pom.xml"), pomDiags.get(0).getUri());
 		assertEquals(1, pomDiags.get(0).getDiagnostics().size());
 		assertEquals(pomDiags.get(0).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
 		assertTrue(pomDiags.get(1).getUri().endsWith("module2/pom.xml"));
@@ -583,19 +587,19 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		for (PublishDiagnosticsParams diag : pomDiags) {
 			String uri = diag.getUri();
 			if (uri.endsWith("childmodule/pom.xml")) {
-				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 0, diag.getDiagnostics().size());
+				assertEquals(0, diag.getDiagnostics().size(), "Unexpected diagnostics:\n" + diag.getDiagnostics());
 				reset1 = true;
 			} else if (uri.endsWith("module2/pom.xml")) {
-				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 0, diag.getDiagnostics().size());
+				assertEquals(0, diag.getDiagnostics().size(), "Unexpected diagnostics:\n" + diag.getDiagnostics());
 				reset2 = true;
 			} else if (uri.endsWith("module3/pom.xml")) {//not a active module so was not updated. But this is actually a dubious behavior. Need to change that
-				assertEquals("Unexpected diagnostics:\n" + diag.getDiagnostics(), 1, diag.getDiagnostics().size());
+				assertEquals(1, diag.getDiagnostics().size(), "Unexpected diagnostics:\n" + diag.getDiagnostics());
 				reset3 = false;
 			}
 		}
-		assertTrue("childmodule/pom.xml diagnostics were not reset", reset1);
-		assertTrue("module2/pom.xml diagnostics were not reset", reset2);
-		assertFalse("module3/pom.xml diagnostics were reset", reset3);
+		assertTrue(reset1, "childmodule/pom.xml diagnostics were not reset");
+		assertTrue(reset2, "module2/pom.xml diagnostics were not reset");
+		assertFalse(reset3, "module3/pom.xml diagnostics were reset");
 
 	}
 
@@ -604,7 +608,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		importProjects("eclipse/unresolvedtype");
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("unresolvedtype");
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
-		assertTrue("unresolved type in Foo.java", markers.stream().anyMatch((marker) -> marker.getResource() != null && ((IFile) marker.getResource()).getName().endsWith("Foo.java")));
+		assertTrue(markers.stream().anyMatch((marker) -> marker.getResource() != null && ((IFile) marker.getResource()).getName().endsWith("Foo.java")), "unresolved type in Foo.java");
 
 		reset(connection);
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
@@ -616,8 +620,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		List<PublishDiagnosticsParams> allCalls = captor.getAllValues();
 		List<PublishDiagnosticsParams> errors = allCalls.stream().filter((p) -> p.getUri().endsWith("Foo.java")).collect(Collectors.toList());
-		assertTrue("Should update the children's diagnostics of the deleted package", errors.size() == 1);
-		assertTrue("Should clean up the children's diagnostics of the deleted package", errors.get(0).getDiagnostics().isEmpty());
+		assertEquals(1, errors.size(), "Should update the children's diagnostics of the deleted package");
+		assertTrue(errors.get(0).getDiagnostics().isEmpty(), "Should clean up the children's diagnostics of the deleted package");
 	}
 
 	@Test
@@ -656,7 +660,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());
 		for (PublishDiagnosticsParams param : captor.getAllValues()) {
-			assertTrue(param.getUri() + " should have been excluded from diagnostics.", !param.getUri().contains("Foo"));
+			assertFalse(param.getUri().contains("Foo"), param.getUri() + " should have been excluded from diagnostics.");
 		}
 	}
 

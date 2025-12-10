@@ -13,8 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -31,12 +31,12 @@ import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 
-	@Before
+	@BeforeEach
 	public void initPreferences() throws Exception{
 		preferences.setInlayHintsSuppressedWhenSameNameNumberedParameter(true);
 	}
@@ -534,7 +534,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
 
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
-		assertEquals(inlayHints.toString(), 0, inlayHints.size());
+		assertEquals(0, inlayHints.size(), inlayHints.toString());
 	}
 
 	@Test
@@ -558,7 +558,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
 		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
-		assertEquals(inlayHints.toString(), 2, inlayHints.size());
+		assertEquals(2, inlayHints.size(), inlayHints.toString());
 		// Should show type hints for lambda parameters only (no 'action:' parameter hint)
 		assertEquals("String", inlayHints.get(0).getLabel().getLeft());
 		assertEquals("Integer", inlayHints.get(1).getLabel().getLeft());
@@ -649,8 +649,8 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 				}
 			}
 		}
-		assertTrue("Should find inlay hint for _greeting", foundGreeting);
-		assertTrue("Should find inlay hint for _string", foundString);
+		assertTrue(foundGreeting, "Should find inlay hint for _greeting");
+		assertTrue(foundString, "Should find inlay hint for _string");
 	}
 
 	@Test
@@ -675,7 +675,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
 
 		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
-		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+		assertTrue(inlayHints.isEmpty(), "Should not show inlay hints for methods with same prefix+number parameters");
 	}
 
 	@Test
@@ -699,7 +699,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
 
 		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
-		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+		assertTrue(inlayHints.isEmpty(), "Should not show inlay hints for methods with same prefix+number parameters");
 	}
 
 	@Test

@@ -13,8 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -35,13 +36,16 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private PrepareRenameHandler handler;
@@ -50,7 +54,7 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IPackageFragmentRoot sourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
@@ -275,108 +279,117 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(result.getLeft().getStart().getLine() > 0);
 	}
 
-	@Test(expected = ResponseErrorException.class)
-	public void testRenamePackage() throws JavaModelException, BadLocationException {
+	@Test
+	void testRenamePackage() {
 		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		assertThrows(ResponseErrorException.class, () -> {
+			IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+			IPackageFragment pack2 = sourceFolder.createPackageFragment("parent.test2", false, null);
 
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-		IPackageFragment pack2 = sourceFolder.createPackageFragment("parent.test2", false, null);
+			String[] codes1= {
+					"package test1;\n",
+					"import parent.test2.B;\n",
+					"public class A {\n",
+					"   public void foo(){\n",
+					"		B b = new B();\n",
+					"		b.foo();\n",
+					"	}\n",
+					"}\n"
+			};
 
-		String[] codes1= {
-				"package test1;\n",
-				"import parent.test2.B;\n",
-				"public class A {\n",
-				"   public void foo(){\n",
-				"		B b = new B();\n",
-				"		b.foo();\n",
-				"	}\n",
-				"}\n"
-		};
+			String[] codes2 = {
+					"package parent.test2|*;\n",
+					"public class B {\n",
+					"	public B() {}\n",
+					"   public void foo() {}\n",
+					"}\n"
+			};
+			StringBuilder builderA = new StringBuilder();
+			mergeCode(builderA, codes1);
+			pack1.createCompilationUnit("A.java", builderA.toString(), false, null);
 
-		String[] codes2 = {
-				"package parent.test2|*;\n",
-				"public class B {\n",
-				"	public B() {}\n",
-				"   public void foo() {}\n",
-				"}\n"
-		};
-		StringBuilder builderA = new StringBuilder();
-		mergeCode(builderA, codes1);
-		pack1.createCompilationUnit("A.java", builderA.toString(), false, null);
+			StringBuilder builderB = new StringBuilder();
+			Position pos = mergeCode(builderB, codes2);
+			ICompilationUnit cuB = pack2.createCompilationUnit("B.java", builderB.toString(), false, null);
 
-		StringBuilder builderB = new StringBuilder();
-		Position pos = mergeCode(builderB, codes2);
-		ICompilationUnit cuB = pack2.createCompilationUnit("B.java", builderB.toString(), false, null);
-
-		prepareRename(cuB, pos, "parent.newpackage");
+			prepareRename(cuB, pos, "parent.newpackage");
+		});
 	}
 
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameMiddleOfPackage() throws JavaModelException, BadLocationException {
+	@Test
+	void testRenameMiddleOfPackage() {
 		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		assertThrows(ResponseErrorException.class, () -> {
+			IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
 
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
-
-		//@formatter:off
-		String[] content = {
-			"package |*ex.amples;\n",
-			"public class A {}\n"
-		};
-		//@formatter:on
-		StringBuilder builder = new StringBuilder();
-		Position pos = mergeCode(builder, content);
-		ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
-
-		prepareRename(cu, pos, "ex.am.ple");
-
-		//@formatter:off
-		String[] content2 = {
-			"package ex.|*amples;\n",
-			"public class A {}\n"
-		};
-		//@formatter:on
-		builder = new StringBuilder();
-		pos = mergeCode(builder, content2);
-		cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
-
-		prepareRename(cu, pos, "ex.am.ple");
-	}
-
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameClassFile() throws JavaModelException, BadLocationException {
-		testRenameClassFile("Ex|*ception");
-	}
-
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameFQCNClassFile() throws JavaModelException, BadLocationException {
-		testRenameClassFile("java.lang.Ex|*ception");
-	}
-
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameBinaryPackage() throws JavaModelException, BadLocationException {
-		testRenameClassFile("java.net|*.URI");
-	}
-
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameImportDeclaration() throws JavaModelException, BadLocationException {
-		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
-
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
-
-		{
-		//@formatter:off
-		String[] content = {
-			"package ex.amples;\n",
-			"import java.ne|*t.URI;\n",
-			"public class A {}\n"
-		};
-		//@formatter:on
+			//@formatter:off
+			String[] content = {
+				"package |*ex.amples;\n",
+				"public class A {}\n"
+			};
+			//@formatter:on
 			StringBuilder builder = new StringBuilder();
 			Position pos = mergeCode(builder, content);
 			ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
 
-			prepareRename(cu, pos, "");
-		}
+			prepareRename(cu, pos, "ex.am.ple");
+
+			//@formatter:off
+			String[] content2 = {
+				"package ex.|*amples;\n",
+				"public class A {}\n"
+			};
+			//@formatter:on
+			builder = new StringBuilder();
+			pos = mergeCode(builder, content2);
+			cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+			prepareRename(cu, pos, "ex.am.ple");
+		});
+	}
+
+	@Test
+	void testRenameClassFile() {
+		assertThrows(ResponseErrorException.class, () -> {
+			testRenameClassFile("Ex|*ception");
+		});
+	}
+
+	@Test
+	void testRenameFQCNClassFile() {
+		assertThrows(ResponseErrorException.class, () -> {
+			testRenameClassFile("java.lang.Ex|*ception");
+		});
+	}
+
+	@Test
+	void testRenameBinaryPackage() {
+		assertThrows(ResponseErrorException.class, () -> {
+			testRenameClassFile("java.net|*.URI");
+		});
+	}
+
+	@Test
+	void testRenameImportDeclaration() {
+		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		assertThrows(ResponseErrorException.class, () -> {
+			IPackageFragment pack1 = sourceFolder.createPackageFragment("ex.amples", false, null);
+
+			{
+			//@formatter:off
+			String[] content = {
+				"package ex.amples;\n",
+				"import java.ne|*t.URI;\n",
+				"public class A {}\n"
+			};
+			//@formatter:on
+				StringBuilder builder = new StringBuilder();
+				Position pos = mergeCode(builder, content);
+				ICompilationUnit cu = pack1.createCompilationUnit("A.java", builder.toString(), false, null);
+
+				prepareRename(cu, pos, "");
+			}
+		});
 	}
 
 	private void testRenameClassFile(String type) throws JavaModelException, BadLocationException {

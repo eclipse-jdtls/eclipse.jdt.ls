@@ -13,10 +13,10 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URI;
@@ -59,15 +59,15 @@ import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author Fred Bricon
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBasedTest {
 
 	@Test
@@ -75,7 +75,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 		//Add jars to fix compilation errors
 		addLibs(projectFolder.toPath());
@@ -87,7 +87,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		{
 			IJavaProject javaProject = JavaCore.create(project);
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
-			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+			assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 			assertEquals("foo.jar", classpath[2].getPath().lastSegment());
 			assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 		}
@@ -100,7 +100,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		{
 			IJavaProject javaProject = JavaCore.create(project);
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
-			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+			assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 			assertEquals("foo.jar", classpath[2].getPath().lastSegment());
 			assertNull(classpath[2].getSourceAttachmentPath());
 		}
@@ -115,11 +115,11 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		{
 			IJavaProject javaProject = JavaCore.create(project);
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
-			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 2, classpath.length);
+			assertEquals(2, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 		}
 		//back to square 1
 		errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 	}
 
@@ -128,7 +128,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 		//Add jars to fix compilation errors
 		addLibs(projectFolder.toPath());
@@ -153,7 +153,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 				Thread.sleep(5);
 			}
 			waitForBackgroundJobs();
-			assertEquals("Update classpath job should have been invoked once", 1, jobInvocations[0]);
+			assertEquals(1, jobInvocations[0], "Update classpath job should have been invoked once");
 		} finally {
 			Job.getJobManager().removeJobChangeListener(listener);
 		}
@@ -161,7 +161,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		{
 			IJavaProject javaProject = JavaCore.create(project);
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
-			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+			assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 			assertEquals("foo.jar", classpath[2].getPath().lastSegment());
 			assertEquals("foo-sources.jar", classpath[2].getSourceAttachmentPath().lastSegment());
 		}
@@ -173,7 +173,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 		File originBinary = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo.jar");
 		File originSource = new File(getSourceProjectDirectory(), "eclipse/source-attachment/foo-sources.jar");
@@ -223,7 +223,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			projectsManager.fileChanged(fooBinary.toURI().toString(), CHANGE_TYPE.CREATED); // Request sent by jdt.ls's lib detection
 			UpdateClasspathJob.getInstance().updateClasspath(javaProject, include, exclude, sources); // Request sent by third-party client
 			waitForBackgroundJobs();
-			assertEquals("Update classpath job should have been invoked once", 1, jobInvocations[0]);
+			assertEquals(1, jobInvocations[0], "Update classpath job should have been invoked once");
 		} finally {
 			Job.getJobManager().removeJobChangeListener(listener);
 		}
@@ -233,7 +233,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			// So latter's `exclude: lib/foo.jar` comes into effect to block former's `include: lib/foo.jar`
 			IClasspathEntry[] classpath = javaProject.getRawClasspath();
 			// Check only one jar file is added to classpath (foo.jar is excluded)
-			assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+			assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 			// Check the only added jar is bar.jar
 			assertEquals("bar.jar", classpath[2].getPath().lastSegment());
 			assertEquals("bar-src.jar", classpath[2].getSourceAttachmentPath().lastSegment());
@@ -280,7 +280,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		File projectFolder = createSourceFolderWithMissingLibs("dynamicLibDetection");
 		IProject project = importRootFolder(projectFolder, "Test.java");
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 		ReferencedLibraries libraries = new ReferencedLibraries();
 		libraries.getInclude().add("lib/foo.jar");
@@ -321,9 +321,9 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 				waitForBackgroundJobs();
 				IClasspathEntry[] classpath = javaProject.getRawClasspath();
 				Optional<IClasspathEntry> fooEntry = Arrays.stream(classpath).filter(c -> c.getPath().lastSegment().equals("foo.jar")).findFirst();
-				assertTrue("Cannot find foo binary", fooEntry.isPresent());
-				assertEquals("Update classpath job should have been invoked 1 times", 1, jobInvocations[0]);
-				assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 3, classpath.length);
+				assertTrue(fooEntry.isPresent(), "Cannot find foo binary");
+				assertEquals(1, jobInvocations[0], "Update classpath job should have been invoked 1 times");
+				assertEquals(3, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 				assertEquals("foo.jar", fooEntry.get().getPath().lastSegment());
 				assertEquals("foo-sources.jar", fooEntry.get().getSourceAttachmentPath().lastSegment());
 			}
@@ -340,9 +340,9 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 				waitForBackgroundJobs();
 				IClasspathEntry[] classpath = javaProject.getRawClasspath();
 				Optional<IClasspathEntry> barEntry = Arrays.stream(classpath).filter(c -> c.getPath().lastSegment().equals("bar.jar")).findFirst();
-				assertTrue("Cannot find bar binary", barEntry.isPresent());
-				assertEquals("Update classpath job should have been invoked 2 times", 2, jobInvocations[0]);
-				assertEquals("Unexpected classpath:\n" + JavaProjectHelper.toString(classpath), 4, classpath.length);
+				assertTrue(barEntry.isPresent(), "Cannot find bar binary");
+				assertEquals(2, jobInvocations[0], "Update classpath job should have been invoked 2 times");
+				assertEquals(4, classpath.length, "Unexpected classpath:\n" + JavaProjectHelper.toString(classpath));
 				assertEquals("bar.jar", barEntry.get().getPath().lastSegment());
 				assertEquals("bar-src.jar", barEntry.get().getSourceAttachmentPath().lastSegment());
 			}
@@ -357,8 +357,8 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 				FileUtils.copyFile(originSource, excludeSource);
 				projectsManager.fileChanged(excludeBinary.toURI().toString(), CHANGE_TYPE.CREATED); // won't send update request
 				waitForBackgroundJobs();
-				assertEquals("Update classpath job should still have been invoked 2 times", 2, jobInvocations[0]);
-				assertEquals("Classpath length should still be 4", 4, javaProject.getRawClasspath().length);
+				assertEquals(2, jobInvocations[0], "Update classpath job should still have been invoked 2 times");
+				assertEquals(4, javaProject.getRawClasspath().length, "Classpath length should still be 4");
 			}
 		} finally {
 			Job.getJobManager().removeJobChangeListener(listener);
@@ -372,7 +372,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			Map<String, Object> configuration = new HashMap<>();
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = Preferences.JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
-			assertEquals("Configuration with no corresponding field", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with no corresponding field");
 		}
 
 		{ // Test import of referenced libraries with a shortcut list
@@ -381,7 +381,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			configuration.put(Preferences.JAVA_PROJECT_REFERENCED_LIBRARIES_KEY, include);
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include));
-			assertEquals("Configuration with shortcut include array", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with shortcut include array");
 		}
 
 		{ // Test import of referenced libraries object with include
@@ -392,7 +392,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include), new HashSet<>(), new HashMap<>());
-			assertEquals("Configuration with include", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with include");
 		}
 
 		{ // Test import of referenced libraries object with include and exclude
@@ -405,7 +405,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include), new HashSet<>(exclude), new HashMap<>());
-			assertEquals("Configuration with include and exclude", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with include and exclude");
 		}
 
 		{ // Test import of referenced libraries object with include and sources
@@ -420,7 +420,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include), new HashSet<>(), sources);
-			assertEquals("Configuration with include and sources", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with include and sources");
 		}
 
 		{ // Test import of referenced libraries object with include, exclude and sources
@@ -437,7 +437,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(include), new HashSet<>(exclude), sources);
-			assertEquals("Configuration with include, exclude and sources", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with include, exclude and sources");
 		}
 
 		{ // Test import of referenced libraries with exclude and sources
@@ -452,7 +452,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(exclude), sources);
-			assertEquals("Configuration with exclude and sources", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with exclude and sources");
 		}
 
 		{ // Test import of referenced libraries with only exclude
@@ -463,7 +463,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(exclude), new HashMap<>());
-			assertEquals("Configuration with exclude", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with exclude");
 		}
 
 		{ // Test import of referenced libraries with only sources
@@ -476,7 +476,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 			}});
 			Preferences preferences = Preferences.createFrom(configuration);
 			ReferencedLibraries libraries = new ReferencedLibraries(new HashSet<>(), new HashSet<>(), sources);
-			assertEquals("Configuration with sources", libraries, preferences.getReferencedLibraries());
+			assertEquals(libraries, preferences.getReferencedLibraries(), "Configuration with sources");
 		}
 	}
 
@@ -523,7 +523,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		waitForBackgroundJobs();
 
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 0, errors.size());
+		assertEquals(0, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 		IJavaProject javaProject = JavaCore.create(project);
 		IClasspathEntry remark = JavaProjectHelper.findJarEntry(javaProject, "remark.jar");
@@ -564,7 +564,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
 		String javadoc = hover.getContents().getLeft().get(1).getLeft();
-		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
+		assertTrue(javadoc.contains("The class that manages converting HTML to Markdown"), "Unexpected Javadoc:" + javadoc);
 
 		// add another artifact to lib folder
 		File jsoupFile = DependencyUtil.getArtifact("org.jsoup", "jsoup", "1.9.2", null);
@@ -587,7 +587,7 @@ public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBa
 		assertNotNull(remark.getSourceAttachmentPath());
 		assertNotNull(hover);
 		javadoc = hover.getContents().getLeft().get(1).getLeft();
-		assertTrue("Unexpected Javadoc:" + javadoc, javadoc.contains("The class that manages converting HTML to Markdown"));
+		assertTrue(javadoc.contains("The class that manages converting HTML to Markdown"), "Unexpected Javadoc:" + javadoc);
 
 	}
 }

@@ -19,13 +19,13 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class ExtractConstantTest extends AbstractSelectionTest {
 
 	private IJavaProject fJProject1;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

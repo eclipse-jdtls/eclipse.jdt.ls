@@ -13,7 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -27,7 +27,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.internal.core.ClasspathEntry;
 import org.eclipse.jdt.internal.core.JavaProject;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SharedIndexTest extends AbstractProjectsManagerBasedTest {
 
@@ -55,8 +55,8 @@ public class SharedIndexTest extends AbstractProjectsManagerBasedTest {
 							sharedIndexFile = new File(expectedIndexUrl.getPath());
 						}
 
-						assertTrue("shared index file should exist", sharedIndexFile.exists());
-						assertTrue("library index should be generated in shared location", sharedIndexFile.toPath().startsWith(newIndexPath.toAbsolutePath()));
+						assertTrue(sharedIndexFile.exists(), "shared index file should exist");
+						assertTrue(sharedIndexFile.toPath().startsWith(newIndexPath.toAbsolutePath()), "library index should be generated in shared location");
 					}
 				}
 		} finally {
