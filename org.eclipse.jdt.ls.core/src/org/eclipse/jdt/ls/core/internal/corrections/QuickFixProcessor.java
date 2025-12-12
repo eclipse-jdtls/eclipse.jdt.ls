@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 202525 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -223,10 +223,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addNLSProposals(context, problem,
 			// proposals);
 			// break;
-			// case IProblem.UnnecessaryNLSTag:
-			// LocalCorrectionsSubProcessor.getUnnecessaryNLSTagProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnnecessaryNLSTag:
+				LocalCorrectionsSubProcessor.getUnnecessaryNLSTagProposals(context, problem, proposals);
+				break;
 			case IProblem.NonStaticAccessToStaticField:
 			case IProblem.NonStaticAccessToStaticMethod:
 			case IProblem.NonStaticOrAlienTypeReceiver:
@@ -404,24 +403,22 @@ public class QuickFixProcessor {
 			case IProblem.JavadocInvalidMemberTypeQualification:
 				JavadocTagsSubProcessor.getInvalidQualificationProposals(context, problem, proposals);
 				break;
-			//
-			// case IProblem.LocalVariableHidingLocalVariable:
-			// case IProblem.LocalVariableHidingField:
-			// case IProblem.FieldHidingLocalVariable:
-			// case IProblem.FieldHidingField:
-			// case IProblem.ArgumentHidingLocalVariable:
-			// case IProblem.ArgumentHidingField:
-			// case IProblem.UseAssertAsAnIdentifier:
-			// case IProblem.UseEnumAsAnIdentifier:
-			// case IProblem.RedefinedLocal:
-			// case IProblem.RedefinedArgument:
-			// case IProblem.DuplicateField:
-			// case IProblem.DuplicateMethod:
-			// case IProblem.DuplicateTypeVariable:
-			// case IProblem.DuplicateNestedType:
-			// LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.LocalVariableHidingLocalVariable:
+			case IProblem.LocalVariableHidingField:
+			case IProblem.FieldHidingLocalVariable:
+			case IProblem.FieldHidingField:
+			case IProblem.ArgumentHidingLocalVariable:
+			case IProblem.ArgumentHidingField:
+			case IProblem.UseAssertAsAnIdentifier:
+			case IProblem.UseEnumAsAnIdentifier:
+			case IProblem.RedefinedLocal:
+			case IProblem.RedefinedArgument:
+			case IProblem.DuplicateField:
+			case IProblem.DuplicateMethod:
+			case IProblem.DuplicateTypeVariable:
+			case IProblem.DuplicateNestedType:
+				LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context, problem, proposals);
+				break;
 			case IProblem.NoMessageSendOnArrayType:
 				UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
 				break;
@@ -585,16 +582,15 @@ public class QuickFixProcessor {
 			case IProblem.AbstractServiceImplementation:
 			case IProblem.ProviderMethodOrConstructorRequiredForServiceImpl:
 			case IProblem.ServiceImplDefaultConstructorNotPublic:
-				// LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addServiceProviderConstructorProposals(context, problem, proposals);
 				break;
 			case IProblem.MissingSynchronizedModifierInInheritedMethod:
 				ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.UnusedObjectAllocation:
-			// LocalCorrectionsSubProcessor.getUnusedObjectAllocationProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedObjectAllocation:
+				LocalCorrectionsSubProcessor.getUnusedObjectAllocationProposals(context, problem, proposals);
+				break;
 			case IProblem.MethodCanBeStatic:
 			case IProblem.MethodCanBePotentiallyStatic:
 				ModifierCorrectionSubProcessor.addStaticMethodProposal(context, problem, proposals);
