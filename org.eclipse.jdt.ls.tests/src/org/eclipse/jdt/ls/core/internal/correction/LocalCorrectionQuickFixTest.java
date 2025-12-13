@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -3293,6 +3293,404 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 			""";
 		// @formatter:on
 		Expected e1 = new Expected("Change type to 'HashMap<Character, Integer>'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+
+
+	@Test
+	public void testHidingVariable1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				       int count= 1;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				       int count1= 1;
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename local variable 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+
+	@Test
+	public void testHidingVariable2() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    private int count;
+			    public void foo(int count) {
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo(int count1) {
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename argument 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable3() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            private int count;
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            private int count1;
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename field 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable4() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    private int count;
+			    public void foo() {
+			        class Inner {
+			            private int count;
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				        class Inner {
+				            private int count1;
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename field 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable5() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            public void foo() {
+			                 int count;
+			            }
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo() {
+				                 int count1;
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename local variable 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable6() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            public void foo(int count) {
+			            }
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count1) {
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename argument 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testDuplicateMethod() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+					}
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count) {
+				            }
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo1(int count) {
+					}
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count) {
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename method 'foo'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnnecessaryNLSTag() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_NON_NLS_STRING_LITERAL, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+						int a = count; //$NON-NLS-1$
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+						int a = count;
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Remove unnecessary '$NON-NLS$' tag", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) throws Exception {
+						new RuntimeException();
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo(int count) throws Exception {
+						throw new RuntimeException();
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Throw the allocated object", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							return new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Return the allocated object", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+						}
+						return "def";
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Remove", after);
 
 		assertCodeActionExists(cu, e1);
 	}

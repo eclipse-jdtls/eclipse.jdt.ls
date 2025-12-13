@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -120,6 +120,22 @@ import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
 import org.eclipse.lsp4j.CodeActionKind;
 
 public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcessor<ProposalKindWrapper> {
+
+	public static void addServiceProviderProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+		new LocalCorrectionsSubProcessor().getServiceProviderProposal(context, problem, proposals);
+	}
+
+	public static void getUnusedObjectAllocationProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getUnusedObjectAllocationProposalsBase(context, problem, proposals);
+	}
+
+	public static void getUnnecessaryNLSTagProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
+		new LocalCorrectionsSubProcessor().getUnnecessaryNLSTagProposalsCore(context, problem, proposals);
+	}
+
+	public static void addInvalidVariableNameProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new LocalCorrectionsSubProcessor().getInvalidVariableNameProposals(context, problem, proposals);
+	}
 
 	public static void addUncaughtExceptionProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		// See https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1189
