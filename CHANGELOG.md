@@ -1,6 +1,6 @@
 # Change Log
 
-# [1.55.0 (December 16th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
+# [1.55.0 (December 17th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
  * enhancement - Add a quickfix to replace a deprecated field with one referenced in the docs. See [#3626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3626).
  * enhancement - Add a quickfix for "type safety warning" to infer type arguments. See [#626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/626).
  * bug fix - Fix a bug in the quickfix that replaces a deprecated method with one refrenced in the docs. See [#3638](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3638).
