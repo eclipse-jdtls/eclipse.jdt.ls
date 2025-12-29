@@ -45,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.javadoc.HtmlToMarkdownConverter;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -1396,5 +1397,75 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals(expectedJavadoc.toString(), actual.stripTrailing(), "Unexpected hover ");
+	}
+
+	@Test
+	public void testIncorrectJavadocRendering_3649() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				/**
+				  * Some javadoc and then ...
+				  * @jls 9.6.4.1 @Target
+				  */
+				public class Hover {}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Hover.java", content, false, null);
+		Hover hover = getHover(cu, 5, 14);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = "Some javadoc and then ...\n"
+				+ "\n"
+				+ "* **@jls**\n"
+				+ "  * 9.6.4.1 @Target";
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
+	}
+
+	/**
+	 * Regression test for https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3631 :
+	 * a custom tag (e.g. "@jls") whose content contains an inline '@' token used to
+	 * corrupt the already-rendered HTML once a recognized tag like "@see" was also
+	 * present, collapsing the entire javadoc hover text to nothing.
+	 */
+	@Test
+	public void testIncorrectJavadocRendering_seeAndCustomTag() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test2", false, null);
+		String content = """
+				package test2;
+				/**
+				  * Some javadoc and then ...
+				  * @see String
+				  * @jls 9.6.4.1 @Target
+				  */
+				public class Hover {}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Hover.java", content, false, null);
+		Hover hover = getHover(cu, 6, 14);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertTrue(actual.startsWith("Some javadoc and then ...\n\n* **See Also:**\n"), "Unexpected hover start: " + actual);
+		assertTrue(actual.endsWith("* **@jls**\n  * 9.6.4.1 @Target"), "Unexpected hover end: " + actual);
+	}
+
+	/**
+	 * No AST, no project, no hover machinery at all: feed HtmlToMarkdownConverter
+	 * a hand-built, already-correctly-closed HTML string whose text content happens
+	 * to contain a literal "@word" preceded by whitespace (exactly what
+	 * JdtLsJavadocAccessImpl legitimately produces for "@jls 9.6.4.1 @Target").
+	 * Since this converter has no javadoc-tag scanning of its own, the trailing
+	 * closing tags must survive intact.
+	 */
+	@Test
+	public void testHtmlToMarkdownConverter_alreadyRenderedHtmlWithEmbeddedAtWord() throws Exception {
+		String html = "Some javadoc and then ...<ul><li><b>@jls</b><ul><li> 9.6.4.1 @Target</li></ul></li></ul>";
+		String markdown = new HtmlToMarkdownConverter().convert(html);
+		assertEquals("Some javadoc and then ...\n\n* **@jls**\n  * 9.6.4.1 @Target", markdown);
 	}
 }
