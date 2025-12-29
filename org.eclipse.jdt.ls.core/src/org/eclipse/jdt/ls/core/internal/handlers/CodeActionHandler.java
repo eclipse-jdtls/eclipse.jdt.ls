@@ -97,7 +97,6 @@ public class CodeActionHandler {
 	// the last Code Action request to finish processing is not the client's latest request. History size must scale with pool size.
 	public static final ResponseStore<Either<ChangeCorrectionProposalCore, CodeActionProposal>> codeActionStore
 			= new ResponseStore<>(Math.max(ForkJoinPool.getCommonPoolParallelism(), 8));
-	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	public static CodeActionOptions createOptions(PreferenceManager preferenceManager) {
 		String[] kinds = { CodeActionKind.QuickFix, CodeActionKind.Refactor, CodeActionKind.RefactorExtract, CodeActionKind.RefactorInline, CodeActionKind.RefactorRewrite, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports };
@@ -368,7 +367,6 @@ public class CodeActionHandler {
 				if (!ChangeUtil.hasChanges(edit)) {
 					return Optional.empty();
 				}
-				command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			}
 		}
 

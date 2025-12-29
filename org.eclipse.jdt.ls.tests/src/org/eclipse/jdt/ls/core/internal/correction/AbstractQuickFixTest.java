@@ -313,20 +313,13 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	protected String evaluateCodeActionCommand(Either<Command, CodeAction> codeAction)
 			throws BadLocationException, JavaModelException {
 
-		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		if (c != null) {
-			assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			assertNotNull(c.getArguments());
-			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			WorkspaceEdit we = (WorkspaceEdit) c.getArguments().get(0);
-			return evaluateWorkspaceEdit(we);
-		} else {
-			WorkspaceEdit we = codeAction.getRight().getEdit();
-			if (we.getDocumentChanges() != null) {
-				return evaluateChanges(we.getDocumentChanges());
-			}
-			return evaluateChanges(we.getChanges());
+		assertTrue(codeAction.isRight(), "Expected CodeAction, got Command: " + codeAction.getLeft());
+
+		WorkspaceEdit we = codeAction.getRight().getEdit();
+		if (we.getDocumentChanges() != null) {
+			return evaluateChanges(we.getDocumentChanges());
 		}
+		return evaluateChanges(we.getChanges());
 	}
 
 	public static String evaluateWorkspaceEdit(WorkspaceEdit edit) throws JavaModelException, BadLocationException {
