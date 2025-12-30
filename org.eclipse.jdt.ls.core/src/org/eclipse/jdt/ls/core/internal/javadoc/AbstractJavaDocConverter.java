@@ -189,19 +189,27 @@ abstract class AbstractJavaDocConverter {
 		@Override
 		protected void printRest(StringBuilder buffer, List<Pair> rest) {
 			if (!rest.isEmpty()) {
-				Iterator<Pair> e = rest.iterator();
-				while (e.hasNext()) {
-					Pair p = e.next();
-					buffer.append("<li>"); //$NON-NLS-1$
-					if (p.fTag() != null) {
+				if (rest.size() == 1) {
+					Iterator<Pair> e = rest.iterator();
+					if (e.hasNext()) {
+						Pair p = e.next();
 						buffer.append(p.fTag());
 					}
-					if (p.fContent() != null) {
-						buffer.append("<ul><li>"); //$NON-NLS-1$
-						buffer.append(p.fContent());
-						buffer.append("</li></ul>"); //$NON-NLS-1$
+				} else {
+					Iterator<Pair> e = rest.iterator();
+					while (e.hasNext()) {
+						Pair p = e.next();
+						buffer.append("<li>"); //$NON-NLS-1$
+						if (p.fTag() != null) {
+							buffer.append(p.fTag());
+						}
+						if (p.fContent() != null) {
+							buffer.append("<ul><li>"); //$NON-NLS-1$
+							buffer.append(p.fContent());
+							buffer.append("</li></ul>"); //$NON-NLS-1$
+						}
+						buffer.append("</li>"); //$NON-NLS-1$
 					}
-					buffer.append("</li>"); //$NON-NLS-1$
 				}
 			}
 		}
@@ -209,10 +217,15 @@ abstract class AbstractJavaDocConverter {
 		@Override
 		protected String printSimpleTag(List<Pair> rest) {
 			StringBuilder buffer = new StringBuilder();
-			buffer.append("<ul>"); //$NON-NLS-1$
-			printTagAttributes(buffer);
-			printRest(buffer, rest);
-			buffer.append("</ul>"); //$NON-NLS-1$
+			if (rest.size() == 1) {
+				printTagAttributes(buffer);
+				printRest(buffer, rest);
+			} else {
+				buffer.append("<ul>"); //$NON-NLS-1$
+				printTagAttributes(buffer);
+				printRest(buffer, rest);
+				buffer.append("</ul>"); //$NON-NLS-1$
+			}
 			return buffer.toString();
 		}
 	}
