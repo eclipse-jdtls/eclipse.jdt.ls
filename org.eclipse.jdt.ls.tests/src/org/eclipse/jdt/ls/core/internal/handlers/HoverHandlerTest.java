@@ -1066,4 +1066,48 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
+
+	@Test
+	public void testHoverHtmlTagSupportMarkdown() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// <p><b>HTML bold</b> sasi</p>\n"
+				+ "/// <p><a href=\\\"https://facebook.com\\\">Eclipse Foundation</a></p>\n"
+				+ "/// <p>This is just an <i>Italics</i> content</p>\n"
+				+ "/// <p>Awesome <strong> Strong </strong> Tag</p>\n"
+				+ "/// <p>Sample <em>EM</em> Element</p>\n"
+				+ "/// <p>Just a <code>hashCode</code>. Nothing else</p>\n"
+				+ "/// <b> This sample\n"
+				+ "/// Lorem Ipsum</b>\n"
+				+ "    public class Test {}\n"
+				+ "");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 9, 18);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		StringBuilder expectedJavadoc = new StringBuilder();
+		expectedJavadoc.append("**HTML bold** sasi\n\n"
+				+ "[Eclipse Foundation](\\\"https://facebook.com\\\")\n\n"
+				+ "This is just an *Italics* content\n\n"
+				+ "Awesome **Strong** Tag\n\n"
+				+ "Sample *EM* Element\n\n"
+				+ "Just a `hashCode`. Nothing else\n"
+				+ "**This sample\n"
+				+ "Lorem Ipsum**"
+				);
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+	}
 }

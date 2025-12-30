@@ -147,7 +147,11 @@ public class JavadocContentAccess2 {
 					}
 				}
 
-				return buf.length() > 0 ? buf.substring(1) : content;
+				String htmlContent = buf.length() > 0 ? buf.substring(1) : content;
+				if (containsHtmlTag(htmlContent)) {
+					return new JavaDoc2MarkdownConverter(htmlContent).getAsString();
+				}
+				return htmlContent;
 			} else {
 				String rawHtml = access.getHTMLContent(element, true);
 				return new JavaDoc2MarkdownConverter(rawHtml).getAsString();
@@ -157,6 +161,13 @@ public class JavadocContentAccess2 {
 		}
 
 		return null;
+	}
+
+	protected static boolean containsHtmlTag(String html) {
+		if (html == null) {
+			return false;
+		}
+		return html.matches("(?s).*<\\s*/?\\s*[a-zA-Z][^>]*>.*");
 	}
 
 	@SuppressWarnings("unchecked")
