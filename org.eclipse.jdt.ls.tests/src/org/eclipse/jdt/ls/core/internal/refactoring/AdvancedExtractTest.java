@@ -80,35 +80,55 @@ public class AdvancedExtractTest extends AbstractSelectionTest {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, selection);
 		List<Either<Command, CodeAction>> extractCodeActions = codeActions.stream().filter(codeAction -> codeAction.getRight().getKind().startsWith(CodeActionKind.RefactorExtract)).collect(Collectors.toList());
 		assertEquals(5, extractCodeActions.size());
-		Command extractConstantCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(3));
+		Command extractConstantCommand = extractCodeActions.stream()
+				.map(CodeActionHandlerTest::getCommand)
+				.filter(command -> RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND.equals(command.getArguments().get(0)))
+				.findFirst()
+				.orElse(null);
 		assertNotNull(extractConstantCommand);
 		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractConstantCommand.getCommand());
 		assertNotNull(extractConstantCommand.getArguments());
 		assertEquals(2, extractConstantCommand.getArguments().size());
 		assertEquals(RefactorProposalUtility.EXTRACT_CONSTANT_COMMAND, extractConstantCommand.getArguments().get(0));
 
-		Command extractFieldCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(1));
+		Command extractFieldCommand = extractCodeActions.stream()
+				.map(CodeActionHandlerTest::getCommand)
+				.filter(command -> RefactorProposalUtility.EXTRACT_FIELD_COMMAND.equals(command.getArguments().get(0)))
+				.findFirst()
+				.orElse(null);
 		assertNotNull(extractFieldCommand);
 		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractFieldCommand.getCommand());
 		assertNotNull(extractFieldCommand.getArguments());
 		assertEquals(3, extractFieldCommand.getArguments().size());
 		assertEquals(RefactorProposalUtility.EXTRACT_FIELD_COMMAND, extractFieldCommand.getArguments().get(0));
 
-		Command extractMethodCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(4));
+		Command extractMethodCommand = extractCodeActions.stream()
+				.map(CodeActionHandlerTest::getCommand)
+				.filter(command -> RefactorProposalUtility.EXTRACT_METHOD_COMMAND.equals(command.getArguments().get(0)))
+				.findFirst()
+				.orElse(null);
 		assertNotNull(extractMethodCommand);
 		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractMethodCommand.getCommand());
 		assertNotNull(extractMethodCommand.getArguments());
 		assertEquals(2, extractMethodCommand.getArguments().size());
 		assertEquals(RefactorProposalUtility.EXTRACT_METHOD_COMMAND, extractMethodCommand.getArguments().get(0));
 
-		Command extractVariableAllCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(0));
+		Command extractVariableAllCommand = extractCodeActions.stream()
+				.map(CodeActionHandlerTest::getCommand)
+				.filter(command -> RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND.equals(command.getArguments().get(0)))
+				.findFirst()
+				.orElse(null);
 		assertNotNull(extractVariableAllCommand);
 		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableAllCommand.getCommand());
 		assertNotNull(extractVariableAllCommand.getArguments());
 		assertEquals(2, extractVariableAllCommand.getArguments().size());
 		assertEquals(RefactorProposalUtility.EXTRACT_VARIABLE_ALL_OCCURRENCE_COMMAND, extractVariableAllCommand.getArguments().get(0));
 
-		Command extractVariableCommand = CodeActionHandlerTest.getCommand(extractCodeActions.get(2));
+		Command extractVariableCommand = extractCodeActions.stream()
+				.map(CodeActionHandlerTest::getCommand)
+				.filter(command -> RefactorProposalUtility.EXTRACT_VARIABLE_COMMAND.equals(command.getArguments().get(0)))
+				.findFirst()
+				.orElse(null);
 		assertNotNull(extractVariableCommand);
 		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, extractVariableCommand.getCommand());
 		assertNotNull(extractVariableCommand.getArguments());
