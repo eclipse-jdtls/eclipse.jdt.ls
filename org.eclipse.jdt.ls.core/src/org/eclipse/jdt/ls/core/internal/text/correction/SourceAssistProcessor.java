@@ -71,7 +71,6 @@ import org.eclipse.jdt.ls.core.internal.codemanipulation.PartialSortMembersOpera
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
@@ -626,7 +625,6 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-			Command command = new Command(actionMessage, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(actionMessage);
 				codeAction.setKind(kind);
@@ -634,7 +632,7 @@ public class SourceAssistProcessor {
 				codeAction.setDiagnostics(Collections.emptyList());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
-				return Optional.of(Either.forLeft(command));
+				return Optional.empty();
 			}
 		}
 	}
@@ -705,8 +703,6 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-
-			Command command = new Command(name, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(name);
 				codeAction.setKind(kind);
@@ -714,13 +710,13 @@ public class SourceAssistProcessor {
 				codeAction.setDiagnostics(context.getDiagnostics());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
-				return Optional.of(Either.forLeft(command));
+				return Optional.empty();
 			}
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
 
-		return null;
+		return Optional.empty();
 	}
 
 	private boolean hasFields(IType type, boolean includeStatic) throws JavaModelException {

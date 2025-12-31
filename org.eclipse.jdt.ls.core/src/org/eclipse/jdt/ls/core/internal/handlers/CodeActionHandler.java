@@ -97,7 +97,6 @@ public class CodeActionHandler {
 	// the last Code Action request to finish processing is not the client's latest request. History size must scale with pool size.
 	public static final ResponseStore<Either<ChangeCorrectionProposalCore, CodeActionProposal>> codeActionStore
 			= new ResponseStore<>(Math.max(ForkJoinPool.getCommonPoolParallelism(), 8));
-	public static final String COMMAND_ID_APPLY_EDIT = "java.apply.workspaceEdit";
 
 	public static CodeActionOptions createOptions(PreferenceManager preferenceManager) {
 		String[] kinds = { CodeActionKind.QuickFix, CodeActionKind.Refactor, CodeActionKind.RefactorExtract, CodeActionKind.RefactorInline, CodeActionKind.RefactorRewrite, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports };
@@ -356,6 +355,7 @@ public class CodeActionHandler {
 
 		Command command = null;
 		WorkspaceEdit edit = null;
+		boolean supportsResolve = preferenceManager.getClientPreferences().isResolveCodeActionSupported();
 		if (proposal instanceof CUCorrectionCommandProposal commandProposal) {
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else if (proposal instanceof RefactoringCorrectionCommandProposal commandProposal) {
@@ -363,48 +363,47 @@ public class CodeActionHandler {
 		} else if (proposal instanceof AssignToVariableAssistCommandProposal commandProposal) {
 			command = new Command(name, commandProposal.getCommand(), commandProposal.getCommandArguments());
 		} else {
-			if (!this.preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
+			if (!supportsResolve) {
 				edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
 				if (!ChangeUtil.hasChanges(edit)) {
 					return Optional.empty();
 				}
-				command = new Command(name, COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			}
 		}
 
-		if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
-			CodeAction codeAction = new CodeAction(name);
-			codeAction.setKind(pk.getKind());
-			if (command == null) { // lazy resolve the edit.
-				if (!preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) {
-					if (proposal instanceof NewCUProposal
-							|| proposal instanceof NewMethodCorrectionProposalCore || proposal instanceof NewAnnotationMemberProposalCore
-							|| proposal instanceof NewVariableCorrectionProposalCore
-					) {
-						codeAction.setCommand(new Command("refresh Diagnostics", "java.project.refreshDiagnostics", Arrays.asList(
-							uri, "thisFile", false, true
-						)));
-					}
-				}
-
-				// The relevance is in descending order while CodeActionComparator sorts in ascending order
-				codeAction.setData(new CodeActionData(proposal, -proposal.getRelevance()));
-			} else {
-				if (edit != null) {
-					// no code action resolve support, but have code action literal support
-					codeAction.setEdit(edit);
-				} else {
-					codeAction.setCommand(command);
-					codeAction.setData(new CodeActionData(null, -proposal.getRelevance()));
-				}
-			}
-			if (pk.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
-				codeAction.setDiagnostics(context.getDiagnostics());
-			}
-			return Optional.of(Either.forRight(codeAction));
-		} else {
+		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
 			return Optional.ofNullable(command != null ? Either.forLeft(command) : null);
 		}
+
+		if (command == null && !preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) { // lazy resolve the edit.
+			if (proposal instanceof NewCUProposal
+					|| proposal instanceof NewMethodCorrectionProposalCore
+					|| proposal instanceof NewAnnotationMemberProposalCore
+					|| proposal instanceof NewVariableCorrectionProposalCore
+			) {
+				command = new Command("refresh Diagnostics", "java.project.refreshDiagnostics", Arrays.asList(
+					uri, "thisFile", false, true
+				));
+			}
+		}
+
+		CodeAction codeAction = new CodeAction(name);
+		codeAction.setKind(pk.getKind());
+		if (!supportsResolve && edit != null) {
+			codeAction.setEdit(edit);
+		}
+		if (command != null) {
+			codeAction.setCommand(command);
+		}
+		if (supportsResolve) {
+			// The relevance is in descending order while CodeActionComparator sorts in ascending order
+			Object dataProposal = command == null ? proposal : null;
+			codeAction.setData(new CodeActionData(dataProposal, -proposal.getRelevance()));
+		}
+		if (pk.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
+			codeAction.setDiagnostics(context.getDiagnostics());
+		}
+		return Optional.of(Either.forRight(codeAction));
 	}
 
 	@SuppressWarnings("unchecked")

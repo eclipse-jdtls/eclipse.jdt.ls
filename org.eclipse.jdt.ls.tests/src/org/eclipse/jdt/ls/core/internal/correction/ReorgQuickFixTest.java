@@ -16,6 +16,7 @@
 package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
@@ -214,17 +216,12 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	private WorkspaceEdit getWorkspaceEdit(Either<Command, CodeAction> codeAction) {
-		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		if (c != null) {
-			assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			assertNotNull(c.getArguments());
-			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			return (WorkspaceEdit) c.getArguments().get(0);
-		} else {
-			WorkspaceEdit e = codeAction.getRight().getEdit();
-			assertNotNull(e);
-			return e;
+		if (codeAction.isLeft()) {
+			throw new AssertionError("Unexpected Command-only action: " + codeAction.getLeft().getCommand());
 		}
+		WorkspaceEdit e = codeAction.getRight().getEdit();
+		assertNotNull(e);
+		return e;
 	}
 
 	private void assertRenameFileOperation(Either<Command, CodeAction> codeAction, String newUri) {
@@ -460,5 +457,42 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 
 		Expected e1 = new Expected("Rename type to 'E'", buf.toString());
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testNoJavaApplyWorkspaceEditCommand() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(false);
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.SourceOrganizeImports)).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		List<Either<Command, CodeAction>> actions = evaluateCodeActions(cu);
+		assertFalse(
+			actions.stream().anyMatch(a ->
+				a.isLeft() && "java.apply.workspaceEdit".equals(a.getLeft().getCommand())
+			),
+			"Should not return legacy java.apply.workspaceEdit Command"
+		);
+		assertFalse(
+			actions.stream().anyMatch(a ->
+				a.isRight() && a.getRight().getCommand() != null && "java.apply.workspaceEdit".equals(a.getRight().getCommand().getCommand())
+			),
+			"Should not embed legacy java.apply.workspaceEdit as CodeAction.command"
+		);
+
+		CodeAction organize = actions.stream()
+			.filter(Either::isRight)
+			.map(Either::getRight)
+			.filter(ca -> "Organize imports".equals(ca.getTitle()))
+			.findFirst()
+			.orElse(null);
+		assertNotNull(organize, "Expected 'Organize imports' code action");
+		assertNotNull(organize.getEdit(), "'Organize imports' should carry WorkspaceEdit");
 	}
 }
