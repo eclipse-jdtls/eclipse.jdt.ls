@@ -207,7 +207,11 @@ public class JavadocContentAccess2 {
 					res = collectLinkElement((ASTNode) children.get(1));
 				} else {
 					res = collectLinkElement((ASTNode) children.get(0));
-					linkTitle = res[0];
+					if (res[0].isEmpty() && children.get(0).toString().startsWith("#") && res.length > 1) {// member implicitly refers to the current class
+						linkTitle = res[1];
+					} else {
+						linkTitle = res[0];
+					}
 				}
 				buf.append("[" + linkTitle + "]");
 				String uri = JdtLsJavadocAccessImpl.createLinkURIHelper(CoreJavaElementLinks.JAVADOC_SCHEME, element, res[0], res.length > 1 ? res[1] : null,
