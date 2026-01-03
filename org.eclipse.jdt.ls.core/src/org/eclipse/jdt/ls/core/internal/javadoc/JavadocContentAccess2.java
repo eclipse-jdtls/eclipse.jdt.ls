@@ -207,7 +207,11 @@ public class JavadocContentAccess2 {
 					res = collectLinkElement((ASTNode) children.get(1));
 				} else {
 					res = collectLinkElement((ASTNode) children.get(0));
-					linkTitle = res[0];
+					if (res[0].isEmpty() && children.get(0).toString().startsWith("#") && res.length > 1) {// member implicitly refers to the current class
+						linkTitle = res[1];
+					} else {
+						linkTitle = res[0];
+					}
 				}
 				buf.append("[" + linkTitle + "]");
 				String uri = JdtLsJavadocAccessImpl.createLinkURIHelper(CoreJavaElementLinks.JAVADOC_SCHEME, element, res[0], res.length > 1 ? res[1] : null,
@@ -224,6 +228,7 @@ public class JavadocContentAccess2 {
 		String refMemberName = null;
 		String[] refMethodParamTypes = null;
 		String[] refMethodParamNames = null;
+		boolean hasParentheses = false;
 		if (e instanceof Name) {
 			Name name = (Name) e;
 			refTypeName = name.getFullyQualifiedName();
@@ -237,6 +242,9 @@ public class JavadocContentAccess2 {
 			Name qualifier = methodRef.getQualifier();
 			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName = methodRef.getName().getIdentifier();
+			if (refMemberName != null) {
+				hasParentheses = e.toString().endsWith("()");
+			}
 			@SuppressWarnings("unchecked")
 			List<MethodRefParameter> params = methodRef.parameters();
 			int ps = params.size();
@@ -256,7 +264,11 @@ public class JavadocContentAccess2 {
 		List<String> result = new ArrayList<>();
 		result.add(refTypeName);
 		if (refMemberName != null) {
-			result.add(refMemberName);
+			if (hasParentheses) {
+				result.add(refMemberName + "()");
+			} else {
+				result.add(refMemberName);
+			}
 		}
 		if (refMethodParamTypes != null) {
 			result.addAll(Arrays.asList(refMethodParamTypes));
