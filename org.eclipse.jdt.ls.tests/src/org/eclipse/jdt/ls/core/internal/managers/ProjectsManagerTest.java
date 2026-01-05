@@ -48,6 +48,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -408,5 +409,12 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		waitForBackgroundJobs();
 		markers = gradle.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
 		assertEquals(0, markers.length);
+	}
+
+	@Test
+	public void testImporters() {
+		Collection<IProjectImporter> importers = ProjectsManager.importers();
+		long count = importers.stream().filter(i -> (i instanceof NoopImporter || i instanceof GradleProjectImporter)).count();
+		assertEquals(2, count);
 	}
 }
