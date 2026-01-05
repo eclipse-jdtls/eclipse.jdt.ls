@@ -393,17 +393,24 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 
 	public static Collection<IProjectImporter> importers() {
 		Map<Integer, IProjectImporter> importers = new TreeMap<>();
-		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, "importers");
+		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(IConstants.PLUGIN_ID, "importers"); //$NON-NLS-1$
 		IConfigurationElement[] configs = extensionPoint.getConfigurationElements();
 		for (int i = 0; i < configs.length; i++) {
 			try {
 				Integer order = Integer.valueOf(configs[i].getAttribute("order"));
-				importers.put(order, (IProjectImporter) configs[i].createExecutableExtension("class")); //$NON-NLS-1$
+				IProjectImporter importer = (IProjectImporter) configs[i].createExecutableExtension("class"); //$NON-NLS-1$
+				while (importers.get(order) != null) {
+					JavaLanguageServerPlugin.logInfo("Duplicate Importers: order=" + order + " " + importer.getClass().getSimpleName() + " " + importers.get(order).getClass().getSimpleName());
+					order++;
+				}
+				importers.put(order, importer);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e.getStatus());
 			}
 		}
-		return importers.values();
+		Collection<IProjectImporter> values = importers.values();
+		JavaLanguageServerPlugin.logInfo(values.stream().map(v -> v.getClass().getSimpleName()).collect(Collectors.joining(", ", "Importers: ", "")));
+		return values;
 	}
 
 	public static IProject createJavaProject(IProject project, IProgressMonitor monitor) throws CoreException, OperationCanceledException {

@@ -40,4 +40,12 @@
             uriPattern=".+\.thingy">
       </contentProvider>
    </extension>
+   <extension
+         id="importers"
+         point="org.eclipse.jdt.ls.core.importers">
+         <importer
+            id = "noopProjectImporter"
+            order ="300"
+            class = "org.eclipse.jdt.ls.core.internal.managers.NoopImporter"/>
+   </extension>
 </fragment>
