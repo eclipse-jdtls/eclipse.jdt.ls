@@ -1,13 +1,14 @@
 # Change Log
 
-# [1.55.0 (December 17th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
+# [1.55.0 (January 6th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
  * enhancement - Add a quickfix to replace a deprecated field with one referenced in the docs. See [#3626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3626).
  * enhancement - Add a quickfix for "type safety warning" to infer type arguments. See [#626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/626).
  * bug fix - Fix a bug in the quickfix that replaces a deprecated method with one refrenced in the docs. See [#3638](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3638).
  * bug fix - "Generate constructor" feature can now be used when the type has no fields. See [#3629](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3629).
  * bug fix - Parse `rootPath` as path string instead of url. See [#3614](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3614).
  * bug fix - Revert temporary rollback of junit bundles to fix JUnit 6 support. See [#3619](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3619).
- * dependencies - Migrate to a new HTML -> Markdown library that's actively maintained. See [#2214](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2214).
+ * bug fix - Ensure importers with the same order number are not dropped. See [#3658](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3658).
+ * dependencies - Migrate to flexmark-java for HTML -> Markdown conversion. See [#2214](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2214).
 
 # [1.54.0 (November 26th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/148?closed=1)
  * enhancement - Add preference to disable returning Javadoc on hover. See [#3610](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3610).
