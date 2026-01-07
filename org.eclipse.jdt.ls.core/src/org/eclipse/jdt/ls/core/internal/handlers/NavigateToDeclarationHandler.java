@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -93,12 +92,12 @@ public class NavigateToDeclarationHandler {
 				}
 				return JDTUtils.toLocation(methodDeclaration);
 			}
-			if (methodDeclaration instanceof IMember member && member.getClassFile() != null) {
+			if (methodDeclaration.getClassFile() != null) {
 				List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 				if (!locations.isEmpty()) {
 					return locations.get(0);
 				}
-				return JDTUtils.toLocation(member.getClassFile());
+				return JDTUtils.toLocation(methodDeclaration.getClassFile());
 			}
 
 		} catch (CoreException e) {
