@@ -54,7 +54,6 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.Flags;
-
 import org.eclipse.jdt.core.IAnnotatable;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IBuffer;
@@ -106,7 +105,6 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.Type;
-
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
@@ -147,6 +145,7 @@ import org.eclipse.lsp4j.Range;
 
 /**
  * General utilities for working with JDT APIs
+ *
  * @author Gorkem Ercan
  *
  */
@@ -298,10 +297,10 @@ public final class JDTUtils {
 				public IBuffer createBuffer(ICompilationUnit workingCopy) {
 					return new DocumentAdapter(workingCopy, path);
 				}
- 			};
- 			try {
- 				return owner.newWorkingCopy(fileName, new IClasspathEntry[] { JavaRuntime.getDefaultJREContainerEntry() }, monitor);
- 			} catch (JavaModelException e) {
+			};
+			try {
+				return owner.newWorkingCopy(fileName, new IClasspathEntry[] { JavaRuntime.getDefaultJREContainerEntry() }, monitor);
+			} catch (JavaModelException e) {
 				return null;
 			}
 		}
@@ -432,9 +431,13 @@ public final class JDTUtils {
 	 * @param uri with 'jdt' scheme
 	 * @return class file
 	 */
-	public static IClassFile resolveClassFile(URI uri){
+	public static IClassFile resolveClassFile(URI uri) {
 		if (uri != null && JDT_SCHEME.equals(uri.getScheme()) && "contents".equals(uri.getAuthority())) {
 			String handleId = uri.getQuery();
+			int idx = handleId.indexOf("&element=");
+			if (idx != -1) {
+				handleId = handleId.substring(0, idx);
+			}
 			IJavaElement element = JavaCore.create(handleId);
 			IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 			return cf;
@@ -891,7 +894,25 @@ public final class JDTUtils {
 		String jarName = classFile.getParent().getParent().getElementName();
 		String uriString = null;
 		try {
-			uriString = new URI(JDT_SCHEME, "contents", PATH_SEPARATOR + jarName + PATH_SEPARATOR + packageName + PATH_SEPARATOR + classFile.getElementName(), classFile.getHandleIdentifier(), null).toASCIIString();
+			String elementName = classFile.getElementName();
+			// Use the original source file name if available
+			String sourceFileName = SourceFileAttributeReader.getSourceFileName(classFile);
+			String fileName = sourceFileName == null ? elementName : sourceFileName;
+			StringBuilder pathBuilder = new StringBuilder();
+			pathBuilder.append(PATH_SEPARATOR).append(jarName);
+			if (packageName != null && !packageName.isBlank()) {
+				pathBuilder.append(PATH_SEPARATOR).append(packageName);
+			}
+			pathBuilder.append(PATH_SEPARATOR).append(fileName);
+
+			String handleIdentifier = classFile.getHandleIdentifier();
+			StringBuilder query = new StringBuilder(handleIdentifier);
+			if (!handleIdentifier.contains(elementName)) {
+				//Add the element name to the query so decompilers can detect it (looking at you module-info.class!)
+				query.append("&element=").append(elementName);
+			}
+			uriString = new URI(JDT_SCHEME, "contents", pathBuilder.toString(), query.toString(), null).toASCIIString();
+
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
@@ -1168,26 +1189,26 @@ public final class JDTUtils {
 			}
 		}
 		switch(resources.length) {
-		case 0:
-			return null;
-		case 1:
-			return resources[0];
-		default://several candidates if a linked resource was created before the real project was configured
+			case 0:
+				return null;
+			case 1:
+				return resources[0];
+			default://several candidates if a linked resource was created before the real project was configured
 				IResource resource = null;
 				for (IResource f : resources) {
-				//delete linked resource
-				if (ProjectsManager.getDefaultProject().equals(f.getProject())) {
-					try {
-						f.delete(true, null);
-					} catch (CoreException e) {
+					//delete linked resource
+					if (ProjectsManager.getDefaultProject().equals(f.getProject())) {
+						try {
+							f.delete(true, null);
+						} catch (CoreException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
 					}
-				}
-				//find closest project containing that file, in case of nested projects
+					//find closest project containing that file, in case of nested projects
 					if (resource == null || f.getProjectRelativePath().segmentCount() < resource.getProjectRelativePath().segmentCount()) {
 						resource = f;
+					}
 				}
-			}
 				return resource;
 		}
 	}
@@ -1970,3 +1991,4 @@ public final class JDTUtils {
 	}
 
 }
+
