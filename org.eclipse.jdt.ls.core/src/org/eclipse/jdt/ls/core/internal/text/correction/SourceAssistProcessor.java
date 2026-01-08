@@ -690,6 +690,9 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CodeActionContext context, ICompilationUnit cu, String name, String kind, CodeActionProposal proposal, int priority) {
+		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
+			return Optional.empty();
+		}
 		if (preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(kind);
@@ -703,15 +706,11 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
-				CodeAction codeAction = new CodeAction(name);
-				codeAction.setKind(kind);
-				codeAction.setEdit(edit);
-				codeAction.setDiagnostics(context.getDiagnostics());
-				return Optional.of(Either.forRight(codeAction));
-			} else {
-				return Optional.empty();
-			}
+			CodeAction codeAction = new CodeAction(name);
+			codeAction.setKind(kind);
+			codeAction.setEdit(edit);
+			codeAction.setDiagnostics(context.getDiagnostics());
+			return Optional.of(Either.forRight(codeAction));
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
