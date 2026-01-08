@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -153,7 +154,7 @@ public class ContentProviderManager {
 		Set<ContentProviderDescriptor> descriptors = getDescriptors(preferredProviderIds);
 		if (descriptors.isEmpty()) {
 			JavaLanguageServerPlugin.logError("No content providers found");
-			return null;
+			return Collections.emptyList();
 		}
 
 		String uriString = uri != null ? uri.toString() : null;
@@ -166,7 +167,7 @@ public class ContentProviderManager {
 
 		if (matches.isEmpty()) {
 			JavaLanguageServerPlugin.logError("Unable to find content provider for URI " + uri);
-			return null;
+			return Collections.emptyList();
 		}
 
 		return matches;

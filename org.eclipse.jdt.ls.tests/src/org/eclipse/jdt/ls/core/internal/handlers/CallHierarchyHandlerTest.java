@@ -189,8 +189,8 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String jarUri = call0Calls.get(0).getTo().getUri();
 		assertTrue(jarUri.startsWith("jdt://"));
-		assertTrue(jarUri.contains("org.apache.commons.lang3.text"));
-		assertTrue(jarUri.contains("WordUtils.class"));
+		assertTrue(jarUri.contains("org.apache.commons.lang3.text/WordUtils.java?"));
+		assertTrue(jarUri.contains("org.apache.commons.lang3.text(WordUtils.class"));
 	}
 
 	@Test
