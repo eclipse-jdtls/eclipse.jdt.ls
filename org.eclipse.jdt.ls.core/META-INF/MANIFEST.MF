@@ -53,7 +53,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.12.0",
  wrapped.com.vladsch.flexmark.flexmark-util-misc;bundle-version="0.64.8",
  wrapped.com.vladsch.flexmark.flexmark-util-options;bundle-version="0.64.8",
  wrapped.com.vladsch.flexmark.flexmark-util-sequence;bundle-version="0.64.8",
- wrapped.com.vladsch.flexmark.flexmark-util-visitor;bundle-version="0.64.8"
+ wrapped.com.vladsch.flexmark.flexmark-util-visitor;bundle-version="0.64.8",
+ wrapped.com.jetbrains.intellij.java.java-decompiler-engine
 Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver",
  org.eclipse.jdt.ls.core.internal.cleanup;x-friends:="org.eclipse.jdt.ls.tests",
@@ -79,7 +80,6 @@ Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jd
  org.eclipse.jdt.ls.internal.gradle.checksums;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.lsp4j.extended;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.lsp4j.legacy.typeHierarchy;x-friends:="org.eclipse.jdt.ls.tests"
-Bundle-ClassPath: lib/java-decompiler-engine-231.9011.34.jar,
- .
+Bundle-ClassPath: . 
 Bundle-Vendor: %Bundle-Vendor
 Automatic-Module-Name: org.eclipse.jdt.ls.core
