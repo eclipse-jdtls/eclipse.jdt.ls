@@ -25,10 +25,10 @@
 			<unit id="org.eclipse.jdt.apt.pluggable.core" version="0.0.0" />
 			<unit id="org.eclipse.pde.junit.runtime" version="0.0.0" />
 			<unit id="org.eclipse.jdt.junit4.runtime" version="0.0.0" />
-			<unit id="junit-jupiter-api" version="5.14.1" />
-			<unit id="junit-jupiter-params" version="5.14.1" />
-			<unit id="junit-vintage-engine" version="5.14.1" />
-			<unit id="junit-platform-suite-engine" version="1.14.1" />
+			<unit id="junit-jupiter-api" version="5.14.2" />
+			<unit id="junit-jupiter-params" version="5.14.2" />
+			<unit id="junit-vintage-engine" version="5.14.2" />
+			<unit id="junit-platform-suite-engine" version="1.14.2" />
 			<unit id="org.eclipse.jdt.core.manipulation" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core" version="0.0.0" />
