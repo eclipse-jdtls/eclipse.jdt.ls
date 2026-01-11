@@ -717,6 +717,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			addInitScriptToArgs(androidInitScript, args);
 		}
 
+		// Add init script of aspectj support
+		if (preferencesManager.getPreferences().isAspectjSupportEnabled()) {
+			File aspectjInitScript = GradleUtils.getGradleInitScript("/gradle/aspectj/init.gradle");
+			addInitScriptToArgs(aspectjInitScript, args);
+		}
+
 		return args;
 	}
 

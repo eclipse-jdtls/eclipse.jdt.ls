@@ -522,6 +522,7 @@ public class Preferences {
 
 	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
 	public static final String JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED = "java.jdt.ls.androidSupport.enabled";
+	public static final String JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED = "java.jdt.ls.aspectjSupport.enabled";
 	public static final String JAVA_JDT_LS_JAVAC_ENABLED = "java.jdt.ls.javac.enabled";
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
@@ -709,6 +710,7 @@ public class Preferences {
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
+	private boolean aspectjSupportEnabled;
 	private boolean javacEnabled;
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
@@ -1137,6 +1139,7 @@ public class Preferences {
 		prefs.projectEncoding = this.projectEncoding;
 		prefs.avoidVolatileChanges = this.avoidVolatileChanges;
 		prefs.protobufSupportEnabled = this.protobufSupportEnabled;
+		prefs.aspectjSupportEnabled = this.aspectjSupportEnabled;
 		prefs.javacEnabled = this.javacEnabled;
 		prefs.androidSupportEnabled = this.androidSupportEnabled;
 		prefs.nullAnalysisMode = this.nullAnalysisMode;
@@ -1751,6 +1754,11 @@ public class Preferences {
 		if (getValue(configuration, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED) != null) {
 			boolean protobufSupported = getBoolean(configuration, JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED, existing.protobufSupportEnabled);
 			prefs.setProtobufSupportEnabled(protobufSupported);
+		}
+
+		if (getValue(configuration, JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED) != null) {
+			boolean aspectjSupported = getBoolean(configuration, JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED, existing.aspectjSupportEnabled);
+			prefs.setAspectjSupportEnabled(aspectjSupported);
 		}
 
 		if (getValue(configuration, JAVA_JDT_LS_JAVAC_ENABLED) != null) {
@@ -2861,6 +2869,14 @@ public class Preferences {
 
 	public void setProtobufSupportEnabled(boolean protobufSupportEnabled) {
 		this.protobufSupportEnabled = protobufSupportEnabled;
+	}
+
+	public boolean isAspectjSupportEnabled() {
+		return aspectjSupportEnabled;
+	}
+
+	public void setAspectjSupportEnabled(boolean aspectjSupportEnabled) {
+		this.aspectjSupportEnabled = aspectjSupportEnabled;
 	}
 
 	public boolean isAndroidSupportEnabled() {
