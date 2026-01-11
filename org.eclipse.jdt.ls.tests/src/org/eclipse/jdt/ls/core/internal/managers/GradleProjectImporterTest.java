@@ -759,6 +759,35 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		assertTrue(distribution instanceof WrapperGradleDistribution);
 	}
 
+	@Test
+	public void testAspectSupportDisabled() throws Exception {
+		boolean oldAspectSupported = this.preferences.isAspectjSupportEnabled();
+		try {
+			this.preferences.setAspectjSupportEnabled(false);
+			IProject project = importGradleProject("aspect");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertHasErrors(project);
+
+		} finally {
+			this.preferences.setAspectjSupportEnabled(oldAspectSupported);
+		}
+	}
+
+	@Test
+	public void testAspectSupportEnabled() throws Exception {
+		boolean oldAspectSupported = this.preferences.isAspectjSupportEnabled();
+		try {
+			this.preferences.setAspectjSupportEnabled(true);
+			IProject project = importGradleProject("aspect");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+			IJavaProject javaProject = JavaCore.create(project);
+			IType demoAspect = javaProject.findType("io.freefair.DemoAspect");
+			assertNotNull(demoAspect);
+		} finally {
+			this.preferences.setAspectjSupportEnabled(oldAspectSupported);
+		}
+	}
 
 	@Test
 	public void testCleanUpBuildServerFootprint() throws Exception {

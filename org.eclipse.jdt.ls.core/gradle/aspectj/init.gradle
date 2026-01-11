@@ -1,0 +1,73 @@
+import org.gradle.plugins.ide.eclipse.model.EclipseModel
+
+gradle.projectsEvaluated { g ->
+	if (System.getProperty("eclipse.application") == null) return
+	def weavingPluginId = "io.freefair.aspectj.post-compile-weaving"
+	def allprojects = g.rootProject.allprojects
+	boolean hasWeaving = allprojects.any { it.plugins.hasPlugin(weavingPluginId) }
+	allprojects.each { p ->
+		if (p.plugins.hasPlugin("eclipse")) {
+			EclipseModel eclipseModel = (EclipseModel) p.property("eclipse")
+			if (hasWeaving) {
+				if (GradleVersion.version(p.getGradle().getGradleVersion()) >= GradleVersion.version("5.4")) {
+					try {
+						try {
+							Task task = p.getTasks().getByName("classes")
+							eclipseModel.synchronizationTasks "classes"
+						} catch (UnknownTaskException e) {
+							// ignore
+						}
+					} catch (Exception e) {
+						// ignore
+					}
+				}
+			}
+			if (p.plugins.hasPlugin("io.freefair.aspectj")) {
+				String[] taskNames = [ "compileAspectj", "compileTestAspectj" ]
+				if (GradleVersion.version(p.getGradle().getGradleVersion()) >= GradleVersion.version("5.4")) {
+					for (final String taskName : taskNames) {
+						try {
+							Task task = p.getTasks().getByName(taskName)
+							eclipseModel.synchronizationTasks taskName
+						} catch (Exception e) {
+							// ignore
+						}
+					}
+				}
+				eclipseModel.classpath.file.whenMerged { cp ->
+					File projectDir = p.getProjectDir()
+					for (final String taskName : taskNames) {
+						Task task
+						try {
+							task = p.getTasks().getByName(taskName)
+						} catch (UnknownTaskException e) {
+							task = null;
+						}
+						if (task == null) {
+							continue
+						}
+						if (task.hasProperty("destinationDirectory")) {
+							def prop = task.destinationDirectory;
+							Object outputDir = null
+							if (prop instanceof org.gradle.api.file.DirectoryProperty) {
+								outputDir = prop.asFile.getOrNull()
+							} else if (prop instanceof File) {
+								outputDir = prop
+							}
+							if (outputDir != null && outputDir.exists()) {
+								cp.entries.removeAll { it instanceof org.gradle.plugins.ide.eclipse.model.Library && it.path.equals(outputDir.toString()) }
+								Object entry = new org.gradle.plugins.ide.eclipse.model.Library(fileReference(outputDir))
+								entry.exported = true
+								entry.entryAttributes.put("aspectj_generated", "true")
+								entry.entryAttributes.put("optional", "true")
+								entry.entryAttributes.put("ignore_optional_problems", "true")
+								cp.entries.add(entry)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
