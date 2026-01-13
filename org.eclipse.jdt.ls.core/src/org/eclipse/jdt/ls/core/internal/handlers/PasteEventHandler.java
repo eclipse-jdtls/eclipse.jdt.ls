@@ -275,8 +275,38 @@ public class PasteEventHandler {
 
 		// Get EOL
 		String eol = getEol(text);
-		String escaped = ESCAPE_JAVA.translate(params.getText());
-		String newText = escaped.replaceAll("((?:\\\\r)?\\\\n)", "$1\" + //" + eol + leadingIndentation + "\"");
+		String pastedText = params.getText();
+
+		// Only apply multi-line formatting if the pasted text contains actual newline characters
+		String newText;
+		if (pastedText.contains("\n") || pastedText.contains("\r")) {
+			// Use temporary markers (Private Use Areas codepoints) to distinguish actual newlines from literal \n sequences
+			// These markers should be unique and not appear in the pasted text
+			String crlfMarker = "\uE000"; // \r\n
+			String lfMarker = "\uE001";   // \n
+			String crMarker = "\uE002";    // \r
+
+			// Replace actual newlines with markers before escaping
+			// This way, after escaping, we can tell which \\n came from actual newlines vs literal \n
+			String textWithMarkers = pastedText.replace("\r\n", crlfMarker)
+					.replace("\n", lfMarker)
+					.replace("\r", crMarker);
+
+			// Escape the text (literal \n will become \\n, markers remain as-is)
+			String escaped = ESCAPE_JAVA.translate(textWithMarkers);
+
+			// Replace markers (actual newlines) with the line break pattern
+			// Keep literal \n sequences (now \\n) as-is
+			String crlfPattern = "\\r\\n\" + //" + eol + leadingIndentation + "\"";
+			String lfPattern = "\\n\" + //" + eol + leadingIndentation + "\"";
+			String crPattern = "\\r\" + //" + eol + leadingIndentation + "\"";
+			newText = escaped.replace(crlfMarker, crlfPattern)
+					.replace(lfMarker, lfPattern)
+					.replace(crMarker, crPattern);
+		} else {
+			// No actual newlines, just escape normally
+			newText = ESCAPE_JAVA.translate(pastedText);
+		}
 		return new DocumentPasteEdit(newText);
 	}
 
