@@ -270,6 +270,141 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 		assertEquals("\\\\u4F60\\\\u597D", actual.getInsertText());
 	}
 
+	@Test
+	public void testPasteLiteralBackslashN() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String nl = "555\\n555";
+			}
+			""", false, monitor);
+
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 30, 2, 30),
+				"\\n",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// Literal \n should be escaped to \\n, but NOT split across lines
+		assertEquals("\\\\n", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteLiteralBackslashNWithActualNewlines() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String foo = "a";
+			}
+			""", false, monitor);
+
+		// Paste: b\nc (literal \n) followed by actual newline, then d, then actual newline, then e
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24),
+				"b\\nc\nd\ne",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// Literal \n should remain as \\n, actual newlines should be split
+		assertEquals("b\\\\nc\\n\" + //\n\t\t\t\"d\\n\" + //\n\t\t\t\"e", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteOnlyLiteralBackslashN() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String str = "";
+			}
+			""", false, monitor);
+
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 23, 2, 23),
+				"\\n",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// No actual newlines, so no line splitting - just escape the literal \n
+		assertEquals("\\\\n", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteMultilineWithLiteralBackslashN() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String text = "";
+			}
+			""", false, monitor);
+
+		// Paste: hello\nworld (literal \n) followed by actual newline, then more text
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 24, 2, 24),
+				"hello\\nworld\nmore\ntext",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// Literal \n stays as \\n, actual newlines get split
+		assertEquals("hello\\\\nworld\\n\" + //\n\t\t\t\"more\\n\" + //\n\t\t\t\"text", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteWindowsNewlineWithLiteralBackslashN() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String str = "";
+			}
+			""", false, monitor);
+
+		// Paste: literal \n followed by Windows newline
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 23, 2, 23),
+				"test\\n\r\nnext",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// Literal \n stays as \\n, Windows newline gets split
+		assertEquals("test\\\\n\\r\\n\" + //\n\t\t\t\"next", actual.getInsertText());
+	}
+
+	@Test
+	public void testPasteOnlyActualNewlines() throws CoreException {
+		ICompilationUnit unit = fPackageTest.createCompilationUnit("A.java", """
+			package test;
+			public class A {
+				private String multiline = "";
+			}
+			""", false, monitor);
+
+		var params = new PasteEventParams(
+				createLocation(JDTUtils.toUri(unit), 2, 29, 2, 29),
+				"line1\nline2\nline3",
+				null,
+				new FormattingOptions(4, false));
+
+		DocumentPasteEdit actual = PasteEventHandler.handlePasteEvent(params, null);
+
+		assertNotNull(actual);
+		// All actual newlines should be split
+		assertEquals("line1\\n\" + //\n\t\t\t\"line2\\n\" + //\n\t\t\t\"line3", actual.getInsertText());
+	}
+
 	private static Location createLocation(String uri, int startLine, int startChar, int endLine, int endChar) {
 		Position start = new Position(startLine, startChar);
 		Position end = new Position(endLine, endChar);
