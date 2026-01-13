@@ -27,6 +27,8 @@ import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.apt.core.util.AptConfig;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -48,6 +50,7 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 		if (projectsManager != null) {
 			boolean gradleJavaHomeChanged = !Objects.equals(oldPreferences.getGradleJavaHome(), newPreferences.getGradleJavaHome());
 			if (gradleJavaHomeChanged || hasAllowedChecksumsChanged(oldPreferences, newPreferences)) {
+				waitForGradleJobs();
 				for (IProject project : ProjectUtils.getGradleProjects()) {
 					if (newPreferences.isGradleWrapperEnabled() || gradleJavaHomeChanged) {
 						updateProject(projectsManager, project, gradleJavaHomeChanged);
@@ -57,16 +60,17 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 
 			boolean protobufSupportChanged = !Objects.equals(oldPreferences.isProtobufSupportEnabled(), newPreferences.isProtobufSupportEnabled());
 			if (protobufSupportChanged) {
-				for (IProject project : ProjectUtils.getGradleProjects()) {
-					projectsManager.updateProject(project, true);
-				}
+				updateProjects(projectsManager);
 			}
 
 			boolean androidSupportChanged = !Objects.equals(oldPreferences.isAndroidSupportEnabled(), newPreferences.isAndroidSupportEnabled());
 			if (androidSupportChanged) {
-				for (IProject project : ProjectUtils.getGradleProjects()) {
-					projectsManager.updateProject(project, true);
-				}
+				updateProjects(projectsManager);
+			}
+
+			boolean aspectjSupportChanged = !Objects.equals(oldPreferences.isAspectjSupportEnabled(), newPreferences.isAspectjSupportEnabled());
+			if (aspectjSupportChanged) {
+				updateProjects(projectsManager);
 			}
 
 			boolean annotationProcessingChanged = !Objects.equals(oldPreferences.isGradleAnnotationProcessingEnabled(), newPreferences.isGradleAnnotationProcessingEnabled());
@@ -84,6 +88,7 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 			}
 			boolean updateBuildConfigurationChanged = !Objects.equals(oldPreferences.getUpdateBuildConfigurationStatus(), newPreferences.getUpdateBuildConfigurationStatus());
 			if (updateBuildConfigurationChanged) {
+				waitForGradleJobs();
 				for (IProject project : ProjectUtils.getGradleProjects()) {
 					String projectPath = project.getLocation().toFile().getAbsolutePath();
 					BuildConfiguration buildConfiguration = GradleProjectImporter.getBuildConfiguration(Paths.get(projectPath));
@@ -91,6 +96,21 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 					gradleBuild.synchronize(new NullProgressMonitor());
 				}
 			}
+		}
+	}
+
+	private void waitForGradleJobs() {
+		try {
+			Job.getJobManager().join(CorePlugin.GRADLE_JOB_FAMILY, new NullProgressMonitor());
+		} catch (OperationCanceledException | InterruptedException e) {
+			// ignore
+		}
+	}
+
+	private void updateProjects(ProjectsManager projectsManager) {
+		waitForGradleJobs();
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			projectsManager.updateProject(project, true);
 		}
 	}
 
