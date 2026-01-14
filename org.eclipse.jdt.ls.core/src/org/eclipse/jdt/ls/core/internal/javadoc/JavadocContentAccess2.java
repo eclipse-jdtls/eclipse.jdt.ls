@@ -207,7 +207,11 @@ public class JavadocContentAccess2 {
 					res = collectLinkElement((ASTNode) children.get(1));
 				} else {
 					res = collectLinkElement((ASTNode) children.get(0));
-					linkTitle = res[0];
+					if (res[0].isEmpty() && children.get(0).toString().startsWith("#") && res.length > 1) {// member implicitly refers to the current class
+						linkTitle = res[1];
+					} else {
+						linkTitle = res[0];
+					}
 				}
 				buf.append("[" + linkTitle + "]");
 				String uri = JdtLsJavadocAccessImpl.createLinkURIHelper(CoreJavaElementLinks.JAVADOC_SCHEME, element, res[0], res.length > 1 ? res[1] : null,
@@ -237,6 +241,14 @@ public class JavadocContentAccess2 {
 			Name qualifier = methodRef.getQualifier();
 			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName = methodRef.getName().getIdentifier();
+			if (refMemberName != null) {
+				if (e.toString().endsWith(")")) {
+					refMemberName = methodRef.toString();
+					if (refMemberName.startsWith("#")) {
+						refMemberName = refMemberName.substring(1);
+					}
+				}
+			}
 			@SuppressWarnings("unchecked")
 			List<MethodRefParameter> params = methodRef.parameters();
 			int ps = params.size();
