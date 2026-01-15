@@ -61,6 +61,10 @@ import org.eclipse.jdt.internal.ui.viewsupport.CoreJavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.Location;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 
 /**
  * Helper to get the content of a Javadoc comment as HTML.
@@ -171,8 +175,10 @@ public class JavadocContentAccess2 {
 				} else {
 					collectTagElements(content, element, t, buf);
 				}
-			} else if (e instanceof TextElement) {
-				buf.append(((TextElement) e).getText());
+			} else if (e instanceof TextElement t) {
+				String tagElementText = t.getText();
+				String inlintTagConv = convertInlineHtmlToMarkdown(tagElementText);
+				buf.append(inlintTagConv);
 			} else if ("@see".equals(tag.getTagName())) {
 				collectLinkedTag(element, tag, buf);
 			} else {
@@ -193,6 +199,54 @@ public class JavadocContentAccess2 {
 				}
 			}
 		}
+	}
+
+	private static String convertInlineHtmlToMarkdown(String text) {
+		String result = text;
+
+		result = replaceInline(result, "strong", "**");
+		result = replaceInline(result, "b", "**");
+		result = replaceInline(result, "em", "*");
+		result = replaceInline(result, "i", "*");
+		result = replaceInline(result, "code", "`");
+		result = convertAnchorTags(result);
+
+		return result;
+	}
+
+	private static String replaceInline(String text, String tag, String md) {
+		return text.replaceAll("(?i)<" + tag + ">\\s*(.*?)\\s*</" + tag + ">", md + "$1" + md);
+	}
+
+	private static String convertAnchorTags(String html) {
+		Document doc = Jsoup.parseBodyFragment(html);
+		for (Element a : doc.select("a")) {
+			String text = a.text().trim();
+			if (text.isEmpty()) {
+				a.remove();
+				continue;
+			}
+			String href = a.hasAttr("href") ? a.attr("href").trim() : "";
+			href = href.replace("\\\"", "\"");
+			if ((href.startsWith("\"") && href.endsWith("\"")) || (href.startsWith("'") && href.endsWith("'"))) {
+				href = href.substring(1, href.length() - 1).trim();
+			}
+			if (isMalformedHref(href)) {
+				href = "";
+			}
+			a.replaceWith(new TextNode("[" + text + "](" + href + ")"));
+		}
+		return doc.body().html();
+	}
+
+	private static boolean isMalformedHref(String href) {
+		if (href.isEmpty()) {
+			return false;
+		}
+		if ((href.startsWith("\"") || href.startsWith("'")) || (href.indexOf(' ') >= 0)) {
+			return true;
+		}
+		return false;
 	}
 
 	private static void collectLinkedTag(IJavaElement element, TagElement t, StringBuilder buf) {
