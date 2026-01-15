@@ -76,6 +76,8 @@
       <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-wikilink" />
       <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-ins" />
       <plugin id="wrapped.com.vladsch.flexmark.flexmark-ext-superscript" />
+      <!-- java decompiler -->
+      <plugin id="wrapped.com.jetbrains.intellij.java.java-decompiler-engine"/>
    </plugins>
 
    <configurations>
