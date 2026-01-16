@@ -18,12 +18,14 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -31,6 +33,7 @@ import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -44,13 +47,18 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
+import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstall2;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -145,6 +153,10 @@ public class HoverInfoProvider {
 				String value = javadoc == null ? null : javadoc.getValue();
 				if (value != null && !value.isBlank()) {
 					res.add(Either.forLeft(value));
+				}
+				String sourceInfo = getSourceInfo(curr);
+				if (sourceInfo != null) {
+					res.add(Either.forLeft("Source: *" + sourceInfo+"*"));
 				}
 			}
 		} catch (Exception e) {
@@ -281,6 +293,76 @@ public class HoverInfoProvider {
 			}
 		}
 		return result != null ? new MarkedString(LANGUAGE_ID, result) : null;
+	}
+
+	public static String getSourceInfo(IJavaElement element) throws JavaModelException {
+		IJavaElement current = element;
+
+		while (current != null && !(current instanceof IPackageFragmentRoot)) {
+			current = current.getParent();
+		}
+		if (!(current instanceof IPackageFragmentRoot root)) {
+			return null;
+		}
+		String sourceInfo = null;
+		if (root.isArchive()) {
+			String jdkVersion = "";
+			if (isSystemLibrary(root)) {
+				IVMInstall vm = null;
+				try {
+					vm = JavaRuntime.getVMInstall(root.getJavaProject());
+					if (vm instanceof IVMInstall2 vm2) {
+						jdkVersion = vm2.getJavaVersion();
+					}
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+				sourceInfo = "Java " + jdkVersion;
+				if (root instanceof JrtPackageFragmentRoot) {
+					sourceInfo += " (module: " + root.getElementName() + ")";
+				}
+			} else {
+				sourceInfo = root.getElementName();
+			}
+
+		} else {
+			sourceInfo = root.getJavaProject().getElementName();
+		}
+
+		if (sourceInfo != null) {
+			// Use toLocation to get URI with line number
+			Location location = JDTUtils.toLocation(element);
+			if (location != null) {
+				String uri = location.getUri() + "#" + (location.getRange().getStart().getLine() + 1);
+				return "[" + sourceInfo + "](" + uri + ")";
+			}
+		}
+
+		return sourceInfo;
+	}
+
+	/**
+	 * Checks if the package fragment root is a system library.
+	 * @param root the package fragment root
+	 * @return true if the package fragment root is a JDK, false otherwise
+	 */
+	private static boolean isSystemLibrary(IPackageFragmentRoot root) {
+		try {
+			if (root.getKind() == IPackageFragmentRoot.K_BINARY && root.isExternal() && root.isReadOnly()) {
+				IClasspathEntry entry = root.getRawClasspathEntry();
+				if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+					return isJREClasspathContainer(entry.getPath());
+				}
+			}
+			return false;
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return false;
+	}
+
+	private static boolean isJREClasspathContainer(IPath containerPath) {
+		return containerPath != null && containerPath.segmentCount() > 0 && JavaRuntime.JRE_CONTAINER.equals(containerPath.segment(0));
 	}
 
 	/**

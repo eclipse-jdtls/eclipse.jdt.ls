@@ -231,7 +231,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertTrue(result.getContents().isLeft());
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
-		assertEquals(2, list.size());
+		assertEquals(3, list.size());
 		assertTrue(list.get(1).isLeft());
 		assertEquals("Test", list.get(1).getLeft());
 	}
@@ -248,7 +248,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertTrue(result.getContents().isLeft());
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
-		assertEquals(2, list.size());
+		assertEquals(3, list.size());
 		assertTrue(list.get(1).isLeft());
 		assertEquals("This is Bar.", list.get(1).getLeft());
 	}
@@ -265,7 +265,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertTrue(result.getContents().isLeft());
 		List<Either<String, MarkedString>> list = result.getContents().getLeft();
 		assertNotNull(list);
-		assertEquals(2, list.size());
+		assertEquals(3, list.size());
 		assertTrue(list.get(1).isLeft());
 		assertEquals("This is interface IFoo.", list.get(1).getLeft());
 	}
