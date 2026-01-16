@@ -31,6 +31,7 @@ import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -44,6 +45,7 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
+import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
@@ -51,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
@@ -145,6 +148,10 @@ public class HoverInfoProvider {
 				String value = javadoc == null ? null : javadoc.getValue();
 				if (value != null && !value.isBlank()) {
 					res.add(Either.forLeft(value));
+				}
+				String sourceInfo = getSourceInfo(curr);
+				if (sourceInfo != null) {
+					res.add(Either.forLeft("Source: *" + sourceInfo+"*"));
 				}
 			}
 		} catch (Exception e) {
@@ -281,6 +288,38 @@ public class HoverInfoProvider {
 			}
 		}
 		return result != null ? new MarkedString(LANGUAGE_ID, result) : null;
+	}
+
+	public static String getSourceInfo(IJavaElement element) throws JavaModelException {
+		IJavaElement current = element;
+
+		while (current != null && !(current instanceof IPackageFragmentRoot)) {
+			current = current.getParent();
+		}
+		if (!(current instanceof IPackageFragmentRoot root)) {
+			return null;
+		}
+		String sourceInfo = null;
+		if (root.isArchive()) {
+			if (root instanceof JrtPackageFragmentRoot) {
+				sourceInfo = "JRE (module: " + root.getElementName() + ")";
+			} else {
+				sourceInfo = root.getElementName();
+			}
+		} else {
+			sourceInfo = root.getJavaProject().getElementName();
+		}
+
+		if (sourceInfo != null) {
+			// Use toLocation to get URI with line number
+			Location location = JDTUtils.toLocation(element);
+			if (location != null) {
+				String uri = location.getUri() + "#" + (location.getRange().getStart().getLine() + 1);
+				return "[" + sourceInfo + "](" + uri + ")";
+			}
+		}
+
+		return sourceInfo;
 	}
 
 	/**
