@@ -577,7 +577,7 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	private List<URI> getURIs(String url) {
-		if (url == null) {
+		if (url == null || url.isBlank()) {
 			return Collections.emptyList();
 		}
 		List<URI> result = new ArrayList<>();
