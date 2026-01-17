@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -146,4 +147,71 @@ public final class MapFlattener {
 		return null;
 	}
 
+	public static boolean containsKey(Map<String, Object> configuration, String key) {
+		if (configuration.containsKey(key)) {
+			return true;
+		}
+		//Probably a chained key, trying nested Maps
+		String[] keyParts = key.split("\\.");
+		String currKey = null;
+		Map<String, Object> currMap = configuration;
+		for (int i = 0; i < keyParts.length; i++) {
+			currKey = keyParts[i];
+			if (i == keyParts.length - 1) {
+				return currMap.containsKey(currKey);
+			}
+			Object val = currMap.get(currKey);
+			if (val instanceof Map) {
+				currMap = (Map<String, Object>) val;
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Sets a value in a nested map structure using a chained key. Creates nested maps as needed.
+	 *
+	 * @param configuration the map to set the value in
+	 * @param chainedKey the chained key (e.g., "java.settings.url")
+	 * @param value the value to set
+	 */
+	public static void setValue(Map<String, Object> configuration, String chainedKey, Object value) {
+		if (configuration == null) {
+			throw new IllegalArgumentException("Configuration cannot be null");
+		}
+		if (chainedKey == null) {
+			throw new IllegalArgumentException("Key cannot be null");
+		}
+
+		// Check if key exists directly (no dots)
+		if (!chainedKey.contains(".")) {
+			configuration.put(chainedKey, value);
+			return;
+		}
+
+		// Split the key and navigate/create nested maps
+		String[] keyParts = chainedKey.split("\\.");
+		Map<String, Object> currMap = configuration;
+
+		for (int i = 0; i < keyParts.length; i++) {
+			String currKey = keyParts[i];
+			if (i == keyParts.length - 1) {
+				// Last part - set the value
+				currMap.put(currKey, value);
+			} else {
+				// Intermediate part - navigate or create nested map
+				Object val = currMap.get(currKey);
+				if (val instanceof Map) {
+					currMap = (Map<String, Object>) val;
+				} else {
+					// Create a new nested map if it doesn't exist or if existing value is not a Map
+					Map<String, Object> newMap = new HashMap<>();
+					currMap.put(currKey, newMap);
+					currMap = newMap;
+				}
+			}
+		}
+	}
 }
