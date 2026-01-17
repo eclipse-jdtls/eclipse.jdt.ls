@@ -146,4 +146,26 @@ public final class MapFlattener {
 		return null;
 	}
 
+	public static boolean containsKey(Map<String, Object> configuration, String key) {
+		if (configuration.containsKey(key)) {
+			return true;
+		}
+		//Probably a chained key, trying nested Maps
+		String[] keyParts = key.split("\\.");
+		String currKey = null;
+		Map<String, Object> currMap = configuration;
+		for (int i = 0; i < keyParts.length; i++) {
+			currKey = keyParts[i];
+			if (i == keyParts.length - 1) {
+				return currMap.containsKey(currKey);
+			}
+			Object val = currMap.get(currKey);
+			if (val instanceof Map) {
+				currMap = (Map<String, Object>) val;
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
 }
