@@ -168,6 +168,8 @@ public class JavadocContentAccess2 {
 			if (e instanceof TagElement t) {
 				if ("@link".equals(t.getTagName()) || "@linkplain".equals(t.getTagName())) {
 					collectLinkedTag(element, t, buf);
+				} else if ("@code".equals(t.getTagName()) || "@literal".equals(t.getTagName())) {
+					collectCodeAndLiteralTag(element, t, buf);
 				} else {
 					collectTagElements(content, element, t, buf);
 				}
@@ -191,6 +193,25 @@ public class JavadocContentAccess2 {
 				} else {
 					buf.append(" ");
 				}
+			}
+		}
+	}
+
+	private static void collectCodeAndLiteralTag(IJavaElement element, TagElement t, StringBuilder buf) {
+		if (t.fragments().size() > 0) {
+			try {
+				if (t.fragments().size() == 1) {
+					String code = ((TextElement) t.fragments().get(0)).getText();
+					if ("@code".equals(t.getTagName())) {
+						buf.append("`" + code + "`");
+					} else if ("@literal".equals(t.getTagName())) {
+						// escape chars applied for <>*^&\`[]
+						code = code.replaceAll("([<>*^&\\\\`\\[\\]])", "\\\\$1");
+						buf.append(code);
+					}
+				}
+			} catch (Exception e) {
+				JavaManipulationPlugin.log(e);
 			}
 		}
 	}
