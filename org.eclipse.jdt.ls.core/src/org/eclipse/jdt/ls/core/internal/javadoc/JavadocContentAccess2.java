@@ -49,6 +49,7 @@ import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocContentAcce
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreMarkdownAccessImpl;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.IJavadocContentFactory;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.JavadocLookup;
+import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
 import org.eclipse.jdt.internal.ui.viewsupport.CoreJavaElementLinks;
@@ -175,6 +176,44 @@ public class JavadocContentAccess2 {
 			sb.append('`');
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Fixes https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3672 : {@code @code}/{@code @literal}
+	 * inline tags inside a "///" Markdown-style javadoc comment were not rendered correctly. PR #3681
+	 * fixed this by adding a TAG_CODE/TAG_LITERAL branch (dispatching to collectCodeAndLiteralTag(), below)
+	 * to collectTagElements()'s tag-name dispatch:
+	 * <pre>
+	 * if (TagElement.TAG_LINK.equals(t.getTagName()) || TagElement.TAG_LINKPLAIN.equals(t.getTagName())) {
+	 *     collectLinkedTag(element, t, buf);
+	 * } else if (TagElement.TAG_CODE.equals(t.getTagName()) || TagElement.TAG_LITERAL.equals(t.getTagName())) {
+	 *     collectCodeAndLiteralTag(element, t, buf);
+	 * } else {
+	 *     collectTagElements(content, element, t, buf);
+	 * }
+	 * </pre>
+	 * collectTagElements()/collectLinkedTag() no longer exist on main (removed by an unrelated
+	 * refactor of renderPlainMarkdown() while this PR was in flight), so that dispatch wiring has
+	 * nowhere to go right now. collectCodeAndLiteralTag() itself is kept below since it's still
+	 * needed once it's reconnected - see the discussion on PR #3681 for where this should land.
+	 */
+	private static void collectCodeAndLiteralTag(IJavaElement element, TagElement t, StringBuilder buf) {
+		if (t.fragments().size() > 0) {
+			try {
+				if (t.fragments().size() == 1) {
+					String code = ((TextElement) t.fragments().get(0)).getText();
+					if ("@code".equals(t.getTagName())) {
+						buf.append("`" + code + "`");
+					} else if ("@literal".equals(t.getTagName())) {
+						// escape chars applied for <>*^&\`[]
+						code = code.replaceAll("([<>*^&\\\\`\\[\\]])", "\\\\$1");
+						buf.append(code);
+					}
+				}
+			} catch (Exception e) {
+				JavaManipulationPlugin.log(e);
+			}
+		}
 	}
 
 	/**
