@@ -1050,4 +1050,58 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
+
+	@Test
+	public void testHoverMarkdownWithCodeTag_01() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// {@code List<String>}\n"
+				+ "public class Markdown{}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 2, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+		StringBuilder expectedJavadoc = new StringBuilder();
+		//@formatter:off
+		expectedJavadoc.append("` List<String>` ");
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+	}
+
+	@Test
+	public void testHoverMarkdownWithCodeTag_02() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// {@literal List<String> <>*^&`[]}\n"
+				+ "public class Markdown{}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 2, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+		StringBuilder expectedJavadoc = new StringBuilder();
+		//@formatter:off
+		expectedJavadoc.append(" List\\<String\\> \\<\\>\\*\\^\\&\\`\\[\\] ");
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+	}
 }
