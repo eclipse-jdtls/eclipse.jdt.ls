@@ -1071,7 +1071,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, hover.getContents().getLeft().size());
 		StringBuilder expectedJavadoc = new StringBuilder();
 		//@formatter:off
-		expectedJavadoc.append("` List<String>` ");
+		expectedJavadoc.append("`List<String>` ");
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
@@ -1098,7 +1098,67 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, hover.getContents().getLeft().size());
 		StringBuilder expectedJavadoc = new StringBuilder();
 		//@formatter:off
-		expectedJavadoc.append(" List\\<String\\> \\<\\>\\*\\^\\&\\`\\[\\] ");
+		expectedJavadoc.append("List\\<String\\> \\<\\>\\*\\^\\&\\`\\[\\] ");
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+	}
+
+	@Test
+	public void testHoverMarkdownWithCodeTag_03() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// Here's some code {@code \n"
+				+ "///     List<String> list = List.of(\"Hello World!\");\n"
+				+ "/// } \n"
+				+ "/// that does something.\n"
+				+ "public class Markdown{}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 5, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+		//@formatter:off
+		StringBuilder expectedJavadoc = new StringBuilder();
+		expectedJavadoc.append("Here's some code  `List<String> list = List.of(\"Hello World!\");` that does something.");
+		//@formatter:on
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+	}
+
+	@Test
+	public void testHoverMarkdownWithCodeTag_04() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "/// Here's some code {@literal \n"
+				+ "///     List<String> list = List.of(\"Hello World!\");\n"
+				+ "/// } \n"
+				+ "/// that does something.\n"
+				+ "public class Markdown{}\n");
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
+		Hover hover = getHover(cu, 5, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+		//@formatter:off
+		StringBuilder expectedJavadoc = new StringBuilder();
+		expectedJavadoc.append("Here's some code List\\<String\\> list = List.of(\"Hello World!\");} that does something.");
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);

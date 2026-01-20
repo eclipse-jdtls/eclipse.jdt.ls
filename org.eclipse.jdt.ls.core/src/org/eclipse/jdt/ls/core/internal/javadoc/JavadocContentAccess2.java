@@ -166,9 +166,9 @@ public class JavadocContentAccess2 {
 		while (!queue.isEmpty()) {
 			ASTNode e = queue.pop();
 			if (e instanceof TagElement t) {
-				if ("@link".equals(t.getTagName()) || "@linkplain".equals(t.getTagName())) {
+				if (TagElement.TAG_LINK.equals(t.getTagName()) || TagElement.TAG_LINKPLAIN.equals(t.getTagName())) {
 					collectLinkedTag(element, t, buf);
-				} else if ("@code".equals(t.getTagName()) || "@literal".equals(t.getTagName())) {
+				} else if (TagElement.TAG_CODE.equals(t.getTagName()) || TagElement.TAG_LITERAL.equals(t.getTagName())) {
 					collectCodeAndLiteralTag(element, t, buf);
 				} else {
 					collectTagElements(content, element, t, buf);
@@ -200,14 +200,30 @@ public class JavadocContentAccess2 {
 	private static void collectCodeAndLiteralTag(IJavaElement element, TagElement t, StringBuilder buf) {
 		if (t.fragments().size() > 0) {
 			try {
-				if (t.fragments().size() == 1) {
-					String code = ((TextElement) t.fragments().get(0)).getText();
-					if ("@code".equals(t.getTagName())) {
-						buf.append("`" + code + "`");
-					} else if ("@literal".equals(t.getTagName())) {
-						// escape chars applied for <>*^&\`[]
-						code = code.replaceAll("([<>*^&\\\\`\\[\\]])", "\\\\$1");
-						buf.append(code);
+				if (t.fragments().size() > 0) {
+					if (TagElement.TAG_CODE.equals(t.getTagName())) {
+						if (t.fragments().size() == 1) {
+							buf.append("`" + ((TextElement) t.fragments().get(0)).getText().strip() + "`");
+						} else {
+							String code;
+							for (int i = 0; i < t.fragments().size(); i++) {
+								code = ((TextElement) t.fragments().get(i)).getText().strip();
+								if (i == 0) {
+									buf.append("`" + code);
+								} else if (i == (t.fragments().size() - 1)) {
+									buf.append(code + "`");
+								} else {
+									buf.append(code);
+								}
+							}
+						}
+					} else if (TagElement.TAG_LITERAL.equals(t.getTagName())) {
+						String code;
+						for (int i = 0; i < t.fragments().size(); i++) {
+							code = ((TextElement) t.fragments().get(i)).getText().strip();
+							code = code.replaceAll("([<>*^&\\\\`\\[\\]])", "\\\\$1");
+							buf.append(code);
+						}
 					}
 				}
 			} catch (Exception e) {
