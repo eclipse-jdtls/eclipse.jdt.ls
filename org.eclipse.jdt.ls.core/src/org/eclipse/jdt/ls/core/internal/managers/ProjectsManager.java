@@ -517,7 +517,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		return job;
 	}
 
-	private void waitForUpdateJobs() {
+	public void waitForUpdateJobs() {
 		int maxThread = preferenceManager.getPreferences().getMaxConcurrentBuilds();
 		Job[] jobs = Job.getJobManager().find(IConstants.UPDATE_PROJECT_FAMILY);
 		if (jobs != null && jobs.length > maxThread) {
