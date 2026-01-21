@@ -178,4 +178,11 @@ public interface IBuildSupport {
 		return Collections.emptyList();
 	}
 
+	/**
+	 * @param resource
+	 * @param monitor
+	 */
+	default void compile(IResource resource, IProgressMonitor monitor) {
+	}
+
 }
