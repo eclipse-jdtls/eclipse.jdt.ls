@@ -466,7 +466,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
 		assertNoErrors(project);
 		// edit pom.xml
-		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.5</version>", "<version>3.5xx</version>"));
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.18.0</version>", "<version>3.18.xx</version>"));
 		waitForBackgroundJobs();
 		ArgumentCaptor<PublishDiagnosticsParams> captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		verify(connection, atLeastOnce()).publishDiagnostics(captor.capture());

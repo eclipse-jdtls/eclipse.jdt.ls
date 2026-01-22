@@ -85,7 +85,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
-		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.5</version>", "<version>3.6</version>"));
+		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.18.0</version>", "<version>3.6</version>"));
 
 		reset(connection);
 		projectsManager.fileChanged(pom.getLocationURI().toString(), CHANGE_TYPE.CHANGED);

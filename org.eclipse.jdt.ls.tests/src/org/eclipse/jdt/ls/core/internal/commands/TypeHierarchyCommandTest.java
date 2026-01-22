@@ -107,7 +107,7 @@ public class TypeHierarchyCommandTest extends AbstractInvisibleProjectBasedTest 
 		assertNotNull(item);
 		assertEquals(item.getName(), "Builder");
 		assertNull(item.getParents());
-		assertEquals(item.getChildren().size(), 9);
+		assertEquals(10, item.getChildren().size());
 		for (TypeHierarchyItem child : item.getChildren()) {
 			List<TypeHierarchyItem> subChild = child.getChildren();
 			assertNotNull(subChild);

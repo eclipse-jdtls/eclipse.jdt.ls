@@ -180,12 +180,12 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
 		assertNotNull(calls);
 		assertEquals(2, calls.size());
-		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 368);
+		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 61);
 
 		List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());
 		assertNotNull(call0Calls);
 		assertEquals(1, call0Calls.size());
-		assertItem(call0Calls.get(0).getTo(), "capitalize(String, char...)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 401);
+		assertItem(call0Calls.get(0).getTo(), "capitalize(String, char...)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 94);
 
 		String jarUri = call0Calls.get(0).getTo().getUri();
 		assertTrue(jarUri.startsWith("jdt://"));

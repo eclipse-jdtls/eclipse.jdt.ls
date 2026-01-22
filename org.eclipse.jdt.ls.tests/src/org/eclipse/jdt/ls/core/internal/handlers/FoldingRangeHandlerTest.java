@@ -46,7 +46,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testFoldingRanges() throws Exception {
 		List<FoldingRange> foldingRanges = getFoldingRanges("org.apache.commons.lang3.text.WordUtils");
-		assertHasFoldingRange(18, 23, FoldingRangeKind.Imports, foldingRanges);
+		assertHasFoldingRange(18, 22, FoldingRangeKind.Imports, foldingRanges);
 		testClassForValidRange("org.apache.commons.lang3.text.WordUtils", foldingRanges);
 	}
 

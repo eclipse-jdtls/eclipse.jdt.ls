@@ -164,7 +164,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testDownloadSources() throws Exception {
-		File file = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.5");
+		File file = DependencyUtil.getSources("org.apache.commons", "commons-lang3", "3.18.0");
 		FileUtils.deleteDirectory(file.getParentFile());
 		boolean mavenDownloadSources = preferences.isMavenDownloadSources();
 		try {
