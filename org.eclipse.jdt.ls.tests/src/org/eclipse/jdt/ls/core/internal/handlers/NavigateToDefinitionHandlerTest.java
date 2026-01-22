@@ -146,7 +146,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		String uri = ClassFileUtil.getURI(defaultProject, "Single");
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
 		handler.definition(new TextDocumentPositionParams(identifier, new Position(1, 31)), monitor);
-		testClass("org.apache.commons.lang3.stringutils", 6579, 20);
+		testClass("org.apache.commons.lang3.stringutils", 145, 30);
 	}
 
 	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)

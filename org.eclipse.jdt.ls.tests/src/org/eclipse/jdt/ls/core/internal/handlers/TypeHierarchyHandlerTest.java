@@ -85,7 +85,7 @@ public class TypeHierarchyHandlerTest extends AbstractInvisibleProjectBasedTest 
 		supertypesParams.setItem(items.get(0));
 		List<TypeHierarchyItem> subtypesItems = fHandler.getSubtypeItems(supertypesParams, monitor);
 		assertNotNull(subtypesItems);
-		assertEquals(9, subtypesItems.size());
+		assertEquals(10, subtypesItems.size());
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/2871

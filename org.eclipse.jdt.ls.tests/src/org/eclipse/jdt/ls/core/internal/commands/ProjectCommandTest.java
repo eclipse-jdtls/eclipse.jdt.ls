@@ -407,7 +407,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 
 		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.StringUtils");
 		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
-		assertEquals(new Range(new Position(115, 13), new Position(115, 24)), resolvedSymbol.getLocation().getRange());
+		assertEquals(new Range(new Position(124, 13), new Position(124, 24)), resolvedSymbol.getLocation().getRange());
 	}
 
 	@Test
