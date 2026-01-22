@@ -28,7 +28,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Range;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -2388,34 +2387,36 @@ public class UnresolvedVariablesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Disabled("Modifier proposals")
 	public void testVarParameterAccess() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
 
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class Base {\n");
-		buf.append("    protected int myField;\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("Base.java", buf.toString(), false, null);
+		String baseCode = """
+			package test1;
+			public class Base {
+			    protected int myField;
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Base.java", baseCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test2;\n");
-		buf.append("import test1.Base;\n");
-		buf.append("public class Child extends Base {\n");
-		buf.append("    public void aMethod(Base parent) {\n");
-		buf.append("        System.out.println(parent.myField);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		cu = pack2.createCompilationUnit("Child.java", buf.toString(), false, null);
+		String childCode = """
+			package test2;
+			import test1.Base;
+			public class Child extends Base {
+			    public void aMethod(Base parent) {
+			        System.out.println(parent.myField);
+			    }
+			}
+			""";
+		cu = pack2.createCompilationUnit("Child.java", childCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class Base {\n");
-		buf.append("    public int myField;\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		String e1Code = """
+			package test1;
+			public class Base {
+			    public int myField;
+			}
+			""";
+		Expected e1 = new Expected("Change visibility of 'myField' to 'public'", e1Code);
 
 		assertCodeActionExists(cu, e1);
 	}

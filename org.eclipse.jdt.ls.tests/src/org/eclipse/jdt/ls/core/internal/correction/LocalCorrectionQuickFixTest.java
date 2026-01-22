@@ -28,7 +28,6 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.Range;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
@@ -245,9 +244,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2);
 	}
 
-	// requires TP >= 4.24 I20220314-1800 - https://github.com/eclipse/eclipse.jdt.ls/issues/2026
 	@Test
-	@Disabled
 	public void testUnusedParameter() throws Exception {
 		Map<String, String> options = fJProject1.getOptions(true);
 		options.put(JavaCore.COMPILER_PB_UNUSED_PARAMETER, JavaCore.ERROR);

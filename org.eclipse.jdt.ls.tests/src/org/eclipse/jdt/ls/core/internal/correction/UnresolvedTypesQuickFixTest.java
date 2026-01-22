@@ -46,8 +46,8 @@ import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.ResourceOperationKind;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
@@ -255,35 +255,43 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Disabled("Create type")
+	@Disabled("Created class doesn't extend Exception.")
 	public void testTypeInExceptionType() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() throws IOExcpetion {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		String eCode = """
+			package test1;
+			public class E {
+			    void foo() throws IOExcpetion {
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", eCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import java.io.IOException;\n");
-		buf.append("\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() throws IOException {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		String e1Code = """
+			package test1;
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("public class IOExcpetion extends Exception {\n");
-		buf.append("\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Add all missing tags", buf.toString());
+			import java.io.IOException;
+
+			public class E {
+			    void foo() throws IOException {
+			    }
+			}
+			""";
+		Expected e1 = new Expected("Change to 'IOException' (java.io)", e1Code);
+
+		//@formatter:off
+		String e2Code = """
+			package test1;
+
+			/**
+			 * IOExcpetion
+			 */
+			public class IOExcpetion extends Exception {
+
+			}
+			""";
+		//@formatter:on
+		Expected e2 = new Expected("Create class 'IOExcpetion'", e2Code);
 		assertCodeActions(cu, e1, e2);
 	}
 
@@ -574,27 +582,29 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Disabled("Create type")
+	@Disabled("Created class doesn't extend Exception.")
 	public void testTypeInCatchBlock() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class E {\n");
-		buf.append("    void foo() {\n");
-		buf.append("        try {\n");
-		buf.append("        } catch (XXX x) {\n");
-		buf.append("        }\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		String eCode = """
+			package test1;
+			public class E {
+			    void foo() {
+			        try {
+			        } catch (XXX x) {
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", eCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("public class XXX extends Exception {\n");
-		buf.append("\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		String e1Code = """
+			package test1;
+
+			public class XXX extends Exception {
+
+			}
+			""";
+		Expected e1 = new Expected("Create class 'XXX'", e1Code);
 
 		assertCodeActionExists(cu, e1);
 	}
@@ -1377,50 +1387,51 @@ public class UnresolvedTypesQuickFixTest extends AbstractQuickFixTest {
 	 * @since 3.9
 	 */
 	@Test
-	@Disabled("Requires Modifier proposals")
 	public void testIndirectRefDefaultClass() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
 
-		StringBuilder buf = new StringBuilder();
+		String bCode = """
+			package test1;
+			class B {
+			    public Object get(Object c) {
+			    	return null;
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("B.java", bCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("class B {\n");
-		buf.append("    public Object get(Object c) {\n");
-		buf.append("    	return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("B.java", buf.toString(), false, null);
+		String aCode = """
+			package test1;
+			public class A {
+			    B b = new B();
+			    public B getB() {
+			    	return b;
+			    }
+			}
+			""";
+		cu = pack1.createCompilationUnit("A.java", aCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class A {\n");
-		buf.append("    B b = new B();\n");
-		buf.append("    public B getB() {\n");
-		buf.append("    	return b;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		cu = pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+		String cCode = """
+			package test2;
+			import test1.A;
+			public class C {
+			    public Object getSide(A a) {
+			    	return a.getB().get(this);
+			    }
+			}
+			""";
+		cu = pack2.createCompilationUnit("C.java", cCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test2;\n");
-		buf.append("import test1.A;\n");
-		buf.append("public class C {\n");
-		buf.append("    public Object getSide(A a) {\n");
-		buf.append("    	return a.getB().get(this);\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		cu = pack2.createCompilationUnit("C.java", buf.toString(), false, null);
-
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class B {\n");
-		buf.append("    public Object get(Object c) {\n");
-		buf.append("    	return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add all missing tags", buf.toString());
+		String e1Code = """
+			package test1;
+			public class B {
+			    public Object get(Object c) {
+			    	return null;
+			    }
+			}
+			""";
+		Expected e1 = new Expected("Change visibility of 'B' to 'public'", e1Code);
 
 		assertCodeActionExists(cu, e1);
 	}

@@ -119,8 +119,8 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 			assertEquals(expecteds.length, codeActions.size(), "Number of code actions: " + res);
 		}
 
-		Map<String, Expected> expectedActions = Stream.of(expecteds).collect(Collectors.toMap(Expected::getName, Function.identity()));
 		Map<String, Either<Command, CodeAction>> actualActions = codeActions.stream().collect(Collectors.toMap(this::getTitle, Function.identity(), ((first, second) -> first), LinkedHashMap::new));
+		Map<String, Expected> expectedActions = Stream.of(expecteds).collect(Collectors.toMap(Expected::getName, Function.identity()));
 
 		for (Expected expected : expecteds) {
 			Either<Command, CodeAction> action = actualActions.get(expected.name);
