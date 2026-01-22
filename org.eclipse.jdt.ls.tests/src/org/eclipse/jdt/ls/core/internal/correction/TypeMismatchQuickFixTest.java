@@ -27,7 +27,6 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
@@ -307,91 +306,98 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Disabled("Requires LocalCorrectionsSubProcessor")
 	public void testTypeMismatchForInterface2() throws Exception {
 		IPackageFragment pack0 = fSourceFolder.createPackageFragment("test0", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test0;\n");
-		buf.append("public interface PrimaryContainer {\n");
-		buf.append("    PrimaryContainer duplicate(PrimaryContainer container);\n");
-		buf.append("}\n");
-		pack0.createCompilationUnit("PrimaryContainer.java", buf.toString(), false, null);
+		String primaryContainerCode = """
+			package test0;
+			public interface PrimaryContainer {
+			    PrimaryContainer duplicate(PrimaryContainer container);
+			}
+			""";
+		pack0.createCompilationUnit("PrimaryContainer.java", primaryContainerCode, false, null);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class Container {\n");
-		buf.append("    public static Container getContainer() {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
+		String containerCode = """
+			package test1;
+			public class Container {
+			    public static Container getContainer() {
+			        return null;
+			    }
+			}
+			""";
+		pack1.createCompilationUnit("Container.java", containerCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import test0.PrimaryContainer;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo(PrimaryContainer primary) {\n");
-		buf.append("         primary.duplicate(Container.getContainer());\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		String eCode = """
+			package test1;
+			import test0.PrimaryContainer;
+			public class E {
+			    public void foo(PrimaryContainer primary) {
+			         primary.duplicate(Container.getContainer());
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", eCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import test0.PrimaryContainer;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo(PrimaryContainer primary) {\n");
-		buf.append("         primary.duplicate((PrimaryContainer) Container.getContainer());\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Remove unused import", buf.toString());
+		String e1Code = """
+			package test1;
+			import test0.PrimaryContainer;
+			public class E {
+			    public void foo(PrimaryContainer primary) {
+			         primary.duplicate((PrimaryContainer) Container.getContainer());
+			    }
+			}
+			""";
+		Expected e1 = new Expected("Cast argument 1 to 'PrimaryContainer'", e1Code);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import test0.PrimaryContainer;\n");
-		buf.append("\n");
-		buf.append("public class Container {\n");
-		buf.append("    public static PrimaryContainer getContainer() {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e2 = new Expected("Remove unused import", buf.toString());
+		String e2Code = """
+			package test1;
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("\n");
-		buf.append("import test0.PrimaryContainer;\n");
-		buf.append("\n");
-		buf.append("public class Container implements PrimaryContainer {\n");
-		buf.append("    public static Container getContainer() {\n");
-		buf.append("        return null;\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e3 = new Expected("Remove unused import", buf.toString());
+			import test0.PrimaryContainer;
 
-		buf = new StringBuilder();
-		buf.append("package test0;\n");
-		buf.append("\n");
-		buf.append("import test1.Container;\n");
-		buf.append("\n");
-		buf.append("public interface PrimaryContainer {\n");
-		buf.append("    PrimaryContainer duplicate(Container container);\n");
-		buf.append("}\n");
-		Expected e4 = new Expected("Remove unused import", buf.toString());
+			public class Container {
+			    public static PrimaryContainer getContainer() {
+			        return null;
+			    }
+			}
+			""";
+		Expected e2 = new Expected("Change return type of 'getContainer(..)' to 'PrimaryContainer'", e2Code);
 
-		buf = new StringBuilder();
-		buf.append("package test0;\n");
-		buf.append("\n");
-		buf.append("import test1.Container;\n");
-		buf.append("\n");
-		buf.append("public interface PrimaryContainer {\n");
-		buf.append("    PrimaryContainer duplicate(PrimaryContainer container);\n");
-		buf.append("\n");
-		buf.append("    void duplicate(Container container);\n");
-		buf.append("}\n");
-		Expected e5 = new Expected("Remove unused import", buf.toString());
+		String e3Code = """
+			package test1;
+
+			import test0.PrimaryContainer;
+
+			public class Container implements PrimaryContainer {
+			    public static Container getContainer() {
+			        return null;
+			    }
+			}
+			""";
+		Expected e3 = new Expected("Let 'Container' implement 'PrimaryContainer'", e3Code);
+
+		String e4Code = """
+			package test0;
+
+			import test1.Container;
+
+			public interface PrimaryContainer {
+			    PrimaryContainer duplicate(Container container);
+			}
+			""";
+		Expected e4 = new Expected("Change method 'duplicate(PrimaryContainer)' to 'duplicate(Container)'", e4Code);
+
+		String e5Code = """
+			package test0;
+
+			import test1.Container;
+
+			public interface PrimaryContainer {
+			    PrimaryContainer duplicate(PrimaryContainer container);
+
+			    void duplicate(Container container);
+			}
+			""";
+		Expected e5 = new Expected("Create method 'duplicate(Container)' in type 'PrimaryContainer'", e5Code);
 
 		assertCodeActions(cu, e1, e2, e3, e4, e5);
 	}
@@ -543,7 +549,6 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	@Test
-	@Disabled("Requires LocalCorrectionsSubProcessor")
 	public void testTypeMismatchForParameterizedType() throws Exception {
 		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
 		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
@@ -551,25 +556,27 @@ public class TypeMismatchQuickFixTest extends AbstractQuickFixTest {
 		fJProject1.setOptions(tempOptions);
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.*;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List list= new ArrayList<Integer>();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		String eCode = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List list= new ArrayList<Integer>();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", eCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("import java.util.*;\n");
-		buf.append("public class E {\n");
-		buf.append("    public void foo() {\n");
-		buf.append("        List<Integer> list= new ArrayList<Integer>();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Remove unused import", buf.toString());
+		String e1Code = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List<Integer> list= new ArrayList<Integer>();
+			    }
+			}
+			""";
+		Expected e1 = new Expected("Add type arguments to 'List'", e1Code);
 
 		assertCodeActionExists(cu, e1);
 

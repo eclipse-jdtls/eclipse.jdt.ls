@@ -28,7 +28,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.core.manipulation.CodeTemplateContextType;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -4093,37 +4092,39 @@ public class UnresolvedMethodsQuickFixTest extends AbstractQuickFixTest {
 	 * @since 3.9
 	 */
 	@Test
-	@Disabled("Requires ModifierCorrectionSubProcessor")
 	public void testIndirectProtectedMethod() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		IPackageFragment pack2 = fSourceFolder.createPackageFragment("test2", false, null);
 
-		StringBuilder buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class A {\n");
-		buf.append("    protected void method() {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		pack1.createCompilationUnit("A.java", buf.toString(), false, null);
+		String aCode = """
+			package test1;
+			public class A {
+			    protected void method() {
+			    }
+			}
+			""";
+		pack1.createCompilationUnit("A.java", aCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test2;\n");
-		buf.append("import test1.A;\n");
-		buf.append("public class B extends A {\n");
-		buf.append("    private void bMethod() {\n");
-		buf.append("        A a = new A();\n");
-		buf.append("        a.method();\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		ICompilationUnit cu = pack2.createCompilationUnit("B.java", buf.toString(), false, null);
+		String bCode = """
+			package test2;
+			import test1.A;
+			public class B extends A {
+			    private void bMethod() {
+			        A a = new A();
+			        a.method();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack2.createCompilationUnit("B.java", bCode, false, null);
 
-		buf = new StringBuilder();
-		buf.append("package test1;\n");
-		buf.append("public class A {\n");
-		buf.append("    public void method() {\n");
-		buf.append("    }\n");
-		buf.append("}\n");
-		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
+		String e1Code = """
+			package test1;
+			public class A {
+			    public void method() {
+			    }
+			}
+			""";
+		Expected e1 = new Expected("Change visibility of 'method()' to 'public'", e1Code);
 
 		assertCodeActions(cu, e1);
 	}

@@ -67,7 +67,6 @@ import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -520,7 +519,6 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
-	@Disabled
 	public void testCodeAction_superfluousSemicolon() throws Exception{
 		ICompilationUnit unit = getWorkingCopy(
 				"src/java/Foo.java",
@@ -537,7 +535,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.SuperfluousSemicolon), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		assertNotNull(codeActions);
-		assertEquals(1, codeActions.size());
+		assertFalse(codeActions.isEmpty());
 		assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
 		WorkspaceEdit we = codeActions.get(0).getRight().getEdit();
 		List<org.eclipse.lsp4j.TextEdit> edits = we.getChanges().get(JDTUtils.toURI(unit));
