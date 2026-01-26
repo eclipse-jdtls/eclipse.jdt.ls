@@ -1092,7 +1092,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 9, 18);
 		assertNotNull(hover);
-		assertEquals(2, hover.getContents().getLeft().size());
+		assertEquals(3, hover.getContents().getLeft().size());
 
 		//@formatter:off
 		StringBuilder expectedJavadoc = new StringBuilder();
