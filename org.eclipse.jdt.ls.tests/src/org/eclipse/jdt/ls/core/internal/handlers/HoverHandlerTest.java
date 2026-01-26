@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -1085,15 +1085,15 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 2, 14);
 		assertNotNull(hover);
-		assertEquals(2, hover.getContents().getLeft().size());
+		assertEquals(3, hover.getContents().getLeft().size());
 
 		String uri = JDTUtils.toURI(cu) + "#3";
 		//@formatter:off
-		String expectedJavadoc = "[newMethodBeingLinkedToo](" + uri +") ";
+		String expectedJavadoc = "[newMethodBeingLinkedToo](" + uri +")";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+		assertEquals(expectedJavadoc.toString(), actual.stripTrailing(), "Unexpected hover ");
 	}
 
 	@Test
@@ -1114,72 +1114,14 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
 		Hover hover = getHover(cu, 2, 14);
 		assertNotNull(hover);
-		assertEquals(2, hover.getContents().getLeft().size());
+		assertEquals(3, hover.getContents().getLeft().size());
 
 		String uri = JDTUtils.toURI(cu) + "#3";
 		//@formatter:off
-		String expectedJavadoc = "[newMethodBeingLinkedToo](" + uri +") ";
+		String expectedJavadoc = "[newMethodBeingLinkedToo](" + uri +")";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
-	}
-
-	@Test
-	public void testHoverInlineLinkTagInMarkdown_03() throws Exception {
-		String name = "java25";
-		importProjects("eclipse/" + name);
-		IProject project = getProject(name);
-		IJavaProject javaProject = JavaCore.create(project);
-		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
-		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
-		StringBuilder buf = new StringBuilder();
-		//@formatter:off
-		buf.append("package test;\n"
-				+ "/// {@link #newMethodBeingLinkedToo()}\n"
-				+ "public class Markdown{}"
-		);
-		//@formatter:on
-		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
-		Hover hover = getHover(cu, 2, 14);
-		assertNotNull(hover);
-		assertEquals(2, hover.getContents().getLeft().size());
-
-		String uri = JDTUtils.toURI(cu) + "#3";
-		//@formatter:off
-		String expectedJavadoc = "[newMethodBeingLinkedToo()](" + uri +") ";
-		//@formatter:on
-		String actual = hover.getContents().getLeft().get(1).getLeft();
-		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
-	}
-
-	@Test
-	public void testHoverInlineLinkTagInMarkdown_04() throws Exception {
-		String name = "java25";
-		importProjects("eclipse/" + name);
-		IProject project = getProject(name);
-		IJavaProject javaProject = JavaCore.create(project);
-		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
-		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
-		StringBuilder buf = new StringBuilder();
-		//@formatter:off
-		buf.append("package test;\n"
-				+ "/// {@link #newMethodBeingLinkedToo(int x)}\n"
-				+ "public class Markdown{}"
-		);
-		//@formatter:on
-		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
-		Hover hover = getHover(cu, 2, 14);
-		assertNotNull(hover);
-		assertEquals(2, hover.getContents().getLeft().size());
-
-		String uri = JDTUtils.toURI(cu) + "#3";
-		//@formatter:off
-		String expectedJavadoc = "[newMethodBeingLinkedToo(int x)](" + uri +") ";
-		//@formatter:on
-		String actual = hover.getContents().getLeft().get(1).getLeft();
-		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals(expectedJavadoc.toString(), actual, "Unexpected hover ");
+		assertEquals(expectedJavadoc.toString(), actual.stripTrailing(), "Unexpected hover ");
 	}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corporation and others.
+ * Copyright (c) 2008, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -241,14 +241,6 @@ public class JavadocContentAccess2 {
 			Name qualifier = methodRef.getQualifier();
 			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
 			refMemberName = methodRef.getName().getIdentifier();
-			if (refMemberName != null) {
-				if (e.toString().endsWith(")")) {
-					refMemberName = methodRef.toString();
-					if (refMemberName.startsWith("#")) {
-						refMemberName = refMemberName.substring(1);
-					}
-				}
-			}
 			@SuppressWarnings("unchecked")
 			List<MethodRefParameter> params = methodRef.parameters();
 			int ps = params.size();
