@@ -1066,4 +1066,30 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
+
+	@Test
+	public void testIncorrectJavadocRendering_3649() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				/**
+				  * Some javadoc and then ...
+				  * @jls 9.6.4.1 @Target
+				  */
+				public class Hover {}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Hover.java", content, false, null);
+		Hover hover = getHover(cu, 5, 14);
+		assertNotNull(hover);
+		assertEquals(2, hover.getContents().getLeft().size());
+
+		//@formatter:off
+		String expectedJavadoc = "Some javadoc and then ...\n"
+				+ "\n"
+				+ "* **@jls**\n"
+				+ "  * 9.6.4.1 @Target";
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
+	}
 }
