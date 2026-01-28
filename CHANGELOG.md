@@ -1,5 +1,22 @@
 # Change Log
 
+# [1.56.0 (January 29th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/149?closed=1)
+ * enhancement - Add library info on hover. See [#3678](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3678).
+ * enhancement - Support AspectJ in Gradle projects. See [#3670](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3670).
+ * enhancement - Enable more quick-fixes from upstream JDT. See [#3660](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3660).
+ * bug fix - Fix wrong type mismatch errors. See [#3691](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3691).
+ * bug fix - Fix incorrect Markdown hover rendering for inline `{@link}`/`{@linkplain}` member references. See [#3655](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3655).
+ * bug fix - Watch `java.settings.url` file modifications. See [#3679](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3679).
+ * bug fix - Don't create unnecessary new lines when pasting text including literal `\n`. See [#3674](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3674).
+ * bug fix - Fix unreliable Maven artifact search. See [#3555](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3555).
+ * dependencies - Bump `tycho-version` from 5.0.1 to 5.0.2. See [#3692](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3692).
+ * dependencies - Bump `org.codehaus.gmavenplus:gmavenplus-plugin` from 4.2.1 to 4.3.0. See [#3688](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3688).
+ * dependencies - Bump `org.apache.commons:commons-lang3` from 3.5 to 3.18.0 in test projects. See [#3685](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3685).
+ * dependencies - Bump `groovy-version` from 5.0.3 to 5.0.4. See [#3683](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3683).
+ * dependencies - Add JUnit Jupiter 5.14.1 to the target platform. See [#3668](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3668).
+ * debt - Restore some disabled tests. See [#3686](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3686).
+ * debt - Phase out `java.apply.workspaceEdit` in favour of `workspace/applyEdit`. See [#3543](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3543).
+
 # [1.55.0 (January 6th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
  * enhancement - Add a quickfix to replace a deprecated field with one referenced in the docs. See [#3626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3626).
  * enhancement - Add a quickfix for "type safety warning" to infer type arguments. See [#626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/626).
