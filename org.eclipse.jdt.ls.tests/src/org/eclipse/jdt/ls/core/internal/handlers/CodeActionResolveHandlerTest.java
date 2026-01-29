@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -451,10 +451,21 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 	// https://github.com/redhat-developer/vscode-java/issues/4138
 	@Test
 	public void testCreateMethod() throws Exception {
+		testCreateMethod(true);
+	}
+
+	//https://github.com/redhat-developer/vscode-java/issues/4320
+	@Test
+	public void testCreateMethodNoBufferValidation() throws Exception {
+		testCreateMethod(false);
+	}
+
+	private void testCreateMethod(boolean validateAllOpenBuffersOnChanges) throws Exception {
 		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isWorkspaceSnippetEditSupported()).thenReturn(true);
 		when(clientPreferences.isResolveCodeActionSupported()).thenReturn(true);
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		preferenceManager.getPreferences().setValidateAllOpenBuffersOnChanges(validateAllOpenBuffersOnChanges);
 		String content = """
 				package test1;
 				import java.util.HashMap;
