@@ -374,8 +374,8 @@ public class CodeActionHandler {
 		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(pk.getKind())) {
 			return Optional.ofNullable(command != null ? Either.forLeft(command) : null);
 		}
-
-		if (command == null && !preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) { // lazy resolve the edit.
+		boolean missingCommand = command == null;
+		if (missingCommand && !preferenceManager.getPreferences().isValidateAllOpenBuffersOnChanges()) { // lazy resolve the edit.
 			if (proposal instanceof NewCUProposal
 					|| proposal instanceof NewMethodCorrectionProposalCore
 					|| proposal instanceof NewAnnotationMemberProposalCore
@@ -397,7 +397,7 @@ public class CodeActionHandler {
 		}
 		if (supportsResolve) {
 			// The relevance is in descending order while CodeActionComparator sorts in ascending order
-			Object dataProposal = command == null ? proposal : null;
+			Object dataProposal = missingCommand ? proposal : null;
 			codeAction.setData(new CodeActionData(dataProposal, -proposal.getRelevance()));
 		}
 		if (pk.getKind() != JavaCodeActionKind.QUICK_ASSIST) {
