@@ -61,9 +61,10 @@ public abstract class BaseInitHandler {
 	}
 
 	public InitializeResult initialize(InitializeParams param) {
-		logInfo("Initializing Java Language Server " + JavaLanguageServerPlugin.getVersion());
+		var jdtlsInfo = getJdtLsInfo();
+		logInfo("Initializing " + jdtlsInfo.details());
 		InitializeResult result = new InitializeResult();
-		setServerInfo(result);
+		result.setServerInfo(jdtlsInfo.toServerInfo());
 		handleInitializationOptions(param);
 		registerCapabilities(result);
 
@@ -73,14 +74,27 @@ public abstract class BaseInitHandler {
 		return result;
 	}
 
-	 public void setServerInfo(InitializeResult initializeResult) {
+	JdtlsInfo getJdtLsInfo() {
 		var rb = ResourceBundle.getBundle("git");
-
-		var serverInfo = new ServerInfo();
 		var name = "JDT Language Server (%s)".formatted(JDTEnvironmentUtils.isSyntaxServer() ? "Syntax" : "Standard");
-		serverInfo.setName(name);
-		serverInfo.setVersion(rb.getString("git.build.version"));
-		initializeResult.setServerInfo(serverInfo);
+		//var version = JavaLanguageServerPlugin.getVersion();
+		return new JdtlsInfo(name, rb.getString("git.build.version"), rb.getString("git.commit.id.abbrev"), rb.getString("git.commit.message.short"));
+	}
+
+	static record JdtlsInfo(String name, String version, String gitCommit, String commitMessage) {
+		public ServerInfo toServerInfo() {
+			var serverInfo = new ServerInfo();
+			serverInfo.setName(this.getClass().getName());
+			serverInfo.setVersion(version());
+			return serverInfo;
+		}
+
+		public String details() {
+			return """
+					%s
+						- Version: %s
+						- Git Commit: %s - %s""".formatted(name, version, gitCommit, commitMessage);
+		}
 	 }
 
 	@SuppressWarnings({ "unchecked", "deprecation" })
