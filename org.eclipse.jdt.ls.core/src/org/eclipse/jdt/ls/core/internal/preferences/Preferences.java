@@ -251,6 +251,11 @@ public class Preferences {
 	public static final String JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY = "java.saveActions.organizeImports";
 
 	/**
+	 * Preference key to enable/disable organize imports on paste
+	 */
+	public static final String JAVA_UPDATE_IMPORTS_ON_PASTE_ENABLED_KEY = "java.updateImportsOnPaste.enabled";
+
+	/**
 	 * Preference key to enable/disable signature help.
 	 */
 	public static final String SIGNATURE_HELP_ENABLED_KEY = "java.signatureHelp.enabled";
@@ -637,6 +642,7 @@ public class Preferences {
 	private String javaQuickFixShowAt;
 	private boolean javaFormatOnTypeEnabled;
 	private boolean javaSaveActionsOrganizeImportsEnabled;
+	private boolean javaUpdateImportsOnPasteEnabled;
 	private boolean signatureHelpEnabled;
 	private boolean signatureHelpDescriptionEnabled;
 	private boolean hoverJavadocEnabled;
@@ -922,6 +928,7 @@ public class Preferences {
 		javaQuickFixShowAt = LINE;
 		javaFormatOnTypeEnabled = false;
 		javaSaveActionsOrganizeImportsEnabled = false;
+		javaUpdateImportsOnPasteEnabled = true;
 		signatureHelpEnabled = false;
 		signatureHelpDescriptionEnabled = false;
 		hoverJavadocEnabled = true;
@@ -1088,6 +1095,7 @@ public class Preferences {
 		prefs.javaQuickFixShowAt = this.javaQuickFixShowAt;
 		prefs.javaFormatOnTypeEnabled = this.javaFormatOnTypeEnabled;
 		prefs.javaSaveActionsOrganizeImportsEnabled = this.javaSaveActionsOrganizeImportsEnabled;
+		prefs.javaUpdateImportsOnPasteEnabled = this.javaUpdateImportsOnPasteEnabled;
 		prefs.signatureHelpEnabled = this.signatureHelpEnabled;
 		prefs.signatureHelpDescriptionEnabled = this.signatureHelpDescriptionEnabled;
 		prefs.hoverJavadocEnabled = this.hoverJavadocEnabled;
@@ -1343,6 +1351,11 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY)) {
 			boolean javaSaveActionAutoOrganizeImportsEnabled = getBoolean(configuration, JAVA_SAVE_ACTIONS_ORGANIZE_IMPORTS_KEY, existing.javaSaveActionsOrganizeImportsEnabled);
 			prefs.setJavaSaveActionAutoOrganizeImportsEnabled(javaSaveActionAutoOrganizeImportsEnabled);
+		}
+
+		if (containsKey(configuration, JAVA_UPDATE_IMPORTS_ON_PASTE_ENABLED_KEY)) {
+			boolean javaUpdateImportsOnPasteEnabled = getBoolean(configuration, JAVA_UPDATE_IMPORTS_ON_PASTE_ENABLED_KEY, existing.javaUpdateImportsOnPasteEnabled);
+			prefs.setJavaUpdateImportsOnPasteEnabled(javaUpdateImportsOnPasteEnabled);
 		}
 
 		if (containsKey(configuration, SIGNATURE_HELP_ENABLED_KEY)) {
@@ -2146,6 +2159,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setJavaUpdateImportsOnPasteEnabled(boolean javaUpdateImportsOnPasteEnabled) {
+		this.javaUpdateImportsOnPasteEnabled = javaUpdateImportsOnPasteEnabled;
+		return this;
+	}
+
 	public Preferences setHashCodeEqualsTemplateUseJava7Objects(boolean hashCodeEqualsTemplateUseJ7Objects) {
 		this.hashCodeEqualsTemplateUseJava7Objects = hashCodeEqualsTemplateUseJ7Objects;
 		return this;
@@ -2400,6 +2418,10 @@ public class Preferences {
 
 	public boolean isJavaSaveActionsOrganizeImportsEnabled() {
 		return javaSaveActionsOrganizeImportsEnabled;
+	}
+
+	public boolean isJavaUpdateImportsOnPasteEnabled() {
+		return javaUpdateImportsOnPasteEnabled;
 	}
 
 	public boolean isSignatureHelpEnabled() {

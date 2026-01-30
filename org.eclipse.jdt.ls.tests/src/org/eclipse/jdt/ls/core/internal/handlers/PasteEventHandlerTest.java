@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.DocumentPasteEdit;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler.PasteEventParams;
@@ -30,7 +32,6 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -522,6 +523,77 @@ public class PasteEventHandlerTest extends AbstractSourceTestCase {
 						"\r\n";
 		assertEquals(expect, changes.get(0).getNewText());
 		assertEquals(new Range(new Position(0, 10), new Position(2, 0)), changes.get(0).getRange());
+	}
+
+	@Test
+	public void testGetAddImportsWorkspaceEditWithPreferenceDisabled() throws CoreException {
+		boolean originalValue = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJavaUpdateImportsOnPasteEnabled();
+		try {
+			// Disable the preference
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaUpdateImportsOnPasteEnabled(false);
+			
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", """
+				package p;
+
+				public class B {
+				}
+				""", true, null);
+			String content = """
+					public List<String> b;
+					public Set<String> c;
+				""";
+			String uri = JDTUtils.toURI(unit);
+			Range range = new Range(new Position(3, 0), new Position(3, 0));
+			PasteEventParams params = new PasteEventParams(new Location(uri, range), content, null, new FormattingOptions(4, false));
+			DocumentPasteEdit documentPasteEdit = PasteEventHandler.getMissingImportsWorkspaceEdit(params, unit, monitor);
+			// When preference is disabled, should return null
+			assertNull(documentPasteEdit);
+		} finally {
+			// Restore original preference value
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaUpdateImportsOnPasteEnabled(originalValue);
+		}
+	}
+
+	@Test
+	public void testGetAddImportsWorkspaceEditWithPreferenceEnabled() throws CoreException {
+		boolean originalValue = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJavaUpdateImportsOnPasteEnabled();
+		try {
+			// Explicitly enable the preference
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaUpdateImportsOnPasteEnabled(true);
+			
+			ICompilationUnit unit = fPackageP.createCompilationUnit("B.java", """
+				package p;
+
+				public class B {
+				}
+				""", true, null);
+			String content = """
+					public List<String> b;
+					public Set<String> c;
+				""";
+			String uri = JDTUtils.toURI(unit);
+			Range range = new Range(new Position(3, 0), new Position(3, 0));
+			PasteEventParams params = new PasteEventParams(new Location(uri, range), content, null, new FormattingOptions(4, false));
+			DocumentPasteEdit documentPasteEdit = PasteEventHandler.getMissingImportsWorkspaceEdit(params, unit, monitor);
+			// When preference is enabled, should organize imports
+			assertNotNull(documentPasteEdit);
+			WorkspaceEdit edit = documentPasteEdit.getAdditionalEdit();
+			List<TextEdit> changes = edit.getChanges().get(uri);
+			assertNotNull(changes);
+			assertEquals(1, changes.size());
+			String expect = """
+
+
+				import java.util.List;
+				import java.util.Set;
+
+				""";
+			assertEquals(expect, changes.get(0).getNewText());
+			assertEquals(new Range(new Position(0, 10), new Position(2, 0)), changes.get(0).getRange());
+		} finally {
+			// Restore original preference value
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaUpdateImportsOnPasteEnabled(originalValue);
+		}
 	}
 
 }
