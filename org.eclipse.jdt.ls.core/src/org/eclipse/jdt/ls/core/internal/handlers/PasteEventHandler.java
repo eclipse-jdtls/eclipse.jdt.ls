@@ -54,6 +54,7 @@ import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -311,6 +312,10 @@ public class PasteEventHandler {
 	}
 
 	public static DocumentPasteEdit getMissingImportsWorkspaceEdit(PasteEventParams params, ICompilationUnit cu, IProgressMonitor monitor) throws CoreException {
+		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager != null && !preferenceManager.getPreferences().isJavaUpdateImportsOnPasteEnabled()) {
+			return null;
+		}
 		Range range = params.getLocation().getRange();
 		String originalDocumentUri = params.getCopiedDocumentUri();
 		String insertText = params.getText();
