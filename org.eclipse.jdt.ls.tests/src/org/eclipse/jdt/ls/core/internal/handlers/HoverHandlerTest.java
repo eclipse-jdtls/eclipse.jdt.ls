@@ -1126,8 +1126,13 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	enum HoverSignatureCase {
-		FIELD_REF("Ball.xxx", 3, 9), SELF_METHOD("newMethodBeingLinkedToo()", 5, 9), METHOD_REF("Ball.abc()", 7, 9), CTOR_REF("Ball.Ball", 9, 9), CTOR_X("Ball.Ball(int x)", 11, 9), CTOR_Y("Ball.Ball(String y)", 13,
-				9), CTOR_MANY("Ball.Ball(String y, int i, Double x)", 15, 9);
+		FIELD_REF("Ball.xxx", 3, 9), 
+		SELF_METHOD("newMethodBeingLinkedToo()", 6, 9), 
+		METHOD_REF("Ball.abc()", 9, 9), 
+		CTOR_REF("Ball.Ball", 12, 9), 
+		CTOR_X("Ball.Ball(int x)", 15, 9), 
+		CTOR_Y("Ball.Ball(String y)", 18,9), 
+		CTOR_MANY("Ball.Ball(String y, int i, Double x)", 21, 9);
 
 		final String link;
 		final int line;
@@ -1150,31 +1155,39 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
 		//@formatter:off
-		buf.append("package test;\n"
-				+ "public class Apple {\n"
-				+ "   /// {@link Ball#xxx}\n"
-				+ "   void foo(){}\n"
-				+ "    /// {@link #newMethodBeingLinkedToo()}\n"
-				+ "    void foo1(){}\n"
-				+ "    /// {@link Ball#abc()}\n"
-				+ "    void voo(){}\n"
-				+ "    /// {@link Ball#Ball}\n"
-				+ "    void voo1(){}\n"
-				+ "    /// {@link Ball#Ball(int x)}\n"
-				+ "    void voo2(){}\n"
-				+ "    /// {@link Ball#Ball(String y)}\n"
-				+ "    void voo3(){}\n"
-				+ "    /// {@link Ball#Ball(String y, int i, Double x)}\n"
-				+ "    void voo4(){}\n"
-				+ "    void newMethodBeingLinkedToo(){}"
-				+ "}\n"
-				+ "class Ball {\n"
-				+ "    private String xxx;\n"
-				+ "    Ball(int x){}\n"
-				+ "    Ball(String y){}\n"
-				+ "    void abc(){}\n"
-				+ "}"
-		);
+		buf.append("""
+					package test;
+					public class Apple {
+						/// {@link Ball#xxx}
+						void foo(){}
+
+						/// {@link #newMethodBeingLinkedToo()}
+						void foo1(){}
+
+						/// {@link Ball#abc()}
+						void voo(){}
+
+						/// {@link Ball#Ball}
+						void voo1(){}
+
+						/// {@link Ball#Ball(int x)}
+						void voo2(){}
+
+						/// {@link Ball#Ball(String y)}
+						void voo3(){}
+
+						/// {@link Ball#Ball(String y, int i, Double x)}
+						void voo4(){}
+
+						void newMethodBeingLinkedToo(){}
+					}
+					class Ball {
+						private String xxx;
+						Ball(int x){}
+						Ball(String y){}
+						void abc(){}
+					}
+				""");
 		//@formatter:on
 		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
 		for (HoverSignatureCase hovercase : HoverSignatureCase.values()) {
