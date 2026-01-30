@@ -1124,4 +1124,79 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		actual = ResourceUtils.dos2Unix(actual);
 		assertEquals(expectedJavadoc.toString(), actual.stripTrailing(), "Unexpected hover ");
 	}
+
+	enum HoverSignatureCase {
+		FIELD_REF("Ball.xxx", 3, 9), SELF_METHOD("newMethodBeingLinkedToo()", 5, 9), METHOD_REF("Ball.abc()", 7, 9), CTOR_REF("Ball.Ball", 9, 9), CTOR_X("Ball.Ball(int x)", 11, 9), CTOR_Y("Ball.Ball(String y)", 13,
+				9), CTOR_MANY("Ball.Ball(String y, int i, Double x)", 15, 9);
+
+		final String link;
+		final int line;
+		final int column;
+
+		HoverSignatureCase(String link, int line, int column) {
+			this.link = link;
+			this.line = line;
+			this.column = column;
+		}
+	}
+
+	@Test
+	public void testJavadocHoverShowFullSignature3690_01() throws Exception {
+		String name = "java25";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		StringBuilder buf = new StringBuilder();
+		//@formatter:off
+		buf.append("package test;\n"
+				+ "public class Apple {\n"
+				+ "   /// {@link Ball#xxx}\n"
+				+ "   void foo(){}\n"
+				+ "    /// {@link #newMethodBeingLinkedToo()}\n"
+				+ "    void foo1(){}\n"
+				+ "    /// {@link Ball#abc()}\n"
+				+ "    void voo(){}\n"
+				+ "    /// {@link Ball#Ball}\n"
+				+ "    void voo1(){}\n"
+				+ "    /// {@link Ball#Ball(int x)}\n"
+				+ "    void voo2(){}\n"
+				+ "    /// {@link Ball#Ball(String y)}\n"
+				+ "    void voo3(){}\n"
+				+ "    /// {@link Ball#Ball(String y, int i, Double x)}\n"
+				+ "    void voo4(){}\n"
+				+ "    void newMethodBeingLinkedToo(){}"
+				+ "}\n"
+				+ "class Ball {\n"
+				+ "    private String xxx;\n"
+				+ "    Ball(int x){}\n"
+				+ "    Ball(String y){}\n"
+				+ "    void abc(){}\n"
+				+ "}"
+		);
+		//@formatter:on
+		ICompilationUnit cu = pack1.createCompilationUnit("Markdown.java", buf.toString(), false, null);
+		for (HoverSignatureCase hovercase : HoverSignatureCase.values()) {
+			enumLinkTest(cu, hovercase.line, hovercase.column, hovercase.link);
+		}
+	}
+
+	void enumLinkTest(ICompilationUnit cu, int line, int column, String link) {
+		Hover hover = getHover(cu, line, column);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		int hashIndex = actual.lastIndexOf('#');
+		int endIndex = actual.lastIndexOf(')');
+		String lineNbr = actual.substring(hashIndex + 1, endIndex);
+		String uri = JDTUtils.toURI(cu) + "#" + lineNbr;
+		//@formatter:off
+		String expectedJavadoc = "[" + link +"](" + uri +")";
+		//@formatter:on
+
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals(expectedJavadoc.toString(), actual.stripTrailing(), "Unexpected hover ");
+	}
 }
