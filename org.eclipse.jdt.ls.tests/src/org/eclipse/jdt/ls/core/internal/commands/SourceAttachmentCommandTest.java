@@ -45,7 +45,7 @@ import org.junit.jupiter.api.Test;
 import com.google.gson.Gson;
 
 public class SourceAttachmentCommandTest extends AbstractProjectsManagerBasedTest {
-	private static final String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsource-attachment%2Ffoo.jar%3Cfoo%28bar.class";
+	private static final String classFileUri = "jdt://contents/foo.jar/foo/bar.java?%3Dsource-attachment%2Ffoo.jar%3Cfoo%28bar.class";
 	private IProject project;
 
 	@BeforeEach
