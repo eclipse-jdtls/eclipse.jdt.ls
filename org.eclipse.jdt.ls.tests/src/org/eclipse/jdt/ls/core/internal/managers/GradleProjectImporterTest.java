@@ -767,7 +767,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			IProject project = importGradleProject("aspect");
 			assertTrue(ProjectUtils.isGradleProject(project));
 			assertHasErrors(project);
-
 		} finally {
 			this.preferences.setAspectjSupportEnabled(oldAspectSupported);
 		}
@@ -786,6 +785,58 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertNotNull(demoAspect);
 		} finally {
 			this.preferences.setAspectjSupportEnabled(oldAspectSupported);
+		}
+	}
+
+	@Test
+	public void testKotlinSupportDisabled() throws Exception {
+		boolean oldKotlinSupported = this.preferences.isKotlinSupportEnabled();
+		try {
+			this.preferences.setKotlinSupportEnabled(false);
+			IProject project = importGradleProject("kotlin");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertHasErrors(project);
+		} finally {
+			this.preferences.setKotlinSupportEnabled(oldKotlinSupported);
+		}
+	}
+
+	@Test
+	public void testKotlinSupportEnabled() throws Exception {
+		boolean oldKotlinSupported = this.preferences.isKotlinSupportEnabled();
+		try {
+			this.preferences.setKotlinSupportEnabled(true);
+			IProject project = importGradleProject("kotlin");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+		} finally {
+			this.preferences.setKotlinSupportEnabled(oldKotlinSupported);
+		}
+	}
+
+	@Test
+	public void testGroovySupportDisabled() throws Exception {
+		boolean oldGroovySupported = this.preferences.isGroovySupportEnabled();
+		try {
+			this.preferences.setGroovySupportEnabled(false);
+			IProject project = importGradleProject("groovy");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertHasErrors(project);
+		} finally {
+			this.preferences.setGroovySupportEnabled(oldGroovySupported);
+		}
+	}
+
+	@Test
+	public void testGroovySupportEnabled() throws Exception {
+		boolean oldGroovySupported = this.preferences.isGroovySupportEnabled();
+		try {
+			this.preferences.setGroovySupportEnabled(true);
+			IProject project = importGradleProject("groovy");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+		} finally {
+			this.preferences.setGroovySupportEnabled(oldGroovySupported);
 		}
 	}
 
