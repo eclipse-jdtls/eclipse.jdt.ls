@@ -79,14 +79,16 @@ def get_shared_config_path(jdtls_base_path):
 def main(args):
 	cwd_name = os.path.basename(os.getcwd())
 
-	if platform.system() == 'Windows' and 'APPDATA' in os.environ:
+	system = platform.system()
+
+	if system == 'Windows' and 'APPDATA' in os.environ:
 		cachedir = Path(os.environ['APPDATA'])
-	elif platform.system() == 'Darwin' and 'HOME' in os.environ:
+	elif system == 'Darwin' and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / 'Library' / 'Caches'
-	elif platform.system() == 'Linux' and 'HOME' in os.environ:
+	elif system == 'Linux' and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / '.cache'
 	else:
-		cachedir = tempfile.gettempdir()
+		cachedir = Path(tempfile.gettempdir())
 
 	cachedir = cachedir / 'jdtls'
 	jdtls_data_path = os.path.join(cachedir, "jdtls-" + sha1(cwd_name.encode()).hexdigest())
@@ -109,7 +111,6 @@ def main(args):
 	shared_config_path = get_shared_config_path(jdtls_base_path)
 	jar_path = find_equinox_launcher(jdtls_base_path)
 
-	system = platform.system()
 	exec_args = ["-Declipse.application=org.eclipse.jdt.ls.core.id1",
 			"-Dosgi.bundles.defaultStartLevel=4",
 			"-Declipse.product=org.eclipse.jdt.ls.core.product",
