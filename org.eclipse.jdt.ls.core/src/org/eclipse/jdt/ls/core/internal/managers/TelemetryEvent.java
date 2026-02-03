@@ -12,7 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import org.eclipse.jdt.ls.core.internal.LogReader.LogEntry;
+
+import com.google.gson.JsonObject;
+
 public class TelemetryEvent {
+
+	public static final String JAVA_PROJECT_BUILD = "java.workspace.initialized";
+	public static final String IMPORT_PROJECT = "java.workspace.importProject";
+
 	private String name;
 	private Object properties;
 
@@ -27,5 +35,25 @@ public class TelemetryEvent {
 
 	public Object getProperties() {
 		return properties;
+	}
+
+	public static void addLogEntryProperties(JsonObject properties, LogEntry entry) {
+		properties.addProperty("message", redact(entry.getMessage()));
+		if (entry.getStack() != null) {
+			properties.addProperty("exception", entry.getMessage() + '\n' + entry.getStack());
+		}
+	}
+
+	private static String redact(String message) {
+		// not sure why we're doing this, introduced in https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2715
+		if (message == null) {
+			return null;
+		}
+
+		if (message.startsWith("Error occured while building workspace.")) {
+			return "Error occured while building workspace.";
+		}
+
+		return message;
 	}
 }

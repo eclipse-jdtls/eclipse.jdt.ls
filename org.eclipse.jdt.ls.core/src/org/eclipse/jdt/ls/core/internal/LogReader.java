@@ -28,10 +28,13 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+
+import org.eclipse.core.runtime.IStatus;
 
 /**
  * Copied from org.eclipse.ui.internal.views.log.LogReader
@@ -447,5 +450,24 @@ public class LogReader {
 		public int getSeverity() {
 			return severity;
 		}
+
+		public static LogEntry from(IStatus status) {
+			LogEntry entry = new LogEntry();
+			entry.fDate = new Date();
+			entry.message = status.getMessage();
+			entry.severity = status.getSeverity();
+			entry.code = status.getCode();
+			entry.pluginId = status.getPlugin();
+			if (status.getException() != null) {
+				StringWriter sw = new StringWriter();
+				status.getException().printStackTrace(new PrintWriter(sw));
+				String exceptionAsString = sw.toString();
+				entry.stack= status.getException().getMessage()+ '\n' + exceptionAsString;
+			}
+
+			entry.children = Arrays.stream(status.getChildren()).map(s -> from(status)).toList();
+			return entry;
+		}
 	}
+
 }

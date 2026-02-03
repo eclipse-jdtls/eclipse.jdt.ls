@@ -80,6 +80,7 @@ import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.LogReader.LogEntry;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -91,6 +92,8 @@ import org.eclipse.jdt.ls.core.internal.handlers.ProjectEncodingMode;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 
+import com.google.gson.JsonObject;
+
 public abstract class ProjectsManager implements ISaveParticipant, IProjectsManager {
 
 	public static final String DEFAULT_PROJECT_NAME = "jdt.ls-java-project";
@@ -100,15 +103,18 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	public static final String BUILD_FILE_MARKER_TYPE = "org.eclipse.jdt.ls.buildFileMarker";
 	private static final int JDTLS_FILTER_TYPE = IResourceFilterDescription.EXCLUDE_ALL | IResourceFilterDescription.INHERITABLE | IResourceFilterDescription.FILES | IResourceFilterDescription.FOLDERS;
 
-	private PreferenceManager preferenceManager;
+	protected final PreferenceManager preferenceManager;
+	protected final TelemetryManager telemetryManager;
+
 	protected JavaLanguageClient client;
 
 	public enum CHANGE_TYPE {
 		CREATED, CHANGED, DELETED
 	};
 
-	public ProjectsManager(PreferenceManager preferenceManager) {
+	public ProjectsManager(PreferenceManager preferenceManager, TelemetryManager telemetryManager) {
 		this.preferenceManager = preferenceManager;
+		this.telemetryManager = telemetryManager;
 	}
 
 	@Override
@@ -159,12 +165,23 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			File rootFolder = rootPath.toFile();
 			try {
 				for (IProjectImporter importer : importers()) {
-					importer.initialize(rootFolder);
-					if (importer.applies(subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
-						if (importer.isResolved(rootFolder)) {
-							break;
+					JsonObject properties = new JsonObject();
+					properties.addProperty("importer", importer.getClass().getName());
+					try {
+						importer.initialize(rootFolder);
+						if (importer.applies(subMonitor.split(1))) {
+							importer.importToWorkspace(subMonitor.split(70));
+							boolean resolved = importer.isResolved(rootFolder);
+							properties.addProperty("resolved", resolved);
+							this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+							if (resolved) {
+								break;
+							}
 						}
+					} catch (CoreException e) {
+						TelemetryEvent.addLogEntryProperties(properties, LogEntry.from(e.getStatus()));
+						this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+						throw e;
 					}
 				}
 			} catch (CoreException e) {
@@ -187,10 +204,19 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 					.filter(rootPath::isPrefixOf).collect(Collectors.toSet());
 			try {
 				for (IProjectImporter importer : importers()) {
-					importer.initialize(rootFolder);
-					if (importer.applies(buildFiles, subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
-						buildFiles = removeImportedConfigurations(buildFiles, importer);
+					JsonObject properties = new JsonObject();
+					properties.addProperty("importer", importer.getClass().getName());
+					try {
+						importer.initialize(rootFolder);
+						if (importer.applies(buildFiles, subMonitor.split(1))) {
+							importer.importToWorkspace(subMonitor.split(70));
+							buildFiles = removeImportedConfigurations(buildFiles, importer);
+							this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+						}
+					} catch (CoreException e) {
+						TelemetryEvent.addLogEntryProperties(properties, LogEntry.from(e.getStatus()));
+						this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
+						throw e;
 					}
 				}
 			} catch (CoreException e) {
@@ -207,11 +233,11 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	private Set<IPath> removeImportedConfigurations(Set<IPath> configurations, IProjectImporter importer) {
 		return configurations.stream()
 			.filter(config -> {
-				try {
-					return !importer.isResolved(config.toFile());
-				} catch (OperationCanceledException | CoreException e) {
-					return true;
-				}
+			try {
+				return !importer.isResolved(config.toFile());
+			} catch (OperationCanceledException | CoreException e) {
+				return true;
+			}
 			})
 			.collect(Collectors.toSet());
 	}
@@ -690,8 +716,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			}
 			List<IResourceFilterDescription> filters = Stream.of(project.getFilters())
 					.filter(f -> {
-						FileInfoMatcherDescription matcher = f.getFileInfoMatcherDescription();
-						return CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && matcher.getArguments() instanceof String args && args.contains(CREATED_BY_JAVA_LANGUAGE_SERVER);
+				FileInfoMatcherDescription matcher = f.getFileInfoMatcherDescription();
+				return CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && matcher.getArguments() instanceof String args && args.contains(CREATED_BY_JAVA_LANGUAGE_SERVER);
 					})
 					.collect(Collectors.toList());
 			boolean filterExists = false;
@@ -848,8 +874,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 			);
 			List<URI> projectUris = filesToImport.stream()
 					.map(path -> {
-						IFile file = JDTUtils.findFile(path.toFile().toURI().toString());
-						return file == null ? null : file.getProject();
+				IFile file = JDTUtils.findFile(path.toFile().toURI().toString());
+				return file == null ? null : file.getProject();
 					})
 					.filter(Objects::nonNull)
 					.map(project -> ProjectUtils.getProjectRealFolder(project).toFile().toURI())

@@ -50,6 +50,7 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.DidChangeWatchedFilesRegistrationOptions;
@@ -82,8 +83,8 @@ public class SyntaxProjectsManager extends ProjectsManager {
 		}
 	};
 
-	public SyntaxProjectsManager(PreferenceManager preferenceManager) {
-		super(preferenceManager);
+	public SyntaxProjectsManager(PreferenceManager preferenceManager, TelemetryManager telemetryManager) {
+		super(preferenceManager, telemetryManager);
 	}
 
 	@Override

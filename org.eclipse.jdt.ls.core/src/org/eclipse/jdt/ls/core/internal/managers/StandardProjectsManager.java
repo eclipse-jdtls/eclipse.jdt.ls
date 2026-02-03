@@ -109,7 +109,6 @@ public class StandardProjectsManager extends ProjectsManager {
 	private final static String FORMATTER_OPTION_PREFIX = JavaCore.PLUGIN_ID + ".formatter"; //$NON-NLS-1$
 	protected static final String BUILD_SUPPORT_EXTENSION_POINT_ID = "buildSupport";
 	private static final Set<Either<String, RelativePattern>> watchers = new LinkedHashSet<>();
-	private PreferenceManager preferenceManager;
 	private boolean buildFinished;
 	private boolean shouldUpdateProjects;
 
@@ -146,9 +145,8 @@ public class StandardProjectsManager extends ProjectsManager {
 
 	private IPreferencesChangeListener preferenceChangeListener = null;
 
-	public StandardProjectsManager(PreferenceManager preferenceManager) {
-		super(preferenceManager);
-		this.preferenceManager = preferenceManager;
+	public StandardProjectsManager(PreferenceManager preferenceManager, TelemetryManager telemetryManager) {
+		super(preferenceManager, telemetryManager);
 	}
 
 	@Override
