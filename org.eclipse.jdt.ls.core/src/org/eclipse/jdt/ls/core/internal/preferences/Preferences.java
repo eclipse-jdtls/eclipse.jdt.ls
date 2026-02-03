@@ -1940,13 +1940,38 @@ public class Preferences {
 	}
 
 	public Preferences setFormatterUrl(String formatterUrl) {
-		this.formatterUrl = ResourceUtils.expandPath(formatterUrl);
+		this.formatterUrl = this.resolveWorkspaceFolder(ResourceUtils.expandPath(formatterUrl));
 		return this;
 	}
 
 	public Preferences setSettingsUrl(String settingsUrl) {
-		this.settingsUrl = ResourceUtils.expandPath(settingsUrl);
+		this.settingsUrl = this.resolveWorkspaceFolder(ResourceUtils.expandPath(settingsUrl));
 		return this;
+	}
+
+	private String resolveWorkspaceFolder(String filePath) {
+		final String workspaceFolderVariable = "${workspaceFolder}";
+		
+		if (!filePath.contains(workspaceFolderVariable)) {
+			return filePath;
+		}
+		Collection<IPath> rootPaths = getRootPaths();
+		
+		if (rootPaths == null || rootPaths.isEmpty()) {
+			return filePath;
+		}
+		for (IPath workspacePath : rootPaths) {
+			String resolvedPath = filePath.replace(workspaceFolderVariable, workspacePath.toOSString());
+			File resolvedFile = new File(resolvedPath);
+			
+			if (resolvedFile.exists()) {
+				return resolvedPath;
+			}
+		}
+		
+		// If no match found in any workspace folder, fall back to first workspace
+		IPath firstWorkspace = rootPaths.iterator().next();
+		return filePath.replace(workspaceFolderVariable, firstWorkspace.toOSString());
 	}
 
 	public Preferences setResourceFilters(List<String> resourceFilters) {
