@@ -552,6 +552,11 @@ public class Preferences {
 	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
 
 	/**
+	 * Preference key to enable/disable resource bundle completion.
+	 */
+	public static final String RESOURCE_BUNDLE_COMPLETION_KEY = "java.completion.resourceBundle.enabled";
+
+	/**
 	 * Preference key to set the scope value to use when searching java code. Allowed value are
 	 * <ul>
 	 * <li><code>main</code>			-	Scope for main code</li>
@@ -730,6 +735,7 @@ public class Preferences {
 	private boolean telemetryEnabled;
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
+	private boolean resourceBundleCompletionEnabled;
 	private List<String> diagnosticFilter;
 	private SearchScope searchScope;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
@@ -992,6 +998,7 @@ public class Preferences {
 		extractInterfaceReplaceEnabled = false;
 		telemetryEnabled = false;
 		validateAllOpenBuffersOnChanges = true;
+		resourceBundleCompletionEnabled = true;
 		diagnosticFilter = new ArrayList<>();
 		searchScope = SearchScope.all;
 	}
@@ -1157,6 +1164,7 @@ public class Preferences {
 		prefs.telemetryEnabled = this.telemetryEnabled;
 		prefs.validateAllOpenBuffersOnChanges = this.validateAllOpenBuffersOnChanges;
 		prefs.chainCompletionEnabled = this.chainCompletionEnabled;
+		prefs.resourceBundleCompletionEnabled = this.resourceBundleCompletionEnabled;
 		prefs.searchScope = this.searchScope;
 
 		// Deep copy collections
@@ -1837,6 +1845,11 @@ public class Preferences {
 		if (containsKey(configuration, CHAIN_COMPLETION_KEY)) {
 			boolean chainCompletionEnabled = getBoolean(configuration, CHAIN_COMPLETION_KEY, existing.chainCompletionEnabled);
 			prefs.setChainCompletionEnabled(chainCompletionEnabled);
+		}
+
+		if (containsKey(configuration, RESOURCE_BUNDLE_COMPLETION_KEY)) {
+			boolean resourceBundleCompletionEnabled = getBoolean(configuration, RESOURCE_BUNDLE_COMPLETION_KEY, existing.resourceBundleCompletionEnabled);
+			prefs.setResourceBundleCompletionEnabled(resourceBundleCompletionEnabled);
 		}
 
 		if (containsKey(configuration, JAVA_DIAGNOSTIC_FILER)) {
@@ -2964,6 +2977,14 @@ public class Preferences {
 
 	public boolean isChainCompletionEnabled() {
 		return this.chainCompletionEnabled;
+	}
+
+	public void setResourceBundleCompletionEnabled(boolean resourceBundleCompletionEnabled) {
+		this.resourceBundleCompletionEnabled = resourceBundleCompletionEnabled;
+	}
+
+	public boolean isResourceBundleCompletionEnabled() {
+		return this.resourceBundleCompletionEnabled;
 	}
 
 	/**
