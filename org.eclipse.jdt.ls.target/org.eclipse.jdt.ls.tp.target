@@ -100,6 +100,21 @@
 			</dependencies>
 			<exclude>org.jsoup:jsoup:1.15.4</exclude>
 		</location>
+		<location includeDependencyDepth="infinite" includeDependencyScopes="compile" includeSource="false" label="JetBrains" missingManifest="generate" type="Maven">
+			<dependencies>
+				<dependency>
+					<groupId>com.jetbrains.intellij.java</groupId>
+					<artifactId>java-decompiler-engine</artifactId>
+					<version>253.29346.240</version>
+				</dependency>
+			</dependencies>
+			<repositories>
+				<repository>
+					<id>jetbrains-intellij</id>
+					<url>https://www.jetbrains.com/intellij-repository/releases/</url>
+				</repository>
+			</repositories>
+		</location>
 	</locations>
 	<targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-25" />
 </target>
