@@ -1,0 +1,39 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version "2.3.0"
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: "org.jetbrains.kotlin.jvm"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+    }
+}
+
+eclipse {
+  classpath {
+    defaultOutputDir = file('target')
+    file {
+        whenMerged {
+            cp -> cp.getEntries().forEach{
+                cpEntry -> if(cpEntry.kind=='src') {
+                    cpEntry.output = cpEntry.output.replace('bin/', 'target/')
+                }
+            }
+        }
+    }
+  }
+}

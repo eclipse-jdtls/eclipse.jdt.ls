@@ -529,6 +529,8 @@ public class Preferences {
 	public static final String JAVA_JDT_LS_PROTOBUF_SUPPORT_ENABLED = "java.jdt.ls.protobufSupport.enabled";
 	public static final String JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED = "java.jdt.ls.androidSupport.enabled";
 	public static final String JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED = "java.jdt.ls.aspectjSupport.enabled";
+	public static final String JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED = "java.jdt.ls.kotlinSupport.enabled";
+	public static final String JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED = "java.jdt.ls.groovySupport.enabled";
 	public static final String JAVA_JDT_LS_JAVAC_ENABLED = "java.jdt.ls.javac.enabled";
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
@@ -718,6 +720,8 @@ public class Preferences {
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
 	private boolean aspectjSupportEnabled;
+	private boolean kotlinSupportEnabled;
+	private boolean groovySupportEnabled;
 	private boolean javacEnabled;
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
@@ -1149,6 +1153,8 @@ public class Preferences {
 		prefs.avoidVolatileChanges = this.avoidVolatileChanges;
 		prefs.protobufSupportEnabled = this.protobufSupportEnabled;
 		prefs.aspectjSupportEnabled = this.aspectjSupportEnabled;
+		prefs.kotlinSupportEnabled = this.kotlinSupportEnabled;
+		prefs.groovySupportEnabled = this.groovySupportEnabled;
 		prefs.javacEnabled = this.javacEnabled;
 		prefs.androidSupportEnabled = this.androidSupportEnabled;
 		prefs.nullAnalysisMode = this.nullAnalysisMode;
@@ -1773,6 +1779,16 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED)) {
 			boolean aspectjSupported = getBoolean(configuration, JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED, existing.aspectjSupportEnabled);
 			prefs.setAspectjSupportEnabled(aspectjSupported);
+		}
+
+		if (containsKey(configuration, JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED)) {
+			boolean kotlinSupported = getBoolean(configuration, JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED, existing.kotlinSupportEnabled);
+			prefs.setKotlinSupportEnabled(kotlinSupported);
+		}
+
+		if (containsKey(configuration, JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED)) {
+			boolean groovySupported = getBoolean(configuration, JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED, existing.groovySupportEnabled);
+			prefs.setGroovySupportEnabled(groovySupported);
 		}
 
 		if (containsKey(configuration, JAVA_JDT_LS_JAVAC_ENABLED)) {
@@ -2898,8 +2914,24 @@ public class Preferences {
 		return aspectjSupportEnabled;
 	}
 
+	public boolean isKotlinSupportEnabled() {
+		return kotlinSupportEnabled;
+	}
+
+	public boolean isGroovySupportEnabled() {
+		return groovySupportEnabled;
+	}
+
 	public void setAspectjSupportEnabled(boolean aspectjSupportEnabled) {
 		this.aspectjSupportEnabled = aspectjSupportEnabled;
+	}
+
+	public void setKotlinSupportEnabled(boolean kotlinSupportEnabled) {
+		this.kotlinSupportEnabled = kotlinSupportEnabled;
+	}
+
+	public void setGroovySupportEnabled(boolean groovySupportEnabled) {
+		this.groovySupportEnabled = groovySupportEnabled;
 	}
 
 	public boolean isAndroidSupportEnabled() {

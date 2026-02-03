@@ -330,6 +330,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
 		}
 		eliminateBuildServerFootprint(monitor);
+		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
+		if (projectsManager != null) {
+			projectsManager.buildSupports().forEach(bs -> {
+				bs.compile(null, subMonitor);
+			});
+		}
 		subMonitor.done();
 	}
 
@@ -721,6 +727,18 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (preferencesManager.getPreferences().isAspectjSupportEnabled()) {
 			File aspectjInitScript = GradleUtils.getGradleInitScript("/gradle/aspectj/init.gradle");
 			addInitScriptToArgs(aspectjInitScript, args);
+		}
+
+		// Add init script of kotlin support
+		if (preferencesManager.getPreferences().isKotlinSupportEnabled()) {
+			File kotlinInitScript = GradleUtils.getGradleInitScript("/gradle/kotlin/init.gradle");
+			addInitScriptToArgs(kotlinInitScript, args);
+		}
+
+		// Add init script of groovy support
+		if (preferencesManager.getPreferences().isGroovySupportEnabled()) {
+			File groovyInitScript = GradleUtils.getGradleInitScript("/gradle/groovy/init.gradle");
+			addInitScriptToArgs(groovyInitScript, args);
 		}
 
 		return args;
