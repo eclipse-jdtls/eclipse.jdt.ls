@@ -235,6 +235,27 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	@Test
+	public void testLombok_showGeneratedCodeSymbols() throws Exception {
+		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
+		if (lombokDisabled) {
+			return;
+		}
+		preferences.setShowGeneratedCodeSymbols(true);
+		try {
+			importProjects("maven/mavenlombok");
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+			String className = "org.sample.Test";
+			List<? extends SymbolInformation> symbols = getSymbols(className);
+			assertFalse(symbols.isEmpty(), "No symbols found for " + className);
+			assertHasSymbol("Test", "Test.java", SymbolKind.Class, symbols);
+			Optional<? extends SymbolInformation> method = symbols.stream().filter(s -> (s.getKind() == SymbolKind.Method)).findAny();
+			assertTrue(method.isPresent(), "Generated methods should appear when java.symbols.includeGeneratedCode is true");
+		} finally {
+			preferences.setShowGeneratedCodeSymbols(false);
+		}
+	}
+
+	@Test
 	public void testDecompiledSource() throws Exception {
 		importProjects("eclipse/reference");
 		IProject project = WorkspaceHelper.getProject("reference");

@@ -114,6 +114,11 @@ public class Preferences {
 	public static final String JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS = "java.symbols.includeSourceMethodDeclarations";
 
 	/**
+	 * Include generated code (e.g. Lombok getters, setters, constructors) in document symbols.
+	 */
+	public static final String JAVA_SYMBOLS_INCLUDE_GENERATED_CODE = "java.symbols.includeGeneratedCode";
+
+	/**
 	 * Insert spaces when pressing Tab
 	 */
 	public static final String JAVA_CONFIGURATION_INSERTSPACES = "java.format.insertSpaces";
@@ -678,6 +683,7 @@ public class Preferences {
 	private boolean smartSemicolonDetection;
 	private boolean includeDecompiledSources;
 	private boolean includeSourceMethodDeclarations;
+	private boolean showGeneratedCodeSymbols;
 
 	private String mavenUserSettings;
 	private String mavenGlobalSettings;
@@ -977,6 +983,7 @@ public class Preferences {
 		smartSemicolonDetection = false;
 		includeDecompiledSources = true;
 		includeSourceMethodDeclarations = false;
+		showGeneratedCodeSymbols = false;
 		insertSpaces = true;
 		tabSize = DEFAULT_TAB_SIZE;
 		mavenNotCoveredPluginExecutionSeverity = IGNORE;
@@ -1145,6 +1152,7 @@ public class Preferences {
 		prefs.smartSemicolonDetection = this.smartSemicolonDetection;
 		prefs.includeDecompiledSources = this.includeDecompiledSources;
 		prefs.includeSourceMethodDeclarations = this.includeSourceMethodDeclarations;
+		prefs.showGeneratedCodeSymbols = this.showGeneratedCodeSymbols;
 		prefs.inlayHintsParameterMode = this.inlayHintsParameterMode;
 		prefs.inlayHintsSuppressedWhenSameNameNumberedParameter = this.inlayHintsSuppressedWhenSameNameNumberedParameter;
 		prefs.inlayHintsVariableTypesEnabled = this.inlayHintsVariableTypesEnabled;
@@ -1734,6 +1742,11 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS)) {
 			boolean includeSourceMethodDeclarations = getBoolean(configuration, JAVA_SYMBOLS_INCLUDE_SOURCE_METHOD_DECLARATIONS, existing.includeSourceMethodDeclarations);
 			prefs.setIncludeSourceMethodDeclarations(includeSourceMethodDeclarations);
+		}
+
+		if (containsKey(configuration, JAVA_SYMBOLS_INCLUDE_GENERATED_CODE)) {
+			boolean showGeneratedCodeSymbols = getBoolean(configuration, JAVA_SYMBOLS_INCLUDE_GENERATED_CODE, existing.showGeneratedCodeSymbols);
+			prefs.setShowGeneratedCodeSymbols(showGeneratedCodeSymbols);
 		}
 
 		if (containsKey(configuration, JAVA_INLAYHINTS_PARAMETERNAMES_ENABLED)) {
@@ -2823,6 +2836,14 @@ public class Preferences {
 
 	public void setIncludeSourceMethodDeclarations(boolean includeSourceMethodDeclarations) {
 		this.includeSourceMethodDeclarations = includeSourceMethodDeclarations;
+	}
+
+	public boolean isShowGeneratedCodeSymbols() {
+		return this.showGeneratedCodeSymbols;
+	}
+
+	public void setShowGeneratedCodeSymbols(boolean showGeneratedCodeSymbols) {
+		this.showGeneratedCodeSymbols = showGeneratedCodeSymbols;
 	}
 
 	public Preferences setInsertSpaces(boolean insertSpaces) {
