@@ -165,7 +165,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public abstract ICompilationUnit resolveCompilationUnit(String uri);
 
-	protected void triggerValidation(ICompilationUnit cu) throws JavaModelException {
+	public void triggerValidation(ICompilationUnit cu) throws JavaModelException {
 		triggerValidation(cu, getDocumentLifecycleDelay());
 	}
 

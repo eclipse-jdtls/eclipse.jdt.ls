@@ -116,8 +116,7 @@ public class CompletionHandler{
 		long startTime = System.currentTimeMillis();
 		CompletionList $ = null;
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			$ = this.computeContentAssist(unit, params, monitor);
+			$ = completeContentAssist(params, monitor);
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
@@ -170,6 +169,11 @@ public class CompletionHandler{
 			completionResponse.setCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
 		}
 		return Either.forRight($);
+	}
+
+	protected CompletionList completeContentAssist(CompletionParams params, IProgressMonitor monitor) throws JavaModelException {
+		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
+		return this.computeContentAssist(unit, params, monitor);
 	}
 
 	@SuppressWarnings("unchecked")

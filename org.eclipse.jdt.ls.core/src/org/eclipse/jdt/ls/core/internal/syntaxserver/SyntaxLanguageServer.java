@@ -413,7 +413,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
-		CompletionHandler handler = new CompletionHandler(preferenceManager);
+		CompletionHandler handler = JavaLanguageServerPlugin.getInstance().getProtocol().createCompletionHandler(preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
 			monitors[0] = monitor;

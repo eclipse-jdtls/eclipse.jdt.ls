@@ -67,7 +67,7 @@ import org.eclipse.lsp4j.WorkspaceServerCapabilities;
 /**
  * Handler for the VS Code extension initialization
  */
-final public class InitHandler extends BaseInitHandler {
+public class InitHandler extends BaseInitHandler {
 	private static final String BUNDLES_KEY = "bundles";
 
 	private JavaClientConnection connection;
