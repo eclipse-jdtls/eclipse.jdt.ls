@@ -14,20 +14,31 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
+import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionList;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -88,6 +99,44 @@ public class CompletionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 
 		CompletionItem resolved = server.resolveCompletionItem(item).join();
 		assertEquals("This is a test.", resolved.getDocumentation().getLeft().trim());
+	}
+
+	@Disabled("Requires a real JDK, instead of stubbed JRE with no module info")
+	@Test
+	public void testModuleCompletion_resolve_showsDocumentation() throws Exception {
+		importProjects("eclipse/java25");
+		IProject java25Project = WorkspaceHelper.getProject("java25");
+		assertNotNull(java25Project, "java25 project should be loaded");
+		IJavaProject javaProject = JavaCore.create(java25Project);
+		IPackageFragmentRoot root = javaProject.getPackageFragmentRoot(java25Project.getFolder("src/main/java"));
+		IPackageFragment pack = root.getPackageFragment("org.sample");
+		String source = """
+				package org.sample;
+
+				import module java.
+
+				public class ImportModule {}
+				""";
+		ICompilationUnit unit = pack.createCompilationUnit("ImportModule.java", source, false, null);
+		unit.becomeWorkingCopy(monitor);
+		unit.makeConsistent(monitor);
+
+		CompletionList list = requestCompletions(unit, "java.");
+		assertNotNull(list);
+		assertTrue(list.getItems().size() > 0, "Expected module completions after 'import module java.'");
+
+		Optional<CompletionItem> javaSqlItem = list.getItems().stream()
+				.filter(i -> CompletionItemKind.Module.equals(i.getKind()))
+				.filter(i -> "java.base".equals(i.getLabel()))
+				.findFirst();
+		assertTrue(javaSqlItem.isPresent(), "Expected 'java.base' module in completion list");
+
+		CompletionItem resolved = server.resolveCompletionItem(javaSqlItem.get()).join();
+		assertNotNull(resolved.getDocumentation(), "Resolved module completion should have documentation");
+		Either<String, org.eclipse.lsp4j.MarkupContent> doc = resolved.getDocumentation();
+		String docText = doc.getLeft() != null ? doc.getLeft() : (doc.getRight() != null ? doc.getRight().getValue() : null);
+		assertNotNull(docText, "Documentation content should not be null");
+		assertTrue(!docText.isBlank(), "Module documentation should not be empty");
 	}
 
 	private CompletionList requestCompletions(ICompilationUnit unit, String completeBehind) throws JavaModelException {
