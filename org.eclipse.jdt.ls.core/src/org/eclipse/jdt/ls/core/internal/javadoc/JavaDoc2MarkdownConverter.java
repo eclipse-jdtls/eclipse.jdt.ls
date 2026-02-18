@@ -16,7 +16,12 @@ import java.io.Reader;
 import java.util.Arrays;
 import java.util.Set;
 
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+
+import com.vladsch.flexmark.ast.Reference;
+import com.vladsch.flexmark.html.renderer.LinkType;
+import com.vladsch.flexmark.html.renderer.ResolvedLink;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -29,6 +34,7 @@ import com.vladsch.flexmark.html2md.converter.HtmlMarkdownWriter;
 import com.vladsch.flexmark.html2md.converter.HtmlNodeConverterContext;
 import com.vladsch.flexmark.html2md.converter.HtmlNodeRenderer;
 import com.vladsch.flexmark.html2md.converter.HtmlNodeRendererHandler;
+import com.vladsch.flexmark.html2md.converter.LinkConversion;
 import com.vladsch.flexmark.util.data.DataHolder;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
@@ -43,6 +49,8 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 	private static final String MARKDOWN_SPACE = "&nbsp;";
 	private static final String LINEBREAK = "\n";
 	private static final String DOUBLE_SPACE = "  ";
+
+	private static final Set<String> EXPLICIT_LINK_TEXT_TAGS = Set.of(FlexmarkHtmlConverter.EXPLICIT_LINK_TEXT_TAGS);
 
 	private final FlexmarkHtmlConverter converter;
 	private final DataHolder flexmarkOptions;
@@ -81,6 +89,8 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 			@Override
 			public Set<HtmlNodeRendererHandler<?>> getHtmlNodeRendererHandlers() {
 				return Set.of(
+						// Unwrap non-functional anchors and output [label](url) with jdt href encoding
+						new HtmlNodeRendererHandler<>("a", Element.class, JavaDoc2MarkdownConverter.this::processA),
 						// Treat <tt> tags like <code> tags (inline code with backticks)
 						new HtmlNodeRendererHandler<>("tt", Element.class, JavaDoc2MarkdownConverter.this::processTt),
 						// Treat <dfn> tags as italic text
@@ -104,10 +114,6 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 	/**
 	 * Sanitizes the provided HTML document by:
 	 * <ul>
-	 * <li>Unwrapping anchor (<code>&lt;a&gt;</code>) tags that use only
-	 * <code>name</code> (legacy anchors), <code>eclipse-javadoc:</code> protocol,
-	 * or <code>#</code> hash hrefs, as these are either non-functional or intended
-	 * for internal navigation that does not translate to Markdown.</li>
 	 * <li>Normalizing <code>&lt;table&gt;</code> elements so that header cells
 	 * (<code>&lt;th&gt;</code>) appear only within header rows
 	 * (<code>&lt;thead&gt;</code>), and any <code>&lt;th&gt;</code> elements in
@@ -126,12 +132,6 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 	 *                     Markdown
 	 */
 	private void sanitize(Document document) {
-		// Unwrap anchors with :
-		// - only name attribute (keep content, remove tag),
-		// - using eclipse-javadoc protocol (internal Eclipse links that don't work in non-Eclipse clients),
-		// - using # anchors (internal links that don't work in Markdown)
-		document.select("a[name]:not([href]), a[href^='eclipse-javadoc:'], a[href^='#']").forEach(anchor -> anchor.unwrap());
-
 		// Add missing table headers and normalize table rows so that
 		// - th cells are only allowed in thead,
 		// - if there's already a thead, convert all th cells in the tbody to td with bold content
@@ -140,6 +140,132 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 
 		//Separate consecutive tt/code tags to prevent broken backtick rendering
 		separateConsecutiveCodeTags(document);
+	}
+
+	/**
+	 * Handles anchor tags. Unwraps internal targets (eclipse-javadoc:, #)
+	 * and percent-encodes parentheses in jdt:// hrefs so Markdown link syntax is not broken (see #3705).
+	 * Based on flexmark's [processA](https://github.com/vsch/flexmark-java/blob/bcfe84a3ab6d23d04adce3e5a0bae45c6b791d14/flexmark-html2md-converter/src/main/java/com/vladsch/flexmark/html2md/converter/internal/HtmlConverterCoreNodeRenderer.java#L264) implementation.
+	 * @param element the anchor element
+	 * @param context the conversion context
+	 * @param out     the markdown writer
+	 */
+	private void processA(Element element, HtmlNodeConverterContext context, HtmlMarkdownWriter out) {
+		if (element.hasAttr("href")) {
+			LinkConversion conv = myHtmlConverterOptions.extInlineLink;
+			if (conv.isSuppressed()) {
+				return;
+			}
+
+			String href = element.attr("href");
+			/* Start of JDT.LS specific code */
+			// Unwrap internal targets that don't translate to Markdown
+			if (href.trim().isEmpty() || href.startsWith("eclipse-javadoc:") || href.startsWith("#")) {
+				context.renderChildren(element, false, null);
+				return;
+			}
+
+			ResolvedLink resolvedLink = context.resolveLink(LinkType.LINK, href, false);
+			String useHref = JDTUtils.cleanupURL(resolvedLink.getUrl());
+			/* End of JDT.LS specific code */
+
+			if (out.isPreFormatted()) {
+				int slashIndex = useHref.lastIndexOf('/');
+				if (slashIndex != -1) {
+					int hashIndex = useHref.indexOf('#', slashIndex);
+					if (hashIndex != -1 && slashIndex + 1 == hashIndex) {
+						useHref = useHref.substring(0, slashIndex) + useHref.substring(hashIndex);
+					}
+				}
+				out.append(useHref);
+			} else if (conv.isParsed()) {
+				context.pushState(element);
+				String textNodes = context.processTextNodes(element);
+				String text = textNodes.trim();
+				String title = element.hasAttr("title") ? element.attr("title") : null;
+
+				if (!text.isEmpty() || !useHref.contains("#")
+						|| !isHeading(element.parent()) && !useHref.equals("#") && (context.getState() == null || context.getState().getAttributes().get("id") == null || context.getState().getAttributes().get("id").getValue().isEmpty())) {
+					if (myHtmlConverterOptions.extractAutoLinks && href.equals(text) && (title == null || title.isEmpty())) {
+						if (myHtmlConverterOptions.wrapAutoLinks) {
+							out.append('<');
+						}
+						out.append(useHref);
+						if (myHtmlConverterOptions.wrapAutoLinks) {
+							out.append('>');
+						}
+						context.transferIdToParent();
+					} else if (!conv.isTextOnly() && !useHref.startsWith("javascript:")) {
+						boolean handled = false;
+
+						if (conv.isReference() && !hasChildrenOfType(element, EXPLICIT_LINK_TEXT_TAGS)) {
+							Reference reference = context.getOrCreateReference(useHref, text, title);
+							if (reference != null) {
+								handled = true;
+								if (reference.getReference().equals(text)) {
+									out.append('[').append(text).append("][]");
+								} else {
+									out.append('[').append(text).append("][").append(reference.getReference()).append(']');
+								}
+							}
+						}
+
+						if (!handled) {
+							out.append('[');
+							out.append(text);
+							out.append(']');
+							out.append('(').append(useHref);
+							if (title != null) {
+								out.append(" \"").append(title.replace("\n", myHtmlConverterOptions.eolInTitleAttribute).replace("\"", "\\\"")).append('"');
+							}
+							out.append(")");
+						}
+					} else {
+						if (href.equals(text)) {
+							out.append(useHref);
+						} else {
+							out.append(text);
+						}
+					}
+
+					context.excludeAttributes("href", "title");
+					context.popState(out);
+				} else {
+					context.transferIdToParent();
+					context.popState(null);
+				}
+			} else if (!conv.isSuppressed()) {
+				context.processWrapped(element, null, true);
+			}
+		} else {
+			boolean stripIdAttribute = false;
+			if (element.childNodeSize() == 0 && element.parent().tagName().equals("body")) {
+				stripIdAttribute = true;
+			}
+			context.processTextNodes(element, stripIdAttribute);
+		}
+	}
+
+	private static boolean isHeading(Element element) {
+		if (element == null) {
+			return false;
+		}
+		String tagName = element.tagName().toLowerCase();
+		for (String headingTag : FlexmarkHtmlConverter.HEADING_NODES) {
+			if (tagName.equals(headingTag)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean hasChildrenOfType(Element element, Set<String> nodeNames) {
+		for (Node child : element.children()) {
+			if (nodeNames.contains(child.nodeName().toLowerCase())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

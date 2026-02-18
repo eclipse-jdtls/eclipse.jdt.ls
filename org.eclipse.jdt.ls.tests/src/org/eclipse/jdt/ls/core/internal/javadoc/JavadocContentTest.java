@@ -70,8 +70,8 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 				  * Some dude
 				  * Another one
 				* **See Also:**
-				  * [some.pkg.SomeClass]()
-				  * [some.pkg.SomeClass.someMethod()]()""";
+				  * some.pkg.SomeClass
+				  * some.pkg.SomeClass.someMethod()""";
 		assertEquals(expectedJavadoc, javadoc.getValue());
 	}
 

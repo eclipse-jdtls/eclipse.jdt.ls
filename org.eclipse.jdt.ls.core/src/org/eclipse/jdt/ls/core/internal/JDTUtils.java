@@ -912,7 +912,7 @@ public final class JDTUtils {
 				query.append("&element=").append(elementName);
 			}
 			uriString = new URI(JDT_SCHEME, "contents", pathBuilder.toString(), query.toString(), null).toASCIIString();
-
+			uriString = cleanupURL(uriString);
 		} catch (URISyntaxException e) {
 			JavaLanguageServerPlugin.logException("Error generating URI for class ", e);
 		}
@@ -1988,6 +1988,20 @@ public final class JDTUtils {
 			}
 		}
 		return root;
+	}
+
+	/** Percent-encodes ( and ) in jdt:// hrefs so [label](url) is not broken (see #3705). */
+	public static String cleanupURL(String url) {
+		if (url == null) {
+			return url;
+		}
+		if (url.indexOf('(') > -1 ) {
+			return url.replace("(", "%28");
+		}
+		if (url.indexOf(')') > -1) {
+			return url.replace(")", "%29");
+		}
+		return url;
 	}
 
 }

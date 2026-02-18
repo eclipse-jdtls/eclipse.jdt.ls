@@ -214,9 +214,10 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 			assertNotNull(hover.getContents());
 			assertEquals(2, hover.getContents().getLeft().size());
 			assertEquals("com.aspose.words.Document.Document(String fileName) throws Exception", hover.getContents().getLeft().get(0).getRight().getValue());
-			//External library should link to the library file
-			assertTrue(hover.getContents().getLeft().get(1).getLeft().startsWith("Source: *[aspose-words-15.12.0-jdk16.jar](jdt://contents/aspose-words-15.12.0-jdk16.jar/com.aspose.words/Document.class?"),
-					"Unexpected Source from " + hover.getContents().getLeft().get(1).getLeft());
+			String source = hover.getContents().getLeft().get(1).getLeft();
+			String prefix = "Source: *[aspose-words-15.12.0-jdk16.jar](jdt://contents/aspose-words-15.12.0-jdk16.jar/com.aspose.words/Document.class?";
+			assertTrue(source.startsWith(prefix), "Unexpected Source from " + source);
+			assertFalse(source.substring(prefix.length()).contains("("), "Source URL is not sanitized: " + source);
 		} finally {
 			if (unit != null) {
 				unit.discardWorkingCopy();
@@ -536,7 +537,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		Either<String, MarkedString> javadoc = hover.getContents().getLeft().get(1);
 		String content = null;
 		assertTrue(javadoc != null && javadoc.getLeft() != null && (content = javadoc.getLeft()) != null, "javadoc has null content");
-		assertMatches("This link doesnt work \\[LinkToSomethingNotFound\\]\\(\\)", content);
+		assertMatches("This link doesnt work LinkToSomethingNotFound", content);
 	}
 
 	@Test
@@ -912,7 +913,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testNoLinkWhenClassContentUnsupported() throws Exception {
 		initPreferenceManager(false);
-		testClassContentSupport("Uses \\[WordUtils\\]\\(\\)");
+		testClassContentSupport("Uses WordUtils");
 	}
 
 	@Test
