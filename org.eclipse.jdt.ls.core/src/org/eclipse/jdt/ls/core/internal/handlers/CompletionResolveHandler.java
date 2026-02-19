@@ -25,11 +25,9 @@ import org.eclipse.jdt.core.CompletionContext;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IModuleDescription;
-import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -41,8 +39,6 @@ import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.jdt.internal.core.JarPackageFragmentRoot;
-import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -181,41 +177,6 @@ public class CompletionResolveHandler {
 			return param;
 		}
 
-		// Resolve module documentation
-		if (proposal.getKind() == CompletionProposal.MODULE_REF || proposal.getKind() == CompletionProposal.MODULE_DECLARATION) {
-			String moduleName = getModuleName(proposal);
-			if (moduleName != null) {
-				IModuleDescription module = findModule(unit.getJavaProject(), moduleName);
-				if (module != null && module.exists() && !monitor.isCanceled()) {
-					try {
-						final IModuleDescription mod = module;
-						String javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-								return JavadocContentAccess2.getMarkdownContent(mod);
-							} else {
-								return JavadocContentAccess2.getPlainTextContent(mod);
-							}
-						}, 750, TimeUnit.MILLISECONDS);
-						if (javadoc != null) {
-							if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-								MarkupContent markupContent = new MarkupContent();
-								markupContent.setKind(MarkupKind.MARKDOWN);
-								markupContent.setValue(javadoc);
-								param.setDocumentation(markupContent);
-							} else {
-								param.setDocumentation(javadoc);
-							}
-						}
-					} catch (UncheckedTimeoutException | TimeoutException e) {
-						// ignore
-					} catch (Exception e) {
-						JavaLanguageServerPlugin.logException("Unable to read module documentation", e);
-					}
-				}
-			}
-			return param;
-		}
-
 		// resolving documentation
 		// 1. get the required type proposal when the argument guessing is
 		// turned off and the proposal is a constructor.
@@ -235,6 +196,20 @@ public class CompletionResolveHandler {
 					IType type = unit.getJavaProject().findType(typeName);
 					if (type != null) {
 						member = type;
+					}
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					return param;
+				}
+			}
+		} else if (proposal.getKind() == CompletionProposal.MODULE_REF || proposal.getKind() == CompletionProposal.MODULE_DECLARATION) {
+			// Resolve module documentation
+			String moduleName = getModuleName(proposal);
+			if (moduleName != null) {
+				try {
+					IModuleDescription module = unit.getJavaProject().findModule(moduleName, null);
+					if (module != null) {
+						member = module;
 					}
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -400,44 +375,6 @@ public class CompletionResolveHandler {
 		}
 		char[] completion = proposal.getCompletion();
 		return completion != null && completion.length > 0 ? String.valueOf(completion) : null;
-	}
-
-	/**
-	 * Find an IModuleDescription by module name in the project (project module, jar modules, or system modules).
-	 */
-	private static IModuleDescription findModule(IJavaProject project, String moduleName) {
-		if (project == null || moduleName == null || moduleName.isEmpty()) {
-			return null;
-		}
-		try {
-			// 1. Project's own module (module-info.java)
-			IModuleDescription projectModule = project.getModuleDescription();
-			if (projectModule != null && moduleName.equals(projectModule.getElementName())) {
-				return projectModule;
-			}
-			// 2. Search all package fragment roots (jars with module-info, JRT system modules)
-			for (IPackageFragmentRoot root : project.getAllPackageFragmentRoots()) {
-				if (root instanceof JrtPackageFragmentRoot jrtRoot) {
-					if (moduleName.equals(jrtRoot.getElementName())) {
-						IModuleDescription jrtModule = jrtRoot.getModuleDescription();
-						if (jrtModule != null) {
-							return jrtModule;
-						}
-					}
-				} else if (root instanceof JarPackageFragmentRoot jarRoot) {
-					IModuleDescription jarModule = jarRoot.getModuleDescription();
-					if (jarModule == null) {
-						jarModule = jarRoot.getAutomaticModuleDescription();
-					}
-					if (jarModule != null && moduleName.equals(jarModule.getElementName())) {
-						return jarModule;
-					}
-				}
-			}
-		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Failed to find module " + moduleName, e);
-		}
-		return null;
 	}
 
 }
