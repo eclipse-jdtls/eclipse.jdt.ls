@@ -176,6 +176,7 @@ public class PreferenceManager {
 		javaCoreOptions.put(JavaCore.CORE_CIRCULAR_CLASSPATH, JavaCore.WARNING);
 		javaCoreOptions.put(JavaCore.COMPILER_IGNORE_UNNAMED_MODULE_FOR_SPLIT_PACKAGE, JavaCore.ENABLED);
 		javaCoreOptions.put(JavaCore.COMPILER_PB_UNUSED_LAMBDA_PARAMETER, JavaCore.IGNORE);
+		javaCoreOptions.put(JavaCore.COMPILER_PB_FORBIDDEN_REFERENCE, JavaCore.IGNORE);
 		if (!Objects.equals(javaCoreOptions, JavaCore.getOptions())) {
 			JavaCore.setOptions(javaCoreOptions);
 		}
