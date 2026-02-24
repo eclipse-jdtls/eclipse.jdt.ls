@@ -1,5 +1,20 @@
 # Change Log
 
+# [1.57.0 (February 26th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/150?closed=1)
+ * enhancement - Have class URIs use their original source name. See [#3666](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3666).
+ * enhancement - Add setting to disable adding imports on paste. See [#3700](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3700).
+ * enhancement - Set `o.e.j.core.compiler.problem.forbiddenReference=ignore` by default. See [#3720](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3720).
+ * enhancement - Add setting to show generated code in document symbols. See [#3706](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3706).
+ * enhancement - Log server version+commit on startup. See [#3689](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3689).
+ * bug fix - Fix python launcher in a custom environment. See [#3701](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3701).
+ * bug fix - Fix code completion in JEP 512: Compact Source Files with static variables. See [#3680](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3680).
+ * bug fix - JEP 511: module completion now shows documentation. See [#3710](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3710).
+ * bug fix - Fix wrong Javadoc rendering (missing close parenthesis for links) on hover. See [#3705](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3705).
+ * dependencies - Update JUnit to 5.14.3. See [#3712](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3712).
+ * dependencies - Bump `org.codehaus.gmavenplus:gmavenplus-plugin` from 4.3.0 to 4.3.1. See [#3707](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3707).
+ * dependencies - Update Fernflower to 253.29346.240, fetched via the target platform. See [#3667](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3667).
+ * dependencies - Bump `org.eclipse.cbi.maven.plugins:eclipse-jarsigner-plugin` from 1.5.3 to 1.5.4. See [#3715](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3715).
+
 # [1.56.0 (January 29th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/149?closed=1)
  * enhancement - Add library info on hover. See [#3678](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3678).
  * enhancement - Support AspectJ in Gradle projects. See [#3670](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3670).
