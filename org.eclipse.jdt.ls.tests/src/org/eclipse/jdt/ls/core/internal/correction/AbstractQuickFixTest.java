@@ -113,6 +113,22 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertCodeActions(codeActions, expecteds);
 	}
 
+	protected void assertCodeActionsMultiFile(ICompilationUnit cu, Range range, Expected... expecteds) throws Exception {
+		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
+		Map<String, Either<Command, CodeAction>> actualActions = codeActions.stream().collect(Collectors.toMap(this::getTitle, Function.identity(), ((first, second) -> first), LinkedHashMap::new));
+		Either<Command, CodeAction> action = actualActions.get(expecteds[0].name);
+		WorkspaceEdit we = action.getRight().getEdit();
+		Iterator<Entry<String, List<TextEdit>>> editEntries = we.getChanges().entrySet().iterator();
+		for (Expected expected : expecteds) {
+			Entry<String, List<TextEdit>> entry = editEntries.next();
+			assertNotNull(entry, "No edits generated");
+			String actionContent = ResourceUtils.dos2Unix(evaluateChanges(entry.getKey(), entry.getValue()));
+			actionContent = ResourceUtils.dos2Unix(actionContent);
+			String content = ResourceUtils.dos2Unix(expected.content);
+			assertEquals(content, actionContent, getTitle(action) + " has the wrong content ");
+		}
+	}
+
 	protected void assertCodeActions(List<Either<Command, CodeAction>> codeActions, Expected... expecteds) throws Exception {
 		if (codeActions.size() < expecteds.length) {
 			String res = codeActions.stream().map(a -> ("'" + getTitle(a) + "'")).collect(Collectors.joining(","));
