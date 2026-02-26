@@ -16,6 +16,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,6 +47,7 @@ import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.TextBlock;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
@@ -64,8 +66,20 @@ class InlayHintVisitor extends ASTVisitor {
 	private ITypeRoot typeRoot;
 	private boolean isVariableTypeHintsEnabled;
 	private boolean isParameterTypeHintsEnabled;
+	private boolean isFormatParameterHintsEnabled;
 	private InlayHintsParameterMode inlayHintsParameterMode;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
+
+	/**
+	 * Regex matching Java format specifiers per {@link java.util.Formatter} syntax.
+	 * Captures:
+	 * <ul>
+	 *   <li>Group 1: argument index (e.g. "2$"), may be null</li>
+	 *   <li>Group 2: conversion character</li>
+	 * </ul>
+	 */
+	private static final Pattern FORMAT_SPECIFIER_PATTERN = Pattern.compile(
+			"%(\\d+\\$)?[-#+ 0,(]*\\d*(?:\\.\\d+)?([bBhHsScCdoxXeEfgGaAtTnN%])");
 
 	InlayHintVisitor(int startOffset, int endOffset, ITypeRoot typeRoot, PreferenceManager preferenceManager) {
 		this.startOffset = startOffset;
@@ -74,6 +88,7 @@ class InlayHintVisitor extends ASTVisitor {
 		this.hints = new ArrayList<>();
 		this.isVariableTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsVariableTypesEnabled();
 		this.isParameterTypeHintsEnabled = preferenceManager.getPreferences().isInlayHintsParameterTypesEnabled();
+		this.isFormatParameterHintsEnabled = preferenceManager.getPreferences().isInlayHintsFormatParametersEnabled();
 		this.inlayHintsParameterMode = preferenceManager.getPreferences().getInlayHintsParameterMode();
 		this.inlayHintsSuppressedWhenSameNameNumberedParameter = preferenceManager.getPreferences().isInlayHintsSuppressedWhenSameNameNumberedParameter();
 	}
@@ -102,6 +117,9 @@ class InlayHintVisitor extends ASTVisitor {
 			return true;
 		}
 		resolveParameterInlayHints(node.resolveMethodBinding(), node.arguments());
+		if (isFormatParameterHintsEnabled) {
+			resolveFormatParameterInlayHints(node);
+		}
 		return true;
 	}
 
@@ -271,6 +289,243 @@ class InlayHintVisitor extends ASTVisitor {
 		} catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Classes whose {@code format} and {@code printf} methods use
+	 * {@link java.util.Formatter} syntax.
+	 */
+	private static final Set<String> FORMAT_CLASSES = Set.of(
+			"java.lang.String",
+			"java.io.PrintStream",
+			"java.io.PrintWriter",
+			"java.util.Formatter",
+			"java.io.Console");
+
+	/**
+	 * Resolve format parameter inlay hints for methods that accept a
+	 * {@link java.util.Formatter}-style format string, such as
+	 * {@code String.format()}, {@code String.formatted()},
+	 * {@code PrintStream.printf()}, {@code Formatter.format()}, etc.
+	 * For each format specifier that consumes an argument, an inlay hint
+	 * is placed after the specifier showing the corresponding argument
+	 * expression text.
+	 */
+	private void resolveFormatParameterInlayHints(MethodInvocation node) {
+		IMethodBinding binding = node.resolveMethodBinding();
+		if (binding == null) {
+			return;
+		}
+
+		ITypeBinding declaringClass = binding.getDeclaringClass();
+		if (declaringClass == null || !FORMAT_CLASSES.contains(declaringClass.getQualifiedName())) {
+			return;
+		}
+
+		String methodName = binding.getName();
+		String formatString = null;
+		List<Expression> formatArgs;
+		List<Expression> allArgs = node.arguments();
+
+		if ("formatted".equals(methodName) && "java.lang.String".equals(declaringClass.getQualifiedName())) {
+			// "pattern".formatted(args...) — instance method on String
+			Expression expr = node.getExpression();
+			formatString = extractStringValue(expr);
+			if (formatString == null) {
+				return;
+			}
+			formatArgs = allArgs;
+		} else if ("format".equals(methodName) || "printf".equals(methodName)) {
+			// format(pattern, args...) or format(locale, pattern, args...)
+			// printf(pattern, args...) or printf(locale, pattern, args...)
+			if (allArgs.isEmpty()) {
+				return;
+			}
+			ITypeBinding[] paramTypes = binding.getParameterTypes();
+			if (paramTypes.length < 1) {
+				return;
+			}
+			int patternIndex;
+			if ("java.util.Locale".equals(paramTypes[0].getQualifiedName())) {
+				patternIndex = 1;
+			} else {
+				patternIndex = 0;
+			}
+			if (allArgs.size() <= patternIndex) {
+				return;
+			}
+			formatString = extractStringValue(allArgs.get(patternIndex));
+			if (formatString == null) {
+				return;
+			}
+			formatArgs = allArgs.subList(patternIndex + 1, allArgs.size());
+		} else {
+			return;
+		}
+
+		// Parse format specifiers and create inlay hints
+		createFormatSpecifierHints(node, formatString, formatArgs);
+	}
+
+	/**
+	 * Extract the string value from a StringLiteral or TextBlock expression.
+	 */
+	private String extractStringValue(Expression expr) {
+		if (expr instanceof StringLiteral stringLiteral) {
+			return stringLiteral.getLiteralValue();
+		} else if (expr instanceof TextBlock textBlock) {
+			return textBlock.getLiteralValue();
+		}
+		return null;
+	}
+
+	/**
+	 * Create inlay hints for format specifiers within a format string.
+	 * Each specifier that consumes an argument gets a hint showing the
+	 * corresponding argument expression.
+	 */
+	private void createFormatSpecifierHints(MethodInvocation node, String formatString, List<Expression> formatArgs) {
+		if (formatArgs.isEmpty()) {
+			return;
+		}
+
+		// Find the format string expression to compute positions
+		Expression formatExpr;
+		IMethodBinding binding = node.resolveMethodBinding();
+		String methodName = binding.getName();
+		if ("formatted".equals(methodName)) {
+			formatExpr = node.getExpression();
+		} else {
+			ITypeBinding[] paramTypes = binding.getParameterTypes();
+			int patternIndex = "java.util.Locale".equals(paramTypes[0].getQualifiedName()) ? 1 : 0;
+			formatExpr = (Expression) node.arguments().get(patternIndex);
+		}
+
+		// The source offset of the format string content (after the opening quote)
+		int sourceStart = formatExpr.getStartPosition();
+		// For StringLiteral, content starts after the opening '"'
+		// For TextBlock, content starts after the opening '"""\n'
+		boolean isTextBlock = formatExpr instanceof TextBlock;
+
+		Matcher matcher = FORMAT_SPECIFIER_PATTERN.matcher(formatString);
+		int implicitArgIndex = 0; // tracks the next argument for specifiers without explicit index
+		int specifierIndexInOrder = 0; // 0-based index of argument-consuming specifiers (for text block source lookup)
+
+		try {
+			while (matcher.find()) {
+				String conversion = matcher.group(2);
+				// Skip %% (literal percent) and %n (newline) - these don't consume arguments
+				if ("%".equals(conversion) || "n".equals(conversion) || "N".equals(conversion)) {
+					continue;
+				}
+
+				String argIndexStr = matcher.group(1);
+				int argIndex;
+				if (argIndexStr != null) {
+					// Explicit argument index like %2$s — 1-based
+					argIndex = Integer.parseInt(argIndexStr.substring(0, argIndexStr.length() - 1)) - 1;
+				} else {
+					argIndex = implicitArgIndex++;
+				}
+
+				if (argIndex < 0 || argIndex >= formatArgs.size()) {
+					continue;
+				}
+
+				Expression arg = formatArgs.get(argIndex);
+				String argText = arg.toString();
+
+				// Compute the position after the specifier in the source
+				int sourcePosition = computeSourcePosition(formatExpr, sourceStart, formatString, matcher.end(), specifierIndexInOrder, isTextBlock);
+				specifierIndexInOrder++;
+
+				int[] lineAndColumn = JsonRpcHelpers.toLine(typeRoot.getBuffer(), sourcePosition);
+				InlayHint hint = new InlayHint(new Position(lineAndColumn[0], lineAndColumn[1]), Either.forLeft(":" + argText));
+				hint.setPaddingLeft(false);
+				hints.add(hint);
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Compute the source position for a given offset within the format string's
+	 * literal value. Handles escape sequences in StringLiterals and the offset
+	 * of TextBlocks.
+	 *
+	 * @param specifierIndexInOrder 0-based index of this argument-consuming specifier (used for text blocks, where literal value may differ from source due to indentation stripping)
+	 */
+	private int computeSourcePosition(Expression formatExpr, int sourceStart, String formatString, int formatOffset, int specifierIndexInOrder, boolean isTextBlock) {
+		if (isTextBlock) {
+			// For text blocks, getLiteralValue() strips indentation so literal offsets don't match source.
+			// Find the n-th argument-consuming specifier in the raw source content instead.
+			String source = formatExpr.toString();
+			int contentStart = source.indexOf('\n') + 1;
+			String sourceContent = source.substring(contentStart);
+			int endInContent = findNthArgumentConsumingSpecifierEnd(sourceContent, specifierIndexInOrder);
+			return sourceStart + contentStart + endInContent;
+		} else {
+			// For string literals, content starts after the opening '"'
+			String source = formatExpr.toString();
+			// Skip the opening quote
+			return sourceStart + mapFormatOffsetToSource(source.substring(1), formatString, formatOffset) + 1;
+		}
+	}
+
+	/**
+	 * Find the end offset (exclusive) of the n-th argument-consuming format specifier in the given source content.
+	 * Used for text blocks where we cannot rely on literal/source offset mapping.
+	 */
+	private int findNthArgumentConsumingSpecifierEnd(String sourceContent, int n) {
+		Matcher m = FORMAT_SPECIFIER_PATTERN.matcher(sourceContent);
+		int count = 0;
+		while (m.find()) {
+			String conversion = m.group(2);
+			if ("%".equals(conversion) || "n".equals(conversion) || "N".equals(conversion)) {
+				continue;
+			}
+			if (count == n) {
+				return m.end();
+			}
+			count++;
+		}
+		return 0;
+	}
+
+	/**
+	 * Map an offset in the literal value (unescaped) to an offset in the source
+	 * (escaped) string. This accounts for escape sequences like \n, \t, \\, etc.
+	 */
+	private int mapFormatOffsetToSource(String source, String literalValue, int targetOffset) {
+		int sourceIdx = 0;
+		int literalIdx = 0;
+		while (literalIdx < targetOffset && sourceIdx < source.length()) {
+			char c = source.charAt(sourceIdx);
+			if (c == '\\' && sourceIdx + 1 < source.length()) {
+				char next = source.charAt(sourceIdx + 1);
+				if (next == 'u') {
+					// Unicode escape: uXXXX
+					sourceIdx += 6;
+				} else if (next >= '0' && next <= '7') {
+					// Octal escape: \0 to \377
+					sourceIdx += 2;
+					if (sourceIdx < source.length() && source.charAt(sourceIdx) >= '0' && source.charAt(sourceIdx) <= '7') {
+						sourceIdx++;
+						if (next <= '3' && sourceIdx < source.length() && source.charAt(sourceIdx) >= '0' && source.charAt(sourceIdx) <= '7') {
+							sourceIdx++;
+						}
+					}
+				} else {
+					// Simple escape: \n, \t, \\, \", etc.
+					sourceIdx += 2;
+				}
+			} else {
+				sourceIdx++;
+			}
+			literalIdx++;
+		}
+		return sourceIdx;
 	}
 
 	/**

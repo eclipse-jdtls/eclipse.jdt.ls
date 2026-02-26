@@ -524,6 +524,8 @@ public class Preferences {
 
 	public static final String JAVA_INLAYHINTS_PARAMETERTYPES_ENABLED = "java.inlayHints.parameterTypes.enabled";
 
+	public static final String JAVA_INLAYHINTS_FORMATPARAMETERS_ENABLED = "java.inlayHints.formatParameters.enabled";
+
 	/**
 	 * Preference key for the inlay hints exclusion list
 	 */
@@ -722,6 +724,7 @@ public class Preferences {
 	private List<String> inlayHintsExclusionList;
 	private boolean inlayHintsVariableTypesEnabled;
 	private boolean inlayHintsParameterTypesEnabled;
+	private boolean inlayHintsFormatParametersEnabled;
 	private ProjectEncodingMode projectEncoding;
 	private boolean avoidVolatileChanges;
 	private boolean protobufSupportEnabled;
@@ -991,6 +994,7 @@ public class Preferences {
 		inlayHintsParameterMode = InlayHintsParameterMode.LITERALS;
 		inlayHintsVariableTypesEnabled = false;
 		inlayHintsParameterTypesEnabled = false;
+		inlayHintsFormatParametersEnabled = false;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
 		javacEnabled = false;
@@ -1157,6 +1161,7 @@ public class Preferences {
 		prefs.inlayHintsSuppressedWhenSameNameNumberedParameter = this.inlayHintsSuppressedWhenSameNameNumberedParameter;
 		prefs.inlayHintsVariableTypesEnabled = this.inlayHintsVariableTypesEnabled;
 		prefs.inlayHintsParameterTypesEnabled = this.inlayHintsParameterTypesEnabled;
+		prefs.inlayHintsFormatParametersEnabled = this.inlayHintsFormatParametersEnabled;
 		prefs.projectEncoding = this.projectEncoding;
 		prefs.avoidVolatileChanges = this.avoidVolatileChanges;
 		prefs.protobufSupportEnabled = this.protobufSupportEnabled;
@@ -1774,6 +1779,11 @@ public class Preferences {
 			prefs.setInlayHintsParameterTypesEnabled(inlayHintsParameterTypesEnabled);
 		}
 
+		if (containsKey(configuration, JAVA_INLAYHINTS_FORMATPARAMETERS_ENABLED)) {
+			boolean inlayHintsFormatParametersEnabled = getBoolean(configuration, JAVA_INLAYHINTS_FORMATPARAMETERS_ENABLED, existing.inlayHintsFormatParametersEnabled);
+			prefs.setInlayHintsFormatParametersEnabled(inlayHintsFormatParametersEnabled);
+		}
+
 		if (containsKey(configuration, JAVA_PROJECT_ENCODING)) {
 			String projectEncoding = getString(configuration, JAVA_PROJECT_ENCODING, null);
 			prefs.setProjectEncoding(ProjectEncodingMode.fromString(projectEncoding, existing.projectEncoding));
@@ -1906,6 +1916,14 @@ public class Preferences {
 
 	public void setInlayHintsParameterTypesEnabled(boolean inlayHintsParameterTypesEnabled) {
 		this.inlayHintsParameterTypesEnabled = inlayHintsParameterTypesEnabled;
+	}
+
+	public boolean isInlayHintsFormatParametersEnabled() {
+		return inlayHintsFormatParametersEnabled;
+	}
+
+	public void setInlayHintsFormatParametersEnabled(boolean inlayHintsFormatParametersEnabled) {
+		this.inlayHintsFormatParametersEnabled = inlayHintsFormatParametersEnabled;
 	}
 
 	private static boolean validateFilePattern(String filename) {
