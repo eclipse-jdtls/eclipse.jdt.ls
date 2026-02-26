@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -34,6 +35,7 @@ import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
@@ -184,7 +186,12 @@ public class WorkspaceSymbolHandler {
 				Location location = null;
 				try {
 					if (!sourceOnly && match.getType().isBinary()) {
-						location = JDTUtils.toLocation(match.getType().getClassFile());
+						if (match.getType() instanceof IMember member) {
+							location = SearchUtils.searchOtherSources(member);
+						}
+						if (location == null) {
+							location = JDTUtils.toLocation(match.getType().getClassFile());
+						}
 					} else if (!match.getType().isBinary()) {
 						location = JDTUtils.toLocation(match.getType());
 					}

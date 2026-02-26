@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMemberValuePair;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -44,6 +45,7 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
@@ -200,6 +202,12 @@ public final class ReferencesHandler {
 							Location location = JDTUtils.toLocation(cf, match.getOffset(), match.getLength());
 							locations.add(location);
 						} else if (includeDecompiledSources && cf != null) {
+							if (element instanceof IMember member) {
+								Location location = SearchUtils.searchOtherSources(member);
+								if (location != null) {
+									locations.add(location);
+								}
+							}
 							List<Location> result = JDTUtils.searchDecompiledSources(element, cf, false, false, monitor);
 							locations.addAll(result);
 						}

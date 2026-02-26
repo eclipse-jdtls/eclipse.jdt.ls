@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
@@ -175,6 +176,31 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(23, locations.get(0).getRange().getEnd().getCharacter());
 		assertNotNull(locations.get(0).getUri());
 		assertTrue(locations.get(0).getUri().endsWith("org/sample/Test.java"));
+	}
+
+	@Test
+	public void testKotlin() throws Exception {
+		boolean oldKotlinSupported = this.preferences.isKotlinSupportEnabled();
+		try {
+			this.preferences.setKotlinSupportEnabled(true);
+			importProjects("gradle/duallang");
+			IProject kotlinProject = ResourcesPlugin.getWorkspace().getRoot().getProject("duallang");
+			assertTrue(ProjectUtils.isGradleProject(kotlinProject));
+			assertNoErrors(kotlinProject);
+			String uri = ClassFileUtil.getURI(kotlinProject, "com.example.MessageApp");
+			TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
+			List<? extends Location> locations = handler.definition(new TextDocumentPositionParams(identifier, new Position(5, 18)), monitor);
+			assertNotNull(locations);
+			assertEquals(1, locations.size());
+			assertEquals(2, locations.get(0).getRange().getStart().getLine());
+			assertEquals(2, locations.get(0).getRange().getEnd().getLine());
+			assertEquals(6, locations.get(0).getRange().getStart().getCharacter());
+			assertEquals(6, locations.get(0).getRange().getEnd().getCharacter());
+			assertNotNull(locations.get(0).getUri());
+			assertTrue(locations.get(0).getUri().endsWith("MessageService.kt"));
+		} finally {
+			this.preferences.setKotlinSupportEnabled(oldKotlinSupported);
+		}
 	}
 
 	@Test

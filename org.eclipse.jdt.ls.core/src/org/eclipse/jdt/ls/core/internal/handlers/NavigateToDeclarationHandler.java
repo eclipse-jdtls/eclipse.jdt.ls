@@ -29,6 +29,7 @@ import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -93,6 +94,10 @@ public class NavigateToDeclarationHandler {
 				return JDTUtils.toLocation(methodDeclaration);
 			}
 			if (methodDeclaration.getClassFile() != null) {
+				Location location = SearchUtils.searchOtherSources(methodDeclaration);
+				if (location != null) {
+					return location;
+				}
 				List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 				if (!locations.isEmpty()) {
 					return locations.get(0);
