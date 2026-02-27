@@ -234,6 +234,14 @@ public abstract class AbstractProjectsManagerBasedTest {
 		return JavaCore.create(testProject);
 	}
 
+	protected IJavaProject newEmptyProject(String projectName) throws Exception {
+		IProject testProject = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
+		assertEquals(false, testProject.exists());
+		ProjectsManager.createJavaProject(testProject, new Path(getWorkingProjectDirectory().getAbsolutePath()).append(projectName), "src", "bin", new NullProgressMonitor());
+		waitForBackgroundJobs();
+		return JavaCore.create(testProject);
+	}
+
 	protected IJavaProject newDefaultProject() throws Exception {
 		IProject testProject = ProjectsManager.getDefaultProject();
 		ProjectsManager.createJavaProject(testProject, new NullProgressMonitor());
