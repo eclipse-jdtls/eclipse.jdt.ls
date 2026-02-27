@@ -85,6 +85,13 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should exist within the code actions");
 	}
 
+	protected void assertCodeActionExists(ICompilationUnit cu, String[] labels) throws Exception {
+		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu);
+		for (String label : labels) {
+			assertTrue(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should exist within the code actions");
+		}
+	}
+
 	protected void assertCodeActionNotExists(ICompilationUnit cu, String label) throws Exception {
 		List<Either<Command, CodeAction>> codeActionCommands = evaluateCodeActions(cu);
 		assertFalse(codeActionCommands.stream().filter(ca -> getTitle(ca).equals(label)).findAny().isPresent(), "'" + label + "' should not be added to the code actions");
