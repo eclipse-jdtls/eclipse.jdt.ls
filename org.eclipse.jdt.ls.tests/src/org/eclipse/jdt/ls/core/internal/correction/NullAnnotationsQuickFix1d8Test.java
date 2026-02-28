@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Test;
  * @author jjohnstn
  *
  */
-public class NullAnnotationsQuickFixTest1d8 extends AbstractQuickFixTest {
+public class NullAnnotationsQuickFix1d8Test extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
