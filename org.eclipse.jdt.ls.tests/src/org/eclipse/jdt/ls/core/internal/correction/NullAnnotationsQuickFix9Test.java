@@ -31,7 +31,7 @@ import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class NullAnnotationsQuickFixTest9 extends AbstractQuickFixTest {
+public class NullAnnotationsQuickFix9Test extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 

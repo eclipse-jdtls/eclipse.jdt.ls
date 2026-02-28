@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
  * Tests against projects with 1.8 compliance and "old" declaration null
  * annotations. Those tests are made to run on Java Spider 1.8 .
  */
-public class NullAnnotationsQuickFixTest1d8Mix extends AbstractQuickFixTest {
+public class NullAnnotationsQuickFix1d8MixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
