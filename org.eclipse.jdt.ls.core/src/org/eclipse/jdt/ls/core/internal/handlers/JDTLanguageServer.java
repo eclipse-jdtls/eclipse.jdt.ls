@@ -282,7 +282,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
 		status = ServiceStatus.Starting;
-		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler, telemetryManager);
+		InitHandler handler = createInitHandler();
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
@@ -335,7 +335,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
 
 					telemetryManager.onBuildFinished(System.currentTimeMillis());
-					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
+					workspaceDiagnosticsHandler = createWorkspaceDiagnosticsHandler();
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
 					classpathUpdateHandler = new ClasspathUpdateHandler(JDTLanguageServer.this.client, documentLifeCycleHandler);
@@ -627,7 +627,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		debugTrace(">> document/completion");
 		try {
-			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			CompletionHandler handler = createCompletionHandler(preferenceManager);
 			IProgressMonitor monitor = new NullProgressMonitor();
 			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
 				waitForLifecycleJobs(monitor);
@@ -1264,4 +1264,15 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return this.workspaceEventHandler.isEmpty();
 	}
 
+	protected DocumentLifeCycleHandler getDocumentLifeCycleHandler() {
+		return documentLifeCycleHandler;
+	}
+
+	public InitHandler createInitHandler() {
+		return new InitHandler(pm, preferenceManager, client, commandHandler, telemetryManager);
+	}
+
+	public WorkspaceDiagnosticsHandler createWorkspaceDiagnosticsHandler() {
+		return new WorkspaceDiagnosticsHandler(client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
+	}
 }

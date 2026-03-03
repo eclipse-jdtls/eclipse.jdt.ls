@@ -76,6 +76,8 @@ import org.eclipse.text.templates.TemplateStoreCore;
  */
 public class PreferenceManager {
 
+	private static final boolean KEEP_JDT_PREFERENCES = Boolean.getBoolean("org.eclipse.jdt.ls_keepJDTPreferences");
+
 	private Preferences preferences ;
 	private static final String CUSTOM_CODE_TEMPLATES = IConstants.PLUGIN_ID + ".custom_code_templates";
 	private ClientPreferences clientPreferences;
@@ -95,9 +97,6 @@ public class PreferenceManager {
 	 * functionality.
 	 */
 	public static void initialize() {
-		// Update JavaCore options
-		initializeJavaCoreOptions();
-
 		// Initialize default preferences
 		IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 		defEclipsePrefs.put("org.eclipse.jdt.ui.typefilter.enabled", "");
@@ -105,8 +104,6 @@ public class PreferenceManager {
 		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, JavaLanguageServerPlugin.DEFAULT_MEMBER_SORT_ORDER);
 		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_VISIBILITY_SORT_ORDER, JavaLanguageServerPlugin.DEFAULT_VISIBILITY_SORT_ORDER);
 		defEclipsePrefs.put(CodeGenerationSettingsConstants.CODEGEN_USE_OVERRIDE_ANNOTATION, Boolean.TRUE.toString());
-		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
-		fDefaultPreferenceStore.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, String.join(";", Preferences.JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT));
 
 		defEclipsePrefs.put(StubUtility.CODEGEN_KEYWORD_THIS, Boolean.FALSE.toString());
 		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
@@ -119,6 +116,16 @@ public class PreferenceManager {
 		defEclipsePrefs.put("recommenders.chain.timeout", "1");
 		defEclipsePrefs.put("recommenders.chain.ignore_types", ""); //$NON-NLS-1$
 		defEclipsePrefs.put("PREF_USE_IMPLEMENTORS", Boolean.TRUE.toString());
+
+		if (KEEP_JDT_PREFERENCES) {
+			return;
+		}
+
+		// Update JavaCore options
+		initializeJavaCoreOptions();
+
+		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
+		fDefaultPreferenceStore.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, String.join(";", Preferences.JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT));
 
 		ContextTypeRegistry registry = new ContextTypeRegistry();
 		// Register standard context types from JDT

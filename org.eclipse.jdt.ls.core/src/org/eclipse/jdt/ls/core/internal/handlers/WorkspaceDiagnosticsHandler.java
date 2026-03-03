@@ -75,7 +75,7 @@ import com.google.gson.JsonObject;
  *
  */
 @SuppressWarnings("restriction")
-public final class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IResourceDeltaVisitor {
+public class WorkspaceDiagnosticsHandler implements IResourceChangeListener, IResourceDeltaVisitor {
 
 	public static final String PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML = "Project configuration is not up-to-date with pom.xml, requires an update.";
 	private final JavaClientConnection connection;
@@ -209,7 +209,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		return false;
 	}
 
-	private void publishMarkers(IProject project, IMarker[] markers) throws CoreException {
+	protected void publishMarkers(IProject project, IMarker[] markers) throws CoreException {
 		Range range = new Range(new Position(0, 0), new Position(0, 0));
 
 		List<IMarker> projectMarkers = new ArrayList<>(markers.length);
@@ -447,7 +447,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		return diagnostics;
 	}
 
-	private static boolean isInteresting(IMarker marker) {
+	protected static boolean isInteresting(IMarker marker) {
 		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().excludedMarkerTypes().stream().noneMatch(markerType -> {
 			try {
 				return marker.isSubtypeOf(markerType);
@@ -584,11 +584,11 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		return DiagnosticSeverity.Information;
 	}
 
-	private void cleanUpDiagnostics(IResource resource) {
+	protected void cleanUpDiagnostics(IResource resource) {
 		cleanUpDiagnostics(resource, false);
 	}
 
-	private void cleanUpDiagnostics(IResource resource, boolean addTrailingSlash) {
+	protected void cleanUpDiagnostics(IResource resource, boolean addTrailingSlash) {
 		String uri = JDTUtils.getFileURI(resource);
 		if (uri != null) {
 			if (addTrailingSlash && !uri.endsWith("/")) {
@@ -598,7 +598,7 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		}
 	}
 
-	private boolean isSupportedDiagnosticsResource(IResource resource) {
+	protected boolean isSupportedDiagnosticsResource(IResource resource) {
 		if (resource.getType() == IResource.PROJECT) {
 			return true;
 		}

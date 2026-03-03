@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -44,7 +45,7 @@ public class LanguageServerApplication implements IApplication {
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
 		prepareStreams();
-		JavaLanguageServerPlugin.startLanguageServer(this);
+		startLanguageServer();
 		if (JavaLanguageServerPlugin.getInstance().getProtocol() instanceof JDTLanguageServer server) {
 			progressReporterManager = server.getProgressReporterManager();
 			if (progressReporterManager != null) {
@@ -67,6 +68,10 @@ public class LanguageServerApplication implements IApplication {
 			}
 		}
 		return IApplication.EXIT_OK;
+	}
+
+	protected void startLanguageServer() throws IOException {
+		JavaLanguageServerPlugin.startLanguageServer(this, null);
 	}
 
 	@Override

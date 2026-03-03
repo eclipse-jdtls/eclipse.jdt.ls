@@ -191,7 +191,7 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						return false;
 					}
 				case "java.completion.onDidSelect":
-					CompletionHandler completionHandler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
+					CompletionHandler completionHandler = JavaLanguageServerPlugin.getInstance().getProtocol().createCompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
 					String requestId = (String) arguments.get(0);
 					String proposalId = (String) arguments.get(1);
 					completionHandler.onDidCompletionItemSelect(requestId, proposalId);

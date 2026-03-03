@@ -21,6 +21,8 @@ import java.util.function.Function;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Registration;
 import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.Unregistration;
@@ -73,6 +75,10 @@ public class BaseJDTLanguageServer {
 			RegistrationParams registrationParams = new RegistrationParams(Collections.singletonList(registration));
 			client.registerCapability(registrationParams);
 		}
+	}
+
+	public CompletionHandler createCompletionHandler(PreferenceManager preferences) {
+		return new CompletionHandler(preferences);
 	}
 
 	protected void toggleCapability(boolean enabled, String id, String capability, Object options) {

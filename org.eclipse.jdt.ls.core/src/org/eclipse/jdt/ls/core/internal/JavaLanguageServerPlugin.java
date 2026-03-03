@@ -366,13 +366,15 @@ public class JavaLanguageServerPlugin extends Plugin {
 		return null;
 	}
 
-	private void startConnection() throws IOException {
+	private void startConnection(BaseJDTLanguageServer protocol) throws IOException {
 		TelemetryManager telemetryManager = new TelemetryManager();
 		boolean firstTimeInitialization = ProjectUtils.getAllProjects().length == 0;
 		telemetryManager.onLanguageServerStart(System.currentTimeMillis(), firstTimeInitialization);
 		Launcher<JavaLanguageClient> launcher;
 		ExecutorService executorService = getExecutorService();
-		if (JDTEnvironmentUtils.isSyntaxServer()) {
+		if (protocol != null) {
+			this.protocol = protocol;
+		} else if (JDTEnvironmentUtils.isSyntaxServer()) {
 			protocol = new SyntaxLanguageServer(contentProviderManager, projectsManager, preferenceManager);
 		} else {
 			protocol = new JDTLanguageServer(projectsManager, preferenceManager, telemetryManager);
@@ -488,10 +490,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 		}
 	}
 
-	static void startLanguageServer(LanguageServerApplication newLanguageServer) throws IOException {
+	public static void startLanguageServer(LanguageServerApplication newLanguageServer, BaseJDTLanguageServer protocol) throws IOException {
 		if (pluginInstance != null) {
 			pluginInstance.languageServer = newLanguageServer;
-			pluginInstance.startConnection();
+			pluginInstance.startConnection(protocol);
 		}
 	}
 
