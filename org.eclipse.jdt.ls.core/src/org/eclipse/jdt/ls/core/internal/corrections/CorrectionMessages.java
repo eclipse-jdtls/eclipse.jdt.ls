@@ -443,4 +443,8 @@ public final class CorrectionMessages extends NLS {
 	public static String NullAnnotationsCorrectionProcessor_change_local_variable_to_nonNull;
 	public static String QuickAssistProcessor_convert_to_try_with_resource;
 	public static String CodeActionHandler_ignore_compiler_problems;
+	public static Object ReorgCorrectionsSubProcessor_enable_preview_features_info;
+	public static String ReorgCorrectionsSubProcessor_enable_preview_features;
+	public static String ReorgCorrectionsSubProcessor_combine_two_quickfixes;
+	public static String UnexpectedError;
 }

@@ -19,8 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -260,6 +260,8 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 					|| problem.getID() == IProblem.UndefinedType
 					|| problem.getID() == IProblem.UninitializedBlankFinalField
 					|| problem.getID() == IProblem.DuplicateInheritedDefaultMethods
+					|| problem.getID() == IProblem.FeatureNotSupported
+					|| problem.getID() == IProblem.MultiConstantCaseLabelsNotSupported || problem.getID() == IProblem.InvalidUsageOfTypeAnnotations
 					|| problem.getID() == IProblem.InheritedDefaultMethodConflictsWithOtherInherited) {
 				data.put(DIAG_ARGUMENTS, problem.getArguments());
 			}

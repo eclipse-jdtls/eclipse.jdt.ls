@@ -67,6 +67,7 @@ import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
 import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -275,17 +276,24 @@ public class ChangeUtil {
 
 		if (!(modifiedElement instanceof IJavaElement)) {
 			TextEdit edit = textChange.getEdit();
-			if (textChange instanceof ExternalFileChange && edit instanceof InsertEdit) {
+			if (textChange instanceof ExternalFileChange) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
 				URI uri = ((ExternalFileChange) textChange).getURI();
 				String fileUri = ResourceUtils.fixURI(uri);
 
-				InsertEdit insertEdit = (InsertEdit) edit;
-				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
-				te.setNewText(insertEdit.getText());
-				int[] insertPos = JsonRpcHelpers.toLine((IDocument) modifiedElement, insertEdit.getOffset());
-				Position pos = new Position(insertPos[0], insertPos[1]);
-				te.setRange(new Range(pos, pos));
-
+				if (edit instanceof InsertEdit insertEdit) {
+					te.setNewText(insertEdit.getText());
+					int[] insertPos = JsonRpcHelpers.toLine((IDocument) modifiedElement, insertEdit.getOffset());
+					Position pos = new Position(insertPos[0], insertPos[1]);
+					te.setRange(new Range(pos, pos));
+				} else if (edit instanceof ReplaceEdit replaceEdit) {
+					te.setNewText(replaceEdit.getText());
+					int[] start = JsonRpcHelpers.toLine((IDocument) modifiedElement, replaceEdit.getOffset());
+					Position startPos = new Position(start[0], start[1]);
+					int[] end = JsonRpcHelpers.toLine((IDocument) modifiedElement, replaceEdit.getOffset() + replaceEdit.getLength());
+					Position endPos = new Position(end[0], end[1]);
+					te.setRange(new Range(startPos, endPos));
+				}
 				if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 					List<Either<TextDocumentEdit, ResourceOperation>> changes = rootEdit.getDocumentChanges();
 					if (changes == null) {

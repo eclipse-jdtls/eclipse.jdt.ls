@@ -452,44 +452,14 @@ public class QuickFixProcessor {
 			case IProblem.DeadCode:
 				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
 				break;
-			// case IProblem.InvalidUsageOfTypeParameters:
-			// case IProblem.InvalidUsageOfStaticImports:
-			// case IProblem.InvalidUsageOfForeachStatements:
-			// case IProblem.InvalidUsageOfTypeArguments:
-			// case IProblem.InvalidUsageOfEnumDeclarations:
-			// case IProblem.InvalidUsageOfVarargs:
-			// case IProblem.InvalidUsageOfAnnotations:
-			// case IProblem.InvalidUsageOfAnnotationDeclarations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_5);
-			// break;
 			// case IProblem.DiamondNotBelow17:
 			// TypeArgumentMismatchSubProcessor.getInferDiamondArgumentsProposal(context,
 			// problem, proposals);
 			// //$FALL-THROUGH$
-			// case IProblem.AutoManagedResourceNotBelow17:
-			// case IProblem.MultiCatchNotBelow17:
-			// case IProblem.PolymorphicMethodNotBelow17:
-			// case IProblem.BinaryLiteralNotBelow17:
-			// case IProblem.UnderscoresInLiteralsNotBelow17:
-			// case IProblem.SwitchOnStringsNotBelow17:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_7);
-			// break;
 			// case IProblem.LambdaExpressionNotBelow18:
 			// LocalCorrectionsSubProcessor.getConvertLambdaToAnonymousClassCreationsProposals(context,
 			// problem, proposals);
 			// //$FALL-THROUGH$
-			// case IProblem.ExplicitThisParameterNotBelow18:
-			// case IProblem.DefaultMethodNotBelow18:
-			// case IProblem.StaticInterfaceMethodNotBelow18:
-			// case IProblem.MethodReferenceNotBelow18:
-			// case IProblem.ConstructorReferenceNotBelow18:
-			// case IProblem.IntersectionCastNotBelow18:
-			// case IProblem.InvalidUsageOfTypeAnnotations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_8);
-			// break;
 			// case IProblem.NonGenericType:
 			// TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context,
 			// problem, proposals);
@@ -710,6 +680,12 @@ public class QuickFixProcessor {
 				break;
 			case IProblem.MissingNonNullByDefaultAnnotationOnPackage:
 				NullAnnotationsCorrectionProcessor.addAddMissingDefaultNullnessProposal(context, problem, proposals);
+				break;
+			case IProblem.FeatureNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
+				break;
+			case IProblem.MultiConstantCaseLabelsNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_14);
 				break;
 			// case IProblem.TypeAnnotationAtQualifiedName:
 			// case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
