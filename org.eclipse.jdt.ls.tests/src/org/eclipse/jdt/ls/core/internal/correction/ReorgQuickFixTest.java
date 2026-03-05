@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -29,8 +30,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
@@ -495,4 +496,45 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		assertNotNull(organize, "Expected 'Organize imports' code action");
 		assertNotNull(organize.getEdit(), "'Organize imports' should carry WorkspaceEdit");
 	}
+
+	@Test
+	public void testBumpRequiredCompliance14() throws Exception {
+		Map<String, String> options= fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E");
+		buf.append("	public void foo(int a) {\n");
+		buf.append("		switch (a) {\n");
+		buf.append("			case 1,2 -> System.out.println(\"abc\");\n");
+		buf.append("			default -> System.out.println(\"def\");\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionExists(cu, "Change compiler compliance to 14");
+	}
+
+	@Test
+	public void testBumpRequiredCompliance15() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E");
+		buf.append("	public void foo(int a) {\n");
+		buf.append("		String s = \"\"\"\n");
+		buf.append("			abcdefg\n");
+		buf.append("			\"\"\";\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionExists(cu, "Change compiler compliance to 15");
+	}
+
 }

@@ -59,6 +59,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.QuickFixProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.RefactorProcessor;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ChangeToRequiredCompilerCompliance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.NewCUProposal;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -365,7 +366,7 @@ public class CodeActionHandler {
 		} else {
 			if (!supportsResolve) {
 				edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
-				if (!ChangeUtil.hasChanges(edit)) {
+				if (!ChangeUtil.hasChanges(edit) && !(proposal instanceof ChangeToRequiredCompilerCompliance)) {
 					return Optional.empty();
 				}
 			}
