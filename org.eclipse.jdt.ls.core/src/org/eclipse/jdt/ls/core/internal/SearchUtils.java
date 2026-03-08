@@ -19,6 +19,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 
+import java.util.Arrays;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -30,6 +32,8 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
@@ -131,6 +135,20 @@ public class SearchUtils {
 			}
 			return null;
 		}
+	}
+
+	private static final SearchParticipant[] EMPTY_PARTICIPANTS = new SearchParticipant[0];
+
+	/**
+	 * Returns contributed search participants, excluding the default Java
+	 * participant. {@link SearchEngine#getSearchParticipants()} places the
+	 * default at index 0; this method returns the remainder.
+	 */
+	public static SearchParticipant[] getContributedSearchParticipants() {
+		SearchParticipant[] all = SearchEngine.getSearchParticipants();
+		return all.length > 1
+				? Arrays.copyOfRange(all, 1, all.length)
+				: EMPTY_PARTICIPANTS;
 	}
 
 	public static Location searchOtherSources(IMember member) throws JavaModelException {

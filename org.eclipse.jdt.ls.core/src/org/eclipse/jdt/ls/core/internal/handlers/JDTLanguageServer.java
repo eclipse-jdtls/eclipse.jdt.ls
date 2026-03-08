@@ -1273,6 +1273,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return CompletableFutures.computeAsync((cc) -> {
 			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
 			return code.apply(monitor);
+		}).whenComplete((result, error) -> {
+			if (error != null) {
+				JavaLanguageServerPlugin.logException(
+						"Unhandled exception in LSP request handler",
+						error);
+			}
 		});
 	}
 
