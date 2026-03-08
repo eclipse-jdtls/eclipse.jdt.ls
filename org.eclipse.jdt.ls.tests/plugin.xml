@@ -41,6 +41,17 @@
       </contentProvider>
    </extension>
    <extension
+         point="org.eclipse.jdt.ls.core.searchParticipant">
+      <searchParticipant
+            class="org.eclipse.jdt.ls.core.internal.FakeSearchParticipant"
+            id="fakeSearchParticipant1">
+      </searchParticipant>
+      <searchParticipant
+            class="org.eclipse.jdt.ls.core.internal.FakeSearchParticipant"
+            id="fakeSearchParticipant2">
+      </searchParticipant>
+   </extension>
+   <extension
          id="importers"
          point="org.eclipse.jdt.ls.core.importers">
          <importer
