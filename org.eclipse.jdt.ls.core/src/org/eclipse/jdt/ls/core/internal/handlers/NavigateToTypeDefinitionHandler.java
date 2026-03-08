@@ -22,10 +22,17 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.ILocalVariable;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -66,8 +73,11 @@ public class NavigateToTypeDefinitionHandler {
 		try {
 			CompilationUnit ast = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, monitor);
 			int offset = JsonRpcHelpers.toOffset(unit.getBuffer(), line, column);
-			if (ast == null || offset < 0) {
+			if (offset < 0) {
 				return null;
+			}
+			if (ast == null) {
+				return computeTypeDefinitionWithoutAST(unit, line, column, monitor);
 			}
 			NodeFinder finder = new NodeFinder(ast, offset, 0);
 			ASTNode coveringNode = finder.getCoveringNode();
@@ -116,5 +126,63 @@ public class NavigateToTypeDefinitionHandler {
 			JavaLanguageServerPlugin.logException("Problem computing typeDefinition for" + unit.getElementName(), e);
 		}
 		return null;
+	}
+
+	/**
+	 * Fallback for non-Java compilation units where CoreASTProvider cannot
+	 * produce a Java AST. Uses codeSelect to resolve the element, then
+	 * navigates to its type definition.
+	 */
+	private Location computeTypeDefinitionWithoutAST(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
+		try {
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, preferenceManager, monitor);
+			if (element == null || monitor.isCanceled()) {
+				return null;
+			}
+			IType targetType = resolveElementType(element, unit.getJavaProject());
+			if (targetType != null) {
+				return NavigateToDefinitionHandler.computeDefinitionNavigation(targetType, unit.getJavaProject());
+			}
+			if (!JavaCore.isJavaLikeFileName(unit.getElementName())) {
+				return NavigateToDefinitionHandler.computeDefinitionNavigation(element, unit.getJavaProject());
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem computing typeDefinition for " + unit.getElementName(), e);
+		}
+		return null;
+	}
+
+	private static IType resolveElementType(IJavaElement element, IJavaProject project) throws JavaModelException {
+		if (element instanceof IType type) {
+			return type;
+		}
+		String typeSignature = null;
+		IType declaringType = null;
+		if (element instanceof IMethod method) {
+			typeSignature = method.getReturnType();
+			declaringType = method.getDeclaringType();
+		} else if (element instanceof IField field) {
+			typeSignature = field.getTypeSignature();
+			declaringType = field.getDeclaringType();
+		} else if (element instanceof ILocalVariable variable) {
+			typeSignature = variable.getTypeSignature();
+			IJavaElement parent = variable.getParent();
+			if (parent instanceof IMember member) {
+				declaringType = member.getDeclaringType();
+			}
+		}
+		if (typeSignature == null) {
+			return null;
+		}
+		String typeName = Signature.toString(typeSignature);
+		if (declaringType != null) {
+			String[][] resolved = declaringType.resolveType(typeName);
+			if (resolved != null && resolved.length > 0) {
+				String fqn = resolved[0][0].isEmpty() ? resolved[0][1] : resolved[0][0] + "." + resolved[0][1];
+				return project.findType(fqn);
+			}
+		}
+		return project.findType(typeName);
 	}
 }
