@@ -108,8 +108,13 @@ import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionProposal;
 import org.eclipse.jdt.internal.codeassist.impl.Engine;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
@@ -220,6 +225,15 @@ public final class JDTUtils {
 				String name = resource.getName();
 				if (org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name)) {
 					return JavaCore.createCompilationUnitFrom(resource);
+				}
+			}
+			// Fallback: ask contributed search participants for non-Java source files
+			// Skip index 0 (default JavaSearchParticipant) — it never provides a CU
+			SearchParticipant[] participants = SearchEngine.getSearchParticipants();
+			for (int i = 1; i < participants.length; i++) {
+				ICompilationUnit cu = participants[i].getCompilationUnit(resource);
+				if (cu != null) {
+					return cu;
 				}
 			}
 		}
@@ -1104,7 +1118,91 @@ public final class JDTUtils {
 					}
 				}
 			}
+			// Fallback: ask contributed search participants for non-Java types.
+			// Java's codeSelect returns empty for types provided by non-Java
+			// languages (e.g., Kotlin facade classes, property accessors).
+			if ((elements == null || elements.length == 0) && unit.getJavaProject() != null) {
+				IJavaElement resolved = resolveViaSearchParticipants(unit, offset, monitor);
+				if (resolved != null) {
+					return new IJavaElement[] { resolved };
+				}
+			}
 			return elements;
+		}
+		return null;
+	}
+
+	/**
+	 * Extracts the Java identifier at the given offset from the buffer and
+	 * searches contributed search participants for a matching TYPE or METHOD
+	 * declaration. Returns the first match, or {@code null} if none found.
+	 * <p>
+	 * This provides a fallback for types and methods provided by non-Java
+	 * languages (e.g., Kotlin facade classes and property accessors) whose
+	 * source is not visible to Java's {@code codeSelect()}.
+	 */
+	private static IJavaElement resolveViaSearchParticipants(ITypeRoot unit, int offset, IProgressMonitor monitor) {
+		try {
+			IBuffer buffer = unit.getBuffer();
+			if (buffer == null) {
+				return null;
+			}
+			int length = buffer.getLength();
+			int start = offset;
+			while (start > 0 && Character.isJavaIdentifierPart(buffer.getChar(start - 1))) {
+				start--;
+			}
+			int end = offset;
+			while (end < length && Character.isJavaIdentifierPart(buffer.getChar(end))) {
+				end++;
+			}
+			if (start == end) {
+				return null;
+			}
+			String identifier = buffer.getText(start, end - start);
+
+			// Search contributed participants for TYPE declarations first,
+			// then METHOD declarations (for property accessors like getXxx)
+			int[] searchTypes = { IJavaSearchConstants.TYPE, IJavaSearchConstants.METHOD };
+			IJavaSearchScope scope = SearchEngine.createJavaSearchScope(
+					new IJavaElement[] { unit.getJavaProject() });
+			SearchEngine engine = new SearchEngine();
+			SearchParticipant[] participants = SearchEngine.getSearchParticipants();
+			for (int searchType : searchTypes) {
+				SearchPattern pattern = SearchPattern.createPattern(
+						identifier, searchType, IJavaSearchConstants.DECLARATIONS,
+						SearchPattern.R_EXACT_MATCH | SearchPattern.R_CASE_SENSITIVE);
+				if (pattern == null) {
+					continue;
+				}
+				IJavaElement[] result = new IJavaElement[1];
+				try {
+					engine.search(pattern, participants, scope,
+							new SearchRequestor() {
+								@Override
+								public void acceptSearchMatch(SearchMatch match)
+										throws CoreException {
+									if (result[0] == null
+											&& match.getAccuracy() != SearchMatch.A_INACCURATE
+											&& match.getElement() instanceof IJavaElement el) {
+										result[0] = el;
+										throw new OperationCanceledException();
+									}
+								}
+							}, monitor);
+				} catch (OperationCanceledException e) {
+					// first match found — stop searching
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(
+							"Error resolving via search participants", e);
+				}
+				if (result[0] != null) {
+					return result[0];
+				}
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(
+					"Error extracting identifier for participant search", e);
 		}
 		return null;
 	}

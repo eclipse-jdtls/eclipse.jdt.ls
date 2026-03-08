@@ -43,12 +43,12 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
 import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
+import org.eclipse.jdt.internal.core.search.indexing.SearchParticipantRegistry;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -81,7 +81,36 @@ public class HoverInfoProvider {
 	private static final long COMMON_SIGNATURE_FLAGS = LABEL_FLAGS & ~JavaElementLabelsCore.ALL_FULLY_QUALIFIED
 			| JavaElementLabelsCore.T_FULLY_QUALIFIED | JavaElementLabelsCore.M_FULLY_QUALIFIED;
 
-	private static final String LANGUAGE_ID = "java";
+	private static final String DEFAULT_LANGUAGE_ID = "java";
+
+	/**
+	 * Returns the LSP language identifier for the given element.
+	 * Queries the SearchParticipantRegistry for contributed (non-Java)
+	 * elements; falls back to "java" for standard Java elements.
+	 */
+	private static String getLanguageId(IJavaElement element) {
+		if (element != null) {
+			ICompilationUnit cu = (element instanceof IMember m)
+					? m.getCompilationUnit()
+					: (element instanceof ILocalVariable lv)
+							? (ICompilationUnit) lv.getAncestor(
+									IJavaElement.COMPILATION_UNIT)
+							: null;
+			if (cu != null) {
+				String fileName = cu.getElementName();
+				String ext = SearchParticipantRegistry
+						.getFileExtension(fileName);
+				if (ext != null) {
+					String langId = SearchParticipantRegistry
+							.getLanguageId(ext);
+					if (langId != null) {
+						return langId;
+					}
+				}
+			}
+		}
+		return DEFAULT_LANGUAGE_ID;
+	}
 
 	private final ITypeRoot unit;
 
@@ -193,7 +222,7 @@ public class HoverInfoProvider {
 		SearchEngine engine = new SearchEngine();
 		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] { unit }, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 		try {
-			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope, new SearchRequestor() {
+			engine.search(pattern, SearchEngine.getSearchParticipants(), scope, new SearchRequestor() {
 
 				@Override
 				public void acceptSearchMatch(SearchMatch match) throws CoreException {
@@ -246,7 +275,7 @@ public class HoverInfoProvider {
 				elementLabel = elementLabel + " = " + constantValue;
 			}
 		}
-		return new MarkedString(LANGUAGE_ID, elementLabel);
+		return new MarkedString(getLanguageId(element), elementLabel);
 	}
 
 	private static String getDefaultValue(IMethod method) {
@@ -292,7 +321,7 @@ public class HoverInfoProvider {
 				}
 			}
 		}
-		return result != null ? new MarkedString(LANGUAGE_ID, result) : null;
+		return result != null ? new MarkedString(getLanguageId(element), result) : null;
 	}
 
 	public static String getSourceInfo(IJavaElement element) throws JavaModelException {

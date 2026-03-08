@@ -217,7 +217,7 @@ public class ImplementationCollector<T> {
 			int limitTo = IJavaSearchConstants.DECLARATIONS | IJavaSearchConstants.IGNORE_DECLARING_TYPE | IJavaSearchConstants.IGNORE_RETURN_TYPE;
 			SearchPattern pattern = SearchPattern.createPattern(method, limitTo);
 			Assert.isNotNull(pattern);
-			SearchParticipant[] participants = new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() };
+			SearchParticipant[] participants = SearchEngine.getSearchParticipants();
 			SearchEngine engine = new SearchEngine();
 			engine.search(pattern, participants, hierarchyScope, requestor, new SubProgressMonitor(monitor, 7));
 			if (monitor.isCanceled()) {

@@ -23,13 +23,17 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.MethodNameMatch;
 import org.eclipse.jdt.core.search.MethodNameMatchRequestor;
 import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.core.search.TypeNameMatch;
 import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -113,6 +117,80 @@ public class WorkspaceSymbolHandler {
 			// search for qualifier = qualiferName.typeName, type = null
 			engine.searchAllTypeNames(tQuery.toCharArray(), qualifierMatchRule, null, typeMatchRule, IJavaSearchConstants.TYPE, searchScope, typeRequestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 
+			// searchAllTypeNames only queries the default (Java) participant.
+			// Supplement with contributed participants (e.g. Kotlin) via search().
+			SearchParticipant[] allParticipants = SearchEngine.getSearchParticipants();
+			SearchParticipant defaultParticipant = SearchEngine.getDefaultSearchParticipant();
+			List<SearchParticipant> contributed = new ArrayList<>();
+			for (SearchParticipant p : allParticipants) {
+				if (p != defaultParticipant) {
+					contributed.add(p);
+				}
+			}
+			if (!contributed.isEmpty() && !monitor.isCanceled()) {
+				SearchPattern typePattern = SearchPattern.createPattern(
+						tQuery,
+						IJavaSearchConstants.TYPE,
+						IJavaSearchConstants.DECLARATIONS,
+						typeMatchRule);
+				if (typePattern != null) {
+					SearchRequestor contributedRequestor = new SearchRequestor() {
+						@Override
+						public void acceptSearchMatch(SearchMatch match) {
+							if (maxResults > 0 && symbols.size() >= maxResults) {
+								monitor.setCanceled(true);
+								return;
+							}
+							Object element = match.getElement();
+							if (!(element instanceof IType type)) {
+								return;
+							}
+							Location location = null;
+							try {
+								if (!type.isBinary()) {
+									location = JDTUtils.toLocation(type);
+								} else {
+									if (sourceOnly) {
+										return;
+									}
+									if (type instanceof IMember member) {
+										location = SearchUtils.searchOtherSources(member);
+									}
+									if (location == null) {
+										location = JDTUtils.toLocation(type.getClassFile());
+									}
+								}
+							} catch (Exception e) {
+								JavaLanguageServerPlugin.logException("Unable to determine location for " + type.getElementName(), e);
+								return;
+							}
+							if (location != null && type.getElementName() != null && !type.getElementName().isEmpty()) {
+								SymbolInformation symbolInformation = new SymbolInformation();
+								symbolInformation.setContainerName(type.getDeclaringType() != null ? type.getDeclaringType().getFullyQualifiedName() : type.getPackageFragment() != null ? type.getPackageFragment().getElementName() : "");
+								symbolInformation.setName(type.getElementName());
+								symbolInformation.setKind(mapKind(type));
+								try {
+									if (Flags.isDeprecated(type.getFlags())) {
+										if (isSymbolTagSupported) {
+											symbolInformation.setTags(List.of(SymbolTag.Deprecated));
+										} else {
+											symbolInformation.setDeprecated(true);
+										}
+									}
+								} catch (JavaModelException e) {
+									// ignore flags resolution failure
+								}
+								symbolInformation.setLocation(location);
+								symbols.add(symbolInformation);
+							}
+						}
+					};
+					engine.search(typePattern,
+							contributed.toArray(new SearchParticipant[0]),
+							searchScope, contributedRequestor, monitor);
+				}
+			}
+
 			if (preferenceManager != null && preferenceManager.getPreferences().isIncludeSourceMethodDeclarations()) {
 				monitor.beginTask("Searching methods...", 100);
 				IJavaSearchScope nonSourceSearchScope = createSearchScope(projectName, true);
@@ -148,6 +226,23 @@ public class WorkspaceSymbolHandler {
 		}
 		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
 		return SearchEngine.createJavaSearchScope(excludeTestCode, targetProjects, scope);
+	}
+
+	private static SymbolKind mapKind(IType type) {
+		try {
+			if (type.isInterface()) {
+				return SymbolKind.Interface;
+			}
+			if (type.isAnnotation()) {
+				return SymbolKind.Property;
+			}
+			if (type.isEnum()) {
+				return SymbolKind.Enum;
+			}
+		} catch (JavaModelException e) {
+			// ignore
+		}
+		return SymbolKind.Class;
 	}
 
 	public static class SearchSymbolParams extends WorkspaceSymbolParams {

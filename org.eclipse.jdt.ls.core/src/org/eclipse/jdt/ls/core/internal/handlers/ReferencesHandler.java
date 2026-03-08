@@ -39,7 +39,6 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
@@ -177,17 +176,25 @@ public final class ReferencesHandler {
 	public void search(IJavaElement elementToSearch, final List<Location> locations, IProgressMonitor monitor, boolean isIncludeDeclaration) throws CoreException, JavaModelException {
 		boolean includeClassFiles = preferenceManager.isClientSupportsClassFileContent();
 		boolean includeDecompiledSources = preferenceManager.getPreferences().isIncludeDecompiledSources();
+		// When the search target is a non-Java element (e.g., from
+		// a contributed SearchParticipant like Kotlin), the Java
+		// MatchLocator cannot fully resolve the declaring type
+		// binding and reports matches as A_INACCURATE. These
+		// matches are still valid — the method name and parameter
+		// count match — so accept them.
+		ICompilationUnit cu = (elementToSearch instanceof IMember m) ? m.getCompilationUnit() : null;
+		boolean acceptInaccurate = cu != null && !JavaCore.isJavaLikeFileName(cu.getElementName());
 		SearchEngine engine = new SearchEngine();
 		SearchPattern pattern = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.REFERENCES);
 		if (isIncludeDeclaration) {
 			SearchPattern patternDecl = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.DECLARATIONS);
 			pattern = SearchPattern.createOrPattern(pattern, patternDecl);
 		}
-		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(elementToSearch), new SearchRequestor() {
+		engine.search(pattern, SearchEngine.getSearchParticipants(), createSearchScope(elementToSearch), new SearchRequestor() {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
-				if (match.getAccuracy() == SearchMatch.A_INACCURATE) {
+				if (!acceptInaccurate && match.getAccuracy() == SearchMatch.A_INACCURATE) {
 					return;
 				}
 				Object o = match.getElement();
