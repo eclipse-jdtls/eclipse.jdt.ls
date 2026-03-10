@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
@@ -186,6 +187,8 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 			importProjects("gradle/duallang");
 			IProject kotlinProject = ResourcesPlugin.getWorkspace().getRoot().getProject("duallang");
 			assertTrue(ProjectUtils.isGradleProject(kotlinProject));
+			projectsManager.projectsBuildFinished(monitor);
+			JobHelpers.waitForJobsToComplete();
 			assertNoErrors(kotlinProject);
 			String uri = ClassFileUtil.getURI(kotlinProject, "com.example.MessageApp");
 			TextDocumentIdentifier identifier = new TextDocumentIdentifier(uri);
