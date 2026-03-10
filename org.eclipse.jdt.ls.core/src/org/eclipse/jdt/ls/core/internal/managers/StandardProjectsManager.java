@@ -724,6 +724,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			this.shouldUpdateProjects = false;
 		}
 		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		new ScalaGradleSupport().cleanScalaProjects(monitor);
 		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
 		if (projectsManager != null) {
 			projectsManager.buildSupports().forEach(bs -> {

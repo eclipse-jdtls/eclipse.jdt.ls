@@ -735,6 +735,12 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			addInitScriptToArgs(groovyInitScript, args);
 		}
 
+		// Add init script of scala support
+		if (preferencesManager.getPreferences().isScalaSupportEnabled()) {
+			File scalaInitScript = GradleUtils.getGradleInitScript("/gradle/scala/init.gradle");
+			addInitScriptToArgs(scalaInitScript, args);
+		}
+
 		return args;
 	}
 

@@ -538,6 +538,7 @@ public class Preferences {
 	public static final String JAVA_JDT_LS_ASPECTJ_SUPPORT_ENABLED = "java.jdt.ls.aspectjSupport.enabled";
 	public static final String JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED = "java.jdt.ls.kotlinSupport.enabled";
 	public static final String JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED = "java.jdt.ls.groovySupport.enabled";
+	public static final String JAVA_JDT_LS_SCALA_SUPPORT_ENABLED = "java.jdt.ls.scalaSupport.enabled";
 	public static final String JAVA_JDT_LS_JAVAC_ENABLED = "java.jdt.ls.javac.enabled";
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
@@ -731,6 +732,7 @@ public class Preferences {
 	private boolean aspectjSupportEnabled;
 	private boolean kotlinSupportEnabled;
 	private boolean groovySupportEnabled;
+	private boolean scalaSupportEnabled;
 	private boolean javacEnabled;
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
@@ -1168,6 +1170,7 @@ public class Preferences {
 		prefs.aspectjSupportEnabled = this.aspectjSupportEnabled;
 		prefs.kotlinSupportEnabled = this.kotlinSupportEnabled;
 		prefs.groovySupportEnabled = this.groovySupportEnabled;
+		prefs.scalaSupportEnabled = this.scalaSupportEnabled;
 		prefs.javacEnabled = this.javacEnabled;
 		prefs.androidSupportEnabled = this.androidSupportEnabled;
 		prefs.nullAnalysisMode = this.nullAnalysisMode;
@@ -1807,6 +1810,11 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED)) {
 			boolean kotlinSupported = getBoolean(configuration, JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED, existing.kotlinSupportEnabled);
 			prefs.setKotlinSupportEnabled(kotlinSupported);
+		}
+
+		if (containsKey(configuration, JAVA_JDT_LS_SCALA_SUPPORT_ENABLED)) {
+			boolean scalaSupported = getBoolean(configuration, JAVA_JDT_LS_SCALA_SUPPORT_ENABLED, existing.scalaSupportEnabled);
+			prefs.setScalaSupportEnabled(scalaSupported);
 		}
 
 		if (containsKey(configuration, JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED)) {
@@ -2957,6 +2965,10 @@ public class Preferences {
 		return kotlinSupportEnabled;
 	}
 
+	public boolean isScalaSupportEnabled() {
+		return scalaSupportEnabled;
+	}
+
 	public boolean isGroovySupportEnabled() {
 		return groovySupportEnabled;
 	}
@@ -2967,6 +2979,10 @@ public class Preferences {
 
 	public void setKotlinSupportEnabled(boolean kotlinSupportEnabled) {
 		this.kotlinSupportEnabled = kotlinSupportEnabled;
+	}
+
+	public void setScalaSupportEnabled(boolean scalaSupportEnabled) {
+		this.scalaSupportEnabled = scalaSupportEnabled;
 	}
 
 	public void setGroovySupportEnabled(boolean groovySupportEnabled) {
