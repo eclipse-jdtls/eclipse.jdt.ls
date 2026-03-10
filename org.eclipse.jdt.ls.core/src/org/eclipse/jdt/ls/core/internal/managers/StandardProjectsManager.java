@@ -724,6 +724,12 @@ public class StandardProjectsManager extends ProjectsManager {
 			this.shouldUpdateProjects = false;
 		}
 		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
+		if (projectsManager != null) {
+			projectsManager.buildSupports().forEach(bs -> {
+				bs.compile(null, monitor);
+			});
+		}
 	}
 
 	@Override

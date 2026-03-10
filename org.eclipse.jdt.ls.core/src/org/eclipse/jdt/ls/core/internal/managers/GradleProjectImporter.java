@@ -330,12 +330,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			GradleUtils.synchronizeAnnotationProcessingConfiguration(subMonitor);
 		}
 		eliminateBuildServerFootprint(monitor);
-		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
-		if (projectsManager != null) {
-			projectsManager.buildSupports().forEach(bs -> {
-				bs.compile(null, subMonitor);
-			});
-		}
 		subMonitor.done();
 	}
 

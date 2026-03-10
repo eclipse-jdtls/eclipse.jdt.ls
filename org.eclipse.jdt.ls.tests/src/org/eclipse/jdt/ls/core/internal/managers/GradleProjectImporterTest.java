@@ -766,6 +766,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setAspectjSupportEnabled(false);
 			IProject project = importGradleProject("aspect");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertHasErrors(project);
 		} finally {
 			this.preferences.setAspectjSupportEnabled(oldAspectSupported);
@@ -779,6 +780,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setAspectjSupportEnabled(true);
 			IProject project = importGradleProject("aspect");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertNoErrors(project);
 			IJavaProject javaProject = JavaCore.create(project);
 			IType demoAspect = javaProject.findType("io.freefair.DemoAspect");
@@ -795,6 +797,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setKotlinSupportEnabled(false);
 			IProject project = importGradleProject("kotlin");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertHasErrors(project);
 		} finally {
 			this.preferences.setKotlinSupportEnabled(oldKotlinSupported);
@@ -808,6 +811,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setKotlinSupportEnabled(true);
 			IProject project = importGradleProject("kotlin");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertNoErrors(project);
 		} finally {
 			this.preferences.setKotlinSupportEnabled(oldKotlinSupported);
@@ -821,10 +825,16 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setGroovySupportEnabled(false);
 			IProject project = importGradleProject("groovy");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertHasErrors(project);
 		} finally {
 			this.preferences.setGroovySupportEnabled(oldGroovySupported);
 		}
+	}
+
+	private void waitForOtherLangs() {
+		projectsManager.projectsBuildFinished(monitor);
+		JobHelpers.waitForJobsToComplete();
 	}
 
 	@Test
@@ -834,6 +844,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setGroovySupportEnabled(true);
 			IProject project = importGradleProject("groovy");
 			assertTrue(ProjectUtils.isGradleProject(project));
+			waitForOtherLangs();
 			assertNoErrors(project);
 		} finally {
 			this.preferences.setGroovySupportEnabled(oldGroovySupported);
