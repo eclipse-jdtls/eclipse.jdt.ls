@@ -13,8 +13,11 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -31,6 +34,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -43,10 +47,96 @@ import org.objectweb.asm.Opcodes;
  */
 public class SearchUtils {
 
+	/*
+	 * The class finds the source file and location of types, fields and methods from *.class file.
+	 * Scala sometimes creates an additional class ending with $ that contains data about the source file and location.
+	 * This class recognizes scala classes and searches for <ClassName>$ class if it exists.
+	 */
+	private static final class SearchClassVisitor extends ClassVisitor {
+		private int elementLine;
+		private String elementName;
+		private boolean isType;
+		private boolean isField;
+		private String elementSignature;
+		private boolean isScala;
+
+		private SearchClassVisitor(int api, int elementLine, String elementName, boolean isType, boolean isField, String elementSignature, boolean isScala) {
+			super(api);
+			this.elementLine = elementLine;
+			this.elementName = elementName;
+			this.isType = isType;
+			this.isField = isField;
+			this.elementSignature = elementSignature;
+			this.isScala = isScala;
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+			if (descriptor.contains("Lscala/reflect/ScalaSignature;") || descriptor.contains("Lscala/ScalaContext;")) {
+				isScala = true;
+			}
+			return super.visitAnnotation(descriptor, visible);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.objectweb.asm.ClassVisitor#visitMethod(int, java.lang.String, java.lang.String, java.lang.String, java.lang.String[])
+		 */
+		@Override
+		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+			if (!isType && !isField && elementName.equals(name) && elementSignature.equals(descriptor)) {
+				return new MethodVisitor(Opcodes.ASM9) {
+
+					/* (non-Javadoc)
+					 * @see org.objectweb.asm.MethodVisitor#visitLineNumber(int, org.objectweb.asm.Label)
+					 */
+					@Override
+					public void visitLineNumber(int line, Label start) {
+						elementLine = line;
+					}
+
+				};
+			}
+			if (!isType && isField && (name.equals("<init>") || name.equals("<clinit>"))) {
+				return new MethodVisitor(Opcodes.ASM9) {
+
+					/* (non-Javadoc)
+					 * @see org.objectweb.asm.MethodVisitor#visitLineNumber(int, org.objectweb.asm.Label)
+					 */
+					@Override
+					public void visitLineNumber(int line, Label start) {
+						elementLine = line;
+					}
+
+				};
+			}
+			if (isType) {
+				return new MethodVisitor(Opcodes.ASM9) {
+					@Override
+					public void visitLineNumber(int line, Label start) {
+						if (elementLine == 0 || line < elementLine) {
+							elementLine = line;
+						}
+					}
+				};
+			}
+			if (!isType && !isField && name.equals("<init>")) {
+				return new MethodVisitor(Opcodes.ASM9) {
+					@Override
+					public void visitLineNumber(int line, Label start) {
+						if (elementLine == 0) {
+							elementLine = line;
+						}
+					}
+				};
+			}
+			return null;
+		}
+	}
+
 	public static Location searchOtherSources(IMember member) throws JavaModelException {
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (member == null || member.getClassFile() == null || preferenceManager == null
-				|| !(preferenceManager.getPreferences().isAspectjSupportEnabled() || preferenceManager.getPreferences().isKotlinSupportEnabled() || preferenceManager.getPreferences().isGroovySupportEnabled())) {
+		if (member == null || member.getClassFile() == null || preferenceManager == null || !(preferenceManager.getPreferences().isAspectjSupportEnabled() || preferenceManager.getPreferences().isKotlinSupportEnabled()
+				|| preferenceManager.getPreferences().isGroovySupportEnabled() || preferenceManager.getPreferences().isScalaSupportEnabled())) {
 			return null;
 		}
 		byte[] bytes;
@@ -79,91 +169,53 @@ public class SearchUtils {
 						IResource resource = javaProject.getProject().findMember(sourcePath.removeFirstSegments(1));
 						if (resource instanceof IFile) {
 							String uri = JDTUtils.getFileURI(resource);
-							String elementSignature[] = { null };
+							String elementSignature = null;
 							String elementName = member.getElementName();
-							int[] elementLine = { 0 };
-							boolean[] isField = { false };
-							boolean[] isType = { false };
+							int elementLine = 0;
+							boolean isField = false;
+							boolean isType = false;
+							boolean isScala = false;
 							if (member instanceof IField field) {
-								elementSignature[0] = field.getTypeSignature();
-								isField[0] = true;
+								elementSignature = field.getTypeSignature();
+								isField = true;
 							} else if (member instanceof IMethod method) {
-								elementSignature[0] = method.getSignature();
+								elementSignature = method.getSignature();
 							} else if (member instanceof IType) {
-								isType[0] = true;
+								isType = true;
 							}
-							if (elementSignature[0] != null || isType[0]) {
-								elementSignature[0] = elementSignature[0] == null ? null : elementSignature[0].replace('.', '/');
-								classReader.accept(new ClassVisitor(Opcodes.ASM9) {
-
-									/* (non-Javadoc)
-									 * @see org.objectweb.asm.ClassVisitor#visitMethod(int, java.lang.String, java.lang.String, java.lang.String, java.lang.String[])
-									 */
-									@Override
-									public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-										if (!isType[0] && !isField[0] && elementName.equals(name) && elementSignature[0].equals(descriptor)) {
-											return new MethodVisitor(Opcodes.ASM9) {
-
-												/* (non-Javadoc)
-												 * @see org.objectweb.asm.MethodVisitor#visitLineNumber(int, org.objectweb.asm.Label)
-												 */
-												@Override
-												public void visitLineNumber(int line, Label start) {
-													elementLine[0] = line;
-												}
-
-											};
+							if (elementSignature != null || isType) {
+								elementSignature = elementSignature == null ? null : elementSignature.replace('.', '/');
+								SearchClassVisitor classVisitor = new SearchClassVisitor(Opcodes.ASM9, elementLine, elementName, isType, isField, elementSignature, isScala);
+								classReader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+								if (classVisitor.isScala && classVisitor.elementLine == 0 && !classVisitor.elementName.endsWith("$")) {
+									File classFile = member.getPath().toFile();
+									File dollarFile = new File(classFile.getParent(), classFile.getName().replace(".class", "$.class"));
+									if (dollarFile.exists()) {
+										try {
+											bytes = Files.readAllBytes(dollarFile.toPath());
+											ClassReader reader = new ClassReader(bytes);
+											reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
+										} catch (IOException e) {
+											JavaLanguageServerPlugin.logException(e);
 										}
-										if (!isType[0] && isField[0] && (name.equals("<init>") || name.equals("<clinit>"))) {
-											return new MethodVisitor(Opcodes.ASM9) {
-
-												/* (non-Javadoc)
-												 * @see org.objectweb.asm.MethodVisitor#visitLineNumber(int, org.objectweb.asm.Label)
-												 */
-												@Override
-												public void visitLineNumber(int line, Label start) {
-													elementLine[0] = line;
-												}
-
-											};
-										}
-										if (isType[0]) {
-											return new MethodVisitor(Opcodes.ASM9) {
-												@Override
-												public void visitLineNumber(int line, Label start) {
-													if (elementLine[0] == 0 || line < elementLine[0]) {
-														elementLine[0] = line;
-													}
-												}
-											};
-										}
-										if (!isType[0] && !isField[0] && name.equals("<init>")) {
-											return new MethodVisitor(Opcodes.ASM9) {
-												@Override
-												public void visitLineNumber(int line, Label start) {
-													if (elementLine[0] == 0) {
-														elementLine[0] = line;
-													}
-												}
-											};
-										}
-										return null;
 									}
-								}, ClassReader.SKIP_FRAMES);
+								}
+								elementLine = classVisitor.elementLine;
 							}
 							int character = 0;
-							if (elementLine[0] > 0) {
+							if (elementLine > 0) {
 								if (resource instanceof IFile file) {
 									try (InputStream is = file.getContents(); BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 										String line;
 										int currentLine = 1;
-										int start = Math.max(1, elementLine[0] - 2);
-										int end = elementLine[0];
+										int start = Math.max(1, elementLine - 2);
+										int end = elementLine;
 										while ((line = reader.readLine()) != null) {
 											if (currentLine >= start && currentLine <= end) {
 												int col = line.indexOf(elementName);
 												if (col != -1) {
 													character = col;
+													elementLine = currentLine;
 													break;
 												}
 											}
@@ -176,9 +228,9 @@ public class SearchUtils {
 										// ignore
 									}
 								}
-								elementLine[0]--;
+								elementLine--;
 							}
-							Position position = new Position(elementLine[0], character);
+							Position position = new Position(elementLine, character);
 							Range range = new Range(position, position);
 							return new Location(ResourceUtils.toClientUri(uri), range);
 						}
