@@ -852,6 +852,36 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 	}
 
 	@Test
+	public void testScalaSupportEnabled() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(true);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
+	@Test
+	public void testScalaSupportDisabled() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(false);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertHasErrors(project);
+		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
+	@Test
 	public void testCleanUpBuildServerFootprint() throws Exception {
 		IProject project = importGradleProject("gradle-build-server");
 		assertFalse(ProjectUtils.hasNature(project, GradleProjectImporter.GRADLE_BUILD_SERVER_NATURE));

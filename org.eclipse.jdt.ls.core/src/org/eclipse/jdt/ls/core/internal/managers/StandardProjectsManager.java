@@ -727,6 +727,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		ProjectsManager projectsManager = JavaLanguageServerPlugin.getProjectsManager();
 		if (projectsManager != null) {
 			projectsManager.buildSupports().forEach(bs -> {
+				bs.cleanScalaProjects(monitor);
 				bs.compile(null, monitor);
 			});
 		}

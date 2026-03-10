@@ -185,4 +185,7 @@ public interface IBuildSupport {
 	default void compile(IResource resource, IProgressMonitor monitor) {
 	}
 
+	default void cleanScalaProjects(IProgressMonitor monitor) {
+	}
+
 }
