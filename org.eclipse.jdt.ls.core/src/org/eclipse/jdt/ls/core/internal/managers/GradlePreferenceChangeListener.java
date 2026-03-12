@@ -63,7 +63,8 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 			boolean aspectjSupportChanged = !Objects.equals(oldPreferences.isAspectjSupportEnabled(), newPreferences.isAspectjSupportEnabled());
 			boolean kotlinSupportChanged = !Objects.equals(oldPreferences.isKotlinSupportEnabled(), newPreferences.isKotlinSupportEnabled());
 			boolean groovySupportChanged = !Objects.equals(oldPreferences.isGroovySupportEnabled(), newPreferences.isGroovySupportEnabled());
-			if (groovySupportChanged || kotlinSupportChanged || aspectjSupportChanged || androidSupportChanged || protobufSupportChanged) {
+			boolean scalaSupportChanged = !Objects.equals(oldPreferences.isScalaSupportEnabled(), newPreferences.isScalaSupportEnabled());
+			if (groovySupportChanged || kotlinSupportChanged || aspectjSupportChanged || androidSupportChanged || protobufSupportChanged || scalaSupportChanged) {
 				updateProjects(projectsManager);
 			}
 
