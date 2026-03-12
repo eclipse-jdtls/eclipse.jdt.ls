@@ -5,6 +5,7 @@
    <extension-point id="org.eclipse.jdt.ls.core.importers" name="JDT LS Project Importer" schema="schema/org.eclipse.jdt.ls.core.importers.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.contentProvider" name="contentProvider" schema="schema/org.eclipse.jdt.ls.core.contentProvider.exsd"/>
    <extension-point id="org.eclipse.jdt.ls.core.buildSupport" name="Build Support" schema="schema/org.eclipse.jdt.ls.core.buildSupport.exsd"/>
+   <extension-point id="org.eclipse.jdt.ls.core.completionHandler" name="Code Completion" schema="schema/org.eclipse.jdt.ls.core.completionHandler.exsd"/>
    <extension
          id="id1"
          point="org.eclipse.core.runtime.applications">
@@ -225,7 +226,7 @@
          id="org.eclipse.jdt.core.javanature">
       </requires-nature>
    </extension>
-   
+
    <extension point="org.eclipse.core.contenttype.contentTypes">
       <file-association
          content-type="org.eclipse.jdt.core.javaDerivedSource"

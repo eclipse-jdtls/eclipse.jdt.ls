@@ -88,11 +88,11 @@ public class SignatureHelpUtils {
 			}
 
 			// first check if we should use the proposal from the last selected completion item.
-			if (CompletionHandler.selectedProposal != null) {
+			if (CompletionHandlers.selectedProposal != null) {
 				for (int i = 0; i < infos.size(); i++) {
 					SignatureInformation signatureInformation = infos.get(i);
 					CompletionProposal proposal = collector.getInfoProposals().get(signatureInformation);
-					if (Arrays.equals(proposal.getSignature(), CompletionHandler.selectedProposal.getSignature())) {
+					if (Arrays.equals(proposal.getSignature(), CompletionHandlers.selectedProposal.getSignature())) {
 						int activeParameter = getActiveParameter(triggerOffset, proposal , context);
 						if (activeParameter >= 0) {
 							help.setActiveSignature(i);
@@ -104,7 +104,7 @@ public class SignatureHelpUtils {
 			}
 
 			// if not matching with the last selected proposal, clear the cache and fallback to guess strategy.
-			CompletionHandler.selectedProposal = null;
+			CompletionHandlers.selectedProposal = null;
 			for (int i = 0; i < infos.size(); i++) {
 				SignatureInformation signatureInformation = infos.get(i);
 				CompletionProposal proposal = collector.getInfoProposals().get(signatureInformation);
