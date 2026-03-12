@@ -42,6 +42,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
 import org.eclipse.jdt.ls.core.internal.handlers.BaseDocumentLifeCycleHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandlers;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentHighlightHandler;
@@ -109,6 +110,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	private ContentProviderManager contentProviderManager;
 	private ProjectsManager projectsManager;
 	private PreferenceManager preferenceManager;
+	private CompletionHandlers codeCompletion;
 	private Job shutdownJob = new Job("Shutdown...") {
 
 		@Override
@@ -136,6 +138,7 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 		this.contentProviderManager = contentProviderManager;
 		this.projectsManager = projectsManager;
 		this.preferenceManager = preferenceManager;
+		this.codeCompletion = new CompletionHandlers(preferenceManager);
 		this.documentLifeCycleHandler = new SyntaxDocumentLifeCycleHandler(null, projectsManager, preferenceManager, delayValidation);
 	}
 
@@ -413,14 +416,13 @@ public class SyntaxLanguageServer extends BaseJDTLanguageServer implements Langu
 	@Override
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		logInfo(">> document/completion");
-		CompletionHandler handler = new CompletionHandler(preferenceManager);
 		final IProgressMonitor[] monitors = new IProgressMonitor[1];
 		CompletableFuture<Either<List<CompletionItem>, CompletionList>> result = computeAsync((monitor) -> {
 			monitors[0] = monitor;
 			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
 				waitForLifecycleJobs(monitor);
 			}
-			return handler.completion(position, monitor);
+			return codeCompletion.completion(position, monitor);
 		});
 		result.join();
 		if (monitors[0].isCanceled()) {
