@@ -56,6 +56,7 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.ls.core.internal.search.SearchParticipants;
 import org.eclipse.jface.text.IRegion;
 
 
@@ -217,7 +218,7 @@ public class ImplementationCollector<T> {
 			int limitTo = IJavaSearchConstants.DECLARATIONS | IJavaSearchConstants.IGNORE_DECLARING_TYPE | IJavaSearchConstants.IGNORE_RETURN_TYPE;
 			SearchPattern pattern = SearchPattern.createPattern(method, limitTo);
 			Assert.isNotNull(pattern);
-			SearchParticipant[] participants = new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() };
+			SearchParticipant[] participants = SearchParticipants.getSearchParticipants();
 			SearchEngine engine = new SearchEngine();
 			engine.search(pattern, participants, hierarchyScope, requestor, new SubProgressMonitor(monitor, 7));
 			if (monitor.isCanceled()) {

@@ -43,7 +43,6 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
@@ -54,6 +53,7 @@ import org.eclipse.jdt.launching.IVMInstall2;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
+import org.eclipse.jdt.ls.core.internal.search.SearchParticipants;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.IRegion;
@@ -193,7 +193,7 @@ public class HoverInfoProvider {
 		SearchEngine engine = new SearchEngine();
 		IJavaSearchScope scope = SearchEngine.createJavaSearchScope(new IJavaElement[] { unit }, IJavaSearchScope.SOURCES | IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES);
 		try {
-			engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, scope, new SearchRequestor() {
+			engine.search(pattern, SearchParticipants.getSearchParticipants(), scope, new SearchRequestor() {
 
 				@Override
 				public void acceptSearchMatch(SearchMatch match) throws CoreException {

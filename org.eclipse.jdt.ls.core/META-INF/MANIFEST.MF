@@ -75,6 +75,7 @@ Export-Package: org.eclipse.jdt.ls.core.contentassist;x-friends:="org.eclipse.jd
  org.eclipse.jdt.ls.core.internal.lsp;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.managers;x-friends:="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver",
  org.eclipse.jdt.ls.core.internal.preferences;x-friends:="org.eclipse.jdt.ls.tests,org.eclipse.jdt.ls.tests.syntaxserver",
+ org.eclipse.jdt.ls.core.internal.search;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.semantictokens;x-friends:="org.eclipse.jdt.ls.tests",
  org.eclipse.jdt.ls.core.internal.syntaxserver;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver",
  org.eclipse.jdt.ls.core.internal.text.correction;x-friends:="org.eclipse.jdt.ls.tests",

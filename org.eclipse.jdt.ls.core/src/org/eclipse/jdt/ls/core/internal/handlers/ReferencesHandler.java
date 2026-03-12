@@ -39,13 +39,13 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.SearchUtils;
+import org.eclipse.jdt.ls.core.internal.search.SearchParticipants;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
@@ -183,7 +183,7 @@ public final class ReferencesHandler {
 			SearchPattern patternDecl = SearchPattern.createPattern(elementToSearch, IJavaSearchConstants.DECLARATIONS);
 			pattern = SearchPattern.createOrPattern(pattern, patternDecl);
 		}
-		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(elementToSearch), new SearchRequestor() {
+		engine.search(pattern, SearchParticipants.getSearchParticipants(), createSearchScope(elementToSearch), new SearchRequestor() {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
