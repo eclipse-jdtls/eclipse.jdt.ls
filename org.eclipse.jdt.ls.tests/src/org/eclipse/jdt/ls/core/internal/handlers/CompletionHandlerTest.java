@@ -106,7 +106,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private DocumentLifeCycleHandler lifeCycleHandler;
 	private JavaClientConnection javaClient;
-	private static String COMPLETION_TEMPLATE =
+	static String COMPLETION_TEMPLATE =
 			"{\n" +
 					"    \"id\": \"1\",\n" +
 					"    \"method\": \"textDocument/completion\",\n" +
@@ -4150,8 +4150,12 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return server.completion(JsonMessageHelper.getParams(createCompletionRequest(unit, loc[0], loc[1]))).join().getRight();
 	}
 
-	private String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
-		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
+	static String createCompletionRequest(ICompilationUnit unit, int line, int kar) {
+		return createCompletionRequest(JDTUtils.toURI(unit), line, kar);
+	}
+
+	static String createCompletionRequest(String uri, int line, int kar) {
+		return COMPLETION_TEMPLATE.replace("${file}", uri)
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
 	}
@@ -4165,6 +4169,10 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	private void mockLSPClient(boolean isSnippetSupported, boolean isSignatureHelpSupported) {
+		mockLSPClient(preferenceManager, isSnippetSupported, isSignatureHelpSupported);
+	}
+
+	static void mockLSPClient(PreferenceManager preferenceManager, boolean isSnippetSupported, boolean isSignatureHelpSupported) {
 		// Mock the preference manager to use LSP v3 support.
 		when(preferenceManager.getClientPreferences().isCompletionSnippetsSupported()).thenReturn(isSnippetSupported);
 		when(preferenceManager.getClientPreferences().isSignatureHelpSupported()).thenReturn(isSignatureHelpSupported);

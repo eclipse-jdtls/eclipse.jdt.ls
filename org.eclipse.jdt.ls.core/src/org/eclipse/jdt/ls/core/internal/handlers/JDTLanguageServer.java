@@ -188,6 +188,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private ClasspathUpdateHandler classpathUpdateHandler;
 	private JVMConfigurator jvmConfigurator;
 	private WorkspaceExecuteCommandHandler commandHandler;
+	private CompletionHandlers codeCompletion;
 	private TypeHierarchyHandler typeHierarchyHandler = new TypeHierarchyHandler();
 
 	private ProgressReporterManager progressReporterManager;
@@ -245,6 +246,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
 		this.commandHandler = commandHandler;
 		this.telemetryManager = telemetryManager;
+		this.codeCompletion = new CompletionHandlers(preferenceManager);
 	}
 
 	@Override
@@ -259,6 +261,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		this.telemetryManager.setLanguageClient(client);
 		this.telemetryManager.setPreferenceManager(preferenceManager);
 		this.telemetryManager.setProjectseManager(pm);
+		this.codeCompletion = new CompletionHandlers(preferenceManager);
 	}
 
 	// For testing purpose
@@ -627,12 +630,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<Either<List<CompletionItem>, CompletionList>> completion(CompletionParams position) {
 		debugTrace(">> document/completion");
 		try {
-			CompletionHandler handler = new CompletionHandler(preferenceManager);
 			IProgressMonitor monitor = new NullProgressMonitor();
 			if (Boolean.getBoolean(JAVA_LSP_JOIN_ON_COMPLETION)) {
 				waitForLifecycleJobs(monitor);
 			}
-			Either<List<CompletionItem>, CompletionList> result = handler.completion(position, monitor);
+			Either<List<CompletionItem>, CompletionList> result = codeCompletion.completion(position, monitor);
 			return CompletableFuture.completedFuture(result);
 		} catch (Exception ex) {
 			return CompletableFuture.failedFuture(ex);
