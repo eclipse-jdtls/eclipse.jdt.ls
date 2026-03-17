@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -59,6 +61,8 @@ import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 
@@ -67,6 +71,18 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 	private List<String> ignoredKinds = Arrays.asList(CodeActionKind.Source + ".*");
 
 	private List<String> onlyKinds;
+
+	private Hashtable<String, String> oldOptions;
+
+	@AfterEach
+	public void cleanOptions() throws Exception {
+		JavaCore.setOptions(oldOptions);
+	}
+
+	@BeforeEach
+	public void setOptions() throws Exception {
+		oldOptions = JavaCore.getOptions();
+	}
 
 	protected void assertCodeActionExists(ICompilationUnit cu, Expected expected) throws Exception {
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu);
