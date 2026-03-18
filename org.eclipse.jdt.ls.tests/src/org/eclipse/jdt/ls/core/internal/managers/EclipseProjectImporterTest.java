@@ -199,7 +199,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testPreviewFeaturesDisabledByDefault() throws Exception {
-		String name = "java25";
+		String name = "java26";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
