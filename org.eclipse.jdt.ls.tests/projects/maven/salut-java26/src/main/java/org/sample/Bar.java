@@ -5,10 +5,11 @@ package org.sample;
  */
 public class Bar {
 
+    // JEP 530: Primitive Types in Patterns, instanceof, and switch (Fourth Preview)
     public static void main(String[] args) {
-        Object foo = "x";
-        if (foo instanceof String str) {
-            System.out.println(str);
+        Object obj = 42;
+        if (obj instanceof int i) {
+            System.out.println("int value: " + i);
         }
     }
 }
