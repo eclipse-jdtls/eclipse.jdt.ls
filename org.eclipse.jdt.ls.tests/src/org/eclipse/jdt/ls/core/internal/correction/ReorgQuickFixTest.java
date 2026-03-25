@@ -514,7 +514,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		assertCodeActionExists(cu, "Change compiler compliance to 14");
+		assertCodeActionExists(cu, "Change project compiler compliance to 14");
 	}
 
 	@Test
@@ -534,7 +534,7 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		assertCodeActionExists(cu, "Change compiler compliance to 15");
+		assertCodeActionExists(cu, "Change project compiler compliance to 15");
 	}
 
 }
