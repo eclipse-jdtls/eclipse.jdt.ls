@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -601,6 +602,22 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.WorkspaceService#executeCommand(org.eclipse.lsp4j.ExecuteCommandParams)
 	 */
+
+	/**
+	 * Delegate commands that are safe to execute without waiting for the search
+	 * index to be ready. These commands only query the JDT workspace model
+	 * (projects, packages, markers) and do not depend on the search index.
+	 * Skipping waitForIndex for these commands enables progressive rendering
+	 * of the Java Projects tree view during long-running imports.
+	 */
+	private static final Set<String> INDEX_INDEPENDENT_COMMANDS = Set.of(
+		"java.project.list",
+		"java.project.checkImportStatus",
+		"java.getPackageData",
+		"java.resolvePath",
+		"java.project.getAll"
+	);
+
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		debugTrace(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
@@ -611,8 +628,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			return CompletableFuture.completedFuture(result);
 		} else {
 			// see https://github.com/redhat-developer/vscode-java/issues/3926
-			if (JavaModelManager.getIndexManager() != null) {
-				JavaModelManager.getIndexManager().waitForIndex(true, null);
+			// Skip waitForIndex for commands that don't need the search index,
+			// so they can return results during long-running project imports.
+			if (!INDEX_INDEPENDENT_COMMANDS.contains(params.getCommand())) {
+				if (JavaModelManager.getIndexManager() != null) {
+					JavaModelManager.getIndexManager().waitForIndex(true, null);
+				}
 			}
 			return computeAsync((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
