@@ -621,12 +621,12 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String expectedJavadoc = """
 			A simple program.
 
-			&nbsp;class HelloWorld { \s
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public static void main(String... args) { \s
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System.out.**println**("Hello World!");   \s
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}\s\s
-			&nbsp;} \s
-			  \s
+			class HelloWorld { \s
+			public static void main(String... args) { \s
+			System.out.**println**("Hello World!");   \s
+			}\s\s
+			} \s
+			 \s
 			""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
@@ -665,8 +665,8 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String expectedJavadoc = """
 			A simple program.
 
-			&nbsp;&nbsp;&nbsp;int x = 1;\s\s
-			  \s
+			int x = 1;\s\s
+			 \s
 			""";
 		//@formatter:on
 		String actual = hover.getContents().getLeft().get(1).getLeft();
