@@ -31,11 +31,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -161,20 +156,8 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
 
-		// Start a background thread to progressively report newly created projects
-		// so that clients (e.g. Java Projects tree view) can show them incrementally
-		// instead of waiting for the entire import to finish.
-		Set<String> notifiedProjects = ConcurrentHashMap.newKeySet();
-		// Seed with default project name so it's never reported
-		notifiedProjects.add(DEFAULT_PROJECT_NAME);
-		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-			Thread t = new Thread(r, "ProjectImportProgressReporter");
-			t.setDaemon(true);
-			return t;
-		});
-		ScheduledFuture<?> progressReporter = scheduler.scheduleAtFixedRate(() -> {
-			sendProgressiveProjectsImported(notifiedProjects);
-		}, 2, 2, TimeUnit.SECONDS);
+		ProgressiveProjectReporter reporter = new ProgressiveProjectReporter(client);
+		reporter.start();
 
 		try {
 			for (IPath rootPath : rootPaths) {
@@ -196,44 +179,11 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 				}
 			}
 		} finally {
-			progressReporter.cancel(false);
-			scheduler.shutdown();
-			// Send a final notification for any remaining projects not yet reported
-			sendProgressiveProjectsImported(notifiedProjects);
+			reporter.stop();
 		}
 
 		if (!importStatusCollection.isOK()) {
 			throw new CoreException(importStatusCollection);
-		}
-	}
-
-	/**
-	 * Check for newly created projects in the workspace and send a
-	 * {@link EventType#ProjectsImported} notification for any that haven't been
-	 * reported yet. This enables progressive loading of the Java Projects tree view
-	 * during long-running imports.
-	 */
-	private void sendProgressiveProjectsImported(Set<String> notifiedProjects) {
-		try {
-			List<URI> newProjectUris = new ArrayList<>();
-			for (IProject p : getWorkspaceRoot().getProjects()) {
-				if (p.isAccessible() && notifiedProjects.add(p.getName())) {
-					IPath realFolder = ProjectUtils.getProjectRealFolder(p);
-					if (realFolder != null) {
-						newProjectUris.add(realFolder.toFile().toURI());
-					}
-				}
-			}
-			if (!newProjectUris.isEmpty() && client != null) {
-				EventNotification notification = new EventNotification()
-						.withType(EventType.ProjectsImported)
-						.withData(newProjectUris);
-				JavaLanguageServerPlugin.logInfo("Progressive import: reporting " + newProjectUris.size() + " new project(s)");
-				client.sendEventNotification(notification);
-			}
-		} catch (Exception e) {
-			// Best effort - don't interrupt the import process
-			JavaLanguageServerPlugin.logException("Error sending progressive import notification", e);
 		}
 	}
 
