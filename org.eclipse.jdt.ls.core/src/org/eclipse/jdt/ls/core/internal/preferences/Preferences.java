@@ -40,6 +40,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.text.StrLookup;
+import org.apache.commons.lang3.text.StrSubstitutor;
 import org.eclipse.core.internal.resources.PreferenceInitializer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -1987,12 +1989,12 @@ public class Preferences {
 	}
 
 	public Preferences setFormatterUrl(String formatterUrl) {
-		this.formatterUrl = ResourceUtils.expandPath(formatterUrl);
+		this.formatterUrl = ResourceUtils.expandPath(expandWorkspacePath(formatterUrl));
 		return this;
 	}
 
 	public Preferences setSettingsUrl(String settingsUrl) {
-		this.settingsUrl = ResourceUtils.expandPath(settingsUrl);
+		this.settingsUrl = ResourceUtils.expandPath(expandWorkspacePath(settingsUrl));
 		return this;
 	}
 
@@ -3290,5 +3292,22 @@ public class Preferences {
 
 	public SearchScope getSearchScope() {
 		return searchScope;
+	}
+
+	private String expandWorkspacePath(String path) {
+		if (path == null || rootPaths == null || rootPaths.isEmpty())
+			return path;
+		StrLookup<String> workspaceResolver = new StrLookup<String>() {
+			@Override
+			public String lookup(String key) {
+				if (key == "workspace") {
+					String prop = getRootPaths().iterator().next().toOSString();
+					return prop;
+				}
+				return null;
+			}
+		};
+		StrSubstitutor strSubstitutor = new StrSubstitutor(workspaceResolver);
+		return strSubstitutor.replace(path);
 	}
 }
