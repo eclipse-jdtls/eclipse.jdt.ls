@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.58.0 (April 8th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/151?closed=1)
+ * enhancement - Progressive project import notifications for tree view. See [#3744](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3744).
+ * enhancement - Support Termux. See [#3742](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3742).
+ * enhancement - Add Null Annotation quick-fixes from JDT to jdt.ls. See [#3727](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3727).
+ * enhancement - Remove the first blank line from generated classes created in the default package. See [#3725](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3725).
+ * enhancement - Add inlay hints for format parameters. See [#3726](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3726).
+ * enhancement - Add quick-assist to convert a class to a record. See [#3723](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3723).
+ * enhancement - Support Scala in Gradle projects. See [#3734](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3734).
+ * enhancement - Enable change compiler compliance quick-fixes. See [#3743](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3743).
+ * bug fix - Navigating to a Kotlin class now opens the sources instead of the decompiled code. See [#3724](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3724).
+
 # [1.57.0 (February 26th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/150?closed=1)
  * enhancement - Have class URIs use their original source name. See [#3666](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3666).
  * enhancement - Add setting to disable adding imports on paste. See [#3700](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3700).
