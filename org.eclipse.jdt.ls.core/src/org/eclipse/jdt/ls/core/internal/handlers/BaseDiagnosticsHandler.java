@@ -262,6 +262,7 @@ public abstract class BaseDiagnosticsHandler implements IProblemRequestor {
 					|| problem.getID() == IProblem.DuplicateInheritedDefaultMethods
 					|| problem.getID() == IProblem.FeatureNotSupported
 					|| problem.getID() == IProblem.MultiConstantCaseLabelsNotSupported || problem.getID() == IProblem.InvalidUsageOfTypeAnnotations
+					|| problem.getID() == IProblem.ContradictoryNullAnnotations
 					|| problem.getID() == IProblem.InheritedDefaultMethodConflictsWithOtherInherited) {
 				data.put(DIAG_ARGUMENTS, problem.getArguments());
 			}

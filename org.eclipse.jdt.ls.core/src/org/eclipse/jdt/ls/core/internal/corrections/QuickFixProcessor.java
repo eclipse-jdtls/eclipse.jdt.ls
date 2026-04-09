@@ -653,6 +653,13 @@ public class QuickFixProcessor {
 			case IProblem.RedundantNullDefaultAnnotationField:
 				NullAnnotationsCorrectionProcessor.addRemoveRedundantAnnotationProposal(context, problem, proposals);
 				break;
+			case IProblem.DereferencingNullableExpression:
+			case IProblem.NullityMismatchingTypeAnnotation:
+				NullAnnotationsCorrectionProcessor.addReplaceNullableAnnotationProposal(context, problem, proposals);
+				break;
+			case IProblem.ContradictoryNullAnnotations:
+				NullAnnotationsCorrectionProcessor.addRemoveContradictoryAnnotationProposals(context, problem, proposals);
+				break;
 			case IProblem.UnusedTypeParameter:
 				LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context, problem, proposals);
 				break;
