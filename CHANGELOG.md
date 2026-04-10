@@ -1,6 +1,6 @@
 # Change Log
 
-# [1.58.0 (April 8th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/151?closed=1)
+# [1.58.0 (April 13th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/151?closed=1)
  * enhancement - Progressive project import notifications for tree view. See [#3744](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3744).
  * enhancement - Support Termux. See [#3742](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3742).
  * enhancement - Add Null Annotation quick-fixes from JDT to jdt.ls. See [#3727](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3727).
