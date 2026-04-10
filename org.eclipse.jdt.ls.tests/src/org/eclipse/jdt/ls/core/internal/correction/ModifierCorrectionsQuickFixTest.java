@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -1384,6 +1385,392 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 		Expected e1 = new Expected("Create 'foo()' in super type 'Base'", buf.toString());
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public final <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public final <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @Deprecated
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    @Deprecated
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				public class E {
+				    public <T> E(T ... a) {
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				public class E {
+				    @SafeVarargs
+				    public <T> E(T ... a) {
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs5() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		assertCodeActionNotExists(cu, CorrectionMessages.VarargsWarningsSubProcessor_add_safevarargs_label);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SuppressWarnings("deprecation")
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @Deprecated
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SuppressWarnings("deprecation")
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    @Deprecated
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				""";
+		pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package p;
+				import java.util.List;
+				class Y {
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu2 = pack1.createCompilationUnit("Y.java", str1, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu2, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        new Y(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				    public <T> Y(T ... a) {
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        new Y(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				    @SafeVarargs
+				    public <T> Y(T ... a) {
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public static <T> List<T> asList() {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public static <T> List<T> asList() {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    @Deprecated
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @Deprecated
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
 	}
 
 }

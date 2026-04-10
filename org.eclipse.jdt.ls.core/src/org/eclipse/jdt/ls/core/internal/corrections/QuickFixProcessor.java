@@ -75,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.NullAnnotationsCorrectionProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.VarargsWarningsSubProcessor;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
@@ -605,19 +606,16 @@ public class QuickFixProcessor {
 			case IProblem.MethodCanBePotentiallyStatic:
 				ModifierCorrectionSubProcessor.addStaticMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.PotentialHeapPollutionFromVararg :
-			// VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnsafeGenericArrayForVarargs:
-			// VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.SafeVarargsOnFixedArityMethod :
-			// case IProblem.SafeVarargsOnNonFinalInstanceMethod:
-			// VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.PotentialHeapPollutionFromVararg:
+				VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context, problem, proposals);
+				break;
+			case IProblem.UnsafeGenericArrayForVarargs:
+				VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context, problem, proposals);
+				break;
+			case IProblem.SafeVarargsOnFixedArityMethod:
+			case IProblem.SafeVarargsOnNonFinalInstanceMethod:
+				VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context, problem, proposals);
+				break;
 			case IProblem.IllegalReturnNullityRedefinition:
 			case IProblem.IllegalDefinitionToNonNullParameter:
 			case IProblem.IllegalRedefinitionToNonNullParameter:
