@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -75,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.NullAnnotationsCorrectionProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeArgumentMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.VarargsWarningsSubProcessor;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -453,34 +454,23 @@ public class QuickFixProcessor {
 			case IProblem.DeadCode:
 				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
 				break;
-			// case IProblem.DiamondNotBelow17:
-			// TypeArgumentMismatchSubProcessor.getInferDiamondArgumentsProposal(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.LambdaExpressionNotBelow18:
-			// LocalCorrectionsSubProcessor.getConvertLambdaToAnonymousClassCreationsProposals(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.NonGenericType:
-			// TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MissingOverrideAnnotation:
-			// case
-			// IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
-			// ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.NonGenericType:
+				TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context, problem, proposals);
+				break;
+			case IProblem.MissingOverrideAnnotation:
+			case IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
+				ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.MethodMustOverride:
 			case IProblem.MethodMustOverrideOrImplement:
 				ModifierCorrectionSubProcessor.removeOverrideAnnotationProposal(context, problem, proposals);
 				break;
-			// case IProblem.FieldMissingDeprecatedAnnotation:
-			// case IProblem.MethodMissingDeprecatedAnnotation:
-			// case IProblem.TypeMissingDeprecatedAnnotation:
-			// ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.FieldMissingDeprecatedAnnotation:
+			case IProblem.MethodMissingDeprecatedAnnotation:
+			case IProblem.TypeMissingDeprecatedAnnotation:
+			case IProblem.MemberOfDeprecatedTypeNotDeprecated:
+				ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.OverridingDeprecatedMethod:
 			case IProblem.OverridingDeprecatedSinceVersionMethod:
 			case IProblem.OverridingTerminallyDeprecatedMethod:
