@@ -39,7 +39,7 @@ public class GradleUtilsTest {
 
 	@Test
 	public void testCompatiblity() {
-		GradleVersion gradleVersion = GradleVersion.version("9.1");
-		assertEquals(JavaCore.VERSION_25, GradleUtils.getHighestSupportedJava(gradleVersion));
+		GradleVersion gradleVersion = GradleVersion.version("9.4");
+		assertEquals(JavaCore.VERSION_26, GradleUtils.getHighestSupportedJava(gradleVersion));
 	}
 }
