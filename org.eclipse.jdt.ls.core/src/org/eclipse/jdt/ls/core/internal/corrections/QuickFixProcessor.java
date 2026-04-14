@@ -75,6 +75,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.NullAnnotationsCorrectionProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeAnnotationSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.TypeArgumentMismatchSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.VarargsWarningsSubProcessor;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
@@ -682,14 +683,12 @@ public class QuickFixProcessor {
 			case IProblem.MultiConstantCaseLabelsNotSupported:
 				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_14);
 				break;
-			// case IProblem.TypeAnnotationAtQualifiedName:
-			// case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
-			// case IProblem.NullAnnotationAtQualifyingType:
-			// case IProblem.IllegalAnnotationForBaseType:
-			// TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context,
-			// problem, proposals);
-			// break;
-
+			case IProblem.TypeAnnotationAtQualifiedName:
+			case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
+			case IProblem.NullAnnotationAtQualifyingType:
+			case IProblem.IllegalAnnotationForBaseType:
+				TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context, problem, proposals);
+				break;
 			default:
 				String str = problem.toString();
 				System.out.println(str);
