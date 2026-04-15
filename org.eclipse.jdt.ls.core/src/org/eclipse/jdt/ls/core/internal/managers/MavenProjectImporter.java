@@ -227,8 +227,12 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					while (i++ < MAX_PROJECTS_TO_IMPORT && iter.hasNext()) {
 						importPartial.add(iter.next());
 					}
-					List<IMavenProjectImportResult> result = configurationManager.importProjects(importPartial, importConfig, monitor2.split(MAX_PROJECTS_TO_IMPORT));
-					results.addAll(result);
+					try {
+						List<IMavenProjectImportResult> result = configurationManager.importProjects(importPartial, importConfig, monitor2.split(MAX_PROJECTS_TO_IMPORT));
+						results.addAll(result);
+					} catch (CoreException e) {
+						JavaLanguageServerPlugin.logException("Failed to import a batch of Maven projects", e);
+					}
 					monitor2.setWorkRemaining(toImport.size() * 2 - it * MAX_PROJECTS_TO_IMPORT);
 				}
 				List<IProject> imported = new ArrayList<>(results.size());
@@ -239,7 +243,11 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				updateProjects(imported, lastWorkspaceStateSaved, monitor2.split(projects.size()));
 				monitor2.done();
 			} else {
-				configurationManager.importProjects(toImport, importConfig, subMonitor.split(75));
+				try {
+					configurationManager.importProjects(toImport, importConfig, subMonitor.split(75));
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Failed to configure some Maven project(s)", e);
+				}
 			}
 		}
 		subMonitor.setWorkRemaining(20);
