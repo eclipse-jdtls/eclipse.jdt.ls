@@ -3692,4 +3692,84 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActionExists(cu, e1);
 	}
 
+	@Test
+	public void testMissingHashCode() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after1 = """
+				package test1;
+
+				import java.util.Objects;
+
+				public class E {
+					String x;
+
+					@Override
+					public int hashCode() {
+						return Objects.hash(x);
+					}
+
+					@Override
+					public boolean equals(Object obj) {
+						if (this == obj) {
+							return true;
+						}
+						if (!(obj instanceof E)) {
+							return false;
+						}
+						E other = (E) obj;
+						return Objects.equals(x, other.x);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e1 = new Expected("Regenerate hashCode() and equals()", after1);
+		Expected e2 = new Expected("Override hashCode()", after2);
+
+		assertCodeActions(cu, e1, e2);
+	}
+
 }

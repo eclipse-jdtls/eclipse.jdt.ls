@@ -338,10 +338,9 @@ public class QuickFixProcessor {
 			case IProblem.EnumConstantMustImplementAbstractMethod:
 				LocalCorrectionsSubProcessor.addUnimplementedMethodsProposals(context, problem, proposals);
 				break;
-			// case IProblem.ShouldImplementHashcode:
-			// LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.ShouldImplementHashcode:
+				LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingValueForAnnotationMember:
 				LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context, problem, proposals);
 				break;
