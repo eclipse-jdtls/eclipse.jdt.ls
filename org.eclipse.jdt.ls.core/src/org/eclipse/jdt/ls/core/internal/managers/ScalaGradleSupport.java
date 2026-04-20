@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +55,8 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * @author snjeza
  *
@@ -62,10 +64,9 @@ import org.gradle.tooling.ProjectConnection;
 public class ScalaGradleSupport {
 
 	public static final Path CONTAINER_PATH = new Path("org.eclipse.buildship.core.gradleclasspathcontainer");
-	public static String[] EXCLUSIONS_PATTERNS = { "**" };
-
 	// Gradle Tooling API removes several scala libraries and adds the Scala builder and container that aren't recognized by Java LS.
 	// See https://github.com/gradle/gradle/blob/b3c5d40e82439da4627b38b4ced93121e551b0eb/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/eclipse/EclipsePlugin.java#L375-L377
+	public static final Set<String> SCALA_LIBRARIES = ImmutableSet.of("scala-library", "scala-swing", "scala-dbc");
 	public void cleanScalaProjects(IProgressMonitor monitor) {
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		if (preferenceManager == null || !preferenceManager.getPreferences().isScalaSupportEnabled()) {
@@ -149,16 +150,7 @@ public class ScalaGradleSupport {
 			if (Boolean.getBoolean("jdt.ls.debug")) {
 				JavaLanguageServerPlugin.logException(e);
 			}
-		} finally {
-			if (initScript != null) {
-				try {
-					Files.delete(initScript.toPath());
-				} catch (IOException e) {
-					JavaLanguageServerPlugin.logException(e);
-				}
-			}
 		}
-		return;
 	}
 
 	private File getInitScript() throws IOException {
@@ -258,39 +250,23 @@ public class ScalaGradleSupport {
 			}
 		}
 		// @formatter:off
-		IClasspathEntry[] newClasspath = Stream.concat(Arrays
-			.stream(classpath), entries.stream())
-			.distinct()
-			.toArray(IClasspathEntry[]::new);
-		// @formatter:on
-		for (int i = 0; i < newClasspath.length; i++) {
-			IClasspathEntry entry = newClasspath[i];
-			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
-				Optional<String> optional = resources.stream().filter(r -> Objects.equals(entry.getPath().removeFirstSegments(1), new Path(r).makeRelativeTo(javaProject.getProject().getLocation()))).findFirst();
-				if (optional.isPresent()) {
-					IPath[] exclusions = entry.getExclusionPatterns();
-					if (exclusions == null) {
-						exclusions = new IPath[0];
-					}
-					List<IPath> currentExclusions = new ArrayList<>(Arrays.asList(exclusions));
-					for (String ext : EXCLUSIONS_PATTERNS) {
-						IPath newPath = new Path(ext);
-						boolean exists = currentExclusions.stream().anyMatch(existingPath -> existingPath.toString().equals(ext));
-						if (!exists) {
-							currentExclusions.add(newPath);
-						}
-					}
-					IClasspathEntry newEntry = JavaCore.newSourceEntry(entry.getPath(), entry.getInclusionPatterns(), currentExclusions.toArray(new IPath[0]), entry.getOutputLocation(), entry.getExtraAttributes());
-					newClasspath[i] = newEntry;
-				}
-			}
-		}
+        IClasspathEntry[] newClasspath = Stream.concat(Arrays
+                .stream(classpath), entries.stream())
+                .distinct()
+                .toArray(IClasspathEntry[]::new);
+        // @formatter:on
 		javaProject.setRawClasspath(newClasspath, monitor);
 	}
 
 	private static List<String> getMissingPaths(IJavaProject javaProject, List<String> paths) {
 		List<String> toAdd = new ArrayList<>();
-		for (String path : paths) {
+		// @formatter:off
+		List<String> scalaLibs = paths
+				.stream()
+				.filter(s -> SCALA_LIBRARIES.stream().anyMatch(s::contains))
+				.collect(Collectors.toList());
+		// @formatter:on
+		for (String path : scalaLibs) {
 			try {
 				IClasspathContainer container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
 				if (container != null) {
