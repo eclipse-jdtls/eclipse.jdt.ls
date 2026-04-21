@@ -24,8 +24,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -36,7 +38,9 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CastExpression;
@@ -49,6 +53,7 @@ import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -132,6 +137,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
 import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
@@ -837,6 +843,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static ThrowStatement getThrowForUnsupportedCase(Expression switchExpr, AST ast, ASTRewrite astRewrite) {
 		ThrowStatement newThrowStatement = ast.newThrowStatement();
 		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
@@ -928,6 +935,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
+	@SuppressWarnings("unchecked")
 	private static ThrowStatement getThrowForUnexpectedDefault(Expression switchExpression, AST ast, ASTRewrite astRewrite) {
 		ThrowStatement newThrowStatement = ast.newThrowStatement();
 		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
@@ -1010,61 +1018,126 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 		AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) selectedNode.getParent();
 
-		ITypeBinding binding = typeDeclaration.resolveBinding();
-		if (binding == null || binding.getSuperclass() == null) {
+		final ITypeBinding typeBinding = typeDeclaration.resolveBinding();
+		if (typeBinding == null || typeBinding.getSuperclass() == null) {
 			return;
 		}
-		final IType type = (IType) binding.getJavaElement();
-
 		boolean hasInstanceFields = false;
-		for (IVariableBinding declaredField : binding.getDeclaredFields()) {
+		for (IVariableBinding declaredField : typeBinding.getDeclaredFields()) {
 			if (!Modifier.isStatic(declaredField.getModifiers())) {
 				hasInstanceFields = true;
 				break;
 			}
 		}
 		if (hasInstanceFields) {
-			//Generate hashCode() and equals()... proposal
-			String label = CorrectionMessages.LocalCorrectionsSubProcessor_regenerate_hashCode_equals_description;
-			try {
-				CodeActionParams params = LocalCorrectionsSubProcessor.constructCodeActionParams(cu, "}");
-				ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null, IProposalRelevance.GENERATE_HASHCODE_AND_EQUALS) {
+			final String METHODNAME_EQUALS = "equals";
+			IMethodBinding[] declaredMethods = typeBinding.getDeclaredMethods();
+			IMethodBinding equalsBinding = null;
+			for (IMethodBinding method : declaredMethods) {
+				if (method.getName().equals(METHODNAME_EQUALS)) {
+					ITypeBinding[] b = method.getParameterTypes();
+					if ((b.length == 1) && (b[0].getQualifiedName().equals("java.lang.Object"))) {
+						equalsBinding = method;
+						break;
+					}
+				}
+			}
+			final Set<String> fieldKeySet = new HashSet<>();
+			if (equalsBinding != null) {
+				final IMethodBinding searchBinding = equalsBinding;
+				ASTVisitor visitor = new ASTVisitor() {
 					@Override
-					protected Change createChange() {
-						CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
-						GenerateHashCodeEqualsParams genParams = new GenerateHashCodeEqualsParams();
-						genParams.context = params;
-						genParams.fields = response.fields;
-						genParams.regenerate = true;
-						IType type = SourceAssistProcessor.getSelectionType(params, new NullProgressMonitor());
-						boolean useJava7Objects = true;
-						boolean useInstanceof = true;
-						boolean useBlocks = true;
-						boolean generateComments = true;
-						TextEdit edit = HashCodeEqualsHandler.generateHashCodeEqualsTextEdit(type, genParams.fields, genParams.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, params.getRange(),
-								new NullProgressMonitor());
-						TextChange change = new CompilationUnitChange(label, cu);
-						MultiTextEdit multiTextEdit = new MultiTextEdit();
-						change.setEdit(multiTextEdit);
-						if (edit != null) {
-							change.addEdit(edit);
-						}
-						return change;
+					public boolean visit(AnnotationTypeDeclaration node) {
+						// TODO Auto-generated method stub
+						return node == typeDeclaration;
 					}
 
 					@Override
-					public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
-						return "";
+					public boolean visit(EnumDeclaration node) {
+						return node == typeDeclaration;
 					}
+
+					@Override
+					public boolean visit(TypeDeclaration node) {
+						return node == typeDeclaration;
+					}
+
+					@Override
+					public boolean visit(MethodDeclaration node) {
+						IMethodBinding nodeBinding = node.resolveBinding();
+						if (nodeBinding == null || !nodeBinding.isEqualTo(searchBinding)) {
+							return false;
+						}
+						if (!typeBinding.isEqualTo(nodeBinding.getDeclaringClass())) {
+							return false;
+						}
+						ASTVisitor equalsVisitor = new ASTVisitor() {
+							@Override
+							public boolean visit(SimpleName node) {
+								IBinding nodeBinding = node.resolveBinding();
+								if (nodeBinding instanceof IVariableBinding varBinding && varBinding.isField()) {
+									fieldKeySet.add(varBinding.getKey());
+								}
+								return false;
+							}
+						};
+						node.accept(equalsVisitor);
+						return false;
+					}
+
 				};
-				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+				typeDeclaration.accept(visitor);
+			}
+			try {
+				CodeActionParams params = LocalCorrectionsSubProcessor.constructCodeActionParams(cu, "}");
+				CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
+				List<LspVariableBinding> fields = new ArrayList<>();
+				for (LspVariableBinding varBinding : response.fields) {
+					if (fieldKeySet.contains(varBinding.bindingKey)) {
+						fields.add(varBinding);
+					}
+				}
+				if (fields.size() > 0) { // if the equals method refers to fields, use them to generate a new hashCode()
+					//Generate hashCode() and equals()... proposal
+					String label = CorrectionMessages.LocalCorrectionsSubProcessor_regenerate_hashCode_equals_description;
+					ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null, IProposalRelevance.GENERATE_HASHCODE_AND_EQUALS) {
+						@Override
+						protected Change createChange() {
+							GenerateHashCodeEqualsParams genParams = new GenerateHashCodeEqualsParams();
+							genParams.context = params;
+							genParams.regenerate = true;
+							genParams.fields = fields.toArray(new LspVariableBinding[0]);
+
+							IType type = SourceAssistProcessor.getSelectionType(params, new NullProgressMonitor());
+							boolean useJava7Objects = true;
+							boolean useInstanceof = true;
+							boolean useBlocks = true;
+							boolean generateComments = true;
+							TextEdit edit = HashCodeEqualsHandler.generateHashCodeEqualsTextEdit(type, genParams.fields, genParams.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, params.getRange(),
+									new NullProgressMonitor());
+							TextChange change = new CompilationUnitChange(label, cu);
+							MultiTextEdit multiTextEdit = new MultiTextEdit();
+							change.setEdit(multiTextEdit);
+							if (edit != null) {
+								change.addEdit(edit);
+							}
+							return change;
+						}
+
+						@Override
+						public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
+							return "";
+						}
+					};
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+				}
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
 		}
 
 		//Override hashCode() proposal
-		IMethodBinding superHashCode = Bindings.findMethodInHierarchy(binding, "hashCode", new ITypeBinding[0]); //$NON-NLS-1$
+		IMethodBinding superHashCode = Bindings.findMethodInHierarchy(typeBinding, "hashCode", new ITypeBinding[0]); //$NON-NLS-1$
 		if (superHashCode == null) {
 			return;
 		}
@@ -1079,7 +1152,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 		try {
 			ImportRewriteContext importContext = new ContextSensitiveImportRewriteContext(astRoot, problem.getOffset(), importRewrite);
-			MethodDeclaration hashCode = StubUtility2Core.createImplementationStub(cu, rewrite, importRewrite, importContext, superHashCode, binding, settings, false, null);
+			MethodDeclaration hashCode = StubUtility2Core.createImplementationStub(cu, rewrite, importRewrite, importContext, superHashCode, typeBinding, settings, false, null);
 			BodyDeclarationRewrite.create(rewrite, typeDeclaration).insert(hashCode, null);
 
 			proposal2.setEndPosition(rewrite.track(hashCode));
