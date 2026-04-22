@@ -79,6 +79,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
+	/** Cached result of annotation attribute value context detection (null = not yet computed). */
+	private Boolean annotationAttributeValueContext;
 	/**
 	 * The possible completion kinds requested by the completion engine:
 	 * - {@link CompletionProposal#FIELD_REF}
@@ -242,6 +244,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return;
 		}
 
+		// Filter out non-constant proposals in annotation attribute value context
+		// (e.g., @Deprecated(forRemoval = |) should only show true/false, not methods)
+		if (isAnnotationAttributeValueContext() && !isValidAnnotationValueProposal(proposal)) {
+			return;
+		}
+
 		if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
 			acceptPotentialMethodDeclaration(proposal);
 		} else {
@@ -349,6 +357,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		response.setItems(completionItems);
 		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		response.setCompletionItemData(contributedData);
+
+		// Inject boolean literal completions for annotation attribute value context
+		// when JDT didn't propose them (e.g., @Deprecated(forRemoval = |))
+		if (annotationAttributeValueContext != null && annotationAttributeValueContext) {
+			injectBooleanLiterals(completionItems);
+		}
+
 		CompletionResponses.store(response);
 
 		return completionItems;
@@ -757,5 +772,173 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Inject boolean literal completion items (true, false) when they are not
+	 * already present. This handles the case where JDT's completion engine doesn't
+	 * propose keywords in annotation attribute value context.
+	 */
+	private void injectBooleanLiterals(List<CompletionItem> items) {
+		boolean hasTrue = false;
+		boolean hasFalse = false;
+		for (CompletionItem item : items) {
+			String label = item.getLabel();
+			if ("true".equals(label)) hasTrue = true;
+			if ("false".equals(label)) hasFalse = true;
+		}
+		if (!hasTrue) {
+			CompletionItem trueItem = new CompletionItem("true");
+			trueItem.setKind(CompletionItemKind.Keyword);
+			trueItem.setInsertText("true");
+			trueItem.setSortText("00000"); // high priority
+			items.add(0, trueItem);
+		}
+		if (!hasFalse) {
+			CompletionItem falseItem = new CompletionItem("false");
+			falseItem.setKind(CompletionItemKind.Keyword);
+			falseItem.setInsertText("false");
+			falseItem.setSortText("00001"); // high priority
+			items.add(hasTrue ? 1 : 0, falseItem);
+		}
+	}
+
+	/**
+	 * Detect if the completion offset is at an annotation attribute value position.
+	 * For example: {@code @Deprecated(forRemoval = |)} — cursor is at the value position.
+	 * <p>
+	 * Annotation attribute values must be compile-time constant expressions per JLS §9.7.1,
+	 * so completion proposals should be filtered accordingly.
+	 * </p>
+	 *
+	 * @see <a href="https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3604">Issue #3604</a>
+	 */
+	private boolean isAnnotationAttributeValueContext() {
+		if (annotationAttributeValueContext != null) {
+			return annotationAttributeValueContext;
+		}
+		annotationAttributeValueContext = false;
+		try {
+			String source = unit.getSource();
+			int offset = response.getOffset();
+			if (source == null || offset <= 0 || offset > source.length()) {
+				return false;
+			}
+			int pos = offset - 1;
+			// Skip any partial token the user has typed
+			while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
+				pos--;
+			}
+			// Skip whitespace
+			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+				pos--;
+			}
+			// Expect '=' (assignment in annotation member-value pair)
+			if (pos < 0 || source.charAt(pos) != '=') {
+				return false;
+			}
+			pos--;
+			// Skip whitespace
+			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+				pos--;
+			}
+			// Expect an identifier (the attribute name)
+			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
+				return false;
+			}
+			while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
+				pos--;
+			}
+			// Skip whitespace
+			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+				pos--;
+			}
+			// Expect '(' or ',' (start of annotation arguments, or separator between them)
+			if (pos < 0 || (source.charAt(pos) != '(' && source.charAt(pos) != ',')) {
+				return false;
+			}
+			if (source.charAt(pos) == ',') {
+				// Walk backward to find matching '('
+				int depth = 0;
+				while (pos >= 0) {
+					char c = source.charAt(pos);
+					if (c == ')') {
+						depth++;
+					} else if (c == '(') {
+						if (depth == 0) {
+							break;
+						}
+						depth--;
+					}
+					pos--;
+				}
+			}
+			if (pos < 0 || source.charAt(pos) != '(') {
+				return false;
+			}
+			pos--;
+			// Skip whitespace
+			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+				pos--;
+			}
+			// Expect annotation name (possibly qualified: org.example.MyAnnotation)
+			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
+				return false;
+			}
+			while (pos >= 0 && (Character.isJavaIdentifierPart(source.charAt(pos)) || source.charAt(pos) == '.')) {
+				pos--;
+			}
+			// Skip whitespace before '@'
+			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+				pos--;
+			}
+			if (pos >= 0 && source.charAt(pos) == '@') {
+				annotationAttributeValueContext = true;
+			}
+		} catch (Exception e) {
+			// Don't let annotation detection failures affect normal completion
+			JavaLanguageServerPlugin.logException("Error detecting annotation context for completion", e);
+		}
+		return annotationAttributeValueContext;
+	}
+
+	/**
+	 * Check if a completion proposal is valid in an annotation attribute value context.
+	 * Per JLS §9.7.1, annotation attribute values must be compile-time constant expressions:
+	 * primitive/String literals, enum constants, class literals, other annotations, or arrays thereof.
+	 */
+	private boolean isValidAnnotationValueProposal(CompletionProposal proposal) {
+		int kind = proposal.getKind();
+		switch (kind) {
+			case CompletionProposal.KEYWORD:
+				// Only allow boolean literals — the only keywords valid as annotation values
+				String keyword = String.valueOf(proposal.getCompletion());
+				return "true".equals(keyword) || "false".equals(keyword);
+			case CompletionProposal.FIELD_REF:
+				// Allow static final fields (constants) and enum members
+				int flags = proposal.getFlags();
+				if (Flags.isEnum(flags)) {
+					return true;
+				}
+				return Flags.isStatic(flags) && Flags.isFinal(flags);
+			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+				// Allow annotation attribute references
+				return true;
+			case CompletionProposal.TYPE_REF:
+			case CompletionProposal.PACKAGE_REF:
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.METHOD_DECLARATION:
+			case CompletionProposal.LOCAL_VARIABLE_REF:
+			case CompletionProposal.VARIABLE_DECLARATION:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				return false;
+			default:
+				// Deny unknown kinds by default to avoid leaking non-constant proposals
+				return false;
+		}
 	}
 }
