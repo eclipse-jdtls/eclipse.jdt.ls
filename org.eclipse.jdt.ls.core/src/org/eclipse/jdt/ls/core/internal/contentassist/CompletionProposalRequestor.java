@@ -81,6 +81,10 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
 	/** Cached result of annotation attribute value context detection (null = not yet computed). */
 	private Boolean annotationAttributeValueContext;
+	/** The attribute name extracted during annotation context detection (e.g., "forRemoval"). */
+	private String annotationAttributeName;
+	/** The annotation type name extracted during annotation context detection (e.g., "Deprecated"). */
+	private String annotationTypeName;
 	/**
 	 * The possible completion kinds requested by the completion engine:
 	 * - {@link CompletionProposal#FIELD_REF}
@@ -775,11 +779,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	}
 
 	/**
-	 * Inject boolean literal completion items (true, false) when they are not
-	 * already present. This handles the case where JDT's completion engine doesn't
-	 * propose keywords in annotation attribute value context.
+	 * Inject boolean literal completion items (true, false) when the annotation
+	 * attribute type is boolean and they are not already present.
 	 */
 	private void injectBooleanLiterals(List<CompletionItem> items) {
+		if (!isAnnotationAttributeBoolean()) {
+			return;
+		}
 		boolean hasTrue = false;
 		boolean hasFalse = false;
 		for (CompletionItem item : items) {
@@ -801,6 +807,51 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			falseItem.setSortText("00001"); // high priority
 			items.add(hasTrue ? 1 : 0, falseItem);
 		}
+	}
+
+	/**
+	 * Check if the current annotation attribute has boolean return type.
+	 * Uses the annotation type name and attribute name captured during context detection.
+	 */
+	private boolean isAnnotationAttributeBoolean() {
+		if (annotationTypeName == null || annotationAttributeName == null) {
+			return false;
+		}
+		try {
+			IJavaProject javaProject = unit.getJavaProject();
+			if (javaProject == null) {
+				return false;
+			}
+			// Try to resolve the annotation type
+			IType annotationType = null;
+			// First try finding by simple name in the compilation unit's imports
+			String[][] resolved = unit.getType(unit.getTypes()[0].getElementName())
+				.resolveType(annotationTypeName);
+			if (resolved != null && resolved.length > 0) {
+				String fullyQualified = resolved[0][0].isEmpty()
+					? resolved[0][1]
+					: resolved[0][0] + "." + resolved[0][1];
+				annotationType = javaProject.findType(fullyQualified);
+			}
+			if (annotationType == null) {
+				// Fallback: try as fully qualified name directly
+				annotationType = javaProject.findType(annotationTypeName);
+			}
+			if (annotationType == null || !annotationType.isAnnotation()) {
+				return false;
+			}
+			// Find the annotation attribute method and check its return type
+			for (var method : annotationType.getMethods()) {
+				if (annotationAttributeName.equals(method.getElementName())) {
+					String returnType = method.getReturnType();
+					// Signature.SIG_BOOLEAN = "Z"
+					return Signature.SIG_BOOLEAN.equals(returnType);
+				}
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Error checking annotation attribute type", e);
+		}
+		return false;
 	}
 
 	/**
@@ -837,18 +888,27 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			if (pos < 0 || source.charAt(pos) != '=') {
 				return false;
 			}
+			// Guard against '==' (comparison operator, not annotation assignment)
+			if (pos + 1 < source.length() && source.charAt(pos + 1) == '=') {
+				return false;
+			}
+			if (pos > 0 && source.charAt(pos - 1) == '!') {
+				return false; // '!=' operator
+			}
 			pos--;
 			// Skip whitespace
 			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
 				pos--;
 			}
-			// Expect an identifier (the attribute name)
+			// Expect an identifier (the attribute name) and capture it
 			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
 				return false;
 			}
+			int attrEnd = pos + 1;
 			while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
 				pos--;
 			}
+			annotationAttributeName = source.substring(pos + 1, attrEnd);
 			// Skip whitespace
 			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
 				pos--;
@@ -881,13 +941,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
 				pos--;
 			}
-			// Expect annotation name (possibly qualified: org.example.MyAnnotation)
+			// Expect annotation name (possibly qualified: org.example.MyAnnotation) and capture it
 			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
 				return false;
 			}
+			int nameEnd = pos + 1;
 			while (pos >= 0 && (Character.isJavaIdentifierPart(source.charAt(pos)) || source.charAt(pos) == '.')) {
 				pos--;
 			}
+			annotationTypeName = source.substring(pos + 1, nameEnd);
 			// Skip whitespace before '@'
 			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
 				pos--;
@@ -925,6 +987,9 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 				// Allow annotation attribute references
 				return true;
 			case CompletionProposal.TYPE_REF:
+				// Allow type references — needed for enum types (e.g., RetentionPolicy.RUNTIME),
+				// class literals (e.g., Foo.class), and nested annotation types
+				return true;
 			case CompletionProposal.PACKAGE_REF:
 			case CompletionProposal.METHOD_REF:
 			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
@@ -937,8 +1002,8 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
 				return false;
 			default:
-				// Deny unknown kinds by default to avoid leaking non-constant proposals
-				return false;
+				// Allow unknown kinds to avoid blocking legitimate proposals
+				return true;
 		}
 	}
 }

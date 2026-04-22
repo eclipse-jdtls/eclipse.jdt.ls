@@ -18,6 +18,7 @@ import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -4069,6 +4070,81 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (CompletionItem item : list.getItems()) {
 			assertEquals(CompletionItemKind.Field, item.getKind());
 		}
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = ");
+
+		assertNotNull(list);
+		assertFalse(list.getItems().isEmpty());
+		// Should contain boolean literals true and false
+		List<String> labels = list.getItems().stream()
+				.map(CompletionItem::getLabel)
+				.collect(Collectors.toList());
+		assertTrue("Expected 'true' in completions but got: " + labels, labels.contains("true"));
+		assertTrue("Expected 'false' in completions but got: " + labels, labels.contains("false"));
+		// Should not contain methods like equals, hashCode, toString
+		for (CompletionItem item : list.getItems()) {
+			assertNotEquals("equals", item.getLabel());
+			assertNotEquals("hashCode", item.getLabel());
+			assertNotEquals("toString", item.getLabel());
+		}
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue_filtersMethodsAndPackages() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = ");
+
+		assertNotNull(list);
+		// No METHOD_REF proposals should survive the filter
+		for (CompletionItem item : list.getItems()) {
+			assertNotEquals("Completion kind should not be Method, but found: " + item.getLabel(),
+					CompletionItemKind.Method, item.getKind());
+		}
+	}
+
+	@Test
+	public void testCompletion_annotationStringAttributeValue_noBooleanInjection() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@SuppressWarnings(value = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "value = ");
+
+		assertNotNull(list);
+		// For String attribute, should NOT inject boolean literals as top items
+		// (true/false may appear as word completions but should not be injected as Keyword kind)
+		boolean hasBooleanKeyword = list.getItems().stream()
+				.anyMatch(item -> ("true".equals(item.getLabel()) || "false".equals(item.getLabel()))
+						&& CompletionItemKind.Keyword == item.getKind());
+		assertFalse("Should not inject boolean keywords for String annotation attribute", hasBooleanKeyword);
 	}
 
 	@Test
