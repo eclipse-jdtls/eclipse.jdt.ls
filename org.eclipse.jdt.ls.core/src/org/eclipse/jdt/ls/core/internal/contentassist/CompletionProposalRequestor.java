@@ -39,6 +39,9 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.compiler.ast.ASTNode;
+import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.TypeFilter;
 import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
@@ -79,12 +82,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
-	/** Cached result of annotation attribute value context detection (null = not yet computed). */
-	private Boolean annotationAttributeValueContext;
+	/** Whether the current completion is in an annotation attribute value context. */
+	private boolean isAnnotationAttributeValueContext;
+	/** Whether annotation attribute value context detection has been performed. */
+	private boolean annotationContextChecked;
 	/** The attribute name extracted during annotation context detection (e.g., "forRemoval"). */
 	private String annotationAttributeName;
 	/** The annotation type name extracted during annotation context detection (e.g., "Deprecated"). */
 	private String annotationTypeName;
+	/** The return type signature from the annotation attribute's binding (e.g., "Z" for boolean). */
+	private String annotationAttributeReturnTypeSignature;
 	/**
 	 * The possible completion kinds requested by the completion engine:
 	 * - {@link CompletionProposal#FIELD_REF}
@@ -250,7 +257,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 		// Filter out non-constant proposals in annotation attribute value context
 		// (e.g., @Deprecated(forRemoval = |) should only show true/false, not methods)
-		if (isAnnotationAttributeValueContext() && !isValidAnnotationValueProposal(proposal)) {
+		if (checkAnnotationAttributeValueContext() && !isValidAnnotationValueProposal(proposal)) {
 			return;
 		}
 
@@ -364,7 +371,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 		// Inject boolean literal completions for annotation attribute value context
 		// when JDT didn't propose them (e.g., @Deprecated(forRemoval = |))
-		if (annotationAttributeValueContext != null && annotationAttributeValueContext) {
+		if (isAnnotationAttributeValueContext) {
 			injectBooleanLiterals(completionItems);
 		}
 
@@ -811,9 +818,15 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	/**
 	 * Check if the current annotation attribute has boolean return type.
-	 * Uses the annotation type name and attribute name captured during context detection.
+	 * Uses the type signature from MemberValuePair binding when available,
+	 * falls back to resolving the annotation type via the Java model.
 	 */
 	private boolean isAnnotationAttributeBoolean() {
+		// Fast path: use binding info from InternalCompletionContext
+		if (annotationAttributeReturnTypeSignature != null) {
+			return Signature.SIG_BOOLEAN.equals(annotationAttributeReturnTypeSignature);
+		}
+		// Fallback: resolve via Java model
 		if (annotationTypeName == null || annotationAttributeName == null) {
 			return false;
 		}
@@ -858,110 +871,129 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	 * Detect if the completion offset is at an annotation attribute value position.
 	 * For example: {@code @Deprecated(forRemoval = |)} — cursor is at the value position.
 	 * <p>
-	 * Annotation attribute values must be compile-time constant expressions per JLS §9.7.1,
-	 * so completion proposals should be filtered accordingly.
+	 * Uses {@link InternalCompletionContext#getCompletionNodeParent()} to detect
+	 * {@link MemberValuePair} context when available, with a source-scanning fallback.
 	 * </p>
 	 *
 	 * @see <a href="https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3604">Issue #3604</a>
 	 */
-	private boolean isAnnotationAttributeValueContext() {
-		if (annotationAttributeValueContext != null) {
-			return annotationAttributeValueContext;
+	private boolean checkAnnotationAttributeValueContext() {
+		if (annotationContextChecked) {
+			return isAnnotationAttributeValueContext;
 		}
-		annotationAttributeValueContext = false;
+		annotationContextChecked = true;
 		try {
-			String source = unit.getSource();
-			int offset = response.getOffset();
-			if (source == null || offset <= 0 || offset > source.length()) {
-				return false;
-			}
-			int pos = offset - 1;
-			// Skip any partial token the user has typed
-			while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
-				pos--;
-			}
-			// Skip whitespace
-			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-				pos--;
-			}
-			// Expect '=' (assignment in annotation member-value pair)
-			if (pos < 0 || source.charAt(pos) != '=') {
-				return false;
-			}
-			// Guard against '==' (comparison operator, not annotation assignment)
-			if (pos + 1 < source.length() && source.charAt(pos + 1) == '=') {
-				return false;
-			}
-			if (pos > 0 && source.charAt(pos - 1) == '!') {
-				return false; // '!=' operator
-			}
-			pos--;
-			// Skip whitespace
-			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-				pos--;
-			}
-			// Expect an identifier (the attribute name) and capture it
-			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
-				return false;
-			}
-			int attrEnd = pos + 1;
-			while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
-				pos--;
-			}
-			annotationAttributeName = source.substring(pos + 1, attrEnd);
-			// Skip whitespace
-			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-				pos--;
-			}
-			// Expect '(' or ',' (start of annotation arguments, or separator between them)
-			if (pos < 0 || (source.charAt(pos) != '(' && source.charAt(pos) != ',')) {
-				return false;
-			}
-			if (source.charAt(pos) == ',') {
-				// Walk backward to find matching '('
-				int depth = 0;
-				while (pos >= 0) {
-					char c = source.charAt(pos);
-					if (c == ')') {
-						depth++;
-					} else if (c == '(') {
-						if (depth == 0) {
-							break;
-						}
-						depth--;
+			// Use InternalCompletionContext to detect MemberValuePair context
+			if (context instanceof InternalCompletionContext internalContext) {
+				ASTNode parent = internalContext.getCompletionNodeParent();
+				if (parent instanceof MemberValuePair mvp) {
+					isAnnotationAttributeValueContext = true;
+					annotationAttributeName = String.valueOf(mvp.name);
+					if (mvp.binding != null && mvp.binding.returnType != null) {
+						annotationAttributeReturnTypeSignature = new String(mvp.binding.returnType.signature());
 					}
-					pos--;
+					return true;
 				}
 			}
-			if (pos < 0 || source.charAt(pos) != '(') {
-				return false;
-			}
-			pos--;
-			// Skip whitespace
-			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-				pos--;
-			}
-			// Expect annotation name (possibly qualified: org.example.MyAnnotation) and capture it
-			if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
-				return false;
-			}
-			int nameEnd = pos + 1;
-			while (pos >= 0 && (Character.isJavaIdentifierPart(source.charAt(pos)) || source.charAt(pos) == '.')) {
-				pos--;
-			}
-			annotationTypeName = source.substring(pos + 1, nameEnd);
-			// Skip whitespace before '@'
-			while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-				pos--;
-			}
-			if (pos >= 0 && source.charAt(pos) == '@') {
-				annotationAttributeValueContext = true;
-			}
+			// Fallback: backward source scanning for annotation attribute value context
+			isAnnotationAttributeValueContext = detectAnnotationContextFromSource();
 		} catch (Exception e) {
 			// Don't let annotation detection failures affect normal completion
 			JavaLanguageServerPlugin.logException("Error detecting annotation context for completion", e);
 		}
-		return annotationAttributeValueContext;
+		return isAnnotationAttributeValueContext;
+	}
+
+	/**
+	 * Fallback detection via backward source scanning when InternalCompletionContext
+	 * does not provide MemberValuePair context.
+	 */
+	private boolean detectAnnotationContextFromSource() throws JavaModelException {
+		String source = unit.getSource();
+		int offset = response.getOffset();
+		if (source == null || offset <= 0 || offset > source.length()) {
+			return false;
+		}
+		int pos = offset - 1;
+		// Skip any partial token the user has typed
+		while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
+			pos--;
+		}
+		// Skip whitespace
+		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+			pos--;
+		}
+		// Expect '=' (assignment in annotation member-value pair)
+		if (pos < 0 || source.charAt(pos) != '=') {
+			return false;
+		}
+		// Guard against '==' and '!=' operators
+		if (pos > 0 && source.charAt(pos - 1) == '=') {
+			return false;
+		}
+		if (pos > 0 && source.charAt(pos - 1) == '!') {
+			return false;
+		}
+		pos--;
+		// Skip whitespace
+		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+			pos--;
+		}
+		// Expect an identifier (the attribute name) and capture it
+		if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
+			return false;
+		}
+		int attrEnd = pos + 1;
+		while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
+			pos--;
+		}
+		annotationAttributeName = source.substring(pos + 1, attrEnd);
+		// Skip whitespace
+		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+			pos--;
+		}
+		// Expect '(' or ',' (start of annotation arguments, or separator between them)
+		if (pos < 0 || (source.charAt(pos) != '(' && source.charAt(pos) != ',')) {
+			return false;
+		}
+		if (source.charAt(pos) == ',') {
+			// Walk backward to find matching '('
+			int depth = 0;
+			while (pos >= 0) {
+				char c = source.charAt(pos);
+				if (c == ')') {
+					depth++;
+				} else if (c == '(') {
+					if (depth == 0) {
+						break;
+					}
+					depth--;
+				}
+				pos--;
+			}
+		}
+		if (pos < 0 || source.charAt(pos) != '(') {
+			return false;
+		}
+		pos--;
+		// Skip whitespace
+		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+			pos--;
+		}
+		// Expect annotation name (possibly qualified: org.example.MyAnnotation) and capture it
+		if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
+			return false;
+		}
+		int nameEnd = pos + 1;
+		while (pos >= 0 && (Character.isJavaIdentifierPart(source.charAt(pos)) || source.charAt(pos) == '.')) {
+			pos--;
+		}
+		annotationTypeName = source.substring(pos + 1, nameEnd);
+		// Skip whitespace before '@'
+		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
+			pos--;
+		}
+		return pos >= 0 && source.charAt(pos) == '@';
 	}
 
 	/**
