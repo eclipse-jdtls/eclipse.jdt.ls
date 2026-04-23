@@ -22,16 +22,25 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnnotationTypeDeclaration;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CastExpression;
@@ -40,13 +49,18 @@ import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.EnumDeclaration;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
@@ -61,6 +75,7 @@ import org.eclipse.jdt.core.dom.SwitchExpression;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
@@ -68,12 +83,17 @@ import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.core.manipulation.dom.NecessaryParenthesesChecker;
+import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
+import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility2Core;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.BodyDeclarationRewrite;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.CodeStyleFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
@@ -84,6 +104,7 @@ import org.eclipse.jdt.internal.corext.fix.UnimplementedCodeFixCore;
 import org.eclipse.jdt.internal.corext.fix.UnusedCodeFixCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.CodeStyleCleanUpCore;
+import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.LocalCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.ProblemLocation;
@@ -106,18 +127,32 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.NewVariableCorrecti
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.util.ASTHelper;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.corrections.InvertBooleanUtility;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.CheckHashCodeEqualsResponse;
+import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateHashCodeEqualsParams;
+import org.eclipse.jdt.ls.core.internal.handlers.JdtDomModels.LspVariableBinding;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.QuickAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.jdt.ui.text.java.correction.ASTRewriteCorrectionProposalCore;
+import org.eclipse.lsp4j.CodeActionContext;
 import org.eclipse.lsp4j.CodeActionKind;
+import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentIdentifier;
+import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.TextChange;
+import org.eclipse.text.edits.MultiTextEdit;
+import org.eclipse.text.edits.TextEdit;
 
 public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcessor<ProposalKindWrapper> {
 
@@ -808,6 +843,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static ThrowStatement getThrowForUnsupportedCase(Expression switchExpr, AST ast, ASTRewrite astRewrite) {
 		ThrowStatement newThrowStatement = ast.newThrowStatement();
 		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
@@ -899,6 +935,7 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 	}
 
+	@SuppressWarnings("unchecked")
 	private static ThrowStatement getThrowForUnexpectedDefault(Expression switchExpression, AST ast, ASTRewrite astRewrite) {
 		ThrowStatement newThrowStatement = ast.newThrowStatement();
 		ClassInstanceCreation newCic = ast.newClassInstanceCreation();
@@ -963,6 +1000,192 @@ public class LocalCorrectionsSubProcessor extends LocalCorrectionsBaseSubProcess
 
 	public static void addExpressionShouldBeAVariableProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
 		new LocalCorrectionsSubProcessor().getExpressionShouldBeAVariableProposalsBase(context, problem, proposals);
+	}
+
+	public static void addMissingHashCodeProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		final ICompilationUnit cu = context.getCompilationUnit();
+
+		CompilationUnit astRoot = context.getASTRoot();
+		ASTNode selectedNode = problem.getCoveringNode(astRoot);
+		if (!(selectedNode instanceof Name)) {
+			return;
+		}
+
+		StructuralPropertyDescriptor locationInParent = selectedNode.getLocationInParent();
+		if (locationInParent != TypeDeclaration.NAME_PROPERTY && locationInParent != EnumDeclaration.NAME_PROPERTY) {
+			return;
+		}
+
+		AbstractTypeDeclaration typeDeclaration = (AbstractTypeDeclaration) selectedNode.getParent();
+
+		final ITypeBinding typeBinding = typeDeclaration.resolveBinding();
+		if (typeBinding == null || typeBinding.getSuperclass() == null) {
+			return;
+		}
+		boolean hasInstanceFields = false;
+		for (IVariableBinding declaredField : typeBinding.getDeclaredFields()) {
+			if (!Modifier.isStatic(declaredField.getModifiers())) {
+				hasInstanceFields = true;
+				break;
+			}
+		}
+		if (hasInstanceFields) {
+			final String METHODNAME_EQUALS = "equals";
+			IMethodBinding[] declaredMethods = typeBinding.getDeclaredMethods();
+			IMethodBinding equalsBinding = null;
+			for (IMethodBinding method : declaredMethods) {
+				if (method.getName().equals(METHODNAME_EQUALS)) {
+					ITypeBinding[] b = method.getParameterTypes();
+					if ((b.length == 1) && (b[0].getQualifiedName().equals("java.lang.Object"))) {
+						equalsBinding = method;
+						break;
+					}
+				}
+			}
+			final Set<String> fieldKeySet = new HashSet<>();
+			if (equalsBinding != null) {
+				final IMethodBinding searchBinding = equalsBinding;
+				ASTVisitor visitor = new ASTVisitor() {
+					@Override
+					public boolean visit(AnnotationTypeDeclaration node) {
+						// TODO Auto-generated method stub
+						return node == typeDeclaration;
+					}
+
+					@Override
+					public boolean visit(EnumDeclaration node) {
+						return node == typeDeclaration;
+					}
+
+					@Override
+					public boolean visit(TypeDeclaration node) {
+						return node == typeDeclaration;
+					}
+
+					@Override
+					public boolean visit(MethodDeclaration node) {
+						IMethodBinding nodeBinding = node.resolveBinding();
+						if (nodeBinding == null || !nodeBinding.isEqualTo(searchBinding)) {
+							return false;
+						}
+						if (!typeBinding.isEqualTo(nodeBinding.getDeclaringClass())) {
+							return false;
+						}
+						ASTVisitor equalsVisitor = new ASTVisitor() {
+							@Override
+							public boolean visit(SimpleName node) {
+								IBinding nodeBinding = node.resolveBinding();
+								if (nodeBinding instanceof IVariableBinding varBinding && varBinding.isField()) {
+									fieldKeySet.add(varBinding.getKey());
+								}
+								return false;
+							}
+						};
+						node.accept(equalsVisitor);
+						return false;
+					}
+
+				};
+				typeDeclaration.accept(visitor);
+			}
+			try {
+				CodeActionParams params = LocalCorrectionsSubProcessor.constructCodeActionParams(cu, "}");
+				CheckHashCodeEqualsResponse response = HashCodeEqualsHandler.checkHashCodeEqualsStatus(params);
+				List<LspVariableBinding> fields = new ArrayList<>();
+				for (LspVariableBinding varBinding : response.fields) {
+					if (fieldKeySet.contains(varBinding.bindingKey)) {
+						fields.add(varBinding);
+					}
+				}
+				if (fields.size() > 0) { // if the equals method refers to fields, use them to generate a new hashCode()
+					//Generate hashCode() and equals()... proposal
+					String label = CorrectionMessages.LocalCorrectionsSubProcessor_regenerate_hashCode_equals_description;
+					ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null, IProposalRelevance.GENERATE_HASHCODE_AND_EQUALS) {
+						@Override
+						protected Change createChange() {
+							GenerateHashCodeEqualsParams genParams = new GenerateHashCodeEqualsParams();
+							genParams.context = params;
+							genParams.regenerate = true;
+							genParams.fields = fields.toArray(new LspVariableBinding[0]);
+
+							IType type = SourceAssistProcessor.getSelectionType(params, new NullProgressMonitor());
+							boolean useJava7Objects = true;
+							boolean useInstanceof = true;
+							boolean useBlocks = true;
+							boolean generateComments = true;
+							TextEdit edit = HashCodeEqualsHandler.generateHashCodeEqualsTextEdit(type, genParams.fields, genParams.regenerate, useJava7Objects, useInstanceof, useBlocks, generateComments, params.getRange(),
+									new NullProgressMonitor());
+							TextChange change = new CompilationUnitChange(label, cu);
+							MultiTextEdit multiTextEdit = new MultiTextEdit();
+							change.setEdit(multiTextEdit);
+							if (edit != null) {
+								change.addEdit(edit);
+							}
+							return change;
+						}
+
+						@Override
+						public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
+							return "";
+						}
+					};
+					proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.log(e);
+			}
+		}
+
+		//Override hashCode() proposal
+		IMethodBinding superHashCode = Bindings.findMethodInHierarchy(typeBinding, "hashCode", new ITypeBinding[0]); //$NON-NLS-1$
+		if (superHashCode == null) {
+			return;
+		}
+
+		String label = CorrectionMessages.LocalCorrectionsSubProcessor_override_hashCode_description;
+
+		ASTRewrite rewrite = ASTRewrite.create(astRoot.getAST());
+		LinkedCorrectionProposalCore proposal2 = new LinkedCorrectionProposalCore(label, cu, rewrite, IProposalRelevance.OVERRIDE_HASHCODE);
+		ImportRewrite importRewrite = proposal2.createImportRewrite(astRoot);
+
+		final CodeGenerationSettings settings = JavaPreferencesSettings.getCodeGenerationSettings(cu);
+
+		try {
+			ImportRewriteContext importContext = new ContextSensitiveImportRewriteContext(astRoot, problem.getOffset(), importRewrite);
+			MethodDeclaration hashCode = StubUtility2Core.createImplementationStub(cu, rewrite, importRewrite, importContext, superHashCode, typeBinding, settings, false, null);
+			BodyDeclarationRewrite.create(rewrite, typeDeclaration).insert(hashCode, null);
+
+			proposal2.setEndPosition(rewrite.track(hashCode));
+
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e);
+		}
+
+		proposals.add(CodeActionHandler.wrap(proposal2, CodeActionKind.QuickFix));
+	}
+
+	public static Range getRange(ICompilationUnit unit, String search) throws JavaModelException {
+		return getRange(unit, search, search.length());
+	}
+
+	public static Range getRange(ICompilationUnit unit, String search, int length) throws JavaModelException {
+		String str = unit.getSource();
+		int start = str.lastIndexOf(search);
+		return JDTUtils.toRange(unit, start, length);
+	}
+
+	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, String search) throws JavaModelException {
+		final Range range = getRange(unit, search);
+		return constructCodeActionParams(unit, range);
+
+	}
+
+	public static CodeActionParams constructCodeActionParams(ICompilationUnit unit, Range range) {
+		CodeActionParams params = new CodeActionParams();
+		params.setTextDocument(new TextDocumentIdentifier(JDTUtils.toURI(unit)));
+		params.setRange(range);
+		params.setContext(new CodeActionContext(Collections.emptyList()));
+		return params;
 	}
 
 	@Override
