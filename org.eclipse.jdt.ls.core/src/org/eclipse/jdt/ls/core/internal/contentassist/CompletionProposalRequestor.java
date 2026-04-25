@@ -260,17 +260,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 
 	public List<CompletionItem> getCompletionItems(IProgressMonitor monitor) {
 		CompletionRankingAggregation[] aggregatedRanks = getAggregatedRankingResult(monitor);
+		Map<CompletionProposal, CompletionRankingAggregation> proposalToRankingResult = new HashMap<>(proposals.size());
 		for (int i = 0; i < proposals.size(); i++) {
 			CompletionProposal proposal = proposals.get(i);
-			if (aggregatedRanks[i] != null) {
+			CompletionRankingAggregation ranking = aggregatedRanks[i];
+			if (ranking != null) {
 				// we assume there won't be overflow for now since the the score from
 				// each provider can only be 100 at most.
-				proposal.setRelevance(proposal.getRelevance() + aggregatedRanks[i].getScore());
+				proposal.setRelevance(proposal.getRelevance() + ranking.getScore());
 			}
-		}
-		Map<CompletionProposal, CompletionRankingAggregation> proposalToRankingResult = new HashMap<>();
-		for (int i = 0; i < proposals.size(); i++) {
-			proposalToRankingResult.put(proposals.get(i), aggregatedRanks[i]);
+			proposalToRankingResult.put(proposal, ranking);
 		}
 
 		proposals.sort(new ProposalComparator(proposals.size()));
