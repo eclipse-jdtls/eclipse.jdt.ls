@@ -60,7 +60,6 @@ import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.internal.launching.StandardVMType;
@@ -243,7 +242,6 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			} else if (GradleUtils.hasGradleInvalidTypeCodeException(importStatus, directory, monitor)) {
 				gradleUpgradeWrapperStatus.add(new GradleUpgradeWrapperStatus(importStatus, GRADLE_INVALID_TYPE_CODE_MESSAGE, directory.toUri().toString()));
 			}
-			checkWrapperChecksum(directory);
 		}
 		// store the digest for the imported gradle projects.
 		ProjectUtils.getGradleProjects().forEach(project -> {
@@ -367,50 +365,31 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		return startSynchronization(projectFolder, monitor);
 	}
 
-	public static void checkWrapperChecksum(Path rootFolder) {
-		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (preferencesManager == null) {
-			return;
-		}
-
-		if (Files.exists(rootFolder.resolve(WrapperValidator.GRADLE_WRAPPER_JAR))) {
-			Job checksumJob = new Job("Validating Gradle wrapper checksum...") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					WrapperValidator validator = new WrapperValidator();
-					try {
-						ValidationResult result = validator.checkWrapper(rootFolder.toFile().getAbsolutePath());
-						if (!result.isValid() && !WrapperValidator.contains(result.getChecksum())) {
-							ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
-							if (pm != null && pm.getConnection() != null) {
-								if (preferencesManager.getClientPreferences().isGradleChecksumWrapperPromptSupport()) {
-									String id = "gradle/checksum/prompt";
-									ExecuteCommandParams params = new ExecuteCommandParams(id, asList(result.getWrapperJar(), result.getChecksum()));
-									pm.getConnection().sendNotification(params);
-								} else {
-									//@formatter:off
-									String message = GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE.replaceAll("@wrapper@", result.getWrapperJar())
-																							.replaceAll("@checksum@", result.getChecksum());
-									//@formatter:on
-									pm.getConnection().showMessage(new MessageParams(MessageType.Error, message));
-								}
-							}
-						}
-					} catch (CoreException e) {
-						JavaLanguageServerPlugin.logException(e.getMessage(), e);
-					}
-					return Status.OK_STATUS;
-				}
-			};
-			checksumJob.setPriority(Job.LONG);
-			checksumJob.schedule();
-		}
-	}
-
 	public static GradleDistribution getGradleDistribution(Path rootFolder) {
 		Preferences preferences = getPreferences();
 		if (preferences.isGradleWrapperEnabled() && Files.exists(rootFolder.resolve("gradle/wrapper/gradle-wrapper.properties"))) {
-			return GradleDistribution.fromBuild();
+			if (Files.exists(rootFolder.resolve(WrapperValidator.GRADLE_WRAPPER_JAR))) {
+				try {
+					WrapperValidator validator = new WrapperValidator();
+					ValidationResult result = validator.checkWrapper(rootFolder.toFile().getAbsolutePath());
+					if (result.getStatus() == ValidationResult.Status.INVALID && !WrapperValidator.contains(result.getChecksum())) {
+						JavaLanguageServerPlugin.logError("Gradle wrapper checksum validation failed for " + rootFolder + ". Skipping wrapper.");
+						notifyInvalidChecksum(rootFolder, result);
+						// Fall through to next distribution option
+					} else if (result.isUnverifiable()) {
+						JavaLanguageServerPlugin.logInfo("Gradle wrapper checksum could not be verified for " + rootFolder + ". Skipping wrapper.");
+						notifyInvalidChecksum(rootFolder, result);
+						// Fall through to next distribution option
+					} else {
+						return GradleDistribution.fromBuild();
+					}
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					// On error, fall through to next distribution option
+				}
+			} else {
+				return GradleDistribution.fromBuild();
+			}
 		}
 		if (StringUtils.isNotBlank(preferences.getGradleVersion())) {
 			List<GradleVersion> versions = CorePlugin.publishedGradleVersions().getVersions();
@@ -433,6 +412,25 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			return GradleDistribution.forLocalInstallation(gradleHomeFile);
 		}
 		return DEFAULT_DISTRIBUTION;
+	}
+
+	private static void notifyInvalidChecksum(Path rootFolder, ValidationResult result) {
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
+		ProjectsManager pm = JavaLanguageServerPlugin.getProjectsManager();
+		if (preferencesManager == null || pm == null || pm.getConnection() == null) {
+			return;
+		}
+		if (preferencesManager.getClientPreferences().isGradleChecksumWrapperPromptSupport()) {
+			String id = "gradle/checksum/prompt";
+			ExecuteCommandParams params = new ExecuteCommandParams(id, asList(result.getWrapperJar(), result.getChecksum()));
+			pm.getConnection().sendNotification(params);
+		} else {
+			//@formatter:off
+			String message = GRADLE_WRAPPER_CHEKSUM_WARNING_TEMPLATE.replaceAll("@wrapper@", result.getWrapperJar())
+																	.replaceAll("@checksum@", result.getChecksum());
+			//@formatter:on
+			pm.getConnection().showMessage(new MessageParams(MessageType.Error, message));
+		}
 	}
 
 	public static File getGradleHomeFile() {
