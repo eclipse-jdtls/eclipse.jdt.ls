@@ -40,6 +40,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameReference;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
@@ -86,10 +87,6 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private boolean isAnnotationAttributeValueContext;
 	/** Whether annotation attribute value context detection has been performed. */
 	private boolean annotationContextChecked;
-	/** The attribute name extracted during annotation context detection (e.g., "forRemoval"). */
-	private String annotationAttributeName;
-	/** The annotation type name extracted during annotation context detection (e.g., "Deprecated"). */
-	private String annotationTypeName;
 	/** The return type signature from the annotation attribute's binding (e.g., "Z" for boolean). */
 	private String annotationAttributeReturnTypeSignature;
 	/**
@@ -790,79 +787,48 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	 * attribute type is boolean and they are not already present.
 	 */
 	private void injectBooleanLiterals(List<CompletionItem> items) {
-		if (!isAnnotationAttributeBoolean()) {
+		if (!isAnnotationAttributeBoolean() || !isCompletingSingleNameReference()) {
 			return;
 		}
 		boolean hasTrue = false;
 		boolean hasFalse = false;
 		for (CompletionItem item : items) {
 			String label = item.getLabel();
-			if ("true".equals(label)) hasTrue = true;
-			if ("false".equals(label)) hasFalse = true;
+			if ("true".equals(label)) {
+				hasTrue = true;
+			}
+			if ("false".equals(label)) {
+				hasFalse = true;
+			}
 		}
+		int insertIndex = hasTrue ? 1 : 0;
 		if (!hasTrue) {
 			CompletionItem trueItem = new CompletionItem("true");
 			trueItem.setKind(CompletionItemKind.Keyword);
 			trueItem.setInsertText("true");
 			trueItem.setSortText("00000"); // high priority
-			items.add(0, trueItem);
+			items.add(insertIndex++, trueItem);
 		}
 		if (!hasFalse) {
 			CompletionItem falseItem = new CompletionItem("false");
 			falseItem.setKind(CompletionItemKind.Keyword);
 			falseItem.setInsertText("false");
 			falseItem.setSortText("00001"); // high priority
-			items.add(hasTrue ? 1 : 0, falseItem);
+			items.add(insertIndex, falseItem);
 		}
 	}
 
 	/**
 	 * Check if the current annotation attribute has boolean return type.
-	 * Uses the type signature from MemberValuePair binding when available,
-	 * falls back to resolving the annotation type via the Java model.
+	 * Uses the type signature from MemberValuePair binding.
 	 */
 	private boolean isAnnotationAttributeBoolean() {
-		// Fast path: use binding info from InternalCompletionContext
-		if (annotationAttributeReturnTypeSignature != null) {
-			return Signature.SIG_BOOLEAN.equals(annotationAttributeReturnTypeSignature);
-		}
-		// Fallback: resolve via Java model
-		if (annotationTypeName == null || annotationAttributeName == null) {
-			return false;
-		}
-		try {
-			IJavaProject javaProject = unit.getJavaProject();
-			if (javaProject == null) {
-				return false;
-			}
-			// Try to resolve the annotation type
-			IType annotationType = null;
-			// First try finding by simple name in the compilation unit's imports
-			String[][] resolved = unit.getType(unit.getTypes()[0].getElementName())
-				.resolveType(annotationTypeName);
-			if (resolved != null && resolved.length > 0) {
-				String fullyQualified = resolved[0][0].isEmpty()
-					? resolved[0][1]
-					: resolved[0][0] + "." + resolved[0][1];
-				annotationType = javaProject.findType(fullyQualified);
-			}
-			if (annotationType == null) {
-				// Fallback: try as fully qualified name directly
-				annotationType = javaProject.findType(annotationTypeName);
-			}
-			if (annotationType == null || !annotationType.isAnnotation()) {
-				return false;
-			}
-			// Find the annotation attribute method and check its return type
-			for (var method : annotationType.getMethods()) {
-				if (annotationAttributeName.equals(method.getElementName())) {
-					String returnType = method.getReturnType();
-					// Signature.SIG_BOOLEAN = "Z"
-					return Signature.SIG_BOOLEAN.equals(returnType);
-				}
-			}
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException("Error checking annotation attribute type", e);
+		return Signature.SIG_BOOLEAN.equals(annotationAttributeReturnTypeSignature);
+	}
+
+	private boolean isCompletingSingleNameReference() {
+		if (context instanceof InternalCompletionContext internalContext) {
+			return internalContext.getCompletionNode() instanceof CompletionOnSingleNameReference;
 		}
 		return false;
 	}
@@ -872,7 +838,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	 * For example: {@code @Deprecated(forRemoval = |)} — cursor is at the value position.
 	 * <p>
 	 * Uses {@link InternalCompletionContext#getCompletionNodeParent()} to detect
-	 * {@link MemberValuePair} context when available, with a source-scanning fallback.
+	 * {@link MemberValuePair} context.
 	 * </p>
 	 *
 	 * @see <a href="https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3604">Issue #3604</a>
@@ -882,118 +848,16 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return isAnnotationAttributeValueContext;
 		}
 		annotationContextChecked = true;
-		try {
-			// Use InternalCompletionContext to detect MemberValuePair context
-			if (context instanceof InternalCompletionContext internalContext) {
-				ASTNode parent = internalContext.getCompletionNodeParent();
-				if (parent instanceof MemberValuePair mvp) {
-					isAnnotationAttributeValueContext = true;
-					annotationAttributeName = String.valueOf(mvp.name);
-					if (mvp.binding != null && mvp.binding.returnType != null) {
-						annotationAttributeReturnTypeSignature = new String(mvp.binding.returnType.signature());
-					}
-					return true;
+		if (context instanceof InternalCompletionContext internalContext) {
+			ASTNode parent = internalContext.getCompletionNodeParent();
+			if (parent instanceof MemberValuePair mvp) {
+				isAnnotationAttributeValueContext = true;
+				if (mvp.binding != null && mvp.binding.returnType != null) {
+					annotationAttributeReturnTypeSignature = new String(mvp.binding.returnType.signature());
 				}
 			}
-			// Fallback: backward source scanning for annotation attribute value context
-			isAnnotationAttributeValueContext = detectAnnotationContextFromSource();
-		} catch (Exception e) {
-			// Don't let annotation detection failures affect normal completion
-			JavaLanguageServerPlugin.logException("Error detecting annotation context for completion", e);
 		}
 		return isAnnotationAttributeValueContext;
-	}
-
-	/**
-	 * Fallback detection via backward source scanning when InternalCompletionContext
-	 * does not provide MemberValuePair context.
-	 */
-	private boolean detectAnnotationContextFromSource() throws JavaModelException {
-		String source = unit.getSource();
-		int offset = response.getOffset();
-		if (source == null || offset <= 0 || offset > source.length()) {
-			return false;
-		}
-		int pos = offset - 1;
-		// Skip any partial token the user has typed
-		while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
-			pos--;
-		}
-		// Skip whitespace
-		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-			pos--;
-		}
-		// Expect '=' (assignment in annotation member-value pair)
-		if (pos < 0 || source.charAt(pos) != '=') {
-			return false;
-		}
-		// Guard against '==' and '!=' operators
-		if (pos > 0 && source.charAt(pos - 1) == '=') {
-			return false;
-		}
-		if (pos > 0 && source.charAt(pos - 1) == '!') {
-			return false;
-		}
-		pos--;
-		// Skip whitespace
-		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-			pos--;
-		}
-		// Expect an identifier (the attribute name) and capture it
-		if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
-			return false;
-		}
-		int attrEnd = pos + 1;
-		while (pos >= 0 && Character.isJavaIdentifierPart(source.charAt(pos))) {
-			pos--;
-		}
-		annotationAttributeName = source.substring(pos + 1, attrEnd);
-		// Skip whitespace
-		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-			pos--;
-		}
-		// Expect '(' or ',' (start of annotation arguments, or separator between them)
-		if (pos < 0 || (source.charAt(pos) != '(' && source.charAt(pos) != ',')) {
-			return false;
-		}
-		if (source.charAt(pos) == ',') {
-			// Walk backward to find matching '('
-			int depth = 0;
-			while (pos >= 0) {
-				char c = source.charAt(pos);
-				if (c == ')') {
-					depth++;
-				} else if (c == '(') {
-					if (depth == 0) {
-						break;
-					}
-					depth--;
-				}
-				pos--;
-			}
-		}
-		if (pos < 0 || source.charAt(pos) != '(') {
-			return false;
-		}
-		pos--;
-		// Skip whitespace
-		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-			pos--;
-		}
-		// Expect annotation name (possibly qualified: org.example.MyAnnotation) and capture it
-		if (pos < 0 || !Character.isJavaIdentifierPart(source.charAt(pos))) {
-			return false;
-		}
-		int nameEnd = pos + 1;
-		while (pos >= 0 && (Character.isJavaIdentifierPart(source.charAt(pos)) || source.charAt(pos) == '.')) {
-			pos--;
-		}
-		annotationTypeName = source.substring(pos + 1, nameEnd);
-		// Skip whitespace before '@'
-		while (pos >= 0 && Character.isWhitespace(source.charAt(pos))) {
-			pos--;
-		}
-		return pos >= 0 && source.charAt(pos) == '@';
 	}
 
 	/**
@@ -1007,7 +871,7 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			case CompletionProposal.KEYWORD:
 				// Only allow boolean literals — the only keywords valid as annotation values
 				String keyword = String.valueOf(proposal.getCompletion());
-				return "true".equals(keyword) || "false".equals(keyword);
+				return isCompletingSingleNameReference() && ("true".equals(keyword) || "false".equals(keyword));
 			case CompletionProposal.FIELD_REF:
 				// Allow static final fields (constants) and enum members
 				int flags = proposal.getFlags();

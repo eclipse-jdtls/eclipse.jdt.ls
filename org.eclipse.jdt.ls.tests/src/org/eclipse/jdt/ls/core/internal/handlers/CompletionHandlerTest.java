@@ -4092,8 +4092,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<String> labels = list.getItems().stream()
 				.map(CompletionItem::getLabel)
 				.collect(Collectors.toList());
-		assertTrue("Expected 'true' in completions but got: " + labels, labels.contains("true"));
-		assertTrue("Expected 'false' in completions but got: " + labels, labels.contains("false"));
+		assertTrue(labels.contains("true"), "Expected 'true' in completions but got: " + labels);
+		assertTrue(labels.contains("false"), "Expected 'false' in completions but got: " + labels);
 		// Should not contain methods like equals, hashCode, toString
 		for (CompletionItem item : list.getItems()) {
 			assertNotEquals("equals", item.getLabel());
@@ -4119,8 +4119,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		// No METHOD_REF proposals should survive the filter
 		for (CompletionItem item : list.getItems()) {
-			assertNotEquals("Completion kind should not be Method, but found: " + item.getLabel(),
-					CompletionItemKind.Method, item.getKind());
+			assertNotEquals(CompletionItemKind.Method, item.getKind(),
+					"Completion kind should not be Method, but found: " + item.getLabel());
 		}
 	}
 
@@ -4144,7 +4144,35 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		boolean hasBooleanKeyword = list.getItems().stream()
 				.anyMatch(item -> ("true".equals(item.getLabel()) || "false".equals(item.getLabel()))
 						&& CompletionItemKind.Keyword == item.getKind());
-		assertFalse("Should not inject boolean keywords for String annotation attribute", hasBooleanKeyword);
+		assertFalse(hasBooleanKeyword, "Should not inject boolean keywords for String annotation attribute");
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue_qualifiedNameNoBooleanInjection() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Test.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = Test.)
+				public class Test {
+				    public static final boolean blah = false;
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = Test.");
+
+		assertNotNull(list);
+		List<String> labels = list.getItems().stream()
+				.map(CompletionItem::getLabel)
+				.collect(Collectors.toList());
+		assertTrue(labels.stream().anyMatch(label -> label.startsWith("blah")),
+				"Expected 'blah' in completions but got: " + labels);
+		boolean hasBooleanKeyword = list.getItems().stream()
+				.anyMatch(item -> ("true".equals(item.getLabel()) || "false".equals(item.getLabel()))
+						&& CompletionItemKind.Keyword == item.getKind());
+		assertFalse(hasBooleanKeyword,
+				"Should not inject boolean keywords for qualified annotation attribute completion");
 	}
 
 	@Test
