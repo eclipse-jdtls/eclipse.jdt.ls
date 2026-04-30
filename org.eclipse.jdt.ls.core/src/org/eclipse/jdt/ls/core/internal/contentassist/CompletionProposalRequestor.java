@@ -39,6 +39,10 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.internal.codeassist.InternalCompletionContext;
+import org.eclipse.jdt.internal.codeassist.complete.CompletionOnSingleNameReference;
+import org.eclipse.jdt.internal.compiler.ast.ASTNode;
+import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.corext.template.java.SignatureUtil;
 import org.eclipse.jdt.internal.corext.util.TypeFilter;
 import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
@@ -79,6 +83,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 	private PreferenceManager preferenceManager;
 	private CompletionProposalReplacementProvider proposalProvider;
 	private CompletionItemDefaults itemDefaults = new CompletionItemDefaults();
+	/** Whether the current completion is in an annotation attribute value context. */
+	private boolean isAnnotationAttributeValueContext;
+	/** Whether annotation attribute value context detection has been performed. */
+	private boolean annotationContextChecked;
+	/** The return type signature from the annotation attribute's binding (e.g., "Z" for boolean). */
+	private String annotationAttributeReturnTypeSignature;
 	/**
 	 * The possible completion kinds requested by the completion engine:
 	 * - {@link CompletionProposal#FIELD_REF}
@@ -242,6 +252,12 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 			return;
 		}
 
+		// Filter out non-constant proposals in annotation attribute value context
+		// (e.g., @Deprecated(forRemoval = |) should only show true/false, not methods)
+		if (checkAnnotationAttributeValueContext() && !isValidAnnotationValueProposal(proposal)) {
+			return;
+		}
+
 		if (proposal.getKind() == CompletionProposal.POTENTIAL_METHOD_DECLARATION) {
 			acceptPotentialMethodDeclaration(proposal);
 		} else {
@@ -349,6 +365,13 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		response.setItems(completionItems);
 		response.setCommonData(CompletionResolveHandler.DATA_FIELD_URI, uri);
 		response.setCompletionItemData(contributedData);
+
+		// Inject boolean literal completions for annotation attribute value context
+		// when JDT didn't propose them (e.g., @Deprecated(forRemoval = |))
+		if (isAnnotationAttributeValueContext) {
+			injectBooleanLiterals(completionItems);
+		}
+
 		CompletionResponses.store(response);
 
 		return completionItems;
@@ -757,5 +780,126 @@ public final class CompletionProposalRequestor extends CompletionRequestor {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Inject boolean literal completion items (true, false) when the annotation
+	 * attribute type is boolean and they are not already present.
+	 */
+	private void injectBooleanLiterals(List<CompletionItem> items) {
+		if (!isAnnotationAttributeBoolean() || !isCompletingSingleNameReference()) {
+			return;
+		}
+		boolean hasTrue = false;
+		boolean hasFalse = false;
+		for (CompletionItem item : items) {
+			String label = item.getLabel();
+			if ("true".equals(label)) {
+				hasTrue = true;
+			}
+			if ("false".equals(label)) {
+				hasFalse = true;
+			}
+		}
+		int insertIndex = hasTrue ? 1 : 0;
+		if (!hasTrue) {
+			CompletionItem trueItem = new CompletionItem("true");
+			trueItem.setKind(CompletionItemKind.Keyword);
+			trueItem.setInsertText("true");
+			trueItem.setSortText("00000"); // high priority
+			items.add(insertIndex++, trueItem);
+		}
+		if (!hasFalse) {
+			CompletionItem falseItem = new CompletionItem("false");
+			falseItem.setKind(CompletionItemKind.Keyword);
+			falseItem.setInsertText("false");
+			falseItem.setSortText("00001"); // high priority
+			items.add(insertIndex, falseItem);
+		}
+	}
+
+	/**
+	 * Check if the current annotation attribute has boolean return type.
+	 * Uses the type signature from MemberValuePair binding.
+	 */
+	private boolean isAnnotationAttributeBoolean() {
+		return Signature.SIG_BOOLEAN.equals(annotationAttributeReturnTypeSignature);
+	}
+
+	private boolean isCompletingSingleNameReference() {
+		if (context instanceof InternalCompletionContext internalContext) {
+			return internalContext.getCompletionNode() instanceof CompletionOnSingleNameReference;
+		}
+		return false;
+	}
+
+	/**
+	 * Detect if the completion offset is at an annotation attribute value position.
+	 * For example: {@code @Deprecated(forRemoval = |)} — cursor is at the value position.
+	 * <p>
+	 * Uses {@link InternalCompletionContext#getCompletionNodeParent()} to detect
+	 * {@link MemberValuePair} context.
+	 * </p>
+	 *
+	 * @see <a href="https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3604">Issue #3604</a>
+	 */
+	private boolean checkAnnotationAttributeValueContext() {
+		if (annotationContextChecked) {
+			return isAnnotationAttributeValueContext;
+		}
+		annotationContextChecked = true;
+		if (context instanceof InternalCompletionContext internalContext) {
+			ASTNode parent = internalContext.getCompletionNodeParent();
+			if (parent instanceof MemberValuePair mvp) {
+				isAnnotationAttributeValueContext = true;
+				if (mvp.binding != null && mvp.binding.returnType != null) {
+					annotationAttributeReturnTypeSignature = new String(mvp.binding.returnType.signature());
+				}
+			}
+		}
+		return isAnnotationAttributeValueContext;
+	}
+
+	/**
+	 * Check if a completion proposal is valid in an annotation attribute value context.
+	 * Per JLS §9.7.1, annotation attribute values must be compile-time constant expressions:
+	 * primitive/String literals, enum constants, class literals, other annotations, or arrays thereof.
+	 */
+	private boolean isValidAnnotationValueProposal(CompletionProposal proposal) {
+		int kind = proposal.getKind();
+		switch (kind) {
+			case CompletionProposal.KEYWORD:
+				// Only allow boolean literals — the only keywords valid as annotation values
+				String keyword = String.valueOf(proposal.getCompletion());
+				return isCompletingSingleNameReference() && ("true".equals(keyword) || "false".equals(keyword));
+			case CompletionProposal.FIELD_REF:
+				// Allow static final fields (constants) and enum members
+				int flags = proposal.getFlags();
+				if (Flags.isEnum(flags)) {
+					return true;
+				}
+				return Flags.isStatic(flags) && Flags.isFinal(flags);
+			case CompletionProposal.ANNOTATION_ATTRIBUTE_REF:
+				// Allow annotation attribute references
+				return true;
+			case CompletionProposal.TYPE_REF:
+				// Allow type references — needed for enum types (e.g., RetentionPolicy.RUNTIME),
+				// class literals (e.g., Foo.class), and nested annotation types
+				return true;
+			case CompletionProposal.PACKAGE_REF:
+			case CompletionProposal.METHOD_REF:
+			case CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER:
+			case CompletionProposal.METHOD_DECLARATION:
+			case CompletionProposal.LOCAL_VARIABLE_REF:
+			case CompletionProposal.VARIABLE_DECLARATION:
+			case CompletionProposal.CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION:
+			case CompletionProposal.ANONYMOUS_CLASS_DECLARATION:
+			case CompletionProposal.POTENTIAL_METHOD_DECLARATION:
+				return false;
+			default:
+				// Allow unknown kinds to avoid blocking legitimate proposals
+				return true;
+		}
 	}
 }
