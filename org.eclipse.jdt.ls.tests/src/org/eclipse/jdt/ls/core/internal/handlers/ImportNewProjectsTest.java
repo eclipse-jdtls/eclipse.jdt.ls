@@ -62,6 +62,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, null);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testImportNewMavenProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -115,11 +116,12 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(6, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
-		verify(client, times(1)).sendEventNotification(argument.capture());
+		verify(client, times(2)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testManualImportNewMavenProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -181,6 +183,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), 1);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testImportNewGradleProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -219,7 +222,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(4, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
-		verify(client, times(1)).sendEventNotification(argument.capture());
+		verify(client, times(2)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
