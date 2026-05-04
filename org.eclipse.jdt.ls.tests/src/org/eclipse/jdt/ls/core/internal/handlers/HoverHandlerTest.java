@@ -623,7 +623,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 			class HelloWorld { \s
 			public static void main(String... args) { \s
-			System.out.**println**("Hello World!");   \s
+			System.out.**println**("Hello World!"); \s
 			}\s\s
 			} \s
 			 \s
