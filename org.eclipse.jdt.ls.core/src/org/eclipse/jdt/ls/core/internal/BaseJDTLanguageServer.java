@@ -84,7 +84,14 @@ public class BaseJDTLanguageServer {
 	}
 
 	protected <R> CompletableFuture<R> computeAsync(Function<IProgressMonitor, R> code) {
-		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)));
+		return CompletableFutures.computeAsync(cc -> code.apply(toMonitor(cc)))
+				.whenComplete((result, error) -> {
+					if (error != null) {
+						JavaLanguageServerPlugin.logException(
+								"Unhandled exception in LSP request handler",
+								error);
+					}
+				});
 	}
 
 	protected IProgressMonitor toMonitor(CancelChecker checker) {
