@@ -36,6 +36,7 @@ import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.m2e.apt.MavenJdtAptPlugin;
 import org.eclipse.m2e.apt.preferences.PreferencesConstants;
 import org.eclipse.m2e.core.MavenPlugin;
+import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.IMavenConfiguration;
 import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.m2e.core.internal.embedder.MavenProperties;
@@ -122,64 +123,82 @@ public class StandardPreferenceManager extends PreferenceManager {
 			}
 		}
 		try {
-			Settings mavenSettings = MavenPlugin.getMaven().getSettings();
-			String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-			IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
-			boolean oldDisableTest = prefs.getBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
-			String oldMultiModuleProjectDirectory = prefs.get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, null);
-			String multiModuleProjectDirectory = systemMmpd;
-			if (multiModuleProjectDirectory == null) {
-				if (preferences.getRootPaths() != null) {
-					for (IPath path : preferences.getRootPaths()) {
-						File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
-						if (f != null) {
-							try {
-								multiModuleProjectDirectory = f.getCanonicalPath();
-							} catch (IOException e) {
-								multiModuleProjectDirectory = f.getAbsolutePath();
+			IMaven maven = MavenPlugin.getMaven();
+			if (maven == null) {
+				// Per m2e maintainer guidance (eclipse-m2e/m2e-core#2168 review):
+				// MavenPlugin.getMaven() is a ServiceTracker-backed accessor that may
+				// legitimately return null while the m2e bundle is still in lazy-
+				// activation phase, or before its IMaven DS component has been
+				// published. This is observed on cold OSGi caches, e.g. the very first
+				// start after a vscode-java upgrade rebuilds globalStorage/redhat.java/
+				// ${version}/config_*. The Maven-related preferences will be re-applied
+				// on the next configuration update once IMaven is ready.
+				// See https://github.com/redhat-developer/vscode-java/issues/3469.
+				JavaLanguageServerPlugin.logInfo("Skipping Maven preference update: IMaven service is not yet available");
+			} else {
+				Settings mavenSettings = maven.getSettings();
+				String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+				IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+				boolean oldDisableTest = prefs.getBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+				String oldMultiModuleProjectDirectory = prefs.get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, null);
+				String multiModuleProjectDirectory = systemMmpd;
+				if (multiModuleProjectDirectory == null) {
+					if (preferences.getRootPaths() != null) {
+						for (IPath path : preferences.getRootPaths()) {
+							File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
+							if (f != null) {
+								try {
+									multiModuleProjectDirectory = f.getCanonicalPath();
+								} catch (IOException e) {
+									multiModuleProjectDirectory = f.getAbsolutePath();
+								}
+								break;
 							}
-							break;
 						}
 					}
 				}
+				updateMavenProjects = updateMavenProjects || !Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag());
+				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
+				if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
+					Profile profile = new Profile();
+					profile.setId(JAVALS_PROFILE);
+					Activation activation = new Activation();
+					activation.setActiveByDefault(true);
+					profile.setActivation(activation);
+					profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
+					if (multiModuleProjectDirectory != null) {
+						profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+					} else {
+						profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+					}
+					mavenSettings.addProfile(profile);
+					mavenSettings.addActiveProfile(profile.getId());
+					prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
+					if (multiModuleProjectDirectory != null) {
+						prefs.put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+					} else {
+						prefs.remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
+					}
+					try {
+						prefs.flush();
+					} catch (BackingStoreException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				} else if (oldDisableTest != preferences.isMavenDisableTestClasspathFlag()) {
+					prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
+					try {
+						prefs.flush();
+					} catch (BackingStoreException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				}
 			}
-			updateMavenProjects = updateMavenProjects || !Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag());
-			mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
-			if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
-				Profile profile = new Profile();
-				profile.setId(JAVALS_PROFILE);
-				Activation activation = new Activation();
-				activation.setActiveByDefault(true);
-				profile.setActivation(activation);
-				profile.getProperties().put(M2E_DISABLE_TEST_CLASSPATH_FLAG, String.valueOf(preferences.isMavenDisableTestClasspathFlag()));
-				if (multiModuleProjectDirectory != null) {
-					profile.getProperties().put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
-				} else {
-					profile.getProperties().remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-				}
-				mavenSettings.addProfile(profile);
-				mavenSettings.addActiveProfile(profile.getId());
-				prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
-				if (multiModuleProjectDirectory != null) {
-					prefs.put(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
-				} else {
-					prefs.remove(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
-				}
-				try {
-					prefs.flush();
-				} catch (BackingStoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
-			} else if (oldDisableTest != preferences.isMavenDisableTestClasspathFlag()) {
-				prefs.putBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, preferences.isMavenDisableTestClasspathFlag());
-				try {
-					prefs.flush();
-				} catch (BackingStoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
-			}
-		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException(e);
+		} catch (CoreException | RuntimeException e) {
+			// Defense in depth: even with the explicit null check above, transient
+			// activation races inside m2e may surface as RuntimeException from internal
+			// calls reached from this block. Failing here would abort the LSP initialize
+			// handshake; log and continue so the rest of the configuration still applies.
+			JavaLanguageServerPlugin.logException("Failed to apply Maven preferences", e);
 		}
 		String newMavenNotCoveredExecutionSeverity = preferences.getMavenNotCoveredPluginExecutionSeverity();
 		String oldMavenNotCoveredExecutionSeverity = getMavenConfiguration().getNotCoveredMojoExecutionSeverity();
