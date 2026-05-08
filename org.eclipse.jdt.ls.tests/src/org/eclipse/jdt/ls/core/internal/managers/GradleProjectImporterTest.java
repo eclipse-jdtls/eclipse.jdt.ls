@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,6 +69,9 @@ import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
+import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -876,6 +880,25 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(hasUnexcludedResources);
 		} finally {
 			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
+	@Test
+	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
+		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala/common");
+		File initScript = null;
+		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+			initScript = GradleUtils.getGradleInitScript("/gradle/scala/javals.gradle");
+			BuildLauncher launcher = connection.newBuild();
+			launcher.withArguments("--init-script", initScript.getAbsolutePath(), "--no-configuration-cache", "--quiet");
+			launcher.forTasks("javalsCheckProject");
+			launcher.setStandardOutput(outputStream);
+			launcher.run();
+			assertEquals("", outputStream.toString().trim());
+		} finally {
+			if (initScript != null) {
+				Files.deleteIfExists(initScript.toPath());
+			}
 		}
 	}
 
