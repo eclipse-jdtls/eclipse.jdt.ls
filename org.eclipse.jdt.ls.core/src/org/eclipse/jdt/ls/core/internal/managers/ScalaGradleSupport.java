@@ -62,7 +62,6 @@ import org.gradle.tooling.ProjectConnection;
 public class ScalaGradleSupport {
 
 	public static final Path CONTAINER_PATH = new Path("org.eclipse.buildship.core.gradleclasspathcontainer");
-	public static String[] EXCLUSIONS_PATTERNS = { "**" };
 
 	// Gradle Tooling API removes several scala libraries and adds the Scala builder and container that aren't recognized by Java LS.
 	// See https://github.com/gradle/gradle/blob/b3c5d40e82439da4627b38b4ced93121e551b0eb/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/eclipse/EclipsePlugin.java#L375-L377
@@ -169,13 +168,10 @@ public class ScalaGradleSupport {
 	 * The process method checks if a library has been added and if not, adds it.
 	 * Gradle Tooling API excludes some scala libraries because it expects Scala IDE to add them.
 	 * Since Scala IDE for VS Code doesn't exist, we add those libraries.
-	 * The method also checks resources folders and excludes them from the compilation.
 	 */
 	private static void process(IProject project, String output, IProgressMonitor monitor) {
 		List<String> taskClasspaths = new LinkedList<>();
 		Map<String, String> taskClasspathSources = new HashMap<>();
-		List<String> sources = new LinkedList<>();
-		List<String> resources = new LinkedList<>();
 		boolean start = false;
 		try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
 			String line;
@@ -200,11 +196,9 @@ public class ScalaGradleSupport {
 									break;
 								}
 								case "SRC": {
-									sources.add(elements[2]);
 									break;
 								}
 								case "RES": {
-									resources.add(elements[2]);
 									break;
 								}
 								default:
@@ -232,7 +226,7 @@ public class ScalaGradleSupport {
 			List<String> toAdd = getMissingPaths(javaProject, paths);
 			if (!toAdd.isEmpty()) {
 				try {
-					configureClasspath(javaProject, toAdd, taskClasspathSources, resources, monitor);
+					configureClasspath(javaProject, toAdd, taskClasspathSources, monitor);
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.logException(e);
 				}
@@ -240,7 +234,7 @@ public class ScalaGradleSupport {
 		}
 	}
 
-	private static void configureClasspath(IJavaProject javaProject, List<String> toAdd, Map<String, String> taskClasspathSources, List<String> resources, IProgressMonitor monitor) throws JavaModelException {
+	private static void configureClasspath(IJavaProject javaProject, List<String> toAdd, Map<String, String> taskClasspathSources, IProgressMonitor monitor) throws JavaModelException {
 		IClasspathEntry[] classpath = javaProject.getRawClasspath();
 		List<IClasspathEntry> entries = new LinkedList<>();
 		for (String path : toAdd) {
@@ -263,28 +257,6 @@ public class ScalaGradleSupport {
 			.distinct()
 			.toArray(IClasspathEntry[]::new);
 		// @formatter:on
-		for (int i = 0; i < newClasspath.length; i++) {
-			IClasspathEntry entry = newClasspath[i];
-			if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE) {
-				Optional<String> optional = resources.stream().filter(r -> Objects.equals(entry.getPath().removeFirstSegments(1), new Path(r).makeRelativeTo(javaProject.getProject().getLocation()))).findFirst();
-				if (optional.isPresent()) {
-					IPath[] exclusions = entry.getExclusionPatterns();
-					if (exclusions == null) {
-						exclusions = new IPath[0];
-					}
-					List<IPath> currentExclusions = new ArrayList<>(Arrays.asList(exclusions));
-					for (String ext : EXCLUSIONS_PATTERNS) {
-						IPath newPath = new Path(ext);
-						boolean exists = currentExclusions.stream().anyMatch(existingPath -> existingPath.toString().equals(ext));
-						if (!exists) {
-							currentExclusions.add(newPath);
-						}
-					}
-					IClasspathEntry newEntry = JavaCore.newSourceEntry(entry.getPath(), entry.getInclusionPatterns(), currentExclusions.toArray(new IPath[0]), entry.getOutputLocation(), entry.getExtraAttributes());
-					newClasspath[i] = newEntry;
-				}
-			}
-		}
 		javaProject.setRawClasspath(newClasspath, monitor);
 	}
 

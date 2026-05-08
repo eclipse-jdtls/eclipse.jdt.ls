@@ -1,9 +1,11 @@
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.jvm.JvmLibrary
 import org.gradle.language.base.artifact.SourcesArtifact
 
 allprojects {
 	afterEvaluate { project ->
+		if (!project.plugins.hasPlugin('scala')) return
 		if (project.tasks.findByName('javalsCheckProject')) return
 		project.tasks.register('javalsCheckProject') {
 			doLast {
@@ -36,28 +38,15 @@ allprojects {
 					def conf = project.configurations[name]
 					if (conf.canBeResolved) {
 						conf.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-							def binPath = artifact.file.absolutePath
-							if (!processedFiles.contains(binPath)) {
-								def id = artifact.moduleVersion.id
-								def key = "${id.group}:${id.name}".toString()
-								def srcPath = sourceMap[key] ?: "NO_SOURCE"
-								println "LIB|${binPath}|${srcPath}"
-								processedFiles.add(binPath)
-							}
-						}
-					}
-				}
-				if (project.hasProperty('sourceSets')) {
-					project.sourceSets.each { ss ->
-						def scope = ss.name // 'main', 'test', 'integrationTest'
-						ss.allSource.srcDirs.each { dir ->
-							if (dir.exists() && !ss.resources.srcDirs.contains(dir)) {
-								println "SRC|${scope}|${dir.absolutePath}"
-							}
-						}
-						ss.resources.srcDirs.each { dir ->
-							if (dir.exists()) {
-								println "RES|${scope}|${dir.absolutePath}"
+							if (!(artifact.id.componentIdentifier instanceof ProjectComponentIdentifier)) {
+								def binPath = artifact.file.absolutePath
+								if (!processedFiles.contains(binPath)) {
+									def id = artifact.moduleVersion.id
+									def key = "${id.group}:${id.name}".toString()
+									def srcPath = sourceMap[key] ?: "NO_SOURCE"
+									println "LIB|${binPath}|${srcPath}"
+									processedFiles.add(binPath)
+								}
 							}
 						}
 					}
