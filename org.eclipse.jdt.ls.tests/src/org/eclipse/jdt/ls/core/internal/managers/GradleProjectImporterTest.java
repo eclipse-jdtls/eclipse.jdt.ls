@@ -868,6 +868,12 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			IProject project = ProjectUtils.getProject("app");
 			assertTrue(ProjectUtils.isGradleProject(project));
 			assertNoErrors(project);
+			IClasspathEntry[] classpathEntries = JavaCore.create(project).getRawClasspath();
+			boolean hasBuildLibEntry = Arrays.stream(classpathEntries).anyMatch(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && cpe.getPath().toString().replace('\\', '/').contains("/build/libs/"));
+			boolean hasUnexcludedResources = Arrays.stream(classpathEntries).anyMatch(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE && cpe.getPath().toString().endsWith("src/main/resources")
+					&& Arrays.stream(cpe.getExclusionPatterns()).noneMatch(pattern -> "**".equals(pattern.toString())));
+			assertFalse(hasBuildLibEntry);
+			assertTrue(hasUnexcludedResources);
 		} finally {
 			this.preferences.setScalaSupportEnabled(oldScalaSupported);
 		}
