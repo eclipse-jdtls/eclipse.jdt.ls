@@ -5,53 +5,54 @@ import org.gradle.language.base.artifact.SourcesArtifact
 
 allprojects {
 	afterEvaluate { project ->
-		if (!project.plugins.hasPlugin('scala')) return
 		if (project.tasks.findByName('javalsCheckProject')) return
 		project.tasks.register('javalsCheckProject') {
 			doLast {
-				println "JAVALS_START"
-				def targetConfNames = ['runtimeClasspath', 'testRuntimeClasspath', 'scalaRuntime']
-				def componentIds = [] as Set
-				def processedFiles = [] as Set
-				targetConfNames.findAll { project.configurations.findByName(it) }.each { name ->
-					def conf = project.configurations[name]
-					if (conf.canBeResolved) {
-						conf.incoming.resolutionResult.allComponents.each {
-							if (it.id instanceof ModuleComponentIdentifier) componentIds.add(it.id)
-						}
-					}
-				}
-				def sourceMap = [:]
-				if (!componentIds.isEmpty()) {
-					project.dependencies.createArtifactResolutionQuery()
-						.forComponents(componentIds)
-						.withArtifacts(JvmLibrary, SourcesArtifact)
-						.execute()
-						.resolvedComponents.each { res ->
-							def sources = res.getArtifacts(SourcesArtifact)
-							if (!sources.isEmpty()) {
-								sourceMap["${res.id.group}:${res.id.module}".toString()] = sources.iterator().next().file.absolutePath
+				if (project.plugins.hasPlugin('scala')) {
+					println "JAVALS_START"
+					def targetConfNames = ['runtimeClasspath', 'testRuntimeClasspath', 'scalaRuntime']
+					def componentIds = [] as Set
+					def processedFiles = [] as Set
+					targetConfNames.findAll { project.configurations.findByName(it) }.each { name ->
+						def conf = project.configurations[name]
+						if (conf.canBeResolved) {
+							conf.incoming.resolutionResult.allComponents.each {
+								if (it.id instanceof ModuleComponentIdentifier) componentIds.add(it.id)
 							}
 						}
-				}
-				targetConfNames.findAll { project.configurations.findByName(it) }.each { name ->
-					def conf = project.configurations[name]
-					if (conf.canBeResolved) {
-						conf.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-							if (!(artifact.id.componentIdentifier instanceof ProjectComponentIdentifier)) {
-								def binPath = artifact.file.absolutePath
-								if (!processedFiles.contains(binPath)) {
-									def id = artifact.moduleVersion.id
-									def key = "${id.group}:${id.name}".toString()
-									def srcPath = sourceMap[key] ?: "NO_SOURCE"
-									println "LIB|${binPath}|${srcPath}"
-									processedFiles.add(binPath)
+					}
+					def sourceMap = [:]
+					if (!componentIds.isEmpty()) {
+						project.dependencies.createArtifactResolutionQuery()
+							.forComponents(componentIds)
+							.withArtifacts(JvmLibrary, SourcesArtifact)
+							.execute()
+							.resolvedComponents.each { res ->
+								def sources = res.getArtifacts(SourcesArtifact)
+								if (!sources.isEmpty()) {
+									sourceMap["${res.id.group}:${res.id.module}".toString()] = sources.iterator().next().file.absolutePath
+								}
+							}
+					}
+					targetConfNames.findAll { project.configurations.findByName(it) }.each { name ->
+						def conf = project.configurations[name]
+						if (conf.canBeResolved) {
+							conf.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+								if (!(artifact.id.componentIdentifier instanceof ProjectComponentIdentifier)) {
+									def binPath = artifact.file.absolutePath
+									if (!processedFiles.contains(binPath)) {
+										def id = artifact.moduleVersion?.id
+										def key = id == null ? null : "${id.group}:${id.name}".toString()
+										def srcPath = key == null ? "NO_SOURCE" : sourceMap[key] ?: "NO_SOURCE"
+										println "LIB|${binPath}|${srcPath}"
+										processedFiles.add(binPath)
+									}
 								}
 							}
 						}
 					}
+					println "JAVALS_END"
 				}
-				println "JAVALS_END"
 			}
 		}
 	}

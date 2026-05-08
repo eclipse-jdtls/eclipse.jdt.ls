@@ -195,12 +195,6 @@ public class ScalaGradleSupport {
 									}
 									break;
 								}
-								case "SRC": {
-									break;
-								}
-								case "RES": {
-									break;
-								}
 								default:
 									JavaLanguageServerPlugin.logInfo("Unexpected value: " + elements[0]);
 									break;
