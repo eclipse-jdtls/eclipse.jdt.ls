@@ -143,6 +143,13 @@ public class StandardPreferenceManager extends PreferenceManager {
 					}
 				}
 			}
+			// Set as JVM system property so m2e's MavenExecutionContext.populateSystemProperties()
+			// picks it up via System.getProperties(). Profile properties alone are not reliably
+			// propagated to the Maven model interpolator during m2e's import flow, causing
+			// ${maven.multiModuleProjectDirectory} in POMs to remain unresolved.
+			if (multiModuleProjectDirectory != null && systemMmpd == null) {
+				System.setProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+			}
 			updateMavenProjects = updateMavenProjects || !Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag());
 			mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));
 			if (preferences.isMavenDisableTestClasspathFlag() || multiModuleProjectDirectory != null) {
