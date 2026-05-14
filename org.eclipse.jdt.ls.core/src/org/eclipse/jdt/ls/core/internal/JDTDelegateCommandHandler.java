@@ -35,7 +35,7 @@ import org.eclipse.jdt.ls.core.internal.commands.TypeHierarchyCommand;
 import org.eclipse.jdt.ls.core.internal.commands.VmCommand;
 import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
-import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandlers;
 import org.eclipse.jdt.ls.core.internal.handlers.CreateModuleInfoHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.FormatterHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.PasteEventHandler;
@@ -191,10 +191,10 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 						return false;
 					}
 				case "java.completion.onDidSelect":
-					CompletionHandler completionHandler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
+					CompletionHandlers completionHandlers = JavaLanguageServerPlugin.getInstance().getCompletionHandlers();
 					String requestId = (String) arguments.get(0);
 					String proposalId = (String) arguments.get(1);
-					completionHandler.onDidCompletionItemSelect(requestId, proposalId);
+					completionHandlers.onDidCompletionItemSelect(requestId, proposalId);
 					return new Object();
 				case "java.decompile":
 					String uri = (String) arguments.get(0);
