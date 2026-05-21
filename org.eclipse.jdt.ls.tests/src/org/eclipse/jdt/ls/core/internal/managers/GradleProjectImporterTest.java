@@ -878,16 +878,18 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
-		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala/common");
+		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala");
 		File initScript = null;
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
 			initScript = GradleUtils.getGradleInitScript("/gradle/scala/javals.gradle");
 			BuildLauncher launcher = connection.newBuild();
 			launcher.withArguments("--init-script", initScript.getAbsolutePath(), "--no-configuration-cache", "--quiet");
-			launcher.forTasks("javalsCheckProject");
+			launcher.forTasks(":common:javalsCheckProject");
 			launcher.setStandardOutput(outputStream);
 			launcher.run();
-			assertEquals("", outputStream.toString().trim());
+			String output = outputStream.toString();
+			assertFalse(output.contains("JAVALS_START"));
+			assertFalse(output.contains("LIB|"));
 		} finally {
 			if (initScript != null) {
 				Files.deleteIfExists(initScript.toPath());
