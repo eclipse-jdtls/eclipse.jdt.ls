@@ -15,7 +15,6 @@ package org.eclipse.jdt.ls.core.internal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -101,33 +100,11 @@ public class HoverInfoProvider {
 			if (monitor.isCanceled()) {
 				return cancelled(res);
 			}
-			IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, line, column, this.preferenceManager, monitor);
-			if (elements == null || elements.length == 0 || monitor.isCanceled()) {
+			IJavaElement curr = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
+			if (curr == null || monitor.isCanceled()) {
 				return cancelled(res);
 			}
-			IJavaElement curr = null;
-			if (elements.length != 1) {
-				// they could be package fragments.
-				// We need to select the one that matches the package fragment of the current unit
-				IPackageFragment packageFragment = (IPackageFragment) unit.getParent();
-				IJavaElement found =
-						Stream
-						.of(elements)
-						.filter(e -> e.equals(packageFragment))
-						.findFirst()
-						.orElse(null);
-				if (found == null) {
-					// this would be a binary package fragment
-					curr = elements[0];
-				} else {
-					curr = found;
-				}
-			} else {
-				curr = elements[0];
-			}
-			if (monitor.isCanceled()) {
-				return cancelled(res);
-			}
+
 			if (JDTEnvironmentUtils.isSyntaxServer() || isResolved(curr, monitor)) {
 				IBuffer buffer = curr.getOpenable().getBuffer();
 				if (buffer == null && curr instanceof BinaryMember binaryMember) {
