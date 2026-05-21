@@ -519,7 +519,7 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		if (resource == null) {
-			Set<IProject> projects = new HashSet<>();
+			Map<File, IProject> projectsByRoot = new HashMap<>();
 			for (IProject project : ProjectUtils.getGradleProjects()) {
 				if (!project.isOpen()) {
 					continue;
@@ -529,16 +529,27 @@ public class GradleBuildSupport implements IBuildSupport {
 					GradleBuild gb = gradleBuild.get();
 					if (gb instanceof InternalGradleBuild igb) {
 						File rootDir = igb.getBuildConfig().getProperties().getRootProjectDirectory();
-						if (rootDir != null && rootDir.equals(project.getRawLocation().toFile())) {
-							projects.add(project);
+						if (rootDir == null) {
+							continue;
+						}
+						// Prefer the workspace project whose location IS the gradle root
+						// (single-project or root-imported case). Otherwise, fall back to
+						// the first workspace project belonging to that build so we still
+						// have a connection point for multi-project builds where the root
+						// itself is not imported.
+						File projectLocation = project.getRawLocation() == null ? null : project.getRawLocation().toFile();
+						if (rootDir.equals(projectLocation)) {
+							projectsByRoot.put(rootDir, project);
+						} else {
+							projectsByRoot.putIfAbsent(rootDir, project);
 						}
 					}
 				}
 			}
 			Map<String, GradleProject> roots = new HashMap<>();
-			for (IProject project : projects) {
-				File projectDir = project.getLocation().toFile();
-				try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+			for (Map.Entry<File, IProject> entry : projectsByRoot.entrySet()) {
+				File rootDir = entry.getKey();
+				try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(rootDir).connect()) {
 					GradleProject gradleProject = connection.getModel(GradleProject.class);
 					roots.put(gradleProject.getPath(), gradleProject);
 				}
@@ -612,13 +623,20 @@ public class GradleBuildSupport implements IBuildSupport {
 								.map(container -> (IProject) container)
 								.toArray(IProject[]::new);
 						List<IProject> workspaceProjects = ProjectUtils.getGradleProjects();
+						Set<IProject> refreshed = new HashSet<>();
 						for (IProject project: projects) {
-							project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-							for (IProject wp: workspaceProjects) {
-								if (wp.isAccessible() && !wp.equals(project)) {
-									if (project.getLocation().isPrefixOf(wp.getLocation())) {
-										wp.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-									}
+							if (refreshed.add(project)) {
+								project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+							}
+						}
+						// Also refresh any workspace gradle project located under the
+						// gradle root directory. This covers multi-project builds where
+						// the root directory itself is not imported as an Eclipse project
+						// (so the loop above would otherwise be a no-op).
+						for (IProject wp : workspaceProjects) {
+							if (wp.isAccessible() && wp.getLocation() != null && path.isPrefixOf(wp.getLocation())) {
+								if (refreshed.add(wp)) {
+									wp.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 								}
 							}
 						}
