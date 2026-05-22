@@ -56,8 +56,12 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
@@ -68,9 +72,11 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -195,6 +201,11 @@ public class RefactorProcessor {
 				}
 
 				getAddStaticImportProposals(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+
+				getAddImportProposal(context, coveringNode, proposals);
 				if (monitor != null && monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
@@ -974,6 +985,72 @@ public class RefactorProcessor {
 		}
 
 		return true;
+	}
+
+	private static boolean getAddImportProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+		Type type = getQualifiedType(node);
+		if (type == null) {
+			return false;
+		}
+
+		ITypeBinding binding = type.resolveBinding();
+		if (binding == null || binding.isPrimitive() || binding.isArray() || binding.isAnonymous() || binding.isNullType()) {
+			return false;
+		}
+
+		if (proposals == null) {
+			return true;
+		}
+
+		try {
+			ImportRewrite importRewrite = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
+			Type importedType = importRewrite.addImport(binding, type.getAST(), new ContextSensitiveImportRewriteContext(type, importRewrite), TypeLocation.OTHER);
+			if (isQualifiedType(importedType)) {
+				return false;
+			}
+
+			ASTRewrite astRewrite = ASTRewrite.create(type.getAST());
+			astRewrite.replace(type, importedType, null);
+
+			ASTRewriteRemoveImportsCorrectionProposalCore proposal = new ASTRewriteRemoveImportsCorrectionProposalCore(CorrectionMessages.QuickAssistProcessor_add_import, context.getCompilationUnit(), astRewrite,
+					IProposalRelevance.ADD_STATIC_IMPORT);
+			proposal.setImportRewrite(importRewrite);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
+		} catch (IllegalArgumentException e) {
+			JavaLanguageServerPlugin.logException("Failed to get add import proposal", e);
+			return false;
+		} catch (JavaModelException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private static Type getQualifiedType(ASTNode node) {
+		ASTNode current = node;
+		while (current != null) {
+			if (current instanceof ParameterizedType parameterizedType && isQualifiedType(parameterizedType.getType())) {
+				return parameterizedType;
+			}
+			if (current instanceof Type type && isQualifiedType(type)) {
+				if (type.getParent() instanceof ParameterizedType parameterizedType && parameterizedType.getType() == type) {
+					return parameterizedType;
+				}
+				return type;
+			}
+			if (current instanceof Statement || current instanceof MethodDeclaration || current instanceof AbstractTypeDeclaration || current instanceof AnonymousClassDeclaration || current instanceof CompilationUnit) {
+				return null;
+			}
+			current = current.getParent();
+		}
+		return null;
+	}
+
+	private static boolean isQualifiedType(Type type) {
+		if (type instanceof SimpleType simpleType) {
+			return simpleType.getName().isQualifiedName();
+		}
+		return type instanceof QualifiedType || type instanceof NameQualifiedType;
 	}
 
 	private static boolean isDirectlyAccessible(ASTNode nameNode, ITypeBinding declaringClass) {
