@@ -1,0 +1,69 @@
+name: Pull-Request Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK8 FX for x64
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: zulu
+          java-package: jdk+fx
+          architecture: x64
+      - name: Set up JDK 25 for x64
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          architecture: x64
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
+        with:
+          gradle-version: '8.5'
+          validate-wrappers: false
+          cache-disabled: true
+          add-job-summary: never
+      - name: Setup JBang
+        uses: jbangdev/setup-jbang@312c53a4221283f9c8e4aa84d8261b82f0c680fb
+      - name: Configure Gradle and Maven
+        run: |
+          mkdir -p ~/.gradle && echo "org.gradle.daemon=false" > ~/.gradle/gradle.properties
+          echo "org.gradle.vfs.watch=false" >> ~/.gradle/gradle.properties
+          echo "org.gradle.daemon.idletimeout=3000" >> ~/.gradle/gradle.properties
+          cat ~/.gradle/gradle.properties
+          cat ~/.m2/toolchains.xml
+          gradle --version
+      - name: Run Integration Tests
+        continue-on-error: true
+        run: >
+          unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
+
+          ./mvnw
+          clean
+          verify
+          -ntp
+          -Dcompletion.timeout=120000
+          -Djava.lsp.mavensearch.timeout=60
+          -Djdt.ls.lombok.disabled=true
+          -DDetectVMInstallationsJob.disabled=true
+          -Dorg.gradle.daemon=false
+          -Dorg.gradle.daemon.idletimeout=10000
+          -Djdt.ls.test.delete.debug=true
+          -B
+          -U
+          -e
+          -fae
+          -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Djdt.ls.lombok.disabled=true -DDetectVMInstallationsJob.disabled=true"
+      - name: Print Test Results
+        run: ./scripts/PrintTestResults.java
