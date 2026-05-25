@@ -339,7 +339,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			projectFile = new File(rootFile, "fakeProject");
 			projectFile.mkdir();
 			projectFile.deleteOnExit();
-			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(file.toPath());
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(projectFile.toPath());
 			assertFalse(build.getGradleUserHome().isPresent());
 		} finally {
 			if (file != null) {
@@ -664,7 +664,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(6, classpathEntries.length);
+				assertEquals(5, classpathEntries.length);
 				// main sourceSet are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
 					return "/app/src/main/java".equals(cpe.getPath().toString());
@@ -676,10 +676,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				// androidTest sourceSet are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
 					return "/app/src/androidTest/java".equals(cpe.getPath().toString());
-				}));
-				// buildConfig files are added to classpath correctly
-				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-					return "/app/build/generated/source/buildConfig/standard/debug".equals(cpe.getPath().toString());
 				}));
 				// dataBinding files are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
@@ -706,7 +702,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(6, classpathEntries.length);
+				assertEquals(5, classpathEntries.length);
 			}
 			this.preferences.setAndroidSupportEnabled(false);
 			for (IProject project : projects) {

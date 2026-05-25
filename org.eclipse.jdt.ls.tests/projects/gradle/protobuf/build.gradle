@@ -16,6 +16,10 @@ group 'com.jdtls.protobuf.test'
 version '1.0-SNAPSHOT'
 sourceCompatibility = '11'
 
+dependencies {
+    implementation 'com.google.protobuf:protobuf-java:3.21.4'
+}
+
 repositories {
     mavenCentral()
 }
