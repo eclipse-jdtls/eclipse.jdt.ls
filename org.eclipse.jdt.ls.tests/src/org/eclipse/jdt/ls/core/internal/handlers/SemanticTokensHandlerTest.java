@@ -375,10 +375,10 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Annotations() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Annotations.java"), "annotation", "annotationMember")
-			.assertNextToken("SomeAnnotation", "annotation", "public")
-			.assertNextToken("SuppressWarnings", "annotation", "public")
-			.assertNextToken("SuppressWarnings", "annotation", "public")
+		TokenAssertionHelper.beginAssertion(getURI("Annotations.java"), "decorator", "annotationMember")
+			.assertNextToken("SomeAnnotation", "decorator", "public")
+			.assertNextToken("SuppressWarnings", "decorator", "public")
+			.assertNextToken("SuppressWarnings", "decorator", "public")
 			.assertNextToken("value", "annotationMember", "public", "abstract")
 		.endAssertion();
 	}
