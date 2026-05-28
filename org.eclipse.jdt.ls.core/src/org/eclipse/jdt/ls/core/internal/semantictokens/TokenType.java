@@ -34,9 +34,9 @@ public enum TokenType {
 	PARAMETER(SemanticTokenTypes.Parameter),
 	MODIFIER(SemanticTokenTypes.Modifier),
 	KEYWORD(SemanticTokenTypes.Keyword),
+	ANNOTATION(SemanticTokenTypes.Decorator),
 
 	// Custom token types
-	ANNOTATION("decorator"),
 	ANNOTATION_MEMBER("annotationMember"),
 	RECORD("record"),
 	RECORD_COMPONENT("recordComponent");
