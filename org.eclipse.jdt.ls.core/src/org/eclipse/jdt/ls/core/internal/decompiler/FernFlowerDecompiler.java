@@ -42,12 +42,11 @@ import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 
 public class FernFlowerDecompiler extends DecompilerImpl {
-	public static final String DECOMPILER_HEADER = "// Source code is decompiled from a .class file using FernFlower decompiler (from Intellij IDEA).\n";
+	public static final String DECOMPILER_HEADER = "// Source code is decompiled from a .class file using Vineflower decompiler.\n";
 
 	public static boolean isDecompiledContents(String contents) {
 		return contents != null && contents.startsWith(DECOMPILER_HEADER);
@@ -85,7 +84,7 @@ public class FernFlowerDecompiler extends DecompilerImpl {
 		decompilerOptions.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
 		decompilerOptions.put(IFernflowerPreferences.DECOMPILE_INNER, "1");
 		decompilerOptions.put(IFernflowerPreferences.DECOMPILE_ENUM, "1");
-		decompilerOptions.put(IFernflowerPreferences.LOG_LEVEL, Severity.ERROR.name());
+		decompilerOptions.put(IFernflowerPreferences.LOG_LEVEL, IFernflowerLogger.Severity.ERROR.name());
 		decompilerOptions.put(IFernflowerPreferences.ASCII_STRING_CHARACTERS, "0");
 		decompilerOptions.put(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1");
 		if (Boolean.getBoolean("jdt.ls.debug")) {
