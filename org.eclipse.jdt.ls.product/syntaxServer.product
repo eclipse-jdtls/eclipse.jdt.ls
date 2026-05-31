@@ -7,6 +7,8 @@
    </configIni>
 
    <launcherArgs>
+      <vmArgs>-Dguice_custom_class_loading=CHILD
+      </vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
       </vmArgsMac>
    </launcherArgs>
