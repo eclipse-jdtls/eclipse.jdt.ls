@@ -83,8 +83,9 @@ public class SnippetUtils {
 		escapedString = escapedString.replaceAll(TM_SELECTED_TEXT, "");
 		escapedString = escapedString.replaceAll(TM_FILENAME_BASE, "");
 
-		if (JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences() != null
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		if (preferenceManager != null && preferenceManager.getClientPreferences() != null
+				&& preferenceManager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
 			MarkupContent markupContent = new MarkupContent();
 			markupContent.setKind(MarkupKind.MARKDOWN);
 			markupContent.setValue(String.format("```%s\n%s\n```", MARKDOWN_LANGUAGE, escapedString));

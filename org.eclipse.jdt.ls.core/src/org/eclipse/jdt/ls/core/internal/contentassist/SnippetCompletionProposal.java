@@ -431,7 +431,8 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	}
 
 	private static boolean isCompletionItemLabelDetailsSupport() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionItemLabelDetailsSupport();
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		return preferenceManager != null && preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport();
 	}
 
 	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {

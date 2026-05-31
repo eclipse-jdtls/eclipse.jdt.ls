@@ -176,8 +176,8 @@ public class CompletionProposalReplacementProvider {
 		} else {
 			item.setInsertTextFormat(InsertTextFormat.PlainText);
 		}
-		if (isResolvingRequest || (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")
-				&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation)) {
+		if (isResolvingRequest || (!client.isCompletionListItemDefaultsPropertySupport("insertTextMode")
+				&& client.getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation)) {
 			item.setInsertTextMode(InsertTextMode.AdjustIndentation);
 		}
 
