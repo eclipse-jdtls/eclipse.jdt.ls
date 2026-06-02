@@ -290,7 +290,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 
 	@Test
 	public void testSemanticTokens_Types() throws JavaModelException {
-		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "annotation", "decorator", "record", "typeParameter", "keyword", "modifier")
+		TokenAssertionHelper.beginAssertion(getURI("Types.java"), "class", "interface", "enum", "decorator", "record", "typeParameter", "keyword", "modifier")
 			.assertNextToken("public", "modifier")
 			.assertNextToken("class", "modifier")
 			.assertNextToken("Types", "class", "public", "declaration")
@@ -325,7 +325,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			.assertNextToken("interface", "modifier")
 			.assertNextToken("SomeInterface", "interface", "static", "declaration")
 			.assertNextToken("SomeEnum", "enum", "static", "readonly", "declaration")
-			.assertNextToken("SomeAnnotation", "annotation", "static", "declaration")
+				.assertNextToken("SomeAnnotation", "decorator", "static", "declaration")
 			.assertNextToken("Class", "class", "public", "readonly", "generic")
 			.assertNextToken("record", "modifier")
 			.assertNextToken("SomeRecord", "record", "static", "readonly", "declaration")
