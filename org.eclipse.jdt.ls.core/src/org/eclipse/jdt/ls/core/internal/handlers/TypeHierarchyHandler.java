@@ -16,12 +16,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOrdinaryClassFile;
@@ -31,10 +35,18 @@ import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchMatch;
+import org.eclipse.jdt.core.search.SearchParticipant;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
 import org.eclipse.jdt.internal.core.JavaModelManager;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.lsp4j.Location;
@@ -134,7 +146,33 @@ public class TypeHierarchyHandler {
 			member = (IMember) element;
 		} else if (element instanceof IOrdinaryClassFile classFile) {
 			member = classFile.getType();
-		} else {
+		}
+		if (member == null) {
+			// Element could not be reconstituted via JavaCore.create() —
+			// this happens for contributed (non-Java) elements whose
+			// handles are not resolvable by the Java model. Re-resolve
+			// via codeSelect using the item's URI and position.
+			String uri = item.getUri();
+			if (uri != null) {
+				try {
+					ITypeRoot typeRoot = JDTUtils.resolveTypeRoot(uri);
+					if (typeRoot != null) {
+						Position pos = item.getSelectionRange().getStart();
+						IJavaElement resolved = JDTUtils.findElementAtSelection(
+								typeRoot, pos.getLine(), pos.getCharacter(),
+								JavaLanguageServerPlugin.getPreferencesManager(),
+								monitor);
+						if (resolved instanceof IType || resolved instanceof IMethod) {
+							member = (IMember) resolved;
+						}
+					}
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(
+							"Failed to resolve type hierarchy element from " + uri, e);
+				}
+			}
+		}
+		if (member == null) {
 			return Collections.emptyList();
 		}
 		return resolveTypeHierarchyItems(member, targetMethod, direction, monitor);
@@ -154,37 +192,229 @@ public class TypeHierarchyHandler {
 			ITypeHierarchy typeHierarchy = null;
 			List<TypeHierarchyItem> items = new ArrayList<>();
 			IType[] hierarchyTypes = null;
-			if (direction == TypeHierarchyDirection.Supertype) {
-				typeHierarchy = type.newSupertypeHierarchy(DefaultWorkingCopyOwner.PRIMARY, monitor);
-				hierarchyTypes = typeHierarchy.getSupertypes(type);
-			} else {
-				ICompilationUnit[] workingCopies = JavaModelManager.getJavaModelManager().getWorkingCopies(DefaultWorkingCopyOwner.PRIMARY, true);
-				typeHierarchy = type.newTypeHierarchy(workingCopies, monitor);
-				hierarchyTypes = typeHierarchy.getSubtypes(type);
+			boolean isContributedElement = false;
+			ICompilationUnit cu = type.getCompilationUnit();
+			if (cu != null) {
+				isContributedElement = !JavaCore.isJavaLikeFileName(
+						cu.getElementName());
 			}
+			if (direction == TypeHierarchyDirection.Supertype) {
+				if (isContributedElement) {
+					// JDT's newSupertypeHierarchy() doesn't work for
+					// contributed (non-Java) types. Resolve supertypes
+					// from the element's declared supertype names.
+					hierarchyTypes = resolveContributedSupertypes(
+							type, monitor);
+				} else {
+					typeHierarchy = type.newSupertypeHierarchy(
+							DefaultWorkingCopyOwner.PRIMARY, monitor);
+					hierarchyTypes = typeHierarchy.getSupertypes(type);
+				}
+			} else {
+				if (!isContributedElement) {
+					ICompilationUnit[] workingCopies = JavaModelManager
+							.getJavaModelManager().getWorkingCopies(
+									DefaultWorkingCopyOwner.PRIMARY,
+									true);
+					typeHierarchy = type.newTypeHierarchy(
+							workingCopies, monitor);
+					hierarchyTypes = typeHierarchy.getSubtypes(type);
+				} else {
+					hierarchyTypes = new IType[0];
+				}
+			}
+			Set<String> seen = new HashSet<>();
 			for (IType hierarchyType : hierarchyTypes) {
 				if (monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
-				TypeHierarchyItem item = null;
-				if (targetMethod != null) {
-					IMethod[] matches = hierarchyType.findMethods(targetMethod);
-					boolean excludeMember = matches == null || matches.length == 0;
-					// Do not show java.lang.Object unless target method is based there
-					if (!excludeMember || !"java.lang.Object".equals(hierarchyType.getFullyQualifiedName())) {
-						item = TypeHierarchyHandler.toTypeHierarchyItem(excludeMember ? hierarchyType : matches[0], excludeMember, targetMethod);
-					}
-				} else {
-					item = TypeHierarchyHandler.toTypeHierarchyItem(hierarchyType);
+				TypeHierarchyItem item = toHierarchyItem(
+						hierarchyType, targetMethod);
+				if (item != null) {
+					items.add(item);
+					seen.add(hierarchyType.getFullyQualifiedName());
 				}
-				if (item == null) {
-					continue;
-				}
-				items.add(item);
+			}
+			// Supplement subtypes with contributed search participants
+			// to discover non-Java types (e.g., Kotlin) that extend
+			// or implement this type.
+			if (direction == TypeHierarchyDirection.Subtype) {
+				supplementWithContributedSubtypes(
+						type, items, seen, targetMethod, monitor);
 			}
 			return items;
 		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(
+					"Failed to resolve type hierarchy", e);
 			return Collections.emptyList();
+		}
+	}
+
+	private TypeHierarchyItem toHierarchyItem(IType hierarchyType,
+			IMethod targetMethod) throws JavaModelException {
+		if (targetMethod != null) {
+			IMethod[] matches = hierarchyType.findMethods(targetMethod);
+			boolean excludeMember = matches == null
+					|| matches.length == 0;
+			if (!excludeMember || !"java.lang.Object".equals(
+					hierarchyType.getFullyQualifiedName())) {
+				return TypeHierarchyHandler.toTypeHierarchyItem(
+						excludeMember ? hierarchyType : matches[0],
+						excludeMember, targetMethod);
+			}
+			return null;
+		}
+		return TypeHierarchyHandler.toTypeHierarchyItem(hierarchyType);
+	}
+
+	/**
+	 * Resolves supertypes for a contributed (non-Java) type element by
+	 * reading its declared supertype names and resolving them. Simple
+	 * names are resolved first via the Java model (as FQN), then via
+	 * type declaration search across all search participants.
+	 */
+	private IType[] resolveContributedSupertypes(IType type,
+			IProgressMonitor monitor) throws JavaModelException {
+		IJavaProject javaProject = type.getJavaProject();
+		SearchParticipant[] participants =
+				SearchEngine.getSearchParticipants();
+		List<IType> supertypes = new ArrayList<>();
+		String superclassName = type.getSuperclassName();
+		if (superclassName != null) {
+			IType resolved = resolveTypeName(
+					superclassName, javaProject,
+					participants, monitor);
+			if (resolved != null) {
+				supertypes.add(resolved);
+			}
+		}
+		String[] interfaceNames = type.getSuperInterfaceNames();
+		for (String ifName : interfaceNames) {
+			IType resolved = resolveTypeName(
+					ifName, javaProject,
+					participants, monitor);
+			if (resolved != null) {
+				supertypes.add(resolved);
+			}
+		}
+		return supertypes.toArray(new IType[0]);
+	}
+
+	/**
+	 * Resolves a type name (simple or fully qualified) to an IType.
+	 * Tries direct lookup first, then falls back to a type declaration
+	 * search across all search participants.
+	 */
+	private IType resolveTypeName(String typeName,
+			IJavaProject javaProject,
+			SearchParticipant[] participants,
+			IProgressMonitor monitor) {
+		if (typeName == null) {
+			return null;
+		}
+		// Try direct FQN lookup first
+		if (javaProject != null) {
+			try {
+				IType type = javaProject.findType(typeName);
+				if (type != null && type.exists()) {
+					return type;
+				}
+			} catch (JavaModelException e) {
+				// Fall through to search
+			}
+		}
+		// Search for type declarations matching the simple name
+		try {
+			SearchPattern pattern = SearchPattern.createPattern(
+					typeName, IJavaSearchConstants.TYPE,
+					IJavaSearchConstants.DECLARATIONS,
+					SearchPattern.R_EXACT_MATCH
+							| SearchPattern.R_CASE_SENSITIVE);
+			if (pattern == null) {
+				return null;
+			}
+			IJavaSearchScope scope = javaProject != null
+					? SearchEngine.createJavaSearchScope(
+							new IJavaElement[]{javaProject})
+					: SearchEngine.createWorkspaceScope();
+			IType[] result = new IType[1];
+			SearchRequestor requestor = new SearchRequestor() {
+				@Override
+				public void acceptSearchMatch(SearchMatch match) {
+					if (result[0] == null
+							&& match.getElement() instanceof IType t
+							&& t.exists()) {
+						result[0] = t;
+					}
+				}
+			};
+			new SearchEngine().search(pattern,
+					participants, scope, requestor, monitor);
+			return result[0];
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(
+					"Error resolving type name: " + typeName, e);
+			return null;
+		}
+	}
+
+	/**
+	 * Supplements the subtype list with types found via contributed
+	 * search participants (e.g., Kotlin types that extend a Java type).
+	 * Uses a SUPERTYPE_TYPE_REFERENCE search to find types that declare
+	 * the given type as their supertype.
+	 */
+	private void supplementWithContributedSubtypes(IType type,
+			List<TypeHierarchyItem> items, Set<String> seen,
+			IMethod targetMethod, IProgressMonitor monitor) {
+		try {
+			SearchPattern pattern = SearchPattern.createPattern(
+					type.getFullyQualifiedName(),
+					IJavaSearchConstants.TYPE,
+					IJavaSearchConstants.IMPLEMENTORS,
+					SearchPattern.R_EXACT_MATCH
+							| SearchPattern.R_CASE_SENSITIVE);
+			if (pattern == null) {
+				return;
+			}
+			SearchParticipant[] contributed =
+					SearchUtils.getContributedSearchParticipants();
+			if (contributed.length == 0) {
+				return;
+			}
+			IJavaSearchScope scope =
+					SearchEngine.createWorkspaceScope();
+			List<IType> foundTypes = new ArrayList<>();
+			SearchRequestor requestor = new SearchRequestor() {
+				@Override
+				public void acceptSearchMatch(SearchMatch match) {
+					Object element = match.getElement();
+					if (element instanceof IType t) {
+						foundTypes.add(t);
+					}
+				}
+			};
+			new SearchEngine().search(pattern,
+					contributed, scope, requestor, monitor);
+			for (IType foundType : foundTypes) {
+				if (monitor.isCanceled()) {
+					return;
+				}
+				String fqn = foundType.getFullyQualifiedName();
+				if (seen.contains(fqn)) {
+					continue;
+				}
+				TypeHierarchyItem item = toHierarchyItem(
+						foundType, targetMethod);
+				if (item != null) {
+					items.add(item);
+					seen.add(fqn);
+				}
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(
+					"Error supplementing type hierarchy with "
+					+ "contributed participants", e);
 		}
 	}
 
