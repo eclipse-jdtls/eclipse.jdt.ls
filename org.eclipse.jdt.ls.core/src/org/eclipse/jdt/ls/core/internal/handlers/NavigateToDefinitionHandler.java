@@ -85,7 +85,7 @@ public class NavigateToDefinitionHandler {
 			if (monitor.isCanceled()) {
 				return null;
 			}
-			if (element == null) {
+			if (element == null && JavaCore.isJavaLikeFileName(unit.getElementName())) {
 				return computeBreakContinue(unit, line, column);
 			}
 			return computeDefinitionNavigation(element, unit.getJavaProject());
