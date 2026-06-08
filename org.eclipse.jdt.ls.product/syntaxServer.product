@@ -49,7 +49,6 @@
       <plugin id="org.eclipse.jdt.ls.filesystem"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
-      <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
       <plugin id="org.jsoup"/>
