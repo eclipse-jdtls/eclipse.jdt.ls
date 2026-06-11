@@ -35,6 +35,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
@@ -87,8 +88,11 @@ public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(textDocumentEdit);
 		assertEquals(textDocumentEdit.getEdits().size(), 1);
 
-		TextEdit textEdit = textDocumentEdit.getEdits().get(0);
-		assertEquals(textEdit.getNewText(), newText);
+		assertTrue(textDocumentEdit.getEdits().get(0).isLeft());
+
+		TextEdit textEdit = textDocumentEdit.getEdits().get(0).getLeft();
+
+		assertEquals(newText, textEdit.getNewText());
 	}
 
 	// Resource Changes
@@ -135,9 +139,7 @@ public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 	public void testMergeChanges() {
 		WorkspaceEdit editA = new WorkspaceEdit();
 		String uriA = "uriA";
-		TextEdit textEdit = new TextEdit(
-			new Range(new Position(0, 0), new Position(0, 0)),
-			"package test;");
+		TextEdit textEdit = new TextEdit(new Range(new Position(0, 0), new Position(0, 0)), "package test;");
 		editA.getChanges().put(uriA, Arrays.asList(textEdit));
 
 		WorkspaceEdit root = ChangeUtil.mergeChanges(null, editA);
@@ -149,9 +151,11 @@ public class ChangeUtilTest extends AbstractProjectsManagerBasedTest {
 
 		WorkspaceEdit editB = new WorkspaceEdit();
 		editB.getChanges().put(uriA, Arrays.asList(textEdit));
+
 		List<Either<TextDocumentEdit, ResourceOperation>> documentChanges = new ArrayList<>();
-		TextDocumentEdit textDocumentEdit = new TextDocumentEdit(
-			new VersionedTextDocumentIdentifier(uriA, 1), Arrays.asList(textEdit));
+		TextDocumentEdit textDocumentEdit = new TextDocumentEdit();
+		textDocumentEdit.setTextDocument(new VersionedTextDocumentIdentifier(uriA, 1));
+		textDocumentEdit.setEdits(Arrays.<Either<TextEdit, SnippetTextEdit>>asList(Either.forLeft(textEdit)));
 		documentChanges.add(Either.forLeft(textDocumentEdit));
 		ResourceOperation resourceOperation = new RenameFile("uriA", "uriB");
 		documentChanges.add(Either.forRight(resourceOperation));

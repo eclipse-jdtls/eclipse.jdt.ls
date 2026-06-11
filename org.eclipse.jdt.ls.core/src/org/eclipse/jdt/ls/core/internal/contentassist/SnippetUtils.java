@@ -188,7 +188,7 @@ public class SnippetUtils {
 			snippets.sort(null);
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
-					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits();
+					List<TextEdit> edits = edit.getDocumentChanges().get(i).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 					String editUri = edit.getDocumentChanges().get(i).getLeft().getTextDocument().getUri();
 					for (int j = 0; j < edits.size(); j++) {
 						Range editRange = edits.get(j).getRange();
