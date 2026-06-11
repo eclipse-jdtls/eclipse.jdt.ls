@@ -378,7 +378,7 @@ public class AbstractQuickFixTest extends AbstractProjectsManagerBasedTest {
 		Set<String> uris = changes.stream().map(tde -> tde.getTextDocument().getUri()).distinct().collect(Collectors.toSet());
 		assertEquals(1, uris.size(), "Only one resource should be modified");
 		String uri = uris.iterator().next();
-		List<TextEdit> edits = changes.stream().flatMap(e -> e.getEdits().stream()).collect(Collectors.toList());
+		List<TextEdit> edits = changes.stream().flatMap(e -> e.getEdits().stream()).filter(Either::isLeft).map(Either::getLeft).collect(Collectors.toList());
 		return ResourceUtils.dos2Unix(evaluateChanges(uri, edits));
 	}
 

@@ -91,7 +91,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	private static final Comparator<Diagnostic> DIAGNOSTICS_COMPARATOR = (Diagnostic d1, Diagnostic d2) -> {
 		int diff = d1.getRange().getStart().getLine() - d2.getRange().getStart().getLine();
 		if (diff == 0) {
-			diff = d1.getMessage().compareTo(d2.getMessage());
+			diff = d1.getMessage().getLeft().compareTo(d2.getMessage().getLeft());
 		}
 		return diff;
 	};
@@ -134,7 +134,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		Range r;
 		Diagnostic d1 = diags.get(0);
-		assertEquals(msg1, d1.getMessage());
+		assertEquals(msg1, d1.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Warning, d1.getSeverity());
 		r = d1.getRange();
 		assertEquals(1, r.getStart().getLine());
@@ -143,7 +143,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(10, r.getEnd().getCharacter());
 
 		Diagnostic d2 = diags.get(1);
-		assertEquals(msg2, d2.getMessage());
+		assertEquals(msg2, d2.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Error, d2.getSeverity());
 		r = d2.getRange();
 		assertEquals(9, r.getStart().getLine());
@@ -152,7 +152,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(25, r.getEnd().getCharacter());
 
 		Diagnostic d3 = diags.get(2);
-		assertEquals(msg3, d3.getMessage());
+		assertEquals(msg3, d3.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Information, d3.getSeverity());
 		r = d3.getRange();
 		assertEquals(99, r.getStart().getLine());
@@ -161,7 +161,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(5, r.getEnd().getCharacter());
 
 		Diagnostic d4 = diags.get(3);
-		assertEquals(msg4, d4.getMessage());
+		assertEquals(msg4, d4.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Error, d4.getSeverity());
 		r = d4.getRange();
 		assertEquals(13, r.getStart().getLine());
@@ -185,18 +185,18 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue(taskDiags.isPresent(), "No TaskMarkerTest.java markers were found");
 		List<Diagnostic> diags = taskDiags.get().getDiagnostics();
 		assertEquals(3, diags.size(), "Some marker is missing");
-		long todoMarkers = diags.stream().filter(p -> p.getMessage().startsWith("TODO")).count();
+		long todoMarkers = diags.stream().filter(p -> p.getMessage().getLeft().startsWith("TODO")).count();
 		assertEquals(2, todoMarkers, "A TODO marker is missing");
 		Collections.sort(diags, new Comparator<Diagnostic>() {
 
 			@Override
 			public int compare(Diagnostic o1, Diagnostic o2) {
-				return o1.getMessage().compareTo(o2.getMessage());
+				return o1.getMessage().getLeft().compareTo(o2.getMessage().getLeft());
 			}
 		});
 		Range r;
 		Diagnostic d = diags.get(1);
-		assertEquals("TODO task 2", d.getMessage());
+		assertEquals("TODO task 2", d.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Information, d.getSeverity());
 		r = d.getRange();
 		assertEquals(11, r.getStart().getLine());
@@ -204,7 +204,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(11, r.getEnd().getLine());
 		assertEquals(22, r.getEnd().getCharacter());
 		d = diags.get(0);
-		assertEquals("TODO task 1", d.getMessage());
+		assertEquals("TODO task 1", d.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Information, d.getSeverity());
 		r = d.getRange();
 		assertEquals(9, r.getStart().getLine());
@@ -225,7 +225,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 
 		Range r;
 		Diagnostic d1 = diags.get(0);
-		assertEquals(msg1, d1.getMessage());
+		assertEquals(msg1, d1.getMessage().getLeft());
 		assertEquals(DiagnosticSeverity.Error, d1.getSeverity());
 		r = d1.getRange();
 		assertEquals(1, r.getStart().getLine());
@@ -262,8 +262,8 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		// https://github.com/redhat-developer/vscode-java/issues/2857
 		// m2e 2.2.0 returns 3 markers
 		assertEquals(3, diags.size(), diags.toString());
-		Diagnostic diag = diags.stream().filter(d -> d.getMessage().startsWith("Project build error")).findFirst().get();
-		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diag.getMessage());
+		Diagnostic diag = diags.stream().filter(d -> d.getMessage().getLeft().startsWith("Project build error")).findFirst().get();
+		assertEquals("Project build error: 'dependencies.dependency.version' for org.apache.commons:commons-lang3:jar is missing.", diag.getMessage().getLeft());
 	}
 
 	@Test
@@ -280,13 +280,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<Diagnostic> diags = projectDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
 		assertEquals(2, diags.size(), diags.toString());
-		assertTrue(diags.get(1).getMessage().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
+		assertTrue(diags.get(1).getMessage().getLeft().startsWith("The compiler compliance specified is 1.7 but a JRE 1.8 is used"));
 		Optional<PublishDiagnosticsParams> pomDiags = allCalls.stream().filter(p -> p.getUri().endsWith("pom.xml")).findFirst();
 		assertTrue(pomDiags.isPresent(), "No pom.xml errors were found");
 		diags = pomDiags.get().getDiagnostics();
 		Collections.sort(diags, DIAGNOSTICS_COMPARATOR);
 		assertEquals(3, diags.size(), diags.toString());
-		assertTrue(diags.get(2).getMessage().startsWith("Project build error: "));
+		assertTrue(diags.get(2).getMessage().getLeft().startsWith("Project build error: "));
 	}
 
 	@Test
@@ -313,7 +313,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertTrue(param.isPresent());
 		List<Diagnostic> diags = param.get().getDiagnostics();
 		assertEquals(2, diags.size(), diags.toString());
-		Optional<Diagnostic> d = diags.stream().filter(p -> p.getMessage().equals("The type A is already defined")).findFirst();
+		Optional<Diagnostic> d = diags.stream().filter(p -> p.getMessage().getLeft().equals("The type A is already defined")).findFirst();
 		assertTrue(d.isPresent());
 		Diagnostic diag = d.get();
 		assertTrue(diag.getRange().getStart().getLine() >= 0);
@@ -400,7 +400,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		// https://github.com/eclipse/eclipse.jdt.ls/issues/2331
 		boolean hasMissingNature = false;
 		for (PublishDiagnosticsParams projectDiags : allCalls) {
-			if (hasMissingNature = projectDiags.getDiagnostics().stream().filter(p -> (p.getMessage().startsWith("Unknown referenced nature"))).findFirst().isPresent()) {
+			if (hasMissingNature = projectDiags.getDiagnostics().stream().filter(p -> (p.getMessage().getLeft().startsWith("Unknown referenced nature"))).findFirst().isPresent()) {
 				break;
 			}
 		}
@@ -435,7 +435,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		List<Diagnostic> diags = pomDiags.get().getDiagnostics();
 		assertEquals(1, diags.size(), diags.toString());
 		Diagnostic diag = diags.get(0);
-		assertTrue(diag.getMessage().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
+		assertTrue(diag.getMessage().getLeft().equals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML));
 		assertEquals(diag.getSeverity(), DiagnosticSeverity.Warning);
 	}
 
@@ -452,7 +452,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		IDocument document = new Document(unit.getSource());
 		List<Diagnostic> diagnostics = WorkspaceDiagnosticsHandler.toDiagnosticsArray(document, markers, false);
 		assertEquals(4, diagnostics.size());
-		Optional<Diagnostic> diag = diagnostics.stream().filter(p -> "Test cannot be resolved to a type".equals(p.getMessage())).findFirst();
+		Optional<Diagnostic> diag = diagnostics.stream().filter(p -> "Test cannot be resolved to a type".equals(p.getMessage().getLeft())).findFirst();
 		Diagnostic diagnostic = diag.get();
 		assertEquals(4, diagnostic.getRange().getStart().getCharacter());
 	}
@@ -513,13 +513,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 			}
 		}
 		assertTrue(projectDiags.size() > 0, "No maven/salut errors were found");
-		Optional<Diagnostic> projectDiag = projectDiags.stream().filter(p -> p.getMessage().contains("references non existing library")).findFirst();
+		Optional<Diagnostic> projectDiag = projectDiags.stream().filter(p -> p.getMessage().getLeft().contains("references non existing library")).findFirst();
 		assertTrue(projectDiag.isPresent(), "No 'references non existing library' diagnostic");
 		assertEquals(projectDiag.get().getSeverity(), DiagnosticSeverity.Error);
 		assertTrue(pomDiags.size() > 0, "No pom.xml errors were found");
-		Optional<Diagnostic> pomDiag = pomDiags.stream().filter(p -> p.getMessage().startsWith("Missing artifact")).findFirst();
+		Optional<Diagnostic> pomDiag = pomDiags.stream().filter(p -> p.getMessage().getLeft().startsWith("Missing artifact")).findFirst();
 		assertTrue(pomDiag.isPresent(), "No 'missing artifact' diagnostic");
-		assertTrue(pomDiag.get().getMessage().startsWith("Missing artifact"));
+		assertTrue(pomDiag.get().getMessage().getLeft().startsWith("Missing artifact"));
 		assertEquals(pomDiag.get().getRange().getStart().getLine(), 19);
 		assertEquals(pomDiag.get().getRange().getStart().getCharacter(), 3);
 		assertEquals(pomDiag.get().getRange().getEnd().getLine(), 19);
@@ -564,14 +564,13 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 		assertEquals(3, pomDiags.size(), "No pom.xml errors were found");
 		assertTrue(pomDiags.get(0).getUri().endsWith("childmodule/pom.xml"), pomDiags.get(0).getUri());
 		assertEquals(1, pomDiags.get(0).getDiagnostics().size());
-		assertEquals(pomDiags.get(0).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
+		assertEquals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML, pomDiags.get(0).getDiagnostics().get(0).getMessage().getLeft());
 		assertTrue(pomDiags.get(1).getUri().endsWith("module2/pom.xml"));
 		assertEquals(1, pomDiags.get(1).getDiagnostics().size());
-		assertEquals(pomDiags.get(1).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
+		assertEquals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML, pomDiags.get(1).getDiagnostics().get(0).getMessage().getLeft());
 		assertTrue(pomDiags.get(2).getUri().endsWith("module3/pom.xml"));
 		assertEquals(1, pomDiags.get(2).getDiagnostics().size());
-		assertEquals(pomDiags.get(2).getDiagnostics().get(0).getMessage(), WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML);
-
+		assertEquals(WorkspaceDiagnosticsHandler.PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML, pomDiags.get(2).getDiagnostics().get(0).getMessage().getLeft());
 		reset(connection);
 		captor = ArgumentCaptor.forClass(PublishDiagnosticsParams.class);
 		projectsManager.updateProject(project, true);
