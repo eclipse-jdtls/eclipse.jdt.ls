@@ -31,6 +31,8 @@ sourceSets {
 
 
 dependencies {
+    implementation project(':common')
+
     // Use Scala 2.13 in our library project
     implementation libs.scala.library
 
