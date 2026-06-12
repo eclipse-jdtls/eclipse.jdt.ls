@@ -51,7 +51,6 @@
       <plugin id="org.eclipse.jdt.core"/>
 	  <plugin id="org.eclipse.jdt.core.javac"/>
       <plugin id="org.eclipse.jdt.launching"/>
-      <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
       <plugin id="org.eclipse.jdt.ls.filesystem"/>
       <plugin id="org.eclipse.jdt.ls.logback.appender" fragment="true"/>
