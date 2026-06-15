@@ -55,7 +55,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/TestJavadoc.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(4, 17)); // private String f[o]o()
+		params.setPosition(new Position(4, 17));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 
@@ -68,7 +68,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/TestJavadoc.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(6, 18)); // return inner.t[e]st;
+		params.setPosition(new Position(6, 18));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 
@@ -81,7 +81,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/TestJavadoc.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(1, 38)); // import ... WordUtils;
+		params.setPosition(new Position(1, 38));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 
@@ -94,7 +94,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/TestJavadoc.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(0, 12)); // package org.sample;
+		params.setPosition(new Position(0, 12));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 
@@ -107,7 +107,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/TestJavadoc.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(5, 9)); // Inner inner = new Inner();
+		params.setPosition(new Position(5, 9));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 
@@ -120,7 +120,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 		String uriString = fJProject.getFile("src/main/java/org/sample/CallHierarchyOther.java").getLocationURI().toString();
 
 		params.setTextDocument(new TextDocumentIdentifier(uriString));
-		params.setPosition(new Position(11, 4)); // @Deprecated
+		params.setPosition(new Position(11, 4));
 
 		String result = fCommand.getFullyQualifiedName(params, new NullProgressMonitor());
 

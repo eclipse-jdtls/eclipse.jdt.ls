@@ -40,7 +40,6 @@ public class FullyQualifiedNameCommand {
 
 		if (textDocument == null || position == null) {
 			return null;
-
 		}
 
 		try {
@@ -60,9 +59,6 @@ public class FullyQualifiedNameCommand {
 	}
 
 	private String getFullyQualifiedName(IJavaElement element) throws JavaModelException {
-
-		System.out.println("Element = " + element);
-		System.out.println("Class = " + (element == null ? "null" : element.getClass().getName()));
 
 		if (element instanceof IType type) {
 			return type.getFullyQualifiedName();
