@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
+import org.eclipse.jdt.ls.core.internal.commands.FullyQualifiedNameCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntries;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
@@ -216,6 +217,10 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					return TroubleshootingInfoCommand.getTroubleshootingInfo();
 				case "java.project.resolveText":
 					return PasteEventHandler.handleFilePasteEvent((String) arguments.get(0), (String) arguments.get(1), monitor);
+				case "java.getFullyQualifiedName":
+					FullyQualifiedNameCommand fullyQualifiedNameCommand = new FullyQualifiedNameCommand();
+					TextDocumentPositionParams fqnParams = JSONUtility.toModel(arguments.get(0), TextDocumentPositionParams.class);
+					return fullyQualifiedNameCommand.getFullyQualifiedName(fqnParams, monitor);
 				default:
 					break;
 			}
