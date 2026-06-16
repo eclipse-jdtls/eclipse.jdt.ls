@@ -707,13 +707,24 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			this.preferences.setAndroidSupportEnabled(false);
 			for (IProject project : projects) {
 				projectsManager.updateProject(project, true);
+				waitForBackgroundJobs();
 			}
-			waitForBackgroundJobs();
 			// regardless of ANDROID_HOME, the number of cpe is 2 since android support is disabled
 			assertEquals(2, javaProject.getRawClasspath().length);
 		} finally {
 			this.preferences.setAndroidSupportEnabled(false);
 		}
+	}
+
+	@Test
+	public void testAndroidProjectSupportDisabled() throws Exception {
+		List<IProject> projects = importProjects("gradle/android");
+		assertEquals(2, projects.size());
+		IProject androidAppProject = WorkspaceHelper.getProject("app");
+		assertNotNull(androidAppProject);
+		IJavaProject javaProject = JavaCore.create(androidAppProject);
+		IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+		assertEquals(2, classpathEntries.length);
 	}
 
 	@Test
