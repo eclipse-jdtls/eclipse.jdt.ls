@@ -37,6 +37,7 @@ import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.StringValue;
+import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -189,9 +190,10 @@ public class SnippetUtils {
 			snippets.sort(null);
 			for (int i = 0; i < edit.getDocumentChanges().size(); i++) {
 				if (edit.getDocumentChanges().get(i).isLeft()) {
-					List<Either<TextEdit, SnippetTextEdit>> edits = new ArrayList<>(edit.getDocumentChanges().get(i).getLeft().getEdits());
-					edit.getDocumentChanges().get(i).getLeft().setEdits(edits);
-					String editUri = edit.getDocumentChanges().get(i).getLeft().getTextDocument().getUri();
+					TextDocumentEdit documentEdit = edit.getDocumentChanges().get(i).getLeft();
+					List<Either<TextEdit, SnippetTextEdit>> edits = new ArrayList<>(documentEdit.getEdits());
+					documentEdit.setEdits(edits);
+					String editUri = documentEdit.getTextDocument().getUri();
 					for (int j = 0; j < edits.size(); j++) {
 						if (!edits.get(j).isLeft()) {
 							continue;
