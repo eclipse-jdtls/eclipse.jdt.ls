@@ -218,9 +218,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				case "java.project.resolveText":
 					return PasteEventHandler.handleFilePasteEvent((String) arguments.get(0), (String) arguments.get(1), monitor);
 				case "java.getFullyQualifiedName":
-					FullyQualifiedNameCommand fullyQualifiedNameCommand = new FullyQualifiedNameCommand();
 					TextDocumentPositionParams fqnParams = JSONUtility.toModel(arguments.get(0), TextDocumentPositionParams.class);
-					return fullyQualifiedNameCommand.getFullyQualifiedName(fqnParams, monitor);
+					return FullyQualifiedNameCommand.getFullyQualifiedName(fqnParams, monitor);
 				default:
 					break;
 			}

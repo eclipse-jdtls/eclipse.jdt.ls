@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2026 Red Hat Inc. and others.
+ * Copyright (c) 2026 IBM Corp. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -8,7 +8,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *     Red Hat Inc. - initial API and implementation
+ *     IBM Corp. - initial API and implementation
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
@@ -29,7 +29,7 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 
 public class FullyQualifiedNameCommand {
 
-	public String getFullyQualifiedName(TextDocumentPositionParams params, IProgressMonitor monitor) {
+	public static String getFullyQualifiedName(TextDocumentPositionParams params, IProgressMonitor monitor) {
 
 		if (params == null) {
 			return null;
@@ -58,7 +58,7 @@ public class FullyQualifiedNameCommand {
 
 	}
 
-	private String getFullyQualifiedName(IJavaElement element) throws JavaModelException {
+	private static String getFullyQualifiedName(IJavaElement element) throws JavaModelException {
 
 		if (element instanceof IType type) {
 			return type.getFullyQualifiedName();
