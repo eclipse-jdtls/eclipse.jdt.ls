@@ -39,7 +39,7 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 
 		| header 1 | header 2 |
 		|----------|----------|
-		| data 1   | data 2   |
+		| data 1 | data 2 |
 
 		<br />
 
@@ -78,12 +78,12 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 			"""
 		| Header 1 | Header 2 |
 		|----------|----------|
-		| Row 1A   | Row 1B   |
-		| Row 2A   | Row 2B   |""";
+		| Row 1A | Row 1B |
+		| Row 2A | Row 2B |""";
 
 	private static final String MARKDOWN_TABLE_1=
 			"""
-		|        |        |
+		|   |   |
 		|--------|--------|
 		| Row 0A | Row 0B |
 		| Row 1A | Row 1B |
@@ -553,14 +553,14 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 			implementation to see if any other charsets are supported. The behavior
 			of such optional charsets may differ between implementations.
 
-			> | Charset       | Description                                                                                    |
+			> | Charset | Description |
 			> |:--------------|:-----------------------------------------------------------------------------------------------|
-			> | `US-ASCII`    | Seven-bit ASCII, a.k.a. `ISO646-US`, a.k.a. the Basic Latin block of the Unicode character set |
-			> | `ISO-8859-1 ` | ISO Latin Alphabet No. 1, a.k.a. `ISO-LATIN-1`                                                 |
-			> | `UTF-8`       | Eight-bit UCS Transformation Format                                                            |
-			> | `UTF-16BE`    | Sixteen-bit UCS Transformation Format, big-endian byte order                                   |
-			> | `UTF-16LE`    | Sixteen-bit UCS Transformation Format, little-endian byte order                                |
-			> | `UTF-16`      | Sixteen-bit UCS Transformation Format, byte order identified by an optional byte-order mark    |
+			> | `US-ASCII` | Seven-bit ASCII, a.k.a. `ISO646-US`, a.k.a. the Basic Latin block of the Unicode character set |
+			> | `ISO-8859-1 ` | ISO Latin Alphabet No. 1, a.k.a. `ISO-LATIN-1` |
+			> | `UTF-8` | Eight-bit UCS Transformation Format |
+			> | `UTF-16BE` | Sixteen-bit UCS Transformation Format, big-endian byte order |
+			> | `UTF-16LE` | Sixteen-bit UCS Transformation Format, little-endian byte order |
+			> | `UTF-16` | Sixteen-bit UCS Transformation Format, byte order identified by an optional byte-order mark |
 
 			<br />
 
@@ -727,30 +727,30 @@ public class JavaDoc2MarkdownConverterTest extends AbstractJavadocConverterTest 
 """;
 
 	private static final String WEIRD_TABLES_MD = """
-|                         Construct                         |                              Matches                              |
+| Construct | Matches |
 |-----------------------------------------------------------|-------------------------------------------------------------------|
-| **Characters**                                                                                                               ||
-| ***x***                                                   | The character *x*                                                 |
-| **`nn`**                                                  | The backslash character                                           |
-| The control character corresponding to *x*                |
-| **Character classes**                                                                                                        ||
-| **`[abc]`**                                               | `a`, `b`, or `c` (simple class)                                   |
-| **`[^abc]`**                                              | Any character except `a`, `b`, or `c` (negation)                  |
-| **`[a-zA-Z]`**                                            | `a` through `z` or `A` through `Z`, inclusive (range)             |
-| **`[a-z&&[^m-p]]`**                                       | `a` through `z`, and not `m` through `p`: `[a-lq-z]`(subtraction) |
-| **Predefined character classes**                                                                                             ||
-| **`.`**                                                   | Any character (may or may not match line terminators)             |
-| **java.lang.Character classes (simple java character type)**                                                                 ||
-| **`p{javaMirrored}`**                                     | Equivalent to java.lang.Character.isMirrored()                    |
-| **Classes for Unicode scripts, blocks, categories and binary properties**                                                    ||
-| **`[p{L}&&[^p{Lu}]]`**                                    | Any letter except an uppercase letter (subtraction)               |
-| **Boundary matchers**                                                                                                        ||
-| **`^`**                                                   | The beginning of a line                                           |
-| **`$`**                                                   | The end of a line                                                 |
+| **Characters** ||
+| ***x*** | The character *x* |
+| **`nn`** | The backslash character |
+| The control character corresponding to *x* |
+| **Character classes** ||
+| **`[abc]`** | `a`, `b`, or `c` (simple class) |
+| **`[^abc]`** | Any character except `a`, `b`, or `c` (negation) |
+| **`[a-zA-Z]`** | `a` through `z` or `A` through `Z`, inclusive (range) |
+| **`[a-z&&[^m-p]]`** | `a` through `z`, and not `m` through `p`: `[a-lq-z]`(subtraction) |
+| **Predefined character classes** ||
+| **`.`** | Any character (may or may not match line terminators) |
+| **java.lang.Character classes (simple java character type)** ||
+| **`p{javaMirrored}`** | Equivalent to java.lang.Character.isMirrored() |
+| **Classes for Unicode scripts, blocks, categories and binary properties** ||
+| **`[p{L}&&[^p{Lu}]]`** | Any letter except an uppercase letter (subtraction) |
+| **Boundary matchers** ||
+| **`^`** | The beginning of a line |
+| **`$`** | The end of a line |
 | The end of the input but for the final terminator, if any |
-| **`\\z`**                                                  | The end of the input                                              |
-| **Unicode Extended Grapheme matcher**                                                                                        ||
-| **`X`**                                                   | Any Unicode extended grapheme cluster                             |
+| **`\\z`** | The end of the input |
+| **Unicode Extended Grapheme matcher** ||
+| **`X`** | Any Unicode extended grapheme cluster |
 [Regular expression constructs, and what they match]""";
 
 
@@ -889,13 +889,13 @@ operand classes.
 The precedence of character-class operators is as follows, from
 highest to lowest:
 
-> |       |                |                  |
+> |   |   |   |
 > |-------|----------------|------------------|
-> | **1** | Literal escape | `\\x`             |
-> | **2** | Grouping       | `[...]`          |
-> | **3** | Range          | `a-z`            |
-> | **4** | Union          | `[a-e][i-u]`     |
-> | **5** | Intersection   | `[a-z&&[aeiou]]` |
+> | **1** | Literal escape | `\\x` |
+> | **2** | Grouping | `[...]` |
+> | **3** | Range | `a-z` |
+> | **4** | Union | `[a-e][i-u]` |
+> | **5** | Intersection | `[a-z&&[aeiou]]` |
 
 Note that a different set of metacharacters are in effect inside
 a character class than outside a character class. For instance, the
