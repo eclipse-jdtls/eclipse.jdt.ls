@@ -111,7 +111,7 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(2, diagParam.getDiagnostics().size());
-		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage().getLeft());
 
 		DiagnosticsCommand.refreshDiagnostics(JDTUtils.toURI(cu1), "thisFile", false);
 
@@ -119,10 +119,10 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, diagnosticReports.size());
 		diagParam = diagnosticReports.get(1);
 		assertEquals(4, diagParam.getDiagnostics().size());
-		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage());
-		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage());
-		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage());
-		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage());
+		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage().getLeft());
+		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage().getLeft());
+		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage().getLeft());
+		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage().getLeft());
 	}
 
 	@Test
@@ -150,10 +150,10 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, diagnosticReports.size());
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(4, diagParam.getDiagnostics().size());
-		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage());
-		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage());
-		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage());
-		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage());
+		assertEquals("Foo.java is a non-project file, only JDK classes are added to its build path", diagParam.getDiagnostics().get(0).getMessage().getLeft());
+		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(1).getMessage().getLeft());
+		assertEquals("UnknownType cannot be resolved to a type", diagParam.getDiagnostics().get(2).getMessage().getLeft());
+		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(3).getMessage().getLeft());
 
 		DiagnosticsCommand.refreshDiagnostics(JDTUtils.toURI(cu1), "thisFile", true);
 
@@ -161,8 +161,8 @@ public class DiagnosticsCommandTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(2, diagnosticReports.size());
 		diagParam = diagnosticReports.get(1);
 		assertEquals(2, diagParam.getDiagnostics().size());
-		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage());
-		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(1).getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", diagParam.getDiagnostics().get(0).getMessage().getLeft());
+		assertEquals("Syntax error, insert \";\" to complete BlockStatements", diagParam.getDiagnostics().get(1).getMessage().getLeft());
 	}
 
 	private void openDocument(ICompilationUnit cu, String content, int version) {

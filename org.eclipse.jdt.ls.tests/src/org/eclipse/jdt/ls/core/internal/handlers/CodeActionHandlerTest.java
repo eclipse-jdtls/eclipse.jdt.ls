@@ -746,7 +746,7 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals(1, we.getDocumentChanges().size());
 
 		TextDocumentEdit textDocEdit = we.getDocumentChanges().get(0).getLeft();
-		assertEquals("org.eclipse.jdt.core.compiler.problem.unusedWarningToken=ignore\n", textDocEdit.getEdits().get(0).getNewText());
+		assertEquals("org.eclipse.jdt.core.compiler.problem.unusedWarningToken=ignore\n", textDocEdit.getEdits().get(0).getLeft().getNewText());
 	}
 
 	@Test
