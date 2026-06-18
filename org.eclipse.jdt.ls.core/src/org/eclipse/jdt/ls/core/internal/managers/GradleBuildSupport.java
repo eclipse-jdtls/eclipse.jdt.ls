@@ -644,7 +644,7 @@ public class GradleBuildSupport implements IBuildSupport {
 						}
 						if (buildSucceeded) {
 							for (IProject project : refreshed) {
-								project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
+								project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 							}
 						}
 					} catch (CoreException e) {
