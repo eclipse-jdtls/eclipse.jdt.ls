@@ -285,13 +285,18 @@ public class ScalaGradleSupport {
 		List<String> toAdd = new ArrayList<>();
 		for (String path : paths) {
 			try {
+				Path classpathPath = new Path(path);
+				boolean exists = Arrays.stream(javaProject.getRawClasspath())
+						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
+						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
 				IClasspathContainer container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
 				if (container != null) {
 					IClasspathEntry[] entries = container.getClasspathEntries();
-					Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), new Path(path))).findFirst();
-					if (!optional.isPresent()) {
-						toAdd.add(path);
-					}
+					Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
+					exists |= optional.isPresent();
+				}
+				if (!exists) {
+					toAdd.add(path);
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e);
