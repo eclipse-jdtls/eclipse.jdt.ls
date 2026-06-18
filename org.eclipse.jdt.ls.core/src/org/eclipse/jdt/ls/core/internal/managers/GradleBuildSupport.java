@@ -546,12 +546,12 @@ public class GradleBuildSupport implements IBuildSupport {
 					}
 				}
 			}
-			Map<String, GradleProject> roots = new HashMap<>();
+			Map<File, GradleProject> roots = new HashMap<>();
 			for (Map.Entry<File, IProject> entry : projectsByRoot.entrySet()) {
 				File rootDir = entry.getKey();
 				try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(rootDir).connect()) {
 					GradleProject gradleProject = connection.getModel(GradleProject.class);
-					roots.put(gradleProject.getPath(), gradleProject);
+					roots.put(rootDir, gradleProject);
 				}
 			}
 			for (GradleProject gradleProject : roots.values()) {

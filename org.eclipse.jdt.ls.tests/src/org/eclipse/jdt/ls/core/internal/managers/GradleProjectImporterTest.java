@@ -73,6 +73,7 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -885,6 +886,8 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
+		// Gradle 8.5 can fail to compile the init script with JDK 25 (ASM/Groovy classfile support).
+		Assumptions.assumeTrue(Runtime.version().feature() < 25, "Skip on JDK 25+");
 		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala");
 		File initScript = null;
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
