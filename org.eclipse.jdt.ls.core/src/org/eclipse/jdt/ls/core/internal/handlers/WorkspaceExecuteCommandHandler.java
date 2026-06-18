@@ -170,7 +170,7 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 	}
 
 	public Set<String> getAllCommands() {
-		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors(true);
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
 			commands.addAll(handler.getAllCommands());
