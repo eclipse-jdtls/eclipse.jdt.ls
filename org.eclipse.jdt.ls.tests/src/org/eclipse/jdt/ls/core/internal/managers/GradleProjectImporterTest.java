@@ -45,7 +45,6 @@ import org.eclipse.buildship.core.internal.CorePlugin;
 import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -53,7 +52,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.apt.core.util.AptConfig;
-import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -874,7 +872,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			waitForOtherLangs();
 			IProject project = ProjectUtils.getProject("app");
 			assertTrue(ProjectUtils.isGradleProject(project));
-			dumpScalaSupportDiagnostics(project);
 			assertNoErrors(project);
 			IClasspathEntry[] classpathEntries = JavaCore.create(project).getRawClasspath();
 			boolean hasBuildLibEntry = Arrays.stream(classpathEntries).anyMatch(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && cpe.getPath().toString().replace('\\', '/').contains("/build/libs/"));
@@ -884,59 +881,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertTrue(hasUnexcludedResources);
 		} finally {
 			this.preferences.setScalaSupportEnabled(oldScalaSupported);
-		}
-	}
-
-	private void dumpScalaSupportDiagnostics(IProject project) {
-		System.out.println("[scala-ci] ===== Scala support diagnostics start =====");
-		try {
-			IJavaProject javaProject = JavaCore.create(project);
-			File projectDir = project.getLocation().toFile();
-			System.out.println("[scala-ci] java.version=" + System.getProperty("java.version"));
-			System.out.println("[scala-ci] project=" + project.getName() + ", location=" + projectDir.getAbsolutePath());
-			System.out.println("[scala-ci] scalaSupportEnabled=" + this.preferences.isScalaSupportEnabled() + ", autobuildEnabled=" + this.preferences.isAutobuildEnabled());
-			System.out.println("[scala-ci] findType(org.example.App)=" + typeExists(javaProject, "org.example.App"));
-			System.out.println("[scala-ci] findType(org.example.App$)=" + typeExists(javaProject, "org.example.App$"));
-			dumpScalaClassFile(projectDir, "build/classes/scala/main/org/example/App.class");
-			dumpScalaClassFile(projectDir, "build/classes/scala/main/org/example/App$.class");
-			dumpScalaClassFile(projectDir, "build/classes/scala/main/org/sample/Test.class");
-			dumpScalaClassFile(projectDir, "build/classes/java/main/org/sample/Test.class");
-			dumpScalaClassFile(projectDir.getParentFile(), "common/build/libs/common.jar");
-			dumpClasspath("raw", javaProject.getRawClasspath());
-			IClasspathContainer container = JavaCore.getClasspathContainer(ScalaGradleSupport.CONTAINER_PATH, javaProject);
-			if (container == null) {
-				System.out.println("[scala-ci] Buildship container=null");
-			} else {
-				System.out.println("[scala-ci] Buildship container path=" + container.getPath() + ", kind=" + container.getKind());
-				dumpClasspath("container", container.getClasspathEntries());
-			}
-			for (IProject workspaceProject : ProjectUtils.getGradleProjects()) {
-				System.out.println("[scala-ci] workspaceGradleProject=" + workspaceProject.getName() + ", accessible=" + workspaceProject.isAccessible() + ", location=" + workspaceProject.getLocation());
-			}
-			List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
-			System.out.println("[scala-ci] errorMarkerCount=" + markers.size());
-			System.out.println("[scala-ci] errors=" + ResourceUtils.toString(markers));
-		} catch (Exception e) {
-			System.out.println("[scala-ci] diagnostics failed: " + e.getClass().getName() + ": " + e.getMessage());
-			e.printStackTrace(System.out);
-		}
-		System.out.println("[scala-ci] ===== Scala support diagnostics end =====");
-	}
-
-	private boolean typeExists(IJavaProject javaProject, String typeName) throws Exception {
-		IType type = javaProject.findType(typeName);
-		return type != null && type.exists();
-	}
-
-	private void dumpScalaClassFile(File baseDir, String relativePath) throws Exception {
-		File file = new File(baseDir, relativePath);
-		System.out.println("[scala-ci] fileExists " + file.getAbsolutePath() + "=" + file.exists() + (file.exists() ? ", size=" + Files.size(file.toPath()) : ""));
-	}
-
-	private void dumpClasspath(String label, IClasspathEntry[] entries) {
-		System.out.println("[scala-ci] " + label + "ClasspathCount=" + entries.length);
-		for (IClasspathEntry entry : entries) {
-			System.out.println("[scala-ci] " + label + "Classpath kind=" + entry.getEntryKind() + ", path=" + entry.getPath() + ", output=" + entry.getOutputLocation() + ", attrs=" + Arrays.toString(entry.getExtraAttributes()));
 		}
 	}
 
