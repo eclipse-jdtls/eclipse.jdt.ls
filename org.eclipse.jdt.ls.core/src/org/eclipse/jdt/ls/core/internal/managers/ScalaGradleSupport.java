@@ -168,7 +168,7 @@ public class ScalaGradleSupport {
 		addDefaultScalaOutputPath(projectDir, "test", paths);
 		if (!paths.isEmpty()) {
 			IJavaProject javaProject = JavaCore.create(project);
-			List<String> toAdd = getMissingPaths(javaProject, paths);
+			List<String> toAdd = getMissingRawClasspathPaths(javaProject, paths);
 			if (!toAdd.isEmpty()) {
 				try {
 					configureClasspath(javaProject, toAdd, new HashMap<>(), monitor);
@@ -283,18 +283,43 @@ public class ScalaGradleSupport {
 
 	private static List<String> getMissingPaths(IJavaProject javaProject, List<String> paths) {
 		List<String> toAdd = new ArrayList<>();
+		IClasspathContainer container;
+		try {
+			container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e);
+			return toAdd;
+		}
+		if (container == null) {
+			return toAdd;
+		}
 		for (String path : paths) {
 			try {
 				Path classpathPath = new Path(path);
 				boolean exists = Arrays.stream(javaProject.getRawClasspath())
 						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
 						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
-				IClasspathContainer container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
-				if (container != null) {
-					IClasspathEntry[] entries = container.getClasspathEntries();
-					Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
-					exists |= optional.isPresent();
+				IClasspathEntry[] entries = container.getClasspathEntries();
+				Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
+				exists |= optional.isPresent();
+				if (!exists) {
+					toAdd.add(path);
 				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return toAdd;
+	}
+
+	private static List<String> getMissingRawClasspathPaths(IJavaProject javaProject, List<String> paths) {
+		List<String> toAdd = new ArrayList<>();
+		for (String path : paths) {
+			try {
+				Path classpathPath = new Path(path);
+				boolean exists = Arrays.stream(javaProject.getRawClasspath())
+						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
+						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
 				if (!exists) {
 					toAdd.add(path);
 				}
