@@ -1,5 +1,6 @@
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.JvmLibrary
 import org.gradle.language.base.artifact.SourcesArtifact
 
@@ -13,6 +14,20 @@ allprojects {
 					def targetConfNames = ['runtimeClasspath', 'testRuntimeClasspath', 'scalaRuntime']
 					def componentIds = [] as Set
 					def processedFiles = [] as Set
+					def addLib = { file, sourcePath ->
+						if (file == null) return
+						def binPath = file.absolutePath
+						if (!processedFiles.contains(binPath)) {
+							println "LIB|${binPath}|${sourcePath ?: 'NO_SOURCE'}"
+							processedFiles.add(binPath)
+						}
+					}
+					project.tasks.withType(ScalaCompile).each { task ->
+						def classesDir = task.hasProperty('destinationDirectory')
+							? task.destinationDirectory.get().asFile
+							: task.destinationDir
+						addLib(classesDir, "NO_SOURCE")
+					}
 					targetConfNames.findAll { project.configurations.findByName(it) }.each { name ->
 						def conf = project.configurations[name]
 						if (conf.canBeResolved) {
@@ -39,14 +54,10 @@ allprojects {
 						if (conf.canBeResolved) {
 							conf.resolvedConfiguration.resolvedArtifacts.each { artifact ->
 								if (!(artifact.id.componentIdentifier instanceof ProjectComponentIdentifier)) {
-									def binPath = artifact.file.absolutePath
-									if (!processedFiles.contains(binPath)) {
-										def id = artifact.moduleVersion?.id
-										def key = id == null ? null : "${id.group}:${id.name}".toString()
-										def srcPath = key == null ? "NO_SOURCE" : sourceMap[key] ?: "NO_SOURCE"
-										println "LIB|${binPath}|${srcPath}"
-										processedFiles.add(binPath)
-									}
+									def id = artifact.moduleVersion?.id
+									def key = id == null ? null : "${id.group}:${id.name}".toString()
+									def srcPath = key == null ? "NO_SOURCE" : sourceMap[key] ?: "NO_SOURCE"
+									addLib(artifact.file, srcPath)
 								}
 							}
 						}

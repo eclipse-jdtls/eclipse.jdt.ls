@@ -135,20 +135,21 @@ public class ScalaGradleSupport {
 		}
 		File projectDir = project.getLocation().toFile();
 		File initScript = null;
-		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
 			initScript = getInitScript();
 			BuildLauncher launcher = connection.newBuild();
 			launcher.withArguments("--init-script", initScript.getAbsolutePath(), "--no-configuration-cache");
 			launcher.forTasks("javalsCheckProject");
 			launcher.setStandardOutput(outputStream);
 			launcher.run();
-			String output = outputStream.toString();
-			process(project, output, monitor);
 		} catch (Exception e) {
 			if (Boolean.getBoolean("jdt.ls.debug")) {
 				JavaLanguageServerPlugin.logException(e);
 			}
 		} finally {
+			process(project, outputStream.toString(), monitor);
+			addDefaultScalaOutputPaths(project, monitor);
 			if (initScript != null) {
 				try {
 					Files.delete(initScript.toPath());
@@ -158,6 +159,32 @@ public class ScalaGradleSupport {
 			}
 		}
 		return;
+	}
+
+	private static void addDefaultScalaOutputPaths(IProject project, IProgressMonitor monitor) {
+		File projectDir = project.getLocation().toFile();
+		List<String> paths = new ArrayList<>();
+		addDefaultScalaOutputPath(projectDir, "main", paths);
+		addDefaultScalaOutputPath(projectDir, "test", paths);
+		if (!paths.isEmpty()) {
+			IJavaProject javaProject = JavaCore.create(project);
+			List<String> toAdd = getMissingPaths(javaProject, paths);
+			if (!toAdd.isEmpty()) {
+				try {
+					configureClasspath(javaProject, toAdd, new HashMap<>(), monitor);
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e);
+				}
+			}
+		}
+	}
+
+	private static void addDefaultScalaOutputPath(File projectDir, String sourceSet, List<String> paths) {
+		File sourceDir = new File(projectDir, "src/" + sourceSet + "/scala");
+		File outputDir = new File(projectDir, "build/classes/scala/" + sourceSet);
+		if (sourceDir.isDirectory() || outputDir.exists()) {
+			paths.add(outputDir.getAbsolutePath());
+		}
 	}
 
 	private File getInitScript() throws IOException {
