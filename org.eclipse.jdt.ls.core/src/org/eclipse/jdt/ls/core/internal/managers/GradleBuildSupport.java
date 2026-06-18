@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -555,13 +556,11 @@ public class GradleBuildSupport implements IBuildSupport {
 				}
 			}
 			for (GradleProject gradleProject : roots.values()) {
-				List<String> taskNames = new ArrayList<>();
+				Set<String> taskNames = new LinkedHashSet<>();
 				for (String taskName : includeTasks) {
-					if (hasTask(gradleProject, taskName)) {
-						taskNames.add(taskName);
-					}
+					collectTaskPaths(gradleProject, taskName, taskNames);
 				}
-				compile(gradleProject, taskNames, monitor);
+				compile(gradleProject, new ArrayList<>(taskNames), monitor);
 			}
 		}
 	}
@@ -607,10 +606,10 @@ public class GradleBuildSupport implements IBuildSupport {
 					String error = errorStream.toString();
 					if (!error.isBlank()) {
 						publishDiagnostics(error, new ParseOptions(
-								taskNames.contains(COMPILE_KOTLIN) || taskNames.contains(COMPILE_TEST_KOTLIN),
-								taskNames.contains(COMPILE_GROOVY) || taskNames.contains(COMPILE_TEST_GROOVY),
-								taskNames.contains(COMPILE_ASPECTJ) || taskNames.contains(COMPILE_TEST_ASPECTJ),
-								taskNames.contains(COMPILE_SCALA) || taskNames.contains(COMPILE_TEST_SCALA)
+								containsTask(taskNames, COMPILE_KOTLIN) || containsTask(taskNames, COMPILE_TEST_KOTLIN),
+								containsTask(taskNames, COMPILE_GROOVY) || containsTask(taskNames, COMPILE_TEST_GROOVY),
+								containsTask(taskNames, COMPILE_ASPECTJ) || containsTask(taskNames, COMPILE_TEST_ASPECTJ),
+								containsTask(taskNames, COMPILE_SCALA) || containsTask(taskNames, COMPILE_TEST_SCALA)
 								)
 							);
 					}
@@ -666,6 +665,26 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 		}
 		return false;
+	}
+
+	private void collectTaskPaths(GradleProject project, String taskName, Set<String> taskPaths) {
+		for (GradleTask task : project.getTasks()) {
+			if (taskName.equals(task.getName())) {
+				String projectPath = project.getPath();
+				if (projectPath == null || ":".equals(projectPath)) {
+					taskPaths.add(taskName);
+				} else {
+					taskPaths.add(projectPath + ":" + taskName);
+				}
+			}
+		}
+		for (GradleProject childProject : project.getChildren()) {
+			collectTaskPaths(childProject, taskName, taskPaths);
+		}
+	}
+
+	private boolean containsTask(List<String> taskNames, String taskName) {
+		return taskNames.stream().anyMatch(name -> taskName.equals(name) || name.endsWith(":" + taskName));
 	}
 
 	private void publishDiagnostics(String error, ParseOptions parseOptions) {
