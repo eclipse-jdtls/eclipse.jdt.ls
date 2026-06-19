@@ -109,7 +109,7 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 			installedBundle.loadClass("jdt.ls.extension.Activator");
 			assertEquals(Bundle.ACTIVE, installedBundle.getState());
 
-			extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
+			extensionCommands = waitForCommands("jdt.ls.extension.command2", "jdt.ls.extension.command3");
 			assertTrue(extensionCommands.contains("jdt.ls.extension.command2"));
 			assertTrue(extensionCommands.contains("jdt.ls.extension.command3"));
 			assertFalse(extensionCommands.contains("jdt.ls.extension.command1"));
@@ -117,5 +117,14 @@ public class WorkspaceExecuteCommandHandlerTest extends AbstractProjectsManagerB
 			// Uninstall the bundle to clean up the testing bundle context.
 			installedBundle.uninstall();
 		}
+	}
+
+	private Set<String> waitForCommands(String... commands) throws InterruptedException {
+		Set<String> extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
+		for (int i = 0; i < 20 && !extensionCommands.containsAll(Set.of(commands)); i++) {
+			Thread.sleep(100);
+			extensionCommands = WorkspaceExecuteCommandHandler.getInstance().getAllCommands();
+		}
+		return extensionCommands;
 	}
 }
