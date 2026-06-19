@@ -170,7 +170,7 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 	}
 
 	public Set<String> getAllCommands() {
-		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors(true);
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 		Set<String> commands = new HashSet<>();
 		for (DelegateCommandHandlerDescriptor handler : handlers) {
 			commands.addAll(handler.getAllCommands());
@@ -194,7 +194,7 @@ public class WorkspaceExecuteCommandHandler implements IRegistryEventListener {
 			throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidParams, errorMessage, null));
 		}
 
-		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors(true);
+		Collection<DelegateCommandHandlerDescriptor> handlers = getDelegateCommandHandlerDescriptors();
 
 		Collection<DelegateCommandHandlerDescriptor> candidates = handlers.stream().filter(desc -> desc.getAllCommands().contains(params.getCommand())).collect(Collectors.toSet()); //no cancellation here but it's super fast so it's ok.
 
