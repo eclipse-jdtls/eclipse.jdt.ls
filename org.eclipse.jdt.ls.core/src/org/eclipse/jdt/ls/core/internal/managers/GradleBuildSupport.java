@@ -43,7 +43,6 @@ import org.eclipse.buildship.core.internal.workspace.FetchStrategy;
 import org.eclipse.buildship.core.internal.workspace.InternalGradleBuild;
 import org.eclipse.buildship.core.internal.workspace.WorkbenchShutdownEvent;
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -583,7 +582,6 @@ public class GradleBuildSupport implements IBuildSupport {
 				JavaLanguageServerPlugin.debugTrace(message);
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 				ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-				boolean buildSucceeded = false;
 				try {
 					connection
 						.newBuild()
@@ -596,7 +594,6 @@ public class GradleBuildSupport implements IBuildSupport {
 							"--continue", "--console=plain"
 						)
 						.run();
-					buildSucceeded = true;
 				} catch (Exception e) {
 					if (Boolean.getBoolean("jdt.ls.debug")) {
 						JavaLanguageServerPlugin.logException(e);
@@ -640,11 +637,6 @@ public class GradleBuildSupport implements IBuildSupport {
 								if (refreshed.add(wp)) {
 									wp.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 								}
-							}
-						}
-						if (buildSucceeded) {
-							for (IProject project : refreshed) {
-								project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
 							}
 						}
 					} catch (CoreException e) {
