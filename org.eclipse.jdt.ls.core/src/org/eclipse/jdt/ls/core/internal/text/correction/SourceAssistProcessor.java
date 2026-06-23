@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017-2022 Microsoft Corporation and others.
+* Copyright (c) 2017-2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -173,14 +173,18 @@ public class SourceAssistProcessor {
 		}
 
 		if (!UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
-			// Override/Implement Methods QuickAssist
-			if (isInTypeDeclaration) {
-				Optional<Either<Command, CodeAction>> quickAssistOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.QUICK_ASSIST);
-				addSourceActionCommand($, params.getContext(), quickAssistOverrideMethods);
+			try {
+				// Override/Implement Methods QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> quickAssistOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.QUICK_ASSIST, type);
+					addSourceActionCommand($, params.getContext(), quickAssistOverrideMethods);
+				}
+				// Override/Implement Methods Source Action
+				Optional<Either<Command, CodeAction>> sourceOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS, type);
+				addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Failed to generate Override/Implement Methods source action", e);
 			}
-			// Override/Implement Methods Source Action
-			Optional<Either<Command, CodeAction>> sourceOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
-			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
 		List<String> fieldNames = CodeActionUtility.getFieldNames(coveredNodes, coveringNode);
@@ -356,8 +360,8 @@ public class SourceAssistProcessor {
 		return OrganizeImportsHandler.organizeImports(context.getCompilationUnit(), isAdvancedOrganizeImportsSupported ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, monitor);
 	}
 
-	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind) {
-		if (!preferenceManager.getClientPreferences().isOverrideMethodsPromptSupported()) {
+	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind, IType type) throws JavaModelException {
+		if (!preferenceManager.getClientPreferences().isOverrideMethodsPromptSupported() || type == null || type.isAnnotation()) {
 			return Optional.empty();
 		}
 
