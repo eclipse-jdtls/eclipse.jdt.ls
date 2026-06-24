@@ -150,6 +150,11 @@ public class ScalaGradleSupport {
 		} finally {
 			process(project, outputStream.toString(), monitor);
 			addDefaultScalaOutputPaths(project, monitor);
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
 			if (initScript != null) {
 				try {
 					Files.delete(initScript.toPath());
