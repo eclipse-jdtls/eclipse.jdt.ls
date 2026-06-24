@@ -3775,11 +3775,17 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					String x;
 					int y;
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
 					@Override
 					public int hashCode() {
 						return Objects.hash(x);
 					}
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
 					@Override
 					public boolean equals(Object obj) {
 						if (this == obj) {
@@ -3797,6 +3803,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					}
 				}
 				""";
+
 
 		String after2 = """
 				package test1;
@@ -3862,11 +3869,17 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					String x;
 					int y;
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
 					@Override
 					public int hashCode() {
 						return Objects.hash(x, Integer.valueOf(y));
 					}
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
 					@Override
 					public boolean equals(Object obj) {
 						if (this == obj) {
