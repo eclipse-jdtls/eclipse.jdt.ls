@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Microsoft Corporation. and others.
+ * Copyright (c) 2020, 2026 Microsoft Corporation. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
+ *     IBM Corporation - Pattern for overriden methods
  *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.preferences;
@@ -138,7 +139,7 @@ public class CodeTemplatePreferences {
 	/**
 	 * Default value for override comments
 	 */
-	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "";
+	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "/** (non-Javadoc)\n" + " * ${see_to_overridden}\n" + " */";
 
 	/**
 	 * Default value for method comments

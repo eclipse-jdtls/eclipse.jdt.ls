@@ -1138,4 +1138,73 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
+	public void testAddJavadocForOverriddenMethod() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" */\n");
+		buf.append("public class E {\n");
+		buf.append("    @Override\n");
+		buf.append("    public String toString() {\n");
+		buf.append("        return \"E []\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" */\n");
+		buf.append("public class E {\n");
+		buf.append("    /** (non-Javadoc)\n");
+		buf.append("     * @see java.lang.Object#toString()\n");
+		buf.append("     */\n");
+		buf.append("    @Override\n");
+		buf.append("    public String toString() {\n");
+		buf.append("        return \"E []\";\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddJavadocForOverriddenMethodInRecord() throws Exception {
+		Map<String, String> options17 = new HashMap<>(fJProject1.getOptions(false));
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject1.setOptions(options17);
+
+	    IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+	    StringBuilder buf = new StringBuilder();
+	    buf.append("package test1;\n");
+	    buf.append("/**\n");
+	    buf.append(" */\n");
+	    buf.append("public record Person(String name, int age) {\n");
+	    buf.append("    @Override\n");
+	    buf.append("    public String toString() {\n");
+	    buf.append("        return name + \" (\" + age + \")\";\n");
+	    buf.append("    }\n");
+	    buf.append("}\n");
+	    ICompilationUnit cu = pack1.createCompilationUnit("Person.java", buf.toString(), false, null);
+
+	    buf = new StringBuilder();
+	    buf.append("package test1;\n");
+	    buf.append("/**\n");
+	    buf.append(" */\n");
+	    buf.append("public record Person(String name, int age) {\n");
+	    buf.append("    /** (non-Javadoc)\n");
+		buf.append("     * @see java.lang.Record#toString()\n");
+	    buf.append("     */\n");
+	    buf.append("    @Override\n");
+	    buf.append("    public String toString() {\n");
+	    buf.append("        return name + \" (\" + age + \")\";\n");
+	    buf.append("    }\n");
+	    buf.append("}\n");
+	    Expected e1 = new Expected("Add Javadoc comment", buf.toString());
+	    assertCodeActions(cu, e1);
+	}
+
+
 }

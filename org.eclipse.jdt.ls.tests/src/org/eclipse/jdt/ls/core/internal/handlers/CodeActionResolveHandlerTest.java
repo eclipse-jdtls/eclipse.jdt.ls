@@ -355,11 +355,15 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("    private void hello() {\n");
 		buf.append("    }\n");
 		buf.append("\n");
+		buf.append("    /** (non-Javadoc)\n");
+		buf.append("     * @see java.lang.Object#toString()\n");
+		buf.append("     */\n");
 		buf.append("    @Override\n");
 		buf.append("    public String toString() {\n");
 		buf.append("        return \"E []\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
+
 		assertEquals(buf.toString(), actual);
 	}
 
