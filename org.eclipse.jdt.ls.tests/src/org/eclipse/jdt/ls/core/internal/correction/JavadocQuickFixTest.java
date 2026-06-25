@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.junit.jupiter.api.BeforeEach;
@@ -1064,6 +1065,76 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("public class E {\n");
 		buf.append("}\n");
 		Expected e1 = new Expected("Qualify inner type name", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddSimpleTypeComment() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class MyClass {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("MyClass.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" * MyClass\n");
+		buf.append(" */\n");
+		buf.append("public class MyClass {\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddTypeCommentWithGenerics() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E<A, B> {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" * E\n");
+		buf.append(" * @param <A>\n");
+		buf.append(" * @param <B>\n");
+		buf.append(" */\n");
+		buf.append("public class E<A, B> {\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddRecordCommentWithGenerics() throws Exception {
+		// Set Java 17 compliance for record support
+		Map<String, String> options17 = new HashMap<>(fJProject1.getOptions(false));
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject1.setOptions(options17);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public record Container<T>(T value, String label) {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("Container.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("/**\n");
+		buf.append(" * Container\n");
+		buf.append(" * @param <T>\n");
+		buf.append(" * @param value\n");
+		buf.append(" * @param label\n");
+		buf.append(" */\n");
+		buf.append("public record Container<T>(T value, String label) {\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Add Javadoc comment", buf.toString());
 		assertCodeActions(cu, e1);
 	}
 

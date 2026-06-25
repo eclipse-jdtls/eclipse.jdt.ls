@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -235,7 +235,12 @@ public class PreferenceManager {
 
 		List<String> typeComment = preferences.getTypeCommentTemplate();
 		content = typeComment == null ? "" : String.join("\n", typeComment);
-		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
+		if (content.isEmpty()) {
+			String initial = CodeGenerationTemplate.TYPECOMMENT.createTemplate().getPattern();
+			templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, initial);
+		} else {
+			templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
+		}
 		if (templateChanged) {
 			reloadTemplateStore();
 		}
