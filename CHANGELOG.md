@@ -3,6 +3,7 @@
 # [1.60.0 (June 26th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
 
 * bug fix - Remove org.eclipse.osgi.services from category.xml. See [#3826](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3826).
+* bug fix - Add Javadoc quick fix support for overridden methods.  See [#3820](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3820).
 
 # [1.59.0 (June 24th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
  * enhancement - Extension point to help implement "Get fully qualified name at cursor". See [#3809](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3809).
