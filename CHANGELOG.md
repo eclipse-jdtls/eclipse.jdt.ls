@@ -1,5 +1,9 @@
 # Change Log
 
+# [1.60.0 (June 26th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
+
+* bug fix - Remove org.eclipse.osgi.services from category.xml. See [#3826](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3826).
+
 # [1.59.0 (June 24th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
  * enhancement - Extension point to help implement "Get fully qualified name at cursor". See [#3809](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3809).
  * enhancement - Expose Add Import action for qualified type references. See [#3781](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3781).
