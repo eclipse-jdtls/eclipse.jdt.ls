@@ -24,6 +24,7 @@ public class CodeLensPreferenceChangeListener implements IPreferencesChangeListe
 	@Override
 	public void preferencesChange(Preferences oldPreferences, Preferences newPreferences) {
 		if (oldPreferences.isReferencesCodeLensEnabled() != newPreferences.isReferencesCodeLensEnabled()
+				|| oldPreferences.isReferencesCodeLensIncludeFields() != newPreferences.isReferencesCodeLensIncludeFields()
 				|| !Objects.equals(oldPreferences.getImplementationsCodeLens(), newPreferences.getImplementationsCodeLens())) {
 			refresh();
 		}
