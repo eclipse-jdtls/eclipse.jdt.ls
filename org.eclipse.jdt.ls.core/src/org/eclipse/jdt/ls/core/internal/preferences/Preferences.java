@@ -243,6 +243,10 @@ public class Preferences {
 	public static final String IMPLEMENTATIONS_CODE_LENS_KEY = "java.implementationCodeLens";
 
 	/**
+	 * Preference key to enable/disable reference code lenses for fields.
+	 */
+	public static final String REFERENCES_CODE_LENS_INCLUDE_FIELDS_KEY = "java.referencesCodeLens.includeFields";
+	/**
 	 * Preference key to enable/disable formatter.
 	 */
 	public static final String JAVA_FORMAT_ENABLED_KEY = "java.format.enabled";
@@ -750,6 +754,7 @@ public class Preferences {
 	private List<String> diagnosticFilter;
 	private SearchScope searchScope;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
+	private boolean referencesCodeLensIncludeFields;
 
 	static {
 		JAVA_IMPORT_EXCLUSIONS_DEFAULT = new LinkedList<>();
@@ -940,6 +945,7 @@ public class Preferences {
 		eclipseDownloadSources = false;
 		mavenUpdateSnapshots = false;
 		referencesCodeLensEnabled = true;
+		referencesCodeLensIncludeFields = false;
 		implementationsCodeLens = "none";
 		javaFormatEnabled = true;
 		javaQuickFixShowAt = LINE;
@@ -1182,6 +1188,7 @@ public class Preferences {
 		prefs.validateAllOpenBuffersOnChanges = this.validateAllOpenBuffersOnChanges;
 		prefs.chainCompletionEnabled = this.chainCompletionEnabled;
 		prefs.searchScope = this.searchScope;
+		prefs.referencesCodeLensIncludeFields = this.referencesCodeLensIncludeFields;
 
 		// Deep copy collections
 		prefs.gradleArguments = this.gradleArguments != null ? new ArrayList<>(this.gradleArguments) : null;
@@ -1350,6 +1357,11 @@ public class Preferences {
 		if (containsKey(configuration, REFERENCES_CODE_LENS_ENABLED_KEY)) {
 			boolean referenceCodelensEnabled = getBoolean(configuration, REFERENCES_CODE_LENS_ENABLED_KEY, existing.referencesCodeLensEnabled);
 			prefs.setReferencesCodelensEnabled(referenceCodelensEnabled);
+		}
+
+		if (containsKey(configuration, REFERENCES_CODE_LENS_INCLUDE_FIELDS_KEY)) {
+			boolean referenceCodelensIncludeFields = getBoolean(configuration, REFERENCES_CODE_LENS_INCLUDE_FIELDS_KEY, existing.referencesCodeLensIncludeFields);
+			prefs.setReferencesCodeLensIncludeFields(referenceCodelensIncludeFields);
 		}
 
 		if (containsKey(configuration, IMPLEMENTATIONS_CODE_LENS_KEY)) {
@@ -2068,6 +2080,11 @@ public class Preferences {
 		return this;
 	}
 
+	private Preferences setReferencesCodeLensIncludeFields(boolean enabled) {
+		this.referencesCodeLensIncludeFields = enabled;
+		return this;
+	}
+
 	public Preferences setImportGradleEnabled(boolean enabled) {
 		this.importGradleEnabled = enabled;
 		return this;
@@ -2419,6 +2436,10 @@ public class Preferences {
 
 	public boolean isReferencesCodeLensEnabled() {
 		return referencesCodeLensEnabled;
+	}
+
+	public boolean isReferencesCodeLensIncludeFields() {
+		return referencesCodeLensIncludeFields;
 	}
 
 	public boolean isImportGradleEnabled() {
