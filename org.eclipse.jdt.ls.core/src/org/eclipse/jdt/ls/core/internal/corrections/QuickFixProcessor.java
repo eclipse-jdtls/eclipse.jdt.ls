@@ -433,6 +433,8 @@ public class QuickFixProcessor {
 			case IProblem.DuplicateMethod:
 			case IProblem.DuplicateTypeVariable:
 			case IProblem.DuplicateNestedType:
+			case IProblem.LambdaRedeclaresLocal:
+			case IProblem.LambdaRedeclaresArgument:
 				LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context, problem, proposals);
 				break;
 			case IProblem.NoMessageSendOnArrayType:
