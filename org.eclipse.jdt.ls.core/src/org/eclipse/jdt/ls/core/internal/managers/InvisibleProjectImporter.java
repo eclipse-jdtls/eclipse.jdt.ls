@@ -62,6 +62,7 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -156,6 +157,10 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		}
 
 		IJavaProject javaProject = JavaCore.create(invisibleProject);
+
+		// Reset stale preview feature settings that would otherwise break the build after the bundled
+		// compiler advances to a newer Java release. See https://github.com/redhat-developer/vscode-java/issues/4420
+		JVMConfigurator.reconcilePreviewFeatureSettings(javaProject);
 
 		IFolder workspaceLinkFolder = invisibleProject.getFolder(ProjectUtils.WORKSPACE_LINK);
 		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
