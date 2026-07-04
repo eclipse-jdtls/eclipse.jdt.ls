@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2020 Microsoft Corporation. and others.
+ * Copyright (c) 2017-2026 Microsoft Corporation. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,7 @@
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
  *     Red Hat, Inc. - added record snippet
+ *     IBM Corporation - Markdown templates
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
@@ -35,6 +36,12 @@ public enum CodeGenerationTemplate {
 	 */
 	FIELDCOMMENT(CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT, CodeTemplateContextType.FIELDCOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT_DEFAULT),
+
+	/**
+	 * Field markdown comment template
+	 */
+	FIELDMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_FIELDMARKDOWNCOMMENT, CodeTemplateContextType.MARKDOWNFIELDCOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Method comment template
 	 */
@@ -42,6 +49,12 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT,
 			CodeTemplateContextType.METHODCOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT_DEFAULT),
+
+	/**
+	 * Method markdown comment template
+	 */
+	METHODMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_METHODMARKDOWNCOMMENT, CodeTemplateContextType.MARKDOWNMETHODCOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Constructor comment template
 	 */
@@ -49,6 +62,12 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT,
 			CodeTemplateContextType.CONSTRUCTORCOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT),
+
+	/**
+	 * Constructor markdown comment template
+	 */
+	CONSTRUCTORMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORMARKDOWNCOMMENT, CodeTemplateContextType.MARKDOWNCONSTRUCTORCOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Constructor method body template
 	 */
@@ -56,6 +75,7 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY,
 			CodeTemplateContextType.CONSTRUCTORBODY_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY_DEFAULT),
+
 	/**
 	 * Delegate comment template
 	 */
@@ -63,6 +83,12 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT,
 			CodeTemplateContextType.DELEGATECOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT_DEFAULT),
+
+	/**
+	 * Delegate markdown comment template
+	 */
+	DELEGATEMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_MARKDOWN_DELEGATECOMMENT, CodeTemplateContextType.MARKDOWNDELEGATECOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Override comment template
 	 */
@@ -70,6 +96,12 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT,
 			CodeTemplateContextType.OVERRIDECOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT_DEFAULT),
+
+	/**
+	 * Override markdown comment template
+	 */
+	OVERRIDEMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_OVERRIDEMARKDOWNCOMMENT, CodeTemplateContextType.MARKDOWNOVERRIDECOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Type comment template
 	 */
@@ -77,6 +109,14 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT,
 			CodeTemplateContextType.TYPECOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_DEFAULT),
+
+	/**
+	 * Type markdown comment template
+	 */
+	TYPEMARKDOWNCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_TYPEMARKDOWNCOMMENT,
+			CodeTemplateContextType.MARKDOWNTYPECOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT_MARKDOWN_DEFAULT),
+
 	/**
 	 * Getter comment template
 	 */
@@ -86,12 +126,25 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT_DEFAULT),
 
 	/**
+	 * Getter markdown comment template
+	 */
+	GETTERMARKDOWNCOMMENT(CodeTemplatePreferences.CODETEMPLATE_GETTERMARKDOWNCOMMENT, CodeTemplateContextType.MARKDOWNGETTERCOMMENT_CONTEXTTYPE, CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT_MARKDOWN_DEFAULT),
+
+	/**
 	 * Getter comment template
 	 */
 	SETTERCOMMENT(
 			CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT,
 			CodeTemplateContextType.SETTERCOMMENT_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT_DEFAULT),
+
+	/**
+	 * Getter comment template
+	 */
+	SETTERMARKDOWNCOMMENT(
+			CodeTemplatePreferences.CODETEMPLATE_SETTERMARKDOWNCOMMENT,
+			CodeTemplateContextType.MARKDOWNSETTERCOMMENT_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT_MARKDOWN_DEFAULT),
 
 	/**
 	 * Getter method body content
@@ -116,6 +169,7 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY,
 			CodeTemplateContextType.CATCHBLOCK_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT),
+
 	/**
 	 * Method body content template
 	 */
@@ -123,6 +177,7 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY,
 			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT),
+
 	/**
 	 * Method body content template for super implementations
 	 */
@@ -130,6 +185,7 @@ public enum CodeGenerationTemplate {
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER,
 			CodeTemplateContextType.METHODBODY_CONTEXTTYPE,
 			CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER_DEFAULT),
+
 	/**
 	 * Snippet `public class` content template
 	 */

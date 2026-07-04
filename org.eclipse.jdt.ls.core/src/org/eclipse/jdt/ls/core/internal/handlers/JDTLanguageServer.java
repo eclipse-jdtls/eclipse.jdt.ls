@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2022 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -38,12 +38,16 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.internal.core.JavaModelManager;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
@@ -560,6 +564,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			if (nullAnalysisConfigurationsChanged) {
 				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated
 				nullAnalysisOptionsUpdated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+			}
+			IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+			if (preferenceManager.getPreferences().isCodeGenerationTemplateGenerateMarkdownComments()) {
+				defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.TRUE.toString());
+			} else {
+				defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.FALSE.toString());
 			}
 		}
 		if (status == ServiceStatus.ServiceReady) {

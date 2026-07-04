@@ -25,6 +25,7 @@ public class CodeTemplatePreferences {
 	public static final String COMMENT_SUFFIX = "comment"; //$NON-NLS-1$
 	public static final String BODY_SUFFIX = "body"; //$NON-NLS-1$
 	private static final String BLOCK_SUFFIX = "block"; //$NON-NLS-1$
+	private static final String MARKDOWN_SUFFIX = "markdown"; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for new types
@@ -41,9 +42,20 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_FIELDCOMMENT = CODETEMPLATES_PREFIX + "field" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for markdown field comments
+	 */
+	public static final String CODETEMPLATE_FIELDMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "field" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * A named preference that defines the template for constructor comments
 	 */
 	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT = CODETEMPLATES_PREFIX + "constructor" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for markdown constructor
+	 * comments
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "constructor" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for constructor body content
@@ -67,14 +79,31 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_DELEGATECOMMENT = CODETEMPLATES_PREFIX + "delegate" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for markdown delegate method
+	 * comments
+	 */
+	public static final String CODETEMPLATE_MARKDOWN_DELEGATECOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "delegate" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * A named preference that defines the template for overridden method comments
 	 */
 	public static final String CODETEMPLATE_OVERRIDECOMMENT = CODETEMPLATES_PREFIX + "override" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for markdown overridden method
+	 * comments
+	 */
+	public static final String CODETEMPLATE_OVERRIDEMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "override" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * A named preference that defines the template for method comments
 	 */
 	public static final String CODETEMPLATE_METHODCOMMENT = CODETEMPLATES_PREFIX + "method" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for markdown method comments
+	 */
+	public static final String CODETEMPLATE_METHODMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "method" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for snippet body content
@@ -87,14 +116,29 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_TYPECOMMENT = CODETEMPLATES_PREFIX + "type" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for markdown type comments
+	 */
+	public static final String CODETEMPLATE_TYPEMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "type" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * A named preference that defines the template for getter comments
 	 */
 	public static final String CODETEMPLATE_GETTERCOMMENT = CODETEMPLATES_PREFIX + "getter" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
+	 * A named preference that defines the template for markdown getter comments
+	 */
+	public static final String CODETEMPLATE_GETTERMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "getter" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
 	 * A named preference that defines the template for setter comments
 	 */
 	public static final String CODETEMPLATE_SETTERCOMMENT = CODETEMPLATES_PREFIX + "setter" + COMMENT_SUFFIX; //$NON-NLS-1$
+
+	/**
+	 * A named preference that defines the template for markown setter comments
+	 */
+	public static final String CODETEMPLATE_SETTERMARKDOWNCOMMENT = CODETEMPLATES_PREFIX + MARKDOWN_SUFFIX + "setter" + COMMENT_SUFFIX; //$NON-NLS-1$
 
 	/**
 	 * A named preference that defines the template for getter method body content
@@ -127,9 +171,19 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_FIELDCOMMENT_DEFAULT = "/**\n" + " *\n" + " */";
 
 	/**
+	 * Default value for markdown field comments
+	 */
+	public static final String CODETEMPLATE_FIELDCOMMENT_MARKDOWN_DEFAULT = "/// ";
+
+	/**
 	 * Default value for constructor comments
 	 */
 	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */";
+
+	/**
+	 * Default value for markdown constructor comments
+	 */
+	public static final String CODETEMPLATE_CONSTRUCTORCOMMENT_MARKDOWN_DEFAULT = "///" + " ${tags}";
 
 	/**
 	 * Default value for delegate comments
@@ -137,9 +191,19 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_DELEGATECOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " * ${see_to_target}\n" + " */\n";
 
 	/**
+	 * Default value for markdown delegate comments
+	 */
+	public static final String CODETEMPLATE_DELEGATECOMMENT_MARKDOWN_DEFAULT = "/// ${tags}\n" + "/// ${see_to_target}";
+
+	/**
 	 * Default value for override comments
 	 */
 	public static final String CODETEMPLATE_OVERRIDECOMMENT_DEFAULT = "/** (non-Javadoc)\n" + " * ${see_to_overridden}\n" + " */";
+
+	/**
+	 * Default value for markdown override comments
+	 */
+	public static final String CODETEMPLATE_OVERRIDECOMMENT_MARKDOWN_DEFAULT = "/// (non-Javadoc)\n" + "/// ${see_to_overridden}";
 
 	/**
 	 * Default value for method comments
@@ -147,9 +211,19 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_METHODCOMMENT_DEFAULT = "/**\n" + " * ${tags}\n" + " */\n";
 
 	/**
+	 * Default value for markdown method comments
+	 */
+	public static final String CODETEMPLATE_METHODCOMMENT_MARKDOWN_DEFAULT = "/// ${tags}\n";
+
+	/**
 	 * Default value for type comments
 	 */
 	public static final String CODETEMPLATE_TYPECOMMENT_DEFAULT = "/**\n" + " * ${type_name}\n" + " * ${tags}\n" + " */";
+
+	/**
+	 * Default value for markdown type comments
+	 */
+	public static final String CODETEMPLATE_TYPECOMMENT_MARKDOWN_DEFAULT = "/// ${type_name}" + "\n/// ${tags}";
 
 	/**
 	 * Default value for getter comments
@@ -157,9 +231,19 @@ public class CodeTemplatePreferences {
 	public static final String CODETEMPLATE_GETTERCOMMENT_DEFAULT = "/**\n" + " * @return the ${bare_field_name}\n" + " */";
 
 	/**
+	 * Default value for markdown getter comments
+	 */
+	public static final String CODETEMPLATE_GETTERCOMMENT_MARKDOWN_DEFAULT = "/// @return the ${bare_field_name}";
+
+	/**
 	 * Default value for setter comments
 	 */
 	public static final String CODETEMPLATE_SETTERCOMMENT_DEFAULT = "/**\n" + " * @param ${param} the ${bare_field_name} to set\n" + " */";
+
+	/**
+	 * Default value for markdown setter comments
+	 */
+	public static final String CODETEMPLATE_SETTERCOMMENT_MARKDOWN_DEFAULT = "/// @param ${param} the ${bare_field_name} to set";
 
 	/**
 	 * Default value for getter method body content
