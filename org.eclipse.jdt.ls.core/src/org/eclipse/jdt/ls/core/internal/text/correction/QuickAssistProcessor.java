@@ -499,7 +499,6 @@ public class QuickAssistProcessor {
 		LambdaExpression lambda = ast.newLambdaExpression();
 
 		String[] lambdaParamNames = getUniqueParameterNames(methodReference, functionalMethod);
-		@SuppressWarnings("unchecked")
 		List<VariableDeclaration> lambdaParameters = lambda.parameters();
 		for (int i = 0; i < lambdaParamNames.length; i++) {
 			String paramName = lambdaParamNames[i];

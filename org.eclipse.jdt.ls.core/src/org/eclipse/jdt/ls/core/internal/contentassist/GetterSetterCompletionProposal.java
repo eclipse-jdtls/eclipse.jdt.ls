@@ -56,10 +56,6 @@ public class GetterSetterCompletionProposal extends InternalCompletionProposal {
 			if (!JdtFlags.isEnum(curr)) {
 				String getterName = GetterSetterUtil.getGetterName(curr, null);
 				if (Strings.startsWithIgnoreCase(getterName, prefix) && !hasMethod(methods, getterName)) {
-					int getterRelevance= relevance;
-					if (JdtFlags.isStatic(curr) && JdtFlags.isFinal(curr)) {
-						getterRelevance= relevance - 1;
-					}
 					CompletionProposal proposal = new GetterSetterCompletionProposal(curr, true, offset);
 					proposal.setName(getterName.toCharArray());
 
