@@ -171,6 +171,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		Collection<IProject> projects = new LinkedHashSet<>();
 		Collection<MavenProjectInfo> toImport = new LinkedHashSet<>();
+		Collection<java.nio.file.Path> toUpdateDigest = new LinkedHashSet<>();
 		long lastWorkspaceStateSaved = getLastWorkspaceStateModified();
 		Set<String> artifactIds = new LinkedHashSet<>();
 		//Separate existing projects from new ones
@@ -188,7 +189,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				}
 			}
 			if (container == null) {
-				digestStore.updateDigest(pom.toPath());
+				toUpdateDigest.add(pom.toPath());
 				toImport.add(projectInfo);
 				artifactIds.add(projectInfo.getModel().getArtifactId());
 			} else {
@@ -198,7 +199,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					projects.add(container.getProject());
 				} else if (project != null) {
 					//Project doesn't have the Maven nature, so we (re)import it
-					digestStore.updateDigest(pom.toPath());
+					toUpdateDigest.add(pom.toPath());
 					// need to delete project due to m2e failing to create if linked and not the same name
 					project.delete(IProject.FORCE | IProject.NEVER_DELETE_PROJECT_CONTENT, subMonitor.split(5));
 					toImport.add(projectInfo);
@@ -206,6 +207,9 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				}
 			}
 
+		}
+		if (!toUpdateDigest.isEmpty()) {
+			digestStore.updateDigests(toUpdateDigest);
 		}
 		if (!toImport.isEmpty()) {
 			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
