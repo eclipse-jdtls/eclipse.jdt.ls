@@ -243,7 +243,7 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (configureNeeded) {
 			configureSettings(preferenceManager.getPreferences());
 		}
-		IResource resource = JDTUtils.getFileOrFolder(uriString);
+		IResource resource = getResourceForChange(uriString, changeType);
 		if (resource == null) {
 			return;
 		}
@@ -309,6 +309,37 @@ public class StandardProjectsManager extends ProjectsManager {
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem refreshing workspace", e);
 		}
+	}
+
+	/**
+	 * Resolves the {@link IResource} for the given change notification.
+	 *
+	 * For most changes we delegate to {@link JDTUtils#getFileOrFolder(String)},
+	 * which eagerly calls {@code IContainer#refreshLocal(DEPTH_ONE, null)} on the
+	 * parent container to disambiguate files from folders.
+	 *
+	 * That eager refresh is harmful for a deleted {@code .classpath} file: it
+	 * notifies the JDT Core resource-change listeners that the classpath file is
+	 * gone *before* {@link IBuildSupport#fileChanged(IResource, CHANGE_TYPE, IProgressMonitor)}
+	 * gets a chance to remove the Java nature and regenerate the correct
+	 * classpath, causing JDT Core to fall back to a default classpath (and create
+	 * a stray {@code bin} output folder) in between. See
+	 * https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1443 and
+	 * https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1251.
+	 *
+	 * To avoid the race, a deleted {@code .classpath} file is resolved without
+	 * triggering that premature refresh; {@link IBuildSupport#refresh(IResource, CHANGE_TYPE, IProgressMonitor)}
+	 * already performs the equivalent (and correctly ordered) refresh once it has
+	 * restored the classpath.
+	 */
+	private IResource getResourceForChange(String uriString, CHANGE_TYPE changeType) {
+		if (changeType == CHANGE_TYPE.DELETED) {
+			IFile file = JDTUtils.findFile(uriString);
+			if (file != null && IJavaProject.CLASSPATH_FILE_NAME.equals(file.getName())) {
+				return file;
+			}
+		}
+		return JDTUtils.getFileOrFolder(uriString);
 	}
 
 	private void appendBuildFileMarker(IResource resource) throws CoreException {
