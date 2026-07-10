@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -519,7 +520,7 @@ public class GradleBuildSupport implements IBuildSupport {
 			return;
 		}
 		if (resource == null) {
-			Set<IProject> projects = new HashSet<>();
+			Map<File, IProject> projectsByRoot = new HashMap<>();
 			for (IProject project : ProjectUtils.getGradleProjects()) {
 				if (!project.isOpen()) {
 					continue;
@@ -529,28 +530,37 @@ public class GradleBuildSupport implements IBuildSupport {
 					GradleBuild gb = gradleBuild.get();
 					if (gb instanceof InternalGradleBuild igb) {
 						File rootDir = igb.getBuildConfig().getProperties().getRootProjectDirectory();
-						if (rootDir != null && rootDir.equals(project.getRawLocation().toFile())) {
-							projects.add(project);
+						if (rootDir == null) {
+							continue;
+						}
+						// Prefer the workspace project whose location IS the gradle root
+						// (single-project or root-imported case). Otherwise, fall back to
+						// the first workspace project belonging to that build so we still
+						// have a connection point for multi-project builds where the root
+						// itself is not imported.
+						File projectLocation = project.getRawLocation() == null ? null : project.getRawLocation().toFile();
+						if (rootDir.equals(projectLocation)) {
+							projectsByRoot.put(rootDir, project);
+						} else {
+							projectsByRoot.putIfAbsent(rootDir, project);
 						}
 					}
 				}
 			}
-			Map<String, GradleProject> roots = new HashMap<>();
-			for (IProject project : projects) {
-				File projectDir = project.getLocation().toFile();
-				try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+			Map<File, GradleProject> roots = new HashMap<>();
+			for (Map.Entry<File, IProject> entry : projectsByRoot.entrySet()) {
+				File rootDir = entry.getKey();
+				try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(rootDir).connect()) {
 					GradleProject gradleProject = connection.getModel(GradleProject.class);
-					roots.put(gradleProject.getPath(), gradleProject);
+					roots.put(rootDir, gradleProject);
 				}
 			}
 			for (GradleProject gradleProject : roots.values()) {
-				List<String> taskNames = new ArrayList<>();
+				Set<String> taskNames = new LinkedHashSet<>();
 				for (String taskName : includeTasks) {
-					if (hasTask(gradleProject, taskName)) {
-						taskNames.add(taskName);
-					}
+					collectTaskPaths(gradleProject, taskName, taskNames);
 				}
-				compile(gradleProject, taskNames, monitor);
+				compile(gradleProject, new ArrayList<>(taskNames), monitor);
 			}
 		}
 	}
@@ -596,10 +606,10 @@ public class GradleBuildSupport implements IBuildSupport {
 					String error = errorStream.toString();
 					if (!error.isBlank()) {
 						publishDiagnostics(error, new ParseOptions(
-								taskNames.contains(COMPILE_KOTLIN) || taskNames.contains(COMPILE_TEST_KOTLIN),
-								taskNames.contains(COMPILE_GROOVY) || taskNames.contains(COMPILE_TEST_GROOVY),
-								taskNames.contains(COMPILE_ASPECTJ) || taskNames.contains(COMPILE_TEST_ASPECTJ),
-								taskNames.contains(COMPILE_SCALA) || taskNames.contains(COMPILE_TEST_SCALA)
+								containsTask(taskNames, COMPILE_KOTLIN) || containsTask(taskNames, COMPILE_TEST_KOTLIN),
+								containsTask(taskNames, COMPILE_GROOVY) || containsTask(taskNames, COMPILE_TEST_GROOVY),
+								containsTask(taskNames, COMPILE_ASPECTJ) || containsTask(taskNames, COMPILE_TEST_ASPECTJ),
+								containsTask(taskNames, COMPILE_SCALA) || containsTask(taskNames, COMPILE_TEST_SCALA)
 								)
 							);
 					}
@@ -612,13 +622,20 @@ public class GradleBuildSupport implements IBuildSupport {
 								.map(container -> (IProject) container)
 								.toArray(IProject[]::new);
 						List<IProject> workspaceProjects = ProjectUtils.getGradleProjects();
+						Set<IProject> refreshed = new HashSet<>();
 						for (IProject project: projects) {
-							project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-							for (IProject wp: workspaceProjects) {
-								if (wp.isAccessible() && !wp.equals(project)) {
-									if (project.getLocation().isPrefixOf(wp.getLocation())) {
-										wp.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-									}
+							if (refreshed.add(project)) {
+								project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+							}
+						}
+						// Also refresh any workspace gradle project located under the
+						// gradle root directory. This covers multi-project builds where
+						// the root directory itself is not imported as an Eclipse project
+						// (so the loop above would otherwise be a no-op).
+						for (IProject wp : workspaceProjects) {
+							if (wp.isAccessible() && wp.getLocation() != null && path.isPrefixOf(wp.getLocation())) {
+								if (refreshed.add(wp)) {
+									wp.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 								}
 							}
 						}
@@ -648,6 +665,26 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 		}
 		return false;
+	}
+
+	private void collectTaskPaths(GradleProject project, String taskName, Set<String> taskPaths) {
+		for (GradleTask task : project.getTasks()) {
+			if (taskName.equals(task.getName())) {
+				String projectPath = project.getPath();
+				if (projectPath == null || ":".equals(projectPath)) {
+					taskPaths.add(taskName);
+				} else {
+					taskPaths.add(projectPath + ":" + taskName);
+				}
+			}
+		}
+		for (GradleProject childProject : project.getChildren()) {
+			collectTaskPaths(childProject, taskName, taskPaths);
+		}
+	}
+
+	private boolean containsTask(List<String> taskNames, String taskName) {
+		return taskNames.stream().anyMatch(name -> taskName.equals(name) || name.endsWith(":" + taskName));
 	}
 
 	private void publishDiagnostics(String error, ParseOptions parseOptions) {

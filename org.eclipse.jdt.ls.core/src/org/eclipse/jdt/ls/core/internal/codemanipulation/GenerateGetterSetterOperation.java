@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018-2021 Microsoft Corporation and others.
+* Copyright (c) 2018-2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
 *
 * Contributors:
 *     Microsoft Corporation - initial API and implementation
+*     IBM Corporation - Generate only Getters for Records
 *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
@@ -87,7 +88,7 @@ public class GenerateGetterSetterOperation {
 			if (!Flags.isEnum(flags)) {
 				boolean isStatic = Flags.isStatic(flags);
 				boolean generateGetter = (GetterSetterUtil.getGetter(field) == null);
-				boolean generateSetter = (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null);
+				boolean generateSetter = (!Flags.isFinal(flags) && GetterSetterUtil.getSetter(field) == null) && !type.isRecord();
 				switch (kind) {
 					case BOTH:
 						if (generateGetter || generateSetter) {

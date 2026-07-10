@@ -3775,11 +3775,17 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					String x;
 					int y;
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
 					@Override
 					public int hashCode() {
 						return Objects.hash(x);
 					}
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
 					@Override
 					public boolean equals(Object obj) {
 						if (this == obj) {
@@ -3797,6 +3803,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					}
 				}
 				""";
+
 
 		String after2 = """
 				package test1;
@@ -3862,11 +3869,17 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 					String x;
 					int y;
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
 					@Override
 					public int hashCode() {
 						return Objects.hash(x, Integer.valueOf(y));
 					}
 
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
 					@Override
 					public boolean equals(Object obj) {
 						if (this == obj) {
@@ -3914,4 +3927,85 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2);
 	}
 
+	@Test
+	public void testLambdaRedeclares1() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count -> {
+				            System.out.println(count);
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count1 -> {
+				            System.out.println(count1);
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'count'", expected);
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testLambdaRedeclares2() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset = 20;
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset1 = 20;
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'offset'", expected);
+
+		assertCodeActions(cu, e1);
+	}
 }

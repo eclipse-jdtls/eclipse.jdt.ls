@@ -387,7 +387,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		diagParam = diagnosticReports.get(0);
 		assertEquals(1, diagParam.getDiagnostics().size());
 		Diagnostic diagnostic = diagParam.getDiagnostics().get(0);
-		assertEquals("Non-JDT errors.", diagnostic.getMessage());
+		assertEquals("Non-JDT errors.", diagnostic.getMessage().getLeft());
 	}
 
 	@Test
@@ -570,7 +570,7 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(1, diagParam.getDiagnostics().size());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage().getLeft());
 	}
 
 	@Test
@@ -621,10 +621,10 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 		PublishDiagnosticsParams diagParam = diagnosticReports.get(0);
 		assertEquals(2, diagParam.getDiagnostics().size(), "Unexpected number of errors " + diagParam.getDiagnostics());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage().getLeft());
 		assertRange(0, 0, 1, d.getRange());
 		d = diagParam.getDiagnostics().get(1);
-		assertEquals("Syntax error, insert \";\" to complete BlockStatements", d.getMessage());
+		assertEquals("Syntax error, insert \";\" to complete BlockStatements", d.getMessage().getLeft());
 		assertRange(3, 17, 18, d.getRange());
 	}
 
@@ -658,19 +658,19 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 
 		assertEquals(4, diagParam.getDiagnostics().size(), "Unexpected number of errors " + diagParam.getDiagnostics());
 		Diagnostic d = diagParam.getDiagnostics().get(0);
-		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage());
+		assertEquals("Foo.java is a non-project file, only syntax errors are reported", d.getMessage().getLeft());
 		assertRange(0, 0, 1, d.getRange());
 
 		d = diagParam.getDiagnostics().get(1);
-		assertEquals("Cannot use this in a static context", d.getMessage());
+		assertEquals("Cannot use this in a static context", d.getMessage().getLeft());
 		assertRange(3, 21, 25, d.getRange());
 
 		d = diagParam.getDiagnostics().get(2);
-		assertEquals("Duplicate method method1() in type Foo", d.getMessage());
+		assertEquals("Duplicate method method1() in type Foo", d.getMessage().getLeft());
 		assertRange(5, 13, 22, d.getRange());
 
 		d = diagParam.getDiagnostics().get(3);
-		assertEquals("Duplicate method method1() in type Foo", d.getMessage());
+		assertEquals("Duplicate method method1() in type Foo", d.getMessage().getLeft());
 		assertRange(7, 13, 22, d.getRange());
 	}
 
@@ -1108,12 +1108,12 @@ public class DocumentLifeCycleHandlerTest extends AbstractProjectsManagerBasedTe
 			List<PublishDiagnosticsParams> diagnosticReports = getClientRequests("publishDiagnostics");
 			assertFalse(diagnosticReports.isEmpty(), "No diagnostics sent on open");
 			List<Diagnostic> diagnostics = diagnosticReports.get(0).getDiagnostics();
-			assertTrue(diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")), "First diagnostics not sent");
+			assertTrue(diagnostics.stream().map(diagnostic -> diagnostic.getMessage().getLeft()).anyMatch(message -> message.contains("Syntax error")), "First diagnostics not sent");
 			lifeCycleHandler.didChange(new DidChangeTextDocumentParams(new VersionedTextDocumentIdentifier(filePath.toUri().toString(), 0), List.of(new TextDocumentContentChangeEvent(new Range(new Position(0, 0), new Position(0, 0)), "another"))));
 			diagnosticReports = getClientRequests("publishDiagnostics");
 			assertEquals(2, diagnosticReports.size(), "No diagnostics sent on change");
 			diagnostics = diagnosticReports.get(1).getDiagnostics();
-			assertTrue(diagnostics.stream().map(Diagnostic::getMessage).anyMatch(message -> message.contains("Syntax error")), "diagnostics not updated upon edit");
+			assertTrue(diagnostics.stream().map(diagnostic -> diagnostic.getMessage().getLeft()).anyMatch(message -> message.contains("Syntax error")), "diagnostics not updated upon edit");
 		} finally {
 			Files.delete(filePath);
 			Files.delete(filePath.getParent());

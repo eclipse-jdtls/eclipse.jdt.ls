@@ -52,9 +52,9 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
-import org.eclipse.lsp4j.extended.SnippetTextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -355,11 +355,15 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		buf.append("    private void hello() {\n");
 		buf.append("    }\n");
 		buf.append("\n");
+		buf.append("    /** (non-Javadoc)\n");
+		buf.append("     * @see java.lang.Object#toString()\n");
+		buf.append("     */\n");
 		buf.append("    @Override\n");
 		buf.append("    public String toString() {\n");
 		buf.append("        return \"E []\";\n");
 		buf.append("    }\n");
 		buf.append("}\n");
+
 		assertEquals(buf.toString(), actual);
 	}
 
@@ -400,9 +404,9 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
 		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
-		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		assertTrue(edits.get(0) instanceof SnippetTextEdit);
-		assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}");
+		List<Either<TextEdit, SnippetTextEdit>> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		assertTrue(edits.get(0).isRight());
+		assertEquals("${1|HashMap,Map,Cloneable,Serializable,AbstractMap,Object|}", edits.get(0).getRight().getSnippet().getValue());
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/3905
@@ -443,9 +447,10 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
 		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
-		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		assertTrue(edits.get(0) instanceof SnippetTextEdit);
-		assertEquals(((SnippetTextEdit) edits.get(0)).getSnippet().getValue(), "\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }");
+		List<Either<TextEdit, SnippetTextEdit>> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		assertTrue(edits.get(0).isRight());
+		SnippetTextEdit snippetTextEdit = edits.get(0).getRight();
+		assertEquals("\n\n        public SubType(${1:String} ${2:name}) {\n            super(name);\n            //TODO Auto-generated constructor stub\n        }", snippetTextEdit.getSnippet().getValue());
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/4138
@@ -505,9 +510,9 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 
 		CodeAction resolvedCodeAction = server.resolveCodeAction(unresolvedCodeAction).join();
 		assertNotNull(resolvedCodeAction.getEdit(), "Should resolve the edit property in the resolveCodeAction request");
-		List<TextEdit> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
-		assertTrue(edits.get(0) instanceof SnippetTextEdit);
-		SnippetTextEdit snippetTextEdit = (SnippetTextEdit) edits.get(0);
+		List<Either<TextEdit, SnippetTextEdit>> edits = resolvedCodeAction.getEdit().getDocumentChanges().get(0).getLeft().getEdits();
+		assertTrue(edits.get(0).isRight());
+		SnippetTextEdit snippetTextEdit = edits.get(0).getRight();
 		String snippet = snippetTextEdit.getSnippet().getValue();
 		assertTrue(snippet.contains("${1:create}(${4|Map<String\\,String>|}"));
 	}

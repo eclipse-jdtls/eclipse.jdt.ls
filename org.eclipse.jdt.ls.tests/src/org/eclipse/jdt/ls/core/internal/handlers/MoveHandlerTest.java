@@ -20,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -175,7 +174,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 
 		//@formatter:off
 		expected = "package jdtls.test3;\r\n" +
@@ -185,7 +184,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
-		List<TextEdit> edits = new ArrayList<>(textEdit.getEdits());
+		List<TextEdit> edits = textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 		assertEquals(expected, TextEditUtil.apply(unitB.getSource(), edits));
 
 		RenameFile renameFile = (RenameFile) changes.get(2).getRight();
@@ -230,7 +229,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				chg -> chg.isLeft() && chg.getLeft().getTextDocument().getUri().endsWith("B.java"))
 				.findFirst().get().getLeft();
 		assertNotNull(textEdit);
-		List<TextEdit> edits = new ArrayList<>(textEdit.getEdits());
+		List<TextEdit> edits = textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 		assertEquals(expected, TextEditUtil.apply(unitB.getSource(), edits));
 
 		RenameFile renameFileB = (RenameFile) changes.stream().filter(
@@ -251,7 +250,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 				chg -> chg.isLeft() && chg.getLeft().getTextDocument().getUri().endsWith("A.java"))
 				.findFirst().get().getLeft();
 		assertNotNull(textEdit);
-		edits = new ArrayList<>(textEdit.getEdits());
+		edits = textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 		assertEquals(expected, TextEditUtil.apply(unitA.getSource(), edits));
 
 		RenameFile renameFileA = (RenameFile) changes.stream().filter(
@@ -333,7 +332,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 
 		//@formatter:off
 		expected = "package test1;\n"
@@ -351,7 +350,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cuSecond.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(cuSecond.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 	}
 
 	@Test
@@ -397,7 +396,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 
 		//@formatter:off
 		expected = "package test1;\n"
@@ -411,7 +410,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 	}
 
 	@Test
@@ -463,7 +462,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 
 		//@formatter:off
 		expected = "package test1;\n"
@@ -475,7 +474,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(unitUtility.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(unitUtility.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 	}
 
 	@Test
@@ -520,7 +519,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 
 		//@formatter:off
 		expected = "package test1;\n"
@@ -535,7 +534,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 	}
 
 	@Test
@@ -571,8 +570,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		TextDocumentEdit textEdit = changes.get(0).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits()));
-
+		assertEquals(expected, TextEditUtil.apply(cu.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 		ResourceOperation resourceOperation = changes.get(1).getRight();
 		assertNotNull(resourceOperation);
 		assertTrue(resourceOperation instanceof CreateFile);
@@ -599,6 +597,6 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		//@formatter:on
 		textEdit = changes.get(2).getLeft();
 		assertNotNull(textEdit);
-		assertEquals(expected, TextEditUtil.apply(pack1.getCompilationUnit("Inner.java").getWorkingCopy(null), textEdit.getEdits()));
+		assertEquals(expected, TextEditUtil.apply(pack1.getCompilationUnit("Inner.java").getWorkingCopy(null), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
 	}
 }
