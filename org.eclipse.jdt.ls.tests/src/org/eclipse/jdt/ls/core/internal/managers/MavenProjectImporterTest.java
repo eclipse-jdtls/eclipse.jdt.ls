@@ -513,7 +513,11 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertEquals(1, javaProjects.length);
 		StandardProjectsManager.cleanInvalidJavaProjects(new NullProgressMonitor());
 		javaProjects = ProjectUtils.getJavaProjects();
-		assertEquals(0, javaProjects.length);
+		// Since m2e 2.11.1 (eclipse-m2e/m2e-core#2160), the unsafe ancestor resource
+		// folder declared in module1 (<directory>../</directory>) is skipped instead of
+		// failing the import, so module1 is now imported as a valid Java project and is
+		// retained after cleaning up invalid projects.
+		assertEquals(1, javaProjects.length);
 	}
 
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {
