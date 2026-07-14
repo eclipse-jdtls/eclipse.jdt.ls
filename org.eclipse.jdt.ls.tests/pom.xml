@@ -48,7 +48,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
+						<argLine>-Dguice_custom_class_loading=CHILD ${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
 						<runOrder>random</runOrder>
 					</configuration>
 
