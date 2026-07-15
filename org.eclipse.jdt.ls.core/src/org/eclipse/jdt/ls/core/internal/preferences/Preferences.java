@@ -503,6 +503,12 @@ public class Preferences {
 	public static final String JAVA_TEMPLATES_FILEHEADER = "java.templates.fileHeader";
 	// Specifies the type comment snippets for new Java type.
 	public static final String JAVA_TEMPLATES_TYPECOMMENT = "java.templates.typeComment";
+	// Specifies the method body snippet for unimplemented methods.
+	public static final String JAVA_TEMPLATES_METHODBODY = "java.templates.methodBody";
+	// Specifies the method body snippet for overridden methods that call super.
+	public static final String JAVA_TEMPLATES_METHODBODY_SUPER = "java.templates.methodBodySuper";
+	// Specifies the catch block body snippet.
+	public static final String JAVA_TEMPLATES_CATCHBODY = "java.templates.catchBody";
 	// Project encoding settings
 	public static final String JAVA_PROJECT_ENCODING = "java.project.encoding";
 
@@ -725,6 +731,9 @@ public class Preferences {
 
 	private List<String> fileHeaderTemplate = new LinkedList<>();
 	private List<String> typeCommentTemplate = new LinkedList<>();
+	private List<String> methodBodyTemplate = new LinkedList<>();
+	private List<String> methodBodySuperTemplate = new LinkedList<>();
+	private List<String> catchBodyTemplate = new LinkedList<>();
 	private boolean insertSpaces;
 	private int tabSize;
 	private InlayHintsParameterMode inlayHintsParameterMode;
@@ -1203,6 +1212,9 @@ public class Preferences {
 		prefs.resourceFilters = this.resourceFilters != null ? new ArrayList<>(this.resourceFilters) : null;
 		prefs.fileHeaderTemplate = this.fileHeaderTemplate != null ? new LinkedList<>(this.fileHeaderTemplate) : null;
 		prefs.typeCommentTemplate = this.typeCommentTemplate != null ? new LinkedList<>(this.typeCommentTemplate) : null;
+		prefs.methodBodyTemplate = this.methodBodyTemplate != null ? new LinkedList<>(this.methodBodyTemplate) : null;
+		prefs.methodBodySuperTemplate = this.methodBodySuperTemplate != null ? new LinkedList<>(this.methodBodySuperTemplate) : null;
+		prefs.catchBodyTemplate = this.catchBodyTemplate != null ? new LinkedList<>(this.catchBodyTemplate) : null;
 		prefs.inlayHintsExclusionList = this.inlayHintsExclusionList != null ? new ArrayList<>(this.inlayHintsExclusionList) : null;
 		prefs.nonnullTypes = this.nonnullTypes != null ? new ArrayList<>(this.nonnullTypes) : null;
 		prefs.nullableTypes = this.nullableTypes != null ? new ArrayList<>(this.nullableTypes) : null;
@@ -1744,6 +1756,21 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_TEMPLATES_TYPECOMMENT)) {
 			List<String> typeComment = getList(configuration, JAVA_TEMPLATES_TYPECOMMENT);
 			prefs.setTypeCommentTemplate(typeComment);
+		}
+
+		if (containsKey(configuration, JAVA_TEMPLATES_METHODBODY)) {
+			List<String> methodBody = getList(configuration, JAVA_TEMPLATES_METHODBODY);
+			prefs.setMethodBodyTemplate(methodBody);
+		}
+
+		if (containsKey(configuration, JAVA_TEMPLATES_METHODBODY_SUPER)) {
+			List<String> methodBodySuper = getList(configuration, JAVA_TEMPLATES_METHODBODY_SUPER);
+			prefs.setMethodBodySuperTemplate(methodBodySuper);
+		}
+
+		if (containsKey(configuration, JAVA_TEMPLATES_CATCHBODY)) {
+			List<String> catchBody = getList(configuration, JAVA_TEMPLATES_CATCHBODY);
+			prefs.setCatchBodyTemplate(catchBody);
 		}
 
 		if (containsKey(configuration, JAVA_REFERENCES_INCLUDE_ACCESSORS)) {
@@ -2817,6 +2844,33 @@ public class Preferences {
 
 	public Preferences setTypeCommentTemplate(List<String> typeCommentTemplate) {
 		this.typeCommentTemplate = typeCommentTemplate;
+		return this;
+	}
+
+	public List<String> getMethodBodyTemplate() {
+		return methodBodyTemplate;
+	}
+
+	public Preferences setMethodBodyTemplate(List<String> methodBodyTemplate) {
+		this.methodBodyTemplate = methodBodyTemplate;
+		return this;
+	}
+
+	public List<String> getMethodBodySuperTemplate() {
+		return methodBodySuperTemplate;
+	}
+
+	public Preferences setMethodBodySuperTemplate(List<String> methodBodySuperTemplate) {
+		this.methodBodySuperTemplate = methodBodySuperTemplate;
+		return this;
+	}
+
+	public List<String> getCatchBodyTemplate() {
+		return catchBodyTemplate;
+	}
+
+	public Preferences setCatchBodyTemplate(List<String> catchBodyTemplate) {
+		this.catchBodyTemplate = catchBodyTemplate;
 		return this;
 	}
 

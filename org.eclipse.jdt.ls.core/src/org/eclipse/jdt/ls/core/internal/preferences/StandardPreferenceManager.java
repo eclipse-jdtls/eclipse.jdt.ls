@@ -137,25 +137,33 @@ public class StandardPreferenceManager extends PreferenceManager {
 				JavaLanguageServerPlugin.logInfo("Skipping Maven preference update: IMaven service is not yet available");
 			} else {
 				Settings mavenSettings = maven.getSettings();
-				String systemMmpd = System.getProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
 				IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
 				boolean oldDisableTest = prefs.getBoolean(M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
 				String oldMultiModuleProjectDirectory = prefs.get(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, null);
-				String multiModuleProjectDirectory = systemMmpd;
-				if (multiModuleProjectDirectory == null) {
-					if (preferences.getRootPaths() != null) {
-						for (IPath path : preferences.getRootPaths()) {
-							File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
-							if (f != null) {
-								try {
-									multiModuleProjectDirectory = f.getCanonicalPath();
-								} catch (IOException e) {
-									multiModuleProjectDirectory = f.getAbsolutePath();
-								}
-								break;
+				String multiModuleProjectDirectory = null;
+				if (preferences.getRootPaths() != null) {
+					for (IPath path : preferences.getRootPaths()) {
+						File f = MavenProperties.computeMultiModuleProjectDirectory(path.toFile());
+						if (f != null) {
+							try {
+								multiModuleProjectDirectory = f.getCanonicalPath();
+							} catch (IOException e) {
+								multiModuleProjectDirectory = f.getAbsolutePath();
 							}
+							break;
 						}
 					}
+				}
+				// Set as JVM system property so m2e's MavenExecutionContext.populateSystemProperties()
+				// picks it up via System.getProperties(). Profile properties alone are not reliably
+				// propagated to the Maven model interpolator during m2e's import flow, causing
+				// ${maven.multiModuleProjectDirectory} in POMs to remain unresolved. Keep the
+				// property in sync with the resolved directory so a stale value does not leak
+				// across configuration updates once the multi-module root is gone.
+				if (multiModuleProjectDirectory != null) {
+					System.setProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY, multiModuleProjectDirectory);
+				} else {
+					System.clearProperty(MAVEN_MULTI_MODULE_PROJECT_DIRECTORY);
 				}
 				updateMavenProjects = updateMavenProjects || !Objects.equals(multiModuleProjectDirectory, oldMultiModuleProjectDirectory) || (oldDisableTest != preferences.isMavenDisableTestClasspathFlag());
 				mavenSettings.getProfiles().removeIf(p -> JAVALS_PROFILE.equals(p.getId()));

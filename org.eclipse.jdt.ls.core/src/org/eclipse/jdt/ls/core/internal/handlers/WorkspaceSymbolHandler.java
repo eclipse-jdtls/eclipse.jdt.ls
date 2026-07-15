@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -186,8 +185,8 @@ public class WorkspaceSymbolHandler {
 				Location location = null;
 				try {
 					if (!sourceOnly && match.getType().isBinary()) {
-						if (match.getType() instanceof IMember member) {
-							location = SearchUtils.searchOtherSources(member);
+						if (match.getType() != null) {
+							location = SearchUtils.searchOtherSources(match.getType());
 						}
 						if (location == null) {
 							location = JDTUtils.toLocation(match.getType().getClassFile());

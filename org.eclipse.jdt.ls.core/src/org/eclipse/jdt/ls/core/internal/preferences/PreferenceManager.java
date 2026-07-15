@@ -241,9 +241,23 @@ public class PreferenceManager {
 		} else {
 			templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
 		}
+
+		List<String> methodBody = preferences.getMethodBodyTemplate();
+		content = methodBody == null ? "" : String.join("\n", methodBody);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_METHODBODY, content);
+
+		List<String> methodBodySuper = preferences.getMethodBodySuperTemplate();
+		content = methodBodySuper == null ? "" : String.join("\n", methodBodySuper);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER, content);
+
+		List<String> catchBody = preferences.getCatchBodyTemplate();
+		content = catchBody == null ? "" : String.join("\n", catchBody);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, content);
+
 		if (templateChanged) {
 			reloadTemplateStore();
 		}
+
 		Hashtable<String, String> options = JavaCore.getOptions();
 		preferences.updateTabSizeInsertSpaces(options);
 		if (!Objects.equals(options, JavaCore.getOptions())) {
