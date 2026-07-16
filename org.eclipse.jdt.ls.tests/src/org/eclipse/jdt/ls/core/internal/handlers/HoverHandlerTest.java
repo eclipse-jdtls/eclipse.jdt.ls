@@ -997,6 +997,145 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
 	}
 
+	@Test
+	public void testHoverPlainMarkdownMethodPreservesFormatting() throws Exception {
+		String name = "java23";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		String content = """
+				package test;
+				public class Test {
+				    /// ## calculate()
+				    ///
+				    /// Paragraph
+				    ///
+				    /// - item 1
+				    /// - _item 2_
+				    void calculate() {}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", content, false, null);
+		Hover hover = getHover(cu, 8, 10);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String expectedJavadoc = "## calculate()  \n"
+				+ "Paragraph  \n"
+				+ "- item 1\n"
+				+ "- _item 2_";
+		String actual = ResourceUtils.dos2Unix(hover.getContents().getLeft().get(1).getLeft());
+		assertEquals(expectedJavadoc, actual, "Unexpected hover ");
+	}
+
+	@Test
+	public void testHoverInheritDocInMarkdownComment() throws Exception {
+		String name = "java23";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		String content = """
+				package test;
+				public class Test {
+				    interface Calculator {
+				        /**
+				         * Adds two numbers.
+				         *
+				         * @param a the first number
+				         * @param b the second number
+				         * @return the sum
+				         */
+				        int add(int a, int b);
+				    }
+				    static class SimpleCalculator implements Calculator {
+				        /// {@inheritDoc}
+				        @Override
+				        public int add(int a, int b) {
+				            return a + b;
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", content, false, null);
+		Hover hover = getHover(cu, 15, 20);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		assertTrue(actual.contains("Adds two numbers."), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the first number"), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the second number"), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the sum"), "Unexpected hover " + actual);
+	}
+
+	@Test
+	public void testHoverImplicitlyInheritedTagsInMarkdownComment() throws Exception {
+		String name = "java23";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		String content = """
+				package test;
+				public class Test {
+				    interface Calculator {
+				        /**
+				         * Calculates a difference.
+				         *
+				         * @param a the inherited first number
+				         * @param b the inherited second number
+				         * @return the inherited difference
+				         */
+				        int subtract(int a, int b);
+				    }
+				    static class SimpleCalculator implements Calculator {
+				        /// Subtracts two numbers locally.
+				        @Override
+				        public int subtract(int a, int b) {
+				            return a - b;
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("Test.java", content, false, null);
+		Hover hover = getHover(cu, 15, 20);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		assertTrue(actual.contains("Subtracts two numbers locally."), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the inherited first number"), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the inherited second number"), "Unexpected hover " + actual);
+		assertTrue(actual.contains("the inherited difference"), "Unexpected hover " + actual);
+	}
+
+	@Test
+	public void testHoverInlineCodeTagInMarkdownComment() throws Exception {
+		String name = "java23";
+		importProjects("eclipse/" + name);
+		IProject project = getProject(name);
+		IJavaProject javaProject = JavaCore.create(project);
+		IPackageFragmentRoot packageFragmentRoot = javaProject.getPackageFragmentRoot(project.getFolder("src/main/java"));
+		IPackageFragment pack1 = packageFragmentRoot.createPackageFragment("test", false, null);
+		String content = """
+				package test;
+				/// Use {@code List<String>} safely.
+				public class MarkdownCode {}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("MarkdownCode.java", content, false, null);
+		Hover hover = getHover(cu, 2, 14);
+		assertNotNull(hover);
+		assertEquals(3, hover.getContents().getLeft().size());
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		assertTrue(actual.contains("`List<String>`"), "Unexpected hover " + actual);
+	}
+
 	private String getTitleHover(ICompilationUnit cu, int line, int character) {
 		// when
 		Hover hover = getHover(cu, line, character);
