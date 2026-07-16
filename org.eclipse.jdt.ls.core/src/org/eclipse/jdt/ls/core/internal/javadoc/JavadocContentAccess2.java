@@ -312,6 +312,8 @@ public class JavadocContentAccess2 {
 
 	private static class JdtLsMarkdownAccessImpl extends CoreMarkdownAccessImpl {
 
+		private boolean trimLeadingWhitespaceAfterCodeOrLiteral;
+
 		public JdtLsMarkdownAccessImpl(IJavaElement element, Javadoc javadoc, String source) {
 			super(element, javadoc, source);
 		}
@@ -347,12 +349,38 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
+		protected void handleInlineTagElement(TagElement node) {
+			super.handleInlineTagElement(node);
+			String tagName = node.getTagName();
+			trimLeadingWhitespaceAfterCodeOrLiteral = TagElement.TAG_CODE.equals(tagName) || TagElement.TAG_LITERAL.equals(tagName);
+		}
+
+		@Override
 		protected void handleInLineTextElement(TextElement te, boolean skipLeadingWhitespace, TagElement tagElement, ASTNode previousNode) {
 			String text = te.getText();
 			if (JavaDocHTMLPathHandler.containsHTMLTag(text)) {
 				text = JavaDocHTMLPathHandler.getValidatedHTMLSrcAttribute(te, fElement);
 			}
-			if (skipLeadingWhitespace) {
+			if (tagElement != null && (TagElement.TAG_CODE.equals(tagElement.getTagName()) || TagElement.TAG_LITERAL.equals(tagElement.getTagName()))) {
+				text = text.strip();
+			} else if (trimLeadingWhitespaceAfterCodeOrLiteral) {
+				text = text.stripLeading();
+				int trailingWhitespaceStart = fBuf.length();
+				int lineBreaks = 0;
+				while (trailingWhitespaceStart > 0 && Character.isWhitespace(fBuf.charAt(trailingWhitespaceStart - 1))) {
+					if (fBuf.charAt(trailingWhitespaceStart - 1) == '\n') {
+						lineBreaks++;
+					}
+					trailingWhitespaceStart--;
+				}
+				if (lineBreaks <= 1) {
+					fBuf.setLength(trailingWhitespaceStart);
+					if (!text.isEmpty() && fBuf.length() > 0) {
+						fBuf.append(' ');
+					}
+				}
+				trimLeadingWhitespaceAfterCodeOrLiteral = false;
+			} else if (skipLeadingWhitespace) {
 				text = text.replaceFirst("^\\s", ""); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			text = text.replaceAll("(\r\n?|\n)([ \t]*\\*)", "$1"); //$NON-NLS-1$ //$NON-NLS-2$
