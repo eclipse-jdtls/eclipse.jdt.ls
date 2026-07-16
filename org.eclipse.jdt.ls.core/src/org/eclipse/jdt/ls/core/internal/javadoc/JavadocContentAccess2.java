@@ -201,16 +201,44 @@ public class JavadocContentAccess2 {
 		if (t.fragments().size() > 0) {
 			try {
 				String[] res;
-				String linkTitle;
+				String linkTitle = null;
 				if (t.fragments().size() == 2) {
 					linkTitle = ((TextElement) t.fragments().get(0)).getText();
 					res = collectLinkElement((ASTNode) children.get(1));
 				} else {
+
 					res = collectLinkElement((ASTNode) children.get(0));
-					if (res[0].isEmpty() && children.get(0).toString().startsWith("#") && res.length > 1) {// member implicitly refers to the current class
-						linkTitle = res[1];
+					if (t.fragments().get(0) instanceof MethodRef methodRef) {
+						if (methodRef.getName().isSimpleName() && !methodRef.getName().getIdentifier().isEmpty() && methodRef.getQualifier() != null && methodRef.getQualifier().isSimpleName()
+								&& !methodRef.getQualifier().getFullyQualifiedName().isEmpty()) {
+							linkTitle = methodRef.getQualifier().getFullyQualifiedName() + "." + methodRef.getName().getIdentifier();
+							@SuppressWarnings("unchecked")
+							List<MethodRefParameter> params = methodRef.parameters();
+							for (int i = 0; i < params.size(); i++) {
+								if (i == 0) {
+									linkTitle += "(";
+								}
+								linkTitle += params.get(i).toString();
+								if (i < params.size() - 1) {
+									linkTitle += ", ";
+								}
+								if (i == params.size() - 1) {
+									linkTitle += ")";
+								}
+							}
+							if (params.size() == 0) {
+								linkTitle += "()";
+							}
+
+						} else if (methodRef.getQualifier() == null) {
+							linkTitle = methodRef.getName().getIdentifier() + "()";
+						}
 					} else {
-						linkTitle = res[0];
+						if (res[0].isEmpty() && children.get(0).toString().startsWith("#") && res.length > 1) {// member implicitly refers to the current class
+							linkTitle = res[1];
+						} else {
+							linkTitle = res[0] + "." + res[1];
+						}
 					}
 				}
 				buf.append("[" + linkTitle + "]");
