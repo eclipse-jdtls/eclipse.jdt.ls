@@ -842,15 +842,14 @@ public class Preferences {
 	}
 
 	public static enum SearchScope {
-		all, main;
+		all, main, projectOnly;
 
 		static SearchScope fromString(String value, SearchScope defaultScope) {
 			if (value != null) {
-				String val = value.toLowerCase();
-				try {
-					return valueOf(val);
-				} catch(Exception e) {
-					//fall back to default severity
+				for (SearchScope scope : values()) {
+					if (scope.name().equalsIgnoreCase(value)) {
+						return scope;
+					}
 				}
 			}
 			return defaultScope;

@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -34,6 +35,7 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
@@ -140,6 +142,16 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertEquals(refereeUri, l.getUri());
 		l = references.get(1);
 		assertEquals(fileURI, l.getUri());
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			references = handler.findReferences(param, monitor);
+			assertEquals(1, references.size());
+			assertEquals(refereeUri, references.get(0).getUri());
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/2227
@@ -190,6 +202,17 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertNotNull(references, "findReferences should not return null");
 		Location location = references.stream().filter(r -> r.getUri().startsWith("jdt://contents/rtstubs.jar/java.lang/System.class")).findFirst().get();
 		assertNotNull(location);
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			references.clear();
+			handler.search(field, references, monitor, true);
+			assertFalse(references.isEmpty());
+			assertTrue(references.stream().allMatch(reference -> reference.getUri().startsWith("file:")));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
 	}
 
 }
