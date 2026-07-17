@@ -142,13 +142,38 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertEquals(refereeUri, l.getUri());
 		l = references.get(1);
 		assertEquals(fileURI, l.getUri());
+	}
+
+	@Test
+	public void testProjectOnlySearchScope() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		importProjects("eclipse/reference");
+		IProject referenceProject = WorkspaceHelper.getProject("reference");
+		IJavaProject referenceJavaProject = JavaCore.create(referenceProject);
+		IType element = referenceJavaProject.findType("org.sample.Foo");
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		URI uri = JDTUtils.toURI(JDTUtils.toUri(cf));
+		String fileURI = ResourceUtils.fixURI(uri);
+		ReferenceParams param = new ReferenceParams();
+		param.setPosition(new Position(5, 6));
+		param.setContext(new ReferenceContext(false));
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 
 		SearchScope searchScope = preferences.getSearchScope();
 		try {
 			preferences.setSearchScope(SearchScope.projectOnly);
-			references = handler.findReferences(param, monitor);
+			List<Location> references = handler.findReferences(param, monitor);
 			assertEquals(1, references.size());
+			String refereeUri = ResourceUtils.fixURI(referenceProject.getFile("src/org/reference/Main.java").getRawLocationURI());
 			assertEquals(refereeUri, references.get(0).getUri());
+
+			IType system = referenceJavaProject.findType("java.lang.System");
+			IField field = system.getField("out");
+			assertTrue(field.exists());
+			references.clear();
+			handler.search(field, references, monitor, true);
+			assertFalse(references.isEmpty());
+			assertTrue(references.stream().allMatch(reference -> reference.getUri().startsWith("file:")));
 		} finally {
 			preferences.setSearchScope(searchScope);
 		}
@@ -202,17 +227,6 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertNotNull(references, "findReferences should not return null");
 		Location location = references.stream().filter(r -> r.getUri().startsWith("jdt://contents/rtstubs.jar/java.lang/System.class")).findFirst().get();
 		assertNotNull(location);
-
-		SearchScope searchScope = preferences.getSearchScope();
-		try {
-			preferences.setSearchScope(SearchScope.projectOnly);
-			references.clear();
-			handler.search(field, references, monitor, true);
-			assertFalse(references.isEmpty());
-			assertTrue(references.stream().allMatch(reference -> reference.getUri().startsWith("file:")));
-		} finally {
-			preferences.setSearchScope(searchScope);
-		}
 	}
 
 }
