@@ -608,6 +608,7 @@ public class Preferences {
 	public static final String IMPLEMENTATION = "textDocument/implementation";
 	public static final String SELECTION_RANGE = "textDocument/selectionRange";
 	public static final String INLAY_HINT = "textDocument/inlayHint";
+	public static final String TYPE_HIERARCHY = "textDocument/prepareTypeHierarchy";
 
 	public static final String FORMATTING_ID = UUID.randomUUID().toString();
 	public static final String FORMATTING_ON_TYPE_ID = UUID.randomUUID().toString();
@@ -631,6 +632,7 @@ public class Preferences {
 	public static final String IMPLEMENTATION_ID = UUID.randomUUID().toString();
 	public static final String SELECTION_RANGE_ID = UUID.randomUUID().toString();
 	public static final String INLAY_HINT_ID = UUID.randomUUID().toString();
+	public static final String TYPE_HIERARCHY_ID = UUID.randomUUID().toString();
 
 	public static final Set<String> DISCOVERED_STATIC_IMPORTS = new LinkedHashSet<>();
 
