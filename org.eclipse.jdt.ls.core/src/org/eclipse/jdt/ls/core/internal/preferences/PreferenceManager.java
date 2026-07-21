@@ -9,6 +9,7 @@
  *
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
+ *     IBM Corporation. - Markdown templates
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
@@ -112,6 +113,7 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
 		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
+		defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.FALSE.toString());
 
 		defEclipsePrefs.put("recommenders.chain.min_chain_length", "2");
 		defEclipsePrefs.put("recommenders.chain.max_chain_length", "3");
@@ -145,14 +147,22 @@ public class PreferenceManager {
 
 		// Initialize templates
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT, CodeGenerationTemplate.FIELDCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_FIELDMARKDOWNCOMMENT, CodeGenerationTemplate.FIELDMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT, CodeGenerationTemplate.METHODCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODMARKDOWNCOMMENT, CodeGenerationTemplate.METHODMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT, CodeGenerationTemplate.CONSTRUCTORCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORMARKDOWNCOMMENT, CodeGenerationTemplate.CONSTRUCTORMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY, CodeGenerationTemplate.CONSTRUCTORBODY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT, CodeGenerationTemplate.DELEGATECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_MARKDOWN_DELEGATECOMMENT, CodeGenerationTemplate.DELEGATEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT, CodeGenerationTemplate.OVERRIDECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_OVERRIDEMARKDOWNCOMMENT, CodeGenerationTemplate.OVERRIDEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, CodeGenerationTemplate.TYPECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_TYPEMARKDOWNCOMMENT, CodeGenerationTemplate.TYPEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT, CodeGenerationTemplate.GETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERMARKDOWNCOMMENT, CodeGenerationTemplate.GETTERMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT, CodeGenerationTemplate.SETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERMARKDOWNCOMMENT, CodeGenerationTemplate.SETTERMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERBODY, CodeGenerationTemplate.GETTERBODY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERBODY, CodeGenerationTemplate.SETTERBOY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, CodeGenerationTemplate.CATCHBODY.createTemplate());
