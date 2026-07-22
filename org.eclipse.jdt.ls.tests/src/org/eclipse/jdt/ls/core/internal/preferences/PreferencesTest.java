@@ -28,9 +28,27 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
 import org.eclipse.jdt.ls.core.internal.handlers.MapFlattener;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.junit.jupiter.api.Test;
 
 public class PreferencesTest {
+
+	@Test
+	public void testProjectOnlySearchScope() {
+		Map<String, Object> config = new HashMap<>();
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "projectOnly");
+
+		Preferences preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.projectOnly, preferences.getSearchScope());
+
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "PROJECTONLY");
+		preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.projectOnly, preferences.getSearchScope());
+
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "invalid");
+		preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.all, preferences.getSearchScope());
+	}
 
 	@Test
 	public void testSetImportOnDemandThreshold() throws Exception {

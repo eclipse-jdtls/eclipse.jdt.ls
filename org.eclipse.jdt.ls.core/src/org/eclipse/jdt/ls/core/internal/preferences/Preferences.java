@@ -577,12 +577,14 @@ public class Preferences {
 	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
 
 	/**
-	 * Preference key to set the scope value to use when searching java code. Allowed value are
+	 * Preference key to set the scope value to use when searching Java code. Allowed values are
 	 * <ul>
-	 * <li><code>main</code>			-	Scope for main code</li>
-	 * <li><code>all</code>				-	Scope for both test and main code</li>
+	 * <li><code>main</code> - Search main source code and libraries</li>
+	 * <li><code>all</code> - Search main and test source code and libraries</li>
+	 * <li><code>projectOnly</code> - For reference searches, include main and test
+	 * source code and referenced projects, excluding application and system libraries</li>
 	 * </ul>
-	 * Any other unknown value will be treated as <code>all</code>.
+	 * Any unknown value will be treated as <code>all</code>.
 	 */
 	public static final String JAVA_SEARCH_SCOPE = "java.search.scope";
 
@@ -848,15 +850,14 @@ public class Preferences {
 	}
 
 	public static enum SearchScope {
-		all, main;
+		all, main, projectOnly;
 
 		static SearchScope fromString(String value, SearchScope defaultScope) {
 			if (value != null) {
-				String val = value.toLowerCase();
-				try {
-					return valueOf(val);
-				} catch(Exception e) {
-					//fall back to default severity
+				for (SearchScope scope : values()) {
+					if (scope.name().equalsIgnoreCase(value)) {
+						return scope;
+					}
 				}
 			}
 			return defaultScope;
