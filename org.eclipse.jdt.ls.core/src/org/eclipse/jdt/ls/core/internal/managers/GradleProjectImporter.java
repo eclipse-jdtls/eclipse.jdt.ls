@@ -246,26 +246,30 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 			checkWrapperChecksum(directory);
 		}
 		// store the digest for the imported gradle projects.
+		List<Path> digestPaths = new ArrayList<>();
 		ProjectUtils.getGradleProjects().forEach(project -> {
 			File buildFile = project.getFile(BUILD_GRADLE_DESCRIPTOR).getLocation().toFile();
 			File settingsFile = project.getFile(SETTINGS_GRADLE_DESCRIPTOR).getLocation().toFile();
 			File buildKtsFile = project.getFile(BUILD_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
 			File settingsKtsFile = project.getFile(SETTINGS_GRADLE_KTS_DESCRIPTOR).getLocation().toFile();
+			if (buildFile.exists()) {
+				digestPaths.add(buildFile.toPath());
+			} else if (buildKtsFile.exists()) {
+				digestPaths.add(buildKtsFile.toPath());
+			}
+			if (settingsFile.exists()) {
+				digestPaths.add(settingsFile.toPath());
+			} else if (settingsKtsFile.exists()) {
+				digestPaths.add(settingsKtsFile.toPath());
+			}
+		});
+		if (!digestPaths.isEmpty()) {
 			try {
-				if (buildFile.exists()) {
-					JavaLanguageServerPlugin.getDigestStore().updateDigest(buildFile.toPath());
-				} else if (buildKtsFile.exists()) {
-					JavaLanguageServerPlugin.getDigestStore().updateDigest(buildKtsFile.toPath());
-				}
-				if (settingsFile.exists()) {
-					JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsFile.toPath());
-				} else if (settingsKtsFile.exists()) {
-					JavaLanguageServerPlugin.getDigestStore().updateDigest(settingsKtsFile.toPath());
-				}
+				JavaLanguageServerPlugin.getDigestStore().updateDigests(digestPaths);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Failed to update digest for gradle build file", e);
 			}
-		});
+		}
 		for (IProject gradleProject : ProjectUtils.getGradleProjects()) {
 			gradleProject.deleteMarkers(COMPATIBILITY_MARKER_ID, true, IResource.DEPTH_ZERO);
 			gradleProject.deleteMarkers(GRADLE_UPGRADE_WRAPPER_MARKER_ID, true, IResource.DEPTH_INFINITE);
