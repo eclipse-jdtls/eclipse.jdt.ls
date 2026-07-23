@@ -17,6 +17,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,7 @@ import org.eclipse.lsp4j.SaveOptions;
 import org.eclipse.lsp4j.SemanticTokensServerFull;
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
@@ -201,6 +203,9 @@ final public class InitHandler extends BaseInitHandler {
 		capabilities.setTextDocumentSync(textDocumentSyncOptions);
 
 		WorkspaceServerCapabilities wsCapabilities = new WorkspaceServerCapabilities();
+		TextDocumentContentRegistrationOptions textDocumentContentOptions = new TextDocumentContentRegistrationOptions();
+		textDocumentContentOptions.setSchemes(Collections.singletonList("jdt"));
+		wsCapabilities.setTextDocumentContent(textDocumentContentOptions);
 		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
 		wsFoldersOptions.setSupported(Boolean.TRUE);
 		wsFoldersOptions.setChangeNotifications(Boolean.TRUE);
