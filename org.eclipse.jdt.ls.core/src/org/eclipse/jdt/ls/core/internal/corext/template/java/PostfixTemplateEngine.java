@@ -46,6 +46,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemLabelDetails;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class PostfixTemplateEngine {
 	private static String Switch_Name = "switch"; //$NON-NLS-1$
@@ -105,18 +106,20 @@ public class PostfixTemplateEngine {
 			CompletionUtils.setInsertTextFormat(item, completionItemDefaults);
 			CompletionUtils.setInsertTextMode(item, completionItemDefaults);
 
-			String content = "";
-			if (isCompletionLazyResolveTextEditEnabled()) {
-				content = SnippetUtils.templateToSnippet(template.getPattern());
-			} else {
-				context.setActiveTemplateName(template.getName());
-				content = evaluateGenericTemplate(context, template);
+			context.setActiveTemplateName(template.getName());
+			String content = evaluateGenericTemplate(context, template);
+			if (content == null) {
+				continue;
 			}
-			setTextEdit(item, content, completionItemDefaults);
+			try {
+				Range insertionPoint = JDTUtils.toRange(compilationUnit, completionCtx.getOffset(), 0);
+				item.setTextEdit(Either.forLeft(new TextEdit(insertionPoint, content)));
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				continue;
+			}
 
-			if (!getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-				setAdditionalTextEdit(item, compilationUnit, context, range, template);
-			}
+			setAdditionalTextEdit(item, compilationUnit, context, range, template);
 
 			if (isCompletionItemLabelDetailsSupport()) {
 				CompletionItemLabelDetails itemLabelDetails = new CompletionItemLabelDetails();
@@ -151,18 +154,10 @@ public class PostfixTemplateEngine {
 		return res;
 	}
 
-	private void setTextEdit(final CompletionItem item, String content, CompletionItemDefaults completionItemDefaults) {
-		if (getClientPreferences().isCompletionListItemDefaultsSupport() && completionItemDefaults.getEditRange() != null) {
-			item.setTextEditText(content);
-		} else {
-			item.setInsertText(content);
-		}
-	}
-
 	public static void setAdditionalTextEdit(final CompletionItem item, ICompilationUnit compilationUnit,
 			JavaPostfixContext context, Range range, Template template) {
 		List<TextEdit> additionalEdits = new ArrayList<>();
-		// use additional test edit to remove the code that needs to be replaced
+		// use additional text edit to remove the code that needs to be replaced
 		additionalEdits.add(new TextEdit(range, ""));
 		List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
 		if (jdtTextEdits != null && !jdtTextEdits.isEmpty()) {
@@ -246,9 +241,5 @@ public class PostfixTemplateEngine {
 
 	private ClientPreferences getClientPreferences() {
 		return JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences();
-	}
-
-	private boolean isCompletionLazyResolveTextEditEnabled() {
-		return JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isCompletionLazyResolveTextEditEnabled();
 	}
 }
