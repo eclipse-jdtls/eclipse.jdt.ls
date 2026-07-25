@@ -187,4 +187,20 @@ public class MakeStaticTest extends AbstractSelectionTest {
 		assertCodeActions(cu, CodeActionUtil.getRange(cu, "bar(String foo)", 0), expected);
 
 	}
+	
+	@Test
+	public void testDefaultInterfaceMethodNotOffered() throws Exception {
+		IPackageFragment pack1 = testSourceFolder.createPackageFragment("", false, null);
+
+		String input = "public interface Foo {\n"
+				+ "\n"
+				+ "	default void bar() {\n"
+				+ "		System.out.println(\"bar\");\n"
+				+ "	}\n"
+				+ "}";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("Foo.java", input, false, null);
+
+		assertCodeActionNotExists(cu, CodeActionUtil.getRange(cu, "bar()", 0), MAKE_STATIC);
+	}
 }

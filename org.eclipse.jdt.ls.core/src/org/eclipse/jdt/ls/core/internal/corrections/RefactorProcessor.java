@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019, 2023 Microsoft Corporation and others.
+* Copyright (c) 2019, 2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -1284,7 +1285,13 @@ public class RefactorProcessor {
 		if (!(element instanceof IMethod method)){
 			return false;
 		}
-
+		try {
+			if (Flags.isDefaultMethod(method.getFlags())) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
 		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(method);
 		try {
 			if (refactoring.checkInitialConditions(monitor).isOK()) {
