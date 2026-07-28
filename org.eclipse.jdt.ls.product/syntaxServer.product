@@ -45,6 +45,7 @@
       <plugin id="org.eclipse.jdt.core"/>
       <plugin id="org.eclipse.jdt.launching"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
+      <plugin id="org.eclipse.jdt.ls.compiler.batch.fragment" fragment="true"/>
       <plugin id="org.eclipse.jdt.ls.filesystem"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>

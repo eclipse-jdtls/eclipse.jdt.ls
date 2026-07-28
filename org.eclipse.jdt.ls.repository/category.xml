@@ -9,6 +9,9 @@
    <bundle id="org.eclipse.jdt.ls.filesystem" version="0.0.0">
     <category name="jdt.ls" />
    </bundle>
+   <bundle id="org.eclipse.jdt.ls.compiler.batch.fragment" version="0.0.0">
+    <category name="jdt.ls" />
+   </bundle>
    <bundle id="org.eclipse.jdt.ls.logback.appender" version="0.0.0">
     <category name="jdt.ls" />
    </bundle>

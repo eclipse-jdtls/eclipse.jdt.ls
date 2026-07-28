@@ -13,6 +13,27 @@
 	<packaging>eclipse-test-plugin</packaging>
 
 	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<dependency-resolution>
+						<extraRequirements>
+							<!-- widens the class visibility of the bundle hosting ECJ so that the
+							     Lombok agent can resolve lombok.config, see
+							     https://github.com/redhat-developer/vscode-java/issues/4461 -->
+							<requirement>
+								<type>eclipse-plugin</type>
+								<id>org.eclipse.jdt.ls.compiler.batch.fragment</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+						</extraRequirements>
+					</dependency-resolution>
+				</configuration>
+			</plugin>
+		</plugins>
 		<pluginManagement>
 			<plugins>
 				<plugin>

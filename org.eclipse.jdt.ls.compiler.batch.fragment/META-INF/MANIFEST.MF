@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %Bundle-Name
+Bundle-SymbolicName: org.eclipse.jdt.ls.compiler.batch.fragment;singleton:=true
+Bundle-Version: 1.61.0.qualifier
+Fragment-Host: org.eclipse.jdt.core.compiler.batch
+Automatic-Module-Name: org.eclipse.jdt.ls.compiler.batch.fragment
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Import-Package: org.eclipse.core.resources,
+ org.eclipse.core.runtime
+Bundle-Vendor: %Bundle-Vendor
