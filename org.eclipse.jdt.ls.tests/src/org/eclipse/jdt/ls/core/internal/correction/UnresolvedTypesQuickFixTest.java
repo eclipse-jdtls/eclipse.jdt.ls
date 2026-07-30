@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2013 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -1630,6 +1630,36 @@ public class E {
 		Expected e1 = new Expected("Import 'List' (java.util)", after);
 
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testTypeInStatementCreateRecordWithComponents() throws Exception {
+		Map<String, String> options17 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options17, JavaCore.VERSION_17);
+		fJProject1.setOptions(options17);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("    void foo() {\n");
+		buf.append("        Re1 obj = new Re1(1, \"hello\");\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("/**\n");
+		buf.append(" * Re1\n");
+		buf.append(" */\n");
+		buf.append("public record Re1(int arg1, String arg2) {\n");
+		buf.append("\n");
+		buf.append("}\n");
+		Expected e1 = new Expected("Create record 'Re1'", buf.toString());
+
+		assertCodeActionExists(cu, e1);
 	}
 
 }
