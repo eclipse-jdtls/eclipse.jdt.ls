@@ -154,6 +154,7 @@ import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentContentParams;
+import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions;
 import org.eclipse.lsp4j.TextDocumentContentResult;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -374,6 +375,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private void registerCapabilities() {
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
+		}
+		if (preferenceManager.getClientPreferences().isTextDocumentContentDynamicRegistrationSupported()) {
+			TextDocumentContentRegistrationOptions options = new TextDocumentContentRegistrationOptions();
+			options.setSchemes(Collections.singletonList("jdt"));
+			registerCapability(Preferences.TEXT_DOCUMENT_CONTENT_ID, Preferences.TEXT_DOCUMENT_CONTENT, options);
 		}
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);

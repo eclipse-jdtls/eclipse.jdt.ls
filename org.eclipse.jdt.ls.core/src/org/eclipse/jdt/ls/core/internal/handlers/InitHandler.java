@@ -203,9 +203,11 @@ final public class InitHandler extends BaseInitHandler {
 		capabilities.setTextDocumentSync(textDocumentSyncOptions);
 
 		WorkspaceServerCapabilities wsCapabilities = new WorkspaceServerCapabilities();
+		if (!preferenceManager.getClientPreferences().isTextDocumentContentDynamicRegistrationSupported()) {
 		TextDocumentContentRegistrationOptions textDocumentContentOptions = new TextDocumentContentRegistrationOptions();
 		textDocumentContentOptions.setSchemes(Collections.singletonList("jdt"));
 		wsCapabilities.setTextDocumentContent(textDocumentContentOptions);
+		}
 		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
 		wsFoldersOptions.setSupported(Boolean.TRUE);
 		wsFoldersOptions.setChangeNotifications(Boolean.TRUE);
