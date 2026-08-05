@@ -594,6 +594,7 @@ public class Preferences {
 	public static final String TEXT_DOCUMENT_RENAME = "textDocument/rename";
 	public static final String WORKSPACE_EXECUTE_COMMAND = "workspace/executeCommand";
 	public static final String WORKSPACE_SYMBOL = "workspace/symbol";
+	public static final String TEXT_DOCUMENT_CONTENT = "workspace/textDocumentContent";
 	public static final String WORKSPACE_WATCHED_FILES = "workspace/didChangeWatchedFiles";
 	public static final String DOCUMENT_SYMBOL = "textDocument/documentSymbol";
 	public static final String COMPLETION = "textDocument/completion";
@@ -618,6 +619,7 @@ public class Preferences {
 	public static final String RENAME_ID = UUID.randomUUID().toString();
 	public static final String EXECUTE_COMMAND_ID = UUID.randomUUID().toString();
 	public static final String WORKSPACE_SYMBOL_ID = UUID.randomUUID().toString();
+	public static final String TEXT_DOCUMENT_CONTENT_ID = UUID.randomUUID().toString();
 	public static final String DOCUMENT_SYMBOL_ID = UUID.randomUUID().toString();
 	public static final String COMPLETION_ID = UUID.randomUUID().toString();
 	public static final String CODE_ACTION_ID = UUID.randomUUID().toString();
