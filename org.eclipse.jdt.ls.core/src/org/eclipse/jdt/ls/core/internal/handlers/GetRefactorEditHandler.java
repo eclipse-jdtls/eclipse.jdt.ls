@@ -309,6 +309,8 @@ public class GetRefactorEditHandler {
 		 */
 		public Command command;
 		public String errorMessage;
+		public Boolean canContinue;
+		public String confirmationToken;
 
 		public RefactorWorkspaceEdit(WorkspaceEdit edit) {
 			this.edit = edit;
@@ -321,6 +323,12 @@ public class GetRefactorEditHandler {
 
 		public RefactorWorkspaceEdit(String errorMessage) {
 			this.errorMessage = errorMessage;
+		}
+
+		public RefactorWorkspaceEdit(String errorMessage, boolean canContinue, String confirmationToken) {
+			this.errorMessage = errorMessage;
+			this.canContinue = canContinue;
+			this.confirmationToken = confirmationToken;
 		}
 	}
 
