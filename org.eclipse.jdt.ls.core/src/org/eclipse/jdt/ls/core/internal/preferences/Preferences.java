@@ -581,7 +581,7 @@ public class Preferences {
 	 * <ul>
 	 * <li><code>main</code> - Search main source code and libraries</li>
 	 * <li><code>all</code> - Search main and test source code and libraries</li>
-	 * <li><code>projectOnly</code> - For reference searches, include main and test
+	 * <li><code>projectOnly</code> - Include main and test
 	 * source code and referenced projects, excluding application and system libraries</li>
 	 * </ul>
 	 * Any unknown value will be treated as <code>all</code>.
