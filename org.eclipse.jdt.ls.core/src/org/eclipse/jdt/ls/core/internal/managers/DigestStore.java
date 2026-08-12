@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,19 +64,40 @@ public class DigestStore {
 	 *             if a digest cannot be computed
 	 */
 	public boolean updateDigest(Path p) throws CoreException {
+		return updateDigests(Arrays.asList(p));
+	}
+
+	/**
+	 * Updates the digests for the given paths.
+	 *
+	 * @param paths
+	 *            Paths to the files in question
+	 * @return whether at least one file is considered changed and the associated
+	 *         project should be updated
+	 * @throws CoreException
+	 *             if a digest cannot be computed
+	 */
+	public boolean updateDigests(Collection<Path> paths) throws CoreException {
 		try {
-			String digest = computeDigest(p);
+			Map<String, String> digests = new HashMap<>();
+			for (Path path : paths) {
+				digests.put(path.toString(), computeDigest(path));
+			}
 			synchronized (fileDigests) {
-				if (!digest.equals(fileDigests.get(p.toString()))) {
-					fileDigests.put(p.toString(), digest);
-					serializeFileDigests();
-					return true;
-				} else {
-					return false;
+				boolean changed = false;
+				for (Map.Entry<String, String> entry : digests.entrySet()) {
+					if (!entry.getValue().equals(fileDigests.get(entry.getKey()))) {
+						fileDigests.put(entry.getKey(), entry.getValue());
+						changed = true;
+					}
 				}
+				if (changed) {
+					serializeFileDigests();
+				}
+				return changed;
 			}
 		} catch (NoSuchAlgorithmException | IOException e) {
-			throw new CoreException(StatusFactory.newErrorStatus("Exception updating digest for " + p, e));
+			throw new CoreException(StatusFactory.newErrorStatus("Exception updating digest for " + paths, e));
 		}
 
 	}
