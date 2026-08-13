@@ -17,8 +17,8 @@ import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertPosition;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1489,6 +1489,59 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("class", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * ${1:InnerTest}\n */\npublic class ${1:InnerTest} {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_class_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(0);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("class Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_interface_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(1);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("interface Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_record_with_package_packagePrivate() throws Exception {
+		preferences.setPreferPackagePrivateVisibility(true);
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(2);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("record Test(${0}) {\n}", te);
 	}
 
 	@Test

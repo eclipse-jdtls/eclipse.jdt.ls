@@ -519,6 +519,8 @@ public class Preferences {
 
 	public static final String JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES = "java.edit.validateAllOpenBuffersOnChanges";
 	public static final String JAVA_DIAGNOSTIC_FILER = "java.diagnostic.filter";
+	// Specifies whether newly created top-level types (class/interface/enum/record) should be package-private instead of public.
+	public static final String JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE = "java.templates.preferPackagePrivateVisibility";
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -771,6 +773,7 @@ public class Preferences {
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
 	private List<String> diagnosticFilter;
+	private boolean preferPackagePrivateVisibility = false;
 	private SearchScope searchScope;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
 	private boolean referencesCodeLensIncludeFields;
@@ -1946,6 +1949,11 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_DIAGNOSTIC_FILER)) {
 			List<String> diagnosticFilter = getList(configuration, JAVA_DIAGNOSTIC_FILER, existing.diagnosticFilter);
 			prefs.setDiagnosticFilter(diagnosticFilter);
+		}
+
+		if (containsKey(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE)) {
+			boolean preferPackagePrivate = getBoolean(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE, existing.preferPackagePrivateVisibility);
+			prefs.setPreferPackagePrivateVisibility(preferPackagePrivate);
 		}
 
 		if (containsKey(configuration, JAVA_CONFIGURATION_ASSOCIATIONS)) {
@@ -3390,6 +3398,15 @@ public class Preferences {
 
 	public void setDiagnosticFilter(List<String> diagnosticFilter) {
 		this.diagnosticFilter = diagnosticFilter;
+	}
+
+	public boolean isPreferPackagePrivateVisibility() {
+		return preferPackagePrivateVisibility;
+	}
+
+	public Preferences setPreferPackagePrivateVisibility(boolean preferPackagePrivateVisibility) {
+		this.preferPackagePrivateVisibility = preferPackagePrivateVisibility;
+		return this;
 	}
 
 	public List<String> getFilesAssociations() {
