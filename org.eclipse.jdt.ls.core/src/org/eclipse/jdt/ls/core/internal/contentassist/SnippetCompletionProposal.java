@@ -121,7 +121,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 		boolean needsPublic(IProgressMonitor monitor) {
 			if (needsPublic == null) {
-				needsPublic = needsPublic(cu, getCompletionContext(), monitor);
+				if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isPreferPackagePrivateVisibility()) {
+					needsPublic = false;
+				} else {
+					needsPublic = needsPublic(cu, getCompletionContext(), monitor);
+				}
 			}
 			return needsPublic;
 		}
