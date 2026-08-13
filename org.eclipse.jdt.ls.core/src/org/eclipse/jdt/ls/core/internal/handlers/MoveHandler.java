@@ -488,11 +488,12 @@ public class MoveHandler {
 					JavaLanguageServerPlugin.logError(status.toString());
 					return new RefactorWorkspaceEdit("Failed to move instance method. Reason: " + status.toString());
 				}
-				if (status.hasError()) {
+				boolean confirmationSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isMoveRefactoringConfirmationSupported();
+				if (status.hasError() && confirmationSupported) {
 					String expectedConfirmationToken = RefactoringConfirmation.createToken("moveInstanceMethodConfirmation:v1", status, params, destination, unit.getSource());
 					if (confirmationToken == null) {
 						List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
-						return new RefactorWorkspaceEdit(String.join(System.lineSeparator(), messages), true, expectedConfirmationToken);
+						return new RefactorWorkspaceEdit(String.join(System.lineSeparator(), messages), expectedConfirmationToken);
 					}
 					if (!Objects.equals(confirmationToken, expectedConfirmationToken)) {
 						return new RefactorWorkspaceEdit("Failed to move instance method because the source or refactoring conditions changed after the problems were shown. Run the refactoring again to review the current problems.");

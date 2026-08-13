@@ -393,12 +393,19 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, response.destinations.length);
 		assertEquals("c", ((LspVariableBinding) response.destinations[0]).name);
 
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(false);
+		RefactorWorkspaceEdit unsupportedClientEdit = MoveHandler.move(new MoveParams("moveInstanceMethod", params, response.destinations[0], true), new NullProgressMonitor());
+		assertNotNull(unsupportedClientEdit);
+		assertNotNull(unsupportedClientEdit.edit);
+		assertNull(unsupportedClientEdit.errorMessage);
+		assertNull(unsupportedClientEdit.confirmationToken);
+
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(true);
 		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveInstanceMethod", params, response.destinations[0], true), new NullProgressMonitor());
 		assertNotNull(refactorEdit);
 		assertNull(refactorEdit.edit);
 		assertNotNull(refactorEdit.errorMessage);
 		assertTrue(refactorEdit.errorMessage.contains("compared to null"), refactorEdit.errorMessage);
-		assertEquals(Boolean.TRUE, refactorEdit.canContinue);
 		assertNotNull(refactorEdit.confirmationToken);
 
 		String originalSource = cu.getSource();
@@ -408,7 +415,6 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		RefactorWorkspaceEdit staleEdit = MoveHandler.move(staleConfirmation, new NullProgressMonitor());
 		assertNotNull(staleEdit);
 		assertNull(staleEdit.edit);
-		assertNull(staleEdit.canContinue);
 		assertNull(staleEdit.confirmationToken);
 		assertTrue(staleEdit.errorMessage.contains("conditions changed"), staleEdit.errorMessage);
 
