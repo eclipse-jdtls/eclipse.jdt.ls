@@ -107,10 +107,11 @@ public class JavadocCompletionProposal {
 			}
 			final CompletionItem ci = new CompletionItem();
 			CompletionItemDefaults completionItemDefaults = collector.getCompletionItemDefaults();
+			var clientPreferences = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences();
 			Range range = JDTUtils.toRange(unit, offset, 0);
-			boolean isSnippetSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported();
+			boolean isSnippetSupported = clientPreferences.isCompletionSnippetsSupported();
 			String replacement = prepareTemplate(buf.toString(), lineDelimiter, isSnippetSupported);
-			if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange") &&
+			if (clientPreferences.isCompletionListItemDefaultsPropertySupport("editRange") &&
 				completionItemDefaults != null && completionItemDefaults.getEditRange() != null &&
 				completionItemDefaults.getEditRange().getLeft() == range) {
 				ci.setTextEditText(replacement);
