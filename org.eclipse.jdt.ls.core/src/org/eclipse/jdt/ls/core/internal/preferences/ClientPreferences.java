@@ -305,6 +305,10 @@ public class ClientPreferences {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringSupport", "false").toString());
 	}
 
+	public boolean isMoveRefactoringConfirmationSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringConfirmationSupport", "false").toString());
+	}
+
 	public boolean isClientHoverProviderRegistered() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("clientHoverProvider", "false").toString());
 	}
