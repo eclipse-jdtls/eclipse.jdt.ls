@@ -46,6 +46,7 @@ import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemLabelDetails;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 public class PostfixTemplateEngine {
 	private static String Switch_Name = "switch"; //$NON-NLS-1$
@@ -112,10 +113,10 @@ public class PostfixTemplateEngine {
 				context.setActiveTemplateName(template.getName());
 				content = evaluateGenericTemplate(context, template);
 			}
-			setTextEdit(item, content, completionItemDefaults);
+			setTextEdit(item, content, range);
 
 			if (!getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-				setAdditionalTextEdit(item, compilationUnit, context, range, template);
+				setAdditionalTextEdit(item, compilationUnit, context, template);
 			}
 
 			if (isCompletionItemLabelDetailsSupport()) {
@@ -151,19 +152,13 @@ public class PostfixTemplateEngine {
 		return res;
 	}
 
-	private void setTextEdit(final CompletionItem item, String content, CompletionItemDefaults completionItemDefaults) {
-		if (getClientPreferences().isCompletionListItemDefaultsSupport() && completionItemDefaults.getEditRange() != null) {
-			item.setTextEditText(content);
-		} else {
-			item.setInsertText(content);
-		}
+	private void setTextEdit(final CompletionItem item, String content, Range range) {
+		item.setTextEdit(Either.forLeft(new TextEdit(range, content)));
 	}
 
 	public static void setAdditionalTextEdit(final CompletionItem item, ICompilationUnit compilationUnit,
-			JavaPostfixContext context, Range range, Template template) {
+			JavaPostfixContext context, Template template) {
 		List<TextEdit> additionalEdits = new ArrayList<>();
-		// use additional test edit to remove the code that needs to be replaced
-		additionalEdits.add(new TextEdit(range, ""));
 		List<org.eclipse.text.edits.TextEdit> jdtTextEdits = context.getAdditionalTextEdits(template.getName());
 		if (jdtTextEdits != null && !jdtTextEdits.isEmpty()) {
 			for (org.eclipse.text.edits.TextEdit edit : jdtTextEdits) {
@@ -171,7 +166,9 @@ public class PostfixTemplateEngine {
 				additionalEdits.addAll(converter.convert());
 			}
 		}
-		item.setAdditionalTextEdits(additionalEdits);
+		if (!additionalEdits.isEmpty()) {
+			item.setAdditionalTextEdits(additionalEdits);
+		}
 	}
 
 	private boolean isCompletionItemLabelDetailsSupport() {
