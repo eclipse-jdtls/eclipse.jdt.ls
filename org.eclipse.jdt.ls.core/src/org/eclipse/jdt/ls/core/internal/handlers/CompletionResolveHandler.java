@@ -58,9 +58,6 @@ import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
-import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4j.TextEdit;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.osgi.util.NLS;
 
 import com.google.common.util.concurrent.SimpleTimeLimiter;
@@ -134,12 +131,6 @@ public class CompletionResolveHandler {
 					Template template = ((PostfixCompletionProposal) proposal).getTemplate();
 					postfixContext.setActiveTemplateName(template.getName());
 					String content = PostfixTemplateEngine.evaluateGenericTemplate(postfixContext, template);
-					int length = postfixContext.getEnd() - postfixContext.getStart();
-					Range range = JDTUtils.toRange(unit, postfixContext.getStart(), length);
-					if (manager.getPreferences().isCompletionLazyResolveTextEditEnabled()) {
-						TextEdit textEdit = new TextEdit(range, content);
-						param.setTextEdit(Either.forLeft(textEdit));
-					}
 
 					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
 						param.setDocumentation(SnippetUtils.beautifyDocument(content));
@@ -147,10 +138,6 @@ public class CompletionResolveHandler {
 
 					if (manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
 						param.setDetail(template.getDescription());
-					}
-
-					if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, range, template);
 					}
 				}
 
