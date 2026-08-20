@@ -236,6 +236,8 @@ public class PreferenceManager {
 		}
 		Preferences oldPreferences = this.preferences;
 		this.preferences = preferences;
+		IEclipsePreferences eclipsePreferences = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		eclipsePreferences.putBoolean(Preferences.PRESERVE_PROJECT_METADATA, preferences.isPreserveProjectMetadata());
 		preferencesChanged(oldPreferences, preferences); // listener will get latest preference from getPreferences()
 		// Update the templates according to the new preferences.
 		boolean templateChanged = false;
@@ -274,8 +276,7 @@ public class PreferenceManager {
 			JavaCore.setOptions(options);
 		}
 		List<String> resourceFilters = preferences.getResourceFilters();
-		IEclipsePreferences eclipsePreferences = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
-		// add the resourceFilters preference; the org.eclipse.jdt.ls.filesystem plugin uses it
+		// Add preferences consumed by the org.eclipse.jdt.ls.filesystem plugin.
 		eclipsePreferences.put(Preferences.JAVA_RESOURCE_FILTERS, String.join("::", resourceFilters));
 		// TODO serialize preferences
 
