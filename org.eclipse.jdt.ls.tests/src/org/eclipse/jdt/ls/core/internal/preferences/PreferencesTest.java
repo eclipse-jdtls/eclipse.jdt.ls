@@ -90,6 +90,20 @@ public class PreferencesTest {
 	}
 
 	@Test
+	public void testPreserveProjectMetadataPreference() {
+		assertFalse(new Preferences().isPreserveProjectMetadata());
+
+		Map<String, Object> configuration = new HashMap<>();
+		MapFlattener.setValue(configuration, Preferences.PRESERVE_PROJECT_METADATA, true);
+		Preferences configured = Preferences.createFrom(configuration);
+		assertTrue(configured.isPreserveProjectMetadata());
+
+		Preferences partiallyUpdated = Preferences.updateFrom(configured, Map.of());
+		assertTrue(partiallyUpdated.isPreserveProjectMetadata());
+		assertTrue(configured.clone().isPreserveProjectMetadata());
+	}
+
+	@Test
 	public void testPartialUpdatePreservesExistingValues() {
 		// Create initial preferences with full configuration
 		Map<String, Object> initialConfig = new HashMap<>();
