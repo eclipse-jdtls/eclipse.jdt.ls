@@ -171,6 +171,42 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testCompletion_annotationTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "  boolean getThing(@Deprec\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "@Deprec");
+		CompletionItem deprecated = list.getItems().stream().filter(i -> i.getLabel().startsWith("Deprecated")).findFirst().orElse(null);
+		assertNotNull(deprecated, "Deprecated annotation proposal not found");
+		String text;
+		if (deprecated.getTextEdit() != null) {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = deprecated.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		} else if (deprecated.getTextEditText() != null) {
+			text = deprecated.getTextEditText();
+		} else {
+			text = deprecated.getInsertText();
+		}
+		assertEquals("Deprecated ", text);
+	}
+
+	@Test
+	public void testCompletion_keywordTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "	pub\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "pub");
+		CompletionItem publicKeyword = list.getItems().stream().filter(i -> "public".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Keyword).findFirst().orElse(null);
+		assertNotNull(publicKeyword, "public keyword proposal not found");
+		String text;
+		if (publicKeyword.getTextEditText() != null) {
+			text = publicKeyword.getTextEditText();
+		} else if (publicKeyword.getInsertText() != null) {
+			text = publicKeyword.getInsertText();
+		} else {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = publicKeyword.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		}
+		assertEquals("public ", text);
+	}
+
+	@Test
 	public void testCompletion_javadocMarkdown() throws Exception {
 		IJavaProject javaProject = JavaCore.create(project);
 		ClientPreferences mockCapabilies = Mockito.mock(ClientPreferences.class);
