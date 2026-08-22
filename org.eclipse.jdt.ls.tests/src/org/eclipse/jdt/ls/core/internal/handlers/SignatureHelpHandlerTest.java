@@ -1223,8 +1223,8 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionProposalRequestor collector = new CompletionProposalRequestor(cu, offset, preferenceManager);
 		cu.codeComplete(offset, collector, monitor);
 
-		CompletionHandler.selectedProposal = collector.getProposals().get(0);
-		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(CompletionHandler.selectedProposal);
+		CompletionHandlers.selectedProposal = collector.getProposals().get(0);
+		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(CompletionHandlers.selectedProposal);
 		String fromProposal = description.toString();
 		String unnamedResult = "String(byte[] arg0, int arg1, int arg2, Charset arg3)";
 		String namedResult = "String(byte[] bytes, int offset, int length, Charset charset)";
