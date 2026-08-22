@@ -208,6 +208,11 @@ public class Preferences {
 	 */
 	public static final String GRADLE_ANNOTATION_PROCESSING_ENABLED = "java.import.gradle.annotationProcessing.enabled";
 	/**
+	 * Preference key to preserve existing project metadata outside the workspace
+	 * metadata area.
+	 */
+	public static final String PRESERVE_PROJECT_METADATA = "java.import.preserveProjectMetadata";
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -664,6 +669,7 @@ public class Preferences {
 	private String gradleJavaHome;
 	private String gradleUserHome;
 	private boolean gradleAnnotationProcessingEnabled;
+	private boolean preserveProjectMetadata;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
 	private boolean mavenDisableTestClasspathFlag;
@@ -959,6 +965,7 @@ public class Preferences {
 		gradleJavaHome = null;
 		gradleUserHome = null;
 		gradleAnnotationProcessingEnabled = true;
+		preserveProjectMetadata = false;
 		importMavenEnabled = true;
 		mavenOffline = false;
 		mavenDisableTestClasspathFlag = false;
@@ -1130,6 +1137,7 @@ public class Preferences {
 		prefs.gradleJavaHome = this.gradleJavaHome;
 		prefs.gradleUserHome = this.gradleUserHome;
 		prefs.gradleAnnotationProcessingEnabled = this.gradleAnnotationProcessingEnabled;
+		prefs.preserveProjectMetadata = this.preserveProjectMetadata;
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
@@ -1348,6 +1356,11 @@ public class Preferences {
 		if (containsKey(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED)) {
 			boolean gradleAnnotationProcessingEnabled = getBoolean(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED, existing.gradleAnnotationProcessingEnabled);
 			prefs.setGradleAnnotationProcessingEnabled(gradleAnnotationProcessingEnabled);
+		}
+
+		if (containsKey(configuration, PRESERVE_PROJECT_METADATA)) {
+			boolean preserveProjectMetadata = getBoolean(configuration, PRESERVE_PROJECT_METADATA, existing.preserveProjectMetadata);
+			prefs.setPreserveProjectMetadata(preserveProjectMetadata);
 		}
 
 		if (containsKey(configuration, IMPORT_MAVEN_ENABLED)) {
@@ -2156,6 +2169,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setPreserveProjectMetadata(boolean enabled) {
+		this.preserveProjectMetadata = enabled;
+		return this;
+	}
+
 	public Preferences setImportMavenEnabled(boolean enabled) {
 		this.importMavenEnabled = enabled;
 		return this;
@@ -2507,6 +2525,10 @@ public class Preferences {
 
 	public boolean isGradleWrapperEnabled() {
 		return gradleWrapperEnabled;
+	}
+
+	public boolean isPreserveProjectMetadata() {
+		return preserveProjectMetadata;
 	}
 
 	public boolean isImportMavenEnabled() {
