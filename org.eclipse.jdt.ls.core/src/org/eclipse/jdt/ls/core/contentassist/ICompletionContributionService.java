@@ -29,4 +29,14 @@ public interface ICompletionContributionService {
 	 * Unregister a completion ranking provider.
 	 */
 	void unregisterRankingProvider(ICompletionRankingProvider provider);
+
+	/**
+	 * Register a completion proposal provider.
+	 */
+	void registerProposalProvider(ICompletionProposalProvider provider);
+
+	/**
+	 * Unregister a completion proposal provider.
+	 */
+	void unregisterProposalProvider(ICompletionProposalProvider provider);
 }
