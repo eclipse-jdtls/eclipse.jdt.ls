@@ -123,26 +123,6 @@
 			<properties>
 				<os.testArgs>-XstartOnFirstThread</os.testArgs>
 			</properties>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.eclipse.tycho</groupId>
-							<artifactId>tycho-surefire-plugin</artifactId>
-							<version>${tycho-version}</version>
-							<configuration>
-								<dependencies>
-									<dependency>
-										<artifactId>org.eclipse.jdt.launching.macosx</artifactId>
-										<version>0.0.0</version>
-										<type>eclipse-plugin</type>
-									</dependency>
-								</dependencies>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
 		</profile>
 	</profiles>
 </project>
