@@ -1078,10 +1078,32 @@ public final class JDTUtils {
 		if (monitor.isCanceled()) {
 			return null;
 		}
-		if (elements != null && elements.length == 1) {
+		if (elements == null || elements.length == 0) {
+			return null;
+		}
+		if (elements.length == 1) {
 			return elements[0];
 		}
-		return null;
+		return resolveElementAtSelection(unit, line, column, elements);
+	}
+
+	/**
+	 * When multiple elements are at the same position, returns the one whose name matches
+	 * the identifier at the cursor. Works for any element type (packages, modules, types, etc.).
+	 */
+	private static IJavaElement resolveElementAtSelection(ITypeRoot unit, int line, int column, IJavaElement[] elements) throws JavaModelException {
+		IBuffer buffer = unit.getBuffer();
+		if (buffer != null) {
+			String identifier = getIdentifierAt(buffer, line, column);
+			if (identifier != null) {
+				for (IJavaElement e : elements) {
+					if (identifier.equals(e.getElementName())) {
+						return e;
+					}
+				}
+			}
+		}
+		return elements[0];
 	}
 
 	public static IJavaElement[] findElementsAtSelection(ITypeRoot unit, int line, int column, PreferenceManager preferenceManager, IProgressMonitor monitor) throws JavaModelException {
@@ -1107,6 +1129,41 @@ public final class JDTUtils {
 			return elements;
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the identifier at the given position in the buffer, including dots (e.g. for module names like "java.xml").
+	 * Used when multiple elements are at the same position (e.g. JEP 511 module imports) to pick the one matching the source.
+	 *
+	 * @param buffer the buffer, or null
+	 * @param line 0-based line
+	 * @param column 0-based column
+	 * @return the identifier at position, or null if none or buffer is null
+	 */
+	public static String getIdentifierAt(IBuffer buffer, int line, int column) {
+		if (buffer == null) {
+			return null;
+		}
+		int offset = JsonRpcHelpers.toOffset(buffer, line, column);
+		if (offset < 0 || offset >= buffer.getLength()) {
+			return null;
+		}
+		int start = offset;
+		while (start > 0 && isIdentifierPart(buffer.getChar(start - 1))) {
+			start--;
+		}
+		int end = offset;
+		while (end < buffer.getLength() && isIdentifierPart(buffer.getChar(end))) {
+			end++;
+		}
+		if (start >= end) {
+			return null;
+		}
+		return buffer.getText(start, end - start);
+	}
+
+	private static boolean isIdentifierPart(char c) {
+		return Character.isLetterOrDigit(c) || c == '_' || c == '.';
 	}
 
 	public static boolean isSameParameters(IMethod method1, IMethod method2) {
