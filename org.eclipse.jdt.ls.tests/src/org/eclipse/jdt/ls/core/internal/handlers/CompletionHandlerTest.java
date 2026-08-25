@@ -1545,6 +1545,21 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_enum_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("enum Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
 	public void testSnippet_inner_class_itemDefaults_enabled_type_definition() throws JavaModelException {
 		mockClientPreferences(true, true, true);
 		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
@@ -1677,6 +1692,37 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
+	}
+
+	@Test
+	public void testSnippet_enum() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		CompletionList list = requestCompletions(unit, "");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", ResourceUtils.dos2Unix(te));
+
+		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
+		assertSame(item, server.resolveCompletionItem(item).join());
+	}
+
+	@Test
+	public void testSnippet_enum_with_package() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", te);
 	}
 
 	@Disabled("When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
