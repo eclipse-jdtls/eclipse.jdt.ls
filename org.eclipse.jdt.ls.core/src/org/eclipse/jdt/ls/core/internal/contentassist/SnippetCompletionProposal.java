@@ -85,9 +85,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String RECORD_SNIPPET_LABEL = "record";
+	private static final String ENUM_SNIPPET_LABEL = "enum";
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
 	private static final String RECORD_KEYWORD = "record";
+	private static final String ENUM_KEYWORD = "enum";
 	private static final String INTERFACE_METHOD_SNIPPET = "$${1|public,private|} $${2:void} $${3:name}($${4});";
 
 	private static String PACKAGEHEADER = "package_header";
@@ -472,13 +474,15 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		boolean isInterfacePrefix = true;
 		boolean isClassPrefix = true;
 		boolean isRecordPrefix = true;
+		boolean isEnumPrefix = true;
 		if (completionToken != null && completionToken.length > 0) {
 			String prefix = new String(completionToken);
 			isInterfacePrefix = INTERFACE_KEYWORD.startsWith(prefix);
 			isClassPrefix = CLASS_KEYWORD.startsWith(prefix);
 			isRecordPrefix = RECORD_KEYWORD.startsWith(prefix);
+			isEnumPrefix = ENUM_KEYWORD.startsWith(prefix);
 		}
-		if (!isInterfacePrefix && !isClassPrefix && !isRecordPrefix) {
+		if (!isInterfacePrefix && !isClassPrefix && !isRecordPrefix && !isEnumPrefix) {
 			return Collections.emptyList();
 		}
 		if (monitor == null) {
@@ -510,6 +514,12 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			CompletionItem recordSnippet = getRecordSnippet(scc, monitor);
 			if (recordSnippet != null) {
 				res.add(recordSnippet);
+			}
+		}
+		if (isEnumPrefix) {
+			CompletionItem enumSnippet = getEnumSnippet(scc, monitor);
+			if (enumSnippet != null) {
+				res.add(enumSnippet);
 			}
 		}
 
@@ -633,6 +643,32 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			return null;
 		}
 		return recordSnippet;
+	}
+
+	private static CompletionItem getEnumSnippet(SnippetCompletionContext scc, IProgressMonitor monitor) {
+		ICompilationUnit cu = scc.getCompilationUnit();
+		if (!accept(cu, scc.getCompletionContext(), false)) {
+			return null;
+		}
+		if (monitor.isCanceled()) {
+			return null;
+		}
+		final CompletionItem enumSnippet = new CompletionItem();
+		enumSnippet.setFilterText(ENUM_SNIPPET_LABEL);
+		enumSnippet.setLabel(ENUM_SNIPPET_LABEL);
+		enumSnippet.setSortText(SortTextHelper.convertRelevance(0));
+
+		try {
+			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.ENUMSNIPPET_PUBLIC : CodeGenerationTemplate.ENUMSNIPPET_DEFAULT;
+			enumSnippet.setInsertText(getSnippetContent(scc, template, true));
+			if (isCompletionListItemDefaultsSupport()) {
+				enumSnippet.setTextEditText(getSnippetContent(scc, template, true));
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e.getStatus());
+			return null;
+		}
+		return enumSnippet;
 	}
 
 	private static void setFields(CompletionItem ci, ICompilationUnit cu, CompletionItemDefaults completionItemDefaults) {

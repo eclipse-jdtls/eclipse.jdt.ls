@@ -129,7 +129,8 @@ public class PreferenceManager {
 		for (String contextTypeId : List.of(
 				CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE,
 				CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
-				CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE)) {
+				CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE,
+				CodeTemplatePreferences.ENUMSNIPPET_CONTEXTTYPE)) {
 			CodeTemplateContextType contextType = new CodeTemplateContextType(contextTypeId);
 			contextType.addResolver(new CodeTemplateVariableResolver(CodeTemplateContextType.FILE_COMMENT, JavaManipulationMessages.CodeTemplateContextType_variable_description_filecomment));
 			registry.addContextType(contextType);
