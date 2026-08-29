@@ -140,17 +140,18 @@ public class CompletionHandler{
 		long executionTime = System.currentTimeMillis() - startTime;
 		String lastRequestId = null;
 		for (CompletionItem item : $.getItems()) {
-			String requestId = "";
-			String proposalId = "";
 			@SuppressWarnings("unchecked")
 			Map<String, String> data = (Map<String, String>) item.getData();
-			if (data != null) {
-				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
-				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
-			}
-			if (requestId.isEmpty() || proposalId.isEmpty()) {
+			if (data == null) {
 				continue;
 			}
+
+			String requestId = data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID);
+			String proposalId = data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID);
+			if (requestId == null || requestId.isEmpty() || proposalId == null || proposalId.isEmpty()) {
+				continue;
+			}
+
 			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
 					requestId,
 					proposalId
