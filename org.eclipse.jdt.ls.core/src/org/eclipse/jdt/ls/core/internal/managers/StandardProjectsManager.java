@@ -391,6 +391,18 @@ public class StandardProjectsManager extends ProjectsManager {
 		if (!Objects.equals(javaOptions, JavaCore.getOptions())) {
 			JavaCore.setOptions(javaOptions);
 		}
+		if (preferences.getClasspathVariables() != null && !preferences.getClasspathVariables().isEmpty()) {
+			for (Entry<String, IPath> entry : preferences.getClasspathVariables().entrySet()) {
+				IPath corePath = JavaCore.getClasspathVariable(entry.getKey());
+				if (!entry.getValue().equals(corePath)) {
+					try {
+						JavaCore.setClasspathVariable(entry.getKey(), entry.getValue(), new NullProgressMonitor());
+					} catch (JavaModelException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				}
+			}
+		}
 		if (cleanWorkspace && preferences.isAutobuildEnabled()) {
 			new WorkspaceJob("Clean workspace...") {
 
