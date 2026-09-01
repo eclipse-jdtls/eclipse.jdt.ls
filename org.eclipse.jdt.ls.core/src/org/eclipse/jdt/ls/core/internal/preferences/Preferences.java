@@ -162,6 +162,12 @@ public class Preferences {
 	 */
 	public static final String JAVA_RESOURCE_FILTERS = "java.project.resourceFilters";
 	public static final List<String> JAVA_RESOURCE_FILTERS_DEFAULT;
+
+	/**
+	 * Specifies classpath variables to use in resolving the classpath
+	 */
+	public static final String JAVA_CLASSPATH_VARIABLES = "java.classpath.variables";
+
 	/**
 	 * Preference key for Show quickfixes at the problem or line level.
 	 */
@@ -740,6 +746,8 @@ public class Preferences {
 	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 	private List<String> resourceFilters;
+	private List<String> classpathVarList;
+	private Map<String, IPath> classpathVariables;
 
 	private List<String> fileHeaderTemplate = new LinkedList<>();
 	private List<String> typeCommentTemplate = new LinkedList<>();
@@ -1014,6 +1022,8 @@ public class Preferences {
 		staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
+		classpathVarList = Collections.emptyList();
+		classpathVariables = Collections.emptyMap();
 		includeAccessors = true;
 		smartSemicolonDetection = false;
 		includeDecompiledSources = true;
@@ -1669,6 +1679,11 @@ public class Preferences {
 			prefs.setResourceFilters(resourceFilters);
 		}
 
+		if (containsKey(configuration, JAVA_CLASSPATH_VARIABLES)) {
+			List<String> classPaths = getList(configuration, JAVA_CLASSPATH_VARIABLES, existing.classpathVarList);
+			prefs.setClasspathVariables(classPaths);
+		}
+
 		if (containsKey(configuration, JAVA_FORMATTER_PROFILE_NAME)) {
 			String formatterProfileName = getString(configuration, JAVA_FORMATTER_PROFILE_NAME);
 			prefs.setFormatterProfileName(formatterProfileName);
@@ -2086,6 +2101,33 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setClasspathVariables(List<String> classpathVariables) {
+		if (classpathVariables != null) {
+			this.classpathVarList = classpathVariables;
+			this.classpathVariables = classpathVariables.stream().filter((resource) -> {
+				// ensure we have at least name= and there is only one equal sign and that value is valid IPath
+				if (resource.length() > 0) {
+					int index = resource.indexOf('=');
+					if (index > 0) {
+						int index2 = resource.indexOf('=', index + 1);
+						if (index2 < 0) {
+							IPath path = IPath.fromOSString(resource.substring(index + 1));
+							if (path.isValidPath(path.toOSString())) {
+								return true;
+							}
+						}
+					}
+				}
+				JavaLanguageServerPlugin.logInfo("Invalid preference: " + Preferences.JAVA_CLASSPATH_VARIABLES + "=" + resource);
+				return false;
+			}).collect(Collectors.toMap(value -> value.substring(0, value.indexOf('=')), value -> IPath.fromOSString(value.substring(value.indexOf('=') + 1))));
+		} else {
+			this.classpathVariables = Collections.emptyMap();
+			this.classpathVarList = Collections.emptyList();
+		}
+		return this;
+	}
+
 	public Preferences setJavaFormatComments(boolean javaFormatComments) {
 		this.javaFormatComments = javaFormatComments;
 		return this;
@@ -2479,6 +2521,10 @@ public class Preferences {
 
 	public List<String> getResourceFilters() {
 		return resourceFilters;
+	}
+
+	public Map<String, IPath> getClasspathVariables() {
+		return classpathVariables;
 	}
 
 	public String getFormatterProfileName() {
