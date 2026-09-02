@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.commands.BuildPathCommand;
 import org.eclipse.jdt.ls.core.internal.commands.DiagnosticsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.FullyQualifiedNameCommand;
+import org.eclipse.jdt.ls.core.internal.commands.GraphSnapshotCommand;
 import org.eclipse.jdt.ls.core.internal.commands.OrganizeImportsCommand;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectClasspathEntries;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
@@ -113,7 +114,8 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 				}
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
-				case "java.project.getAll":
+				case GraphSnapshotCommand.COMMAND_ID:
+					return GraphSnapshotCommand.execute(monitor);				case "java.project.getAll":
 					if (!arguments.isEmpty()) {
 						GetAllProjectOptions option = JSONUtility.toModel(arguments.get(0), GetAllProjectOptions.class);
 						if (option.includeNonJava) {

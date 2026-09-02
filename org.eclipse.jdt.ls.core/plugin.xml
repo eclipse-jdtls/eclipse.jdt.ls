@@ -95,6 +95,9 @@
                   id="java.project.getAll">
             </command>
             <command
+                  id="java.graph.snapshot">
+            </command>
+            <command
                   id="java.project.refreshDiagnostics">
             </command>
             <command
