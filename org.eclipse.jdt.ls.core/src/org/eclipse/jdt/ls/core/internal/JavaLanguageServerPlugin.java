@@ -254,6 +254,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 		JavaManipulation.setPreferenceNodeId(IConstants.PLUGIN_ID);
 
 		// initialize MembersOrderPreferenceCacheCommon used by BodyDeclarationRewrite
+		DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID).put(MembersOrderPreferenceCacheCommon.APPEARANCE_ENABLE_VISIBILITY_SORT_ORDER, Boolean.TRUE.toString());
 		MembersOrderPreferenceCacheCommon preferenceCache = JavaManipulationPlugin.getDefault().getMembersOrderPreferenceCacheCommon();
 		preferenceCache.install();
 	}
