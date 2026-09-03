@@ -55,6 +55,7 @@ import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaContextTypeRegi
 import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaLanguageServerTemplateStore;
 import org.eclipse.jdt.ls.core.internal.handlers.BundleUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
+import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandlers;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
@@ -137,6 +138,8 @@ public class JavaLanguageServerPlugin extends Plugin {
 	private CompletionContributionService completionContributionService;
 	private LogHandler logHandler;
 
+	private CompletionHandlers completionHandlers;
+
 	public static LanguageServerApplication getLanguageServer() {
 		return pluginInstance == null ? null : pluginInstance.languageServer;
 	}
@@ -167,6 +170,7 @@ public class JavaLanguageServerPlugin extends Plugin {
 			preferenceManager = new StandardPreferenceManager();
 			projectsManager = new StandardProjectsManager(preferenceManager);
 		}
+		completionHandlers = new CompletionHandlers(preferenceManager);
 		digestStore = new DigestStore(getStateLocation().toFile());
 		try {
 			ResourcesPlugin.getWorkspace().addSaveParticipant(IConstants.PLUGIN_ID, projectsManager);
@@ -425,6 +429,10 @@ public class JavaLanguageServerPlugin extends Plugin {
 
 	public WorkingCopyOwner getWorkingCopyOwner() {
 		return this.protocol.getWorkingCopyOwner();
+	}
+
+	public CompletionHandlers getCompletionHandlers() {
+		return completionHandlers;
 	}
 
 	public static JavaLanguageServerPlugin getInstance() {
