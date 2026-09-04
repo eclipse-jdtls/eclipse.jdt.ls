@@ -49,8 +49,8 @@ Installation
 
 There are several options to install eclipse.jdt.ls:
 
-- Download and extract a milestone build from [http://download.eclipse.org/jdtls/milestones/](http://download.eclipse.org/jdtls/milestones/?d)
-- Download and extract a snapshot build from [http://download.eclipse.org/jdtls/snapshots/](http://download.eclipse.org/jdtls/snapshots/?d)
+- Download and extract a milestone build from <https://download.eclipse.org/justj/?file=jdtls/milestones>
+- Download and extract a snapshot build from <https://download.eclipse.org/justj/?file=jdtls/snapshots>
 - Under some Linux distributions you can use the package manager. Search the package repositories for `jdtls` or `eclipse.jdt.ls`.
 - Build it from source. Clone the repository via `git clone` and build the project via `JAVA_HOME=/path/to/java/21 ./mvnw clean verify -U`. Optionally append `-DskipTests=true` to by-pass the tests. This command builds the server into the `./org.eclipse.jdt.ls.product/target/repository` folder.
 
