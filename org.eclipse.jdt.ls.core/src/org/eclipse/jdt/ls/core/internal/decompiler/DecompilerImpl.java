@@ -29,7 +29,12 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 public abstract class DecompilerImpl implements IDecompiler {
 	private static Map<DecompilerType, Map<String, DecompilerResult>> decompilerCache =
 			Collections.synchronizedMap(new EnumMap<>(DecompilerType.class));
-	private static final int CACHE_SIZE = 100;
+	/**
+	 * Maximum entries in the per-type decompiler LRU cache.
+	 * Configurable via {@code -Djdt.ls.decompiler.cacheSize=<int>}.
+	 * Default: 100
+	 */
+	private static final int CACHE_SIZE = Integer.getInteger("jdt.ls.decompiler.cacheSize", 100);
 
 	private static Map<String, DecompilerResult> getLRUCache(int maxEntries) {
 		Map<String, DecompilerResult> map = new LinkedHashMap<>(maxEntries + 1, .75F, true) {
