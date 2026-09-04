@@ -105,7 +105,6 @@ public class PreferenceManager {
 		defEclipsePrefs.put(CodeStyleConfiguration.ORGIMPORTS_IMPORTORDER, String.join(";", Preferences.JAVA_IMPORT_ORDER_DEFAULT));
 		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_MEMBER_SORT_ORDER, JavaLanguageServerPlugin.DEFAULT_MEMBER_SORT_ORDER);
 		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_VISIBILITY_SORT_ORDER, JavaLanguageServerPlugin.DEFAULT_VISIBILITY_SORT_ORDER);
-		defEclipsePrefs.put(MembersOrderPreferenceCacheCommon.APPEARANCE_ENABLE_VISIBILITY_SORT_ORDER, Boolean.TRUE.toString());
 		defEclipsePrefs.put(CodeGenerationSettingsConstants.CODEGEN_USE_OVERRIDE_ANNOTATION, Boolean.TRUE.toString());
 		IEclipsePreferences fDefaultPreferenceStore = DefaultScope.INSTANCE.getNode(JavaManipulation.getPreferenceNodeId());
 		fDefaultPreferenceStore.put(JavaManipulationPlugin.CODEASSIST_FAVORITE_STATIC_MEMBERS, String.join(";", Preferences.JAVA_COMPLETION_FAVORITE_MEMBERS_DEFAULT));
