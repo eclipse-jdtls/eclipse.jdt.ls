@@ -32,8 +32,8 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeHierarchy;
+import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Javadoc;
@@ -440,8 +440,6 @@ public class JavadocContentAccess2 {
 		@Override
 		protected void handleIndex(List<? extends ASTNode> fragments) {
 			super.handleIndex(fragments);
-			// This is a bug upstream
-			fLiteralContent--;
 		}
 
 		@Override
