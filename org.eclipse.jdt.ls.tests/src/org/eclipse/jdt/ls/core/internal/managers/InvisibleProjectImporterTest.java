@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
@@ -231,6 +232,57 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 		} finally {
 			TestVMType.setTestJREAsDefault(defaultJVM);
 		}
+	}
+
+	@Test
+	public void testStalePreviewFeaturesAreReset() throws Exception {
+		// Use a fixture without a .settings folder so it isn't linked: jdt.ls only auto-enables preview
+		// (the state this reconciles) when the settings folder is not linked.
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		assertTrue(invisibleProject.exists());
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		// Simulate the state left behind after the bundled compiler advanced to a newer "latest":
+		// preview was auto-enabled (and silenced) by jdt.ls at a compliance that is no longer the latest.
+		String olderThanLatest = JavaCore.getAllVersions().get(JavaCore.getAllVersions().size() - 2);
+		javaProject.setOption(JavaCore.COMPILER_COMPLIANCE, olderThanLatest);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+
+		assertTrue(JVMConfigurator.reconcilePreviewFeatureSettings(javaProject));
+
+		assertEquals(JavaCore.DISABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+		assertEquals(JavaCore.getDefaultOptions().get(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES),
+				javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true));
+	}
+
+	@Test
+	public void testPreviewFeaturesKeptWhenOnLatestJDK() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		assertTrue(invisibleProject.exists());
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		javaProject.setOption(JavaCore.COMPILER_COMPLIANCE, JavaCore.latestSupportedJavaVersion());
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.IGNORE);
+
+		assertFalse(JVMConfigurator.reconcilePreviewFeatureSettings(javaProject));
+
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
+	}
+
+	@Test
+	public void testExplicitPreviewFeaturesNotReset() throws Exception {
+		IProject invisibleProject = copyAndImportFolder("singlefile/java14", "foo/bar/Foo.java");
+		assertTrue(invisibleProject.exists());
+		IJavaProject javaProject = JavaCore.create(invisibleProject);
+		String olderThanLatest = JavaCore.getAllVersions().get(JavaCore.getAllVersions().size() - 2);
+		javaProject.setOption(JavaCore.COMPILER_COMPLIANCE, olderThanLatest);
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, JavaCore.ENABLED);
+		// A deliberate user setting keeps the default report severity (warning), not ignore.
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, JavaCore.WARNING);
+
+		assertFalse(JVMConfigurator.reconcilePreviewFeatureSettings(javaProject));
+
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true));
 	}
 
 	@Test
