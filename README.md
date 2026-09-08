@@ -158,3 +158,4 @@ Milestone builds are available under [http://download.eclipse.org/jdtls/mileston
 License
 -------
 EPL 2.0, See [LICENSE](LICENSE) file.
+
