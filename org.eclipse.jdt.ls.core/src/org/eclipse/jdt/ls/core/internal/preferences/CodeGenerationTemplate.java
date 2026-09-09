@@ -232,7 +232,23 @@ public enum CodeGenerationTemplate {
 	RECORDSNIPPET_DEFAULT(
 			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
 			CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE,
-			CodeTemplatePreferences.CODETEMPLATE_RECORDSNIPPET_DEFAULT);
+			CodeTemplatePreferences.CODETEMPLATE_RECORDSNIPPET_DEFAULT),
+
+	/**
+	 * Snippet `public enum` content template
+	 */
+	ENUMSNIPPET_PUBLIC(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplatePreferences.ENUMSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_ENUMSNIPPET_PUBLIC),
+
+	/**
+	 * Snippet `enum` content template
+	 */
+	ENUMSNIPPET_DEFAULT(
+			CodeTemplatePreferences.CODETEMPLATE_CODESNIPPET,
+			CodeTemplatePreferences.ENUMSNIPPET_CONTEXTTYPE,
+			CodeTemplatePreferences.CODETEMPLATE_ENUMSNIPPET_DEFAULT);
 
 
 	private final String preferenceId;

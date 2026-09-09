@@ -32,6 +32,7 @@ import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -402,6 +403,23 @@ public class StandardProjectsManager extends ProjectsManager {
 		}
 	}
 
+	public void configureClasspathVariables(Preferences oldPrefs, Preferences newPrefs, IProgressMonitor monitor) throws CoreException {
+		Map<String, IPath> oldClasspathVariables = oldPrefs.getClasspathVariables();
+		Map<String, IPath> newClasspathVariables = newPrefs.getClasspathVariables();
+		for (Entry<String, IPath> entry : newClasspathVariables.entrySet()) {
+			IPath prefValue = entry.getValue();
+			IPath oldPrefValue = oldClasspathVariables.get(entry.getKey());
+			if (!prefValue.equals(oldPrefValue)) {
+				JavaCore.setClasspathVariable(entry.getKey(), prefValue, monitor);
+			}
+		}
+		for (String key : oldClasspathVariables.keySet()) {
+			if (!newClasspathVariables.containsKey(key)) {
+				JavaCore.removeClasspathVariable(key, monitor);
+			}
+		}
+	}
+
 	private static void initializeDefaultOptions(Preferences preferences) {
 		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
 		IVMInstall defaultVM = JavaRuntime.getDefaultVMInstall();
@@ -649,6 +667,13 @@ public class StandardProjectsManager extends ProjectsManager {
 					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
 						try {
 							configureFilters(new NullProgressMonitor());
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
+					}
+					if (!Objects.equals(oldPreferences.getClasspathVariables(), newPreferences.getClasspathVariables())) {
+						try {
+							configureClasspathVariables(oldPreferences, newPreferences, new NullProgressMonitor());
 						} catch (CoreException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}

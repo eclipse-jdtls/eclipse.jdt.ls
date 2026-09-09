@@ -17,8 +17,8 @@ import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertPosition;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertTextEdit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -168,6 +168,42 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, joinOnCompletion);
 			}
 		}
+	}
+
+	@Test
+	public void testCompletion_annotationTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "  boolean getThing(@Deprec\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "@Deprec");
+		CompletionItem deprecated = list.getItems().stream().filter(i -> i.getLabel().startsWith("Deprecated")).findFirst().orElse(null);
+		assertNotNull(deprecated, "Deprecated annotation proposal not found");
+		String text;
+		if (deprecated.getTextEdit() != null) {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = deprecated.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		} else if (deprecated.getTextEditText() != null) {
+			text = deprecated.getTextEditText();
+		} else {
+			text = deprecated.getInsertText();
+		}
+		assertEquals("Deprecated ", text);
+	}
+
+	@Test
+	public void testCompletion_keywordTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "	pub\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "pub");
+		CompletionItem publicKeyword = list.getItems().stream().filter(i -> "public".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Keyword).findFirst().orElse(null);
+		assertNotNull(publicKeyword, "public keyword proposal not found");
+		String text;
+		if (publicKeyword.getTextEditText() != null) {
+			text = publicKeyword.getTextEditText();
+		} else if (publicKeyword.getInsertText() != null) {
+			text = publicKeyword.getInsertText();
+		} else {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = publicKeyword.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		}
+		assertEquals("public ", text);
 	}
 
 	@Test
@@ -1492,6 +1528,74 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_class_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(0);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("class Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_interface_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(1);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("interface Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_record_with_package_packagePrivate() throws Exception {
+		preferences.setPreferPackagePrivateVisibility(true);
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(2);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("record Test(${0}) {\n}", te);
+	}
+
+	@Test
+	public void testSnippet_enum_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("enum Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
 	public void testSnippet_inner_class_itemDefaults_enabled_type_definition() throws JavaModelException {
 		mockClientPreferences(true, true, true);
 		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
@@ -1624,6 +1728,37 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("record", item.getLabel());
 		String te = item.getInsertText();
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
+	}
+
+	@Test
+	public void testSnippet_enum() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		CompletionList list = requestCompletions(unit, "");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", ResourceUtils.dos2Unix(te));
+
+		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
+		assertSame(item, server.resolveCompletionItem(item).join());
+	}
+
+	@Test
+	public void testSnippet_enum_with_package() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", te);
 	}
 
 	@Disabled("When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")

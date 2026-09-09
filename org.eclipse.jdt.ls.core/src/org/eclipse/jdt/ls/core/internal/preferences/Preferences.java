@@ -162,6 +162,12 @@ public class Preferences {
 	 */
 	public static final String JAVA_RESOURCE_FILTERS = "java.project.resourceFilters";
 	public static final List<String> JAVA_RESOURCE_FILTERS_DEFAULT;
+
+	/**
+	 * Specifies classpath variables to use in resolving the classpath
+	 */
+	public static final String JAVA_CLASSPATH_VARIABLES = "java.classpath.variables";
+
 	/**
 	 * Preference key for Show quickfixes at the problem or line level.
 	 */
@@ -519,6 +525,8 @@ public class Preferences {
 
 	public static final String JAVA_EDIT_VALIDATE_ALL_OPEN_BUFFERS_ON_CHANGES = "java.edit.validateAllOpenBuffersOnChanges";
 	public static final String JAVA_DIAGNOSTIC_FILER = "java.diagnostic.filter";
+	// Specifies whether newly created top-level types (class/interface/enum/record) should be package-private instead of public.
+	public static final String JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE = "java.templates.preferPackagePrivateVisibility";
 	/**
 	 * The preferences for generating toString method.
 	 */
@@ -577,12 +585,14 @@ public class Preferences {
 	public static final String CHAIN_COMPLETION_KEY = "java.completion.chain.enabled";
 
 	/**
-	 * Preference key to set the scope value to use when searching java code. Allowed value are
+	 * Preference key to set the scope value to use when searching Java code. Allowed values are
 	 * <ul>
-	 * <li><code>main</code>			-	Scope for main code</li>
-	 * <li><code>all</code>				-	Scope for both test and main code</li>
+	 * <li><code>main</code> - Search main source code and libraries</li>
+	 * <li><code>all</code> - Search main and test source code and libraries</li>
+	 * <li><code>projectOnly</code> - Include main and test
+	 * source code and referenced projects, excluding application and system libraries</li>
 	 * </ul>
-	 * Any other unknown value will be treated as <code>all</code>.
+	 * Any unknown value will be treated as <code>all</code>.
 	 */
 	public static final String JAVA_SEARCH_SCOPE = "java.search.scope";
 
@@ -736,6 +746,8 @@ public class Preferences {
 	private int staticImportOnDemandThreshold;
 	private Set<RuntimeEnvironment> runtimes = new HashSet<>();
 	private List<String> resourceFilters;
+	private List<String> classpathVarList;
+	private Map<String, IPath> classpathVariables;
 
 	private List<String> fileHeaderTemplate = new LinkedList<>();
 	private List<String> typeCommentTemplate = new LinkedList<>();
@@ -769,6 +781,7 @@ public class Preferences {
 	private boolean validateAllOpenBuffersOnChanges;
 	private boolean chainCompletionEnabled;
 	private List<String> diagnosticFilter;
+	private boolean preferPackagePrivateVisibility = false;
 	private SearchScope searchScope;
 	private boolean inlayHintsSuppressedWhenSameNameNumberedParameter;
 	private boolean referencesCodeLensIncludeFields;
@@ -850,15 +863,14 @@ public class Preferences {
 	}
 
 	public static enum SearchScope {
-		all, main;
+		all, main, projectOnly;
 
 		static SearchScope fromString(String value, SearchScope defaultScope) {
 			if (value != null) {
-				String val = value.toLowerCase();
-				try {
-					return valueOf(val);
-				} catch(Exception e) {
-					//fall back to default severity
+				for (SearchScope scope : values()) {
+					if (scope.name().equalsIgnoreCase(value)) {
+						return scope;
+					}
 				}
 			}
 			return defaultScope;
@@ -1010,6 +1022,8 @@ public class Preferences {
 		staticImportOnDemandThreshold = IMPORTS_STATIC_ONDEMANDTHRESHOLD_DEFAULT;
 		referencedLibraries = JAVA_PROJECT_REFERENCED_LIBRARIES_DEFAULT;
 		resourceFilters = JAVA_RESOURCE_FILTERS_DEFAULT;
+		classpathVarList = Collections.emptyList();
+		classpathVariables = Collections.emptyMap();
 		includeAccessors = true;
 		smartSemicolonDetection = false;
 		includeDecompiledSources = true;
@@ -1665,6 +1679,11 @@ public class Preferences {
 			prefs.setResourceFilters(resourceFilters);
 		}
 
+		if (containsKey(configuration, JAVA_CLASSPATH_VARIABLES)) {
+			List<String> classPaths = getList(configuration, JAVA_CLASSPATH_VARIABLES, existing.classpathVarList);
+			prefs.setClasspathVariables(classPaths);
+		}
+
 		if (containsKey(configuration, JAVA_FORMATTER_PROFILE_NAME)) {
 			String formatterProfileName = getString(configuration, JAVA_FORMATTER_PROFILE_NAME);
 			prefs.setFormatterProfileName(formatterProfileName);
@@ -1947,6 +1966,11 @@ public class Preferences {
 			prefs.setDiagnosticFilter(diagnosticFilter);
 		}
 
+		if (containsKey(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE)) {
+			boolean preferPackagePrivate = getBoolean(configuration, JAVA_TEMPLATES_PREFER_PACKAGE_PRIVATE, existing.preferPackagePrivateVisibility);
+			prefs.setPreferPackagePrivateVisibility(preferPackagePrivate);
+		}
+
 		if (containsKey(configuration, JAVA_CONFIGURATION_ASSOCIATIONS)) {
 			Object object = getValue(configuration, JAVA_CONFIGURATION_ASSOCIATIONS);
 			Set<String> associations = new HashSet<>();
@@ -2073,6 +2097,33 @@ public class Preferences {
 			}).collect(Collectors.toList());
 		} else {
 			this.resourceFilters = Collections.emptyList();
+		}
+		return this;
+	}
+
+	public Preferences setClasspathVariables(List<String> classpathVariables) {
+		if (classpathVariables != null) {
+			this.classpathVarList = classpathVariables;
+			this.classpathVariables = classpathVariables.stream().filter((resource) -> {
+				// ensure we have at least name= and there is only one equal sign and that value is valid IPath
+				if (resource.length() > 0) {
+					int index = resource.indexOf('=');
+					if (index > 0) {
+						int index2 = resource.indexOf('=', index + 1);
+						if (index2 < 0) {
+							IPath path = IPath.fromOSString(resource.substring(index + 1));
+							if (path.isValidPath(path.toOSString())) {
+								return true;
+							}
+						}
+					}
+				}
+				JavaLanguageServerPlugin.logInfo("Invalid preference: " + Preferences.JAVA_CLASSPATH_VARIABLES + "=" + resource);
+				return false;
+			}).collect(Collectors.toMap(value -> value.substring(0, value.indexOf('=')), value -> IPath.fromOSString(value.substring(value.indexOf('=') + 1))));
+		} else {
+			this.classpathVariables = Collections.emptyMap();
+			this.classpathVarList = Collections.emptyList();
 		}
 		return this;
 	}
@@ -2470,6 +2521,10 @@ public class Preferences {
 
 	public List<String> getResourceFilters() {
 		return resourceFilters;
+	}
+
+	public Map<String, IPath> getClasspathVariables() {
+		return classpathVariables;
 	}
 
 	public String getFormatterProfileName() {
@@ -3389,6 +3444,15 @@ public class Preferences {
 
 	public void setDiagnosticFilter(List<String> diagnosticFilter) {
 		this.diagnosticFilter = diagnosticFilter;
+	}
+
+	public boolean isPreferPackagePrivateVisibility() {
+		return preferPackagePrivateVisibility;
+	}
+
+	public Preferences setPreferPackagePrivateVisibility(boolean preferPackagePrivateVisibility) {
+		this.preferPackagePrivateVisibility = preferPackagePrivateVisibility;
+		return this;
 	}
 
 	public List<String> getFilesAssociations() {

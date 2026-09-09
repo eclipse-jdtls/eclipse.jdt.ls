@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
@@ -90,6 +91,19 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 			//No class in the workspace project starts with Array, so everything comes from the JDK
 			assertTrue(location.getUri().startsWith("jdt://"), "Unexpected uri "+ location.getUri());
 		}
+	}
+
+	@Test
+	public void testProjectOnlySearchScope() {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		preferences.setSearchScope(SearchScope.projectOnly);
+
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search("Array", monitor);
+		assertEquals(0, results.size(), "Types from libraries should be excluded");
+
+		results = WorkspaceSymbolHandler.search("Baz", monitor);
+		assertEquals(2, results.size(), "Workspace types should remain searchable");
+		assertTrue(results.stream().allMatch(symbol -> symbol.getLocation().getUri().startsWith("file://")));
 	}
 
 	@Test

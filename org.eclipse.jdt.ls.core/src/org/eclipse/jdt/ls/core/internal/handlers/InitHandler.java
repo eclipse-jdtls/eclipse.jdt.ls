@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -36,6 +36,8 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -261,6 +263,9 @@ final public class InitHandler extends BaseInitHandler {
 				if (preferences.isImportGradleEnabled()) {
 					WrapperValidator.putSha256(preferences.getGradleWrapperList());
 				}
+				if (!preferences.getClasspathVariables().isEmpty()) {
+					initializeClasspathVariables(preferences);
+				}
 				Runnable resetBuildState = () -> {
 				};
 				try {
@@ -307,4 +312,13 @@ final public class InitHandler extends BaseInitHandler {
 		job.schedule();
 	}
 
+	private void initializeClasspathVariables(Preferences prefs) {
+		for (Map.Entry<String, IPath> entry : prefs.getClasspathVariables().entrySet()) {
+			try {
+				JavaCore.setClasspathVariable(entry.getKey(), entry.getValue(), new NullProgressMonitor());
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+	}
 }

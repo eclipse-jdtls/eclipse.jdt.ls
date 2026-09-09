@@ -61,11 +61,15 @@ public final class ReferencesHandler {
 
 	private IJavaSearchScope createSearchScope(IJavaElement elementToSearch) throws JavaModelException {
 		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		int includeMask = IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS | IJavaSearchScope.APPLICATION_LIBRARIES;
-		if (isInsideJRE(elementToSearch)) {
-			includeMask |= IJavaSearchScope.SYSTEM_LIBRARIES;
+		SearchScope searchScope = preferenceManager.getPreferences().getSearchScope();
+		int includeMask = IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS;
+		if (searchScope != SearchScope.projectOnly) {
+			includeMask |= IJavaSearchScope.APPLICATION_LIBRARIES;
+			if (isInsideJRE(elementToSearch)) {
+				includeMask |= IJavaSearchScope.SYSTEM_LIBRARIES;
+			}
 		}
-		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
+		var excludeTestCode = searchScope == SearchScope.main;
 		return SearchEngine.createJavaSearchScope(excludeTestCode, projects, includeMask);
 	}
 

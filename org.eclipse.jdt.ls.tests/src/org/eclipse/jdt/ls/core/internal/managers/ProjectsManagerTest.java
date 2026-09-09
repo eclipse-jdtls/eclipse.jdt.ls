@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2022 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.internal.resources.Resource;
@@ -228,6 +229,30 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
 		assertNoErrors(project);
+	}
+
+	@Test
+	public void testClasspathVariables() throws Exception {
+		Map<String, IPath> classpathVariables = preferenceManager.getPreferences().getClasspathVariables();
+		assertTrue(classpathVariables.isEmpty());
+		try {
+			String name = "salut";
+			importProjects("maven/" + name);
+			IProject project = getProject(name);
+			assertIsJavaProject(project);
+			preferenceManager.getPreferences().setClasspathVariables(Arrays.asList("var1=/home/user1", "var2=/home/user2"));
+			Map<String, IPath> classpathVariables2 = preferenceManager.getPreferences().getClasspathVariables();
+			assertEquals(classpathVariables2.get("var1"), IPath.fromOSString("/home/user1"));
+			assertEquals(classpathVariables2.get("var2"), IPath.fromOSString("/home/user2"));
+			assertEquals(classpathVariables2.get("var3"), null);
+			preferenceManager.getPreferences().setClasspathVariables(null);
+			classpathVariables2 = preferenceManager.getPreferences().getClasspathVariables();
+			assertEquals(classpathVariables2.get("var1"), null);
+			assertEquals(classpathVariables2.get("var2"), null);
+			assertEquals(classpathVariables2.get("var3"), null);
+		} finally {
+			preferenceManager.getPreferences().setClasspathVariables(null);
+		}
 	}
 
 	@Test

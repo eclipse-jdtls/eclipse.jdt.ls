@@ -161,6 +161,8 @@ public class CodeTemplatePreferences {
 
 	public static final String RECORDSNIPPET_CONTEXTTYPE = "recordsnippet_context"; //$NON-NLS-1$
 
+	public static final String ENUMSNIPPET_CONTEXTTYPE = "enumsnippet_context"; //$NON-NLS-1$
+
 	/**
 	 * Default value for new type
 	 */
@@ -300,6 +302,14 @@ public class CodeTemplatePreferences {
 	 * Default value for public record snippet body content
 	 */
 	public static final String CODETEMPLATE_RECORDSNIPPET_PUBLIC = "${filecomment}${package_header}${typecomment}public record ${type_name}(${cursor}) {\n}";
+	/**
+	 * Default value for enum snippet body content
+	 */
+	public static final String CODETEMPLATE_ENUMSNIPPET_DEFAULT = "${filecomment}${package_header}enum ${type_name} {\n\n\t${cursor}\n}";
+	/**
+	 * Default value for public enum snippet body content
+	 */
+	public static final String CODETEMPLATE_ENUMSNIPPET_PUBLIC = "${filecomment}${package_header}${typecomment}public enum ${type_name} {\n\n\t${cursor}\n}";
 
 	public static class Month extends SimpleTemplateVariableResolver {
 		public Month() {
