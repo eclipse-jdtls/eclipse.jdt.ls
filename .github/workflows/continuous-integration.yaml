@@ -55,7 +55,6 @@ jobs:
           -ntp
           -Dcompletion.timeout=120000
           -Djava.lsp.mavensearch.timeout=60
-          -Djdt.ls.lombok.disabled=true
           -DDetectVMInstallationsJob.disabled=true
           -Dorg.gradle.daemon=false
           -Dorg.gradle.daemon.idletimeout=10000
