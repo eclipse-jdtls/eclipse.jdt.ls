@@ -39,6 +39,7 @@
 		<module>org.eclipse.jdt.ls.filesystem</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.logback.appender</module>
+		<module>org.eclipse.jdt.ls.tests.lombok</module>
 		<module>org.eclipse.jdt.ls.tests.syntaxserver</module>
 		<module>org.eclipse.jdt.ls.product</module>
 	</modules>
@@ -152,7 +153,7 @@
 						<target>
 							<artifact>
 								<groupId>org.eclipse.jdt.ls</groupId>
-								<artifactId>org.eclipse.jdt.ls.tp</artifactId>
+								<artifactId>org.eclipse.jdt.ls.target</artifactId>
 								<version>${project.version}</version>
 							</artifact>
 						</target>

@@ -41,46 +41,76 @@ public class PrintTestResults {
 
 			Map<String, TestCase> headResult = new HashMap<>();
 
-			try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("org.eclipse.jdt.ls.tests").resolve("target").resolve("surefire-reports"), "*.xml")) {
-				dirStream.forEach(path -> {
-					try {
-						TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
-						for (TestCase testCase : testSuiteResult.testCases) {
-							headResult.put(testCase.classname + "." + testCase.name, testCase);
+			Path jdtlsTestResults = Paths.get("org.eclipse.jdt.ls.tests").resolve("target").resolve("surefire-reports");
+			if (jdtlsTestResults.toFile().exists()) {
+				try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(jdtlsTestResults, "*.xml")) {
+					dirStream.forEach(path -> {
+						try {
+							TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
+							for (TestCase testCase : testSuiteResult.testCases) {
+								headResult.put(testCase.classname + "." + testCase.name, testCase);
+							}
+						} catch (JAXBException | ClassCastException e) {
+							error("failed when parsing XML test results: " + e.getLocalizedMessage());
+							e.printStackTrace();
+							System.exit(1);
+							return;
 						}
-					} catch (JAXBException | ClassCastException e) {
-						error("failed when parsing XML test results: " + e.getLocalizedMessage());
-						e.printStackTrace();
-						System.exit(1);
-						return;
-					}
-				});
-			} catch (IOException e) {
-				error("failed to read test result files: " + e.getLocalizedMessage());
-				e.printStackTrace();
-				System.exit(1);
-				return;
+					});
+				} catch (IOException e) {
+					error("failed to read test result files: " + e.getLocalizedMessage());
+					e.printStackTrace();
+					System.exit(1);
+					return;
+				}
 			}
 
-			try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("org.eclipse.jdt.ls.tests.syntaxserver").resolve("target").resolve("surefire-reports"), "*.xml")) {
-				dirStream.forEach(path -> {
-					try {
-						TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
-						for (TestCase testCase : testSuiteResult.testCases) {
-							headResult.put(testCase.classname + "." + testCase.name, testCase);
+			Path jdtlsSyntaxServerTestResults = Paths.get("org.eclipse.jdt.ls.tests.syntaxserver").resolve("target").resolve("surefire-reports");
+			if (jdtlsSyntaxServerTestResults.toFile().exists()) {
+				try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(jdtlsSyntaxServerTestResults, "*.xml")) {
+					dirStream.forEach(path -> {
+						try {
+							TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
+							for (TestCase testCase : testSuiteResult.testCases) {
+								headResult.put(testCase.classname + "." + testCase.name, testCase);
+							}
+						} catch (JAXBException | ClassCastException e) {
+							error("failed when parsing XML test results: " + e.getLocalizedMessage());
+							e.printStackTrace();
+							System.exit(1);
+							return;
 						}
-					} catch (JAXBException | ClassCastException e) {
-						error("failed when parsing XML test results: " + e.getLocalizedMessage());
-						e.printStackTrace();
-						System.exit(1);
-						return;
-					}
-				});
-			} catch (IOException e) {
-				error("failed to read test result files: " + e.getLocalizedMessage());
-				e.printStackTrace();
-				System.exit(1);
-				return;
+					});
+				} catch (IOException e) {
+					error("failed to read test result files: " + e.getLocalizedMessage());
+					e.printStackTrace();
+					System.exit(1);
+					return;
+				}
+			}
+
+			Path jdtlsLombokTestResults = Paths.get("org.eclipse.jdt.ls.tests.lombok").resolve("target").resolve("surefire-reports");
+			if (jdtlsLombokTestResults.toFile().exists()) {
+				try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(jdtlsLombokTestResults, "*.xml")) {
+					dirStream.forEach(path -> {
+						try {
+							TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
+							for (TestCase testCase : testSuiteResult.testCases) {
+								headResult.put(testCase.classname + "." + testCase.name, testCase);
+							}
+						} catch (JAXBException | ClassCastException e) {
+							error("failed when parsing XML test results: " + e.getLocalizedMessage());
+							e.printStackTrace();
+							System.exit(1);
+							return;
+						}
+					});
+				} catch (IOException e) {
+					error("failed to read test result files: " + e.getLocalizedMessage());
+					e.printStackTrace();
+					System.exit(1);
+					return;
+				}
 			}
 
 			int failures = 0;
