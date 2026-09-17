@@ -49,6 +49,8 @@ jobs:
         run: >
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
 
+          ./mvnw clean install -DskipTests
+
           ./mvnw
           clean
           verify
@@ -111,6 +113,8 @@ jobs:
         run: >
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
 
+          ./mvnw clean install -DskipTests
+
           ./mvnw
           clean
           verify
@@ -172,6 +176,8 @@ jobs:
         continue-on-error: true
         run: >
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
+
+          ./mvnw clean install -DskipTests
 
           ./mvnw
           clean
