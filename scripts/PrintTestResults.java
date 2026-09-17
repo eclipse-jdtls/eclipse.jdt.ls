@@ -83,6 +83,27 @@ public class PrintTestResults {
 				return;
 			}
 
+			try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(Paths.get("org.eclipse.jdt.ls.tests.lombok").resolve("target").resolve("surefire-reports"), "*.xml")) {
+				dirStream.forEach(path -> {
+					try {
+						TestSuite testSuiteResult = (TestSuite) unmarshaller.unmarshal(path.toFile());
+						for (TestCase testCase : testSuiteResult.testCases) {
+							headResult.put(testCase.classname + "." + testCase.name, testCase);
+						}
+					} catch (JAXBException | ClassCastException e) {
+						error("failed when parsing XML test results: " + e.getLocalizedMessage());
+						e.printStackTrace();
+						System.exit(1);
+						return;
+					}
+				});
+			} catch (IOException e) {
+				error("failed to read test result files: " + e.getLocalizedMessage());
+				e.printStackTrace();
+				System.exit(1);
+				return;
+			}
+
 			int failures = 0;
 			int passes = 0;
 			for (TestCase testCase : headResult.values()) {
