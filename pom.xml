@@ -28,17 +28,17 @@
 		<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
 		<!-- To handle OSX-specific settings -->
 		<os.testArgs></os.testArgs>
-		<lombokArgs></lombokArgs>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
 	</properties>
 	<modules>
-		<module>org.eclipse.jdt.ls.target</module>
+		<module>org.eclipse.jdt.ls.tp</module>
 		<module>org.eclipse.jdt.ls.core</module>
 		<module>org.eclipse.jdt.ls.filesystem</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.logback.appender</module>
+		<module>org.eclipse.jdt.ls.tests.lombok</module>
 		<module>org.eclipse.jdt.ls.tests.syntaxserver</module>
 		<module>org.eclipse.jdt.ls.product</module>
 	</modules>

@@ -48,7 +48,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
+						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
 						<runOrder>random</runOrder>
 					</configuration>
 
@@ -80,35 +80,6 @@
 								</configuration>
 							</execution>
 						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>lombok</id>
-			<activation>
-				<property>
-					<name>jdt.ls.lombok.disabled</name>
-					<value>!true</value>
-				</property>
-			</activation>
-			<properties>
-				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.36.jar</lombokArgs>
-			</properties>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>org.projectlombok</groupId>
-									<artifactId>lombok</artifactId>
-									<version>1.18.36</version>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
 					</plugin>
 				</plugins>
 			</build>

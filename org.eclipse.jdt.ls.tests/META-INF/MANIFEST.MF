@@ -4,7 +4,9 @@ Automatic-Module-Name: org.eclipse.jdt.ls.tests
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.eclipse.jdt.ls.tests;singleton:=true
 Bundle-Version: 1.62.0.qualifier
-Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver"
+Export-Package: org.eclipse.jdt.ls.core.internal;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver,org.eclipse.jdt.ls.tests.lombok",
+ org.eclipse.jdt.ls.core.internal.handlers;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver,org.eclipse.jdt.ls.tests.lombok",
+ org.eclipse.jdt.ls.core.internal.managers;x-friends:="org.eclipse.jdt.ls.tests.syntaxserver,org.eclipse.jdt.ls.tests.lombok"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: org.junit.jupiter.api;version="[5.14.0,6.0.0)",
  org.junit.jupiter.api.extension;version="[5.14.0,6.0.0)",
