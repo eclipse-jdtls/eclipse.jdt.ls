@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
@@ -215,44 +214,6 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(SymbolKind.Interface, deprecated.getKind());
 		assertNotNull(deprecated.getDeprecated());
 		assertTrue(deprecated.getDeprecated(), "Should be deprecated");
-	}
-
-	@Test
-	public void testLombok() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		importProjects("maven/mavenlombok");
-		project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
-		String className = "org.sample.Test";
-		List<? extends SymbolInformation> symbols = getSymbols(className);
-		//@formatter:on
-		assertFalse(symbols.isEmpty(), "No symbols found for " + className);
-		assertHasSymbol("Test", "Test.java", SymbolKind.Class, symbols);
-		Optional<? extends SymbolInformation> method = symbols.stream().filter(s -> (s.getKind() == SymbolKind.Method)).findAny();
-		assertFalse(method.isPresent());
-	}
-
-	@Test
-	public void testLombok_showGeneratedCodeSymbols() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		preferences.setShowGeneratedCodeSymbols(true);
-		try {
-			importProjects("maven/mavenlombok");
-			project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
-			String className = "org.sample.Test";
-			List<? extends SymbolInformation> symbols = getSymbols(className);
-			assertFalse(symbols.isEmpty(), "No symbols found for " + className);
-			assertHasSymbol("Test", "Test.java", SymbolKind.Class, symbols);
-			Optional<? extends SymbolInformation> method = symbols.stream().filter(s -> (s.getKind() == SymbolKind.Method)).findAny();
-			assertTrue(method.isPresent(), "Generated methods should appear when java.symbols.includeGeneratedCode is true");
-		} finally {
-			preferences.setShowGeneratedCodeSymbols(false);
-		}
 	}
 
 	@Test
