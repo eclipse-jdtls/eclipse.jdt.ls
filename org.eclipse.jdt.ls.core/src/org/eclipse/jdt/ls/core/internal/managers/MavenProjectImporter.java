@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.lsp4j.MessageType;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.embedder.IMaven;
 import org.eclipse.m2e.core.embedder.MavenModelManager;
@@ -239,16 +240,20 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					}
 					monitor2.setWorkRemaining(toImport.size() * 2 - it * MAX_PROJECTS_TO_IMPORT);
 				}
+				logFailedImports(results);
 				List<IProject> imported = new ArrayList<>(results.size());
 				for (IMavenProjectImportResult result : results) {
-					imported.add(result.getProject());
+					if (result.getProject() != null) {
+						imported.add(result.getProject());
+					}
 				}
 				monitor2.setTaskName("Updating Maven project(s)");
 				updateProjects(imported, lastWorkspaceStateSaved, monitor2.split(projects.size()));
 				monitor2.done();
 			} else {
 				try {
-					configurationManager.importProjects(toImport, importConfig, subMonitor.split(75));
+					List<IMavenProjectImportResult> result = configurationManager.importProjects(toImport, importConfig, subMonitor.split(75));
+					logFailedImports(result);
 				} catch (CoreException e) {
 					JavaLanguageServerPlugin.logException("Failed to configure some Maven project(s)", e);
 				}
@@ -257,6 +262,21 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		subMonitor.setWorkRemaining(20);
 		updateProjects(projects, lastWorkspaceStateSaved, subMonitor.split(20));
 		subMonitor.done();
+	}
+
+	private void logFailedImports(List<IMavenProjectImportResult> results) {
+		List<String> failedProjects = new ArrayList<>();
+		for (IMavenProjectImportResult result : results) {
+			if (result.getProject() == null) {
+				File pomFile = result.getMavenProjectInfo().getPomFile();
+				JavaLanguageServerPlugin.logError("Failed to import Maven project at " + pomFile + " - a project with the same name already exists (check for duplicate groupId/artifactId)");
+				failedProjects.add(pomFile.getAbsolutePath());
+			}
+		}
+		if (!failedProjects.isEmpty()) {
+			String message = failedProjects.size() + " Maven project(s) could not be imported due to duplicate groupId/artifactId. See the language server log for details.";
+			JavaLanguageServerPlugin.getInstance().getClientConnection().showNotificationMessage(MessageType.Error, message);
+		}
 	}
 
 	private File getParentPomFile(MavenProjectInfo projectInfo) {
