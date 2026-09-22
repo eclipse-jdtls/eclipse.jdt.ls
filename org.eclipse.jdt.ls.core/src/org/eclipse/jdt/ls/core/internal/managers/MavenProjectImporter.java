@@ -71,8 +71,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	public static final String IMPORTING_MAVEN_PROJECTS = "Importing Maven project(s)";
 
-	public static final String POM_FILE = "pom.xml";
-
 	private static final String DUPLICATE_ARTIFACT_TEMPLATE = "[groupId]-[artifactId]";
 	private static final String STATE_FILENAME = "workspaceState.ser";
 
@@ -115,7 +113,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			return false;
 		}
 
-		Collection<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(POM_FILE), true /*includeNested*/);
+		Collection<java.nio.file.Path> configurationDirs = findProjectPathByConfigurationName(buildFiles, Arrays.asList(IMavenConstants.POM_FILE_NAME), true /*includeNested*/);
 		if (configurationDirs == null || configurationDirs.isEmpty()) {
 			return false;
 		}
@@ -301,7 +299,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		while (iterator.hasNext()) {
 			IProject project = iterator.next();
 			project.open(monitor);
-			IFile pomFile = project.getFile(POM_FILE);
+			IFile pomFile = project.getFile(IMavenConstants.POM_FILE_NAME);
 			pomFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
 			if (!needsMavenUpdate(pomFile, lastWorkspaceStateSaved)) {
 				iterator.remove();
@@ -361,7 +359,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				|| !dir.isDirectory()) {
 			return false;
 		}
-		return isReadable(new File(dir, POM_FILE));
+		return isReadable(new File(dir, IMavenConstants.POM_FILE_NAME));
 	}
 
 	private boolean isReadable(File destination) {
