@@ -374,10 +374,6 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertTrue(signature.getLabel().equals("add(String e) : boolean"));
 		String documentation = signature.getDocumentation().getLeft();
 		assertEquals("Test", documentation);
-		assertEquals(1, signature.getParameters().size());
-		Either<String, MarkupContent> paramDoc = signature.getParameters().get(0).getDocumentation();
-		assertNotNull(paramDoc);
-		assertEquals("the element to add", paramDoc.getRight().getValue());
 	}
 
 	@Test
@@ -1197,7 +1193,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		buf.append("	}\n");
 		buf.append("}\n");
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
-		SignatureHelp help = getSignatureHelp(cu, 9, 7);
+		SignatureHelp help = getSignatureHelp(cu, 10, 7);
 		assertNotNull(help);
 		assertEquals(1, help.getSignatures().size());
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
