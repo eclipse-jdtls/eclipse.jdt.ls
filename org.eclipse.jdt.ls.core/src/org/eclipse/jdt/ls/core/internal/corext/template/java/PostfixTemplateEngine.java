@@ -89,6 +89,10 @@ public class PostfixTemplateEngine {
 			return res;
 		}
 
+		// Captured before evaluating any template, since field-creating templates mutate the
+		// document (and therefore the completion offset) while evaluating.
+		String affectedStatement = context.getAffectedStatement();
+
 		Template[] templates = JavaLanguageServerPlugin.getInstance().getTemplateStore().getTemplates(JavaPostfixContextType.ID_ALL);
 		Template[] availableTemplates = Arrays.stream(templates).filter(context::canEvaluate).toArray(Template[]::new);
 		boolean needsCheck = !isJava12OrHigherProject(compilationUnit);
@@ -102,6 +106,16 @@ public class PostfixTemplateEngine {
 			final CompletionItem item = new CompletionItem();
 			item.setLabel(template.getName());
 			item.setKind(CompletionItemKind.Snippet);
+
+			// The text edit replaces the whole postfix expression, so per LSP the edit range - not
+			// the label - is the word the client filters against. Without a matching filter text,
+			// clients that derive the filter word from the range (VS Code, nvim, lsp-mode) discard
+			// the item outright. Mirrors CompletionProposalRequestor#toCompletionItem, see #1348.
+			// The template name is appended rather than reusing the replaced source text, because
+			// the name may only be partially typed when completion is triggered.
+			if (!affectedStatement.isEmpty()) {
+				item.setFilterText(affectedStatement + "." + template.getName()); //$NON-NLS-1$
+			}
 
 			CompletionUtils.setInsertTextFormat(item, completionItemDefaults);
 			CompletionUtils.setInsertTextMode(item, completionItemDefaults);
