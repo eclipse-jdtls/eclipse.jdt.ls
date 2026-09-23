@@ -17,15 +17,19 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.maven.Maven;
+import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.DefaultMavenExecutionRequest;
+import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.MavenExecutionRequestPopulator;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -115,10 +119,32 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 				MavenProject project = eyeMaven.readProject(directory.resolve(IMavenConstants.POM_FILE_NAME).toFile(), monitor);
 				DefaultMavenExecutionRequest req = new DefaultMavenExecutionRequest();
 				eyeMaven.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
+				Properties properties = new Properties(System.getProperties());
+				// set the location where the projects will be generated
+				properties.setProperty("eclipse.projectDir", ResourcesPlugin.getWorkspace().getRoot().getFullPath().toOSString());
 				req.setSystemProperties(System.getProperties());
 				req.setGoals(List.of("eclipse:eclipse"));
 				req.setPom(project.getFile());
 				req.setBaseDirectory(directory.toFile());
+				req.setExecutionListener(new AbstractExecutionListener() {
+					/* (non-Javadoc)
+					 * @see org.apache.maven.execution.AbstractExecutionListener#mojoStarted(org.apache.maven.execution.ExecutionEvent)
+					 */
+					@Override
+					public void mojoStarted(ExecutionEvent event) {
+						monitor.subTask(getExecutionEventString(event));
+						super.mojoStarted(event);
+					}
+
+					/* (non-Javadoc)
+					 * @see org.apache.maven.execution.AbstractExecutionListener#mojoSucceeded(org.apache.maven.execution.ExecutionEvent)
+					 */
+					@Override
+					public void mojoSucceeded(ExecutionEvent event) {
+						monitor.subTask(getExecutionEventString(event));
+						super.mojoSucceeded(event);
+					}
+				});
 				MavenExecutionResult res = maven.execute(req);
 				if (res.hasExceptions()) {
 					if (res.getExceptions().get(0) instanceof Exception) {
@@ -141,6 +167,27 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 	public void reset() {
 		// TODO Auto-generated method stub
 		super.reset();
+	}
+
+	private static String getExecutionEventString(ExecutionEvent event) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("[");
+		sb.append(event.getType().name());
+		sb.append("] Project: ");
+		sb.append(event.getProject().getGroupId());
+		sb.append(":");
+		sb.append(event.getProject().getArtifactId());
+		sb.append(":");
+		sb.append(event.getProject().getVersion());
+		sb.append(" Plugin: ");
+		sb.append(event.getMojoExecution().getPlugin().getGroupId());
+		sb.append(":");
+		sb.append(event.getMojoExecution().getPlugin().getArtifactId());
+		sb.append(":");
+		sb.append(event.getMojoExecution().getPlugin().getVersion());
+		sb.append(" Goal: ");
+		sb.append(event.getMojoExecution().getGoal());
+		return sb.toString();
 	}
 
 }
