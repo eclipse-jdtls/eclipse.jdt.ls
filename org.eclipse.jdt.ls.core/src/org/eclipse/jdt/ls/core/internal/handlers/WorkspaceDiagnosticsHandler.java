@@ -59,6 +59,8 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
+import org.eclipse.lsp4j.MessageParams;
+import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
@@ -360,6 +362,12 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			for (IMarker marker : previewFeatureMarkers) {
 				// error message mentions invalid release level, and the supported level
 				String errorMessage = ResourceUtils.getMessage(marker);
+				if (JavaLanguageServerPlugin.getProjectsManager().getConnection() != null) {
+					MessageParams previewFeatureMessage = new MessageParams();
+					previewFeatureMessage.setType(MessageType.Error);
+					previewFeatureMessage.setMessage(errorMessage);
+					JavaLanguageServerPlugin.getProjectsManager().getConnection().showMessage(previewFeatureMessage);
+				}
 				String projectUri = JDTUtils.getFileURI(marker.getResource().getProject());
 				JsonObject entry = new JsonObject();
 				entry.addProperty("uri", projectUri);
