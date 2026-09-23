@@ -12,9 +12,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -112,6 +119,11 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 	 */
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException {
+
+		if (isAlreadyImported()) {
+			return;
+		}
+
 		try {
 			IMaven eyeMaven = MavenPlugin.getMaven();
 			Maven maven = eyeMaven.lookup(Maven.class);
@@ -119,9 +131,10 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 				MavenProject project = eyeMaven.readProject(directory.resolve(IMavenConstants.POM_FILE_NAME).toFile(), monitor);
 				DefaultMavenExecutionRequest req = new DefaultMavenExecutionRequest();
 				eyeMaven.lookup(MavenExecutionRequestPopulator.class).populateDefaults(req);
-				Properties properties = new Properties(System.getProperties());
+				Properties properties = new Properties();
 				// set the location where the projects will be generated
-				properties.setProperty("eclipse.projectDir", ResourcesPlugin.getWorkspace().getRoot().getFullPath().toOSString());
+				properties.setProperty("eclipse.projectDir", ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString());
+				req.setUserProperties(properties);
 				req.setSystemProperties(System.getProperties());
 				req.setGoals(List.of("eclipse:eclipse"));
 				req.setPom(project.getFile());
@@ -134,15 +147,6 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 					public void mojoStarted(ExecutionEvent event) {
 						monitor.subTask(getExecutionEventString(event));
 						super.mojoStarted(event);
-					}
-
-					/* (non-Javadoc)
-					 * @see org.apache.maven.execution.AbstractExecutionListener#mojoSucceeded(org.apache.maven.execution.ExecutionEvent)
-					 */
-					@Override
-					public void mojoSucceeded(ExecutionEvent event) {
-						monitor.subTask(getExecutionEventString(event));
-						super.mojoSucceeded(event);
 					}
 				});
 				MavenExecutionResult res = maven.execute(req);
@@ -157,7 +161,80 @@ public class MavenEclipseEclipseProjectImporter extends EclipseProjectImporter {
 			JavaLanguageServerPlugin.logException(e);
 		}
 
+		// for the parent builder
+		this.setDirectories(collectConvertedProjects());
+
 		super.importToWorkspace(monitor);
+	}
+
+	private boolean isAlreadyImported() {
+		Path workspacePath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toPath();
+		try {
+			class LocatingFileVisitor extends SimpleFileVisitor<Path> {
+				boolean found = false;
+
+				/* (non-Javadoc)
+				 * @see java.nio.file.SimpleFileVisitor#preVisitDirectory(java.lang.Object, java.nio.file.attribute.BasicFileAttributes)
+				 */
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if (dir.endsWith(".metadata")) {
+						return FileVisitResult.SKIP_SUBTREE;
+					}
+					return super.preVisitDirectory(dir, attrs);
+				}
+
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+					if (attrs.isRegularFile() && file.endsWith(".project")) {
+						found = true;
+						return FileVisitResult.TERMINATE;
+					}
+					return super.visitFile(file, attrs);
+				}
+			}
+			LocatingFileVisitor visitor = new LocatingFileVisitor();
+			Files.walkFileTree(workspacePath, visitor);
+			return visitor.found;
+		} catch (IOException ioe) {
+			JavaLanguageServerPlugin.logException("Failed to collect converted projects", ioe);
+		}
+		return false;
+	}
+
+	private List<Path> collectConvertedProjects() {
+		Path workspacePath = ResourcesPlugin.getWorkspace().getRoot().getLocation().toPath();
+		try {
+			List<Path> res = new ArrayList<>();
+			Files.walkFileTree(workspacePath, new SimpleFileVisitor<Path>() {
+				/* (non-Javadoc)
+				 * @see java.nio.file.SimpleFileVisitor#preVisitDirectory(java.lang.Object, java.nio.file.attribute.BasicFileAttributes)
+				 */
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if (dir.endsWith(".metadata")) {
+						return FileVisitResult.SKIP_SUBTREE;
+					}
+					return super.preVisitDirectory(dir, attrs);
+				}
+
+				/* (non-Javadoc)
+				 * @see java.nio.file.SimpleFileVisitor#visitFile(java.lang.Object, java.nio.file.attribute.BasicFileAttributes)
+				 */
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					if (attrs.isRegularFile() && file.endsWith(".project")) {
+						res.add(file.getParent());
+					}
+					return super.visitFile(file, attrs);
+				}
+			});
+			return res;
+		} catch (IOException ioe) {
+			JavaLanguageServerPlugin.logException("Failed to collect converted projects", ioe);
+		}
+		return Collections.emptyList();
 	}
 
 	/* (non-Javadoc)
