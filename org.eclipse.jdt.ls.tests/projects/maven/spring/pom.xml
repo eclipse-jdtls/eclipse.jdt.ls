@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
-			<version>7.0.2</version>
+			<version>7.0.8</version>
 		</dependency>
 	</dependencies>
 </project>
