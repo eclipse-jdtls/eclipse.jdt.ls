@@ -48,4 +48,11 @@
             order ="300"
             class = "org.eclipse.jdt.ls.core.internal.managers.NoopImporter"/>
    </extension>
+   <extension
+      id="testCompletionHandler"
+      point="org.eclipse.jdt.ls.core.completionHandler">
+      <completionHandler
+          id="testHandler"
+          class="org.eclipse.jdt.ls.core.internal.handlers.ContributedTestCompletionHandler" />
+   </extension>
 </fragment>
