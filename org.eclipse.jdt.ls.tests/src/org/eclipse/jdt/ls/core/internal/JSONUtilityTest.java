@@ -61,21 +61,16 @@ public class JSONUtilityTest {
 		assertNull(JSONUtility.toModel(null, Object.class));
 	}
 
-	private static class Options {
-		public String option1;
-		public String option2;
-	}
-
 	@Test
 	public void testMap() {
 		Map<String, Object> map = new HashMap<>();
-		map.put("option1", "value1");
-		map.put("option2", "value2");
+		map.put("line", 5);
+		map.put("character", 3);
 
-		Options options = JSONUtility.toModel(map, Options.class);
+		Position options = JSONUtility.toModel(map, Position.class);
 		assertNotNull(options);
-		assertEquals(options.option1, "value1");
-		assertEquals(options.option2, "value2");
+		assertEquals(options.getLine(), 5);
+		assertEquals(options.getCharacter(), 3);
 	}
 
 }

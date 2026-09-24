@@ -13,7 +13,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,16 +63,7 @@ public class JSONUtility {
 			return gson.fromJson(json, clazz);
 		}
 		if (object instanceof Map) {
-			try {
-				Map<String, Object> map = (Map<String, Object>) object;
-				T result = clazz.newInstance();
-				for (Field field : clazz.getFields()) {
-					field.set(result, map.get(field.getName()));
-				}
-				return result;
-			} catch (InstantiationException | IllegalAccessException e) {
-				throw new RuntimeException(e);
-			}
+			return gson.fromJson(gson.toJsonTree(object), clazz);
 		}
 		return null;
 	}
