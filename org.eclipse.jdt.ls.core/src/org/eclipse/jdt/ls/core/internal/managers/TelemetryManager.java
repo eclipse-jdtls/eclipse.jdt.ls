@@ -36,8 +36,6 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.MessageType;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -249,10 +247,9 @@ public class TelemetryManager {
 	}
 
 	public void sendEvent(TelemetryEvent event) {
-		if (prefs == null  || !prefs.getPreferences().isTelemetryEnabled()) {
+		if (client == null || prefs == null || !prefs.getPreferences().isTelemetryEnabled()) {
 			return;
 		}
-		client.logMessage(new MessageParams(MessageType.Info, "telemetry "+event.getName()));
 		client.telemetryEvent(event);
 	}
 
