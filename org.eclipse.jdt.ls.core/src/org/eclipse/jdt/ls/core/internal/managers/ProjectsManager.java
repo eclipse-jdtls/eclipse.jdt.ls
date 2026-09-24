@@ -220,6 +220,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 						if (importer.applies(buildFiles, subMonitor.split(1))) {
 							importer.importToWorkspace(subMonitor.split(70));
 							buildFiles = removeImportedConfigurations(buildFiles, importer);
+							properties.addProperty("resolved", importer.isResolved(rootFolder));
 							this.telemetryManager.sendEvent(new TelemetryEvent(TelemetryEvent.IMPORT_PROJECT, properties));
 						}
 					} catch (CoreException e) {
