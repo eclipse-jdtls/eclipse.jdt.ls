@@ -373,7 +373,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
 		assertTrue(signature.getLabel().equals("add(String e) : boolean"));
 		String documentation = signature.getDocumentation().getLeft();
-		assertEquals(" Test ", documentation);
+		assertEquals("Test", documentation);
 	}
 
 	@Test
@@ -1172,6 +1172,36 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(help);
 		Either<String, MarkupContent> documentation = help.getSignatures().get(help.getActiveSignature()).getDocumentation();
 		assertEquals("This is an API.", documentation.getLeft().trim());
+	}
+
+	@Test
+	public void testSignatureHelp_parameterDocumentation() throws Exception {
+		when(preferenceManager.getPreferences().isSignatureHelpDescriptionEnabled()).thenReturn(true);
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public class E {\n");
+		buf.append("	/**\n");
+		buf.append("	 * Copies elements from source to destination.\n");
+		buf.append("	 * @param src the source array\n");
+		buf.append("	 * @param dest the destination array\n");
+		buf.append("	 * @param count number of elements to copy\n");
+		buf.append("	 */\n");
+		buf.append("	public void copy(Object[] src, Object[] dest, int count) {}\n");
+		buf.append("	public void test() {\n");
+		buf.append("		copy(null, null, 0)\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		SignatureHelp help = getSignatureHelp(cu, 10, 7);
+		assertNotNull(help);
+		assertEquals(1, help.getSignatures().size());
+		SignatureInformation signature = help.getSignatures().get(help.getActiveSignature());
+		assertEquals("Copies elements from source to destination.", signature.getDocumentation().getLeft());
+		assertEquals(3, signature.getParameters().size());
+		assertEquals("the source array", signature.getParameters().get(0).getDocumentation().getRight().getValue());
+		assertEquals("the destination array", signature.getParameters().get(1).getDocumentation().getRight().getValue());
+		assertEquals("number of elements to copy", signature.getParameters().get(2).getDocumentation().getRight().getValue());
 	}
 
 	@Test
