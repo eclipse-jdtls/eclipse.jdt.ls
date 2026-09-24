@@ -481,7 +481,7 @@ public class LogReader {
 				entry.stack= status.getException().getMessage()+ '\n' + exceptionAsString;
 			}
 
-			entry.children = Arrays.stream(status.getChildren()).map(s -> from(status)).toList();
+			entry.children = Arrays.stream(status.getChildren()).map(s -> from(s)).toList();
 			return entry;
 		}
 	}
