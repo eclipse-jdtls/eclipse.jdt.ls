@@ -34,11 +34,12 @@
 		<generateSourceRef>true</generateSourceRef>
 	</properties>
 	<modules>
-		<module>org.eclipse.jdt.ls.target</module>
+		<module>org.eclipse.jdt.ls.tp</module>
 		<module>org.eclipse.jdt.ls.core</module>
 		<module>org.eclipse.jdt.ls.filesystem</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.logback.appender</module>
+		<module>org.eclipse.jdt.ls.tests.lombok</module>
 		<module>org.eclipse.jdt.ls.tests.syntaxserver</module>
 		<module>org.eclipse.jdt.ls.product</module>
 	</modules>
