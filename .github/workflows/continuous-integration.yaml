@@ -187,7 +187,6 @@ jobs:
           -ntp
           -Dcompletion.timeout=120000
           -Djava.lsp.mavensearch.timeout=60
-          -Djdt.ls.lombok.disabled=true
           -DDetectVMInstallationsJob.disabled=true
           -Dorg.gradle.daemon=false
           -Dorg.gradle.daemon.idletimeout=10000
@@ -197,6 +196,6 @@ jobs:
           -U
           -e
           -fae
-          -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -Djdt.ls.lombok.disabled=true -DDetectVMInstallationsJob.disabled=true"
+          -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -DDetectVMInstallationsJob.disabled=true"
       - name: Print Test Results
         run: ./scripts/PrintTestResults.java
