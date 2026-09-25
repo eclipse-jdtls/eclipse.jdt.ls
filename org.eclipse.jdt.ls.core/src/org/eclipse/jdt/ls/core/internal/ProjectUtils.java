@@ -64,7 +64,6 @@ import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
-import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.UnmanagedFolderNature;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -602,7 +601,7 @@ public final class ProjectUtils {
 		}
 		String lastSegment = resource.getFullPath().lastSegment();
 		if (ProjectUtils.isMavenProject(project)) {
-			return lastSegment.equals(MavenProjectImporter.POM_FILE);
+			return lastSegment.equals(IMavenConstants.POM_FILE_NAME);
 		} else if (ProjectUtils.isGradleProject(project)) {
 			return lastSegment.equals(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR) ||
 				lastSegment.equals(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR) ||

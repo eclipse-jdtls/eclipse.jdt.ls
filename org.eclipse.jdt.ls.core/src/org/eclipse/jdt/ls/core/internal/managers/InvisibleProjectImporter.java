@@ -65,6 +65,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 
 public class InvisibleProjectImporter extends AbstractProjectImporter {
 	public static final String[][] SRC_PREFIXES = new String[][] {
@@ -472,7 +473,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 
 		IPath srcPath = sourcePath.removeLastSegments(segments.size() -1 - index);
 		IPath container = srcPath.removeLastSegments(1);
-		return container.append(MavenProjectImporter.POM_FILE).toFile().exists()
+		return container.append(IMavenConstants.POM_FILE_NAME).toFile().exists()
 			|| container.append(GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR).toFile().exists()
 			|| container.append(GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR).toFile().exists()
 			|| container.append(GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR).toFile().exists()
@@ -609,7 +610,7 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 				exclusions.addAll(javaImportExclusions);
 			}
 			buildFiles = new HashSet<>(Arrays.asList(
-				MavenProjectImporter.POM_FILE,
+					IMavenConstants.POM_FILE_NAME,
 				GradleProjectImporter.BUILD_GRADLE_DESCRIPTOR,
 				GradleProjectImporter.BUILD_GRADLE_KTS_DESCRIPTOR,
 				GradleProjectImporter.SETTINGS_GRADLE_DESCRIPTOR,
