@@ -134,6 +134,7 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Document;
@@ -201,6 +202,8 @@ public final class JDTUtils {
 		IFile resource = (IFile) findResource(uri, ResourcesPlugin.getWorkspace().getRoot()::findFilesForLocationURI);
 		if(resource != null) {
 			return resolveCompilationUnit(resource);
+		} else if (OnDemandImportManager.getInstance().isActive()) {
+			return null;
 		} else {
 			return getFakeCompilationUnit(uri, new NullProgressMonitor());
 		}
@@ -762,6 +765,20 @@ public final class JDTUtils {
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		if (unit == null && cf == null) {
 			return null;
+		}
+		if (unit == null && cf != null) {
+			OnDemandImportManager odm = OnDemandImportManager.getInstance();
+			if (odm.isActive()) {
+				String sourceUri = odm.tryImportForClassFile(cf, element.getJavaProject(),
+						new org.eclipse.core.runtime.NullProgressMonitor());
+				if (sourceUri != null) {
+					ICompilationUnit cu = resolveCompilationUnit(sourceUri);
+					if (cu != null) {
+						unit = cu;
+						cf = null;
+					}
+				}
+			}
 		}
 		if (element instanceof ISourceReference) {
 			ISourceRange nameRange = type.getRange(element);

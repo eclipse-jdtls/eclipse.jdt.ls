@@ -86,6 +86,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSy
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.lsp.ValidateDocumentParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
@@ -220,6 +221,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					classpathUpdateHandler.removeElementChangeListener();
 					classpathUpdateHandler = null;
 				}
+				OnDemandImportManager.getInstance().closeProjectsOnShutdown(monitor);
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
@@ -313,36 +315,51 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				try {
-					StandardProjectsManager.cleanInvalidJavaProjects(monitor);
+					boolean ondemand = "ondemand".equals(preferenceManager.getPreferences().getImportMode());
+
+					if (!ondemand) {
+						StandardProjectsManager.cleanInvalidJavaProjects(monitor);
+					}
 
 					registerCapabilities();
 					// we do not have the user setting initialized yet at this point but we should
 					// still call to enable defaults in case client does not support configuration changes
 					syncCapabilitiesToSettings();
 
-					// before send the service ready notification, make sure all bundles are synchronized
-					synchronizeBundles();
-
-					client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
-					status = ServiceStatus.ServiceReady;
-					telemetryManager.onServiceReady(System.currentTimeMillis());
+					if (ondemand) {
+						client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
+						status = ServiceStatus.ServiceReady;
+						telemetryManager.onServiceReady(System.currentTimeMillis());
+						synchronizeBundles();
+					} else {
+						// https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/2267
+						synchronizeBundles();
+						client.sendStatus(ServiceStatus.ServiceReady, "ServiceReady");
+						status = ServiceStatus.ServiceReady;
+						telemetryManager.onServiceReady(System.currentTimeMillis());
+					}
 					pm.projectsImported(monitor);
 
-					IndexUtils.copyIndexesToSharedLocation();
-					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
-					logInfo(">> build jobs finished");
+					if (!ondemand) {
+						IndexUtils.copyIndexesToSharedLocation();
+						JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+						logInfo(">> build jobs finished");
+					}
 					// https://github.com/redhat-developer/vscode-java/issues/3637 - delay registerWatchers
 					pm.registerWatchers();
 					debugTrace(">> watchers registered");
-					// https://github.com/redhat-developer/vscode-java/issues/3797
-					pm.checkIndexes();
-					debugTrace(">> indexes checked");
-					pm.projectsBuildFinished(monitor);
 
-					JobHelpers.waitForUpdateJobs(60 * 60 * 1000);
-					JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+					if (!ondemand) {
+						// https://github.com/redhat-developer/vscode-java/issues/3797
+						pm.checkIndexes();
+						debugTrace(">> indexes checked");
+						pm.projectsBuildFinished(monitor);
 
-					telemetryManager.onBuildFinished(System.currentTimeMillis());
+						JobHelpers.waitForUpdateJobs(60 * 60 * 1000);
+						JobHelpers.waitForBuildJobs(60 * 60 * 1000); // 1 hour
+
+						telemetryManager.onBuildFinished(System.currentTimeMillis());
+					}
 					workspaceDiagnosticsHandler = new WorkspaceDiagnosticsHandler(JDTLanguageServer.this.client, pm, preferenceManager.getClientPreferences(), documentLifeCycleHandler);
 					workspaceDiagnosticsHandler.addResourceChangeListener();
 					workspaceDiagnosticsHandler.publishDiagnostics(monitor);
