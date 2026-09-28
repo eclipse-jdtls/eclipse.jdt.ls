@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
@@ -297,6 +298,25 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 			return element.indexOf("junit") > -1;
 		});
 		assertTrue(containsJunit);
+	}
+
+	@Test
+	public void testGetClasspathsFromMapArgument() throws Exception {
+		importProjects("maven/classpathtest");
+		IProject project = WorkspaceHelper.getProject("classpathtest");
+		String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
+
+		// Mirror what a client sends over JSON-RPC, e.g. { "scope": "runtime" }, which
+		// arrives as a Map and must be converted to ClasspathOptions by JSONUtility.
+		Map<String, Object> optionsMap = new HashMap<>();
+		optionsMap.put("scope", "runtime");
+		ClasspathOptions options = JSONUtility.toModel(optionsMap, ClasspathOptions.class);
+		assertNotNull(options);
+
+		ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
+		assertEquals(1, result.classpaths.length);
+		assertEquals(0, result.modulepaths.length);
+		assertTrue(result.classpaths[0].indexOf("junit") == -1);
 	}
 
 	@Test
