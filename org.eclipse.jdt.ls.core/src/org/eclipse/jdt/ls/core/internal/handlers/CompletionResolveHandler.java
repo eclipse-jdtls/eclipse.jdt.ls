@@ -150,7 +150,7 @@ public class CompletionResolveHandler {
 					}
 
 					if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, range, template);
+						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, template);
 					}
 				}
 

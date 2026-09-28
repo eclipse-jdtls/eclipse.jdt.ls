@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2019 Red Hat Inc. and others.
+ * Copyright (c) 2017-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -234,12 +234,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(mockCapabilies.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isFoldgingRangeDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isCompletionDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(mockCapabilies.isTypeHierarchyDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(JDTLanguageServer.JAVA_LSP_INITIALIZE_WORKSPACE, monitor);
-		verify(client, times(9)).registerCapability(any());
+		verify(client, times(10)).registerCapability(any());
 		waitForBackgroundJobs();
 	}
 

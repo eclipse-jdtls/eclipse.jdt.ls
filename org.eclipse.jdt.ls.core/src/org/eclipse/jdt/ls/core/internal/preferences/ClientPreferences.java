@@ -151,6 +151,10 @@ public class ClientPreferences {
 		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
 	}
 
+	public boolean isTextDocumentContentDynamicRegistrationSupported() {
+		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getTextDocumentContent());
+	}
+
 	public boolean isWorkspaceChangeWatchedFilesDynamicRegistered() {
 		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getDidChangeWatchedFiles());
 	}
@@ -299,6 +303,10 @@ public class ClientPreferences {
 
 	public boolean isMoveRefactoringSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringSupport", "false").toString());
+	}
+
+	public boolean isMoveRefactoringConfirmationSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringConfirmationSupport", "false").toString());
 	}
 
 	public boolean isClientHoverProviderRegistered() {

@@ -161,6 +161,29 @@ public class CodeLensHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testGetCodeLensSymbolsIncludeFields() throws Exception {
+		Preferences preferences = Preferences.createFrom(Collections.singletonMap(Preferences.REFERENCES_CODE_LENS_INCLUDE_FIELDS_KEY, "true"));
+		Mockito.reset(preferenceManager);
+		when(preferenceManager.getPreferences()).thenReturn(preferences);
+		handler = new CodeLensHandler(preferenceManager);
+
+		String payload = createCodeLensSymbolsRequest("src/java/FooWithField.java");
+		CodeLensParams codeLensParams = getParams(payload);
+		String uri = codeLensParams.getTextDocument().getUri();
+		assertFalse(uri.isEmpty());
+
+		List<CodeLens> result = handler.getCodeLensSymbols(uri, monitor);
+
+		assertEquals(2, result.size(), "Found " + result);
+
+		CodeLens cl = result.get(0);
+		assertRange(4, 16, 20, cl.getRange());
+
+		cl = result.get(1);
+		assertRange(2, 13, 25, cl.getRange());
+	}
+
+	@Test
 	@SuppressWarnings("unchecked")
 	public void testGetCodeLensSymbolsForClass() throws Exception {
 		Preferences implementationsCodeLenses = Preferences.createFrom(Collections.singletonMap(Preferences.IMPLEMENTATIONS_CODE_LENS_KEY, "types"));

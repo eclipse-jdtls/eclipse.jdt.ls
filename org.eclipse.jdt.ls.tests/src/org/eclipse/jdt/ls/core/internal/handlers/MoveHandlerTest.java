@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +48,7 @@ import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -351,6 +353,99 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
 		assertEquals(expected, TextEditUtil.apply(cuSecond.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
+	}
+
+	@Test
+	public void testMoveInstanceMethodConfirmsTargetNullCheck() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		//@formatter:off
+		ICompilationUnit cu = pack1.createCompilationUnit("Demo.java", "package test1;\n"
+				+ "\n"
+				+ "public class Demo {\n"
+				+ "    public static void main(String[] args) {\n"
+				+ "        A a = new A();\n"
+				+ "        System.out.println(a.process());\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "\n"
+				+ "class A {\n"
+				+ "    C c;\n"
+				+ "\n"
+				+ "    int process() {\n"
+				+ "        if (c != null) return 2;\n"
+				+ "        return 0;\n"
+				+ "    }\n"
+				+ "}\n"
+				+ "\n"
+				+ "class B extends A {\n"
+				+ "}\n"
+				+ "\n"
+				+ "class C extends B {\n"
+				+ "}\n",
+				false, null);
+		//@formatter:on
+		CodeActionParams params = CodeActionUtil.constructCodeActionParams(cu, "c != null");
+		MoveParams moveParams = new MoveParams("moveInstanceMethod", new String[] { JDTUtils.toURI(cu) }, params);
+		MoveDestinationsResponse response = MoveHandler.getMoveDestinations(moveParams);
+		assertNotNull(response);
+		assertNull(response.errorMessage);
+		assertNotNull(response.destinations);
+		assertEquals(1, response.destinations.length);
+		assertEquals("c", ((LspVariableBinding) response.destinations[0]).name);
+
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(false);
+		RefactorWorkspaceEdit unsupportedClientEdit = MoveHandler.move(new MoveParams("moveInstanceMethod", params, response.destinations[0], true), new NullProgressMonitor());
+		assertNotNull(unsupportedClientEdit);
+		assertNotNull(unsupportedClientEdit.edit);
+		assertNull(unsupportedClientEdit.errorMessage);
+		assertNull(unsupportedClientEdit.confirmationToken);
+
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(true);
+		RefactorWorkspaceEdit refactorEdit = MoveHandler.move(new MoveParams("moveInstanceMethod", params, response.destinations[0], true), new NullProgressMonitor());
+		assertNotNull(refactorEdit);
+		assertNull(refactorEdit.edit);
+		assertNotNull(refactorEdit.errorMessage);
+		assertTrue(refactorEdit.errorMessage.contains("compared to null"), refactorEdit.errorMessage);
+		assertNotNull(refactorEdit.confirmationToken);
+
+		String originalSource = cu.getSource();
+		cu.getBuffer().setContents(originalSource + "\n// source changed\n");
+		cu.save(null, true);
+		MoveParams staleConfirmation = new MoveParams("moveInstanceMethod", null, params, response.destinations[0], true, refactorEdit.confirmationToken);
+		RefactorWorkspaceEdit staleEdit = MoveHandler.move(staleConfirmation, new NullProgressMonitor());
+		assertNotNull(staleEdit);
+		assertNull(staleEdit.edit);
+		assertNull(staleEdit.confirmationToken);
+		assertTrue(staleEdit.errorMessage.contains("conditions changed"), staleEdit.errorMessage);
+
+		cu.getBuffer().setContents(originalSource);
+		cu.save(null, true);
+		MoveParams confirmedMove = new MoveParams("moveInstanceMethod", null, params, response.destinations[0], true, refactorEdit.confirmationToken);
+		RefactorWorkspaceEdit confirmedEdit = MoveHandler.move(confirmedMove, new NullProgressMonitor());
+		assertNotNull(confirmedEdit);
+		assertNotNull(confirmedEdit.edit);
+		assertNull(confirmedEdit.errorMessage);
+		List<Either<TextDocumentEdit, ResourceOperation>> changes = confirmedEdit.edit.getDocumentChanges();
+		assertEquals(1, changes.size());
+		TextDocumentEdit textEdit = changes.get(0).getLeft();
+		assertNotNull(textEdit);
+		String movedSource = TextEditUtil.apply(originalSource, textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList());
+		assertTrue(movedSource.contains("return c.process();"), movedSource);
+		assertTrue(movedSource.contains("if (this != null) return 2;"), movedSource);
+	}
+
+	@Test
+	public void testConfirmationTokenFingerprintsInputsAndProblems() {
+		RefactoringStatus status = new RefactoringStatus();
+		status.addError("problem");
+
+		String token = RefactoringConfirmation.createToken("operation:v1", status, "request", "source");
+		assertEquals(64, token.length());
+		assertEquals(token, RefactoringConfirmation.createToken("operation:v1", status, "request", "source"));
+		assertNotEquals(token, RefactoringConfirmation.createToken("operation:v1", status, "request", "changed source"));
+
+		status.addWarning("another problem");
+		assertNotEquals(token, RefactoringConfirmation.createToken("operation:v1", status, "request", "source"));
 	}
 
 	@Test

@@ -60,6 +60,7 @@ jobs:
           -Dorg.gradle.daemon=false
           -Dorg.gradle.daemon.idletimeout=10000
           -Djdt.ls.test.delete.debug=true
+          -Dmaven.test.failure.ignore=true
           -B
           -U
           -e

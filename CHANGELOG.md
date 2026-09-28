@@ -1,5 +1,34 @@
 # Change Log
 
+# [1.61.0 (September 3rd, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/153?closed=1)
+
+ * enhancement - Add setting to make new classes package-private instead of public. See [#3865](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3865).
+ * enhancement - Add settings to customize the TODO comment in generated stubs. See [#3847](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3847).
+ * enhancement - Add setting to set Eclipse classpath variables (i.e. `kind="var"`). See [#3860](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3860).
+ * enhancement - Add trailing space after keyword/annotation completions. See [#3868](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3868).
+ * enhancement - Support generating Javadoc comments as Markdown. See [#3837](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3837).
+ * enhancement - "Create record" quick fix now infers record components from constructor call arguments. See [#3856](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3856).
+ * enhancement - Add a confirmation dialog for when a non-fatal error is encountered during the move instance method refactoring. See [#3862](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3862).
+ * enhancement - Add a quickfix to add or update field access modifiers. See [#3863](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3863).
+ * enhancement - Add snippet completion to declare an enum type. See [#3871](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3871).
+ * enhancement - Replace the custom `java/classFileContents` request with the standard `workspace/textDocumentContent` request from LSP 3.18. See [#3852](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3852).
+ * enhancement - Add "projectOnly" scope to `java.search.scope` setting to exclude JDK and library references. See [#3821](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3821).
+ * enhancement - Add a CodeLens for fields that shows references to the field. See [#3828](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3828).
+ * enhancement - Add quickfix to rename a variable declared in a lambda that's name clashes with a variable declared outside the lambda. See [#3824](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3824).
+ * performance - Batch DigestStore serialization during Maven/Gradle project import. See [#3839](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3839).
+ * bug fix - Do not offer "Make Static" action for default interface methods. See [#3853](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3853).
+ * bug fix - Override `JLSFile.childInfos()` to include redirected metadata files. See [#3844](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3844).
+ * bug fix - Suppress 'Assign parameter to field' proposal for record constructors. See [#3842](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3842).
+ * bug fix - Fix Scala Gradle classpath pollution. See [#3815](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3815).
+ * bug fix - Ensure that `maven.multiModuleProjectDirectory` system property is set, which fixes Maven projects that use it. See [#3760](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3760).
+ * bug fix - Fix how the `@inheritDoc` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3696](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3696).
+ * bug fix - Fix how the `@value` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3695](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3695).
+ * bug fix - Fix how method and constructor references are rendered in Javadoc hovers based on Markdown Javadoc. See [#3690](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3690).
+ * bug fix - Fix how the `@code` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3672](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3672).
+ * bug fix - Properly support dynamic registration of the type hierarchy capability. See [#3769](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3769).
+ * bug fix - Fix potential compiler error concerning pattern instanceof. See [#3845](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3845).
+ * build - Report syntax server test failures in GitHub Actions. See [#3817](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3817).
+
 # [1.60.0 (June 26th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
 
 * bug fix - Remove org.eclipse.osgi.services from category.xml. See [#3826](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3826).

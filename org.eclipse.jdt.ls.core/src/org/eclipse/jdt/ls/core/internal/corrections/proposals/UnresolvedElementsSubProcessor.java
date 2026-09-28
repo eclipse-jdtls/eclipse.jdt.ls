@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2024 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -24,12 +24,17 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.NodeFinder;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.ImportRewriteContext;
@@ -40,7 +45,6 @@ import org.eclipse.jdt.internal.core.manipulation.BindingLabelProviderCore;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.TypeMismatchBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
@@ -58,6 +62,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.RenameNodeCorrectio
 import org.eclipse.jdt.internal.ui.text.correction.proposals.ReplaceCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -111,13 +116,39 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor#addNewTypeProposalsInteractiveInnerLoop(org.eclipse.jdt.core.ICompilationUnit, org.eclipse.jdt.core.dom.Name, org.eclipse.jdt.core.IJavaElement, int, int, org.eclipse.jdt.core.dom.Name, java.util.Collection)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void addNewTypeProposalsInteractiveInnerLoop(ICompilationUnit cu, Name node, IJavaElement enclosing, int rel, int kind, Name refNode, Collection<ProposalKindWrapper> proposals) throws CoreException {
 		if ((kind & TypeKinds.CLASSES) != 0) {
 			NewCUProposal proposal = new NewCUProposal(cu, node, NewCUProposal.K_CLASS, enclosing, rel + 3);
 			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
 			if (canUseRecord(cu.getJavaProject(), refNode)) {
-				proposal = new NewCUProposal(cu, node, NewCUProposal.K_RECORD, enclosing, rel + 3);
+
+				List<Expression> arguments = null;
+				ASTNode parent = node.getParent();
+				if (parent instanceof SimpleType) {
+					parent = parent.getParent();
+				}
+				if (parent instanceof VariableDeclarationStatement stmt) {
+					for (Object o : stmt.fragments()) {
+						if (o instanceof VariableDeclarationFragment frag) {
+							Expression init = frag.getInitializer();
+							if (init instanceof ClassInstanceCreation creation) {
+								arguments = creation.arguments();
+							}
+						}
+
+					}
+				}
+				if (parent instanceof ClassInstanceCreation creation) {
+					arguments = creation.arguments();
+				}
+
+				if (arguments != null && arguments.isEmpty()) {
+					proposal = new NewCUProposal(cu, node, NewCUProposal.K_RECORD, enclosing, rel + 3);
+				} else {
+					proposal = new NewCUProposal(cu, node, NewCUProposal.K_RECORD, enclosing, rel + 3, arguments);
+				}
                 proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
             }
 		}
