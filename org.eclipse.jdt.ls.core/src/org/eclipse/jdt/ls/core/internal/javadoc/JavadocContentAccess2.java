@@ -19,7 +19,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
@@ -109,6 +111,105 @@ public class JavadocContentAccess2 {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Returns per-parameter javadoc descriptions for a method, extracted from @param tags.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String, String> getParameterJavadoc(IMethod method) throws JavaModelException {
+		Map<String, String> result = new LinkedHashMap<>();
+		String source = getJavaDocNode(method);
+		if (source == null) {
+			return result;
+		}
+		Javadoc javadoc = CoreJavadocContentAccessUtility.getJavadocNode(method, source);
+		if (javadoc == null) {
+			return result;
+		}
+		for (Object tagObj : javadoc.tags()) {
+			if (tagObj instanceof TagElement tag && TagElement.TAG_PARAM.equals(tag.getTagName())) {
+				List<ASTNode> fragments = tag.fragments();
+				if (!fragments.isEmpty() && fragments.get(0) instanceof org.eclipse.jdt.core.dom.Name name) {
+					String paramName = name.toString();
+					StringBuilder description = new StringBuilder();
+					for (int i = 1; i < fragments.size(); i++) {
+						ASTNode fragment = fragments.get(i);
+						if (fragment instanceof TextElement textElement) {
+							if (description.length() > 0) {
+								description.append(' ');
+							}
+							description.append(textElement.getText().strip());
+						} else if (fragment instanceof TagElement inlineTag) {
+							if (description.length() > 0) {
+								description.append(' ');
+							}
+							description.append(renderInlineTag(inlineTag));
+						}
+					}
+					if (description.length() > 0) {
+						result.put(paramName, description.toString());
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static String renderInlineTag(TagElement tag) {
+		StringBuilder sb = new StringBuilder();
+		String tagName = tag.getTagName();
+		boolean isCode = TagElement.TAG_CODE.equals(tagName) || TagElement.TAG_LITERAL.equals(tagName);
+		if (isCode) {
+			sb.append('`');
+		}
+		for (Object fragment : tag.fragments()) {
+			if (fragment instanceof TextElement textElement) {
+				sb.append(textElement.getText().strip());
+			} else if (fragment instanceof org.eclipse.jdt.core.dom.Name name) {
+				sb.append(name.toString());
+			}
+		}
+		if (isCode) {
+			sb.append('`');
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Returns the method-level javadoc description, excluding @param and other block tags.
+	 */
+	@SuppressWarnings("unchecked")
+	public static String getMethodDescription(IMethod method) throws JavaModelException {
+		String source = getJavaDocNode(method);
+		if (source == null) {
+			return null;
+		}
+		Javadoc javadoc = CoreJavadocContentAccessUtility.getJavadocNode(method, source);
+		if (javadoc == null) {
+			return null;
+		}
+		StringBuilder description = new StringBuilder();
+		for (Object tagObj : javadoc.tags()) {
+			if (tagObj instanceof TagElement tag && tag.getTagName() == null) {
+				for (Object fragment : tag.fragments()) {
+					if (fragment instanceof TextElement textElement) {
+						if (description.length() > 0) {
+							description.append(' ');
+						}
+						description.append(textElement.getText().strip());
+					} else if (fragment instanceof TagElement inlineTag) {
+						if (description.length() > 0) {
+							description.append(' ');
+						}
+						description.append(renderInlineTag(inlineTag));
+					}
+				}
+			}
+		}
+		String result = description.toString().strip();
+		return result.isEmpty() ? null : result;
 	}
 
 	private static boolean isPlainMarkdown(IJavaElement element, Javadoc javadoc) {

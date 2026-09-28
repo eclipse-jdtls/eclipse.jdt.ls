@@ -656,7 +656,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					JavaModelManager.getIndexManager().waitForIndex(true, null);
 				}
 			}
-			return computeAsync((monitor) -> {
+			return computeAsyncWithClientProgress((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
 			});
 		}
@@ -1301,7 +1301,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync((cc) -> {
 			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
-			return code.apply(monitor);
+			try {
+				return code.apply(monitor);
+			} finally {
+				monitor.done();
+			}
 		});
 	}
 
