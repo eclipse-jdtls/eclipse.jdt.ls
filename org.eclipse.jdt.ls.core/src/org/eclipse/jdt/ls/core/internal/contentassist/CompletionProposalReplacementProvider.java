@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -222,7 +223,7 @@ public class CompletionProposalReplacementProvider {
 				// in lazy resolve mode, early return when the text edit content starts
 				// with the replaced content. Otherwise, the filter text will mismatch the
 				// replaced content, causing the item disappear at client.
-				if (defaultText.startsWith(toReplace)) {
+				if (proposal.getKind() != CompletionProposal.KEYWORD && proposal.getKind() != CompletionProposal.TYPE_REF && defaultText.startsWith(toReplace)) {
 					return defaultText;
 				}
 			} catch (IndexOutOfBoundsException | JavaModelException e) {
@@ -247,6 +248,15 @@ public class CompletionProposalReplacementProvider {
 				break;
 			case CompletionProposal.LAMBDA_EXPRESSION:
 				appendLambdaExpressionReplacement(completionBuffer, proposal);
+				break;
+			case CompletionProposal.KEYWORD:
+				appendReplacementString(completionBuffer, proposal, false);
+				appendSpaceAfterKeyword(completionBuffer, proposal);
+				break;
+			case CompletionProposal.TYPE_REF:
+				boolean overloadedMethodProposalType = item.getLabelDetails() == null ? false : "(...)".equals(item.getLabelDetails().getDetail());
+				appendReplacementString(completionBuffer, proposal, overloadedMethodProposalType);
+				appendSpaceAfterAnnotationType(completionBuffer, proposal);
 				break;
 			default:
 				boolean overloadedMethodProposal = item.getLabelDetails() == null ? false : "(...)".equals(item.getLabelDetails().getDetail());
@@ -596,6 +606,42 @@ public class CompletionProposalReplacementProvider {
 		if(proposal.getKind() == CompletionProposal.METHOD_DECLARATION){
 			appendBody(buffer);
 		}
+	}
+
+	private static final Set<String> KEYWORDS_NEEDING_TRAILING_SPACE = Set.of("public", "private", "protected", "static", "void", "class", "interface", "extends", "implements", "return", "new", "import");
+
+	private void appendSpaceAfterKeyword(StringBuilder buffer, CompletionProposal proposal) {
+		String keyword = String.valueOf(proposal.getCompletion());
+		if (!KEYWORDS_NEEDING_TRAILING_SPACE.contains(keyword)) {
+			return;
+		}
+		try {
+			int end = proposal.getReplaceEnd();
+			IBuffer docBuffer = compilationUnit.getBuffer();
+			if (end < docBuffer.getLength() && (docBuffer.getChar(end) == ' ' || docBuffer.getChar(end) == '\t')) {
+				return;
+			}
+		} catch (Exception e) {
+			return;
+		}
+		buffer.append(' ');
+	}
+
+	private void appendSpaceAfterAnnotationType(StringBuilder buffer, CompletionProposal proposal) {
+		try {
+			int start = proposal.getReplaceStart();
+			IBuffer docBuffer = compilationUnit.getBuffer();
+			if (start <= 0 || docBuffer.getChar(start - 1) != '@') {
+				return;
+			}
+			int end = proposal.getReplaceEnd();
+			if (end < docBuffer.getLength() && (docBuffer.getChar(end) == ' ' || docBuffer.getChar(end) == '\t')) {
+				return;
+			}
+		} catch (Exception e) {
+			return;
+		}
+		buffer.append(' ');
 	}
 
 	private boolean hasParameters(CompletionProposal proposal) throws IllegalArgumentException {

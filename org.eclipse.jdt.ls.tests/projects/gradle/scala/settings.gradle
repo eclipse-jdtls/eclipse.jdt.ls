@@ -4,4 +4,4 @@ plugins {
 }
 
 rootProject.name = 'scala'
-include('app')
+include('app', 'common')

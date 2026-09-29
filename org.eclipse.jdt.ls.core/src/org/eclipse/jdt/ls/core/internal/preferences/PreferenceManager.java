@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2020 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *     Red Hat Inc. - initial API and implementation
+ *     IBM Corporation. - Markdown templates
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
@@ -112,6 +113,7 @@ public class PreferenceManager {
 		defEclipsePrefs.put(StubUtility.CODEGEN_IS_FOR_GETTERS, Boolean.TRUE.toString());
 		defEclipsePrefs.put(StubUtility.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		defEclipsePrefs.put(StubUtility.CODEGEN_ADD_COMMENTS, Boolean.FALSE.toString());
+		defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.FALSE.toString());
 
 		defEclipsePrefs.put("recommenders.chain.min_chain_length", "2");
 		defEclipsePrefs.put("recommenders.chain.max_chain_length", "3");
@@ -127,7 +129,8 @@ public class PreferenceManager {
 		for (String contextTypeId : List.of(
 				CodeTemplatePreferences.CLASSSNIPPET_CONTEXTTYPE,
 				CodeTemplatePreferences.INTERFACESNIPPET_CONTEXTTYPE,
-				CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE)) {
+				CodeTemplatePreferences.RECORDSNIPPET_CONTEXTTYPE,
+				CodeTemplatePreferences.ENUMSNIPPET_CONTEXTTYPE)) {
 			CodeTemplateContextType contextType = new CodeTemplateContextType(contextTypeId);
 			contextType.addResolver(new CodeTemplateVariableResolver(CodeTemplateContextType.FILE_COMMENT, JavaManipulationMessages.CodeTemplateContextType_variable_description_filecomment));
 			registry.addContextType(contextType);
@@ -145,14 +148,22 @@ public class PreferenceManager {
 
 		// Initialize templates
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_FIELDCOMMENT, CodeGenerationTemplate.FIELDCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_FIELDMARKDOWNCOMMENT, CodeGenerationTemplate.FIELDMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODCOMMENT, CodeGenerationTemplate.METHODCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_METHODMARKDOWNCOMMENT, CodeGenerationTemplate.METHODMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORCOMMENT, CodeGenerationTemplate.CONSTRUCTORCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORMARKDOWNCOMMENT, CodeGenerationTemplate.CONSTRUCTORMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CONSTRUCTORBODY, CodeGenerationTemplate.CONSTRUCTORBODY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_DELEGATECOMMENT, CodeGenerationTemplate.DELEGATECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_MARKDOWN_DELEGATECOMMENT, CodeGenerationTemplate.DELEGATEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_OVERRIDECOMMENT, CodeGenerationTemplate.OVERRIDECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_OVERRIDEMARKDOWNCOMMENT, CodeGenerationTemplate.OVERRIDEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, CodeGenerationTemplate.TYPECOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_TYPEMARKDOWNCOMMENT, CodeGenerationTemplate.TYPEMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERCOMMENT, CodeGenerationTemplate.GETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERMARKDOWNCOMMENT, CodeGenerationTemplate.GETTERMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERCOMMENT, CodeGenerationTemplate.SETTERCOMMENT.createTemplate());
+		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERMARKDOWNCOMMENT, CodeGenerationTemplate.SETTERMARKDOWNCOMMENT.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_GETTERBODY, CodeGenerationTemplate.GETTERBODY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_SETTERBODY, CodeGenerationTemplate.SETTERBOY.createTemplate());
 		templates.put(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, CodeGenerationTemplate.CATCHBODY.createTemplate());
@@ -235,10 +246,29 @@ public class PreferenceManager {
 
 		List<String> typeComment = preferences.getTypeCommentTemplate();
 		content = typeComment == null ? "" : String.join("\n", typeComment);
-		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
+		if (content.isEmpty()) {
+			String initial = CodeGenerationTemplate.TYPECOMMENT.createTemplate().getPattern();
+			templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, initial);
+		} else {
+			templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_TYPECOMMENT, content);
+		}
+
+		List<String> methodBody = preferences.getMethodBodyTemplate();
+		content = methodBody == null ? "" : String.join("\n", methodBody);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_METHODBODY, content);
+
+		List<String> methodBodySuper = preferences.getMethodBodySuperTemplate();
+		content = methodBodySuper == null ? "" : String.join("\n", methodBodySuper);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER, content);
+
+		List<String> catchBody = preferences.getCatchBodyTemplate();
+		content = catchBody == null ? "" : String.join("\n", catchBody);
+		templateChanged |= updateTemplate(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY, content);
+
 		if (templateChanged) {
 			reloadTemplateStore();
 		}
+
 		Hashtable<String, String> options = JavaCore.getOptions();
 		preferences.updateTabSizeInsertSpaces(options);
 		if (!Objects.equals(options, JavaCore.getOptions())) {

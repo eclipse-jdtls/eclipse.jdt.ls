@@ -160,7 +160,7 @@ public class SyntaxServerTest extends AbstractSyntaxProjectsManagerBasedTest {
 		assertEquals(ResourceUtils.fixURI(fileURI), params.getUri());
 		assertNotNull(params.getDiagnostics());
 		assertEquals(1, params.getDiagnostics().size());
-		assertEquals("Syntax error, insert \";\" to complete FieldDeclaration", params.getDiagnostics().get(0).getMessage());
+		assertEquals("Syntax error, insert \";\" to complete FieldDeclaration", params.getDiagnostics().get(0).getMessage().getLeft());
 	}
 
 	@Test

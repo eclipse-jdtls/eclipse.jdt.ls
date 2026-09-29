@@ -64,6 +64,7 @@ import com.google.common.collect.ImmutableSet;
 public class ScalaGradleSupport {
 
 	public static final Path CONTAINER_PATH = new Path("org.eclipse.buildship.core.gradleclasspathcontainer");
+
 	// Gradle Tooling API removes several scala libraries and adds the Scala builder and container that aren't recognized by Java LS.
 	// See https://github.com/gradle/gradle/blob/b3c5d40e82439da4627b38b4ced93121e551b0eb/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/eclipse/EclipsePlugin.java#L375-L377
 	public static final Set<String> SCALA_LIBRARIES = ImmutableSet.of("scala-library", "scala-swing", "scala-dbc");
@@ -137,19 +138,59 @@ public class ScalaGradleSupport {
 		}
 		File projectDir = project.getLocation().toFile();
 		File initScript = null;
-		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try (ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
 			initScript = getInitScript();
 			BuildLauncher launcher = connection.newBuild();
 			launcher.withArguments("--init-script", initScript.getAbsolutePath(), "--no-configuration-cache");
 			launcher.forTasks("javalsCheckProject");
 			launcher.setStandardOutput(outputStream);
 			launcher.run();
-			String output = outputStream.toString();
-			process(project, output, monitor);
 		} catch (Exception e) {
 			if (Boolean.getBoolean("jdt.ls.debug")) {
 				JavaLanguageServerPlugin.logException(e);
 			}
+		} finally {
+			process(project, outputStream.toString(), monitor);
+			addDefaultScalaOutputPaths(project, monitor);
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+			if (initScript != null) {
+				try {
+					Files.delete(initScript.toPath());
+				} catch (IOException e) {
+					JavaLanguageServerPlugin.logException(e);
+				}
+			}
+		}
+	}
+
+	private static void addDefaultScalaOutputPaths(IProject project, IProgressMonitor monitor) {
+		File projectDir = project.getLocation().toFile();
+		List<String> paths = new ArrayList<>();
+		addDefaultScalaOutputPath(projectDir, "main", paths);
+		addDefaultScalaOutputPath(projectDir, "test", paths);
+		if (!paths.isEmpty()) {
+			IJavaProject javaProject = JavaCore.create(project);
+			List<String> toAdd = getMissingRawClasspathPaths(javaProject, paths);
+			if (!toAdd.isEmpty()) {
+				try {
+					configureClasspath(javaProject, toAdd, new HashMap<>(), monitor);
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e);
+				}
+			}
+		}
+	}
+
+	private static void addDefaultScalaOutputPath(File projectDir, String sourceSet, List<String> paths) {
+		File sourceDir = new File(projectDir, "src/" + sourceSet + "/scala");
+		File outputDir = new File(projectDir, "build/classes/scala/" + sourceSet);
+		if (sourceDir.isDirectory() || outputDir.exists()) {
+			paths.add(outputDir.getAbsolutePath());
 		}
 	}
 
@@ -161,13 +202,10 @@ public class ScalaGradleSupport {
 	 * The process method checks if a library has been added and if not, adds it.
 	 * Gradle Tooling API excludes some scala libraries because it expects Scala IDE to add them.
 	 * Since Scala IDE for VS Code doesn't exist, we add those libraries.
-	 * The method also checks resources folders and excludes them from the compilation.
 	 */
 	private static void process(IProject project, String output, IProgressMonitor monitor) {
 		List<String> taskClasspaths = new LinkedList<>();
 		Map<String, String> taskClasspathSources = new HashMap<>();
-		List<String> sources = new LinkedList<>();
-		List<String> resources = new LinkedList<>();
 		boolean start = false;
 		try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
 			String line;
@@ -189,14 +227,6 @@ public class ScalaGradleSupport {
 									} else {
 										taskClasspathSources.put(elements[1], "NO_SOURCE");
 									}
-									break;
-								}
-								case "SRC": {
-									sources.add(elements[2]);
-									break;
-								}
-								case "RES": {
-									resources.add(elements[2]);
 									break;
 								}
 								default:
@@ -224,7 +254,7 @@ public class ScalaGradleSupport {
 			List<String> toAdd = getMissingPaths(javaProject, paths);
 			if (!toAdd.isEmpty()) {
 				try {
-					configureClasspath(javaProject, toAdd, taskClasspathSources, resources, monitor);
+					configureClasspath(javaProject, toAdd, taskClasspathSources, monitor);
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.logException(e);
 				}
@@ -232,7 +262,7 @@ public class ScalaGradleSupport {
 		}
 	}
 
-	private static void configureClasspath(IJavaProject javaProject, List<String> toAdd, Map<String, String> taskClasspathSources, List<String> resources, IProgressMonitor monitor) throws JavaModelException {
+	private static void configureClasspath(IJavaProject javaProject, List<String> toAdd, Map<String, String> taskClasspathSources, IProgressMonitor monitor) throws JavaModelException {
 		IClasspathEntry[] classpath = javaProject.getRawClasspath();
 		List<IClasspathEntry> entries = new LinkedList<>();
 		for (String path : toAdd) {
@@ -258,7 +288,7 @@ public class ScalaGradleSupport {
 		javaProject.setRawClasspath(newClasspath, monitor);
 	}
 
-	private static List<String> getMissingPaths(IJavaProject javaProject, List<String> paths) {
+	private static List<String> getMissingRawClasspathPaths(IJavaProject javaProject, List<String> paths) {
 		List<String> toAdd = new ArrayList<>();
 		// @formatter:off
 		List<String> scalaLibs = paths
@@ -268,13 +298,12 @@ public class ScalaGradleSupport {
 		// @formatter:on
 		for (String path : scalaLibs) {
 			try {
-				IClasspathContainer container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
-				if (container != null) {
-					IClasspathEntry[] entries = container.getClasspathEntries();
-					Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), new Path(path))).findFirst();
-					if (!optional.isPresent()) {
-						toAdd.add(path);
-					}
+				Path classpathPath = new Path(path);
+				boolean exists = Arrays.stream(javaProject.getRawClasspath())
+						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
+						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
+				if (!exists) {
+					toAdd.add(path);
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e);

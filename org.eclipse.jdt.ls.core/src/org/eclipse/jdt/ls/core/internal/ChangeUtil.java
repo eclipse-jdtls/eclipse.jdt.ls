@@ -58,6 +58,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -302,7 +303,9 @@ public class ChangeUtil {
 					}
 
 					VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(fileUri, null);
-					TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, Arrays.asList(te));
+					TextDocumentEdit documentEdit = new TextDocumentEdit();
+					documentEdit.setTextDocument(identifier);
+					documentEdit.setEdits(Arrays.asList(Either.forLeft(te)));
 					changes.add(Either.forLeft(documentEdit));
 				} else {
 					Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = rootEdit.getChanges();
@@ -337,7 +340,9 @@ public class ChangeUtil {
 			}
 
 			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, null);
-			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, textEdits);
+			TextDocumentEdit documentEdit = new TextDocumentEdit();
+			documentEdit.setTextDocument(identifier);
+			documentEdit.setEdits(textEdits.stream().map(Either::<org.eclipse.lsp4j.TextEdit, SnippetTextEdit>forLeft).toList());
 			changes.add(Either.forLeft(documentEdit));
 		} else {
 			Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();

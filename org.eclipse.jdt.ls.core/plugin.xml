@@ -148,6 +148,9 @@
              <command
                   id="java.project.resolveText">
             </command>
+            <command
+				  id="java.getFullyQualifiedName">
+			</command>
       </delegateCommandHandler>
    </extension>
    <extension

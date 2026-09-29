@@ -183,10 +183,27 @@ public class BasicFileDetectorTest {
 		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile")
 				.includeNested(false).maxDepth(2);
 		Collection<Path> dirs = detector.scan(null);
+		// maxDepth(2) finds build files up to 2 levels deep (inclusive). Directories
+		// located exactly at maxDepth are reported through visitFile, not preVisitDirectory.
+		assertEquals(3, dirs.size(), "Found " + dirs);
+		List<String> missingDirs = separatorsToSystem(list("projects/buildfiles/parent/1_1",
+				"projects/buildfiles/parent/1_0/0_2_0", "projects/buildfiles/parent/1_0/0_2_1"));
+		dirs.stream().map(Path::toString).forEach(missingDirs::remove);
+		assertEquals(0, missingDirs.size(), "Directories were not detected" + missingDirs);
+	}
+
+	@Test
+	public void testScanBuildFileAtMaxDepthBoundary() throws Exception {
+		// Regression test for https://github.com/redhat-developer/vscode-java/issues/4364:
+		// a build file located exactly at maxDepth levels deep must be detected.
+		BasicFileDetector detector = new BasicFileDetector(Paths.get("projects/buildfiles/parent"), "buildfile")
+				.includeNested(false).maxDepth(1);
+		Collection<Path> dirs = detector.scan(null);
 		assertEquals(1, dirs.size(), "Found " + dirs);
 		assertEquals(FilenameUtils.separatorsToSystem("projects/buildfiles/parent/1_1"),
 				dirs.iterator().next().toString());
 	}
+
 
     @Test
 	public void testScanSymbolicLinks() throws Exception {
