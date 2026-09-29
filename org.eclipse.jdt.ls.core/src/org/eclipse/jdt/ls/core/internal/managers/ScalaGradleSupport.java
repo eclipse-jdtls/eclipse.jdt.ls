@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -302,6 +303,37 @@ public class ScalaGradleSupport {
 				boolean exists = Arrays.stream(javaProject.getRawClasspath())
 						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
 						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
+				if (!exists) {
+					toAdd.add(path);
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return toAdd;
+	}
+
+	private static List<String> getMissingPaths(IJavaProject javaProject, List<String> paths) {
+		List<String> toAdd = new ArrayList<>();
+		IClasspathContainer container;
+		try {
+			container = JavaCore.getClasspathContainer(CONTAINER_PATH, javaProject);
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e);
+			return toAdd;
+		}
+		if (container == null) {
+			return toAdd;
+		}
+		for (String path : paths) {
+			try {
+				Path classpathPath = new Path(path);
+				boolean exists = Arrays.stream(javaProject.getRawClasspath())
+						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
+						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
+				IClasspathEntry[] entries = container.getClasspathEntries();
+				Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
+				exists |= optional.isPresent();
 				if (!exists) {
 					toAdd.add(path);
 				}
