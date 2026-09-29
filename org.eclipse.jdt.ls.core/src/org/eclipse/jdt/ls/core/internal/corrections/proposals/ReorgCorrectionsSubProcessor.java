@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2024 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
@@ -35,6 +36,9 @@ import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.ReorgCorrectionsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.UnresolvedElementsBaseSubProcessor;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.CorrectMainTypeNameProposalCore;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstall2;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
@@ -62,6 +66,72 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocation problem,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new ReorgCorrectionsSubProcessor().addRemoveImportStatementProposals(context, problem, proposals);
+	}
+
+	/**
+	 * Adds a proposal to increase the compiler compliance level
+	 *
+	 * @param context
+	 *            the context
+	 * @param problem
+	 *            the current problem
+	 * @param proposals
+	 *            the resulting proposals
+	 * @param requiredVersion
+	 *            the minimal required Java compiler version
+	 */
+	public static void getNeedHigherComplianceProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals, String requiredVersion) {
+		getNeedHigherComplianceProposals(context, problem, proposals, false, requiredVersion);
+	}
+
+	public static void getNeedHigherComplianceProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		String[] args = problem.getProblemArguments();
+		if (args != null && args.length == 2) {
+			String supportedVersion = JavaCore.latestSupportedJavaVersion();
+			String requiredVersion = args[1];
+			boolean enablePreviews = requiredVersion.equals(supportedVersion);
+			getNeedHigherComplianceProposals(context, problem, proposals, enablePreviews, requiredVersion);
+		}
+	}
+
+	/**
+	 * Adds a proposal to increase the compiler compliance level as well as set
+	 * --enable-previews option.
+	 *
+	 * @param context
+	 *            the context
+	 * @param problem
+	 *            the current problem
+	 * @param proposals
+	 *            the resulting proposals
+	 * @param enablePreviews
+	 *            --enable-previews option will be enabled if set to true
+	 * @param requiredVersion
+	 *            the minimal required Java compiler version
+	 */
+	static void getNeedHigherComplianceProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals, boolean enablePreviews, String requiredVersion) {
+		// unique logic for jdt.ls so we don't call base sub-processor here
+		IVMInstall install = JavaRuntime.getDefaultVMInstall();
+		String jreVersion = "21"; //$NON-NLS-1$ // assume default minimum
+		if (install instanceof IVMInstall2 install2) {
+			jreVersion = install2.getJavaVersion();
+			if (jreVersion == null) {
+				jreVersion = "21"; //$NON-NLS-1$ // assume default minimum
+			}
+			if (jreVersion.contains(".")) {
+				jreVersion = jreVersion.substring(0, jreVersion.indexOf(".")); //$NON-NLS-1$
+			}
+		}
+		if (Float.parseFloat(requiredVersion) <= Float.parseFloat(jreVersion)) {
+			IJavaProject project = context.getCompilationUnit().getJavaProject();
+			String label1 = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_change_project_compliance_description, requiredVersion);
+			if (enablePreviews) {
+				label1 = Messages.format(CorrectionMessages.ReorgCorrectionsSubProcessor_combine_two_quickfixes, new String[] { label1, CorrectionMessages.ReorgCorrectionsSubProcessor_enable_preview_features });
+				proposals.add(new ReorgCorrectionsSubProcessor().createChangeToRequiredCompilerComplianceProposal(label1, project, false, requiredVersion, enablePreviews, IProposalRelevance.CHANGE_PROJECT_COMPLIANCE));
+			} else {
+				proposals.add(new ReorgCorrectionsSubProcessor().createChangeToRequiredCompilerComplianceProposal(label1, project, false, requiredVersion, false, IProposalRelevance.CHANGE_PROJECT_COMPLIANCE));
+			}
+		}
 	}
 
 	/* (non-Javadoc)
@@ -171,8 +241,8 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	 */
 	@Override
 	protected ProposalKindWrapper createChangeToRequiredCompilerComplianceProposal(String label1, IJavaProject project, boolean changeOnWorkspace, String requiredVersion, int relevance) {
-		// Not yet implemented in jdt.ls,  jdt.ui impl is UI-based
-		return null;
+		ChangeToRequiredCompilerCompliance proposal = new ChangeToRequiredCompilerCompliance(label1, project, requiredVersion, relevance);
+		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
 	/* (non-Javadoc)
@@ -180,8 +250,8 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 	 */
 	@Override
 	protected ProposalKindWrapper createChangeToRequiredCompilerComplianceProposal(String label2, IJavaProject project, boolean changeOnWorkspace, String requiredVersion, boolean enablePreviews, int relevance) {
-		// Not yet implemented in jdt.ls,  jdt.ui impl is UI-based
-		return null;
+		ChangeToRequiredCompilerCompliance proposal = new ChangeToRequiredCompilerCompliance(label2, project, requiredVersion, enablePreviews, relevance);
+		return CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix);
 	}
 
 	/* (non-Javadoc)

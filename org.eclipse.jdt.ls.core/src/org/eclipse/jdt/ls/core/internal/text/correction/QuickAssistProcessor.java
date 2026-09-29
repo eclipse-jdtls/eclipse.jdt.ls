@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -132,6 +132,7 @@ import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.PatternInstanceofToSwitchCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
@@ -142,6 +143,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrecti
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ConvertRecordSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -221,6 +223,7 @@ public class QuickAssistProcessor {
 			getConvertLambdaExpressionAndMethodRefCleanUpProposal(context, coveringNode, resultingCollections);
 			getConvertMethodReferenceToLambdaProposal(context, coveringNode, resultingCollections);
 			getConvertLambdaToMethodReferenceProposal(context, coveringNode, resultingCollections);
+			getConvertToRecordProposals(context, coveringNode, resultingCollections);
 			getAddInferredLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
 			getAddVarLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
 			getRemoveVarOrInferredLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
@@ -256,6 +259,13 @@ public class QuickAssistProcessor {
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private static boolean getConvertToRecordProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+		if (!JavaModelUtil.is16OrHigher(context.getCompilationUnit().getJavaProject())) {
+			return false;
+		}
+		return ConvertRecordSubProcessor.getConvertToRecordProposals(context, node, resultingCollections);
 	}
 
 	private static boolean getExtractMethodFromLambdaProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
@@ -339,9 +349,10 @@ public class QuickAssistProcessor {
 
 		ITypeBinding parentType = Bindings.getBindingOfParentType(node);
 		if (parentType != null) {
-			if (parentType.isInterface()) {
+			if (parentType.isInterface() || parentType.isRecord()) {
 				return false;
 			}
+
 			// assign to existing fields
 			CompilationUnit root = context.getASTRoot();
 			IVariableBinding[] declaredFields = parentType.getDeclaredFields();
@@ -489,7 +500,6 @@ public class QuickAssistProcessor {
 		LambdaExpression lambda = ast.newLambdaExpression();
 
 		String[] lambdaParamNames = getUniqueParameterNames(methodReference, functionalMethod);
-		@SuppressWarnings("unchecked")
 		List<VariableDeclaration> lambdaParameters = lambda.parameters();
 		for (int i = 0; i < lambdaParamNames.length; i++) {
 			String paramName = lambdaParamNames[i];
@@ -1490,11 +1500,13 @@ public class QuickAssistProcessor {
 			ifStmt= (IfStatement) ifStmt.getParent();
 		}
 		IProposableFix fix= PatternInstanceofToSwitchFixCore.createPatternInstanceofToSwitchFix(ifStmt);
-		if (fix == null)
+		if (fix == null) {
 			return false;
+		}
 
-		if (resultingCollections == null)
+		if (resultingCollections == null) {
 			return true;
+		}
 
 		// add correction proposal
 		Map<String, String> options= new Hashtable<>();

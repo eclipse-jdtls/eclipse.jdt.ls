@@ -43,17 +43,20 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -172,6 +175,29 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		pom.setLastModified(System.currentTimeMillis() + 1000);
 		importExistingMavenProject(name);
 		assertEquals(1, jobSpy.updateProjectJobCalled, "Changed Project should be updated");
+	}
+
+	@Test
+	public void testDigestStoreBatchUpdate() throws Exception {
+		Path stateLocation = Files.createTempDirectory("digest-store-test");
+		try {
+			Path first = stateLocation.resolve("first-pom.xml");
+			Path second = stateLocation.resolve("second-pom.xml");
+			Files.write(first, List.of("first"));
+			Files.write(second, List.of("second"));
+
+			DigestStore digestStore = new DigestStore(stateLocation.toFile());
+			assertTrue(digestStore.updateDigests(List.of(first, second)));
+			assertFalse(digestStore.updateDigests(List.of(first, second)));
+
+			DigestStore persistedDigestStore = new DigestStore(stateLocation.toFile());
+			assertFalse(persistedDigestStore.updateDigests(List.of(first, second)));
+
+			Files.write(first, List.of("changed"));
+			assertTrue(persistedDigestStore.updateDigests(List.of(first, second)));
+		} finally {
+			FileUtils.deleteDirectory(stateLocation.toFile());
+		}
 	}
 
 	@Test
@@ -403,6 +429,28 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava26Project() throws Exception {
+		IProject project = importMavenProject("salut-java26");
+		assertIsJavaProject(project);
+		assertEquals("26", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava27Project() throws Exception {
+		IProject project = importMavenProject("salut-java27");
+		assertIsJavaProject(project);
+		assertEquals("27", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 
@@ -488,6 +536,22 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));
 	}
 
+	@Test
+	public void testDuplicateGroupIdArtifactId() throws Exception {
+		JavaClientConnection javaClient = new JavaClientConnection(client);
+		JDTLanguageServer server = Mockito.mock(JDTLanguageServer.class);
+		Mockito.when(server.getClientConnection()).thenReturn(javaClient);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		try {
+			importProjects("maven/multimodule-same-gav");
+			IProject[] projects = ProjectUtils.getAllProjects(false);
+			assertEquals(1, projects.length);
+			assertTrue(clientRequests.containsKey("showMessage"));
+		} finally {
+			JavaLanguageServerPlugin.getInstance().setProtocol(null);
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/3639
 	@Test
 	public void testInvalidProject() throws Exception {
@@ -502,7 +566,11 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertEquals(1, javaProjects.length);
 		StandardProjectsManager.cleanInvalidJavaProjects(new NullProgressMonitor());
 		javaProjects = ProjectUtils.getJavaProjects();
-		assertEquals(0, javaProjects.length);
+		// Since m2e 2.11.1 (eclipse-m2e/m2e-core#2160), the unsafe ancestor resource
+		// folder declared in module1 (<directory>../</directory>) is skipped instead of
+		// failing the import, so module1 is now imported as a valid Java project and is
+		// retained after cleaning up invalid projects.
+		assertEquals(1, javaProjects.length);
 	}
 
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {

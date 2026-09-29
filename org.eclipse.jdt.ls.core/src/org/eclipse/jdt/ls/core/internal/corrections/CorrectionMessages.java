@@ -68,6 +68,7 @@ public final class CorrectionMessages extends NLS {
 	public static String QuickAssistProcessor_inline_local_description;
 	public static String QuickAssistProcessor_name_extension_from_class;
 	public static String QuickAssistProcessor_name_extension_from_interface;
+	public static String QuickAssistProcessor_add_import;
 	public static String QuickAssistProcessor_convert_to_static_import;
 	public static String QuickAssistProcessor_convert_to_static_import_replace_all;
 	public static String RefactorProcessor_extract_interface;
@@ -433,6 +434,7 @@ public final class CorrectionMessages extends NLS {
 	public static String LocalCorrectionsSubProcessor_override_hashCode_description;
 	public static String LocalCorrectionsSubProcessor_override_default_method_description;
 	public static String LocalCorrectionsSubProcessor_override_method_description;
+	public static String LocalCorrectionsSubProcessor_regenerate_hashCode_equals_description;
 	public static String LocalCorrectionsSubProcessor_replace_with_unqualified_enum_constant;
 	public static String LocalCorrectionsSubProcessor_throw_allocated_description;
 	public static String SuppressWarningsSubProcessor_fix_suppress_token_label;
@@ -443,4 +445,8 @@ public final class CorrectionMessages extends NLS {
 	public static String NullAnnotationsCorrectionProcessor_change_local_variable_to_nonNull;
 	public static String QuickAssistProcessor_convert_to_try_with_resource;
 	public static String CodeActionHandler_ignore_compiler_problems;
+	public static Object ReorgCorrectionsSubProcessor_enable_preview_features_info;
+	public static String ReorgCorrectionsSubProcessor_enable_preview_features;
+	public static String ReorgCorrectionsSubProcessor_combine_two_quickfixes;
+	public static String UnexpectedError;
 }

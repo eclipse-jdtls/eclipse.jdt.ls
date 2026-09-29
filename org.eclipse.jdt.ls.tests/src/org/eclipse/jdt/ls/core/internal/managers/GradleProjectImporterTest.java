@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -68,7 +69,11 @@ import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
+import org.gradle.tooling.BuildLauncher;
+import org.gradle.tooling.GradleConnector;
+import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -339,7 +344,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			projectFile = new File(rootFile, "fakeProject");
 			projectFile.mkdir();
 			projectFile.deleteOnExit();
-			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(file.toPath());
+			BuildConfiguration build = GradleProjectImporter.getBuildConfiguration(projectFile.toPath());
 			assertFalse(build.getGradleUserHome().isPresent());
 		} finally {
 			if (file != null) {
@@ -664,7 +669,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(6, classpathEntries.length);
+				assertEquals(5, classpathEntries.length);
 				// main sourceSet are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
 					return "/app/src/main/java".equals(cpe.getPath().toString());
@@ -676,10 +681,6 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				// androidTest sourceSet are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
 					return "/app/src/androidTest/java".equals(cpe.getPath().toString());
-				}));
-				// buildConfig files are added to classpath correctly
-				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-					return "/app/build/generated/source/buildConfig/standard/debug".equals(cpe.getPath().toString());
 				}));
 				// dataBinding files are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
@@ -706,18 +707,29 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(6, classpathEntries.length);
+				assertEquals(5, classpathEntries.length);
 			}
 			this.preferences.setAndroidSupportEnabled(false);
 			for (IProject project : projects) {
 				projectsManager.updateProject(project, true);
+				waitForBackgroundJobs();
 			}
-			waitForBackgroundJobs();
 			// regardless of ANDROID_HOME, the number of cpe is 2 since android support is disabled
 			assertEquals(2, javaProject.getRawClasspath().length);
 		} finally {
 			this.preferences.setAndroidSupportEnabled(false);
 		}
+	}
+
+	@Test
+	public void testAndroidProjectSupportDisabled() throws Exception {
+		List<IProject> projects = importProjects("gradle/android");
+		assertEquals(2, projects.size());
+		IProject androidAppProject = WorkspaceHelper.getProject("app");
+		assertNotNull(androidAppProject);
+		IJavaProject javaProject = JavaCore.create(androidAppProject);
+		IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
+		assertEquals(2, classpathEntries.length);
 	}
 
 	@Test
@@ -848,6 +860,65 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertNoErrors(project);
 		} finally {
 			this.preferences.setGroovySupportEnabled(oldGroovySupported);
+		}
+	}
+
+	@Test
+	public void testScalaSupportEnabled() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(true);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+			IClasspathEntry[] classpathEntries = JavaCore.create(project).getRawClasspath();
+			boolean hasBuildLibEntry = Arrays.stream(classpathEntries).anyMatch(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY && cpe.getPath().toString().replace('\\', '/').contains("/build/libs/"));
+			boolean hasUnexcludedResources = Arrays.stream(classpathEntries).anyMatch(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_SOURCE && cpe.getPath().toString().endsWith("src/main/resources")
+					&& Arrays.stream(cpe.getExclusionPatterns()).noneMatch(pattern -> "**".equals(pattern.toString())));
+			assertFalse(hasBuildLibEntry);
+			assertTrue(hasUnexcludedResources);
+		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
+	@Test
+	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
+		// Gradle 8.5 can fail to compile the init script with JDK 25 (ASM/Groovy classfile support).
+		Assumptions.assumeTrue(Runtime.version().feature() < 25, "Skip on JDK 25+");
+		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala");
+		File initScript = null;
+		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
+			initScript = GradleUtils.getGradleInitScript("/gradle/scala/javals.gradle");
+			BuildLauncher launcher = connection.newBuild();
+			launcher.withArguments("--init-script", initScript.getAbsolutePath(), "--no-configuration-cache", "--quiet");
+			launcher.forTasks(":common:javalsCheckProject");
+			launcher.setStandardOutput(outputStream);
+			launcher.run();
+			String output = outputStream.toString();
+			assertFalse(output.contains("JAVALS_START"));
+			assertFalse(output.contains("LIB|"));
+		} finally {
+			if (initScript != null) {
+				Files.deleteIfExists(initScript.toPath());
+			}
+		}
+	}
+
+	@Test
+	public void testScalaSupportDisabled() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(false);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertHasErrors(project);
+		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
 		}
 	}
 

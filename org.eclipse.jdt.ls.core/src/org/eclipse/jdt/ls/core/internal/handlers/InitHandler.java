@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2021 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,8 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
@@ -59,6 +62,7 @@ import org.eclipse.lsp4j.SaveOptions;
 import org.eclipse.lsp4j.SemanticTokensServerFull;
 import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions;
 import org.eclipse.lsp4j.ServerCapabilities;
+import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions;
 import org.eclipse.lsp4j.TextDocumentSyncKind;
 import org.eclipse.lsp4j.TextDocumentSyncOptions;
 import org.eclipse.lsp4j.WorkspaceFoldersOptions;
@@ -201,6 +205,11 @@ final public class InitHandler extends BaseInitHandler {
 		capabilities.setTextDocumentSync(textDocumentSyncOptions);
 
 		WorkspaceServerCapabilities wsCapabilities = new WorkspaceServerCapabilities();
+		if (!preferenceManager.getClientPreferences().isTextDocumentContentDynamicRegistrationSupported()) {
+		TextDocumentContentRegistrationOptions textDocumentContentOptions = new TextDocumentContentRegistrationOptions();
+		textDocumentContentOptions.setSchemes(Collections.singletonList("jdt"));
+		wsCapabilities.setTextDocumentContent(textDocumentContentOptions);
+		}
 		WorkspaceFoldersOptions wsFoldersOptions = new WorkspaceFoldersOptions();
 		wsFoldersOptions.setSupported(Boolean.TRUE);
 		wsFoldersOptions.setChangeNotifications(Boolean.TRUE);
@@ -254,6 +263,9 @@ final public class InitHandler extends BaseInitHandler {
 				if (preferences.isImportGradleEnabled()) {
 					WrapperValidator.putSha256(preferences.getGradleWrapperList());
 				}
+				if (!preferences.getClasspathVariables().isEmpty()) {
+					initializeClasspathVariables(preferences);
+				}
 				Runnable resetBuildState = () -> {
 				};
 				try {
@@ -300,4 +312,13 @@ final public class InitHandler extends BaseInitHandler {
 		job.schedule();
 	}
 
+	private void initializeClasspathVariables(Preferences prefs) {
+		for (Map.Entry<String, IPath> entry : prefs.getClasspathVariables().entrySet()) {
+			try {
+				JavaCore.setClasspathVariable(entry.getKey(), entry.getValue(), new NullProgressMonitor());
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+	}
 }

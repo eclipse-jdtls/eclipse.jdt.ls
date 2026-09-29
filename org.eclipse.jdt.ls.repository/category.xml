@@ -35,7 +35,6 @@
    <bundle id="org.eclipse.equinox.security.macosx" version="0.0.0" os="macosx"/>
    <bundle id="org.eclipse.equinox.security.win32" version="0.0.0" os="win32"/>
    <bundle id="org.eclipse.osgi.compatibility.state" version="0.0.0"/>
-   <bundle id="org.eclipse.osgi.services" version="0.0.0"/>
 
    <category-def name="jdt.ls" label="JDT Language Server"/>
    <category-def name="jdt.ls.sdk" label="JDT Language Server (Developer Resources)"/>

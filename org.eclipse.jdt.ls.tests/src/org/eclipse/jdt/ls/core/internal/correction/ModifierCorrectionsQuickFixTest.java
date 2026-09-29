@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -21,6 +21,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -1384,6 +1385,716 @@ public class ModifierCorrectionsQuickFixTest extends AbstractQuickFixTest {
 
 		Expected e1 = new Expected("Create 'foo()' in super type 'Base'", buf.toString());
 		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public final <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public final <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @Deprecated
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    @Deprecated
+				    public static <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				public class E {
+				    public <T> E(T ... a) {
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				public class E {
+				    @SafeVarargs
+				    public <T> E(T ... a) {
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargs5() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public <T> List<T> asList(T ... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		assertCodeActionNotExists(cu, CorrectionMessages.VarargsWarningsSubProcessor_add_safevarargs_label);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SuppressWarnings("deprecation")
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @Deprecated
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SuppressWarnings("deprecation")
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    @Deprecated
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				public class E {
+				    void foo() {
+				        Y.asList(Y.asList("Hello", " World"));
+				    }
+				}
+				""";
+		pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package p;
+				import java.util.List;
+				class Y {
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu2 = pack1.createCompilationUnit("Y.java", str1, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu2, e1);
+	}
+
+	@Test
+	public void testAddSafeVarargsToDeclaration4() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        new Y(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				    public <T> Y(T ... a) {
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    void foo() {
+				        new Y(Y.asList("Hello", " World"));
+				    }
+				}
+				class Y {
+				    @SafeVarargs
+				    public static <T> List<T> asList(T... a) {
+				        return null;
+				    }
+				    @SafeVarargs
+				    public <T> Y(T ... a) {
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Add @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs1() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public static <T> List<T> asList() {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public static <T> List<T> asList() {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs2() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testRemoveSafeVarargs3() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);
+		String str = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @SafeVarargs
+				    @Deprecated
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String expected = """
+				package p;
+				import java.util.List;
+				public class E {
+				    @Deprecated
+				    public <T> List<T> asList2(T... a) {
+				        return null;
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Remove @SafeVarargs", expected);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testMethodOverrideDeprecated1() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION_WHEN_OVERRIDING_DEPRECATED_METHOD, JavaCore.ENABLED);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION, JavaCore.WARNING);
+		fJProject.setOptions(options9);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
+		String str = """
+				package pack;
+				public class E {
+				    @Deprecated(since="3")
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    public void foo() {
+				    }
+				}
+
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+		expected[0] = """
+				package pack;
+				public class E {
+				    @Deprecated(since="3")
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     * @deprecated
+				     */
+				    @Deprecated
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		expected[1] = """
+				package pack;
+				public class E {
+				    @Deprecated(since="3")
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    @SuppressWarnings("deprecation")
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		Expected e0 = new Expected("Mark method as deprecated", expected[0]);
+		Expected e1 = new Expected("Add @SuppressWarnings 'deprecation' to 'foo()'", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	// Bug 530600 - [9][quick fix] should handle new variants of IProblem.OverridingDeprecatedMethod
+	// - forRemoval
+	@Test
+	public void testMethodOverrideDeprecated2() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION_WHEN_OVERRIDING_DEPRECATED_METHOD, JavaCore.ENABLED);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION, JavaCore.WARNING);
+		fJProject.setOptions(options9);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
+		String str = """
+				package pack;
+				public class E {
+				    @Deprecated(forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    public void foo() {
+				    }
+				}
+
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+		expected[0] = """
+				package pack;
+				public class E {
+				    @Deprecated(forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     * @deprecated
+				     */
+				    @Deprecated
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		expected[1] = """
+				package pack;
+				public class E {
+				    @Deprecated(forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    @SuppressWarnings("removal")
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		Expected e0 = new Expected("Mark method as deprecated", expected[0]);
+		Expected e1 = new Expected("Add @SuppressWarnings 'removal' to 'foo()'", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	// Bug 530600 - [9][quick fix] should handle new variants of IProblem.OverridingDeprecatedMethod
+	// - since and forRemoval
+	@Test
+	public void testMethodOverrideDeprecated3() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION_WHEN_OVERRIDING_DEPRECATED_METHOD, JavaCore.ENABLED);
+		options9.put(JavaCore.COMPILER_PB_DEPRECATION, JavaCore.WARNING);
+		fJProject.setOptions(options9);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("pack", false, null);
+		String str = """
+				package pack;
+				public class E {
+				    @Deprecated(since="4.2",forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    public void foo() {
+				    }
+				}
+
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+		expected[0] = """
+				package pack;
+				public class E {
+				    @Deprecated(since="4.2",forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     * @deprecated
+				     */
+				    @Deprecated
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		expected[1] = """
+				package pack;
+				public class E {
+				    @Deprecated(since="4.2",forRemoval=true)
+				    public void foo() {
+				    }
+				}   \s
+
+				class F extends E {
+				    /**
+				     */
+				    @SuppressWarnings("removal")
+					public void foo() {
+				    }
+				}
+
+				""";
+
+		Expected e0 = new Expected("Mark method as deprecated", expected[0]);
+		Expected e1 = new Expected("Add @SuppressWarnings 'removal' to 'foo()'", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testMissingMethodDeprecationAnnotation() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_MISSING_OVERRIDE_ANNOTATION, JavaCore.ERROR);
+		options9.put(JavaCore.COMPILER_PB_MISSING_DEPRECATED_ANNOTATION, JavaCore.ERROR);
+		fJProject.setOptions(options9);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String str = """
+				package test1;
+				public final class C {
+				    /**
+				     * @deprecated
+				     */
+				    @Override
+				    public String toString() {
+				        return null;
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("C.java", str, false, null);
+
+		String expected1 = """
+				package test1;
+				public final class C {
+				    /**
+				     * @deprecated
+				     */
+				    @Deprecated
+					@Override
+				    public String toString() {
+				        return null;
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Add missing @Deprecated annotation", expected1);
+		assertCodeActionExists(cu, e1);
+	}
+
+
+	@Test
+	public void testMissingFieldDeprecationAnnotation() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_MISSING_OVERRIDE_ANNOTATION, JavaCore.ERROR);
+		options9.put(JavaCore.COMPILER_PB_MISSING_DEPRECATED_ANNOTATION, JavaCore.ERROR);
+		fJProject.setOptions(options9);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String str = """
+				package test1;
+				public final class C {
+				    /**
+				     * @deprecated
+				     */
+				    public String name;
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("C.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public final class C {
+				    /**
+				     * @deprecated
+				     */
+				    @Deprecated
+					public String name;
+				}
+				""";
+		Expected e1 = new Expected("Add missing @Deprecated annotation", str1);
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testMissingOverrideAnnotation() throws Exception {
+		Map<String, String> options9 = new HashMap<>();
+		JavaModelUtil.setComplianceOptions(options9, JavaCore.VERSION_9);
+		options9.put(JavaCore.COMPILER_PB_MISSING_OVERRIDE_ANNOTATION, JavaCore.ERROR);
+		options9.put(JavaCore.COMPILER_PB_MISSING_DEPRECATED_ANNOTATION, JavaCore.ERROR);
+		fJProject.setOptions(options9);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String str = """
+				package test1;
+				public final class C {
+				    public String toString() {
+				        return null;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("C.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public final class C {
+				    @Override
+					public String toString() {
+				        return null;
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Add missing @Override annotation", str1);
+		assertCodeActionExists(cu, e1);
 	}
 
 }

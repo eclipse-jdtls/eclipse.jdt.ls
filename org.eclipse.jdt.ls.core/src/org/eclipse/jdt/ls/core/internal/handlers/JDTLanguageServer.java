@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2022 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -37,12 +38,16 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.internal.core.JavaModelManager;
+import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.BaseJDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.IDelegateCommandHandler;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JSONUtility;
@@ -148,6 +153,9 @@ import org.eclipse.lsp4j.SetTraceParams;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
+import org.eclipse.lsp4j.TextDocumentContentParams;
+import org.eclipse.lsp4j.TextDocumentContentRegistrationOptions;
+import org.eclipse.lsp4j.TextDocumentContentResult;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.TypeDefinitionParams;
@@ -368,6 +376,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		if (preferenceManager.getClientPreferences().isWorkspaceSymbolDynamicRegistered()) {
 			registerCapability(Preferences.WORKSPACE_SYMBOL_ID, Preferences.WORKSPACE_SYMBOL);
 		}
+		if (preferenceManager.getClientPreferences().isTextDocumentContentDynamicRegistrationSupported()) {
+			TextDocumentContentRegistrationOptions options = new TextDocumentContentRegistrationOptions();
+			options.setSchemes(Collections.singletonList("jdt"));
+			registerCapability(Preferences.TEXT_DOCUMENT_CONTENT_ID, Preferences.TEXT_DOCUMENT_CONTENT, options);
+		}
 		if (!preferenceManager.getClientPreferences().isClientDocumentSymbolProviderRegistered() && preferenceManager.getClientPreferences().isDocumentSymbolDynamicRegistered()) {
 			registerCapability(Preferences.DOCUMENT_SYMBOL_ID, Preferences.DOCUMENT_SYMBOL);
 		}
@@ -394,6 +407,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		}
 		if (preferenceManager.getClientPreferences().isInlayHintDynamicRegistered()) {
 			registerCapability(Preferences.INLAY_HINT_ID, Preferences.INLAY_HINT);
+		}
+		if (preferenceManager.getClientPreferences().isTypeHierarchyDynamicRegistrationSupported()) {
+			registerCapability(Preferences.TYPE_HIERARCHY_ID, Preferences.TYPE_HIERARCHY);
 		}
 	}
 
@@ -560,6 +576,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 				// trigger rebuild all the projects when the null analysis configuration changed **and** the compiler options updated
 				nullAnalysisOptionsUpdated = this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
 			}
+			IEclipsePreferences defEclipsePrefs = DefaultScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+			if (preferenceManager.getPreferences().isCodeGenerationTemplateGenerateMarkdownComments()) {
+				defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.TRUE.toString());
+			} else {
+				defEclipsePrefs.put(StubUtility.CODEGEN_USE_MARKDOWN, Boolean.FALSE.toString());
+			}
 		}
 		if (status == ServiceStatus.ServiceReady) {
 			// If we toggle on the capabilities too early before the tasks in initialized handler finished,
@@ -601,6 +623,22 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	/* (non-Javadoc)
 	 * @see org.eclipse.lsp4j.services.WorkspaceService#executeCommand(org.eclipse.lsp4j.ExecuteCommandParams)
 	 */
+
+	/**
+	 * Delegate commands that are safe to execute without waiting for the search
+	 * index to be ready. These commands only query the JDT workspace model
+	 * (projects, packages, markers) and do not depend on the search index.
+	 * Skipping waitForIndex for these commands enables progressive rendering
+	 * of the Java Projects tree view during long-running imports.
+	 */
+	private static final Set<String> INDEX_INDEPENDENT_COMMANDS = Set.of(
+		"java.project.list",
+		"java.project.checkImportStatus",
+		"java.getPackageData",
+		"java.resolvePath",
+		"java.project.getAll"
+	);
+
 	@Override
 	public CompletableFuture<Object> executeCommand(ExecuteCommandParams params) {
 		debugTrace(">> workspace/executeCommand " + (params == null ? null : params.getCommand()));
@@ -611,10 +649,14 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			return CompletableFuture.completedFuture(result);
 		} else {
 			// see https://github.com/redhat-developer/vscode-java/issues/3926
-			if (JavaModelManager.getIndexManager() != null) {
-				JavaModelManager.getIndexManager().waitForIndex(true, null);
+			// Skip waitForIndex for commands that don't need the search index,
+			// so they can return results during long-running project imports.
+			if (!INDEX_INDEPENDENT_COMMANDS.contains(params.getCommand())) {
+				if (JavaModelManager.getIndexManager() != null) {
+					JavaModelManager.getIndexManager().waitForIndex(true, null);
+				}
 			}
-			return computeAsync((monitor) -> {
+			return computeAsyncWithClientProgress((monitor) -> {
 				return commandHandler.executeCommand(params, monitor);
 			});
 		}
@@ -969,6 +1011,14 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		});
 	}
 
+	@Override
+	public CompletableFuture<TextDocumentContentResult> textDocumentContent(TextDocumentContentParams params) {
+		debugTrace(">> workspace/textDocumentContent");
+		ContentProviderManager handler = JavaLanguageServerPlugin.getContentProviderManager();
+		URI uri = JDTUtils.toURI(params.getUri());
+		return computeAsync((monitor) -> new TextDocumentContentResult(handler.getContent(uri, monitor)));
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.ls.core.internal.JavaProtocolExtensions#ClassFileContents(org.eclipse.lsp4j.TextDocumentIdentifier)
 	 */
@@ -1251,7 +1301,11 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	private <R> CompletableFuture<R> computeAsyncWithClientProgress(Function<IProgressMonitor, R> code) {
 		return CompletableFutures.computeAsync((cc) -> {
 			IProgressMonitor monitor = progressReporterManager.getProgressReporter(cc);
-			return code.apply(monitor);
+			try {
+				return code.apply(monitor);
+			} finally {
+				monitor.done();
+			}
 		});
 	}
 

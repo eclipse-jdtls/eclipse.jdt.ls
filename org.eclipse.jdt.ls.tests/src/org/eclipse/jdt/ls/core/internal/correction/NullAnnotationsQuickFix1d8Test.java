@@ -1320,7 +1320,6 @@ public class NullAnnotationsQuickFix1d8Test extends AbstractQuickFixTest {
 					}
 					""", false, null);
 
-			CompilationUnit unit = getASTRoot(cu);
 			assertCodeActionExists(cu, new String[] { "Add @SuppressWarnings 'null' to 'isValid()'", "Add @SuppressWarnings 'null' to 'validationStatus'", "Change parameter 'refPrefix' to '@NonNull'" });
 		}
 
@@ -1353,6 +1352,153 @@ public class NullAnnotationsQuickFix1d8Test extends AbstractQuickFixTest {
 
 			assertCodeActionExists(cu, new String[] { "Add @SuppressWarnings 'null' to 'isValid()'", "Add @SuppressWarnings 'null' to 'validationStatus'", "Change parameter 'refPrefix' to '@NonNull'",
 					"Change parameter of 'validateNewRefName(..)' to '@Nullable'" });
+		}
+
+		@Test
+		public void testGH2913() throws Exception {
+			IPackageFragment my = fSourceFolder.createPackageFragment("my", false, null);
+			ICompilationUnit cu = my.createCompilationUnit("Test.java", """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void invokeMe(@Nullable String aaa) {
+					    System.out.println(aaa.length());
+					  }
+					}
+					""", false, null);
+
+			String str1 = """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void invokeMe(@NonNull String aaa) {
+					    System.out.println(aaa.length());
+					  }
+					}
+					""";
+			Expected e1 = new Expected("Change 'aaa' to '@NonNull'", str1);
+			assertCodeActionExists(cu, e1);
+		}
+
+		@Test
+		public void testGH2919() throws Exception {
+			IPackageFragment my = fSourceFolder.createPackageFragment("my", false, null);
+			ICompilationUnit cu = my.createCompilationUnit("Test.java", """
+					package my;
+					import org.eclipse.jdt.annotation.NonNull;
+					import org.eclipse.jdt.annotation.Nullable;
+					public class Test {
+					  public @Nullable @NonNull String invokeMe(String aaa) {
+					    return "abc";
+					  }
+					}
+					""", false, null);
+
+			String str1 = """
+					package my;
+					import org.eclipse.jdt.annotation.Nullable;
+					public class Test {
+					  public @Nullable String invokeMe(String aaa) {
+					    return "abc";
+					  }
+					}
+					""";
+			Expected e1 = new Expected("Remove '@NonNull'", str1);
+
+			String str2 = """
+					package my;
+					import org.eclipse.jdt.annotation.NonNull;
+					public class Test {
+					  public @NonNull String invokeMe(String aaa) {
+					    return "abc";
+					  }
+					}
+					""";
+			Expected e2 = new Expected("Remove '@Nullable'", str2);
+			assertCodeActions(cu, e1, e2);
+		}
+
+		@Test
+		public void testGH2822_1() throws Exception {
+			IPackageFragment my = fSourceFolder.createPackageFragment("my", false, null);
+			ICompilationUnit cu = my.createCompilationUnit("Test.java", """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void doStuff() {
+					    invokeMe(getString());
+					  }
+					  public void invokeMe(@NonNull String value) {
+					    System.out.println(value.length());
+					  }
+					  public @Nullable String getString() {
+					    return "my string";
+					  }
+					}
+					""", false, null);
+
+
+			String str1 = """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void doStuff() {
+					    invokeMe(getString());
+					  }
+					  public void invokeMe(@NonNull String value) {
+					    System.out.println(value.length());
+					  }
+					  public @NonNull String getString() {
+					    return "my string";
+					  }
+					}
+					""";
+			Expected e1 = new Expected("Change 'getString()' to '@NonNull'", str1);
+			assertCodeActionExists(cu, e1);
+		}
+
+		@Test
+		public void testGH2822_2() throws Exception {
+			IPackageFragment my = fSourceFolder.createPackageFragment("my", false, null);
+			ICompilationUnit cu = my.createCompilationUnit("Test.java", """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void doStuff() {
+					    invokeMe(getString());
+					  }
+					  public void invokeMe(@NonNull String value) {
+					    System.out.println(value.length());
+					  }
+					  public @Nullable String getString() {
+					    return getOtherString();
+					  }
+					  public @NonNull String getOtherString() {
+					  	return "other string";
+					  }
+					}
+					""", false, null);
+
+			String str1 = """
+					package my;
+					import org.eclipse.jdt.annotation.*;
+					public class Test {
+					  public void doStuff() {
+					    invokeMe(getString());
+					  }
+					  public void invokeMe(@NonNull String value) {
+					    System.out.println(value.length());
+					  }
+					  public @NonNull String getString() {
+					    return getOtherString();
+					  }
+					  public @NonNull String getOtherString() {
+					  	return "other string";
+					  }
+					}
+					""";
+			Expected e1 = new Expected("Change 'getString()' to '@NonNull'", str1);
+			assertCodeActionExists(cu, e1);
 		}
 
 }

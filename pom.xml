@@ -6,7 +6,7 @@
 	<groupId>org.eclipse.jdt.ls</groupId>
 	<artifactId>parent</artifactId>
 	<name>${base.name} :: Parent</name>
-	<version>1.58.0-SNAPSHOT</version>
+	<version>1.62.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<licenses>
 		<license>
@@ -64,7 +64,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
-					<version>3.10.0</version>
+					<version>3.11.0</version>
 					<executions>
 						<execution>
 							<?m2e execute onConfiguration?>

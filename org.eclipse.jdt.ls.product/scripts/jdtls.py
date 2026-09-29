@@ -67,6 +67,9 @@ def get_shared_config_path(jdtls_base_path):
 
 	if system in ['Linux', 'FreeBSD']:
 		config_dir = 'config_linux'
+	# or use system == 'Android'
+	elif 'TERMUX_VERSION' in os.environ:
+		config_dir = 'config_linux'
 	elif system == 'Darwin':
 		config_dir = 'config_mac'
 	elif system == 'Windows':
@@ -86,6 +89,8 @@ def main(args):
 	elif system == 'Darwin' and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / 'Library' / 'Caches'
 	elif system == 'Linux' and 'HOME' in os.environ:
+		cachedir = Path(os.environ['HOME']) / '.cache'
+	elif 'TERMUX_VERSION' in os.environ and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / '.cache'
 	else:
 		cachedir = Path(tempfile.gettempdir())

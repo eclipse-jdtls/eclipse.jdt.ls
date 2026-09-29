@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2025 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -75,6 +75,9 @@ import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
 import org.eclipse.jdt.ls.core.internal.text.correction.NullAnnotationsCorrectionProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeAnnotationSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeArgumentMismatchSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.VarargsWarningsSubProcessor;
 import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
@@ -335,10 +338,9 @@ public class QuickFixProcessor {
 			case IProblem.EnumConstantMustImplementAbstractMethod:
 				LocalCorrectionsSubProcessor.addUnimplementedMethodsProposals(context, problem, proposals);
 				break;
-			// case IProblem.ShouldImplementHashcode:
-			// LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.ShouldImplementHashcode:
+				LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingValueForAnnotationMember:
 				LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context, problem, proposals);
 				break;
@@ -431,6 +433,8 @@ public class QuickFixProcessor {
 			case IProblem.DuplicateMethod:
 			case IProblem.DuplicateTypeVariable:
 			case IProblem.DuplicateNestedType:
+			case IProblem.LambdaRedeclaresLocal:
+			case IProblem.LambdaRedeclaresArgument:
 				LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context, problem, proposals);
 				break;
 			case IProblem.NoMessageSendOnArrayType:
@@ -452,64 +456,23 @@ public class QuickFixProcessor {
 			case IProblem.DeadCode:
 				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
 				break;
-			// case IProblem.InvalidUsageOfTypeParameters:
-			// case IProblem.InvalidUsageOfStaticImports:
-			// case IProblem.InvalidUsageOfForeachStatements:
-			// case IProblem.InvalidUsageOfTypeArguments:
-			// case IProblem.InvalidUsageOfEnumDeclarations:
-			// case IProblem.InvalidUsageOfVarargs:
-			// case IProblem.InvalidUsageOfAnnotations:
-			// case IProblem.InvalidUsageOfAnnotationDeclarations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_5);
-			// break;
-			// case IProblem.DiamondNotBelow17:
-			// TypeArgumentMismatchSubProcessor.getInferDiamondArgumentsProposal(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.AutoManagedResourceNotBelow17:
-			// case IProblem.MultiCatchNotBelow17:
-			// case IProblem.PolymorphicMethodNotBelow17:
-			// case IProblem.BinaryLiteralNotBelow17:
-			// case IProblem.UnderscoresInLiteralsNotBelow17:
-			// case IProblem.SwitchOnStringsNotBelow17:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_7);
-			// break;
-			// case IProblem.LambdaExpressionNotBelow18:
-			// LocalCorrectionsSubProcessor.getConvertLambdaToAnonymousClassCreationsProposals(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.ExplicitThisParameterNotBelow18:
-			// case IProblem.DefaultMethodNotBelow18:
-			// case IProblem.StaticInterfaceMethodNotBelow18:
-			// case IProblem.MethodReferenceNotBelow18:
-			// case IProblem.ConstructorReferenceNotBelow18:
-			// case IProblem.IntersectionCastNotBelow18:
-			// case IProblem.InvalidUsageOfTypeAnnotations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_8);
-			// break;
-			// case IProblem.NonGenericType:
-			// TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MissingOverrideAnnotation:
-			// case
-			// IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
-			// ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.NonGenericType:
+				TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context, problem, proposals);
+				break;
+			case IProblem.MissingOverrideAnnotation:
+			case IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
+				ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.MethodMustOverride:
 			case IProblem.MethodMustOverrideOrImplement:
 				ModifierCorrectionSubProcessor.removeOverrideAnnotationProposal(context, problem, proposals);
 				break;
-			// case IProblem.FieldMissingDeprecatedAnnotation:
-			// case IProblem.MethodMissingDeprecatedAnnotation:
-			// case IProblem.TypeMissingDeprecatedAnnotation:
-			// ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.FieldMissingDeprecatedAnnotation:
+			case IProblem.MethodMissingDeprecatedAnnotation:
+			case IProblem.TypeMissingDeprecatedAnnotation:
+			case IProblem.MemberOfDeprecatedTypeNotDeprecated:
+				ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.OverridingDeprecatedMethod:
 			case IProblem.OverridingDeprecatedSinceVersionMethod:
 			case IProblem.OverridingTerminallyDeprecatedMethod:
@@ -635,19 +598,16 @@ public class QuickFixProcessor {
 			case IProblem.MethodCanBePotentiallyStatic:
 				ModifierCorrectionSubProcessor.addStaticMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.PotentialHeapPollutionFromVararg :
-			// VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnsafeGenericArrayForVarargs:
-			// VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.SafeVarargsOnFixedArityMethod :
-			// case IProblem.SafeVarargsOnNonFinalInstanceMethod:
-			// VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.PotentialHeapPollutionFromVararg:
+				VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context, problem, proposals);
+				break;
+			case IProblem.UnsafeGenericArrayForVarargs:
+				VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context, problem, proposals);
+				break;
+			case IProblem.SafeVarargsOnFixedArityMethod:
+			case IProblem.SafeVarargsOnNonFinalInstanceMethod:
+				VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context, problem, proposals);
+				break;
 			case IProblem.IllegalReturnNullityRedefinition:
 			case IProblem.IllegalDefinitionToNonNullParameter:
 			case IProblem.IllegalRedefinitionToNonNullParameter:
@@ -683,6 +643,13 @@ public class QuickFixProcessor {
 			case IProblem.RedundantNullDefaultAnnotationField:
 				NullAnnotationsCorrectionProcessor.addRemoveRedundantAnnotationProposal(context, problem, proposals);
 				break;
+			case IProblem.DereferencingNullableExpression:
+			case IProblem.NullityMismatchingTypeAnnotation:
+				NullAnnotationsCorrectionProcessor.addReplaceNullableAnnotationProposal(context, problem, proposals);
+				break;
+			case IProblem.ContradictoryNullAnnotations:
+				NullAnnotationsCorrectionProcessor.addRemoveContradictoryAnnotationProposals(context, problem, proposals);
+				break;
 			case IProblem.UnusedTypeParameter:
 				LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context, problem, proposals);
 				break;
@@ -711,14 +678,18 @@ public class QuickFixProcessor {
 			case IProblem.MissingNonNullByDefaultAnnotationOnPackage:
 				NullAnnotationsCorrectionProcessor.addAddMissingDefaultNullnessProposal(context, problem, proposals);
 				break;
-			// case IProblem.TypeAnnotationAtQualifiedName:
-			// case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
-			// case IProblem.NullAnnotationAtQualifyingType:
-			// case IProblem.IllegalAnnotationForBaseType:
-			// TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context,
-			// problem, proposals);
-			// break;
-
+			case IProblem.FeatureNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
+				break;
+			case IProblem.MultiConstantCaseLabelsNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_14);
+				break;
+			case IProblem.TypeAnnotationAtQualifiedName:
+			case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
+			case IProblem.NullAnnotationAtQualifyingType:
+			case IProblem.IllegalAnnotationForBaseType:
+				TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context, problem, proposals);
+				break;
 			default:
 				String str = problem.toString();
 				System.out.println(str);

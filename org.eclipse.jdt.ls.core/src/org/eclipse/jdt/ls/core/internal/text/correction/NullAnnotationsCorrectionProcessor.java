@@ -69,6 +69,14 @@ public class NullAnnotationsCorrectionProcessor extends NullAnnotationsCorrectio
 		new NullAnnotationsCorrectionProcessor().getLocalVariableAnnotationProposal(context, problem, proposals);
 	}
 
+	public static void addRemoveContradictoryAnnotationProposals(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new NullAnnotationsCorrectionProcessor().getRemoveContradictoryAnnotationProposals(context, problem, proposals);
+	}
+
+	public static void addReplaceNullableAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new NullAnnotationsCorrectionProcessor().getReplaceNullableAnnotationProposal(context, problem, proposals);
+	}
+
 	private NullAnnotationsCorrectionProcessor() {
 	}
 	/* (non-Javadoc)

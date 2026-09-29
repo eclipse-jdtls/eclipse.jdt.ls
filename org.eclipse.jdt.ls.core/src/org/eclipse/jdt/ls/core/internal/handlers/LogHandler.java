@@ -51,14 +51,14 @@ public class LogHandler {
 	 * <p>Clients who load the LS in same process can override the default log handler.
 	 * This usually needs to be done very early, before the language server starts.</p>
 	 */
-	public static Predicate<IStatus> defaultLogFilter = new DefaultLogFilter();
+	public static Predicate<LogEntry> defaultLogFilter = new DefaultLogFilter();
 	private static final String JAVA_ERROR_LOG = "java.ls.error";
 
 	private ILogListener logListener;
 	private DateFormat dateFormat;
 	private int logLevelMask;
 	private JavaClientConnection connection;
-	private Predicate<IStatus> filter;
+	private Predicate<LogEntry> filter;
 
 	private String firstRecordedEntryDateString;
 
@@ -75,7 +75,7 @@ public class LogHandler {
 		this(defaultLogFilter);
 	}
 
-	public LogHandler(Predicate<IStatus> filter) {
+	public LogHandler(Predicate<LogEntry> filter) {
 		this.filter = filter;
 	}
 
@@ -135,12 +135,19 @@ public class LogHandler {
 	}
 
 	private void processLogMessage(LogEntry entry) {
+		if ((filter != null && !filter.test(entry)) || (entry.getSeverity() & logLevelMask) == 0) {
+			//no op;
+			return;
+		}
 		// Skip sending to client if current thread is interrupted as that would close the LSP connection to the client !!!
 		if (Thread.currentThread().isInterrupted() || connection == null) {
 			return;
 		}
 		String dateString = this.dateFormat.format(entry.getDate());
-		String message = entry.getMessage() + '\n' + entry.getStack();
+		String message = entry.getMessage();
+		if (entry.getStack() != null) {
+			message = message + '\n' + entry.getStack();
+		}
 
 		connection.logMessage(getMessageTypeFromSeverity(entry.getSeverity()), dateString + ' ' + message);
 		final boolean hasWorkspaceExitedUnsaved = entry.getSeverity() == IStatus.WARNING
@@ -159,44 +166,21 @@ public class LogHandler {
 			}
 		}
 	}
+
 	private void processLogMessage(IStatus status) {
-		if ((filter != null && !filter.test(status)) || !status.matches(this.logLevelMask)) {
-			//no op;
-			return;
-		}
-		// Skip sending to client if current thread is interrupted as that would close the LSP connection to the client !!!
-		if (Thread.currentThread().isInterrupted() || connection == null) {
-			return;
-		}
-		String dateString = this.dateFormat.format(new Date());
-		String message = status.getMessage();
-		String exceptionAsString = null;
+		LogEntry entry = new LogEntry();
+		entry.setMessage(status.getMessage());
+		entry.setSeverity(status.getSeverity());
+		entry.setDate(new Date());
+		entry.setPluginId(status.getPlugin());
 		if (status.getException() != null) {
 			StringWriter sw = new StringWriter();
 			status.getException().printStackTrace(new PrintWriter(sw));
-			exceptionAsString = sw.toString();
-			message = message + '\n' + exceptionAsString;
-		} else if (message.startsWith(BUILD_ERROR_MSG_DETAILS)) {
-			exceptionAsString = message.substring(BUILD_ERROR_MSG_DETAILS_LENGTH).trim();
+			entry.setStack(sw.toString());
+		} else if (status.getMessage() != null && status.getMessage().startsWith(BUILD_ERROR_MSG_DETAILS)) {
+			entry.setStack(status.getMessage().substring(BUILD_ERROR_MSG_DETAILS_LENGTH).trim());
 		}
-
-		connection.logMessage(getMessageTypeFromSeverity(status.getSeverity()), dateString + ' ' + message);
-
-		final boolean hasWorkspaceExitedUnsaved = status.getSeverity() == IStatus.WARNING
-				&& status.getMessage().contains("workspace exited with unsaved changes in the previous session");
-		// Send a trace event to client
-		if (status.getSeverity() == IStatus.ERROR || hasWorkspaceExitedUnsaved) {
-			JsonObject properties = new JsonObject();
-			properties.addProperty("message", redact(status.getMessage()));
-			if (exceptionAsString != null) {
-				properties.addProperty("exception", exceptionAsString);
-			}
-			int hashCode = properties.hashCode();
-			if (!knownErrors.contains(hashCode)) {
-				knownErrors.add(hashCode);
-				connection.telemetryEvent(new TelemetryEvent(JAVA_ERROR_LOG, properties));
-			}
-		}
+		processLogMessage(entry);
 	}
 
 	private String redact(String message) {

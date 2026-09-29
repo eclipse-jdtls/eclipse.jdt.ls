@@ -3692,4 +3692,320 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActionExists(cu, e1);
 	}
 
+	@Test
+	public void testMissingHashCode1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e2 = new Expected("Override hashCode()", after2);
+		assertCodeActions(cu, e2);
+		assertCodeActionNotExists(cu, "Regenerate hashCode() and equals()");
+	}
+
+	@Test
+	public void testMissingHashCode2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x);
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after1 = """
+				package test1;
+
+				import java.util.Objects;
+
+				public class E {
+					String x;
+					int y;
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
+					@Override
+					public int hashCode() {
+						return Objects.hash(x);
+					}
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
+					@Override
+					public boolean equals(Object obj) {
+						if (this == obj) {
+							return true;
+						}
+						if (!(obj instanceof E)) {
+							return false;
+						}
+						E other = (E) obj;
+						return Objects.equals(x, other.x);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x);
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e1 = new Expected("Regenerate hashCode() and equals()", after1);
+		Expected e2 = new Expected("Override hashCode()", after2);
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testMissingHashCode3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x) && ((E)obj).y == this.y;
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after1 = """
+				package test1;
+
+				import java.util.Objects;
+
+				public class E {
+					String x;
+					int y;
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
+					@Override
+					public int hashCode() {
+						return Objects.hash(x, Integer.valueOf(y));
+					}
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
+					@Override
+					public boolean equals(Object obj) {
+						if (this == obj) {
+							return true;
+						}
+						if (!(obj instanceof E)) {
+							return false;
+						}
+						E other = (E) obj;
+						return Objects.equals(x, other.x) && y == other.y;
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x) && ((E)obj).y == this.y;
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e1 = new Expected("Regenerate hashCode() and equals()", after1);
+		Expected e2 = new Expected("Override hashCode()", after2);
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testLambdaRedeclares1() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count -> {
+				            System.out.println(count);
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count1 -> {
+				            System.out.println(count1);
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'count'", expected);
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testLambdaRedeclares2() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset = 20;
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset1 = 20;
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'offset'", expected);
+
+		assertCodeActions(cu, e1);
+	}
 }

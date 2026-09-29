@@ -51,7 +51,6 @@
       <plugin id="org.eclipse.jdt.core"/>
 	  <plugin id="org.eclipse.jdt.core.javac"/>
       <plugin id="org.eclipse.jdt.launching"/>
-      <plugin id="org.eclipse.jdt.launching.macosx"/>
       <plugin id="org.eclipse.jdt.ls.core"/>
       <plugin id="org.eclipse.jdt.ls.filesystem"/>
       <plugin id="org.eclipse.jdt.ls.logback.appender" fragment="true"/>
@@ -62,7 +61,6 @@
       <plugin id="org.eclipse.m2e.workspace.cli"/>
       <plugin id="org.eclipse.osgi"/>
       <plugin id="org.eclipse.osgi.compatibility.state" fragment="true"/>
-      <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.xtext.xbase.lib"/>
       <plugin id="org.jsoup"/>

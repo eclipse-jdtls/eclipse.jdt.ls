@@ -155,24 +155,33 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	protected void importProjects(Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, rootPaths.size() * 100);
 		MultiStatus importStatusCollection = new MultiStatus(IConstants.PLUGIN_ID, -1, "Failed to import projects", null);
-		for (IPath rootPath : rootPaths) {
-			File rootFolder = rootPath.toFile();
-			try {
-				for (IProjectImporter importer : importers()) {
-					importer.initialize(rootFolder);
-					if (importer.applies(subMonitor.split(1))) {
-						importer.importToWorkspace(subMonitor.split(70));
-						if (importer.isResolved(rootFolder)) {
-							break;
+
+		ProgressiveProjectReporter reporter = new ProgressiveProjectReporter(client);
+		reporter.start();
+
+		try {
+			for (IPath rootPath : rootPaths) {
+				File rootFolder = rootPath.toFile();
+				try {
+					for (IProjectImporter importer : importers()) {
+						importer.initialize(rootFolder);
+						if (importer.applies(subMonitor.split(1))) {
+							importer.importToWorkspace(subMonitor.split(70));
+							if (importer.isResolved(rootFolder)) {
+								break;
+							}
 						}
 					}
+				} catch (CoreException e) {
+					// if a rootPath import failed, keep importing the next rootPath
+					importStatusCollection.add(e.getStatus());
+					JavaLanguageServerPlugin.logException("Failed to import projects", e);
 				}
-			} catch (CoreException e) {
-				// if a rootPath import failed, keep importing the next rootPath
-				importStatusCollection.add(e.getStatus());
-				JavaLanguageServerPlugin.logException("Failed to import projects", e);
 			}
+		} finally {
+			reporter.stop();
 		}
+
 		if (!importStatusCollection.isOK()) {
 			throw new CoreException(importStatusCollection);
 		}
