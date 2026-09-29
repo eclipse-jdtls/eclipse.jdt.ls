@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2018-2022 Microsoft Corporation and others.
+* Copyright (c) 2018-2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -41,6 +41,7 @@ public final class ActionMessages extends NLS {
 	public static String GenerateFinalModifiersAction_label;
 	public static String GenerateFinalModifiersAction_templateLabel;
 	public static String GenerateFinalModifiersAction_selectionLabel;
+	public static String ChangeFieldModifierAction_templateLabel;
 	public static String SortMembers_templateLabel;
 	public static String SortMembers_selectionLabel;
 	public static String MoveRefactoringAction_label;
@@ -51,6 +52,7 @@ public final class ActionMessages extends NLS {
 	public static String ReportAllErrorsForAnyNonProjectFile;
 	public static String ReportSyntaxErrorsForThisFile;
 	public static String ReportSyntaxErrorsForAnyNonProjectFile;
+	public static String AddFieldModifierAction_templateLabel;
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, ActionMessages.class);

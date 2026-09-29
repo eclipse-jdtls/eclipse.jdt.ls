@@ -218,6 +218,8 @@ public class CodeLensHandler {
 				if (parentType != null && !JDTUtils.isUnnamedClass(parentType) && overlaps(((ISourceReference) parentType).getNameRange(), ((ISourceReference) element).getNameRange())) {
 					continue;
 				}
+			} else if (element.getElementType() == IJavaElement.FIELD && preferenceManager.getPreferences().isReferencesCodeLensIncludeFields()) {
+				// allow field reference CodeLens
 			} else {//neither a type nor a method, we bail
 				continue;
 			}

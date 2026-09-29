@@ -1204,7 +1204,6 @@ public class ExtractFieldRefactoring extends Refactoring {
 		private final List<IBinding> fLocalDefinitions = new ArrayList<>(0); // List of IBinding (Variable and Type)
 		private final List<SimpleName> fLocalReferencesToEnclosing = new ArrayList<>(0); // List of ASTNodes
 		private final List<ITypeBinding> fMethodTypeVariables;
-		private boolean fClassTypeVariablesUsed = false;
 
 		public LocalTypeAndVariableUsageAnalyzer(ITypeBinding[] methodTypeVariables) {
 			fMethodTypeVariables = Arrays.asList(methodTypeVariables);
@@ -1230,8 +1229,6 @@ public class ExtractFieldRefactoring extends Refactoring {
 				} else if (!fLocalDefinitions.contains(typeBinding)) {
 					if (fMethodTypeVariables.contains(typeBinding)) {
 						fLocalReferencesToEnclosing.add(node);
-					} else {
-						fClassTypeVariablesUsed = true;
 					}
 				}
 			}

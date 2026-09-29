@@ -14,10 +14,13 @@
 package org.eclipse.jdt.ls.core.internal.filesystem;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.filesystem.local.LocalFile;
 import org.eclipse.core.runtime.IPath;
@@ -67,6 +70,55 @@ public class JLSFile extends LocalFile {
         }
 
         return childNameSet.toArray(String[]::new);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Since the metadata files may be redirected into the workspace metadata area,
+     * we override this method to make sure the redirected files are reported as
+     * children. This mirrors {@link #childNames(int, IProgressMonitor)} and is
+     * required because {@link LocalFile#childInfos(int, IProgressMonitor)} performs
+     * a bulk directory listing of the physical location that bypasses both
+     * {@link #childNames(int, IProgressMonitor)} and {@link #getChild(String)},
+     * which would otherwise leave the redirected metadata files invisible to the
+     * resource refresh/synchronization.
+     * </p>
+     */
+    @Override
+    public IFileInfo[] childInfos(int options, IProgressMonitor monitor) {
+        IFileInfo[] childInfos = super.childInfos(options, monitor);
+        if (JLSFsUtils.generatesMetadataFilesAtProjectRoot()) {
+            return childInfos;
+        }
+
+        IPath filePath = new Path(this.filePath);
+        if (JLSFsUtils.isExcluded(filePath)) {
+            return childInfos;
+        }
+        String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(filePath);
+        if (projectName == null) {
+            return childInfos;
+        }
+
+        Set<String> existingNames = new LinkedHashSet<>();
+        for (IFileInfo info : childInfos) {
+            existingNames.add(info.getName());
+        }
+
+        List<IFileInfo> result = null;
+        for (String fileName : JLSFsUtils.METADATA_NAMES) {
+            if (!existingNames.contains(fileName) &&
+                    JLSFsUtils.METADATA_FOLDER_PATH.append(projectName).append(fileName).toFile().exists()) {
+                if (result == null) {
+                    result = new ArrayList<>(Arrays.asList(childInfos));
+                }
+                result.add(getChild(fileName).fetchInfo());
+            }
+        }
+
+        return result == null ? childInfos : result.toArray(IFileInfo[]::new);
     }
 
     @Override

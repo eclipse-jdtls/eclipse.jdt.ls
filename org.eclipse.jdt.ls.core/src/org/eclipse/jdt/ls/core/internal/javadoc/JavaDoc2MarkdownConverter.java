@@ -18,16 +18,16 @@ import java.util.Set;
 
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-
-import com.vladsch.flexmark.ast.Reference;
-import com.vladsch.flexmark.html.renderer.LinkType;
-import com.vladsch.flexmark.html.renderer.ResolvedLink;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
+import com.vladsch.flexmark.ast.Reference;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.html.renderer.LinkType;
+import com.vladsch.flexmark.html.renderer.ResolvedLink;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.html2md.converter.HtmlConverterOptions;
 import com.vladsch.flexmark.html2md.converter.HtmlMarkdownWriter;
@@ -81,6 +81,10 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 		flexmarkOptions.set(FlexmarkHtmlConverter.UNWRAPPED_TAGS, extendedUnwrappedTags);
 		flexmarkOptions.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false);
 		flexmarkOptions.set(FlexmarkHtmlConverter.TYPOGRAPHIC_SMARTS, false);
+
+		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_TRIM_CELL_WHITESPACE, true);
+		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_SPACE_AROUND_PIPES, true);
+		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_ADJUST_COLUMN_WIDTH, false);
 		return flexmarkOptions;
 	}
 

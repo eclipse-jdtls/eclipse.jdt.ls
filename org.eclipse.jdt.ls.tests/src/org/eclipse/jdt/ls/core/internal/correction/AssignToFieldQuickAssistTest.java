@@ -284,4 +284,18 @@ public class AssignToFieldQuickAssistTest extends AbstractQuickFixTest {
 		Range selection = CodeActionUtil.getRange(cu, "int p2", 0);
 		assertCodeActions(cu, selection, e1, e2, e3);
 	}
+
+	@Test
+	public void testNoAssignParamToFieldForRecords() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public record E((int p) {\n");
+		buf.append("    public  E(int p) {\n");
+		buf.append("    this.p = p;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionNotExists(cu, "Assign parameter to new field");
+	}
 }

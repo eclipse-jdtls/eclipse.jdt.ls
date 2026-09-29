@@ -186,10 +186,14 @@ public class WorkspaceSymbolHandler {
 
 		int scope = IJavaSearchScope.REFERENCED_PROJECTS | IJavaSearchScope.SOURCES;
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (!sourceOnly && preferenceManager != null && preferenceManager.isClientSupportsClassFileContent()) {
+		SearchScope searchScope = preferenceManager == null
+				? SearchScope.all
+				: preferenceManager.getPreferences().getSearchScope();
+		if (!sourceOnly && searchScope != SearchScope.projectOnly && preferenceManager != null
+				&& preferenceManager.isClientSupportsClassFileContent()) {
 			scope |= IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES;
 		}
-		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
+		var excludeTestCode = searchScope == SearchScope.main;
 		return SearchEngine.createJavaSearchScope(excludeTestCode, targetProjects, scope);
 	}
 
@@ -319,8 +323,8 @@ public class WorkspaceSymbolHandler {
 				Location location = null;
 				try {
 					if (!sourceOnly && match.getType().isBinary()) {
-						if (match.getType() instanceof IMember member) {
-							location = SearchUtils.searchOtherSources(member);
+						if (match.getType() != null) {
+							location = SearchUtils.searchOtherSources(match.getType());
 						}
 						if (location == null) {
 							location = JDTUtils.toLocation(match.getType().getClassFile());

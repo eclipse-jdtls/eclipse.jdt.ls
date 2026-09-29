@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019, 2023 Microsoft Corporation and others.
+* Copyright (c) 2019, 2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -74,7 +75,6 @@ import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
-import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
@@ -114,6 +114,7 @@ import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.cleanup.CleanUpRequirements;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
 import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
@@ -607,8 +608,8 @@ public class RefactorProcessor {
 		}
 
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
-		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptions.TRUE);
 		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
 		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
@@ -635,8 +636,8 @@ public class RefactorProcessor {
 
 		// add correction proposal
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
-		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptions.TRUE);
 		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context);
 		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
@@ -1087,7 +1088,7 @@ public class RefactorProcessor {
 			return false;
 		}
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptions.TRUE);
 		ICleanUp cleanUp = new AbstractCleanUp(options) {
 			@Override
 			public CleanUpRequirements getRequirements() {
@@ -1284,7 +1285,13 @@ public class RefactorProcessor {
 		if (!(element instanceof IMethod method)){
 			return false;
 		}
-
+		try {
+			if (Flags.isDefaultMethod(method.getFlags())) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
 		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(method);
 		try {
 			if (refactoring.checkInitialConditions(monitor).isOK()) {

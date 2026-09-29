@@ -14,9 +14,13 @@
 package org.eclipse.jdt.ls.core.internal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.lsp4j.Position;
 import org.junit.jupiter.api.Test;
@@ -55,6 +59,18 @@ public class JSONUtilityTest {
 	@Test
 	public void testNullObject(){
 		assertNull(JSONUtility.toModel(null, Object.class));
+	}
+
+	@Test
+	public void testMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("line", 5);
+		map.put("character", 3);
+
+		Position options = JSONUtility.toModel(map, Position.class);
+		assertNotNull(options);
+		assertEquals(options.getLine(), 5);
+		assertEquals(options.getCharacter(), 3);
 	}
 
 }

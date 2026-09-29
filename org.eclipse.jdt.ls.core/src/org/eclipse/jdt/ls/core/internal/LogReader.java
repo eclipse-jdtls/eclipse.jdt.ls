@@ -440,6 +440,22 @@ public class LogReader {
 			children.add(child);
 		}
 
+		public void setSeverity(int severity) {
+			this.severity = severity;
+		}
+
+		public void setDate(Date date) {
+			this.fDate = date;
+		}
+
+		public void setPluginId(String pluginId) {
+			this.pluginId = pluginId;
+		}
+
+		public String getPluginId() {
+			return pluginId;
+		}
+
 		public Date getDate() {
 			return fDate;
 		}

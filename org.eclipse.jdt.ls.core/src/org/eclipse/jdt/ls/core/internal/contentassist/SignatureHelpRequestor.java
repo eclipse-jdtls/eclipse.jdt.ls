@@ -45,6 +45,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.lsp4j.MarkupContent;
+import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureInformation;
@@ -124,8 +126,23 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		SignatureInformation $ = new SignatureInformation();
 		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(methodProposal);
 		$.setLabel(description.toString());
+		Map<String, String> paramDocs = Map.of();
 		if (isDescriptionEnabled) {
-			$.setDocumentation(this.computeJavaDoc(methodProposal));
+			IMethod method = resolveMethod(methodProposal);
+			if (method != null) {
+				try {
+					String methodDescription = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
+						return JavadocContentAccess2.getMethodDescription(method);
+					}, 500, TimeUnit.MILLISECONDS);
+					if (methodDescription != null) {
+						$.setDocumentation(methodDescription);
+					}
+					paramDocs = JavadocContentAccess2.getParameterJavadoc(method);
+				} catch (UncheckedTimeoutException tooSlow) {
+				} catch (Exception e) {
+					JavaLanguageServerPlugin.logException("Unable to read signature help documentation", e);
+				}
+			}
 		}
 
 		char[] signature = SignatureUtil.fix83600(methodProposal.getSignature());
@@ -148,7 +165,12 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 			builder.append(' ');
 			builder.append(parameterNames[i]);
 
-			parameterInfos.add(new ParameterInformation(builder.toString()));
+			ParameterInformation paramInfo = new ParameterInformation(builder.toString());
+			String paramDoc = paramDocs.get(new String(parameterNames[i]));
+			if (paramDoc != null) {
+				paramInfo.setDocumentation(new MarkupContent(MarkupKind.MARKDOWN, paramDoc));
+			}
+			parameterInfos.add(paramInfo);
 		}
 
 		$.setParameters(parameterInfos);
@@ -180,12 +202,11 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 		return vararg;
 	}
 
-	public String computeJavaDoc(CompletionProposal proposal) {
+	private IMethod resolveMethod(CompletionProposal proposal) {
 		try {
 			String fullyQualifiedName = SignatureUtil.stripSignatureToFQN(String.valueOf(proposal.getDeclarationSignature()));
 			IType type = unit.getJavaProject().findType(fullyQualifiedName);
 			if (type == null) {
-				// find secondary types if primary type search is missed.
 				type = unit.getJavaProject().findType(fullyQualifiedName, new NullProgressMonitor());
 			}
 			if (type != null) {
@@ -205,26 +226,17 @@ public final class SignatureHelpRequestor extends CompletionRequestor {
 						}
 						IMethod method = JavaModelUtil.findMethod(String.valueOf(proposal.getName()), parameters, proposal.isConstructor(), type);
 						if (method != null && method.exists()) {
-							ICompilationUnit unit = type.getCompilationUnit();
-							if (unit != null) {
-								unit.reconcile(ICompilationUnit.NO_AST, false, null, null);
+							ICompilationUnit compilationUnit = type.getCompilationUnit();
+							if (compilationUnit != null) {
+								compilationUnit.reconcile(ICompilationUnit.NO_AST, false, null, null);
 							}
-							String javadoc = null;
-							try {
-								javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-									return JavadocContentAccess2.getPlainTextContent(method);
-								}, 500, TimeUnit.MILLISECONDS);
-							} catch (UncheckedTimeoutException tooSlow) {
-							} catch (Exception e) {
-								JavaLanguageServerPlugin.logException("Unable to read documentation", e);
-							}
-							return javadoc;
+							return method;
 						}
 					}
 				}
 			}
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Unable to resolve signaturehelp javadoc", e);
+			JavaLanguageServerPlugin.logException("Unable to resolve signaturehelp method", e);
 		}
 		return null;
 	}

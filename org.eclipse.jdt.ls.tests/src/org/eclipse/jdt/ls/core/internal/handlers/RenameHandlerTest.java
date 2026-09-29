@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
@@ -253,8 +252,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(JDTUtils.toURI(cu), resourceChange.getOldUri());
 		assertEquals(JDTUtils.toURI(cu).replaceFirst("(?s)E(?!.*?E)", "Newname"), resourceChange.getNewUri());
 
-		List<TextEdit> testChanges = new LinkedList<>();
-		testChanges.addAll(resourceChanges.get(0).getLeft().getEdits());
+		List<TextEdit> testChanges = resourceChanges.get(0).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
 		String expected = "package test1;\n" +
 						  "public class Newname {\n" +
@@ -879,11 +877,9 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(5, resourceChanges.size());
 
-		List<TextEdit> testChangesA = new LinkedList<>();
-		testChangesA.addAll(resourceChanges.get(0).getLeft().getEdits());
+		List<TextEdit> testChangesA = resourceChanges.get(0).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
-		List<TextEdit> testChangesB = new LinkedList<>();
-		testChangesB.addAll(resourceChanges.get(1).getLeft().getEdits());
+		List<TextEdit> testChangesB = resourceChanges.get(1).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
 		String expectedA =
 				"package test1;\n" +

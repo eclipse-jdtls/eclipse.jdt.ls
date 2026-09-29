@@ -409,4 +409,55 @@ public class PreferenceManagerTest {
 			assertEquals(false, preferenceManager.getPreferences().isTelemetryEnabled());
 		}
 	}
+
+	@Test
+	public void testUpdateMethodBodyTemplate() {
+		PreferenceManager.initialize();
+
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.METHODSTUB_ID);
+		assertNotNull(template);
+		assertEquals(CodeTemplatePreferences.CODETEMPLATE_METHODBODY_DEFAULT, template.getPattern());
+
+		Preferences preferences = new Preferences();
+		preferences.setMethodBodyTemplate(Arrays.asList("throw new UnsupportedOperationException(\"Unimplemented method '${enclosing_method}'\");"));
+		preferenceManager.update(preferences);
+
+		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.METHODSTUB_ID);
+		assertNotNull(template);
+		assertEquals("throw new UnsupportedOperationException(\"Unimplemented method '${enclosing_method}'\");", template.getPattern());
+	}
+
+	@Test
+	public void testUpdateMethodBodySuperTemplate() {
+		PreferenceManager.initialize();
+
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.METHODSTUB_ALTERNATIVE_ID);
+		assertNotNull(template);
+		assertEquals(CodeTemplatePreferences.CODETEMPLATE_METHODBODY_SUPER_DEFAULT, template.getPattern());
+
+		Preferences preferences = new Preferences();
+		preferences.setMethodBodySuperTemplate(Arrays.asList("${body_statement}"));
+		preferenceManager.update(preferences);
+
+		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.METHODSTUB_ALTERNATIVE_ID);
+		assertNotNull(template);
+		assertEquals("${body_statement}", template.getPattern());
+	}
+
+	@Test
+	public void testUpdateCatchBodyTemplate() {
+		PreferenceManager.initialize();
+
+		Template template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.CATCHBLOCK_ID);
+		assertNotNull(template);
+		assertEquals(CodeTemplatePreferences.CODETEMPLATE_CATCHBODY_DEFAULT, template.getPattern());
+
+		Preferences preferences = new Preferences();
+		preferences.setCatchBodyTemplate(Arrays.asList("${exception_var}.printStackTrace();"));
+		preferenceManager.update(preferences);
+
+		template = JavaManipulation.getCodeTemplateStore().findTemplateById(CodeTemplateContextType.CATCHBLOCK_ID);
+		assertNotNull(template);
+		assertEquals("${exception_var}.printStackTrace();", template.getPattern());
+	}
 }
