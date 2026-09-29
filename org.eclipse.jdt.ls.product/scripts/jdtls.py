@@ -136,6 +136,6 @@ def main(args):
 		exec_args = [ '-Djdk.xml.maxGeneralEntitySizeLimit=0', '-Djdk.xml.totalEntitySizeLimit=0' ] + exec_args
 
 	if os.name == 'posix':
-		os.execvp(java_executable, exec_args)
+		os.execvp(java_executable, [java_executable] + exec_args)
 	else:
 		subprocess.run([java_executable] + exec_args)
