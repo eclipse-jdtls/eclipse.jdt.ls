@@ -43,10 +43,11 @@ public final class CompletionUtils {
 	 *            the completion itemDefaults of the completion list
 	 */
 	public static void setInsertTextMode(final CompletionItem item, CompletionItemDefaults completionItemDefaults) {
-		if ((!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode") ||
+		var clientPreferences = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences();
+		if ((!clientPreferences.isCompletionListItemDefaultsPropertySupport("insertTextMode") ||
 				completionItemDefaults.getInsertTextMode() == null ||
 				completionItemDefaults.getInsertTextMode() != InsertTextMode.AdjustIndentation) &&
-				JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation
+				clientPreferences.getCompletionItemInsertTextModeDefault() != InsertTextMode.AdjustIndentation
 		) {
 			item.setInsertTextMode(InsertTextMode.AdjustIndentation);
 		}
@@ -61,8 +62,9 @@ public final class CompletionUtils {
 	 *            the completion itemDefaults of the completion list
 	 */
 	public static void setInsertTextFormat(final CompletionItem item, CompletionItemDefaults completionItemDefaults) {
-		InsertTextFormat insertTextFormat = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionSnippetsSupported() ? InsertTextFormat.Snippet : InsertTextFormat.PlainText;
-		if (!JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat") ||
+		var clientPreferences = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences();
+		InsertTextFormat insertTextFormat = clientPreferences.isCompletionSnippetsSupported() ? InsertTextFormat.Snippet : InsertTextFormat.PlainText;
+		if (!clientPreferences.isCompletionListItemDefaultsPropertySupport("insertTextFormat") ||
 			completionItemDefaults.getInsertTextFormat() == null ||
 			completionItemDefaults.getInsertTextFormat() != insertTextFormat
 		) {
