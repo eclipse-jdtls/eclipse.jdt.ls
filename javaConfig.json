@@ -3,10 +3,11 @@
         "org.eclipse.jdt.ls.core",
         "org.eclipse.jdt.ls.filesystem",
 		"org.eclipse.jdt.ls.logback.appender",
-        "org.eclipse.jdt.ls.target",
+        "org.eclipse.jdt.ls.tp",
         "org.eclipse.jdt.ls.tests",
-        "org.eclipse.jdt.ls.tests.syntaxserver"
+        "org.eclipse.jdt.ls.tests.syntaxserver",
+        "org.eclipse.jdt.ls.tests.lombok"
     ],
 
-   "targetPlatform": "org.eclipse.jdt.ls.target/org.eclipse.jdt.ls.tp.target"
+   "targetPlatform": "org.eclipse.jdt.ls.tp/org.eclipse.jdt.ls.tp.target"
 }
