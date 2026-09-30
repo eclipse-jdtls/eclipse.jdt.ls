@@ -86,6 +86,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.WorkspaceSymbolHandler.SearchSy
 import org.eclipse.jdt.ls.core.internal.lsp.JavaProtocolExtensions;
 import org.eclipse.jdt.ls.core.internal.lsp.ValidateDocumentParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
@@ -188,6 +189,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public static final String JAVA_LSP_JOIN_ON_COMPLETION = "java.lsp.joinOnCompletion";
 	public static final String JAVA_LSP_INITIALIZE_WORKSPACE = "java.lsp.initializeWorkspace";
 	private ProjectsManager pm;
+	private OnDemandImportManager onDemandImportManager;
 	private LanguageServerWorkingCopyOwner workingCopyOwner;
 	private PreferenceManager preferenceManager;
 	private DocumentLifeCycleHandler documentLifeCycleHandler;
@@ -220,6 +222,9 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 					classpathUpdateHandler.removeElementChangeListener();
 					classpathUpdateHandler = null;
 				}
+				// Close on-demand imported projects so the next session
+				// starts clean (avoids stale projects in the workspace).
+				onDemandImportManager.closeProjectsOnShutdown(monitor);
 				ResourcesPlugin.getWorkspace().save(true, monitor);
 			} catch (CoreException e) {
 				logException(e.getMessage(), e);
@@ -248,6 +253,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager, WorkspaceExecuteCommandHandler commandHandler, TelemetryManager telemetryManager) {
 		this.pm = projects;
+		this.onDemandImportManager = new OnDemandImportManager();
 		this.preferenceManager = preferenceManager;
 		this.jvmConfigurator = new JVMConfigurator();
 		JavaRuntime.addVMInstallChangedListener(jvmConfigurator);
@@ -262,7 +268,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		this.workingCopyOwner = new LanguageServerWorkingCopyOwner(this.client);
 		pm.setConnection(client);
 		WorkingCopyOwner.setPrimaryBufferProvider(this.workingCopyOwner);
-		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true);
+		this.documentLifeCycleHandler = new DocumentLifeCycleHandler(this.client, preferenceManager, pm, true, onDemandImportManager);
 		this.workspaceEventHandler = new WorkspaceEventsHandler(pm, this.client, this.documentLifeCycleHandler);
 		this.telemetryManager.setLanguageClient(client);
 		this.telemetryManager.setPreferenceManager(preferenceManager);
@@ -290,7 +296,7 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	public CompletableFuture<InitializeResult> initialize(InitializeParams params) {
 		logInfo(">> initialize");
 		status = ServiceStatus.Starting;
-		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler, telemetryManager);
+		InitHandler handler = new InitHandler(pm, preferenceManager, client, commandHandler, onDemandImportManager, telemetryManager);
 		return CompletableFuture.completedFuture(handler.initialize(params));
 	}
 
