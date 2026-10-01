@@ -1306,6 +1306,12 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 			} finally {
 				monitor.done();
 			}
+		}).whenComplete((result, error) -> {
+			if (error != null) {
+				JavaLanguageServerPlugin.logException(
+						"Unhandled exception in LSP request handler",
+						error);
+			}
 		});
 	}
 

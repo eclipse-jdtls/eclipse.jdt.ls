@@ -16,8 +16,10 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.Assert;
@@ -56,6 +58,7 @@ import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jface.text.IRegion;
 
 
@@ -136,10 +139,70 @@ public class ImplementationCollector<T> {
 			if (monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
+			supplementWithContributedImplementations(type, results, allTypes, monitor);
 		} finally {
 			monitor.done();
 		}
 		return results;
+	}
+
+	/**
+	 * Supplements the implementation list with types found via contributed
+	 * search participants. JDT's type hierarchy only discovers Java subtypes;
+	 * non-Java types (e.g., Kotlin) that implement or extend the target type
+	 * are only discoverable via an IMPLEMENTORS search through contributed
+	 * participants.
+	 */
+	private void supplementWithContributedImplementations(IType type,
+			List<T> results, IType[] alreadyFound,
+			IProgressMonitor monitor) {
+		SearchParticipant[] contributed =
+				SearchUtils.getContributedSearchParticipants();
+		if (contributed.length == 0) {
+			return;
+		}
+		try {
+			SearchPattern pattern = SearchPattern.createPattern(
+					type.getFullyQualifiedName(),
+					IJavaSearchConstants.TYPE,
+					IJavaSearchConstants.IMPLEMENTORS,
+					SearchPattern.R_EXACT_MATCH
+							| SearchPattern.R_CASE_SENSITIVE);
+			if (pattern == null) {
+				return;
+			}
+			Set<String> seen = new HashSet<>();
+			for (IType t : alreadyFound) {
+				seen.add(t.getFullyQualifiedName());
+			}
+			List<IType> foundTypes = new ArrayList<>();
+			new SearchEngine().search(pattern, contributed,
+					SearchEngine.createWorkspaceScope(),
+					new SearchRequestor() {
+						@Override
+						public void acceptSearchMatch(SearchMatch match) {
+							if (match.getElement() instanceof IType t) {
+								foundTypes.add(t);
+							}
+						}
+					}, monitor);
+			for (IType foundType : foundTypes) {
+				if (monitor.isCanceled()) {
+					return;
+				}
+				if (seen.contains(foundType.getFullyQualifiedName())) {
+					continue;
+				}
+				T result = mapper.convert(foundType, 0, 0);
+				if (result != null) {
+					results.add(result);
+					seen.add(foundType.getFullyQualifiedName());
+				}
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(
+					"Error searching contributed participants for implementations", e);
+		}
 	}
 
 	private List<T> findMethodImplementations(IProgressMonitor monitor) throws CoreException {
@@ -217,7 +280,7 @@ public class ImplementationCollector<T> {
 			int limitTo = IJavaSearchConstants.DECLARATIONS | IJavaSearchConstants.IGNORE_DECLARING_TYPE | IJavaSearchConstants.IGNORE_RETURN_TYPE;
 			SearchPattern pattern = SearchPattern.createPattern(method, limitTo);
 			Assert.isNotNull(pattern);
-			SearchParticipant[] participants = new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() };
+			SearchParticipant[] participants = SearchEngine.getSearchParticipants();
 			SearchEngine engine = new SearchEngine();
 			engine.search(pattern, participants, hierarchyScope, requestor, new SubProgressMonitor(monitor, 7));
 			if (monitor.isCanceled()) {

@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -64,7 +65,13 @@ public class NavigateToDeclarationHandler {
 	private Location computeDeclarationNavigation(ITypeRoot unit, int line, int column, IProgressMonitor monitor) {
 		try {
 			IJavaElement element = JDTUtils.findElementAtSelection(unit, line, column, this.preferenceManager, monitor);
-			if (monitor.isCanceled() || element == null || element.getElementType() != IJavaElement.METHOD) {
+			if (monitor.isCanceled() || element == null) {
+				return null;
+			}
+			if (element.getElementType() != IJavaElement.METHOD) {
+				if (!JavaCore.isJavaLikeFileName(unit.getElementName())) {
+					return NavigateToDefinitionHandler.computeDefinitionNavigation(element, unit.getJavaProject());
+				}
 				return null;
 			}
 
@@ -74,6 +81,9 @@ public class NavigateToDeclarationHandler {
 			IMethod methodDeclaration = tester.findDeclaringMethod(method, false);
 
 			if (methodDeclaration == null) {
+				if (!JavaCore.isJavaLikeFileName(unit.getElementName())) {
+					return NavigateToDefinitionHandler.computeDefinitionNavigation(element, unit.getJavaProject());
+				}
 				return null;
 			}
 
