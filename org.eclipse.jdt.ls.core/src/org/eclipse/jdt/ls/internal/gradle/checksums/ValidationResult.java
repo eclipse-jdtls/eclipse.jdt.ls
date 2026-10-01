@@ -19,14 +19,20 @@ package org.eclipse.jdt.ls.internal.gradle.checksums;
  */
 public class ValidationResult {
 
+	public enum Status {
+		VALID,
+		INVALID,
+		UNVERIFIABLE
+	}
+
 	private String checksum;
 	private String wrapperJar;
-	private boolean valid;
+	private Status status;
 
-	public ValidationResult(String wrapperJar, String checksum, boolean valid) {
+	public ValidationResult(String wrapperJar, String checksum, Status status) {
 		this.wrapperJar = wrapperJar;
 		this.checksum = checksum;
-		this.valid = valid;
+		this.status = status;
 	}
 
 	public String getChecksum() {
@@ -34,7 +40,15 @@ public class ValidationResult {
 	}
 
 	public boolean isValid() {
-		return valid;
+		return status == Status.VALID;
+	}
+
+	public boolean isUnverifiable() {
+		return status == Status.UNVERIFIABLE;
+	}
+
+	public Status getStatus() {
+		return status;
 	}
 
 	public String getWrapperJar() {
@@ -42,4 +56,3 @@ public class ValidationResult {
 	}
 
 }
-

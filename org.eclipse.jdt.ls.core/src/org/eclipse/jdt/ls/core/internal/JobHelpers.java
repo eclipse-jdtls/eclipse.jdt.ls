@@ -226,10 +226,6 @@ public final class JobHelpers {
 		}
 	}
 
-	public static void waitForLoadingGradleVersionJob() {
-		waitForJobs(LoadingGradleVersionJobMatcher.INSTANCE, MAX_TIME_MILLIS);
-	}
-
 	public static void waitForBuildOffJobs(int maxTimeMillis) {
 		waitForJobs(BuildJobOffMatcher.INSTANCE, maxTimeMillis);
 	}
@@ -347,17 +343,6 @@ public final class JobHelpers {
 		@Override
 		public boolean matches(Job job) {
 			return job.belongsTo(BaseInitHandler.JAVA_LS_INITIALIZATION_JOBS);
-		}
-
-	}
-
-	static class LoadingGradleVersionJobMatcher implements IJobMatcher {
-
-		public static final IJobMatcher INSTANCE = new LoadingGradleVersionJobMatcher();
-
-		@Override
-		public boolean matches(Job job) {
-			return job.getClass().getName().matches("org.eclipse.buildship.core.internal.util.gradle.PublishedGradleVersionsWrapper.LoadVersionsJob");
 		}
 
 	}

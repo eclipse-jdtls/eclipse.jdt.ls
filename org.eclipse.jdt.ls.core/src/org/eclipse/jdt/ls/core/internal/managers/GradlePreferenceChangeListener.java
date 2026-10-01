@@ -20,12 +20,8 @@ import java.util.Objects;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.GradleBuild;
 import org.eclipse.buildship.core.GradleCore;
-import org.eclipse.buildship.core.GradleDistribution;
-import org.eclipse.buildship.core.WrapperGradleDistribution;
 import org.eclipse.buildship.core.internal.CorePlugin;
-import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.jobs.Job;
@@ -36,7 +32,6 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
-import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 
 /**
@@ -113,20 +108,8 @@ public class GradlePreferenceChangeListener implements IPreferencesChangeListene
 		String projectDir = project.getLocation().toFile().getAbsolutePath();
 		Path projectPath = Paths.get(projectDir);
 		if (gradleJavaHomeChanged || Files.exists(projectPath.resolve("gradlew"))) {
-			ProjectConfiguration configuration = CorePlugin.configurationManager().loadProjectConfiguration(project);
-			GradleDistribution distribution = configuration.getBuildConfiguration().getGradleDistribution();
-			if (gradleJavaHomeChanged || !(distribution instanceof WrapperGradleDistribution)) {
-				projectsManager.updateProject(project, true);
-			} else {
-				try {
-					ValidationResult result = new WrapperValidator().checkWrapper(projectDir);
-					if (!result.isValid()) {
-						projectsManager.updateProject(project, true);
-					}
-				} catch (CoreException e) {
-					JavaLanguageServerPlugin.logException(e.getMessage(), e);
-				}
-			}
+			// Validation now happens inside getGradleDistribution(), so just trigger re-import
+			projectsManager.updateProject(project, true);
 		}
 	}
 
