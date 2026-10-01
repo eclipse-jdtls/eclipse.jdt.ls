@@ -42,10 +42,13 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ServiceStatus;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
+import org.eclipse.buildship.core.internal.CorePlugin;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
 import org.eclipse.lsp4j.CodeLensOptions;
 import org.eclipse.lsp4j.DocumentFilter;
@@ -95,8 +98,20 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
-		JobHelpers.waitForJobs(JavaLanguageServerPlugin.INITIALIZE_AFTER_JOB, new NullProgressMonitor());
 		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
+		Preferences preferences = preferenceManager.getPreferences();
+		if (!"ondemand".equals(preferences.getImportMode())) {
+			JobHelpers.waitForJobs(JavaLanguageServerPlugin.INITIALIZE_AFTER_JOB, new NullProgressMonitor());
+			if (preferences.isImportGradleEnabled()) {
+				BundleUtils.startBundle(CorePlugin.PLUGIN_ID);
+			}
+			if (preferences.isImportMavenEnabled()) {
+				BundleUtils.startBundle(IMavenConstants.PLUGIN_ID);
+				long start = System.currentTimeMillis();
+				JobHelpers.waitForProjectRegistryRefreshJob();
+				JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
+			}
+		}
 
 		try {
 			@SuppressWarnings("unchecked")
@@ -273,6 +288,9 @@ final public class InitHandler extends BaseInitHandler {
 					JobHelpers.waitForRepositoryRegistryUpdateJob();
 					JavaLanguageServerPlugin.logInfo("RepositoryRegistryUpdateJob finished " + (System.currentTimeMillis() - start) + "ms");
 					resetBuildState = ProjectsManager.interruptAutoBuild();
+					if ("ondemand".equals(preferences.getImportMode())) {
+						OnDemandImportManager.getInstance().closeStaleProjects(roots, subMonitor);
+					}
 					projectsManager.initializeProjects(roots, subMonitor);
 					projectsManager.configureFilters(monitor);
 					JavaLanguageServerPlugin.logInfo("Workspace initialized in " + (System.currentTimeMillis() - start) + "ms");

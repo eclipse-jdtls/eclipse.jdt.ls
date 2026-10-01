@@ -45,6 +45,7 @@ import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.corext.codemanipulation.GetterSetterUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
@@ -75,6 +76,7 @@ public final class ReferencesHandler {
 
 	public List<Location> findReferences(ReferenceParams param, IProgressMonitor monitor) {
 		final List<Location> locations = new ArrayList<>();
+		OnDemandImportManager.getInstance().tryImportReverseDependencies(param.getTextDocument().getUri(), false, monitor);
 		ITypeRoot typeRoot = null;
 		try {
 			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());

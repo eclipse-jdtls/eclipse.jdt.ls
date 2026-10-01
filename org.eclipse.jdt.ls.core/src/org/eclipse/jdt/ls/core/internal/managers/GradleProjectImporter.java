@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -221,6 +223,10 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException {
 		if (!applies(monitor)) {
+			return;
+		}
+		if (isOnDemandMode()) {
+			setupOnDemand(monitor);
 			return;
 		}
 		List<Path> directoriesToImport = new ArrayList<>(this.directories);
@@ -756,7 +762,39 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	@Override
-	public void reset() {
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected AbstractSourceFolderIndex createSourceFolderIndex() {
+		Path workspacePath = rootFolder.toPath().toAbsolutePath().normalize();
+		GradleSourceFolderIndex index = new GradleSourceFolderIndex(workspacePath);
+		index.scan();
+		return index;
+	}
+
+	@Override
+	protected List<IProject> importModule(String moduleId, IProgressMonitor monitor) throws CoreException {
+		Path moduleDir = sourceFolderIndex.getModuleDir(moduleId);
+		if (moduleDir == null) {
+			return List.of();
+		}
+		IStatus status = startSynchronization(moduleDir, monitor);
+		if (!status.isOK()) {
+			return List.of();
+		}
+		List<IProject> result = new ArrayList<>();
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			if (project.getLocation() != null) {
+				Path projectPath = project.getLocation().toFile().toPath().normalize();
+				if (projectPath.equals(moduleDir.normalize())) {
+					result.add(project);
+					break;
+				}
+			}
+		}
+		return result;
 	}
 
 	public static boolean isFailedStatus(IStatus status) {
