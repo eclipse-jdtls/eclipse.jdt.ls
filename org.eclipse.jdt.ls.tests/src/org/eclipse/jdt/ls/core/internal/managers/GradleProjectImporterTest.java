@@ -884,6 +884,32 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		}
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/4393#top
+	@Test
+	public void testResources() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(true);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			assertNoErrors(project);
+			IJavaProject javaProject = JavaCore.create(project);
+			IClasspathEntry[] classpath = javaProject.getRawClasspath();
+			for (IClasspathEntry entry : classpath) {
+				if (entry.getEntryKind() == IClasspathEntry.CPE_SOURCE && "/app/src/main/resources".equals(entry.getPath().toString())) {
+					IPath[] exclusions = entry.getExclusionPatterns();
+					if (exclusions != null && exclusions.length > 0) {
+						fail("src/main/resources is excluded from classpath");
+					}
+				}
+			}
+		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
 	@Test
 	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
 		// Gradle 8.5 can fail to compile the init script with JDK 25 (ASM/Groovy classfile support).

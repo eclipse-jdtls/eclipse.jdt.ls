@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +56,8 @@ import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * @author snjeza
  *
@@ -65,6 +68,7 @@ public class ScalaGradleSupport {
 
 	// Gradle Tooling API removes several scala libraries and adds the Scala builder and container that aren't recognized by Java LS.
 	// See https://github.com/gradle/gradle/blob/b3c5d40e82439da4627b38b4ced93121e551b0eb/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/eclipse/EclipsePlugin.java#L375-L377
+	public static final Set<String> SCALA_LIBRARIES = ImmutableSet.of("scala-library", "scala-swing", "scala-dbc");
 	public void cleanScalaProjects(IProgressMonitor monitor) {
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		if (preferenceManager == null || !preferenceManager.getPreferences().isScalaSupportEnabled()) {
@@ -163,7 +167,6 @@ public class ScalaGradleSupport {
 				}
 			}
 		}
-		return;
 	}
 
 	private static void addDefaultScalaOutputPaths(IProject project, IProgressMonitor monitor) {
@@ -278,12 +281,36 @@ public class ScalaGradleSupport {
 			}
 		}
 		// @formatter:off
-		IClasspathEntry[] newClasspath = Stream.concat(Arrays
-			.stream(classpath), entries.stream())
-			.distinct()
-			.toArray(IClasspathEntry[]::new);
-		// @formatter:on
+        IClasspathEntry[] newClasspath = Stream.concat(Arrays
+                .stream(classpath), entries.stream())
+                .distinct()
+                .toArray(IClasspathEntry[]::new);
+        // @formatter:on
 		javaProject.setRawClasspath(newClasspath, monitor);
+	}
+
+	private static List<String> getMissingRawClasspathPaths(IJavaProject javaProject, List<String> paths) {
+		List<String> toAdd = new ArrayList<>();
+		// @formatter:off
+		List<String> scalaLibs = paths
+				.stream()
+				.filter(s -> SCALA_LIBRARIES.stream().anyMatch(s::contains))
+				.collect(Collectors.toList());
+		// @formatter:on
+		for (String path : scalaLibs) {
+			try {
+				Path classpathPath = new Path(path);
+				boolean exists = Arrays.stream(javaProject.getRawClasspath())
+						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
+						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
+				if (!exists) {
+					toAdd.add(path);
+				}
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException(e);
+			}
+		}
+		return toAdd;
 	}
 
 	private static List<String> getMissingPaths(IJavaProject javaProject, List<String> paths) {
@@ -307,24 +334,6 @@ public class ScalaGradleSupport {
 				IClasspathEntry[] entries = container.getClasspathEntries();
 				Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
 				exists |= optional.isPresent();
-				if (!exists) {
-					toAdd.add(path);
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException(e);
-			}
-		}
-		return toAdd;
-	}
-
-	private static List<String> getMissingRawClasspathPaths(IJavaProject javaProject, List<String> paths) {
-		List<String> toAdd = new ArrayList<>();
-		for (String path : paths) {
-			try {
-				Path classpathPath = new Path(path);
-				boolean exists = Arrays.stream(javaProject.getRawClasspath())
-						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
-						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
 				if (!exists) {
 					toAdd.add(path);
 				}
