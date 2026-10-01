@@ -35,7 +35,7 @@ public class StandardProjectManagerTest {
 		 * @param preferenceManager
 		 */
 		public StandardProjectsManagerDummy(PreferenceManager preferenceManager) {
-			super(preferenceManager);
+			super(preferenceManager, new TelemetryManager());
 		}
 
 		@Override
