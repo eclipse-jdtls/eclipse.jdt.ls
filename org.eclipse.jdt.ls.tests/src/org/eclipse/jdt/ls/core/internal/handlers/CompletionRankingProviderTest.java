@@ -110,7 +110,7 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 				"}\n");
 
 		requestCompletions(unit, "Integer.");
-		CompletionHandler handler = new CompletionHandler(JavaLanguageServerPlugin.getPreferencesManager());
+		CompletionHandlers handler = new CompletionHandlers(JavaLanguageServerPlugin.getPreferencesManager());
 
 		ArgumentCaptor<CompletionItem> argument = ArgumentCaptor.forClass(CompletionItem.class);
 		handler.onDidCompletionItemSelect(String.valueOf((new CompletionResponse()).getId() - 1), "0");

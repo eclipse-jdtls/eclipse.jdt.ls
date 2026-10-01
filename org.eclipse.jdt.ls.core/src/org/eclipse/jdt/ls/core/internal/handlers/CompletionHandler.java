@@ -13,16 +13,13 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.ProgressMonitorWrapper;
@@ -37,9 +34,6 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.core.DefaultWorkingCopyOwner;
-import org.eclipse.jdt.ls.core.contentassist.CompletionRanking;
-import org.eclipse.jdt.ls.core.contentassist.ICompletionRankingProvider;
-import org.eclipse.jdt.ls.core.internal.ExceptionFactory;
 import org.eclipse.jdt.ls.core.internal.JDTEnvironmentUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -51,7 +45,6 @@ import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
-import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemOptions;
@@ -60,10 +53,9 @@ import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.Position;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 
-public class CompletionHandler{
+public class CompletionHandler implements ICompletionHandler {
 
 	public final static CompletionOptions getDefaultCompletionOptions(PreferenceManager preferenceManager) {
 		CompletionOptions completionOptions = new CompletionOptions(Boolean.TRUE, List.of(".", "@", "#", "*", " "));
@@ -101,19 +93,15 @@ public class CompletionHandler{
 
 	};
 
-	// TODO: we can consider to cache more detailed context so that the information can also
-	// be used by features like inlay hint.
-	public static CompletionProposal selectedProposal;
-
 	private PreferenceManager manager;
 
 	public CompletionHandler(PreferenceManager manager) {
 		this.manager = manager;
 	}
 
-	public Either<List<CompletionItem>, CompletionList> completion(CompletionParams params,
+	@Override
+	public CompletionList completion(CompletionParams params,
 			IProgressMonitor monitor) {
-		long startTime = System.currentTimeMillis();
 		CompletionList $ = null;
 		try {
 			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
@@ -137,96 +125,7 @@ public class CompletionHandler{
 		} else {
 			JavaLanguageServerPlugin.logInfo("Completion request completed");
 		}
-		long executionTime = System.currentTimeMillis() - startTime;
-		String lastRequestId = null;
-		for (CompletionItem item : $.getItems()) {
-			String requestId = "";
-			String proposalId = "";
-			@SuppressWarnings("unchecked")
-			Map<String, String> data = (Map<String, String>) item.getData();
-			if (data != null) {
-				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
-				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
-			}
-			if (requestId.isEmpty() || proposalId.isEmpty()) {
-				continue;
-			}
-			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
-					requestId,
-					proposalId
-			)));
-
-			if (Objects.equals(requestId, lastRequestId)) {
-				continue;
-			}
-			lastRequestId = requestId;
-			int pId = Integer.parseInt(proposalId);
-			long rId = Long.parseLong(requestId);
-			CompletionResponse completionResponse = CompletionResponses.get(rId);
-			if (completionResponse == null || completionResponse.getProposals().size() <= pId) {
-				JavaLanguageServerPlugin.logError("Failed to save common data for completion items.");
-				continue;
-			}
-			completionResponse.setCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME, String.valueOf(executionTime));
-		}
-		return Either.forRight($);
-	}
-
-	@SuppressWarnings("unchecked")
-	public void onDidCompletionItemSelect(String requestId, String proposalId) throws CoreException {
-		triggerSignatureHelp();
-		if (proposalId.isEmpty() || requestId.isEmpty()) {
-			return;
-		}
-		int pId = Integer.parseInt(proposalId);
-		long rId = Long.parseLong(requestId);
-		CompletionResponse completionResponse = CompletionResponses.get(rId);
-		if (completionResponse == null || completionResponse.getItems().size() <= pId
-				|| completionResponse.getProposals().size() <= pId) {
-			throw ExceptionFactory.newException("Cannot get completion responses.");
-		}
-
-		CompletionProposal proposal = completionResponse.getProposals().get(pId);
-
-		// clear the cache if failed to get the selected proposal.
-		if (proposal == null) {
-			selectedProposal = null;
-		} else if (proposal.getKind() == CompletionProposal.METHOD_REF
-				|| proposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION
-				|| proposal.getKind() == CompletionProposal.METHOD_REF_WITH_CASTED_RECEIVER) {
-			selectedProposal = proposal;
-		}
-		CompletionItem item = completionResponse.getItems().get(pId);
-		if (item == null) {
-			throw ExceptionFactory.newException("Cannot get the completion item.");
-		}
-
-		// get the cached completion execution time and set it to the selected item in case that providers need it.
-		String executionTime = completionResponse.getCommonData(CompletionRanking.COMPLETION_EXECUTION_TIME);
-		if (executionTime != null) {
-			((Map<String, String>)item.getData()).put(CompletionRanking.COMPLETION_EXECUTION_TIME, executionTime);
-		}
-
-		Map<String, String> contributedData = completionResponse.getCompletionItemData(pId);
-		if (contributedData != null) {
-			((Map<String, String>)item.getData()).putAll(contributedData);
-		}
-
-		List<ICompletionRankingProvider> providers =
-				((CompletionContributionService) JavaLanguageServerPlugin.getCompletionContributionService()).getRankingProviders();
-		for (ICompletionRankingProvider provider : providers) {
-			provider.onDidCompletionItemSelect(item);
-		}
-	}
-
-	private void triggerSignatureHelp() {
-		if (manager.getPreferences().isSignatureHelpEnabled()) {
-			String onSelectedCommand = manager.getClientPreferences().getCompletionItemCommand();
-			if (!onSelectedCommand.isEmpty() && manager.getClientPreferences().isExecuteClientCommandSupport()) {
-				JavaLanguageServerPlugin.getInstance().getClientConnection()
-						.executeClientCommand(onSelectedCommand);
-			}
-		}
+		return $;
 	}
 
 	private CompletionList computeContentAssist(ICompilationUnit unit, CompletionParams params, IProgressMonitor monitor) throws JavaModelException {
