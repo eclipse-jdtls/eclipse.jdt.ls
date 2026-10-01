@@ -157,6 +157,10 @@
          id="importers"
          point="org.eclipse.jdt.ls.core.importers">
          <importer
+            id = "mavenEclipseEclipseProjectImporter"
+            order = "200"
+            class = "org.eclipse.jdt.ls.core.internal.managers.MavenEclipseEclipseProjectImporter"/>
+         <importer
             id = "gradleProjectImporter"
             order ="300"
             class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/>
@@ -176,6 +180,10 @@
    <extension
    		 id="buildSupport"
          point="org.eclipse.jdt.ls.core.buildSupport">
+         <buildSupport
+         	id="mavenEclipseEclipseBuildSupport"
+         	order="200"
+         	class="org.eclipse.jdt.ls.core.internal.managers.MavenEclipseEclipseBuildSupport" />
          <buildSupport
          	id="gradleBuildSupport"
          	order="300"
@@ -228,7 +236,7 @@
          id="org.eclipse.jdt.core.javanature">
       </requires-nature>
    </extension>
-   
+
    <extension point="org.eclipse.core.contenttype.contentTypes">
       <file-association
          content-type="org.eclipse.jdt.core.javaDerivedSource"

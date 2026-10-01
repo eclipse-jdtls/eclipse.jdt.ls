@@ -28,7 +28,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
-import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.junit.jupiter.api.Test;
 
 public class AbstractProjectImporterTest {
@@ -60,7 +60,7 @@ public class AbstractProjectImporterTest {
 		configurationPaths.add(FileUtil.toPath(new File("projects", "maven").toPath().resolve("multimodule3/module1/pom.xml").toUri()));
 		configurationPaths.add(FileUtil.toPath(new File("projects", "maven").toPath().resolve("multimodule3/module2/pom.xml").toUri()));
 		Collection<Path> paths = importer.findProjectPath(configurationPaths, Arrays.asList(
-			MavenProjectImporter.POM_FILE
+				IMavenConstants.POM_FILE_NAME
 		), true);
 
 		assertTrue(paths.size() == 3);

@@ -53,6 +53,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
+import org.eclipse.m2e.core.internal.IMavenConstants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -171,7 +172,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		String name = "salut";
 		IProject salut = importMavenProject(name);
 		assertEquals(0, jobSpy.updateProjectJobCalled, "New Project should not be updated");
-		File pom = salut.getFile(MavenProjectImporter.POM_FILE).getRawLocation().toFile();
+		File pom = salut.getFile(IMavenConstants.POM_FILE_NAME).getRawLocation().toFile();
 		pom.setLastModified(System.currentTimeMillis() + 1000);
 		importExistingMavenProject(name);
 		assertEquals(1, jobSpy.updateProjectJobCalled, "Changed Project should be updated");
