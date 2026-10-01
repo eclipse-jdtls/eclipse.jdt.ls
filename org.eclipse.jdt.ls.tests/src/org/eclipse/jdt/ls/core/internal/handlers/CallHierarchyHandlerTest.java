@@ -141,9 +141,10 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> call1Calls = getOutgoings(calls.get(1).getTo());
 		assertNotNull(call1Calls);
-		assertEquals(4, call1Calls.size());
+		assertEquals(2, call1Calls.size());
+		assertEquals(2, call1Calls.get(0).getFromRanges().size());
 		assertItem(call1Calls.get(0).getTo(), "Child()", Constructor, "org.sample.CallHierarchy$Child", false, 42);
-		assertItem(call1Calls.get(2).getTo(), "currentThread()" + JavaElementLabelsCore.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
+		assertItem(call1Calls.get(1).getTo(), "currentThread()" + JavaElementLabelsCore.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
 	}
 
 	@Test
@@ -179,7 +180,8 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
 		assertNotNull(calls);
-		assertEquals(2, calls.size());
+		assertEquals(1, calls.size());
+		assertEquals(2, calls.get(0).getFromRanges().size());
 		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 61);
 
 		List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());

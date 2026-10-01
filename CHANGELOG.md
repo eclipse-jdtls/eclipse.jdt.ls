@@ -1,5 +1,24 @@
 # Change Log
 
+# [1.62.0 (October 1st, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/154?closed=1)
+
+ * enhancement - Support Java 27. See [#3889](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3889).
+ * enhancement - Support sorting members alphabetically by reusing `DefaultJavaElementComparator` from core.manipulation. See [#3876](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3876).
+ * enhancement - Make decompiler cache size configurable via system property `jdt.ls.decompiler.cacheSize`. See [#3875](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3875).
+ * enhancement - Show a progress report on the client side when executing delegate commands. See [#1186](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1186).
+ * enhancement - Per-parameter signature help documentation. See [#1291](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1291).
+ * bug fix - Report an error when Maven projects share groupId/artifactId. See [#3893](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3893)
+ * bug fix - Allow parsing maps in `JSONUtility`. See [#3900](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3900).
+ * bug fix - Fix regression in handing `{@index }` Javadoc. See [#3878](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3878).
+ * bug fix - Fix overlapping edits in postfix completions. See [#3861](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3861).
+ * bug fix - Having a project with preview enabled but not set to the latest Java version silently fails to build. See [#3846](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3846).
+ * bug fix - JEP 511: Hovering over java.xml module import displays java.xml.crypto Javadoc. See [#3709](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3709).
+ * bug fix - Early log messages are not filtered. See [#3541](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3541).
+ * bug fix - Pass executable path as `argv[0]` to `os.execvp` in python launch script. See [#3901](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3901).
+ * bug fix - Outgoing call hierarchies sometimes duplicate the results. See [#3193](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3193).
+ * bug fix - Incorrect Javadoc rendering when inline @ tokens appear in block tags. See [#3631](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3631).
+ * build - Split lombok tests out to their own test suite. See [#3891](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3891).
+
 # [1.61.0 (September 3rd, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/153?closed=1)
 
  * enhancement - Add setting to make new classes package-private instead of public. See [#3865](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3865).

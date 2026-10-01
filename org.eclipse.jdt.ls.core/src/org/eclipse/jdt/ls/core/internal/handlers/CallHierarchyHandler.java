@@ -270,11 +270,9 @@ public class CallHierarchyHandler {
 			Collection<CallLocation> callLocations = call.getMethodCall().getCallLocations();
 			if (callLocations != null && !callLocations.isEmpty()) {
 				List<Range> ranges = toCallRanges(callLocations);
-				for (int i = 0; i < callLocations.size(); i++) {
-					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-					if (symbol != null) {
-						result.add(new CallHierarchyOutgoingCall(symbol, ranges));
-					}
+				CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+				if (symbol != null) {
+					result.add(new CallHierarchyOutgoingCall(symbol, ranges));
 				}
 			}
 			IMember member = call.getMember();
