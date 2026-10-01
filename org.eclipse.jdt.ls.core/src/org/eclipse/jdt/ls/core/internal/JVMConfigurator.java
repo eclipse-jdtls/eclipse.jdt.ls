@@ -348,4 +348,45 @@ public class JVMConfigurator implements IVMInstallChangedListener {
 		}
 	}
 
+	/**
+	 * Reset preview feature options that jdt.ls auto-enabled for an invisible project but that became
+	 * invalid after the bundled compiler advanced to a newer Java release (preview enabled at a
+	 * non-latest compliance fails the whole build). Only options that look auto-enabled by jdt.ls
+	 * (enabled, with the preview-report severity set to {@code ignore}) on a project whose compliance
+	 * is below {@link JavaCore#latestSupportedJavaVersion()} are reset; deliberate user settings,
+	 * managed projects, projects with a linked (user-owned) settings folder and projects on the
+	 * latest JDK are left untouched.
+	 *
+	 * @param javaProject the unmanaged project to reconcile.
+	 * @return {@code true} if the preview options were reset.
+	 */
+	public static boolean reconcilePreviewFeatureSettings(IJavaProject javaProject) {
+		if (javaProject == null || !ProjectUtils.isUnmanagedFolder(javaProject.getProject())) {
+			return false;
+		}
+		// A linked settings folder holds user-owned prefs on disk that jdt.ls never auto-enabled;
+		// don't reconcile (and don't write back into) those, mirroring configureJVMSettings.
+		if (ProjectUtils.isSettingsFolderLinked(javaProject.getProject())) {
+			return false;
+		}
+		if (!JavaCore.ENABLED.equals(javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, true))) {
+			return false;
+		}
+		// Only reconcile settings that were auto-enabled (and silenced) by jdt.ls, not ones a user set on purpose.
+		if (!JavaCore.IGNORE.equals(javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, true))) {
+			return false;
+		}
+		String compliance = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+		if (compliance == null || JavaCore.compareJavaVersions(compliance, JavaCore.latestSupportedJavaVersion()) >= 0) {
+			// The project is still on the latest supported version, enabling preview is valid.
+			return false;
+		}
+		Hashtable<String, String> defaultOptions = JavaCore.getDefaultOptions();
+		javaProject.setOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, defaultOptions.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES));
+		javaProject.setOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, defaultOptions.get(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES));
+		JavaLanguageServerPlugin.logInfo("Reset stale preview feature settings for project " + javaProject.getProject().getName()
+				+ " (compliance " + compliance + " is below the latest supported Java version " + JavaCore.latestSupportedJavaVersion() + ").");
+		return true;
+	}
+
 }
