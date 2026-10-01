@@ -131,6 +131,21 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void testListSourcePathsWithMavenModuleOutsideRoot() throws Exception {
+		importProjects("maven/outside-modules");
+		IProject project = WorkspaceHelper.getProject("parent");
+		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
+		manager.getPreferences().setRootPaths(Arrays.asList(project.getLocation()));
+
+		ListCommandResult listResult = (ListCommandResult) BuildPathCommand.listSourcePaths();
+		assertTrue(listResult.status);
+		SourcePath[] sourcePaths = listResult.data;
+		assertNotNull(sourcePaths);
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "module1".equals(p.projectName)));
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "shared".equals(p.projectName)));
+	}
+
+	@Test
 	public void testBuildPathOperationInGradleProject() throws Exception {
 		importProjects("gradle/simple-gradle");
 		IProject project = WorkspaceHelper.getProject("simple-gradle");
