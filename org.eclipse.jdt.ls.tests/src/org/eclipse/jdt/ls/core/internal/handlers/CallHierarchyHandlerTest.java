@@ -114,13 +114,11 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
 		assertNotNull(calls);
-		assertEquals(4, calls.size());
+		assertEquals(3, calls.size());
 		assertItem(calls.get(2).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 7);
-		assertItem(calls.get(3).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 10);
 		Range selectionRange = calls.get(2).getFrom().getSelectionRange();
 		assertEquals(new Range(new Position(7, 18), new Position(7, 30)), selectionRange);
-		selectionRange = calls.get(3).getFrom().getSelectionRange();
-		assertEquals(new Range(new Position(10, 18), new Position(10, 30)), selectionRange);
+		assertEquals(2, calls.get(2).getFromRanges().size());
 	}
 
 	@Test
@@ -164,7 +162,8 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
 		assertNotNull(call0Calls);
-		assertEquals(3, call0Calls.size());
+		assertEquals(1, call0Calls.size());
+		assertEquals(3, call0Calls.get(0).getFromRanges().size());
 		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "org.sample.CallHierarchyOther", false, 5);
 	}
 
