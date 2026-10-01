@@ -210,16 +210,15 @@ public class CallHierarchyHandler {
 		List<CallHierarchyIncomingCall> result = new ArrayList<>();
 		for (MethodWrapper call : calls) {
 			Collection<CallLocation> callLocations = call.getMethodCall().getCallLocations();
-			if (callLocations != null) {
-				for (CallLocation location : callLocations) {
-					IOpenable openable = getOpenable(location);
-					Range callRange = getRange(openable, location);
-					CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
-					if (symbol != null) {
-						symbol.setSelectionRange(callRange);
-						List<Range> ranges = toCallRanges(callLocations);
-						result.add(new CallHierarchyIncomingCall(symbol, ranges));
-					}
+			if (callLocations != null && !callLocations.isEmpty()) {
+				CallLocation firstLocation = callLocations.iterator().next();
+				IOpenable openable = getOpenable(firstLocation);
+				Range callRange = getRange(openable, firstLocation);
+				CallHierarchyItem symbol = toCallHierarchyItem(call.getMember());
+				if (symbol != null) {
+					symbol.setSelectionRange(callRange);
+					List<Range> ranges = toCallRanges(callLocations);
+					result.add(new CallHierarchyIncomingCall(symbol, ranges));
 				}
 			}
 			IMember member = call.getMember();
