@@ -430,16 +430,42 @@ public class ProjectCommand {
 		} else {
 			schedulingRule = javaProject.getSchedulingRule();
 		}
-		workspace.run((IWorkspaceRunnable) monitor -> {
-			String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
-			result[0] = new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
-		}, schedulingRule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+		try {
+			workspace.run((IWorkspaceRunnable) monitor -> {
+				String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
+				result[0] = new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
+			}, schedulingRule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+		} catch (CoreException e) {
+			// In on-demand mode, MavenRuntimeClasspathProvider may fail to
+			// resolve project references for dependencies not yet imported.
+			// Fall back to the compile classpath which correctly resolves
+			// these dependencies as jars from the local Maven repository.
+			JavaLanguageServerPlugin.logInfo("Runtime classpath resolution failed for "
+					+ javaProject.getElementName() + ", falling back to compile classpath: " + e.getMessage());
+			return getClasspathsFromCompileClasspath(javaProject);
+		}
 
 		if (result[0] != null) {
 			return result[0];
 		}
 
 		throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to get the classpaths."));
+	}
+
+	private static ClasspathResult getClasspathsFromCompileClasspath(IJavaProject javaProject) throws CoreException {
+		IClasspathEntry[] resolvedClasspath = javaProject.getResolvedClasspath(true);
+		List<String> classpathEntries = new ArrayList<>();
+		for (IClasspathEntry entry : resolvedClasspath) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY
+					|| entry.getEntryKind() == IClasspathEntry.CPE_PROJECT
+					|| entry.getEntryKind() == IClasspathEntry.CPE_VARIABLE) {
+				classpathEntries.add(entry.getPath().toOSString());
+			}
+		}
+		String outputPath = javaProject.getOutputLocation().toOSString();
+		classpathEntries.add(0, outputPath);
+		return new ClasspathResult(javaProject.getProject().getLocationURI(),
+				classpathEntries.toArray(new String[0]), new String[0]);
 	}
 
 	/**

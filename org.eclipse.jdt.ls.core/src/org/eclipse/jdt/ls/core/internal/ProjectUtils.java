@@ -67,6 +67,7 @@ import org.eclipse.jdt.ls.core.internal.managers.InternalBuildSupports;
 import org.eclipse.jdt.ls.core.internal.managers.MavenProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.UnmanagedFolderNature;
+import org.eclipse.jdt.ls.core.internal.preferences.ImportMode;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.m2e.core.internal.IMavenConstants;
@@ -146,16 +147,31 @@ public final class ProjectUtils {
 	}
 
 	public static IProject[] getAllProjects() {
-		return ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		// In on-demand mode, closed projects from a previous session remain in
+		// the workspace. Filter them out so callers don't crash on closed projects
+		// (e.g. IProject#findMaxProblemSeverity() throws on a closed project).
+		if (isOnDemandMode()) {
+			return Stream.of(projects)
+					.filter(IProject::isAccessible)
+					.toArray(IProject[]::new);
+		}
+		return projects;
 	}
 
 	public static IProject[] getAllProjects(boolean includeInvisibleProjects) {
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		IProject[] projects = getAllProjects();
 		if (includeInvisibleProjects) {
 			return projects;
 		} else {
 			return Stream.of(projects).filter(p -> isVisibleProject(p)).collect(Collectors.toList()).toArray(new IProject[0]);
 		}
+	}
+
+	private static boolean isOnDemandMode() {
+		PreferenceManager pm = JavaLanguageServerPlugin.getPreferencesManager();
+		return pm != null && pm.getPreferences() != null
+				&& pm.getPreferences().getImportMode() == ImportMode.ON_DEMAND;
 	}
 
 	public static IProject getProject(String projectName) {

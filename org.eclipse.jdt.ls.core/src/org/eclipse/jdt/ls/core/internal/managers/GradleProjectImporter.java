@@ -70,6 +70,8 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.EventNotification;
 import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.GradleModuleIndex;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -756,7 +758,40 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	@Override
-	public void reset() {
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected IModuleIndex createModuleIndex() {
+		GradleModuleIndex index = new GradleModuleIndex(getWorkspacePath());
+		index.scan();
+		return index;
+	}
+
+	/**
+	 * Imports a single Gradle module via Buildship.
+	 *
+	 * <p>Delegates to {@link #startSynchronization} which triggers
+	 * Buildship's project synchronization for the module directory.
+	 * After synchronization, looks up the resulting Eclipse project
+	 * by matching the location path.</p>
+	 */
+	@Override
+	protected List<IProject> importModule(Path modulePath, IProgressMonitor monitor) throws CoreException {
+		IStatus status = startSynchronization(modulePath, monitor);
+		if (!status.isOK()) {
+			return List.of();
+		}
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			if (project.getLocation() != null) {
+				Path projectPath = project.getLocation().toFile().toPath().normalize();
+				if (projectPath.equals(modulePath)) {
+					return List.of(project);
+				}
+			}
+		}
+		return List.of();
 	}
 
 	public static boolean isFailedStatus(IStatus status) {

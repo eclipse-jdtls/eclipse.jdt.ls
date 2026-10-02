@@ -45,6 +45,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.MavenModuleIndex;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -156,6 +158,51 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	@Override
 	public void reset() {
 		projectInfos = null;
+		super.reset();
+	}
+
+	@Override
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected IModuleIndex createModuleIndex() {
+		return new MavenModuleIndex(getWorkspacePath());
+	}
+
+	/**
+	 * Imports a single Maven module via M2E.
+	 *
+	 * <p>Uses M2E's {@link LocalProjectScanner} to discover the module and
+	 * {@link IProjectConfigurationManager#importProjects} to create the
+	 * Eclipse project with proper Maven nature and classpath.</p>
+	 */
+	@Override
+	protected List<IProject> importModule(java.nio.file.Path modulePath, IProgressMonitor monitor) throws CoreException {
+		File pomFile = modulePath.resolve(POM_FILE).toFile();
+		if (!pomFile.isFile()) {
+			return List.of();
+		}
+		try {
+			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+			LocalProjectScanner scanner = new LocalProjectScanner(
+					List.of(modulePath.toString()), false, modelManager);
+			scanner.run(monitor);
+			Set<MavenProjectInfo> infos = collectProjects(scanner.getProjects());
+			if (infos.isEmpty()) {
+				return List.of();
+			}
+			List<IMavenProjectImportResult> importResults = configurationManager.importProjects(
+					infos, importConfig, monitor);
+			return importResults.stream()
+					.map(IMavenProjectImportResult::getProject)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
+		} catch (InterruptedException e) {
+			throw new OperationCanceledException();
+		}
 	}
 
 	@Override

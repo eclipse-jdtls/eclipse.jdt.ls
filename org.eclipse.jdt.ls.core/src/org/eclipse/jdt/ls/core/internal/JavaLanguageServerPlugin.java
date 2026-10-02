@@ -192,12 +192,9 @@ public class JavaLanguageServerPlugin extends Plugin {
 					// https://github.com/redhat-developer/vscode-java/issues/3184
 					// start the m2e and buildship plugin before calling JavaCore.setOptions
 					// load maven plugin https://github.com/redhat-developer/vscode-java/issues/2088
-					// https://github.com/redhat-developer/vscode-java/issues/3904 moved from InitHandler.handleInitializationOptions()
+					// https://github.com/redhat-developer/vscode-java/issues/3904 waitForProjectRegistryRefreshJob is done in InitHandler.triggerInitialization()
 					BundleUtils.startBundle(CorePlugin.PLUGIN_ID);
 					BundleUtils.startBundle(IMavenConstants.PLUGIN_ID);
-					long start = System.currentTimeMillis();
-					JobHelpers.waitForProjectRegistryRefreshJob();
-					JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
 					JavaCore.initializeAfterLoad(monitor);
 				} catch (CoreException e) {
 					logException(e);
