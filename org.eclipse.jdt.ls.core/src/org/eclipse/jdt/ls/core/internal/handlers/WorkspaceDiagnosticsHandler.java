@@ -265,7 +265,8 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 			if (monitor != null && monitor.isCanceled()) {
 				throw new OperationCanceledException();
 			}
-			if (ProjectsManager.getDefaultProject().equals(project)) {
+			// In on-demand mode, closed projects are still in the workspace but not accessible.
+			if (ProjectsManager.getDefaultProject().equals(project) || !project.isAccessible()) {
 				continue;
 			}
 			IMarker[] allMarkers = project.findMarkers(null, true, IResource.DEPTH_INFINITE);
@@ -391,6 +392,9 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		Diagnostic d = new Diagnostic();
 		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
 		String message = marker.getAttribute(IMarker.MESSAGE, "");
+		if (message == null || message.isEmpty()) {
+			return null;
+		}
 		if (Messages.ProjectConfigurationUpdateRequired.equals(message)) {
 			message = PROJECT_CONFIGURATION_IS_NOT_UP_TO_DATE_WITH_POM_XML;
 		}
@@ -452,9 +456,13 @@ public final class WorkspaceDiagnosticsHandler implements IResourceChangeListene
 		if (marker == null || !marker.exists()) {
 			return null;
 		}
+		String message = marker.getAttribute(IMarker.MESSAGE, "");
+		if (message == null || message.isEmpty()) {
+			return null;
+		}
 		Diagnostic d = new Diagnostic();
 		d.setSource(JavaLanguageServerPlugin.SERVER_SOURCE_ID);
-		d.setMessage(marker.getAttribute(IMarker.MESSAGE, ""));
+		d.setMessage(message);
 		int problemId = marker.getAttribute(IJavaModelMarker.ID, 0);
 		d.setCode(String.valueOf(problemId));
 		d.setSeverity(convertSeverity(marker.getAttribute(IMarker.SEVERITY, -1)));
