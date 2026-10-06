@@ -35,6 +35,7 @@ import java.util.stream.Stream;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -73,6 +74,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jdt.ls.core.internal.preferences.ImportMode;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -430,16 +432,66 @@ public class ProjectCommand {
 		} else {
 			schedulingRule = javaProject.getSchedulingRule();
 		}
-		workspace.run((IWorkspaceRunnable) monitor -> {
-			String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
-			result[0] = new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
-		}, schedulingRule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+		try {
+			workspace.run((IWorkspaceRunnable) monitor -> {
+				String[][] paths = delegate.getClasspathAndModulepath(launchConfig);
+				result[0] = new ClasspathResult(javaProject.getProject().getLocationURI(), paths[0], paths[1]);
+			}, schedulingRule, IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+		} catch (CoreException e) {
+			if (JavaLanguageServerPlugin.getPreferencesManager() != null
+					&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences() != null
+					&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getImportMode() == ImportMode.ON_DEMAND) {
+				// In on-demand mode, MavenRuntimeClasspathProvider may fail to
+				// resolve project references for dependencies not yet imported.
+				// Fall back to the compile classpath which correctly resolves
+				// these dependencies as jars from the local Maven repository.
+				JavaLanguageServerPlugin.logInfo("Runtime classpath resolution failed for "
+						+ javaProject.getElementName() + ", falling back to compile classpath: " + e.getMessage());
+				return getClasspathsFromCompileClasspath(javaProject);
+			}
+			throw e;
+		}
 
 		if (result[0] != null) {
 			return result[0];
 		}
 
 		throw new CoreException(new Status(IStatus.ERROR, IConstants.PLUGIN_ID, "Failed to get the classpaths."));
+	}
+
+	private static ClasspathResult getClasspathsFromCompileClasspath(IJavaProject javaProject) throws CoreException {
+		IClasspathEntry[] resolvedClasspath = javaProject.getResolvedClasspath(true);
+		IProject project = javaProject.getProject();
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		List<String> classpathEntries = new ArrayList<>();
+		for (IClasspathEntry entry : resolvedClasspath) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY
+					|| entry.getEntryKind() == IClasspathEntry.CPE_VARIABLE) {
+				classpathEntries.add(entry.getPath().toOSString());
+			} else if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT) {
+				IProject refProject = root.getProject(entry.getPath().segment(0));
+				if (refProject != null && refProject.exists()) {
+					IJavaProject refJavaProject = JavaCore.create(refProject);
+					if (refJavaProject != null) {
+						IPath outputLocation = refJavaProject.getOutputLocation();
+						IContainer outputFolder = root.findMember(outputLocation) instanceof IContainer c ? c : null;
+						if (outputFolder != null && outputFolder.getLocation() != null) {
+							classpathEntries.add(outputFolder.getLocation().toOSString());
+							continue;
+						}
+					}
+				}
+				classpathEntries.add(entry.getPath().toOSString());
+			}
+		}
+		IPath outputLocation = javaProject.getOutputLocation();
+		IContainer outputFolder = root.findMember(outputLocation) instanceof IContainer c ? c : null;
+		String outputPath = outputFolder != null && outputFolder.getLocation() != null
+				? outputFolder.getLocation().toOSString()
+				: project.getLocation().append(outputLocation.removeFirstSegments(1)).toOSString();
+		classpathEntries.add(0, outputPath);
+		return new ClasspathResult(project.getLocationURI(),
+				classpathEntries.toArray(new String[0]), new String[0]);
 	}
 
 	/**
