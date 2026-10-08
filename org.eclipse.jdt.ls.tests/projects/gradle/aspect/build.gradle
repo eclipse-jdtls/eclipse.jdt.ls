@@ -1,5 +1,5 @@
 plugins {
-    id("io.freefair.aspectj") version "8.10.2"
+    id("io.freefair.aspectj") version "9.8.0"
 }
 
 apply plugin: 'java'
@@ -13,7 +13,7 @@ java {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
