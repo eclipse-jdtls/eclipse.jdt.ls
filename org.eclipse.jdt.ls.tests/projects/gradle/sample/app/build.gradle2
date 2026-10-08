@@ -12,15 +12,17 @@ plugins {
 }
 
 repositories {
-    // Use JCenter for resolving dependencies.
-    jcenter()
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
 }
 
 dependencies {
     implementation 'org.apache.commons:commons-lang3:3.11'
 }
 
-mainClassName = "sample.App"
+application {
+    mainClass = "sample.App"
+}
 
 tasks.named('test') {
     // Use junit platform for unit tests.
