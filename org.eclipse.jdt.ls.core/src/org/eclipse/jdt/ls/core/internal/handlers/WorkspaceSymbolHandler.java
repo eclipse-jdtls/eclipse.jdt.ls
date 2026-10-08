@@ -193,6 +193,9 @@ public class WorkspaceSymbolHandler {
 							location = SearchUtils.searchOtherSources(match.getType());
 						}
 						if (location == null) {
+							location = JDTUtils.findOnDemandSource(match.getType().getClassFile());
+						}
+						if (location == null) {
 							location = JDTUtils.toLocation(match.getType().getClassFile());
 						}
 					} else if (!match.getType().isBinary()) {

@@ -61,16 +61,22 @@ public abstract class BaseInitHandler {
 	}
 
 	public InitializeResult initialize(InitializeParams param) {
+		long t0 = System.currentTimeMillis();
 		var jdtlsInfo = getJdtLsInfo();
 		logInfo("Initializing " + jdtlsInfo.details());
 		InitializeResult result = new InitializeResult();
 		result.setServerInfo(jdtlsInfo.toServerInfo());
+		long t1 = System.currentTimeMillis();
 		handleInitializationOptions(param);
+		long t2 = System.currentTimeMillis();
 		registerCapabilities(result);
+		long t3 = System.currentTimeMillis();
 
 		// At the end of the InitHandler, trigger a job to import the workspace. This is used to ensure ServiceStatus notification
 		// is not sent before the initialize response. See the bug https://github.com/redhat-developer/vscode-java/issues/1056
 		triggerInitialization(preferenceManager.getPreferences().getRootPaths());
+		long t4 = System.currentTimeMillis();
+		logInfo("initialize timing: handleInitializationOptions=" + (t2 - t1) + "ms, registerCapabilities=" + (t3 - t2) + "ms, triggerInitialization=" + (t4 - t3) + "ms, total=" + (t4 - t0) + "ms");
 		return result;
 	}
 
