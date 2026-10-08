@@ -129,8 +129,7 @@ public class StandardProjectsManager extends ProjectsManager {
 			Either.forLeft("**/*.java"),
 			Either.forLeft("**/.project"),
 			Either.forLeft("**/.classpath"),
-			Either.forLeft("**/.settings/*.prefs"),
-			Either.forLeft("**/src/**")
+			Either.forLeft("**/.settings/*.prefs")
 	);
 	//@formatter:on
 
@@ -492,6 +491,8 @@ public class StandardProjectsManager extends ProjectsManager {
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
 				for (IProject project : projects) {
+					// add src directory, but only if it sits below project directory
+					patterns.add(Either.forRight(new RelativePattern(Either.forRight(project.getLocation().toFile().toURI().toString()), "**/src/**")));
 					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
 						continue;
 					}
