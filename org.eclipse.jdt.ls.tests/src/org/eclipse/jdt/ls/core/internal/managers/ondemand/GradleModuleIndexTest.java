@@ -80,6 +80,8 @@ public class GradleModuleIndexTest extends AbstractProjectsManagerBasedTest {
 		List<Path> first = index.resolveModulesToImport(modulePath);
 		assertEquals(1, first.size());
 
+		index.markImportComplete(modulePath);
+
 		List<Path> second = index.resolveModulesToImport(modulePath);
 		assertTrue(second.isEmpty());
 	}

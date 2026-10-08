@@ -52,6 +52,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -779,7 +780,14 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	 */
 	@Override
 	protected List<IProject> importModule(Path modulePath, IProgressMonitor monitor) throws CoreException {
-		// Use the Gradle root (where settings.gradle is) for synchronization.
+		// Record open projects before sync to identify side-effect siblings.
+		Set<String> previouslyOpen = new HashSet<>();
+		for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			if (project.isOpen()) {
+				previouslyOpen.add(project.getName());
+			}
+		}
+
 		// Buildship needs the root to find the Gradle wrapper and apply
 		// root build.gradle settings (e.g. subprojects { sourceCompatibility }).
 		Path gradleRoot = findGradleRoot(modulePath);
@@ -788,16 +796,22 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 		if (isFailedStatus(status)) {
 			return List.of();
 		}
+
+		// Close sibling projects created by root sync to preserve on-demand semantics.
 		Path normalizedModule = modulePath.toAbsolutePath().normalize();
+		IProject targetProject = null;
 		for (IProject project : ProjectUtils.getGradleProjects()) {
 			if (project.getLocation() != null) {
 				Path projectPath = project.getLocation().toFile().toPath().normalize();
 				if (projectPath.equals(normalizedModule)) {
-					return List.of(project);
+					targetProject = project;
+				} else if (!previouslyOpen.contains(project.getName())) {
+					project.close(monitor);
 				}
 			}
 		}
-		return List.of();
+
+		return targetProject != null ? List.of(targetProject) : List.of();
 	}
 
 	/**

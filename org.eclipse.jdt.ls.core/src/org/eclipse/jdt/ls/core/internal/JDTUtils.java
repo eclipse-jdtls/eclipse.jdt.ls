@@ -82,6 +82,7 @@ import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IScanner;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -134,6 +135,7 @@ import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Document;
@@ -747,6 +749,20 @@ public final class JDTUtils {
 	}
 
 	/**
+	 * Creates a location for a given java element.
+	 *
+	 * @param element the java element
+	 * @param resolveSource when {@code true}, resolves {@code .class} files
+	 *        to their workspace {@code .java} source via ECJ parsing without
+	 *        triggering a project import (used by navigation handlers)
+	 * @return location or null
+	 * @throws JavaModelException
+	 */
+	public static Location toLocation(IJavaElement element, boolean resolveSource) throws JavaModelException {
+		return toLocation(element, LocationType.NAME_RANGE, resolveSource);
+	}
+
+	/**
 	 * Creates a location for a given java element. Unlike {@link #toLocation} this
 	 * method can be called to return with a range that contains surrounding
 	 * comments (method body), not just the name of the Java element. Element can be
@@ -758,10 +774,46 @@ public final class JDTUtils {
 	 * @throws JavaModelException
 	 */
 	public static Location toLocation(IJavaElement element, LocationType type) throws JavaModelException {
+		return toLocation(element, type, false);
+	}
+
+	/**
+	 * Creates a location for a given java element.
+	 *
+	 * @param element the java element
+	 * @param type the range type
+	 * @param resolveSource when {@code true}, resolves {@code .class} files
+	 *        to their workspace {@code .java} source via ECJ parsing without
+	 *        triggering a project import; the actual import happens later
+	 *        via {@code textDocument/didOpen} when the editor opens the file
+	 * @return location or null
+	 * @throws JavaModelException
+	 */
+	public static Location toLocation(IJavaElement element, LocationType type, boolean resolveSource) throws JavaModelException {
 		ICompilationUnit unit = (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
 		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
 		if (unit == null && cf == null) {
 			return null;
+		}
+		if (resolveSource && unit == null && cf != null) {
+			OnDemandImportManager odm = JavaLanguageServerPlugin.getOnDemandImportManager();
+			if (odm != null && odm.isActive()) {
+				String sourceUri = odm.findSourceForClassFile(cf);
+				if (sourceUri != null) {
+					ICompilationUnit cu = resolveCompilationUnit(sourceUri);
+					if (cu != null) {
+						IJavaElement[] matched = cu.findElements(element);
+						if (matched != null && matched.length > 0) {
+							element = matched[0];
+						}
+						unit = cu;
+						cf = null;
+					} else {
+						Range range = resolveElementRange(sourceUri, element);
+						return new Location(ResourceUtils.toClientUri(sourceUri), range);
+					}
+				}
+			}
 		}
 		if (element instanceof ISourceReference) {
 			ISourceRange nameRange = type.getRange(element);
@@ -854,6 +906,205 @@ public final class JDTUtils {
 	 */
 	public static Location toLocation(IClassFile classFile) throws JavaModelException{
 		return toLocation(classFile, 0, 0);
+	}
+
+	/**
+	 * Finds the workspace source file for a class file in on-demand mode.
+	 *
+	 * <p>Parses the source with ECJ to resolve the type declaration range.
+	 * The actual project import happens later via {@code textDocument/didOpen}
+	 * when VS Code opens the file.</p>
+	 *
+	 * @param classFile the class file to resolve
+	 * @return location to the source file with accurate range, or {@code null} if not found
+	 */
+	public static Location findOnDemandSource(IClassFile classFile) {
+		return findOnDemandSource(classFile, true);
+	}
+
+	/**
+	 * Finds the workspace source file for a class file in on-demand mode.
+	 *
+	 * @param classFile the class file to resolve
+	 * @param resolveRange when {@code true}, parses the source with ECJ to
+	 *        compute a precise type-declaration range (used by navigation
+	 *        handlers); when {@code false}, returns a default (0,0) range
+	 *        to avoid expensive parsing (used by workspace-symbol search
+	 *        where the range is resolved later via {@code resolveWorkspaceSymbol})
+	 * @return location to the source file, or {@code null} if not found
+	 */
+	public static Location findOnDemandSource(IClassFile classFile, boolean resolveRange) {
+		OnDemandImportManager odm = JavaLanguageServerPlugin.getOnDemandImportManager();
+		if (odm == null || !odm.isActive()) {
+			return null;
+		}
+		String sourceUri = odm.findSourceForClassFile(classFile);
+		if (sourceUri == null) {
+			return null;
+		}
+		Range range = resolveRange
+				? resolveTypeRange(sourceUri, classFile.getType().getElementName())
+				: newRange();
+		return new Location(ResourceUtils.toClientUri(sourceUri), range);
+	}
+
+	/**
+	 * Parses the source file at the given URI with ECJ and returns the range
+	 * of the type declaration matching {@code typeName}.
+	 *
+	 * <p>The visitor searches recursively through all type declarations
+	 * (classes, enums, annotation types) so that nested types such as
+	 * {@code Outer$Inner} are resolved correctly — not just top-level types.</p>
+	 *
+	 * <h3>Use cases</h3>
+	 * <ul>
+	 *   <li><b>Top-level type</b> — {@code typeName = "MyService"},
+	 *       matched directly from {@code cu.types()}</li>
+	 *   <li><b>Nested type</b> — {@code typeName = "Inner"} (from class file
+	 *       {@code Outer$Inner.class}), the visitor descends into {@code Outer}
+	 *       and matches {@code Inner} inside it</li>
+	 * </ul>
+	 *
+	 * @param sourceUri the file URI of the {@code .java} source
+	 * @param typeName the simple name of the type to locate
+	 * @return the range covering the type's name, or a default (0,0) range
+	 *         if the type cannot be found or parsing fails
+	 */
+	private static Range resolveTypeRange(String sourceUri, String typeName) {
+		try {
+			CompilationUnit cu = parseSource(sourceUri);
+			Range[] result = new Range[1];
+			cu.accept(new ASTVisitor() {
+				@Override
+				public boolean visit(org.eclipse.jdt.core.dom.TypeDeclaration node) {
+					return checkType(node);
+				}
+
+				@Override
+				public boolean visit(org.eclipse.jdt.core.dom.EnumDeclaration node) {
+					return checkType(node);
+				}
+
+				@Override
+				public boolean visit(org.eclipse.jdt.core.dom.AnnotationTypeDeclaration node) {
+					return checkType(node);
+				}
+
+				private boolean checkType(AbstractTypeDeclaration node) {
+					if (result[0] != null) {
+						return false;
+					}
+					if (typeName.equals(node.getName().getIdentifier())) {
+						nameRange(result, cu, node.getName());
+						return false;
+					}
+					return true;
+				}
+			});
+			if (result[0] != null) {
+				return result[0];
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Failed to resolve type range", e);
+		}
+		return newRange();
+	}
+
+	/**
+	 * Parses the source file at the given URI with ECJ and returns the range
+	 * of the element declaration (type, method, or field).
+	 *
+	 * <p>Methods are matched by name and parameter count; fields by name.
+	 * If the specific member cannot be found, falls back to the declaring
+	 * type range.</p>
+	 *
+	 * @param sourceUri the file URI of the {@code .java} source
+	 * @param element the Java element to locate
+	 * @return the range covering the element's name, or a default (0,0) range
+	 *         if the element cannot be found or parsing fails
+	 */
+	private static Range resolveElementRange(String sourceUri, IJavaElement element) {
+		if (element instanceof IType type) {
+			return resolveTypeRange(sourceUri, type.getElementName());
+		}
+		try {
+			CompilationUnit cu = parseSource(sourceUri);
+			Range[] result = new Range[1];
+
+			if (element instanceof IMethod method) {
+				String methodName = method.getElementName();
+				int paramCount = method.getParameterTypes().length;
+				cu.accept(new ASTVisitor() {
+					@Override
+					public boolean visit(MethodDeclaration node) {
+						if (result[0] != null) {
+							return false;
+						}
+						if (methodName.equals(node.getName().getIdentifier())
+								&& node.parameters().size() == paramCount) {
+							nameRange(result, cu, node.getName());
+							return false;
+						}
+						return true;
+					}
+				});
+			} else if (element instanceof IField field) {
+				String fieldName = field.getElementName();
+				cu.accept(new ASTVisitor() {
+					@Override
+					public boolean visit(VariableDeclarationFragment node) {
+						if (result[0] != null) {
+							return false;
+						}
+						if (fieldName.equals(node.getName().getIdentifier())) {
+							nameRange(result, cu, node.getName());
+							return false;
+						}
+						return true;
+					}
+
+					@Override
+					public boolean visit(org.eclipse.jdt.core.dom.EnumConstantDeclaration node) {
+						if (result[0] != null) {
+							return false;
+						}
+						if (fieldName.equals(node.getName().getIdentifier())) {
+							nameRange(result, cu, node.getName());
+							return false;
+						}
+						return true;
+					}
+				});
+			}
+
+			if (result[0] != null) {
+				return result[0];
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Failed to resolve element range", e);
+		}
+
+		if (element instanceof IMember member && member.getDeclaringType() != null) {
+			return resolveTypeRange(sourceUri, member.getDeclaringType().getElementName());
+		}
+		return newRange();
+	}
+
+	private static CompilationUnit parseSource(String sourceUri) throws Exception {
+		java.nio.file.Path path = Paths.get(new URI(sourceUri));
+		char[] source = Files.readString(path).toCharArray();
+		ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
+		parser.setSource(source);
+		parser.setIgnoreMethodBodies(true);
+		return (CompilationUnit) parser.createAST(null);
+	}
+
+	private static void nameRange(Range[] result, CompilationUnit cu, SimpleName name) {
+		int start = name.getStartPosition();
+		int end = start + name.getLength();
+		result[0] = new Range(
+				new Position(cu.getLineNumber(start) - 1, cu.getColumnNumber(start)),
+				new Position(cu.getLineNumber(end) - 1, cu.getColumnNumber(end)));
 	}
 
 	/**

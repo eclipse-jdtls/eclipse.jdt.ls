@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.managers;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.ModuleInfo;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.ModuleScanner;
 import org.eclipse.jdt.ls.core.internal.preferences.IPreferencesChangeListener;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Diagnostic;
@@ -822,6 +825,17 @@ public class GradleBuildSupport implements IBuildSupport {
 			}
 		}
 		return null;
+	}
+
+	private static final String BUILD_GRADLE = "build.gradle";
+	private static final String BUILD_GRADLE_KTS = "build.gradle.kts";
+
+	@Override
+	public ModuleInfo scanModule(java.nio.file.Path dir) {
+		if (!Files.isRegularFile(dir.resolve(BUILD_GRADLE)) && !Files.isRegularFile(dir.resolve(BUILD_GRADLE_KTS))) {
+			return null;
+		}
+		return new ModuleInfo(dir.toAbsolutePath().normalize(), dir.getFileName().toString(), ModuleScanner.detectSourceFolders(dir));
 	}
 
 }

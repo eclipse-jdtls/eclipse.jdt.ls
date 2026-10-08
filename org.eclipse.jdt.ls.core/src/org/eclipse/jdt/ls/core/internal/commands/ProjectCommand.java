@@ -73,6 +73,7 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ImportMode;
 import org.eclipse.lsp4j.Location;
@@ -644,6 +645,16 @@ public class ProjectCommand {
 	public static SymbolInformation resolveWorkspaceSymbol(SymbolInformation request) {
 		ITypeRoot unit = JDTUtils.resolveTypeRoot(request.getLocation().getUri());
 		if (unit == null || !unit.exists()) {
+			OnDemandImportManager odm = JavaLanguageServerPlugin.getOnDemandImportManager();
+			if (odm != null && odm.isActive()) {
+				// In on-demand mode the source file's project is not yet imported,
+				// so resolveTypeRoot returns null.  Return the request as-is with
+				// its file:// URI and default (0,0) range.  When vscode-java opens
+				// the file, didOpen triggers the on-demand import; vscode-java then
+				// calls resolveWorkspaceSymbol again and this time the compilation
+				// unit resolves, giving the precise range below.
+				return request;
+			}
 			return null;
 		}
 		Location location = request.getLocation();

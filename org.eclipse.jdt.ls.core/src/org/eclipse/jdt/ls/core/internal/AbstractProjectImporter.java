@@ -176,6 +176,7 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 				IProject reopened = tryReopenClosedProject(moduleDir, subMonitor.split(1));
 				if (reopened != null) {
 					result.add(reopened);
+					index.markImportComplete(moduleDir);
 				} else {
 					// ex: first time ever → full M2E import of /workspace/myapp/core/pom.xml
 					List<IProject> imported = importModule(moduleDir, subMonitor.split(1));
@@ -183,6 +184,7 @@ public abstract class AbstractProjectImporter implements IProjectImporter {
 						index.markNotImported(moduleDir);
 					} else {
 						result.addAll(imported);
+						index.markImportComplete(moduleDir);
 					}
 				}
 			} catch (CoreException e) {

@@ -20,15 +20,21 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.ls.core.internal.EventNotification;
 import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IProjectImporter;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.DocumentLifeCycleHandler;
@@ -67,6 +73,14 @@ public class OnDemandImportManager {
 	 */
 	private final List<IProjectImporter> importers = new ArrayList<>();
 
+	private final ModuleScanner moduleScanner = new ModuleScanner();
+
+	private static final List<IClassFileSourceStrategy> STRATEGIES = List.of(
+			new ScannedModulesStrategy(),
+			new SourceAttachmentStrategy(),
+			new JarPathStrategy()
+	);
+
 	private Collection<IPath> rootPaths;
 
 	private volatile boolean active;
@@ -103,6 +117,21 @@ public class OnDemandImportManager {
 		JavaLanguageServerPlugin.logInfo("On-demand mode initialized: "
 				+ importers.size() + " importer(s) registered for "
 				+ rootPaths.size() + " root path(s)");
+
+		// Start background scan of all workspace modules for "Go to Definition" support
+		for (IPath rootPath : rootPaths) {
+			Job scanJob = Job.create("Scan workspace modules", monitor -> {
+				try {
+					moduleScanner.scan(rootPath.toFile().toPath());
+				} catch (RuntimeException e) {
+					JavaLanguageServerPlugin.logException("Failed to scan workspace modules", e);
+				}
+				return Status.OK_STATUS;
+			});
+			scanJob.setPriority(Job.LONG);
+			scanJob.setSystem(true);
+			scanJob.schedule();
+		}
 	}
 
 	/**
@@ -110,6 +139,42 @@ public class OnDemandImportManager {
 	 */
 	public boolean isActive() {
 		return active;
+	}
+
+	// ── Source resolution ─────────────────────────────────────────────────
+
+	/**
+	 * Finds the workspace source file for the given class file without importing.
+	 *
+	 * <p>Used by workspace symbol search (Ctrl+T) to return source locations
+	 * instead of decompiled class locations. The actual import happens later
+	 * via {@code textDocument/didOpen} when the user navigates to the result.</p>
+	 *
+	 * @param classFile the class file to resolve
+	 * @return the source file URI, or {@code null} if not found in workspace
+	 */
+	public String findSourceForClassFile(IClassFile classFile) {
+		if (!active) {
+			return null;
+		}
+		try {
+			IPackageFragment pkg = (IPackageFragment) classFile.getParent();
+			String pkgPath = pkg.getElementName().replace('.', '/');
+			String cfName = classFile.getElementName();
+			int dollar = cfName.indexOf('$');
+			String sourceName = (dollar > 0 ? cfName.substring(0, dollar) : cfName.replace(".class", "")) + ".java";
+			String relativePath = pkgPath.isEmpty() ? sourceName : pkgPath + "/" + sourceName;
+
+			for (IClassFileSourceStrategy strategy : STRATEGIES) {
+				Path sourceFile = strategy.findSource(classFile, relativePath, moduleScanner);
+				if (sourceFile != null) {
+					return sourceFile.toUri().toString();
+				}
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Failed to find source for class file", e);
+		}
+		return null;
 	}
 
 	// ── On-demand import ────────────────────────────────────────────────
@@ -146,7 +211,11 @@ public class OnDemandImportManager {
 				JavaLanguageServerPlugin.logException("On-demand import failed for " + uri, e);
 			}
 		}
-		// No importer handled the file (e.g. file outside any build system)
+		// A concurrent import may have already handled this file's module.
+		IFile file = JDTUtils.findFile(uri);
+		if (file != null && file.getProject().isOpen()) {
+			return true;
+		}
 		return false;
 	}
 

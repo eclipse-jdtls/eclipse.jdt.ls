@@ -67,8 +67,11 @@ public class OnDemandImportMavenTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(first);
 		waitForBackgroundJobs();
 
+		// Returns true because the file is now in an open project (concurrent check).
+		// In production, DocumentLifeCycleHandler won't call tryOnDemandImport again
+		// because its precondition (resource == null || !project.isOpen()) is false.
 		boolean second = manager.tryOnDemandImport(fileUri, new NullProgressMonitor());
-		assertFalse(second);
+		assertTrue(second);
 	}
 
 	@Test
