@@ -90,15 +90,19 @@ public class NavigateToTypeDefinitionHandler {
 								IType type = compilationUnit.getJavaProject().findType(fqn);
 								if (type.getClassFile() != null) {
 									String uriString = JDTUtils.toUri(type.getClassFile());
-									Location location = JDTUtils.toLocation(element);
+									Location location = JDTUtils.toLocation(element, true);
 									location.setUri(uriString);
 									return location;
 								}
 								return null;
 							}
-							return JDTUtils.toLocation(element);
+							return JDTUtils.toLocation(element, true);
 						}
 						if (element instanceof IMember member && member.getClassFile() != null) {
+							Location onDemandLocation = JDTUtils.findOnDemandSource(member.getClassFile());
+							if (onDemandLocation != null) {
+								return onDemandLocation;
+							}
 							Location location = SearchUtils.searchOtherSources(member);
 							if (location != null) {
 								return location;

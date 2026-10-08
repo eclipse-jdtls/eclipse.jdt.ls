@@ -58,6 +58,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ISourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.MavenSourceDownloader;
@@ -508,6 +509,13 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
+	}
+
+	public static OnDemandImportManager getOnDemandImportManager() {
+		if (pluginInstance != null && pluginInstance.getProtocol() instanceof JDTLanguageServer server) {
+			return server.getOnDemandImportManager();
+		}
+		return null;
 	}
 
 	public static DigestStore getDigestStore() {
