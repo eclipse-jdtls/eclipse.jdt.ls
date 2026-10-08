@@ -497,7 +497,7 @@ public class StandardProjectsManager extends ProjectsManager {
 					if (project.getLocation() instanceof IPath location) {
 						String path = location.toPortableString();
 						if (location.getDevice() != null) {
-							path.replace(location.getDevice(), "");
+							path = path.replace(location.getDevice(), "");
 						}
 						if (!path.endsWith("/")) {
 							path += "/";
