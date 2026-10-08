@@ -495,7 +495,14 @@ public class StandardProjectsManager extends ProjectsManager {
 				for (IProject project : projects) {
 					// add src directory, but only if it sits below project directory
 					if (project.getLocation() instanceof IPath location) {
-						srcPatterns.add((Either.forLeft(location.toFile().toURI().toString() + "**/src/**")));
+						String path = location.toPortableString();
+						if (location.getDevice() != null) {
+							path.replace(location.getDevice(), "");
+						}
+						if (!path.endsWith("/")) {
+							path += "/";
+						}
+						srcPatterns.add((Either.forLeft("**" + path + "**/src/**")));
 					} else {
 						missingProjectLocation = true;
 					}
