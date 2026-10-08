@@ -12,12 +12,21 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -32,6 +41,8 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.ModuleInfo;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.ModuleScanner;
 import org.eclipse.m2e.core.MavenPlugin;
 import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
@@ -159,6 +170,94 @@ public class MavenBuildSupport implements IBuildSupport {
 	@Override
 	public String unsupportedOperationMessage() {
 		return UNSUPPORTED_ON_MAVEN;
+	}
+
+	private static final String POM_XML = "pom.xml";
+
+	@Override
+	public ModuleInfo scanModule(Path dir) {
+		Path pomPath = dir.resolve(POM_XML);
+		if (!Files.isRegularFile(pomPath)) {
+			return null;
+		}
+		List<Path> sourceFolders = ModuleScanner.detectSourceFolders(dir);
+		PomHandler handler = new PomHandler();
+		try {
+			SAXParserFactory factory = SAXParserFactory.newInstance();
+			SAXParser parser = factory.newSAXParser();
+			parser.parse(pomPath.toFile(), handler);
+		} catch (Exception e) {
+			// ignore
+		}
+		String artifactId = handler.artifactId;
+		if (artifactId == null) {
+			artifactId = dir.getFileName().toString();
+		}
+		if (handler.sourceDirectory != null) {
+			ModuleScanner.addIfDirectory(dir, handler.sourceDirectory, sourceFolders);
+		}
+		if (handler.testSourceDirectory != null) {
+			ModuleScanner.addIfDirectory(dir, handler.testSourceDirectory, sourceFolders);
+		}
+		return new ModuleInfo(dir.toAbsolutePath().normalize(), artifactId, sourceFolders);
+	}
+
+	private static class PomHandler extends DefaultHandler {
+
+		String artifactId;
+		String sourceDirectory;
+		String testSourceDirectory;
+
+		private int depth;
+		private boolean inParent;
+		private String currentElement;
+		private StringBuilder content;
+
+		@Override
+		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+			depth++;
+			currentElement = qName;
+			content = new StringBuilder();
+			if ("parent".equals(qName)) {
+				// /project/parent — track to skip /project/parent/artifactId
+				inParent = true;
+			}
+		}
+
+		@Override
+		public void endElement(String uri, String localName, String qName) throws SAXException {
+			String text = content.toString().trim();
+			if ("parent".equals(qName)) {
+				// leaving /project/parent
+				inParent = false;
+			} else if ("artifactId".equals(qName) && !inParent && artifactId == null && depth == 2) {
+				// /project/artifactId (depth 2) — skip /project/parent/artifactId (depth 3)
+				artifactId = text;
+			} else if ("sourceDirectory".equals(qName)) {
+				// /project/build/sourceDirectory — unique in pom.xml, no depth guard needed
+				sourceDirectory = text;
+			} else if ("testSourceDirectory".equals(qName)) {
+				// /project/build/testSourceDirectory — unique in pom.xml, no depth guard needed
+				testSourceDirectory = text;
+			}
+			depth--;
+			currentElement = null;
+			// All three found — stop parsing early
+			if (artifactId != null && sourceDirectory != null && testSourceDirectory != null) {
+				throw new DoneException();
+			}
+		}
+
+		@Override
+		public void characters(char[] ch, int start, int length) throws SAXException {
+			if (currentElement != null) {
+				content.append(ch, start, length);
+			}
+		}
+
+		private static class DoneException extends SAXException {
+			private static final long serialVersionUID = 1L;
+		}
 	}
 
 }

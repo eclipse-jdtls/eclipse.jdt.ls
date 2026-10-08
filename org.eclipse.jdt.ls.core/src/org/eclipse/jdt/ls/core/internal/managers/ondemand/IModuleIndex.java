@@ -118,11 +118,26 @@ public interface IModuleIndex {
 	 *
 	 * <p>Called when an import attempt fails or is cancelled, allowing
 	 * the next {@code didOpen} for a file in this module to trigger
-	 * a fresh import.</p>
+	 * a fresh import. Also wakes any threads waiting on this module's
+	 * in-progress import.</p>
 	 *
 	 * @param modulePath the module directory to un-mark
 	 */
 	void markNotImported(Path modulePath);
+
+	/**
+	 * Signals that an in-progress import for the given module completed
+	 * successfully.
+	 *
+	 * <p>Wakes any threads blocked in {@link #resolveModulesToImport(Path)}
+	 * waiting for this module's import to finish. The module remains in
+	 * the imported set.</p>
+	 *
+	 * @param modulePath the module directory whose import completed
+	 */
+	default void markImportComplete(Path modulePath) {
+		// no-op by default
+	}
 
 	/**
 	 * Returns the number of known modules (discovered lazily).

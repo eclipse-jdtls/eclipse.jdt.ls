@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.ModuleInfo;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
 /**
@@ -183,6 +185,21 @@ public interface IBuildSupport {
 	 * @param monitor
 	 */
 	default void compile(IResource resource, IProgressMonitor monitor) {
+	}
+
+	/**
+	 * Scans a directory for a build file recognized by this build system
+	 * and returns module metadata if found.
+	 *
+	 * <p>Called during the background workspace scan. Implementations should
+	 * be lightweight (no full XML/Groovy parsing).</p>
+	 *
+	 * @param dir the directory to check
+	 * @return module info, or {@code null} if this directory is not a module
+	 *         for this build system
+	 */
+	default ModuleInfo scanModule(Path dir) {
+		return null;
 	}
 
 }

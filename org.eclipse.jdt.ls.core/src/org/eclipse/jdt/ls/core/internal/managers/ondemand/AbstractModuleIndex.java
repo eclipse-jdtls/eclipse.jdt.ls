@@ -19,6 +19,9 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base implementation of {@link IModuleIndex} with lazy module discovery.
@@ -52,6 +55,15 @@ public abstract class AbstractModuleIndex implements IModuleIndex {
 	protected final Set<Path> importedModules = Collections.synchronizedSet(new LinkedHashSet<>());
 
 	/**
+	 * Tracks modules whose import is in progress. The first caller creates a
+	 * future; concurrent callers wait on it. Completed and removed by
+	 * {@link #markImportComplete(Path)} or {@link #markNotImported(Path)}.
+	 */
+	private final ConcurrentHashMap<Path, CompletableFuture<Boolean>> inProgressImports = new ConcurrentHashMap<>();
+
+	private final Object importLock = new Object();
+
+	/**
 	 * The workspace root directory. Used to ensure walk-up discovery stays
 	 * within the workspace boundaries.
 	 */
@@ -63,7 +75,7 @@ public abstract class AbstractModuleIndex implements IModuleIndex {
 	 * @param workspacePath the workspace root directory
 	 */
 	protected AbstractModuleIndex(Path workspacePath) {
-		this.workspacePath = workspacePath;
+		this.workspacePath = workspacePath.toAbsolutePath().normalize();
 	}
 
 	@Override
@@ -105,7 +117,6 @@ public abstract class AbstractModuleIndex implements IModuleIndex {
 
 	@Override
 	public List<Path> resolveModulesToImport(Path modulePath) {
-		// ex: modulePath = /workspace/module-a
 		if (modulePath == null) {
 			return Collections.emptyList();
 		}
@@ -113,14 +124,33 @@ public abstract class AbstractModuleIndex implements IModuleIndex {
 		if (!knownModules.contains(normalized)) {
 			return Collections.emptyList();
 		}
-		// Atomic add: first call returns true → import needed
-		// ex: importedModules.add(/workspace/module-a) → true
-		// Second call for same module returns false → already imported
-		// ex: importedModules.add(/workspace/module-a) → false
-		if (!importedModules.add(normalized)) {
+
+		CompletableFuture<Boolean> pending = null;
+		synchronized (importLock) {
+			if (importedModules.contains(normalized)) {
+				// Already imported or in-progress — check which
+				pending = inProgressImports.get(normalized);
+				if (pending == null) {
+					// Fully imported, nothing to wait for
+					return Collections.emptyList();
+				}
+				// Fall through to wait on the in-progress import
+			} else {
+				// First caller: mark as importing and create a future for others to wait on
+				importedModules.add(normalized);
+				inProgressImports.put(normalized, new CompletableFuture<>());
+			}
+		}
+
+		if (pending != null) {
+			try {
+				pending.get(2, TimeUnit.MINUTES);
+			} catch (Exception e) {
+				// timeout or interruption — caller falls through to fallback checks
+			}
 			return Collections.emptyList();
 		}
-		// ex: returns [/workspace/module-a]
+
 		List<Path> result = new ArrayList<>();
 		result.add(normalized);
 		return result;
@@ -133,7 +163,27 @@ public abstract class AbstractModuleIndex implements IModuleIndex {
 
 	@Override
 	public void markNotImported(Path modulePath) {
-		importedModules.remove(normalize(modulePath));
+		Path normalized = normalize(modulePath);
+		CompletableFuture<Boolean> future;
+		synchronized (importLock) {
+			importedModules.remove(normalized);
+			future = inProgressImports.remove(normalized);
+		}
+		if (future != null) {
+			future.complete(false);
+		}
+	}
+
+	@Override
+	public void markImportComplete(Path modulePath) {
+		Path normalized = normalize(modulePath);
+		CompletableFuture<Boolean> future;
+		synchronized (importLock) {
+			future = inProgressImports.remove(normalized);
+		}
+		if (future != null) {
+			future.complete(true);
+		}
 	}
 
 	// ── Module registry queries ─────────────────────────────────────────

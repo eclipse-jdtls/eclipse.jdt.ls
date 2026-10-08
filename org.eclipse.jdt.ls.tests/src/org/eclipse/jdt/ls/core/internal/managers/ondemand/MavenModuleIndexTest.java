@@ -69,6 +69,8 @@ public class MavenModuleIndexTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(1, first.size());
 		assertEquals(modulePath, first.get(0));
 
+		index.markImportComplete(modulePath);
+
 		List<Path> second = index.resolveModulesToImport(modulePath);
 		assertTrue(second.isEmpty());
 	}
@@ -86,6 +88,7 @@ public class MavenModuleIndexTest extends AbstractProjectsManagerBasedTest {
 		assertFalse(index.isImported(modulePath));
 
 		index.resolveModulesToImport(modulePath);
+		index.markImportComplete(modulePath);
 
 		assertTrue(index.isImported(modulePath));
 	}
