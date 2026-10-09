@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -335,6 +335,43 @@ public final class ResourceUtils {
 			}
 		}
 
+		return Either.forLeft(globPattern);
+	}
+
+	/**
+	 * Convert an {@link IPath} plus pattern suffix to a glob pattern.
+	 *
+	 * @param path
+	 *            the path to convert
+	 * @param patternSiffix
+	 *            suffix to add to glob pattern
+	 * @return a glob pattern prefixed with the path
+	 */
+	public static Either<String, RelativePattern> toGlobPattern(IPath path, String patternSuffix) {
+		if (path == null) {
+			return null;
+		}
+
+		if (path.isAbsolute()) {
+			String baseUri = path.toFile().toURI().toString();
+			return Either.forRight(new RelativePattern(Either.forRight(baseUri), patternSuffix));
+		}
+
+		String globPattern = path.toPortableString();
+		if (path.getDevice() != null) {
+			//This seems pretty hack-ish: need to remove device as it seems to break
+			// file detection, at least on vscode
+			globPattern = globPattern.replace(path.getDevice(), "**");
+		}
+
+		File file = path.toFile();
+		if (!file.isFile()) {
+			if (!globPattern.endsWith("/")) {
+				globPattern += "/";
+			}
+		}
+
+		globPattern += patternSuffix;
 		return Either.forLeft(globPattern);
 	}
 
