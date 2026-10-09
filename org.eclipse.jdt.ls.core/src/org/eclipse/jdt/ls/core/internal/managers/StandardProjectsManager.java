@@ -489,24 +489,12 @@ public class StandardProjectsManager extends ProjectsManager {
 			buildSupports().forEach(e -> e.getWatchPatterns().forEach(p -> patterns.add(Either.forLeft(p))));
 			Set<IPath> sources = new HashSet<>();
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-			Set<Either<String, RelativePattern>> srcPatterns = new HashSet<>();
-			boolean missingProjectLocation = false;
 			try {
 				for (IProject project : projects) {
-					// add src directory, but only if it sits below project directory
+					// add src directory under each project
 					if (project.getLocation() instanceof IPath location) {
-						String path = location.toPortableString();
-						if (location.getDevice() != null) {
-							path = path.replace(location.getDevice(), "");
-						}
-						if (!path.endsWith("/")) {
-							path += "/";
-						}
-						srcPatterns.add((Either.forLeft("**" + path + "**/src/**")));
-					} else {
-						missingProjectLocation = true;
+						patterns.add(ResourceUtils.toGlobPattern(location, "**/src/**"));
 					}
-
 					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
 						continue;
 					}
@@ -563,13 +551,6 @@ public class StandardProjectsManager extends ProjectsManager {
 				}
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
-			}
-			if (missingProjectLocation) {
-				// if missing a project location, then add generic src pattern
-				patterns.add(Either.forLeft("**/src/**"));
-			} else {
-				// otherwise, add project-specific src directories
-				srcPatterns.stream().forEach(p -> patterns.add(p));
 			}
 			List<FileSystemWatcher> fileWatchers = new ArrayList<>();
 			patterns.addAll(sources.stream().map(ResourceUtils::toGlobPattern).collect(Collectors.toList()));
