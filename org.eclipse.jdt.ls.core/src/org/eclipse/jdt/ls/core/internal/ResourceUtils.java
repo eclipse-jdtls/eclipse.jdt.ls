@@ -352,11 +352,6 @@ public final class ResourceUtils {
 			return null;
 		}
 
-		if (path.isAbsolute()) {
-			String baseUri = path.toFile().toURI().toString();
-			return Either.forRight(new RelativePattern(Either.forRight(baseUri), patternSuffix));
-		}
-
 		String globPattern = path.toPortableString();
 		if (path.getDevice() != null) {
 			//This seems pretty hack-ish: need to remove device as it seems to break

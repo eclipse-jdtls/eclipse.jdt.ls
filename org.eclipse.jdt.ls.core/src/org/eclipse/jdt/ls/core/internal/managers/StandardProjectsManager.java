@@ -491,9 +491,12 @@ public class StandardProjectsManager extends ProjectsManager {
 			IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 			try {
 				for (IProject project : projects) {
-					// add src directory under each project
-					if (project.getLocation() instanceof IPath location) {
-						patterns.add(ResourceUtils.toGlobPattern(location, "**/src/**"));
+					// add src directory under each project folder
+					IPath projectLocation = ProjectUtils.getProjectRealFolder(project);
+					if (projectLocation != null) {
+						patterns.add(ResourceUtils.toGlobPattern(projectLocation, "**/src/**"));
+					} else {
+						JavaLanguageServerPlugin.logError("Project location for " + project.getName() + " cannot be resolved");
 					}
 					if (DEFAULT_PROJECT_NAME.equals(project.getName())) {
 						continue;
