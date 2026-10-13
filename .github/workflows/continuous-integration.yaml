@@ -45,8 +45,11 @@ jobs:
           cat ~/.m2/toolchains.xml
           gradle --version
       - name: Run Integration Tests
+        id: run_tests
         continue-on-error: true
         run: >
+          set -e
+
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
 
           ./mvnw clean install -DskipTests
@@ -71,6 +74,11 @@ jobs:
           -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -DDetectVMInstallationsJob.disabled=true"
       - name: Print Test Results
         run: ./scripts/PrintTestResults.java
+      - name: Fail if the build step itself failed
+        if: steps.run_tests.outcome == 'failure'
+        run: |
+          echo "The build/test step failed (see 'Run Integration Tests' above for the real cause, e.g. a compile error) -- failing the job explicitly since that step uses continue-on-error."
+          exit 1
 
   run-syntaxserver-tests:
     name: Integration Tests (Syntax Server)
@@ -108,8 +116,11 @@ jobs:
           cat ~/.m2/toolchains.xml
           gradle --version
       - name: Run Integration Tests
+        id: run_tests
         continue-on-error: true
         run: >
+          set -e
+
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
 
           ./mvnw clean install -DskipTests
@@ -134,6 +145,11 @@ jobs:
           -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -DDetectVMInstallationsJob.disabled=true"
       - name: Print Test Results
         run: ./scripts/PrintTestResults.java
+      - name: Fail if the build step itself failed
+        if: steps.run_tests.outcome == 'failure'
+        run: |
+          echo "The build/test step failed (see 'Run Integration Tests' above for the real cause, e.g. a compile error) -- failing the job explicitly since that step uses continue-on-error."
+          exit 1
 
   run-lombok-tests:
     name: Integration Tests (Lombok support)
@@ -171,8 +187,11 @@ jobs:
           cat ~/.m2/toolchains.xml
           gradle --version
       - name: Run Integration Tests
+        id: run_tests
         continue-on-error: true
         run: >
+          set -e
+
           unset GRADLE_USER_HOME # setup-gradle configures this, but there's a test that expects it to be unset
 
           ./mvnw clean install -DskipTests
@@ -197,3 +216,8 @@ jobs:
           -Dtycho.testArgLine="-XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms256m -Djava8fx.home=$JAVA_HOME_8_X64 -Dorg.gradle.daemon.idletimeout=3000 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false -DDetectVMInstallationsJob.disabled=true"
       - name: Print Test Results
         run: ./scripts/PrintTestResults.java
+      - name: Fail if the build step itself failed
+        if: steps.run_tests.outcome == 'failure'
+        run: |
+          echo "The build/test step failed (see 'Run Integration Tests' above for the real cause, e.g. a compile error) -- failing the job explicitly since that step uses continue-on-error."
+          exit 1

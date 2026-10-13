@@ -128,6 +128,9 @@ public class PrintTestResults {
 			System.out.println("Total passes: " + passes);
 			if (failures > 0) {
 				System.exit(failures);
+			} else if (passes == 0) {
+				error("No tests were discovered at all. This usually means the build failed (e.g. a compile error) before any tests could run, rather than that everything passed.");
+				System.exit(1);
 			}
 		} catch (Exception e) {
 			error("unable to pretty print test results: " + e.getLocalizedMessage());
