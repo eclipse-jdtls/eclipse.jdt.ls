@@ -158,21 +158,26 @@ public class JavadocContentAccess2 {
 
 	@SuppressWarnings("unchecked")
 	private static String renderInlineTag(TagElement tag) {
-		StringBuilder sb = new StringBuilder();
 		String tagName = tag.getTagName();
-		boolean isCode = TagElement.TAG_CODE.equals(tagName) || TagElement.TAG_LITERAL.equals(tagName);
-		if (isCode) {
-			sb.append('`');
-		}
+		StringBuilder sb = new StringBuilder();
 		for (Object fragment : tag.fragments()) {
 			if (fragment instanceof TextElement textElement) {
+				if (sb.length() > 0) {
+					sb.append(' ');
+				}
 				sb.append(textElement.getText().strip());
 			} else if (fragment instanceof org.eclipse.jdt.core.dom.Name name) {
+				if (sb.length() > 0) {
+					sb.append(' ');
+				}
 				sb.append(name.toString());
 			}
 		}
-		if (isCode) {
-			sb.append('`');
+		if (TagElement.TAG_CODE.equals(tagName)) {
+			return "`" + sb + "`";
+		} else if (TagElement.TAG_LITERAL.equals(tagName)) {
+			// escape chars that are significant in Markdown: <>*^&`[]
+			return sb.toString().replaceAll("([<>*^&\\\\`\\[\\]])", "\\\\$1");
 		}
 		return sb.toString();
 	}
