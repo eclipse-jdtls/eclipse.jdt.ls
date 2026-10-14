@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Referenced directly via -Dlogback.configurationFile on the test JVM (see pom.xml), rather
+  than relying on classpath discovery: this bundle's own classpath resource is not visible to
+  whichever OSGi bundle's classloader first initializes Logback, so a plain logback.xml
+  dropped into src/ is silently ignored by the test runtime. Without this, Logback falls back
+  to its BasicConfigurator default, which logs everything, including every byte of HTTP wire
+  traffic from real Maven/Aether artifact resolution in tests like
+  ResolveSourceMappingHandlerTest and ContentProviderManagerTest, at DEBUG to the console.
+  That gets captured into the Surefire report's system-out and has produced single test
+  report files tens of megabytes in size, large enough to OOM the Jenkins JUnit result
+  publisher (which must load the whole report into memory to parse it).
+-->
+<configuration>
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} -- %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.apache.http" level="WARN" additivity="false" />
+	<logger name="org.apache.hc.client5.http" level="WARN" additivity="false" />
+	<logger name="org.eclipse.aether" level="WARN" additivity="false" />
+
+	<root level="INFO">
+		<appender-ref ref="CONSOLE" />
+	</root>
+</configuration>
