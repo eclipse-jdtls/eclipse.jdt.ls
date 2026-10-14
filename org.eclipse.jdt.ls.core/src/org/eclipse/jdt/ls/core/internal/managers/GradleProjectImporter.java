@@ -820,13 +820,9 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 
 	private class GradleCompatibilityInfo {
 
-		@SuppressWarnings("unused")
 		private String projectUri;
-		@SuppressWarnings("unused")
 		private String message;
-		@SuppressWarnings("unused")
 		private String highestJavaVersion;
-		@SuppressWarnings("unused")
 		private String recommendedGradleVersion;
 
 		public GradleCompatibilityInfo(String projectPath, String message, String highestJavaVersion, String recommendedGradleVersion) {
@@ -838,11 +834,8 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	private class UpgradeGradleWrapperInfo {
-		@SuppressWarnings("unused")
 		private String projectUri;
-		@SuppressWarnings("unused")
 		private String message;
-		@SuppressWarnings("unused")
 		private String recommendedGradleVersion;
 
 		public UpgradeGradleWrapperInfo(String projectUri, String message, String recommendedGradleVersion) {
