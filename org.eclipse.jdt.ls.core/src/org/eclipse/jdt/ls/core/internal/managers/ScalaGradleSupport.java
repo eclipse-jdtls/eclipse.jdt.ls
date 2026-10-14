@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.ClasspathContainerInitializer;
+import org.eclipse.jdt.core.IClasspathAttribute;
 import org.eclipse.jdt.core.IClasspathContainer;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
@@ -170,28 +171,44 @@ public class ScalaGradleSupport {
 
 	private static void addDefaultScalaOutputPaths(IProject project, IProgressMonitor monitor) {
 		File projectDir = project.getLocation().toFile();
-		List<String> paths = new ArrayList<>();
+		List<IPath> paths = new ArrayList<>();
 		addDefaultScalaOutputPath(projectDir, "main", paths);
 		addDefaultScalaOutputPath(projectDir, "test", paths);
-		if (!paths.isEmpty()) {
-			IJavaProject javaProject = JavaCore.create(project);
-			List<String> toAdd = getMissingRawClasspathPaths(javaProject, paths);
-			if (!toAdd.isEmpty()) {
-				try {
-					configureClasspath(javaProject, toAdd, new HashMap<>(), monitor);
-				} catch (JavaModelException e) {
-					JavaLanguageServerPlugin.logException(e);
+		if (paths.isEmpty()) {
+			return;
+		}
+		IJavaProject javaProject = JavaCore.create(project);
+		try {
+			IClasspathEntry[] classpath = javaProject.getRawClasspath();
+			List<IClasspathEntry> newClasspath = new ArrayList<>(classpath.length + paths.size());
+			for (IClasspathEntry entry : classpath) {
+				if (entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY && paths.remove(entry.getPath())) {
+					newClasspath.add(newScalaOutputEntry(entry.getPath()));
+				} else {
+					newClasspath.add(entry);
 				}
 			}
+			paths.forEach(path -> newClasspath.add(newScalaOutputEntry(path)));
+			IClasspathEntry[] entries = newClasspath.toArray(IClasspathEntry[]::new);
+			if (!Arrays.equals(classpath, entries)) {
+				javaProject.setRawClasspath(entries, monitor);
+			}
+		} catch (JavaModelException e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
 	}
 
-	private static void addDefaultScalaOutputPath(File projectDir, String sourceSet, List<String> paths) {
+	private static void addDefaultScalaOutputPath(File projectDir, String sourceSet, List<IPath> paths) {
 		File sourceDir = new File(projectDir, "src/" + sourceSet + "/scala");
 		File outputDir = new File(projectDir, "build/classes/scala/" + sourceSet);
 		if (sourceDir.isDirectory() || outputDir.exists()) {
-			paths.add(outputDir.getAbsolutePath());
+			paths.add(new Path(outputDir.getAbsolutePath()));
 		}
+	}
+
+	private static IClasspathEntry newScalaOutputEntry(IPath path) {
+		IClasspathAttribute optional = JavaCore.newClasspathAttribute(IClasspathAttribute.OPTIONAL, "true");
+		return JavaCore.newLibraryEntry(path, null, null, null, new IClasspathAttribute[] { optional }, false);
 	}
 
 	private File getInitScript() throws IOException {
@@ -315,24 +332,6 @@ public class ScalaGradleSupport {
 				IClasspathEntry[] entries = container.getClasspathEntries();
 				Optional<IClasspathEntry> optional = Arrays.stream(entries).filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY).filter(entry -> Objects.equals(entry.getPath(), classpathPath)).findFirst();
 				exists |= optional.isPresent();
-				if (!exists) {
-					toAdd.add(path);
-				}
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException(e);
-			}
-		}
-		return toAdd;
-	}
-
-	private static List<String> getMissingRawClasspathPaths(IJavaProject javaProject, List<String> paths) {
-		List<String> toAdd = new ArrayList<>();
-		for (String path : paths) {
-			try {
-				Path classpathPath = new Path(path);
-				boolean exists = Arrays.stream(javaProject.getRawClasspath())
-						.filter(entry -> entry.getEntryKind() == IClasspathEntry.CPE_LIBRARY)
-						.anyMatch(entry -> Objects.equals(entry.getPath(), classpathPath));
 				if (!exists) {
 					toAdd.add(path);
 				}
