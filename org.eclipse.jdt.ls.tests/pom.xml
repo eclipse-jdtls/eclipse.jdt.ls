@@ -48,7 +48,10 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} -Dlogback.configurationFile=${project.basedir}/logback-test.xml</argLine>
+						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<systemProperties>
+							<logback.configurationFile>${project.basedir}/logback-test.xml</logback.configurationFile>
+						</systemProperties>
 						<runOrder>random</runOrder>
 					</configuration>
 
