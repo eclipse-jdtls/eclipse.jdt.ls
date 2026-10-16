@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018-2020 Microsoft Corporation and others.
+ * Copyright (c) 2018-2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -349,8 +349,31 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 
 		String uri = JDTUtils.toURI(cu);
-		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t)).toArray(Template[]::new);
-		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t)).toArray(Template[]::new);
+
+		// Resolve the project's Java compliance level once so we can gate version-restricted snippets.
+		int projectSourceLevel = 0;
+		IJavaProject javaProject = cu.getJavaProject();
+		if (javaProject != null) {
+			String version = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+			try {
+				projectSourceLevel = (int) Float.parseFloat(version);
+			} catch (NumberFormatException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+
+		Map<String, CodeSnippetTemplate> snippetByName = new HashMap<>();
+		for (CodeSnippetTemplate s : CodeSnippetTemplate.values()) {
+			snippetByName.put(s.getDisplayName(), s);
+		}
+		int sourceLevel = projectSourceLevel;
+		Predicate<Template> sourceLevelFilter = t -> {
+			CodeSnippetTemplate s = snippetByName.get(t.getName());
+			return s == null || s.isApplicable(sourceLevel);
+		};
+
+		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t) && sourceLevelFilter.test(t)).toArray(Template[]::new);
+		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t) && sourceLevelFilter.test(t)).toArray(Template[]::new);
 		List<CompletionProposal> proposals = new ArrayList<>();
 		int indexReduction = 0;
 		for (int i = 0; i < availableTemplates.length + availableTemplatesAll.length; i++) {
