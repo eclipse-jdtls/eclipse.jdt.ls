@@ -30,6 +30,10 @@ public class JLSFileSystem extends LocalFileSystem {
 
     @Override
     public IFileStore getStore(IPath path) {
+        IPath preservedPath = ProjectMetadataStore.getRedirectedPath(path);
+        if (preservedPath != null) {
+            return new JLSFile(preservedPath.toFile());
+        }
         if (JLSFsUtils.shouldStoreInMetadataArea(path)) {
             IPath containerPath = JLSFsUtils.getContainerPath(path);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
@@ -38,7 +42,7 @@ public class JLSFileSystem extends LocalFileSystem {
             }
             IPath redirectedPath = JLSFsUtils.getMetaDataFilePath(projectName, path);
             if (redirectedPath != null) {
-                return new JLSFile(redirectedPath.toFile()); 
+                return new JLSFile(redirectedPath.toFile());
             }
         }
         return new JLSFile(path.toFile());

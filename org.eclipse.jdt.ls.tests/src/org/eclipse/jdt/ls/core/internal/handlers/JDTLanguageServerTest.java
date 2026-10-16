@@ -30,6 +30,9 @@ import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -103,6 +106,30 @@ public class JDTLanguageServerTest {
 			assertFalse(isAutoBuilding(), "Autobuilding is on");
 		} finally {
 			ProjectsManager.setAutoBuilding(enabled);
+		}
+	}
+
+	@Test
+	public void testPreserveProjectMetadataConfiguration() {
+		IEclipsePreferences store = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		String previousValue = store.get(Preferences.PRESERVE_PROJECT_METADATA, null);
+		try {
+			Map<String, Object> configuration = new HashMap<>();
+			configuration.put(Preferences.PRESERVE_PROJECT_METADATA, true);
+			server.didChangeConfiguration(new DidChangeConfigurationParams(configuration));
+			assertTrue(prefManager.getPreferences().isPreserveProjectMetadata());
+			assertTrue(store.getBoolean(Preferences.PRESERVE_PROJECT_METADATA, false));
+
+			configuration.put(Preferences.PRESERVE_PROJECT_METADATA, false);
+			server.didChangeConfiguration(new DidChangeConfigurationParams(configuration));
+			assertFalse(prefManager.getPreferences().isPreserveProjectMetadata());
+			assertFalse(store.getBoolean(Preferences.PRESERVE_PROJECT_METADATA, true));
+		} finally {
+			if (previousValue == null) {
+				store.remove(Preferences.PRESERVE_PROJECT_METADATA);
+			} else {
+				store.put(Preferences.PRESERVE_PROJECT_METADATA, previousValue);
+			}
 		}
 	}
 
