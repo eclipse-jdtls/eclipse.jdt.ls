@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.DocumentAdapter;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection.JavaLanguageClient;
+import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -105,7 +106,7 @@ public abstract class AbstractSyntaxProjectsManagerBasedTest {
 
 		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
-		projectsManager = new SyntaxProjectsManager(preferenceManager);
+		projectsManager = new SyntaxProjectsManager(preferenceManager, new TelemetryManager());
 		monitor = new NullProgressMonitor();
 		WorkingCopyOwner.setPrimaryBufferProvider(new WorkingCopyOwner() {
 			@Override
