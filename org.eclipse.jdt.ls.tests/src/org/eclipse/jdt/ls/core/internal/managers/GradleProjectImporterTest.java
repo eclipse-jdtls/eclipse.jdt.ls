@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
@@ -46,6 +47,7 @@ import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
@@ -53,6 +55,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.apt.core.util.AptConfig;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -880,6 +883,27 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			assertFalse(hasBuildLibEntry);
 			assertTrue(hasUnexcludedResources);
 		} finally {
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
+	@Test
+	public void testScalaSupportWithoutScalaOutput() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		boolean oldAutobuildEnabled = this.preferences.isAutobuildEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(true);
+			this.preferences.setAutobuildEnabled(false);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			FileUtils.deleteDirectory(new File(project.getLocation().toFile(), "build"));
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			JobHelpers.waitForJobsToComplete();
+			assertEquals(0, project.findMarkers(IJavaModelMarker.BUILDPATH_PROBLEM_MARKER, false, IResource.DEPTH_ZERO).length);
+		} finally {
+			this.preferences.setAutobuildEnabled(oldAutobuildEnabled);
 			this.preferences.setScalaSupportEnabled(oldScalaSupported);
 		}
 	}
