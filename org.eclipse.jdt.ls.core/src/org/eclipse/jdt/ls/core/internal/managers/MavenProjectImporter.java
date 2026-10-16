@@ -30,6 +30,7 @@ import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -45,6 +46,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.MavenModuleIndex;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -156,16 +159,137 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	@Override
 	public void reset() {
 		projectInfos = null;
+		super.reset();
+	}
+
+	@Override
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected IModuleIndex createModuleIndex() {
+		return new MavenModuleIndex(getWorkspacePath());
+	}
+
+	/**
+	 * Imports a single Maven module via M2E.
+	 *
+	 * <p>Uses M2E's {@link LocalProjectScanner} to discover the module and
+	 * {@link IProjectConfigurationManager#importProjects} to create the
+	 * Eclipse project with proper Maven nature and classpath.</p>
+	 *
+	 * <h3>Duplicate artifactId handling</h3>
+	 * <p>In on-demand mode, modules are imported one at a time. When two modules
+	 * share the same artifactId (e.g. {@code org.a:common} and {@code org.b:common}),
+	 * the second import would fail silently because an Eclipse project named
+	 * "common" already exists. To handle this:</p>
+	 * <ol>
+	 *   <li>The existing project "common" is renamed to "org.a-common"</li>
+	 *   <li>The new module is imported as "org.b-common"</li>
+	 * </ol>
+	 * <p>This matches the behavior of full import mode, where all projects
+	 * use the {@code [groupId]-[artifactId]} template when duplicates exist.</p>
+	 *
+	 * <h3>Use cases</h3>
+	 * <ul>
+	 *   <li><b>No conflict</b> — user opens {@code a/core/src/Foo.java},
+	 *       artifactId "core" is unique → project "core" created.</li>
+	 *   <li><b>Duplicate artifactId</b> — user opens {@code b/common/src/Bar.java},
+	 *       project "common" (from {@code a/common}) already exists
+	 *       → "common" renamed to "org.a-common", new project "org.b-common" created.</li>
+	 * </ul>
+	 */
+	@Override
+	protected List<IProject> importModule(java.nio.file.Path modulePath, IProgressMonitor monitor) throws CoreException {
+		File pomFile = modulePath.resolve(POM_FILE).toFile();
+		if (!pomFile.isFile()) {
+			return List.of();
+		}
+		configureMavenPreferences();
+		try {
+			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+			LocalProjectScanner scanner = new LocalProjectScanner(
+					List.of(modulePath.toString()), false, modelManager);
+			scanner.run(monitor);
+			Set<MavenProjectInfo> infos = collectProjects(scanner.getProjects());
+			if (infos.isEmpty()) {
+				return List.of();
+			}
+			// ex: importing org.b:common, project "common" (org.a:common) already exists
+			//   → rename "common" to "org.a-common"
+			//   → import org.b:common as "org.b-common"
+			for (MavenProjectInfo info : infos) {
+				String artifactId = info.getModel().getArtifactId();
+				IProject existing = ResourcesPlugin.getWorkspace().getRoot().getProject(artifactId);
+				if (existing.exists()) {
+					importConfig.setProjectNameTemplate(DUPLICATE_ARTIFACT_TEMPLATE);
+					renameWithGroupId(existing, monitor);
+					break;
+				}
+			}
+			List<IMavenProjectImportResult> importResults = configurationManager.importProjects(
+					infos, importConfig, monitor);
+			return importResults.stream()
+					.map(IMavenProjectImportResult::getProject)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
+		} catch (InterruptedException e) {
+			throw new OperationCanceledException();
+		}
+	}
+
+	/**
+	 * Renames a project from {@code [artifactId]} to {@code [groupId]-[artifactId]}.
+	 *
+	 * <p>Called when a second module with the same artifactId is being imported.
+	 * Reads the groupId from the project's {@code pom.xml} (or its parent) to
+	 * build the qualified name.</p>
+	 *
+	 * <p>Example: project "common" at {@code a/common/} with groupId {@code org.a}
+	 * is renamed to "org.a-common".</p>
+	 *
+	 * @param project the existing project to rename
+	 * @param monitor progress monitor
+	 */
+	private void renameWithGroupId(IProject project, IProgressMonitor monitor) {
+		try {
+			File pom = project.getLocation().toFile().toPath().resolve(POM_FILE).toFile();
+			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+			org.apache.maven.model.Model model = modelManager.readMavenModel(pom);
+			String groupId = model.getGroupId();
+			if (groupId == null && model.getParent() != null) {
+				groupId = model.getParent().getGroupId();
+			}
+			if (groupId != null) {
+				String newName = groupId + "-" + project.getName();
+				IProjectDescription desc = project.getDescription();
+				desc.setName(newName);
+				project.move(desc, true, monitor);
+				JavaLanguageServerPlugin.logInfo("On-demand rename: " + project.getName() + " → " + newName);
+			}
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException("Failed to rename project " + project.getName(), e);
+		}
+	}
+
+	private void configureMavenPreferences() {
+		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
+		configurationImpl.setDownloadSources(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenDownloadSources());
+		try {
+			configurationImpl.setNotCoveredMojoExecutionSeverity(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getMavenNotCoveredPluginExecutionSeverity());
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		PluginExecutionAction action = PluginExecutionAction.valueOf(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getMavenDefaultMojoExecutionAction());
+		configurationImpl.setDefaultMojoExecutionAction(action);
 	}
 
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		JavaLanguageServerPlugin.logInfo(IMPORTING_MAVEN_PROJECTS);
-		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
-		configurationImpl.setDownloadSources(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenDownloadSources());
-		configurationImpl.setNotCoveredMojoExecutionSeverity(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getMavenNotCoveredPluginExecutionSeverity());
-		PluginExecutionAction action = PluginExecutionAction.valueOf(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getMavenDefaultMojoExecutionAction());
-		configurationImpl.setDefaultMojoExecutionAction(action);
+		configureMavenPreferences();
 		SubMonitor subMonitor = SubMonitor.convert(monitor, 105);
 		subMonitor.setTaskName(IMPORTING_MAVEN_PROJECTS);
 		Set<MavenProjectInfo> files = getMavenProjectInfo(subMonitor.split(5));

@@ -174,16 +174,21 @@ public class NavigateToDefinitionHandler {
 				IClassFile classFile = JDTUtils.getClassFile(compilationUnit);
 				if (classFile != null) {
 					String uriString = JDTUtils.toUri(classFile);
-					Location location = fixLocation(element, JDTUtils.toLocation(element), compilationUnit.getJavaProject());
+					Location location = fixLocation(element, JDTUtils.toLocation(element, true), compilationUnit.getJavaProject());
 					location.setUri(uriString);
 					return location;
 				}
 				return null;
 			}
-			return fixLocation(element, JDTUtils.toLocation(element), javaProject);
+			return fixLocation(element, JDTUtils.toLocation(element, true), javaProject);
 		}
 
 		if (element instanceof IMember member && member.getClassFile() != null) {
+			// On-demand mode: try importing the workspace module before falling back to decompiled source
+			Location onDemandLocation = JDTUtils.findOnDemandSource(member.getClassFile());
+			if (onDemandLocation != null) {
+				return onDemandLocation;
+			}
 			Location location = SearchUtils.searchOtherSources(member);
 			if (location != null) {
 				return location;

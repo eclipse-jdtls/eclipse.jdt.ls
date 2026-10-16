@@ -58,12 +58,14 @@ import org.eclipse.jdt.ls.core.internal.handlers.CompletionContributionService;
 import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.LogHandler;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.DigestStore;
 import org.eclipse.jdt.ls.core.internal.managers.ISourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.MavenSourceDownloader;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.StandardProjectsManager;
 import org.eclipse.jdt.ls.core.internal.managers.TelemetryManager;
+import org.eclipse.jdt.ls.core.internal.preferences.ImportMode;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.StandardPreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.SyntaxLanguageServer;
@@ -195,9 +197,15 @@ public class JavaLanguageServerPlugin extends Plugin {
 					// https://github.com/redhat-developer/vscode-java/issues/3904 moved from InitHandler.handleInitializationOptions()
 					BundleUtils.startBundle(CorePlugin.PLUGIN_ID);
 					BundleUtils.startBundle(IMavenConstants.PLUGIN_ID);
-					long start = System.currentTimeMillis();
-					JobHelpers.waitForProjectRegistryRefreshJob();
-					JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
+					// In on-demand mode, skip the wait: stale projects from a crashed session
+					// would be refreshed here before closeStaleProjects() has a chance to close them.
+					// The import mode is passed as a JVM arg because LSP initializationOptions
+					// are not yet available at this stage of the plugin lifecycle.
+					if (!ImportMode.ON_DEMAND.getValue().equals(System.getProperty("jdt.ls.importMode"))) {
+						long start = System.currentTimeMillis();
+						JobHelpers.waitForProjectRegistryRefreshJob();
+						JavaLanguageServerPlugin.logInfo("ProjectRegistryRefreshJob finished " + (System.currentTimeMillis() - start) + "ms");
+					}
 					JavaCore.initializeAfterLoad(monitor);
 				} catch (CoreException e) {
 					logException(e);
@@ -501,6 +509,13 @@ public class JavaLanguageServerPlugin extends Plugin {
 	 */
 	public static ProjectsManager getProjectsManager() {
 		return pluginInstance.projectsManager;
+	}
+
+	public static OnDemandImportManager getOnDemandImportManager() {
+		if (pluginInstance != null && pluginInstance.getProtocol() instanceof JDTLanguageServer server) {
+			return server.getOnDemandImportManager();
+		}
+		return null;
 	}
 
 	public static DigestStore getDigestStore() {

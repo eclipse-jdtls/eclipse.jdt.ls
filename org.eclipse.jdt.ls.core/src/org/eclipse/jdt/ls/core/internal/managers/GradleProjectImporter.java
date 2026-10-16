@@ -70,6 +70,8 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.EventNotification;
 import org.eclipse.jdt.ls.core.internal.EventType;
 import org.eclipse.jdt.ls.core.internal.IConstants;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.GradleModuleIndex;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
@@ -756,7 +758,63 @@ public class GradleProjectImporter extends AbstractProjectImporter {
 	}
 
 	@Override
-	public void reset() {
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected IModuleIndex createModuleIndex() {
+		return new GradleModuleIndex(getWorkspacePath());
+	}
+
+	/**
+	 * Imports a single Gradle module via Buildship.
+	 *
+	 * <p>Synchronizes from the Gradle root project directory (where
+	 * {@code settings.gradle} lives), not from the subproject directory.
+	 * This is required so that Buildship finds the Gradle wrapper and
+	 * applies root-level build configuration (e.g. {@code subprojects}
+	 * blocks). After synchronization, looks up the resulting Eclipse
+	 * project by matching the module location path.</p>
+	 */
+	@Override
+	protected List<IProject> importModule(Path modulePath, IProgressMonitor monitor) throws CoreException {
+		// Use the Gradle root (where settings.gradle is) for synchronization.
+		// Buildship needs the root to find the Gradle wrapper and apply
+		// root build.gradle settings (e.g. subprojects { sourceCompatibility }).
+		Path gradleRoot = findGradleRoot(modulePath);
+		IStatus status = startSynchronization(gradleRoot, monitor);
+		if (!status.isOK()) {
+			return List.of();
+		}
+		Path normalizedModule = modulePath.toAbsolutePath().normalize();
+		for (IProject project : ProjectUtils.getGradleProjects()) {
+			if (project.getLocation() != null) {
+				Path projectPath = project.getLocation().toFile().toPath().normalize();
+				if (projectPath.equals(normalizedModule)) {
+					return List.of(project);
+				}
+			}
+		}
+		return List.of();
+	}
+
+	/**
+	 * Walks up from a module path to find the Gradle root project directory
+	 * (the one containing {@code settings.gradle} or {@code settings.gradle.kts}).
+	 *
+	 * @return the Gradle root directory, or {@code modulePath} as fallback
+	 */
+	private Path findGradleRoot(Path modulePath) {
+		Path current = modulePath.toAbsolutePath().normalize();
+		Path workspace = getWorkspacePath();
+		while (current != null && current.startsWith(workspace)) {
+			if (Files.exists(current.resolve(SETTINGS_GRADLE_DESCRIPTOR)) || Files.exists(current.resolve(SETTINGS_GRADLE_KTS_DESCRIPTOR))) {
+				return current;
+			}
+			current = current.getParent();
+		}
+		return modulePath;
 	}
 
 	public static boolean isFailedStatus(IStatus status) {

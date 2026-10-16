@@ -85,15 +85,19 @@ public class NavigateToDeclarationHandler {
 					IType type = compilationUnit.getJavaProject().findType(fqn);
 					if (type.getClassFile() != null) {
 						String uriString = JDTUtils.toUri(type.getClassFile());
-						Location location = JDTUtils.toLocation(element);
+						Location location = JDTUtils.toLocation(element, true);
 						location.setUri(uriString);
 						return location;
 					}
 					return null;
 				}
-				return JDTUtils.toLocation(methodDeclaration);
+				return JDTUtils.toLocation(methodDeclaration, true);
 			}
 			if (methodDeclaration.getClassFile() != null) {
+				Location onDemandLocation = JDTUtils.findOnDemandSource(methodDeclaration.getClassFile());
+				if (onDemandLocation != null) {
+					return onDemandLocation;
+				}
 				Location location = SearchUtils.searchOtherSources(methodDeclaration);
 				if (location != null) {
 					return location;
