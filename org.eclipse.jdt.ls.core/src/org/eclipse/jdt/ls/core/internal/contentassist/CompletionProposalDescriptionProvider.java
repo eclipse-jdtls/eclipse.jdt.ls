@@ -839,6 +839,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	private boolean isCompletionItemLabelDetailsSupport() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionItemLabelDetailsSupport();
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		return preferenceManager != null && preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport();
 	}
 }
