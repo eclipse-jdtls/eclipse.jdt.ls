@@ -14,7 +14,9 @@ package org.eclipse.jdt.ls.core.internal;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -44,4 +46,36 @@ public interface IProjectImporter {
 	void importToWorkspace(IProgressMonitor monitor) throws OperationCanceledException, CoreException;
 
 	void reset();
+
+	// ── On-demand mode ──────────────────────────────────────────────────
+
+	/**
+	 * Returns whether this importer supports on-demand project import.
+	 *
+	 * <p>When {@code true} and the user has configured
+	 * {@link org.eclipse.jdt.ls.core.internal.preferences.ImportMode#ON_DEMAND},
+	 * the importer will skip eager import at startup and instead import
+	 * modules lazily when files are opened.</p>
+	 *
+	 * @return {@code true} if on-demand import is supported
+	 */
+	default boolean supportsOnDemand() {
+		return false;
+	}
+
+	/**
+	 * Imports the module containing the given file URI on-demand.
+	 *
+	 * <p>Called from {@link org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager}
+	 * when a {@code textDocument/didOpen} notification is received for a file
+	 * that is not yet part of any imported project.</p>
+	 *
+	 * @param uri the file URI that triggered the import
+	 * @param monitor progress monitor
+	 * @return the list of imported projects (empty if nothing was imported)
+	 * @throws CoreException if the import fails
+	 */
+	default List<IProject> importOnDemand(String uri, IProgressMonitor monitor) throws CoreException {
+		return List.of();
+	}
 }
