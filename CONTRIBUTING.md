@@ -75,6 +75,12 @@ this will get rid of the errors.
 
 #
 
+## Running the tests
+
+The Gradle test projects use Java toolchains 17 and 21, so the Gradle tests need both JDKs installed where [Gradle detects them](https://docs.gradle.org/current/userguide/toolchains.html#sec:auto_detection).
+
+#
+
 ## Pull Requests
 
 In order to submit contributions for review, please make sure you have signed the [Eclipse Contributor Agreement](https://www.eclipse.org/legal/ecafaq.php) (ECA) with your account.

@@ -30,7 +30,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
-          gradle-version: '8.5'
+          gradle-version: '9.8.1'
           validate-wrappers: false
           cache-disabled: true
           add-job-summary: never
@@ -93,7 +93,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
-          gradle-version: '8.5'
+          gradle-version: '9.8.1'
           validate-wrappers: false
           cache-disabled: true
           add-job-summary: never
@@ -156,7 +156,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
-          gradle-version: '8.5'
+          gradle-version: '9.8.1'
           validate-wrappers: false
           cache-disabled: true
           add-job-summary: never

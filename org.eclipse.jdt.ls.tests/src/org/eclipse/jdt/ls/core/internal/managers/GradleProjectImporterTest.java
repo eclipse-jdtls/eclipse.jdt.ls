@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.buildship.core.BuildConfiguration;
 import org.eclipse.buildship.core.FixedVersionGradleDistribution;
 import org.eclipse.buildship.core.GradleDistribution;
@@ -46,6 +47,7 @@ import org.eclipse.buildship.core.internal.configuration.ProjectConfiguration;
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
@@ -53,6 +55,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.apt.core.util.AptConfig;
 import org.eclipse.jdt.core.IClasspathEntry;
+import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
@@ -67,13 +70,13 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TestVMType;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.framework.protobuf.ProtobufSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -175,7 +178,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			} else {
 				assertSame(distribution, GradleProjectImporter.DEFAULT_DISTRIBUTION);
 			}
-			String requiredVersion = "8.5";
+			String requiredVersion = "9.8.1";
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setGradleVersion(requiredVersion);
 			distribution = GradleProjectImporter.getGradleDistribution(file.toPath());
 			assertEquals(distribution.getClass(), FixedVersionGradleDistribution.class);
@@ -597,10 +600,10 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			IJavaProject javaProject = JavaCore.create(project);
 			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
 			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-				return "/protobuf/build/generated/source/proto/main/java".equals(cpe.getPath().toString());
+				return "/protobuf/build/generated/sources/proto/main/java".equals(cpe.getPath().toString()) && isProtobufGeneratedSource(cpe);
 			}));
 			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-				return "/protobuf/build/generated/source/proto/test/java".equals(cpe.getPath().toString());
+				return "/protobuf/build/generated/sources/proto/test/java".equals(cpe.getPath().toString()) && isProtobufGeneratedSource(cpe);
 			}));
 		} finally {
 			this.preferences.setProtobufSupportEnabled(false);
@@ -616,10 +619,10 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 			IClasspathEntry[] classpathEntries = javaProject.getRawClasspath();
 			assertEquals(5, classpathEntries.length);
 			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-				return "/protobuf/build/generated/source/proto/main/java".equals(cpe.getPath().toString());
+				return "/protobuf/build/generated/sources/proto/main/java".equals(cpe.getPath().toString()) && isProtobufGeneratedSource(cpe);
 			}));
 			assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
-				return "/protobuf/build/generated/source/proto/test/java".equals(cpe.getPath().toString());
+				return "/protobuf/build/generated/sources/proto/test/java".equals(cpe.getPath().toString()) && isProtobufGeneratedSource(cpe);
 			}));
 
 			this.preferences.setProtobufSupportEnabled(false);
@@ -627,10 +630,14 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 			waitForBackgroundJobs();
 
-			assertEquals(3, javaProject.getRawClasspath().length);
+			assertFalse(Arrays.stream(javaProject.getRawClasspath()).anyMatch(GradleProjectImporterTest::isProtobufGeneratedSource));
 		} finally {
 			this.preferences.setProtobufSupportEnabled(false);
 		}
+	}
+
+	private static boolean isProtobufGeneratedSource(IClasspathEntry entry) {
+		return Arrays.stream(entry.getExtraAttributes()).anyMatch(attribute -> ProtobufSupport.PROTOBUF_GENERATED_SOURCE.equals(attribute.getName()) && "true".equals(attribute.getValue()));
 	}
 
 	@Test
@@ -884,6 +891,27 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		}
 	}
 
+	@Test
+	public void testScalaSupportWithoutScalaOutput() throws Exception {
+		boolean oldScalaSupported = this.preferences.isScalaSupportEnabled();
+		boolean oldAutobuildEnabled = this.preferences.isAutobuildEnabled();
+		try {
+			this.preferences.setScalaSupportEnabled(true);
+			this.preferences.setAutobuildEnabled(false);
+			importGradleProject("scala");
+			waitForOtherLangs();
+			IProject project = ProjectUtils.getProject("app");
+			assertTrue(ProjectUtils.isGradleProject(project));
+			FileUtils.deleteDirectory(new File(project.getLocation().toFile(), "build"));
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			JobHelpers.waitForJobsToComplete();
+			assertEquals(0, project.findMarkers(IJavaModelMarker.BUILDPATH_PROBLEM_MARKER, false, IResource.DEPTH_ZERO).length);
+		} finally {
+			this.preferences.setAutobuildEnabled(oldAutobuildEnabled);
+			this.preferences.setScalaSupportEnabled(oldScalaSupported);
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/4393#top
 	@Test
 	public void testResources() throws Exception {
@@ -912,9 +940,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 
 	@Test
 	public void testScalaSupportTaskNoopsForNonScalaProject() throws Exception {
-		// Gradle 8.5 can fail to compile the init script with JDK 25 (ASM/Groovy classfile support).
-		Assumptions.assumeTrue(Runtime.version().feature() < 25, "Skip on JDK 25+");
-		File projectDir = new File(getSourceProjectDirectory(), "gradle/scala");
+		File projectDir = copyFiles("gradle/scala", true);
 		File initScript = null;
 		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ProjectConnection connection = GradleConnector.newConnector().forProjectDirectory(projectDir).connect()) {
 			initScript = GradleUtils.getGradleInitScript("/gradle/scala/javals.gradle");
