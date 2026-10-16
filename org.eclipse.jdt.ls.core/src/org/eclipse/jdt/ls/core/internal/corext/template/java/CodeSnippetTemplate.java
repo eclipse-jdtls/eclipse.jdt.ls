@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Microsoft Corporation and others.
+ * Copyright (c) 2019, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
+ *     IBM Corporation - IO & Instance Main templates
  *******************************************************************************/
 
 package org.eclipse.jdt.ls.core.internal.corext.template.java;
@@ -48,7 +49,15 @@ public enum CodeSnippetTemplate {
 	PSVM(TemplatePreferences.PSVM_ID, JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
 	SYS_OUT(TemplatePreferences.SYS_OUT_ID, "System.out.println()", JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSOUT_CONTENT, TemplatePreferences.SYSOUT_DESCRIPTION),
 	SYS_ERR(TemplatePreferences.SYS_ERR_ID, "System.err.println()", JavaContextType.ID_STATEMENTS, TemplatePreferences.SYSERR_CONTENT, TemplatePreferences.SYSERR_DESCRIPTION),
-	PUBLIC_MAIN(TemplatePreferences.PUBLIC_MAIN_ID, "public static void main(String[] args)", JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION);
+	PUBLIC_MAIN(TemplatePreferences.PUBLIC_MAIN_ID, "public static void main(String[] args)", JavaContextType.ID_MEMBERS, TemplatePreferences.MAIN_CONTENT, TemplatePreferences.MAIN_DESCRIPTION),
+
+	IO_PRINTLN(TemplatePreferences.IO_PRINTLN_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IO_PRINTLN_CONTENT, TemplatePreferences.IO_PRINTLN_DESCRIPTION, 25),
+	IO_PRINT(TemplatePreferences.IO_PRINT_ID, JavaContextType.ID_STATEMENTS, TemplatePreferences.IO_PRINT_CONTENT, TemplatePreferences.IO_PRINT_DESCRIPTION, 25),
+	INSTANCE_MAIN(TemplatePreferences.INSTANCE_MAIN_ID, "void main()", JavaContextType.ID_MEMBERS, TemplatePreferences.INSTANCE_MAIN_CONTENT, TemplatePreferences.INSTANCE_MAIN_DESCRIPTION, 25),
+
+	// short, typeable aliases (matches the sout/serr/psvm pattern above)
+	IOP(TemplatePreferences.IOP_ID, "iop", JavaContextType.ID_STATEMENTS, TemplatePreferences.IO_PRINTLN_CONTENT, TemplatePreferences.IO_PRINTLN_DESCRIPTION, 25),
+	IOPL(TemplatePreferences.IOPL_ID, "iopl", JavaContextType.ID_STATEMENTS, TemplatePreferences.IO_PRINT_CONTENT, TemplatePreferences.IO_PRINT_DESCRIPTION, 25);
 
 	//@formatter:on
 
@@ -57,16 +66,26 @@ public enum CodeSnippetTemplate {
 	private final String defaultContent;
 	private final String description;
 	private String displayName = null;
+	private final int minSourceLevel;
 
 	private CodeSnippetTemplate(String templatesId, String contextType, String defaultContent, String description) {
+		this(templatesId, contextType, defaultContent, description, 0);
+	}
+
+	private CodeSnippetTemplate(String templatesId, String displayName, String contextType, String defaultContent, String description) {
+		this(templatesId, displayName, contextType, defaultContent, description, 0);
+	}
+
+	private CodeSnippetTemplate(String templatesId, String contextType, String defaultContent, String description, int minSourceLevel) {
 		this.templateId = templatesId;
 		this.contextType = contextType;
 		this.defaultContent = defaultContent;
 		this.description = description;
+		this.minSourceLevel = minSourceLevel;
 	}
 
-	private CodeSnippetTemplate(String templatesId, String displayName, String contextType, String defaultContent, String description) {
-		this(templatesId, contextType, defaultContent, description);
+	private CodeSnippetTemplate(String templatesId, String displayName, String contextType, String defaultContent, String description, int minSourceLevel) {
+		this(templatesId, contextType, defaultContent, description, minSourceLevel);
 		this.displayName = displayName;
 	}
 
@@ -80,6 +99,18 @@ public enum CodeSnippetTemplate {
 
 	public String getDisplayName() {
 		return StringUtils.isNotBlank(this.displayName) ? this.displayName : this.name().toLowerCase();
+	}
+
+	/**
+	 * @param sourceLevel
+	 *            the project's/compilation unit's Java compliance level, e.g. as
+	 *            parsed from
+	 *            {@code IJavaProject#getOption(JavaCore.COMPILER_SOURCE, true)} or
+	 *            {@code IJavaProject#getOption(JavaCore.COMPILER_COMPLIANCE, true)}.
+	 * @return whether this snippet should be offered at the given source level.
+	 */
+	public boolean isApplicable(int sourceLevel) {
+		return this.minSourceLevel == 0 || sourceLevel >= this.minSourceLevel;
 	}
 }
 
@@ -113,6 +144,11 @@ class TemplatePreferences {
 	public static final String SYS_OUT_ID = "org.eclipse.jdt.ls.templates.sys_out";
 	public static final String SYS_ERR_ID = "org.eclipse.jdt.ls.templates.sys_err";
 	public static final String PUBLIC_MAIN_ID = "org.eclipse.jdt.ls.templates.publicmain";
+	public static final String IO_PRINTLN_ID = "org.eclipse.jdt.ls.templates.io_println";
+	public static final String IO_PRINT_ID = "org.eclipse.jdt.ls.templates.io_print";
+	public static final String INSTANCE_MAIN_ID = "org.eclipse.jdt.ls.templates.instancemain";
+	public static final String IOP_ID = "org.eclipse.jdt.ls.templates.iop";
+	public static final String IOPL_ID = "org.eclipse.jdt.ls.templates.iopl";
 
 	// DefaultContents
 	public static final String SYSOUT_CONTENT = "System.out.println($${0});";
@@ -135,6 +171,9 @@ class TemplatePreferences {
 	public static final String STATIC_METHOD_CONTENT = "$${1|public,private|} static $${2:void} $${3:name}($${4}) {\n" + "\t$${0}\n" + "}";
 	public static final String NEW_CONTENT = "$${1:Object} $${2:foo} = new $${1}($${3});\n" + "$${0}";
 	public static final String FIELD_CONTENT = "$${1|public,protected,private|} $${2:String} $${3:name};";
+	public static final String IO_PRINTLN_CONTENT = "IO.println($${0});";
+	public static final String IO_PRINT_CONTENT = "IO.print($${0});";
+	public static final String INSTANCE_MAIN_CONTENT = "void main() {\n" + "\t$${0}\n" + "}";
 
 	// Descriptions
 	public static final String SYSOUT_DESCRIPTION = "print to standard out";
@@ -157,4 +196,7 @@ class TemplatePreferences {
 	public static final String STATIC_METHOD_DESCRIPTION = "static method";
 	public static final String NEW_DESCRIPTION = "create new object";
 	public static final String FIELD_DESCRIPTION = "field";
+	public static final String IO_PRINTLN_DESCRIPTION = "print to standard out via java.lang.IO";
+	public static final String IO_PRINT_DESCRIPTION = "print to standard out via java.lang.IO, no newline";
+	public static final String INSTANCE_MAIN_DESCRIPTION = "instance main method for implicitly declared classes";
 }

@@ -4297,6 +4297,51 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				.replace("${char}", String.valueOf(kar));
 	}
 
+	@Test
+	public void testSnippet_io_statements() throws Exception {
+		importProjects("eclipse/java25");
+		project = WorkspaceHelper.getProject("java25");
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void m() {\n" +
+			"		io\n" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "		io");
+
+		assertNotNull(list);
+		List<CompletionItem> items = list.getItems();
+		assertTrue(items.stream().anyMatch(i -> "io_println".equals(i.getLabel())),    "io_println must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "io_print".equals(i.getLabel())),      "io_print must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "iop".equals(i.getLabel())),           "iop must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "iopl".equals(i.getLabel())),          "iopl must appear on Java 25+");
+	}
+
+	@Test
+	public void testSnippet_instance_main() throws Exception {
+		importProjects("eclipse/java25");
+		project = WorkspaceHelper.getProject("java25");
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	main\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "	main");
+
+		assertNotNull(list);
+		assertTrue(list.getItems().stream().anyMatch(i -> "void main()".equals(i.getLabel())),
+				"instance_main (void main()) must appear on Java 25+");
+	}
+
 	private void mockLSP3Client() {
 		mockLSPClient(true, true);
 	}
