@@ -214,6 +214,21 @@ public class Preferences {
 	 */
 	public static final String GRADLE_ANNOTATION_PROCESSING_ENABLED = "java.import.gradle.annotationProcessing.enabled";
 	/**
+	 * Preference key for import mode: "full" (default) or "ondemand".
+	 */
+	public static final String IMPORT_MODE = "java.import.mode";
+
+	/**
+	 * Preference key to enable/disable MBT importer.
+	 */
+	public static final String IMPORT_MBT_ENABLED = "java.import.mbt.enabled";
+
+	/**
+	 * Preference key for mbt.json storage: "file" (persist at project root) or "memory" (in-memory only).
+	 */
+	public static final String IMPORT_MBT_STORAGE = "java.import.mbt.storage";
+
+	/**
 	 * Preference key to enable/disable maven importer.
 	 */
 	public static final String IMPORT_MAVEN_ENABLED = "java.import.maven.enabled";
@@ -670,6 +685,9 @@ public class Preferences {
 	private String gradleJavaHome;
 	private String gradleUserHome;
 	private boolean gradleAnnotationProcessingEnabled;
+	private String importMode;
+	private boolean importMbtEnabled;
+	private String mbtStorage;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
 	private boolean mavenDisableTestClasspathFlag;
@@ -967,6 +985,9 @@ public class Preferences {
 		gradleJavaHome = null;
 		gradleUserHome = null;
 		gradleAnnotationProcessingEnabled = true;
+		importMode = "full";
+		importMbtEnabled = false;
+		mbtStorage = "file";
 		importMavenEnabled = true;
 		mavenOffline = false;
 		mavenDisableTestClasspathFlag = false;
@@ -1140,6 +1161,9 @@ public class Preferences {
 		prefs.gradleJavaHome = this.gradleJavaHome;
 		prefs.gradleUserHome = this.gradleUserHome;
 		prefs.gradleAnnotationProcessingEnabled = this.gradleAnnotationProcessingEnabled;
+		prefs.importMode = this.importMode;
+		prefs.importMbtEnabled = this.importMbtEnabled;
+		prefs.mbtStorage = this.mbtStorage;
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
@@ -1358,6 +1382,21 @@ public class Preferences {
 		if (containsKey(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED)) {
 			boolean gradleAnnotationProcessingEnabled = getBoolean(configuration, GRADLE_ANNOTATION_PROCESSING_ENABLED, existing.gradleAnnotationProcessingEnabled);
 			prefs.setGradleAnnotationProcessingEnabled(gradleAnnotationProcessingEnabled);
+		}
+
+		if (containsKey(configuration, IMPORT_MODE)) {
+			String importMode = getString(configuration, IMPORT_MODE, existing.importMode);
+			prefs.setImportMode(importMode);
+		}
+
+		if (containsKey(configuration, IMPORT_MBT_ENABLED)) {
+			boolean importMbtEnabled = getBoolean(configuration, IMPORT_MBT_ENABLED, existing.importMbtEnabled);
+			prefs.setImportMbtEnabled(importMbtEnabled);
+		}
+
+		if (containsKey(configuration, IMPORT_MBT_STORAGE)) {
+			String mbtStorage = getString(configuration, IMPORT_MBT_STORAGE, existing.mbtStorage);
+			prefs.setMbtStorage(mbtStorage);
 		}
 
 		if (containsKey(configuration, IMPORT_MAVEN_ENABLED)) {
@@ -2198,6 +2237,29 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setImportMode(String mode) {
+		this.importMode = mode;
+		return this;
+	}
+
+	public Preferences setImportMbtEnabled(boolean enabled) {
+		this.importMbtEnabled = enabled;
+		return this;
+	}
+
+	public String getMbtStorage() {
+		return mbtStorage;
+	}
+
+	public Preferences setMbtStorage(String storage) {
+		this.mbtStorage = storage;
+		return this;
+	}
+
+	public boolean isMbtStorageFile() {
+		return !"memory".equals(mbtStorage);
+	}
+
 	public Preferences setImportMavenEnabled(boolean enabled) {
 		this.importMavenEnabled = enabled;
 		return this;
@@ -2553,6 +2615,14 @@ public class Preferences {
 
 	public boolean isGradleWrapperEnabled() {
 		return gradleWrapperEnabled;
+	}
+
+	public String getImportMode() {
+		return importMode;
+	}
+
+	public boolean isImportMbtEnabled() {
+		return importMbtEnabled;
 	}
 
 	public boolean isImportMavenEnabled() {

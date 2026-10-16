@@ -25,6 +25,7 @@ import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 
@@ -51,6 +52,10 @@ public class DocumentLifeCycleHandler extends BaseDocumentLifeCycleHandler {
 	public ICompilationUnit resolveCompilationUnit(String uri) {
 		ICompilationUnit unit = null;
 		IFile resource = JDTUtils.findFile(uri);
+		boolean imported = OnDemandImportManager.getInstance().tryOnDemandImport(uri, new NullProgressMonitor());
+		if (resource == null && imported) {
+			resource = JDTUtils.findFile(uri);
+		}
 		if (resource != null) { // Open the files already managed by the jdt workspace.
 			unit = JDTUtils.resolveCompilationUnit(resource);
 		} else { // Open the standalone files.

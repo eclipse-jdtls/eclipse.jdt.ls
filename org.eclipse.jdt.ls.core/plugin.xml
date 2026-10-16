@@ -157,6 +157,10 @@
          id="importers"
          point="org.eclipse.jdt.ls.core.importers">
          <importer
+            id = "mbtProjectImporter"
+            order = "10"
+            class = "org.eclipse.jdt.ls.core.internal.mbt.MbtProjectImporter"/>
+         <importer
             id = "gradleProjectImporter"
             order ="300"
             class = "org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter"/>
@@ -176,6 +180,10 @@
    <extension
    		 id="buildSupport"
          point="org.eclipse.jdt.ls.core.buildSupport">
+         <buildSupport
+         	id="mbtBuildSupport"
+         	order="50"
+         	class="org.eclipse.jdt.ls.core.internal.mbt.MbtBuildSupport" />
          <buildSupport
          	id="gradleBuildSupport"
          	order="300"

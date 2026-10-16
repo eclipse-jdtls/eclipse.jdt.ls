@@ -25,6 +25,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.managers.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.RenameOptions;
@@ -58,6 +59,7 @@ public class RenameHandler {
 		if (!preferenceManager.getPreferences().isRenameEnabled()) {
 			return edit;
 		}
+		OnDemandImportManager.getInstance().tryImportReverseDependencies(params.getTextDocument().getUri(), true, monitor);
 		try {
 			final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 

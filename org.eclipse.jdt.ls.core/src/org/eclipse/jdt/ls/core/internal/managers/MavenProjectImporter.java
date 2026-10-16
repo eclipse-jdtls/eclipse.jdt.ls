@@ -156,10 +156,60 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	@Override
 	public void reset() {
 		projectInfos = null;
+		super.reset();
+	}
+
+	@Override
+	public boolean supportsOnDemand() {
+		return true;
+	}
+
+	@Override
+	protected AbstractSourceFolderIndex createSourceFolderIndex() {
+		java.nio.file.Path workspacePath = rootFolder.toPath().toAbsolutePath().normalize();
+		return new MavenSourceFolderIndex(workspacePath);
+	}
+
+	@Override
+	protected List<IProject> importModule(String moduleId, IProgressMonitor monitor) throws CoreException {
+		java.nio.file.Path moduleDir = sourceFolderIndex.getModuleDir(moduleId);
+		if (moduleDir == null) {
+			return List.of();
+		}
+		File pomFile = moduleDir.resolve(POM_FILE).toFile();
+		if (!pomFile.isFile()) {
+			return List.of();
+		}
+		try {
+			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
+			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+			LocalProjectScanner scanner = new LocalProjectScanner(
+					List.of(moduleDir.toAbsolutePath().toString()), false, modelManager);
+			scanner.run(monitor);
+			Set<MavenProjectInfo> infos = collectProjects(scanner.getProjects());
+			if (infos.isEmpty()) {
+				return List.of();
+			}
+			List<IMavenProjectImportResult> importResults = configurationManager.importProjects(
+					infos, importConfig, monitor);
+			List<IProject> result = new ArrayList<>();
+			for (IMavenProjectImportResult ir : importResults) {
+				if (ir.getProject() != null) {
+					result.add(ir.getProject());
+				}
+			}
+			return result;
+		} catch (InterruptedException e) {
+			throw new OperationCanceledException();
+		}
 	}
 
 	@Override
 	public void importToWorkspace(IProgressMonitor monitor) throws CoreException, OperationCanceledException {
+		if (isOnDemandMode()) {
+			setupOnDemand(monitor);
+			return;
+		}
 		JavaLanguageServerPlugin.logInfo(IMPORTING_MAVEN_PROJECTS);
 		MavenConfigurationImpl configurationImpl = (MavenConfigurationImpl)MavenPlugin.getMavenConfiguration();
 		configurationImpl.setDownloadSources(JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isMavenDownloadSources());
