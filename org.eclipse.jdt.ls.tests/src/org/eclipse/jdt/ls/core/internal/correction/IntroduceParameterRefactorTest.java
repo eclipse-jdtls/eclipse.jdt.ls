@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -36,15 +36,15 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class IntroduceParameterRefactorTest extends AbstractQuickFixTest {
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
 	private ClientPreferences clientPreferences;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());

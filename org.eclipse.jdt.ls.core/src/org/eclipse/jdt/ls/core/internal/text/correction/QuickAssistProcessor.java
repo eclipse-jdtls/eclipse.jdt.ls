@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -132,6 +132,7 @@ import org.eclipse.jdt.internal.corext.fix.SwitchExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesAnalyzer;
 import org.eclipse.jdt.internal.corext.refactoring.surround.SurroundWithTryWithResourcesRefactoringCore;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.fix.PatternInstanceofToSwitchCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
@@ -142,6 +143,7 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrecti
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
+import org.eclipse.jdt.ls.core.internal.corrections.proposals.ConvertRecordSubProcessor;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.JavadocTagsSubProcessor;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
@@ -221,6 +223,7 @@ public class QuickAssistProcessor {
 			getConvertLambdaExpressionAndMethodRefCleanUpProposal(context, coveringNode, resultingCollections);
 			getConvertMethodReferenceToLambdaProposal(context, coveringNode, resultingCollections);
 			getConvertLambdaToMethodReferenceProposal(context, coveringNode, resultingCollections);
+			getConvertToRecordProposals(context, coveringNode, resultingCollections);
 			getAddInferredLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
 			getAddVarLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
 			getRemoveVarOrInferredLambdaParameterTypesProposal(context, coveringNode, resultingCollections);
@@ -256,6 +259,13 @@ public class QuickAssistProcessor {
 			return resultingCollections;
 		}
 		return Collections.emptyList();
+	}
+
+	private static boolean getConvertToRecordProposals(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> resultingCollections) {
+		if (!JavaModelUtil.is16OrHigher(context.getCompilationUnit().getJavaProject())) {
+			return false;
+		}
+		return ConvertRecordSubProcessor.getConvertToRecordProposals(context, node, resultingCollections);
 	}
 
 	private static boolean getExtractMethodFromLambdaProposal(IInvocationContext context, ASTNode coveringNode, boolean problemsAtLocation, Collection<ProposalKindWrapper> proposals) throws CoreException {
@@ -339,9 +349,10 @@ public class QuickAssistProcessor {
 
 		ITypeBinding parentType = Bindings.getBindingOfParentType(node);
 		if (parentType != null) {
-			if (parentType.isInterface()) {
+			if (parentType.isInterface() || parentType.isRecord()) {
 				return false;
 			}
+
 			// assign to existing fields
 			CompilationUnit root = context.getASTRoot();
 			IVariableBinding[] declaredFields = parentType.getDeclaredFields();
@@ -375,6 +386,7 @@ public class QuickAssistProcessor {
 		if (methodDecl.getBody() == null) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		List<SingleVariableDeclaration> parameters = methodDecl.parameters();
 		if (parameters.size() <= 1) {
 			return false;
@@ -480,6 +492,7 @@ public class QuickAssistProcessor {
 	 *             if an exception occurs while accessing the Java element
 	 *             corresponding to the <code>functionalMethod</code>
 	 */
+	@SuppressWarnings("unchecked")
 	public static LambdaExpression convertMethodRefernceToLambda(MethodReference methodReference, IMethodBinding functionalMethod, CompilationUnit astRoot, ASTRewrite rewrite, LinkedProposalModelCore linkedProposalModel,
 			boolean createBlockBody) throws JavaModelException {
 
@@ -804,6 +817,7 @@ public class QuickAssistProcessor {
 				removeCatchBlock(rewrite, catchClause);
 				if (type.isUnionType()) {
 					UnionType unionType = (UnionType) type;
+					@SuppressWarnings("unchecked")
 					List<Type> types = unionType.types();
 					for (Type elementType : types) {
 						if (!(elementType instanceof SimpleType || elementType instanceof NameQualifiedType)) {
@@ -839,6 +853,7 @@ public class QuickAssistProcessor {
 
 	private static void removeException(ASTRewrite rewrite, UnionType unionType, Type exception) {
 		ListRewrite listRewrite = rewrite.getListRewrite(unionType, UnionType.TYPES_PROPERTY);
+		@SuppressWarnings("unchecked")
 		List<Type> types = unionType.types();
 		for (Iterator<Type> iterator = types.iterator(); iterator.hasNext();) {
 			Type type = iterator.next();
@@ -848,6 +863,7 @@ public class QuickAssistProcessor {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void addExceptionToThrows(AST ast, MethodDeclaration methodDeclaration, ASTRewrite rewrite, Type type2) {
 		ITypeBinding binding = type2.resolveBinding();
 		if (binding == null || isNotYetThrown(binding, methodDeclaration.thrownExceptionTypes())) {
@@ -864,6 +880,7 @@ public class QuickAssistProcessor {
 			rewrite.remove(catchClause, null);
 		} else {
 			Block block = tryStatement.getBody();
+			@SuppressWarnings("unchecked")
 			List<Statement> statements = block.statements();
 			int nStatements = statements.size();
 			if (nStatements == 1) {
@@ -954,6 +971,7 @@ public class QuickAssistProcessor {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static boolean getTryWithResourceProposals(IInvocationContext context, ASTNode node, ArrayList<ASTNode> coveredNodes, Collection<ProposalKindWrapper> resultingCollections) throws IllegalArgumentException, CoreException {
 		ASTNode parentStatement = ASTResolving.findAncestor(node, ASTNode.VARIABLE_DECLARATION_STATEMENT);
 		if (!(parentStatement instanceof VariableDeclarationStatement) && !(parentStatement instanceof ExpressionStatement) && !(node instanceof SimpleName) && (coveredNodes == null || coveredNodes.isEmpty())) {
@@ -1190,6 +1208,7 @@ public class QuickAssistProcessor {
 
 	private static boolean getConvertToSwitchExpressionProposals(IInvocationContext context, ASTNode covering, Collection<ProposalKindWrapper> resultingCollections) {
 		if (covering instanceof Block block) {
+			@SuppressWarnings("unchecked")
 			List<Statement> statements = block.statements();
 			int startIndex = QuickAssistProcessorUtil.getIndex(context.getSelectionOffset(), statements);
 			if (startIndex == -1 || startIndex >= statements.size()) {
@@ -1481,11 +1500,13 @@ public class QuickAssistProcessor {
 			ifStmt= (IfStatement) ifStmt.getParent();
 		}
 		IProposableFix fix= PatternInstanceofToSwitchFixCore.createPatternInstanceofToSwitchFix(ifStmt);
-		if (fix == null)
+		if (fix == null) {
 			return false;
+		}
 
-		if (resultingCollections == null)
+		if (resultingCollections == null) {
 			return true;
+		}
 
 		// add correction proposal
 		Map<String, String> options= new Hashtable<>();
@@ -1503,7 +1524,8 @@ public class QuickAssistProcessor {
         if (decl.getName() != node || decl.resolveBinding() == null || Modifier.isPrivate(decl.getModifiers())) {
             return false;
         }
-        boolean addOverride = StubUtility2Core.findAnnotation("java.lang.Override", decl.modifiers()) == null; //$NON-NLS-1$
+        @SuppressWarnings("unchecked")
+		boolean addOverride = StubUtility2Core.findAnnotation("java.lang.Override", decl.modifiers()) == null; //$NON-NLS-1$
         return getCreateInSuperClassProposals(context, node, resultingCollections, addOverride);
     }
 

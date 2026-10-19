@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017 Microsoft Corporation and others.
+ * Copyright (c) 2017, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ package org.eclipse.jdt.ls.core.internal.correction;
 
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -26,16 +27,15 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -244,9 +244,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2);
 	}
 
-	// requires TP >= 4.24 I20220314-1800 - https://github.com/eclipse/eclipse.jdt.ls/issues/2026
 	@Test
-	@Ignore
 	public void testUnusedParameter() throws Exception {
 		Map<String, String> options = fJProject1.getOptions(true);
 		options.put(JavaCore.COMPILER_PB_UNUSED_PARAMETER, JavaCore.ERROR);
@@ -1896,7 +1894,6 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
 
 
-		String[] expected = new String[1];
 		buf = new StringBuilder();
 		buf.append("package test;\n");
 		buf.append("public class E {\n");
@@ -2778,4 +2775,1237 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActionExists(cu, e1);
 	}
 
+	@Test
+	public void testUnnecessaryThrownException1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    public void foo(String b) throws IOException {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+
+				public class E {
+				    public void foo(String b) {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+					 * @throws IOException \s
+					 */
+				    public void foo(String b) throws IOException {
+				        if  (b != null) {
+				            System.out.println();
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     * @throws ParseException\s
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION_INCLUDE_DOC_COMMENT_REFERENCE, JavaCore.DISABLED);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @param i
+				     * @throws IOException
+				     * @throws ParseException
+				     */
+				    public void foo(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				import java.io.IOException;
+				public class E {
+				    /**
+				     * @param i
+				     * @throws IOException
+				     */
+				    public void foo(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Remove thrown exception", str1);
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testUnnecessaryThrownException4() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_DECLARED_THROWN_EXCEPTION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String[] expected = new String[2];
+
+		expected[0] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     */
+				    public E(int i) throws IOException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+
+		expected[1] = """
+				package test1;
+				import java.io.IOException;
+				import java.text.ParseException;
+				public class E {
+				    /**
+				     * @throws IOException
+				     * @throws ParseException\s
+				     */
+				    public E(int i) throws IOException, ParseException {
+				        if  (i == 0) {
+				            throw new IOException();
+				        }
+				    }
+				    public void foo(int i) throws ParseException {
+				        if  (i == 0) {
+				            throw new ParseException(null, 4);
+				        }
+				    }
+				}
+				""";
+
+		Expected e0 = new Expected("Remove thrown exception", expected[0]);
+		Expected e1 = new Expected("Document thrown exception to avoid 'unused' warning", expected[1]);
+		assertCodeActions(cu, e0, e1);
+	}
+
+	@Test
+	public void testSetParenteses1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    public void foo(Object x) {
+				        if (!x instanceof Runnable) {
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public class E {
+				    public void foo(Object x) {
+				        if (!(x instanceof Runnable)) {
+				        }
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Put 'instanceof' in parentheses", str1);
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testSetParenteses2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    public boolean foo(int x) {
+				        return !x instanceof Runnable || true;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String str1 = """
+				package test1;
+				public class E {
+				    public boolean foo(int x) {
+				        return !(x instanceof Runnable) || true;
+				    }
+				}
+				""";
+		Expected e1 = new Expected("Put 'instanceof' in parentheses", str1);
+		assertCodeActions(cu, e1);
+	}
+
+	public void testUncheckedConversionVariableDeclaration() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map = new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionMethodArgument() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo(Map<String, String> map) {
+			    }
+			    public void bar() {
+			        foo(new HashMap());
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo(Map<String, String> map) {
+			    }
+			    public void bar() {
+			        foo(new HashMap<>());
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionReturnStatement() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public Map<String, String> foo() {
+			        return new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public Map<String, String> foo() {
+			        return new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionAssignment() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map;
+			        map = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        Map<String, String> map;
+			        map = new HashMap<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'HashMap'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionList() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List<String> list = new ArrayList();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        List<String> list = new ArrayList<>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Add type arguments to 'ArrayList'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUncheckedConversionExplicitTypeArguments() throws Exception {
+		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
+		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);
+		tempOptions.put(JavaCore.COMPILER_PB_RAW_TYPE_REFERENCE, JavaCore.WARNING);
+		fJProject1.setOptions(tempOptions);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		// @formatter:off
+		String before = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        HashMap<Character, Integer> asdf = new HashMap();
+			    }
+			}
+			""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", before, false, null);
+
+		String after = """
+			package test1;
+			import java.util.*;
+			public class E {
+			    public void foo() {
+			        HashMap<Character, Integer> asdf = new HashMap<Character, Integer>();
+			    }
+			}
+			""";
+		// @formatter:on
+		Expected e1 = new Expected("Change type to 'HashMap<Character, Integer>'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+
+
+	@Test
+	public void testHidingVariable1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				       int count= 1;
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				       int count1= 1;
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename local variable 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+
+	@Test
+	public void testHidingVariable2() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    private int count;
+			    public void foo(int count) {
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo(int count1) {
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename argument 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable3() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            private int count;
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            private int count1;
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename field 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable4() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    private int count;
+			    public void foo() {
+			        class Inner {
+			            private int count;
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    private int count;
+				    public void foo() {
+				        class Inner {
+				            private int count1;
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename field 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable5() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            public void foo() {
+			                 int count;
+			            }
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo() {
+				                 int count1;
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename local variable 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testHidingVariable6() throws Exception {
+		Hashtable<String, String> hashtable= JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1= fSourceFolder.createPackageFragment("test1", false, null);
+		String str= """
+			package test1;
+			public class E {
+			    public void foo(int count) {
+			        class Inner {
+			            public void foo(int count) {
+			            }
+			        }
+			    }
+			}
+			""";
+		ICompilationUnit cu= pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count1) {
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename argument 'count'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testDuplicateMethod() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		hashtable.put(JavaCore.COMPILER_PB_FIELD_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+					}
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count) {
+				            }
+				        }
+				    }
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo1(int count) {
+					}
+				    public void foo(int count) {
+				        class Inner {
+				            public void foo(int count) {
+				            }
+				        }
+				    }
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Rename method 'foo'", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnnecessaryNLSTag() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_NON_NLS_STRING_LITERAL, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+						int a = count; //$NON-NLS-1$
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo(int count) {
+						int a = count;
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Remove unnecessary '$NON-NLS$' tag", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public void foo(int count) throws Exception {
+						new RuntimeException();
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public void foo(int count) throws Exception {
+						throw new RuntimeException();
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Throw the allocated object", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							return new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Return the allocated object", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testUnusedAllocation3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_UNUSED_OBJECT_ALLOCATION, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+							new String("abc");
+						}
+						return "def";
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after = """
+				package test1;
+				public class E {
+					public String foo(int count) throws Exception {
+						if (count < 3) {
+						}
+						return "def";
+					}
+				}
+				""";
+		// @formatter:on
+		Expected e1 = new Expected("Remove", after);
+
+		assertCodeActionExists(cu, e1);
+	}
+
+	@Test
+	public void testMissingHashCode1() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+
+					public boolean equals(Object obj) {
+				    	return super.equals(obj);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e2 = new Expected("Override hashCode()", after2);
+		assertCodeActions(cu, e2);
+		assertCodeActionNotExists(cu, "Regenerate hashCode() and equals()");
+	}
+
+	@Test
+	public void testMissingHashCode2() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x);
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after1 = """
+				package test1;
+
+				import java.util.Objects;
+
+				public class E {
+					String x;
+					int y;
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
+					@Override
+					public int hashCode() {
+						return Objects.hash(x);
+					}
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
+					@Override
+					public boolean equals(Object obj) {
+						if (this == obj) {
+							return true;
+						}
+						if (!(obj instanceof E)) {
+							return false;
+						}
+						E other = (E) obj;
+						return Objects.equals(x, other.x);
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x);
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e1 = new Expected("Regenerate hashCode() and equals()", after1);
+		Expected e2 = new Expected("Override hashCode()", after2);
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testMissingHashCode3() throws Exception {
+		Hashtable<String, String> hashtable = JavaCore.getOptions();
+		hashtable.put(JavaCore.COMPILER_PB_MISSING_HASHCODE_METHOD, JavaCore.ERROR);
+		fJProject1.setOptions(hashtable);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		String str = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x) && ((E)obj).y == this.y;
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", str, false, null);
+
+		String after1 = """
+				package test1;
+
+				import java.util.Objects;
+
+				public class E {
+					String x;
+					int y;
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#hashCode()
+					 */
+					@Override
+					public int hashCode() {
+						return Objects.hash(x, Integer.valueOf(y));
+					}
+
+					/** (non-Javadoc)
+					 * @see java.lang.Object#equals(java.lang.Object)
+					 */
+					@Override
+					public boolean equals(Object obj) {
+						if (this == obj) {
+							return true;
+						}
+						if (!(obj instanceof E)) {
+							return false;
+						}
+						E other = (E) obj;
+						return Objects.equals(x, other.x) && y == other.y;
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+				}
+				""";
+
+		String after2 = """
+				package test1;
+				public class E {
+					String x;
+					int y;
+
+					public boolean equals(Object obj) {
+						if (obj instanceof E) {
+							return ((E)obj).x.equals(this.x) && ((E)obj).y == this.y;
+				    	}
+					}
+
+					public void foo(Integer a) {
+						System.out.println(a);
+					}
+
+					@Override
+					public int hashCode() {
+						// TODO Auto-generated method stub
+						throw new UnsupportedOperationException("Unimplemented method 'hashCode'");
+					}
+				}
+				""";
+		Expected e1 = new Expected("Regenerate hashCode() and equals()", after1);
+		Expected e2 = new Expected("Override hashCode()", after2);
+
+		assertCodeActions(cu, e1, e2);
+	}
+
+	@Test
+	public void testLambdaRedeclares1() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count -> {
+				            System.out.println(count);
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				import java.util.function.Consumer;
+
+				public class E {
+				    public void foo() {
+				        int count = 0;
+				        Consumer<Integer> consumer = count1 -> {
+				            System.out.println(count1);
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'count'", expected);
+
+		assertCodeActions(cu, e1);
+	}
+
+	@Test
+	public void testLambdaRedeclares2() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		options.put(JavaCore.COMPILER_PB_LOCAL_VARIABLE_HIDING, JavaCore.ERROR);
+		fJProject1.setOptions(options);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+
+		String source = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset = 20;
+				        };
+				    }
+				}
+				""";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("E1.java", source, false, null);
+
+		String expected = """
+				package test1;
+				class HidingExample {
+				    public void process() {
+				        int offset = 10;
+				        Runnable task = () -> {
+				            int offset1 = 20;
+				        };
+				    }
+				}
+				""";
+
+		Expected e1 = new Expected("Rename 'offset'", expected);
+
+		assertCodeActions(cu, e1);
+	}
 }

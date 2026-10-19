@@ -19,18 +19,20 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 public class ResolveSourceMappingHandler {
-    private static final Pattern SOURCE_PATTERN = Pattern.compile("([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.java:\\d+)\\)");
+    private static final Pattern SOURCE_PATTERN = Pattern.compile(
+        "([\\w$\\.]+\\/)?(([\\w$]+\\.)+[<\\w$>]+)\\(([\\w-$]+\\.(?:java|kt|groovy|clj|scala)(?::\\d+)?)+\\)"
+    );
     private static final JdtSourceLookUpProvider sourceProvider = new JdtSourceLookUpProvider();
 
     /**
      * Given a line of stacktrace, resolve the uri of the source file or class file.
-     * 
+     *
      * @param lineText
      *              the line of the stacktrace.
      * @param projectNames
      *              A list of the project names that needs to search in. If the given list is empty,
      *              All the projects in the workspace will be searched.
-     * 
+     *
      * @return the uri of the associated source file or class file.
      */
     public static String resolveStackTraceLocation(String lineText, List<String> projectNames) {

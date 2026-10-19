@@ -12,9 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,14 +35,15 @@ import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.ReferenceContext;
 import org.eclipse.lsp4j.ReferenceParams;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * ReferencesHandlerTest
@@ -52,7 +54,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 	private IProject project;
 
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception{
 		importProjects("eclipse/hello");
 		project = WorkspaceHelper.getProject("hello");
@@ -69,7 +71,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		param.setTextDocument( new TextDocumentIdentifier("/foo/bar"));
 		List<Location> references =  handler.findReferences(param, monitor);
 		assertNotNull(references);
-		assertTrue("references are not empty", references.isEmpty());
+		assertTrue(references.isEmpty(), "references are not empty");
 	}
 
 	@Test
@@ -82,7 +84,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		param.setContext(new ReferenceContext(false));
 		param.setTextDocument( new TextDocumentIdentifier(fileURI));
 		List<Location> references =  handler.findReferences(param, monitor);
-		assertNotNull("findReferences should not return null",references);
+		assertNotNull(references, "findReferences should not return null");
 		assertEquals(1, references.size());
 		Location l = references.get(0);
 		String refereeUri = ResourceUtils.fixURI(project.getFile("src/java/Foo3.java").getRawLocationURI());
@@ -101,11 +103,11 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 			param.setTextDocument(new TextDocumentIdentifier(fileURI));
 			preferenceManager.getPreferences().setIncludeAccessors(false);
 			List<Location> references = handler.findReferences(param, monitor);
-			assertNotNull("findReferences should not return null", references);
+			assertNotNull(references, "findReferences should not return null");
 			assertEquals(3, references.size());
 			preferenceManager.getPreferences().setIncludeAccessors(true);
 			references = handler.findReferences(param, monitor);
-			assertNotNull("findReferences should not return null", references);
+			assertNotNull(references, "findReferences should not return null");
 			assertEquals(5, references.size());
 			Location l = references.get(0);
 			String refereeUri = ResourceUtils.fixURI(project.getFile("src/org/ref/Apple.java").getRawLocationURI());
@@ -133,13 +135,48 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		param.setContext(new ReferenceContext(false));
 		param.setTextDocument(new TextDocumentIdentifier(fileURI));
 		List<Location> references = handler.findReferences(param, monitor);
-		assertNotNull("findReferences should not return null", references);
+		assertNotNull(references, "findReferences should not return null");
 		assertEquals(2, references.size());
 		Location l = references.get(0);
 		String refereeUri = ResourceUtils.fixURI(referenceProject.getFile("src/org/reference/Main.java").getRawLocationURI());
 		assertEquals(refereeUri, l.getUri());
 		l = references.get(1);
 		assertEquals(fileURI, l.getUri());
+	}
+
+	@Test
+	public void testProjectOnlySearchScope() throws Exception {
+		when(preferenceManager.isClientSupportsClassFileContent()).thenReturn(true);
+		importProjects("eclipse/reference");
+		IProject referenceProject = WorkspaceHelper.getProject("reference");
+		IJavaProject referenceJavaProject = JavaCore.create(referenceProject);
+		IType element = referenceJavaProject.findType("org.sample.Foo");
+		IClassFile cf = (IClassFile) element.getAncestor(IJavaElement.CLASS_FILE);
+		URI uri = JDTUtils.toURI(JDTUtils.toUri(cf));
+		String fileURI = ResourceUtils.fixURI(uri);
+		ReferenceParams param = new ReferenceParams();
+		param.setPosition(new Position(5, 6));
+		param.setContext(new ReferenceContext(false));
+		param.setTextDocument(new TextDocumentIdentifier(fileURI));
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			List<Location> references = handler.findReferences(param, monitor);
+			assertEquals(1, references.size());
+			String refereeUri = ResourceUtils.fixURI(referenceProject.getFile("src/org/reference/Main.java").getRawLocationURI());
+			assertEquals(refereeUri, references.get(0).getUri());
+
+			IType system = referenceJavaProject.findType("java.lang.System");
+			IField field = system.getField("out");
+			assertTrue(field.exists());
+			references.clear();
+			handler.search(field, references, monitor, true);
+			assertFalse(references.isEmpty());
+			assertTrue(references.stream().allMatch(reference -> reference.getUri().startsWith("file:")));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
 	}
 
 	// https://github.com/redhat-developer/vscode-java/issues/2227
@@ -187,7 +224,7 @@ public class ReferencesHandlerTest extends AbstractProjectsManagerBasedTest{
 		assertTrue(field.exists());
 		List<Location> references = new ArrayList<>();
 		handler.search(field, references, monitor, true);
-		assertNotNull("findReferences should not return null", references);
+		assertNotNull(references, "findReferences should not return null");
 		Location location = references.stream().filter(r -> r.getUri().startsWith("jdt://contents/rtstubs.jar/java.lang/System.class")).findFirst().get();
 		assertNotNull(location);
 	}

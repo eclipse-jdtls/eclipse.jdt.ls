@@ -13,8 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.framework.protobuf;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,19 +23,19 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractGradleBasedTest;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ProtobufSupportTest extends AbstractGradleBasedTest {
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		JavaLanguageServerPlugin.getProjectsManager().setConnection(this.client);
 		this.preferences.setProtobufSupportEnabled(true);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		JavaLanguageServerPlugin.getProjectsManager().setConnection(null);
 		this.preferences.setProtobufSupportEnabled(false);
@@ -52,7 +52,7 @@ public class ProtobufSupportTest extends AbstractGradleBasedTest {
 		List<Object> notifications = this.clientRequests.get("sendActionableNotification");
 		assertEquals(1, notifications.size());
 	}
-	
+
 	@Test
 	public void testGenerateProtobufSources() throws Exception {
 		IProject project = importGradleProject("protobuf");

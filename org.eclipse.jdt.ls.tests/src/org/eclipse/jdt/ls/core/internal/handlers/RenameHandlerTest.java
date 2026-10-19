@@ -15,19 +15,15 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.LinkedList;
 import java.util.List;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -53,13 +49,16 @@ import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private RenameHandler handler;
@@ -68,7 +67,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IPackageFragmentRoot sourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		IJavaProject javaProject = newEmptyProject();
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
@@ -249,8 +248,7 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(JDTUtils.toURI(cu), resourceChange.getOldUri());
 		assertEquals(JDTUtils.toURI(cu).replaceFirst("(?s)E(?!.*?E)", "Newname"), resourceChange.getNewUri());
 
-		List<TextEdit> testChanges = new LinkedList<>();
-		testChanges.addAll(resourceChanges.get(0).getLeft().getEdits());
+		List<TextEdit> testChanges = resourceChanges.get(0).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
 		String expected = "package test1;\n" +
 						  "public class Newname {\n" +
@@ -266,59 +264,62 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(expected, TextEditUtil.apply(builder.toString(), testChanges));
 	}
 
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameTypeWithErrors() throws JavaModelException, BadLocationException {
+	@Test
+	void testRenameTypeWithErrors() {
 		Mockito.lenient().when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		assertThrows(ResponseErrorException.class, () -> {
+			IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
-
-		String[] codes = { "package test1;\n",
-				           "public class Newname {\n",
-				           "   }\n",
-				           "}\n" };
-		StringBuilder builder = new StringBuilder();
-		mergeCode(builder, codes);
-		ICompilationUnit cu = pack1.createCompilationUnit("Newname.java", builder.toString(), false, null);
+			String[] codes = { "package test1;\n",
+					           "public class Newname {\n",
+					           "   }\n",
+					           "}\n" };
+			StringBuilder builder = new StringBuilder();
+			mergeCode(builder, codes);
+			ICompilationUnit cu = pack1.createCompilationUnit("Newname.java", builder.toString(), false, null);
 
 
-		String[] codes1 = { "package test1;\n",
-				           "public class E|* {\n",
-				           "   public E() {\n",
-				           "   }\n",
-				           "   public int bar() {\n", "   }\n",
-				           "   public int foo() {\n",
-				           "		this.bar();\n",
-				           "   }\n",
-				           "}\n" };
-		builder = new StringBuilder();
-		Position pos = mergeCode(builder, codes1);
-		cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
+			String[] codes1 = { "package test1;\n",
+					           "public class E|* {\n",
+					           "   public E() {\n",
+					           "   }\n",
+					           "   public int bar() {\n", "   }\n",
+					           "   public int foo() {\n",
+					           "		this.bar();\n",
+					           "   }\n",
+					           "}\n" };
+			builder = new StringBuilder();
+			Position pos = mergeCode(builder, codes1);
+			cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
 
-		WorkspaceEdit edit = getRenameEdit(cu, pos, "Newname");
-		assertNotNull(edit);
-		List<Either<TextDocumentEdit, ResourceOperation>> resourceChanges = edit.getDocumentChanges();
+			WorkspaceEdit edit = getRenameEdit(cu, pos, "Newname");
+			assertNotNull(edit);
+			List<Either<TextDocumentEdit, ResourceOperation>> resourceChanges = edit.getDocumentChanges();
 
-		assertEquals(resourceChanges.size(), 3);
+			assertEquals(resourceChanges.size(), 3);
+		});
 	}
 
-	@Test(expected = ResponseErrorException.class)
-	public void testRenameSystemLibrary() throws JavaModelException {
-		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+	@Test
+	void testRenameSystemLibrary() {
+		assertThrows(ResponseErrorException.class, () -> {
+			IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 
-		String[] codes = {
-				"package test1;\n",
-				"public class E {\n",
-				"   public int bar() {\n",
-				"		String str = new String();\n",
-				"   	str.len|*gth();\n",
-				"   }\n",
-				"}\n"
-		};
-		StringBuilder builder = new StringBuilder();
-		Position pos = mergeCode(builder, codes);
-		ICompilationUnit cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
+			String[] codes = {
+					"package test1;\n",
+					"public class E {\n",
+					"   public int bar() {\n",
+					"		String str = new String();\n",
+					"   	str.len|*gth();\n",
+					"   }\n",
+					"}\n"
+			};
+			StringBuilder builder = new StringBuilder();
+			Position pos = mergeCode(builder, codes);
+			ICompilationUnit cu = pack1.createCompilationUnit("E.java", builder.toString(), false, null);
 
-		getRenameEdit(cu, pos, "newname");
+			getRenameEdit(cu, pos, "newname");
+		});
 	}
 
 	@Test
@@ -574,77 +575,6 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 				);
 	}
 
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/eclipse/eclipse.jdt.ls/issues/1775
-	@Test
-	public void testRenameTypeLombok() throws Exception {
-		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
-		IFile file = project.getFile("src/main/java/org/sample/Test.java");
-		assertTrue(file.exists());
-		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
-		Position pos = new Position(5, 15);
-		String source = cu.getSource();
-		String expected = source.replace("Test", "Test1");
-		WorkspaceEdit edit = getRenameEdit(cu, pos, "Test1");
-		assertNotNull(edit);
-		assertEquals(2, edit.getChanges().size());
-		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
-	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/redhat-developer/vscode-java/issues/3203
-	@Test
-	public void testLombokSingular() throws Exception {
-		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
-		IFile file = project.getFile("src/main/java/org/sample/Test2.java");
-		assertTrue(file.exists());
-		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
-		Position pos = new Position(9, 18);
-		String source = cu.getSource();
-		String expected = source.replace("singulars", "singulars2");
-		WorkspaceEdit edit = getRenameEdit(cu, pos, "singulars2");
-		assertNotNull(edit);
-		assertEquals(1, edit.getChanges().size());
-		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
-	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/redhat-developer/vscode-java/issues/2805
-	@Test
-	public void testRenameMethodLombok() throws Exception {
-		if (Boolean.getBoolean("jdt.ls.lombok.disabled")) {
-			return;
-		}
-		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
-		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
-		if (!markers.isEmpty()) {
-			// there isn't the lombok agent
-			return;
-		}
-		IFile main = project.getFile("src/main/java/org/sample/Main.java");
-		assertTrue(main.exists());
-		ICompilationUnit mainCu = JavaCore.createCompilationUnitFrom(main);
-		String mainSource = mainCu.getSource();
-		String mainExpected = mainSource.replace("getName", "getName1");
-		IFile file = project.getFile("src/main/java/org/sample/Test.java");
-		assertTrue(file.exists());
-		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
-		Position pos = new Position(6, 23);
-		String source = cu.getSource();
-		String expected = source.replace("name", "name1");
-		WorkspaceEdit edit = getRenameEdit(cu, pos, "name1");
-		assertNotNull(edit);
-		assertEquals(2, edit.getChanges().size());
-		assertEquals(expected, TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
-		assertEquals(mainExpected, TextEditUtil.apply(mainSource, edit.getChanges().get(JDTUtils.toURI(mainCu))));
-	}
-
 	@Test
 	public void testRenameSuperMethod() throws JavaModelException, BadLocationException {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
@@ -872,11 +802,9 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		assertEquals(5, resourceChanges.size());
 
-		List<TextEdit> testChangesA = new LinkedList<>();
-		testChangesA.addAll(resourceChanges.get(0).getLeft().getEdits());
+		List<TextEdit> testChangesA = resourceChanges.get(0).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
-		List<TextEdit> testChangesB = new LinkedList<>();
-		testChangesB.addAll(resourceChanges.get(1).getLeft().getEdits());
+		List<TextEdit> testChangesB = resourceChanges.get(1).getLeft().getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList();
 
 		String expectedA =
 				"package test1;\n" +

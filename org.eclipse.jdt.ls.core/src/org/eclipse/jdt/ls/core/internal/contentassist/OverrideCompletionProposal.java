@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -59,7 +58,6 @@ import org.eclipse.text.edits.MalformedTreeException;
  */
 public class OverrideCompletionProposal {
 
-	private IJavaProject fJavaProject;
 	private String fMethodName;
 	private String[] fParamTypes;
 	private ICompilationUnit fCompilationUnit;
@@ -74,7 +72,6 @@ public class OverrideCompletionProposal {
 
 		fParamTypes= paramTypes;
 		fMethodName= methodName;
-		fJavaProject= cu.getJavaProject();
 		StringBuilder buffer = new StringBuilder();
 		buffer.append(completionProposal);
 		buffer.append(" {};");

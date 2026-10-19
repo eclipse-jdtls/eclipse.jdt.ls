@@ -15,12 +15,14 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.correction;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -28,27 +30,28 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.lsp4j.CodeAction;
+import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReorgQuickFixTest extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 		fJProject1.setOptions(TestOptions.getDefaultOptions());
@@ -214,17 +217,12 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 	}
 
 	private WorkspaceEdit getWorkspaceEdit(Either<Command, CodeAction> codeAction) {
-		Command c = codeAction.isLeft() ? codeAction.getLeft() : codeAction.getRight().getCommand();
-		if (c != null) {
-			assertEquals(CodeActionHandler.COMMAND_ID_APPLY_EDIT, c.getCommand());
-			assertNotNull(c.getArguments());
-			assertTrue(c.getArguments().get(0) instanceof WorkspaceEdit);
-			return (WorkspaceEdit) c.getArguments().get(0);
-		} else {
-			WorkspaceEdit e = codeAction.getRight().getEdit();
-			assertNotNull(e);
-			return e;
+		if (codeAction.isLeft()) {
+			throw new AssertionError("Unexpected Command-only action: " + codeAction.getLeft().getCommand());
 		}
+		WorkspaceEdit e = codeAction.getRight().getEdit();
+		assertNotNull(e);
+		return e;
 	}
 
 	private void assertRenameFileOperation(Either<Command, CodeAction> codeAction, String newUri) {
@@ -461,4 +459,82 @@ public class ReorgQuickFixTest extends AbstractQuickFixTest {
 		Expected e1 = new Expected("Rename type to 'E'", buf.toString());
 		assertCodeActions(cu, e1);
 	}
+
+	@Test
+	public void testNoJavaApplyWorkspaceEditCommand() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(false);
+		when(preferenceManager.getClientPreferences().isSupportedCodeActionKind(CodeActionKind.SourceOrganizeImports)).thenReturn(true);
+
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("import java.util.Vector;\n");
+		buf.append("public class E {\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+
+		List<Either<Command, CodeAction>> actions = evaluateCodeActions(cu);
+		assertFalse(
+			actions.stream().anyMatch(a ->
+				a.isLeft() && "java.apply.workspaceEdit".equals(a.getLeft().getCommand())
+			),
+			"Should not return legacy java.apply.workspaceEdit Command"
+		);
+		assertFalse(
+			actions.stream().anyMatch(a ->
+				a.isRight() && a.getRight().getCommand() != null && "java.apply.workspaceEdit".equals(a.getRight().getCommand().getCommand())
+			),
+			"Should not embed legacy java.apply.workspaceEdit as CodeAction.command"
+		);
+
+		CodeAction organize = actions.stream()
+			.filter(Either::isRight)
+			.map(Either::getRight)
+			.filter(ca -> "Organize imports".equals(ca.getTitle()))
+			.findFirst()
+			.orElse(null);
+		assertNotNull(organize, "Expected 'Organize imports' code action");
+		assertNotNull(organize.getEdit(), "'Organize imports' should carry WorkspaceEdit");
+	}
+
+	@Test
+	public void testBumpRequiredCompliance14() throws Exception {
+		Map<String, String> options= fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E");
+		buf.append("	public void foo(int a) {\n");
+		buf.append("		switch (a) {\n");
+		buf.append("			case 1,2 -> System.out.println(\"abc\");\n");
+		buf.append("			default -> System.out.println(\"def\");\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionExists(cu, "Change project compiler compliance to 14");
+	}
+
+	@Test
+	public void testBumpRequiredCompliance15() throws Exception {
+		Map<String, String> options = fJProject1.getOptions(true);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_1_8, options);
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("\n");
+		buf.append("public class E");
+		buf.append("	public void foo(int a) {\n");
+		buf.append("		String s = \"\"\"\n");
+		buf.append("			abcdefg\n");
+		buf.append("			\"\"\";\n");
+		buf.append("		}\n");
+		buf.append("	}\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionExists(cu, "Change project compiler compliance to 15");
+	}
+
 }

@@ -217,6 +217,10 @@ public class JavaClientConnection {
 		return this.client.refreshInlayHints();
 	}
 
+	public CompletableFuture<Void> refreshCodeLenses() {
+		return this.client.refreshCodeLenses();
+	}
+
 	public void telemetryEvent(Object object) {
 		if (JavaLanguageServerPlugin.getPreferencesManager() != null
 			&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isTelemetryEnabled()) {

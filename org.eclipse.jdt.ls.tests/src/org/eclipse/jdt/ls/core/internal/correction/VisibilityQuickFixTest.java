@@ -16,9 +16,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Nikolas Komonen - nkomonen@redhat.com
@@ -29,7 +28,7 @@ public class VisibilityQuickFixTest extends AbstractQuickFixTest {
 	private IJavaProject fJProject1;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject1 = newEmptyProject();
 
@@ -38,7 +37,7 @@ public class VisibilityQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testMethodReducesVisibility() throws Exception {
-		int problem = IProblem.MethodReducesVisibility;
+		// Testing IProblem.MethodReducesVisibility;
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 
 		StringBuilder bufB = new StringBuilder();
@@ -74,8 +73,7 @@ public class VisibilityQuickFixTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testInheritedMethodReducesVisibilityAndOverridingNonVisibleMethod() throws Exception {
-		int problem = IProblem.InheritedMethodReducesVisibility;
-		int problem2 = IProblem.OverridingNonVisibleMethod;
+		// Testing IProblem.InheritedMethodReducesVisibility and IProblem.OverridingNonVisibleMethod;
 		// The code action fixes both of these diagnostic issues
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("p", false, null);

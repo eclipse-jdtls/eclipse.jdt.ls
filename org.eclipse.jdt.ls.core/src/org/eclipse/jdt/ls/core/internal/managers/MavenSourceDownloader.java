@@ -77,6 +77,10 @@ public class MavenSourceDownloader implements ISourceDownloader {
 						if (artifact == null) {
 							artifact = new MavenCentralIdentifier().identify(path, monitor);
 						}
+						if (artifact == null) {
+							// fall back to heuristic artifact identification
+							artifact = new MavenLocalRepositoryIdentifier().identify(path, monitor);
+						}
 						if (artifact != null) {
 							downloadStateCache.put(fragment, DOWNLOAD_REQUESTED);
 							if (!ProjectUtils.isMavenProject(element.getJavaProject().getProject())) {

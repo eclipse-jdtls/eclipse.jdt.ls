@@ -13,12 +13,13 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.WorkspaceHelper.getProject;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +27,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -40,7 +42,12 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.JavaRuntime;
+import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
@@ -48,9 +55,10 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.FileSystemWatcher;
 import org.eclipse.lsp4j.RelativePattern;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest {
@@ -58,7 +66,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 	private static final String BAR_PATTERN = "**/bar";
 	private EclipseProjectImporter importer;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		importer = new EclipseProjectImporter();
 	}
@@ -83,12 +91,12 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertIsJavaProject(project);
 		assertNoErrors(project);
 		//1 message sent to the platform logger
-		assertEquals(logListener.getErrors().toString(), 1, logListener.getErrors().size());
+		assertEquals(1, logListener.getErrors().size(), logListener.getErrors().toString());
 		String error = logListener.getErrors().get(0);
-		assertTrue("Unexpected error: " + error, error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"));
+		assertTrue(error.startsWith("Missing resource filter type: 'org.eclipse.ui.ide.missingFilter'"), "Unexpected error: " + error);
 		//but no message sent to the client
 		List<Object> loggedMessages = clientRequests.get("logMessage");
-		assertNull("Unexpected logs " + loggedMessages, loggedMessages);
+		assertNull(loggedMessages, "Unexpected logs " + loggedMessages);
 	}
 
 	@Test
@@ -191,7 +199,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 
 	@Test
 	public void testPreviewFeaturesDisabledByDefault() throws Exception {
-		String name = "java25";
+		String name = "java27";
 		importProjects("eclipse/" + name);
 		IProject project = getProject(name);
 		assertIsJavaProject(project);
@@ -240,7 +248,7 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		assertEquals(11, watchers.size());
 		String srcGlobPattern = watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern);
-		assertTrue("Unexpected source glob pattern: " + srcGlobPattern, srcGlobPattern.endsWith("projectwithrootsource/**"));
+		assertTrue(srcGlobPattern.endsWith("projectwithrootsource/**"), "Unexpected source glob pattern: " + srcGlobPattern);
 	}
 
 	@Test
@@ -287,7 +295,60 @@ public class EclipseProjectImporterTest extends AbstractProjectsManagerBasedTest
 		assertFalse(hasUnimportedProjects);
 	}
 
-	@After
+	@Test
+	public void testForbiddenReference() throws Exception {
+		IVMInstall defaultJRE = JavaRuntime.getDefaultVMInstall();
+		IProject project = null;
+		IExecutionEnvironment java8env = JVMConfigurator.getExecutionEnvironment("JavaSE-1.8");
+		IVMInstall oldJavaVm = java8env.getDefaultVM();
+		try {
+			IVMInstall java8vm = null;
+			IVMInstall java8DefaultVm = null;
+			if (java8env != null) {
+				java8DefaultVm = java8env.getDefaultVM();
+				IVMInstall[] compatibleVms = java8env.getCompatibleVMs();
+				for (IVMInstall vm : compatibleVms) {
+					if (vm.getVMInstallType().getName().startsWith("TestVMInstall-")) {
+						continue;
+					}
+					if (java8env.isStrictlyCompatible(vm)) {
+						java8vm = vm;
+						java8env.setDefaultVM(java8vm);
+						break;
+					}
+				}
+			}
+			Assumptions.assumeFalse(java8vm == null, "JavaSE-1.8 VM is not found, skipping test");
+			// Import JavaFX project and checks it compiles without errors
+			JavaRuntime.setDefaultVMInstall(java8vm, monitor, true);
+			String name = "forbiddenreference";
+			importProjects("eclipse/" + name);
+			Hashtable<String, String> options = JavaCore.getOptions();
+			String fr = options.get(JavaCore.COMPILER_PB_FORBIDDEN_REFERENCE);
+			assertEquals("ignore", fr);
+			project = getProject(name);
+			assertIsJavaProject(project);
+			assertNoErrors(project);
+			JavaRuntime.setDefaultVMInstall(defaultJRE, monitor, true);
+			if (java8env != null) {
+				java8env.setDefaultVM(java8DefaultVm);
+			}
+			JobHelpers.waitForJobsToComplete();
+			List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
+			assertNotEquals(0, errors.size());
+			String errorsStr = ResourceUtils.toString(errors);
+			assertTrue(errorsStr.contains("The import java.lang.management cannot be resolved"), "Unexpected errors:\n " + errorsStr);
+		} finally {
+			JavaRuntime.setDefaultVMInstall(defaultJRE, monitor, true);
+			IExecutionEnvironment environment = JVMConfigurator.getExecutionEnvironment("JavaSE-21");
+			if (environment != null) {
+				environment.setDefaultVM(defaultJRE);
+			}
+			java8env.setDefaultVM(oldJavaVm);
+		}
+	}
+
+	@AfterEach
 	public void after() {
 		importer = null;
 	}

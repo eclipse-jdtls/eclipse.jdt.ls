@@ -13,8 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -44,14 +44,13 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.Refactoring;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Mock
@@ -61,7 +60,7 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 	private IPackageFragment fPackageP;
 
 	@Override
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
 		fRoot = fJavaProject.findPackageFragmentRoot(fJavaProject.getPath().append("src"));
@@ -84,14 +83,14 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "getName");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
-		Assert.assertNotNull(changeSignatureAction);
+		assertNotNull(changeSignatureAction);
 		Command changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
-		Assert.assertNotNull(changeSignatureCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		assertNotNull(changeSignatureCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
 		List<Object> arguments = changeSignatureCommand.getArguments();
-		Assert.assertEquals(2, arguments.size());
+		assertEquals(2, arguments.size());
 		Object arg0 = arguments.get(0);
 		assertEquals(true, arg0 instanceof String);
 		assertEquals("changeSignature", arg0);
@@ -123,14 +122,14 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "getName");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
-		Assert.assertNotNull(changeSignatureAction);
+		assertNotNull(changeSignatureAction);
 		Command changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
-		Assert.assertNotNull(changeSignatureCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		assertNotNull(changeSignatureCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
 		List<Object> arguments = changeSignatureCommand.getArguments();
-		Assert.assertEquals(2, arguments.size());
+		assertEquals(2, arguments.size());
 		Object arg1 = arguments.get(1);
 		assertEquals(true, arg1 instanceof CodeActionParams);
 		ChangeSignatureInfo info = server.getChangeSignatureInfo((CodeActionParams) arg1).join();
@@ -174,14 +173,14 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "getName");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
-		Assert.assertNotNull(changeSignatureAction);
+		assertNotNull(changeSignatureAction);
 		Command changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
-		Assert.assertNotNull(changeSignatureCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		assertNotNull(changeSignatureCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
 		List<Object> arguments = changeSignatureCommand.getArguments();
-		Assert.assertEquals(2, arguments.size());
+		assertEquals(2, arguments.size());
 		Object arg1 = arguments.get(1);
 		assertEquals(true, arg1 instanceof CodeActionParams);
 		ChangeSignatureInfo info = server.getChangeSignatureInfo((CodeActionParams) arg1).join();
@@ -215,14 +214,14 @@ public class ChangeSignatureHandlerTest extends AbstractCompilationUnitBasedTest
 		ICompilationUnit unitTwo = fPackageP.createCompilationUnit("A.java", expected, true, null);
 		params = CodeActionUtil.constructCodeActionParams(unit, "getName");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		changeSignatureAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.REFACTOR_CHANGE_SIGNATURE);
-		Assert.assertNotNull(changeSignatureAction);
+		assertNotNull(changeSignatureAction);
 		changeSignatureCommand = CodeActionHandlerTest.getCommand(changeSignatureAction);
-		Assert.assertNotNull(changeSignatureCommand);
-		Assert.assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
+		assertNotNull(changeSignatureCommand);
+		assertEquals(RefactorProposalUtility.APPLY_REFACTORING_COMMAND_ID, changeSignatureCommand.getCommand());
 		arguments = changeSignatureCommand.getArguments();
-		Assert.assertEquals(2, arguments.size());
+		assertEquals(2, arguments.size());
 		arg1 = arguments.get(1);
 		assertEquals(true, arg1 instanceof CodeActionParams);
 		info = server.getChangeSignatureInfo((CodeActionParams) arg1).join();

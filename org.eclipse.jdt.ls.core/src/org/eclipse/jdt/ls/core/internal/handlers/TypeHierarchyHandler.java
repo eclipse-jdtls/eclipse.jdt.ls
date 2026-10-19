@@ -69,6 +69,7 @@ public class TypeHierarchyHandler {
 			if (data == null) {
 				return null;
 			}
+			@SuppressWarnings("unchecked")
 			Map<String, String> map = JSONUtility.toModel(data, Map.class);
 			String handleIdentifier = map.get("element");
 			String methodIdentifier = map.get("method");

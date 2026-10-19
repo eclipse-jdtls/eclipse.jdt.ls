@@ -13,9 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -31,7 +31,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.HashCodeEqualsHandler.GenerateH
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 	@Override
@@ -418,6 +418,9 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"	double rate;\r\n" +
 				"	Cloneable[] anArray;\r\n" +
 				"	List<String> aList;\r\n" +
+				"	/** (non-Javadoc)\r\n" +
+				"	 * @see java.lang.Object#hashCode()\r\n" +
+				"	 */\r\n" +
 				"	@Override\r\n" +
 				"	public int hashCode() {\r\n" +
 				"		final int prime = 31;\r\n" +
@@ -431,6 +434,9 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		result = prime * result + ((aList == null) ? 0 : aList.hashCode());\r\n" +
 				"		return result;\r\n" +
 				"	}\r\n" +
+				"	/** (non-Javadoc)\r\n" +
+				"	 * @see java.lang.Object#equals(java.lang.Object)\r\n" +
+				"	 */\r\n" +
 				"	@Override\r\n" +
 				"	public boolean equals(Object obj) {\r\n" +
 				"		if (this == obj)\r\n" +
@@ -459,6 +465,7 @@ public class HashCodeEqualsHandlerTest extends AbstractSourceTestCase {
 				"		return true;\r\n" +
 				"	}\r\n" +
 				"}";
+
 		/* @formatter:on */
 
 		compareSource(expected, unit.getSource());

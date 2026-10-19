@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -88,7 +87,7 @@ public class CompletionHandler{
 		}
 
 		private String getSortText(CompletionItem ci) {
-			return StringUtils.defaultString(ci.getSortText(), DEFAULT_SORT_TEXT);
+			return Objects.toString(ci.getSortText(), DEFAULT_SORT_TEXT);
 		}
 
 	};
@@ -141,16 +140,18 @@ public class CompletionHandler{
 		long executionTime = System.currentTimeMillis() - startTime;
 		String lastRequestId = null;
 		for (CompletionItem item : $.getItems()) {
-			String requestId = "";
-			String proposalId = "";
+			@SuppressWarnings("unchecked")
 			Map<String, String> data = (Map<String, String>) item.getData();
-			if (data != null) {
-				requestId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_REQUEST_ID, "");
-				proposalId = data.getOrDefault(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID, "");
-			}
-			if (requestId.isEmpty() || proposalId.isEmpty()) {
+			if (data == null) {
 				continue;
 			}
+
+			String requestId = data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID);
+			String proposalId = data.get(CompletionResolveHandler.DATA_FIELD_PROPOSAL_ID);
+			if (requestId == null || requestId.isEmpty() || proposalId == null || proposalId.isEmpty()) {
+				continue;
+			}
+
 			item.setCommand(new Command("", "java.completion.onDidSelect", Arrays.asList(
 					requestId,
 					proposalId
@@ -172,6 +173,7 @@ public class CompletionHandler{
 		return Either.forRight($);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void onDidCompletionItemSelect(String requestId, String proposalId) throws CoreException {
 		triggerSignatureHelp();
 		if (proposalId.isEmpty() || requestId.isEmpty()) {

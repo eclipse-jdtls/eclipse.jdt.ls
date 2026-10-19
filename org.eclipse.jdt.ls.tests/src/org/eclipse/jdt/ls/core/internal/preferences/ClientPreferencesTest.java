@@ -12,8 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -34,13 +35,16 @@ import org.eclipse.lsp4j.SignatureHelpCapabilities;
 import org.eclipse.lsp4j.SymbolTagSupportCapabilities;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ClientPreferencesTest {
 
 	private ClientPreferences prefs;
@@ -54,16 +58,18 @@ public class ClientPreferencesTest {
 	@Mock
 	private WorkspaceClientCapabilities workspace;
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		when(cap.getTextDocument()).thenReturn(text);
 		when(cap.getWorkspace()).thenReturn(workspace);
 		prefs = new ClientPreferences(cap);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void testClientPreferences() {
-		new ClientPreferences(null);
+	@Test
+	void testClientPreferences() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			new ClientPreferences(null);
+		});
 	}
 
 	@Test

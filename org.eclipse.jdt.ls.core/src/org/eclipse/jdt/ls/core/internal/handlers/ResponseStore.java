@@ -37,7 +37,7 @@ public class ResponseStore<T> {
 	public ResponseStore(int maxSize) {
 		this.responseCache = Collections.synchronizedMap(new LinkedHashMap<Long, ResponseItem<T>>() {
 			@Override
-			protected boolean removeEldestEntry(final Map.Entry eldest) {
+			protected boolean removeEldestEntry(final Map.Entry<Long, ResponseItem<T>> eldest) {
 				return maxSize > 0 && size() > maxSize;
 			}
 		});

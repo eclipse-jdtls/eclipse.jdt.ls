@@ -1,0 +1,55 @@
+plugins {
+    id("io.freefair.aspectj") version "8.10.2"
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: "io.freefair.aspectj"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation "org.aspectj:aspectjrt:1.9.25"
+}
+
+compileAspectj {
+        sourceCompatibility "17"
+        targetCompatibility "17"
+}
+compileTestAspectj {
+        sourceCompatibility "17"
+        targetCompatibility "17"
+}
+
+compileAspectj {
+    ajcOptions {
+        outxml = true
+        outxmlfile = "bar.xml"
+    }
+}
+
+compileAspectj.ajcOptions.outxml = true
+compileAspectj.ajcOptions.outxmlfile = "bar.xml"
+
+eclipse {
+  classpath {
+    defaultOutputDir = file('target')
+    file {
+        whenMerged {
+            cp -> cp.getEntries().forEach{
+                cpEntry -> if(cpEntry.kind=='src') {
+                    cpEntry.output = cpEntry.output.replace('bin/', 'target/')
+                }
+            }
+        }
+    }
+  }
+}

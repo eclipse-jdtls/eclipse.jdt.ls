@@ -13,9 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.contentassist;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,9 +24,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class SnippetUtilsTest {
 
@@ -34,14 +34,14 @@ public class SnippetUtilsTest {
 	protected PreferenceManager preferenceManager;
 	private PreferenceManager oldPreferenceManager;
 
-	@Before
+	@BeforeEach
 	public void initProjectManager() throws Exception {
 		preferenceManager = mock(PreferenceManager.class);
 		oldPreferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 		JavaLanguageServerPlugin.setPreferencesManager(preferenceManager);
 	}
 
-	@After
+	@AfterEach
 	public void cleanup() throws Exception {
 		JavaLanguageServerPlugin.setPreferencesManager(oldPreferenceManager);
 	}

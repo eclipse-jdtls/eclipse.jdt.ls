@@ -1,0 +1,20 @@
+plugins {
+    id 'groovy'
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.groovy:groovy:4.0.25' 
+}
+
+

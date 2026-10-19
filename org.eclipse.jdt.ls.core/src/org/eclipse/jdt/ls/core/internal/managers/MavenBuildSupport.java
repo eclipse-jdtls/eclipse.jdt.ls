@@ -33,9 +33,7 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.eclipse.m2e.core.MavenPlugin;
-import org.eclipse.m2e.core.internal.MavenPluginActivator;
 import org.eclipse.m2e.core.internal.project.ProjectConfigurationManager;
-import org.eclipse.m2e.core.internal.project.registry.ProjectRegistryManager;
 import org.eclipse.m2e.core.project.IMavenProjectFacade;
 import org.eclipse.m2e.core.project.IMavenProjectRegistry;
 import org.eclipse.m2e.core.project.IProjectConfigurationManager;
@@ -52,14 +50,12 @@ public class MavenBuildSupport implements IBuildSupport {
 	private static final List<String> WATCH_FILE_PATTERNS = Collections.singletonList("**/pom.xml");
 
 	private IProjectConfigurationManager configurationManager;
-	private ProjectRegistryManager projectManager;
 	private DigestStore digestStore;
 	private IMavenProjectRegistry registry;
 	private boolean shouldCollectProjects;
 
 	public MavenBuildSupport() {
 		this.configurationManager = MavenPlugin.getProjectConfigurationManager();
-		this.projectManager = MavenPluginActivator.getDefault().getMavenProjectManagerImpl();
 		this.digestStore = JavaLanguageServerPlugin.getDigestStore();
 		this.registry = MavenPlugin.getMavenProjectRegistry();
 		this.shouldCollectProjects = true;

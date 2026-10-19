@@ -23,6 +23,6 @@ jobs:
     uses: eclipse-platform/eclipse.platform.releng.aggregator/.github/workflows/updateTarget.yml@master
     with:
       author: eclipse-ls-bot <ls-bot@eclipse.org>
-      path: 'org.eclipse.jdt.ls.target'
+      path: 'org.eclipse.jdt.ls.tp'
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}

@@ -15,13 +15,14 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertPosition;
 import static org.eclipse.jdt.ls.core.internal.Lsp4jAssertions.assertTextEdit;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,7 +66,6 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.CompletionContext;
 import org.eclipse.lsp4j.CompletionItem;
-import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemTag;
 import org.eclipse.lsp4j.CompletionList;
@@ -85,20 +85,23 @@ import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.text.edits.InsertEdit;
 import org.eclipse.text.edits.MalformedTreeException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ComparisonFailure;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.opentest4j.AssertionFailedError;
 
 /**
  * @author Gorkem Ercan
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	private DocumentLifeCycleHandler lifeCycleHandler;
@@ -119,7 +122,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 					"    \"jsonrpc\": \"2.0\"\n" +
 					"}";
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		mockLSP3Client();
 		CoreASTProvider sharedASTProvider = CoreASTProvider.getInstance();
@@ -132,7 +135,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		Preferences.DISCOVERED_STATIC_IMPORTS.clear();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -164,6 +167,42 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				System.setProperty(JDTLanguageServer.JAVA_LSP_JOIN_ON_COMPLETION, joinOnCompletion);
 			}
 		}
+	}
+
+	@Test
+	public void testCompletion_annotationTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "  boolean getThing(@Deprec\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "@Deprec");
+		CompletionItem deprecated = list.getItems().stream().filter(i -> i.getLabel().startsWith("Deprecated")).findFirst().orElse(null);
+		assertNotNull(deprecated, "Deprecated annotation proposal not found");
+		String text;
+		if (deprecated.getTextEdit() != null) {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = deprecated.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		} else if (deprecated.getTextEditText() != null) {
+			text = deprecated.getTextEditText();
+		} else {
+			text = deprecated.getInsertText();
+		}
+		assertEquals("Deprecated ", text);
+	}
+
+	@Test
+	public void testCompletion_keywordTrailingSpace() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "public class Foo {\n" + "	pub\n" + "}\n");
+		CompletionList list = requestCompletions(unit, "pub");
+		CompletionItem publicKeyword = list.getItems().stream().filter(i -> "public".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Keyword).findFirst().orElse(null);
+		assertNotNull(publicKeyword, "public keyword proposal not found");
+		String text;
+		if (publicKeyword.getTextEditText() != null) {
+			text = publicKeyword.getTextEditText();
+		} else if (publicKeyword.getInsertText() != null) {
+			text = publicKeyword.getInsertText();
+		} else {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = publicKeyword.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		}
+		assertEquals("public ", text);
 	}
 
 	@Test
@@ -251,7 +290,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 		CompletionList list = requestCompletions(unit, "Objec");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		List<CompletionItem> items = list.getItems();
 		for ( CompletionItem item : items) {
@@ -285,7 +324,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 		CompletionList list = requestCompletions(unit, "Objec");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		Map<String,String> data = (Map<String, String>) list.getItems().get(0).getData();
 		long requestId = Long.parseLong(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID));
@@ -293,7 +332,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(completionResponse);
 		String uri = completionResponse.getCommonData(CompletionResolveHandler.DATA_FIELD_URI);
 		assertNotNull(uri);
-		assertTrue("unexpected URI prefix: " + uri, uri.matches("file://.*/src/java/Foo\\.java"));
+		assertTrue(uri.matches("file://.*/src/java/Foo\\.java"), "unexpected URI prefix: " + uri);
 	}
 
 	@Test
@@ -307,7 +346,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 		CompletionList list = requestCompletions(unit, "Objec");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		Map<String,String> data = (Map<String, String>) list.getItems().get(0).getData();
 		long requestId = Long.parseLong(data.get(CompletionResolveHandler.DATA_FIELD_REQUEST_ID));
@@ -330,7 +369,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 		CompletionList list = requestCompletions(unit, "new O");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		Comparator<CompletionItem> comparator = (CompletionItem a, CompletionItem b) -> a.getSortText().compareTo(b.getSortText());
@@ -722,7 +761,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(ci.getTextEdit().getLeft());
 		try {
 			assertTextEdit(5, 4, 6, "put(${1:key}, ${2:value})", ci.getTextEdit().getLeft());
-		} catch (ComparisonFailure e) {
+		} catch (AssertionFailedError e) {
 			//In case the JDK has no sources
 			assertTextEdit(5, 4, 6, "put(${1:arg0}, ${2:arg1})", ci.getTextEdit().getLeft());
 		}
@@ -1085,7 +1124,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 						+"}\n");
 		CompletionList list = requestCompletions(unit, "    NoP");
 		assertNotNull(list);
-		assertFalse("No proposals were found", list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 		assertEquals("NoPackage", list.getItems().get(0).getLabel());
 	}
 
@@ -1395,7 +1434,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic interface Test {}\npublic interface InnerTest{\n");
 
 		assertNotNull(list);
-		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
+		assertFalse(list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet), "No snippets should be returned");
 	}
 
 	@Test
@@ -1436,7 +1475,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "ctor");
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		assertFalse("No ctor snippet should be available", items.stream().anyMatch(i -> "ctor".equals(i.getLabel())));
+		assertFalse(items.stream().anyMatch(i -> "ctor".equals(i.getLabel())), "No ctor snippet should be available");
 	}
 
 	@Test
@@ -1488,6 +1527,74 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 	}
 
 	@Test
+	public void testSnippet_class_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(0);
+		assertEquals("class", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("class Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_interface_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(1);
+		assertEquals("interface", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("interface Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
+	public void testSnippet_record_with_package_packagePrivate() throws Exception {
+		preferences.setPreferPackagePrivateVisibility(true);
+		importProjects("eclipse/records");
+		project = WorkspaceHelper.getProject("records");
+		ICompilationUnit unit = getWorkingCopy("src/main/java/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		List<CompletionItem> items = new ArrayList<>(list.getItems());
+		assertFalse(items.isEmpty());
+		items.sort((i1, i2) -> (i1.getSortText().compareTo(i2.getSortText())));
+
+		CompletionItem item = items.get(2);
+		assertEquals("record", item.getLabel());
+		String te = item.getInsertText();
+		assertEquals("record Test(${0}) {\n}", te);
+	}
+
+	@Test
+	public void testSnippet_enum_with_package_packagePrivate() throws JavaModelException {
+		preferences.setPreferPackagePrivateVisibility(true);
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("enum Test {\n\n\t${0}\n}", te);
+	}
+
+	@Test
 	public void testSnippet_inner_class_itemDefaults_enabled_type_definition() throws JavaModelException {
 		mockClientPreferences(true, true, true);
 		when(preferenceManager.getClientPreferences().getCompletionItemInsertTextModeDefault()).thenReturn(InsertTextMode.AsIs);
@@ -1535,7 +1642,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic class Test {}\npublic class InnerTest{}\n");
 
 		assertNotNull(list);
-		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
+		assertFalse(list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet), "No snippets should be returned");
 	}
 
 	@Test
@@ -1569,7 +1676,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "static_method");
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
-		assertFalse("No static_method snippet should be available", items.stream().anyMatch(i -> "static_method".equals(i.getLabel())));
+		assertFalse(items.stream().anyMatch(i -> "static_method".equals(i.getLabel())), "No static_method snippet should be available");
 	}
 
 	@Test
@@ -1580,7 +1687,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(list);
 		List<CompletionItem> items = new ArrayList<>(list.getItems());
 		//Not a Java 14 project => no snippet
-		assertFalse("No record snippet should be available", items.stream().anyMatch(i -> "record".equals(i.getLabel())));
+		assertFalse(items.stream().anyMatch(i -> "record".equals(i.getLabel())), "No record snippet should be available");
 	}
 
 	@Test
@@ -1622,7 +1729,38 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("/**\n * Test\n */\npublic record Test(${0}) {\n}", te);
 	}
 
-	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Test
+	public void testSnippet_enum() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "");
+		CompletionList list = requestCompletions(unit, "");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("package org.sample;\n\n/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", ResourceUtils.dos2Unix(te));
+
+		//check resolution doesn't blow up (https://github.com/eclipse/eclipse.jdt.ls/issues/675)
+		assertSame(item, server.resolveCompletionItem(item).join());
+	}
+
+	@Test
+	public void testSnippet_enum_with_package() throws JavaModelException {
+		ICompilationUnit unit = getWorkingCopy("src/org/sample/Test.java", "package org.sample;\n");
+		CompletionList list = requestCompletions(unit, "package org.sample;\n");
+
+		assertNotNull(list);
+		CompletionItem item = list.getItems().stream()
+				.filter(i -> "enum".equals(i.getLabel()) && i.getKind() == CompletionItemKind.Snippet)
+				.findFirst().orElse(null);
+		assertNotNull(item);
+		String te = item.getInsertText();
+		assertEquals("/**\n * Test\n */\npublic enum Test {\n\n\t${0}\n}", te);
+	}
+
+	@Disabled("When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
 	@Test
 	public void testSnippet_inner_record() throws Exception {
 		importProjects("eclipse/records");
@@ -1641,7 +1779,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("/**\n * ${1:InnerTest}\n */\npublic record ${1:InnerTest}(${0}) {\n}", te);
 	}
 
-	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Disabled("When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
 	@Test
 	public void testSnippet_sibling_inner_record() throws Exception {
 		importProjects("eclipse/records");
@@ -1660,7 +1798,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("/**\n * ${1:InnerTest_1}\n */\npublic record ${1:InnerTest_1}(${0) {\n}", te);
 	}
 
-	@Ignore(value = "When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
+	@Disabled("When running tests, in SnippetCompletionProposal.getSnippetContent(), cu.getAllTypes() returns en empty array, so inner record name is not computed")
 	@Test
 	public void testSnippet_nested_inner_record() throws Exception {
 		importProjects("eclipse/records");
@@ -1688,7 +1826,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionList list = requestCompletions(unit, "package org.sample;\npublic record Test() {}\npublic record InnerTest(){\n");
 
 		assertNotNull(list);
-		assertFalse("No snippets should be returned", list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet));
+		assertFalse(list.getItems().stream().anyMatch(ci -> ci.getKind() == CompletionItemKind.Snippet), "No snippets should be returned");
 	}
 
 	@Test
@@ -1749,7 +1887,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
 		}).collect(Collectors.toList());
-		assertFalse("No override proposals", filtered.isEmpty());
+		assertFalse(filtered.isEmpty(), "No override proposals");
 		CompletionItem oride = filtered.get(0);
 		assertEquals("toString", oride.getInsertText());
 		assertNotNull(oride.getTextEdit());
@@ -1793,7 +1931,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> filtered = list.getItems().stream().filter((item) -> {
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
 		}).collect(Collectors.toList());
-		assertFalse("No override proposals", filtered.isEmpty());
+		assertFalse(filtered.isEmpty(), "No override proposals");
 		CompletionItem oride = filtered.get(0);
 		assertEquals("run", oride.getInsertText());
 		assertNotNull(oride.getTextEdit());
@@ -1831,7 +1969,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
 		}).collect(Collectors.toList());
-		assertEquals("No override proposals", filtered.size(), 1);
+		assertEquals(1, filtered.size(), "No override proposals");
 		CompletionItem oride = filtered.get(0);
 		assertEquals("getParent", oride.getInsertText());
 		assertNotNull(oride.getTextEdit());
@@ -1843,7 +1981,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}";
 
 		assertEquals(expectedText, text);
-		assertEquals("Missing required imports", 1, oride.getAdditionalTextEdits().size());
+		assertEquals(1, oride.getAdditionalTextEdits().size(), "Missing required imports");
 
 		assertEquals("\n\nimport java.io.File;\n\n", oride.getAdditionalTextEdits().get(0).getNewText());
 		assertPosition(0, 19, oride.getAdditionalTextEdits().get(0).getRange().getStart());
@@ -1866,7 +2004,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<CompletionItem> filtered = list.getItems().stream().filter((item)->{
 			return item.getDetail() != null && item.getDetail().startsWith("Override method in");
 		}).collect(Collectors.toList());
-		assertEquals("No override proposals", filtered.size(), 1);
+		assertEquals(1, filtered.size(), "No override proposals");
 		CompletionItem oride = filtered.get(0);
 		assertEquals("deleteSomething", oride.getInsertText());
 		assertNotNull(oride.getTextEdit());
@@ -1883,7 +2021,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}";
 
 		assertEquals(expectedText, text);
-		assertEquals("Missing required imports", 1, oride.getAdditionalTextEdits().size());
+		assertEquals(1, oride.getAdditionalTextEdits().size(), "Missing required imports");
 		assertEquals("\n\nimport java.io.IOException;\n\n", oride.getAdditionalTextEdits().get(0).getNewText());
 		assertPosition(0, 19, oride.getAdditionalTextEdits().get(0).getRange().getStart());
 		assertPosition(2, 0, oride.getAdditionalTextEdits().get(0).getRange().getEnd());
@@ -1905,7 +2043,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:off
 		CompletionList list = requestCompletions(unit, "   zz");
 		assertNotNull(list);
-		assertFalse("No proposals were found", list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 		CompletionItem item = list.getItems().get(0);
 		assertEquals("zzz() : void", item.getLabel());
 
@@ -2340,7 +2478,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				"}\n");
 				//@formatter:on
 		CompletionList list = requestCompletions(unit, " AbstractTe");
-		assertEquals("Test proposals leaked:\n" + list.getItems(), 0, list.getItems().size());
+		assertEquals(0, list.getItems().size(), "Test proposals leaked:\n" + list.getItems());
 	}
 
 	@Test
@@ -2400,7 +2538,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				//@formatter:on
 		CompletionList list = requestCompletions(unit, " AbstractTe");
 		assertNotNull(list);
-		assertEquals("Test proposals missing from :\n" + list, 1, list.getItems().size());
+		assertEquals(1, list.getItems().size(), "Test proposals missing from :\n" + list);
 		assertEquals("AbstractTest - foo.bar", list.getItems().get(0).getLabel());
 	}
 
@@ -2669,7 +2807,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(list);
 			assertFalse(list.isIncomplete());
 			assertTrue(list.getItems().size() > 0);
-			assertTrue("no proposal for foo()", "foo() : void".equals(list.getItems().get(0).getLabel()));
+			assertTrue("foo() : void".equals(list.getItems().get(0).getLabel()), "no proposal for foo()");
 		} finally {
 			PreferenceManager.getPrefs(null).setJavaCompletionFavoriteMembers(Collections.emptyList());
 			System.setProperty("completion.timeout", String.valueOf(timeout));
@@ -2713,7 +2851,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			assertNotNull(list);
 			assertFalse(list.isIncomplete());
 			completionOnly = noSnippets(list.getItems());
-			assertTrue("Expected way than " + completionOnly.size(), completionOnly.size() > Preferences.JAVA_COMPLETION_MAX_RESULTS_DEFAULT);
+			assertTrue(completionOnly.size() > Preferences.JAVA_COMPLETION_MAX_RESULTS_DEFAULT, "Expected way than " + completionOnly.size());
 			assertTrue(completionOnly.get(0).getSortText().compareTo(completionOnly.get(completionOnly.size() - 1).getSortText()) < 0);
 
 		} finally {
@@ -2846,7 +2984,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		CompletionItem resolvedItem = server.resolveCompletionItem(ci).join();
 		assertNotNull(resolvedItem.getDocumentation().getRight());
 		String doc = resolvedItem.getDocumentation().getRight().getValue();
-		assertTrue("Unexpected documentation content in " + doc, doc.contains("*  [Baz](file:/"));
+		assertTrue(doc.contains("* [Baz](file:/"), "Unexpected documentation content in " + doc);
 	}
 
 	@Test
@@ -2863,7 +3001,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "o.toStr");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 		CompletionItem ci = list.getItems().get(0);
 		assertNull(ci.getAdditionalTextEdits());
 		assertEquals("toString() : String", ci.getLabel());
@@ -2887,7 +3025,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		//@formatter:on
 		CompletionList list = requestCompletions(unit, "HashMa");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 		CompletionItem ci = list.getItems().get(0);
 		assertNull(ci.getAdditionalTextEdits());
 		assertEquals("HashMap - java.util", ci.getLabel());
@@ -2958,7 +3096,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 				.findFirst()
 				.isPresent();
 		//@formatter:off
-		assertTrue("The 'List - java.util' proposal hasn't been found", present);
+		assertTrue(present,"The 'List - java.util' proposal hasn't been found");
 		try {
 			List<String> filteredTypes = new ArrayList<>();
 			filteredTypes.add("java.util.*");
@@ -3015,7 +3153,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 			CompletionList list = requestCompletions(unit, "l.clea");
 			assertNotNull(list);
-			assertEquals("Missing completion", 1, list.getItems().size());
+			assertEquals(1, list.getItems().size(), "Missing completion");
 			assertEquals("clear() : void", list.getItems().get(0).getLabel());
 		} finally {
 			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
@@ -3042,7 +3180,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 			CompletionList list = requestCompletions(unit, "l.clea");
 			assertNotNull(list);
-			assertEquals("Missing completion", 1, list.getItems().size());
+			assertEquals(1, list.getItems().size(), "Missing completion");
 			assertEquals("clear() : void", list.getItems().get(0).getLabel());
 		} finally {
 			PreferenceManager.getPrefs(null).setFilteredTypes(Collections.emptyList());
@@ -3405,19 +3543,19 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(deprecatedClass);
 		assertEquals(CompletionItemKind.Class, deprecatedClass.getKind());
 		assertNotNull(deprecatedClass.getTags());
-		assertTrue("Should have deprecated tag", deprecatedClass.getTags().contains(CompletionItemTag.Deprecated));
+		assertTrue(deprecatedClass.getTags().contains(CompletionItemTag.Deprecated), "Should have deprecated tag");
 
 		CompletionItem deprecatedMethod = requestCompletions(unit, "\t\tdeprecatedMe").getItems().get(0);
 		assertNotNull(deprecatedMethod);
 		assertEquals(CompletionItemKind.Method, deprecatedMethod.getKind());
 		assertNotNull(deprecatedMethod.getTags());
-		assertTrue("Should have deprecated tag", deprecatedMethod.getTags().contains(CompletionItemTag.Deprecated));
+		assertTrue(deprecatedMethod.getTags().contains(CompletionItemTag.Deprecated), "Should have deprecated tag");
 
 		CompletionItem notDeprecated = requestCompletions(unit, "\t\tnotDepr").getItems().get(0);
 		assertNotNull(notDeprecated);
 		assertEquals(CompletionItemKind.Method, notDeprecated.getKind());
 		if (notDeprecated.getTags() != null) {
-			assertFalse("Should not have deprecated tag", notDeprecated.getTags().contains(CompletionItemTag.Deprecated));
+			assertFalse(notDeprecated.getTags().contains(CompletionItemTag.Deprecated), "Should not have deprecated tag");
 		}
 	}
 
@@ -3438,7 +3576,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertNotNull(deprecatedClass);
 		assertEquals(CompletionItemKind.Class, deprecatedClass.getKind());
 		assertNotNull(deprecatedClass.getDeprecated());
-		assertTrue("Should be deprecated", deprecatedClass.getDeprecated());
+		assertTrue(deprecatedClass.getDeprecated(), "Should be deprecated");
 	}
 
 	@Test
@@ -3463,7 +3601,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		try {
 			assertEquals("(Object t) ->", lambda.getLabel());
-		} catch (ComparisonFailure e) {
+		} catch (AssertionFailedError e) {
 			// In case the JDK has no sources
 			assertEquals("(Object arg0) ->", lambda.getLabel());
 		}
@@ -3626,11 +3764,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "List", unit.getSource().indexOf("List()") + 6);
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		List<CompletionItem> items = list.getItems().stream().filter(p -> "java.util.List".equals(p.getDetail()))
 			.collect(Collectors.toList());
-		assertFalse("java.util.List not found",items.isEmpty());
+		assertFalse(items.isEmpty(), "java.util.List not found");
 		CompletionItem resolved = server.resolveCompletionItem(list.getItems().get(0)).join();
 		assertEquals("java.util.List", resolved.getTextEdit().getLeft().getNewText());
 	}
@@ -3647,11 +3785,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "= ");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		List<CompletionItem> items = list.getItems().stream().filter(p -> p.getLabel() != null && p.getLabel().contains("->"))
 			.collect(Collectors.toList());
-		assertFalse("Lambda not found",items.isEmpty());
+		assertFalse(items.isEmpty(), "Lambda not found");
 		assertTrue(items.get(0).getTextEdit().getLeft().getNewText().matches("\\(\\) -> \\$\\{0\\}"));
 	}
 
@@ -3667,11 +3805,11 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "= ");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		List<CompletionItem> items = list.getItems().stream().filter(p -> p.getLabel() != null && p.getLabel().contains("->"))
 			.collect(Collectors.toList());
-		assertFalse("Lambda not found",items.isEmpty());
+		assertFalse(items.isEmpty(), "Lambda not found");
 		assertTrue(items.get(0).getTextEdit().getLeft().getNewText().matches("\\(\\$\\{1:\\w+\\}\\, \\$\\{2:\\w+\\}\\) -> \\$\\{0\\}"));
 	}
 
@@ -3890,8 +4028,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "new ");
 		CompletionItem completionItem = list.getItems().get(0);
-		assertEquals("Array type completion EditText", "String[]", completionItem.getInsertText());
-		assertEquals("Array type completion Label", "String[] - java.lang", completionItem.getLabel());
+		assertEquals("String[]", completionItem.getInsertText(), "Array type completion EditText");
+		assertEquals("String[] - java.lang", completionItem.getLabel(), "Array type completion Label");
 	}
 
 	@Test
@@ -3906,8 +4044,8 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "new ");
 		CompletionItem completionItem = list.getItems().get(0);
-		assertEquals("Array type completion EditText", "int[]", completionItem.getInsertText());
-		assertEquals("Array type completion Label", "int[]", completionItem.getLabel());
+		assertEquals("int[]", completionItem.getInsertText(), "Array type completion EditText");
+		assertEquals("int[]", completionItem.getLabel(), "Array type completion Label");
 	}
 
 	@Test
@@ -3922,106 +4060,9 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 		CompletionList list = requestCompletions(unit, "new ");
 		CompletionItem completionItem = list.getItems().get(0);
-		assertEquals("Array type completion EditText", "Arr[]", completionItem.getInsertText());
-		assertEquals("Array type completion Label", "Arr[] - java", completionItem.getLabel());
+		assertEquals("Arr[]", completionItem.getInsertText(), "Array type completion EditText");
+		assertEquals("Arr[] - java", completionItem.getLabel(), "Array type completion Label");
 	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/eclipse/eclipse.jdt.ls/issues/2669
-	@Test
-	public void testCompletion_lombok() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
-		IJavaProject javaProject = JavaCore.create(proj);
-		ICompilationUnit unit = null;
-		try {
-			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Test.java"));
-			unit.becomeWorkingCopy(null);
-			String source =
-			//@formatter:off
-				"package org.sample;\n"
-				+ "import lombok.Builder;\n"
-				+ "import lombok.Data;\n"
-				+ "import lombok.Builder.Default;\n"
-				+ "@Data\n"
-				+ "@Builder\n"
-				+ "public class Test {\n"
-				+ "      @Default\n"
-				+ "      private Integer offset = ;\n"
-				+ "}\n";
-			//@formatter:on
-			changeDocument(unit, source, 1);
-			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			CompletionList list = requestCompletions(unit, " = ");
-			assertNotNull(list);
-			assertEquals(6, list.getItems().size());
-			CompletionItemDefaults itemDefaults = list.getItemDefaults();
-			assertNotNull(itemDefaults);
-			assertNull(itemDefaults.getInsertTextFormat());
-			assertNull(itemDefaults.getEditRange());
-		} finally {
-			unit.discardWorkingCopy();
-			proj.delete(true, monitor);
-		}
-	}
-
-	// this test should pass when starting with -javaagent:<lombok_jar> (-javagent:~/.m2/repository/org/projectlombok/lombok/1.18.28/lombok-1.18.28.jar)
-	// https://github.com/eclipse/eclipse.jdt.ls/issues/2669
-	@Test
-	public void testCompletion_lombok2() throws Exception {
-		boolean lombokDisabled = "true".equals(System.getProperty("jdt.ls.lombok.disabled"));
-		if (lombokDisabled) {
-			return;
-		}
-		when(preferenceManager.getClientPreferences().isCompletionInsertReplaceSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsSupport()).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextFormat")).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
-		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
-		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
-		IJavaProject javaProject = JavaCore.create(proj);
-		ICompilationUnit unit = null;
-		try {
-			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/Test.java"));
-			unit.becomeWorkingCopy(null);
-			String source =
-			//@formatter:off
-					"package org.sample;\n"
-					+ "import lombok.Builder;\n"
-					+ "import lombok.Data;\n"
-					+ "import lombok.Builder.Default;\n"
-					+ "@Data\n"
-					+ "@Builder\n"
-					+ "public class Test {\n"
-					+ "      private Integer offset = ;\n"
-					+ "}\n";
-				//@formatter:on
-			changeDocument(unit, source, 1);
-			Job.getJobManager().join(DocumentLifeCycleHandler.DOCUMENT_LIFE_CYCLE_JOBS, new NullProgressMonitor());
-			CompletionList list = requestCompletions(unit, " = ");
-			assertNotNull(list);
-			assertEquals(19, list.getItems().size());
-			CompletionItemDefaults itemDefaults = list.getItemDefaults();
-			assertNotNull(itemDefaults);
-			assertNotNull(itemDefaults.getEditRange());
-		} finally {
-			unit.discardWorkingCopy();
-			proj.delete(true, monitor);
-		}
-	}
-
 
 	@Test
 	public void testCompletion_record() throws Exception{
@@ -4066,6 +4107,109 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		for (CompletionItem item : list.getItems()) {
 			assertEquals(CompletionItemKind.Field, item.getKind());
 		}
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = ");
+
+		assertNotNull(list);
+		assertFalse(list.getItems().isEmpty());
+		// Should contain boolean literals true and false
+		List<String> labels = list.getItems().stream()
+				.map(CompletionItem::getLabel)
+				.collect(Collectors.toList());
+		assertTrue(labels.contains("true"), "Expected 'true' in completions but got: " + labels);
+		assertTrue(labels.contains("false"), "Expected 'false' in completions but got: " + labels);
+		// Should not contain methods like equals, hashCode, toString
+		for (CompletionItem item : list.getItems()) {
+			assertNotEquals("equals", item.getLabel());
+			assertNotEquals("hashCode", item.getLabel());
+			assertNotEquals("toString", item.getLabel());
+		}
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue_filtersMethodsAndPackages() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = ");
+
+		assertNotNull(list);
+		// No METHOD_REF proposals should survive the filter
+		for (CompletionItem item : list.getItems()) {
+			assertNotEquals(CompletionItemKind.Method, item.getKind(),
+					"Completion kind should not be Method, but found: " + item.getLabel());
+		}
+	}
+
+	@Test
+	public void testCompletion_annotationStringAttributeValue_noBooleanInjection() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Foo.java", """
+				package foo.bar;
+
+				@SuppressWarnings(value = )
+				public class Foo {
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "value = ");
+
+		assertNotNull(list);
+		// For String attribute, should NOT inject boolean literals as top items
+		// (true/false may appear as word completions but should not be injected as Keyword kind)
+		boolean hasBooleanKeyword = list.getItems().stream()
+				.anyMatch(item -> ("true".equals(item.getLabel()) || "false".equals(item.getLabel()))
+						&& CompletionItemKind.Keyword == item.getKind());
+		assertFalse(hasBooleanKeyword, "Should not inject boolean keywords for String annotation attribute");
+	}
+
+	@Test
+	public void testCompletion_annotationBooleanAttributeValue_qualifiedNameNoBooleanInjection() throws Exception {
+		importProjects("eclipse/java17");
+		project = WorkspaceHelper.getProject("java17");
+		ICompilationUnit unit = getWorkingCopy("src/foo/bar/Test.java", """
+				package foo.bar;
+
+				@Deprecated(forRemoval = Test.)
+				public class Test {
+				    public static final boolean blah = false;
+				}
+				""");
+
+		CompletionList list = requestCompletions(unit, "forRemoval = Test.");
+
+		assertNotNull(list);
+		List<String> labels = list.getItems().stream()
+				.map(CompletionItem::getLabel)
+				.collect(Collectors.toList());
+		assertTrue(labels.stream().anyMatch(label -> label.startsWith("blah")),
+				"Expected 'blah' in completions but got: " + labels);
+		boolean hasBooleanKeyword = list.getItems().stream()
+				.anyMatch(item -> ("true".equals(item.getLabel()) || "false".equals(item.getLabel()))
+						&& CompletionItemKind.Keyword == item.getKind());
+		assertFalse(hasBooleanKeyword,
+				"Should not inject boolean keywords for qualified annotation attribute completion");
 	}
 
 	@Test
@@ -4151,6 +4295,51 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		return COMPLETION_TEMPLATE.replace("${file}", JDTUtils.toURI(unit))
 				.replace("${line}", String.valueOf(line))
 				.replace("${char}", String.valueOf(kar));
+	}
+
+	@Test
+	public void testSnippet_io_statements() throws Exception {
+		importProjects("eclipse/java25");
+		project = WorkspaceHelper.getProject("java25");
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	public void m() {\n" +
+			"		io\n" +
+			"	}\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "		io");
+
+		assertNotNull(list);
+		List<CompletionItem> items = list.getItems();
+		assertTrue(items.stream().anyMatch(i -> "io_println".equals(i.getLabel())),    "io_println must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "io_print".equals(i.getLabel())),      "io_print must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "iop".equals(i.getLabel())),           "iop must appear on Java 25+");
+		assertTrue(items.stream().anyMatch(i -> "iopl".equals(i.getLabel())),          "iopl must appear on Java 25+");
+	}
+
+	@Test
+	public void testSnippet_instance_main() throws Exception {
+		importProjects("eclipse/java25");
+		project = WorkspaceHelper.getProject("java25");
+		//@formatter:off
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/org/sample/Test.java",
+			"package org.sample;\n" +
+			"public class Test {\n" +
+			"	main\n" +
+			"}"
+		);
+		//@formatter:on
+		CompletionList list = requestCompletions(unit, "	main");
+
+		assertNotNull(list);
+		assertTrue(list.getItems().stream().anyMatch(i -> "void main()".equals(i.getLabel())),
+				"instance_main (void main()) must appear on Java 25+");
 	}
 
 	private void mockLSP3Client() {

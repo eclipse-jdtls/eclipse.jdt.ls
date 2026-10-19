@@ -34,6 +34,7 @@ import org.eclipse.jdt.core.search.TypeNameMatchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.Location;
@@ -141,10 +142,14 @@ public class WorkspaceSymbolHandler {
 
 		int scope = IJavaSearchScope.REFERENCED_PROJECTS | IJavaSearchScope.SOURCES;
 		PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
-		if (!sourceOnly && preferenceManager != null && preferenceManager.isClientSupportsClassFileContent()) {
+		SearchScope searchScope = preferenceManager == null
+				? SearchScope.all
+				: preferenceManager.getPreferences().getSearchScope();
+		if (!sourceOnly && searchScope != SearchScope.projectOnly && preferenceManager != null
+				&& preferenceManager.isClientSupportsClassFileContent()) {
 			scope |= IJavaSearchScope.APPLICATION_LIBRARIES | IJavaSearchScope.SYSTEM_LIBRARIES;
 		}
-		var excludeTestCode = preferenceManager.getPreferences().getSearchScope() == SearchScope.main;
+		var excludeTestCode = searchScope == SearchScope.main;
 		return SearchEngine.createJavaSearchScope(excludeTestCode, targetProjects, scope);
 	}
 
@@ -184,7 +189,12 @@ public class WorkspaceSymbolHandler {
 				Location location = null;
 				try {
 					if (!sourceOnly && match.getType().isBinary()) {
-						location = JDTUtils.toLocation(match.getType().getClassFile());
+						if (match.getType() != null) {
+							location = SearchUtils.searchOtherSources(match.getType());
+						}
+						if (location == null) {
+							location = JDTUtils.toLocation(match.getType().getClassFile());
+						}
 					} else if (!match.getType().isBinary()) {
 						location = JDTUtils.toLocation(match.getType());
 					}

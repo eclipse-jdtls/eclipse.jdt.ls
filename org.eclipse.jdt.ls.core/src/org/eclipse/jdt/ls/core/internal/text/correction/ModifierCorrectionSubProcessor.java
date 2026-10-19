@@ -38,6 +38,14 @@ import org.eclipse.lsp4j.CodeActionKind;
 
 public class ModifierCorrectionSubProcessor extends ModifierCorrectionSubProcessorCore<ProposalKindWrapper> {
 
+	public static void addOverrideAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new ModifierCorrectionSubProcessor().getOverrideAnnotationProposal(context, problem, proposals);
+	}
+
+	public static void addDeprecatedAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals) {
+		new ModifierCorrectionSubProcessor().getDeprecatedAnnotationProposal(context, problem, proposals);
+	}
+
 	public static void addNonAccessibleReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection<ProposalKindWrapper> proposals, int kind, int relevance) throws CoreException {
 		new ModifierCorrectionSubProcessor().getNonAccessibleReferenceProposal(context, problem, proposals, kind, relevance);
 	}

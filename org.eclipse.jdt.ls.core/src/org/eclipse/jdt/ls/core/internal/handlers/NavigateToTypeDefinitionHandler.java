@@ -36,6 +36,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -98,6 +99,10 @@ public class NavigateToTypeDefinitionHandler {
 							return JDTUtils.toLocation(element);
 						}
 						if (element instanceof IMember member && member.getClassFile() != null) {
+							Location location = SearchUtils.searchOtherSources(member);
+							if (location != null) {
+								return location;
+							}
 							List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 							if (!locations.isEmpty()) {
 								return locations.get(0);

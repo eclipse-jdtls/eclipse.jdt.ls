@@ -55,7 +55,6 @@ import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
@@ -162,7 +161,7 @@ public class DocumentSymbolHandler {
 			if (type != IJavaElement.TYPE && type != IJavaElement.FIELD && type != IJavaElement.METHOD) {
 				continue;
 			}
-			if (element instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
+			if (element instanceof SourceMethod method && JDTUtils.isGenerated(method) && !preferenceManager.getPreferences().isShowGeneratedCodeSymbols()) {
 				continue;
 			}
 			Location location = JDTUtils.toLocation(element);
@@ -230,7 +229,7 @@ public class DocumentSymbolHandler {
 		if (type != TYPE && type != FIELD && type != METHOD && type != PACKAGE_DECLARATION && type != COMPILATION_UNIT && type != PACKAGE_FRAGMENT) {
 			return null;
 		}
-		if (unit instanceof SourceMethod method && JDTUtils.isGenerated(method)) {
+		if (unit instanceof SourceMethod method && JDTUtils.isGenerated(method) && !preferenceManager.getPreferences().isShowGeneratedCodeSymbols()) {
 			return null;
 		}
 		if (monitor.isCanceled()) {

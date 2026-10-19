@@ -16,19 +16,19 @@ import static org.eclipse.lsp4j.SymbolKind.Class;
 import static org.eclipse.lsp4j.SymbolKind.Constructor;
 import static org.eclipse.lsp4j.SymbolKind.Field;
 import static org.eclipse.lsp4j.SymbolKind.Method;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
-import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
@@ -41,15 +41,15 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.lsp4j.SymbolTag;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @see CallHierarchyHandler
  */
 public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("eclipse/hello", "maven/salut"));
 	}
@@ -114,13 +114,11 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> calls = getIncomingCalls(items.get(0));
 		assertNotNull(calls);
-		assertEquals(4, calls.size());
+		assertEquals(3, calls.size());
 		assertItem(calls.get(2).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 7);
-		assertItem(calls.get(3).getFrom(), "main(String[]) : void", Method, "org.sample.Call", false, 10);
 		Range selectionRange = calls.get(2).getFrom().getSelectionRange();
 		assertEquals(new Range(new Position(7, 18), new Position(7, 30)), selectionRange);
-		selectionRange = calls.get(3).getFrom().getSelectionRange();
-		assertEquals(new Range(new Position(10, 18), new Position(10, 30)), selectionRange);
+		assertEquals(2, calls.get(2).getFromRanges().size());
 	}
 
 	@Test
@@ -141,9 +139,10 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> call1Calls = getOutgoings(calls.get(1).getTo());
 		assertNotNull(call1Calls);
-		assertEquals(4, call1Calls.size());
+		assertEquals(2, call1Calls.size());
+		assertEquals(2, call1Calls.get(0).getFromRanges().size());
 		assertItem(call1Calls.get(0).getTo(), "Child()", Constructor, "org.sample.CallHierarchy$Child", false, 42);
-		assertItem(call1Calls.get(2).getTo(), "currentThread()" + JavaElementLabelsCore.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
+		assertItem(call1Calls.get(1).getTo(), "currentThread()" + JavaElementLabelsCore.DECL_STRING + "Thread", Method, "java.lang.Thread", false, 0);
 	}
 
 	@Test
@@ -163,7 +162,8 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyIncomingCall> call0Calls = getIncomingCalls(calls.get(0).getFrom());
 		assertNotNull(call0Calls);
-		assertEquals(3, call0Calls.size());
+		assertEquals(1, call0Calls.size());
+		assertEquals(3, call0Calls.get(0).getFromRanges().size());
 		assertItem(call0Calls.get(0).getFrom(), "{...}", Constructor, "org.sample.CallHierarchyOther", false, 5);
 	}
 
@@ -179,18 +179,19 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		List<CallHierarchyOutgoingCall> calls = getOutgoings(items.get(0));
 		assertNotNull(calls);
-		assertEquals(2, calls.size());
-		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 368);
+		assertEquals(1, calls.size());
+		assertEquals(2, calls.get(0).getFromRanges().size());
+		assertItem(calls.get(0).getTo(), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 61);
 
 		List<CallHierarchyOutgoingCall> call0Calls = getOutgoings(calls.get(0).getTo());
 		assertNotNull(call0Calls);
 		assertEquals(1, call0Calls.size());
-		assertItem(call0Calls.get(0).getTo(), "capitalize(String, char...)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 401);
+		assertItem(call0Calls.get(0).getTo(), "capitalize(String, char...)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 94);
 
 		String jarUri = call0Calls.get(0).getTo().getUri();
 		assertTrue(jarUri.startsWith("jdt://"));
-		assertTrue(jarUri.contains("org.apache.commons.lang3.text"));
-		assertTrue(jarUri.contains("WordUtils.class"));
+		assertTrue(jarUri.contains("org.apache.commons.lang3.text/WordUtils.java?"));
+		assertTrue(jarUri.contains("org.apache.commons.lang3.text%28WordUtils.class"));
 	}
 
 	@Test

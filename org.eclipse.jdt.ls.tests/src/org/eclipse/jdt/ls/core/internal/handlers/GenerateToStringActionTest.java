@@ -13,7 +13,11 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -33,14 +37,13 @@ import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -48,7 +51,7 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
@@ -71,12 +74,12 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
-		Assert.assertNotNull(toStringAction);
+		assertNotNull(toStringAction);
 		Command toStringCommand = CodeActionHandlerTest.getCommand(toStringAction);
-		Assert.assertNotNull(toStringCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT, toStringCommand.getCommand());
+		assertNotNull(toStringCommand);
+		assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT, toStringCommand.getCommand());
 	}
 
 	@Test
@@ -91,11 +94,11 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> toStringAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING);
-		Assert.assertNotNull(toStringAction);
+		assertNotNull(toStringAction);
 		WorkspaceEdit toStringEdit = CodeActionHandlerTest.getEdit(toStringAction);
-		Assert.assertNotNull(toStringEdit);
+		assertNotNull(toStringEdit);
 	}
 
 	@Test
@@ -110,8 +113,8 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING), "The operation is not applicable to interfaces");
 	}
 
 	@Test
@@ -128,8 +131,8 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to enums", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_TO_STRING), "The operation is not applicable to enums");
 	}
 
 	@Test
@@ -144,15 +147,15 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
+		assertTrue(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
+		assertFalse(CodeActionHandlerTest.commandExists(quickAssistActions, SourceAssistProcessor.COMMAND_ID_ACTION_GENERATETOSTRINGPROMPT));
 	}
 
 	@Test
@@ -167,15 +170,15 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		List<Either<Command, CodeAction>> quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
+		assertTrue(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
 		// Test if the quick assist exists only for type declaration
 		params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		quickAssistActions = CodeActionHandlerTest.findActions(codeActions, JavaCodeActionKind.QUICK_ASSIST);
-		Assert.assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
+		assertFalse(CodeActionHandlerTest.titleExists(quickAssistActions, ActionMessages.GenerateToStringAction_label));
 	}
 
 	@Test
@@ -193,7 +196,7 @@ public class GenerateToStringActionTest extends AbstractCompilationUnitBasedTest
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertNull(CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Generate toString()..."));
+		assertNotNull(codeActions);
+		assertNull(CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.QUICK_ASSIST, "Generate toString()..."));
 	}
 }

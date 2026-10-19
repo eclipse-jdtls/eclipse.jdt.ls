@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017-2019 Red Hat Inc. and others.
+ * Copyright (c) 2017-2026 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -12,12 +12,12 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -94,19 +94,19 @@ import org.eclipse.lsp4j.WatchKind;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.WorkspaceEditCapabilities;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author snjeza
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private static final String TEST_CONTENT = "test=test\n";
@@ -119,7 +119,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Mock
 	private WorkspaceExecuteCommandHandler commandHandler;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		server = new JDTLanguageServer(projectsManager, preferenceManager, commandHandler);
 		server.connectClient(client);
@@ -127,7 +127,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		JobHelpers.waitForJobsToComplete(monitor);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		server.disconnectClient();
 		server.shutdown();
@@ -234,12 +234,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		when(mockCapabilies.isDocumentHighlightDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isFoldgingRangeDynamicRegistered()).thenReturn(Boolean.TRUE);
 		when(mockCapabilies.isCompletionDynamicRegistered()).thenReturn(Boolean.TRUE);
+		when(mockCapabilies.isTypeHierarchyDynamicRegistrationSupported()).thenReturn(Boolean.TRUE);
 		InitializeResult result = initialize(true);
 		assertNull(result.getCapabilities().getDocumentSymbolProvider());
 		server.initialized(new InitializedParams());
 		waitForBackgroundJobs();
 		JobHelpers.waitForJobs(JDTLanguageServer.JAVA_LSP_INITIALIZE_WORKSPACE, monitor);
-		verify(client, times(9)).registerCapability(any());
+		verify(client, times(10)).registerCapability(any());
 		waitForBackgroundJobs();
 	}
 
@@ -333,10 +334,10 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		projectsManager.projectsBuildFinished(null);
 		// 8 basic + 3 project roots
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, watchers.size());
+		assertEquals(12, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
 		List<FileSystemWatcher> projectWatchers = watchers.subList(9, 12);
 		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
-		assertTrue(WatchKind.Delete == projectWatchers.get(0).getKind());
+		assertEquals(WatchKind.Delete, projectWatchers.get(0).getKind());
 		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
 		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("simple-gradle"));
 
@@ -380,7 +381,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).registerCapability(any());
 		List<FileSystemWatcher> newWatchers = projectsManager.registerWatchers();
 		verify(client, times(1)).registerCapability(any());
-		assertEquals("Unexpected watchers:\n" + toString(watchers), 12, newWatchers.size());
+		assertEquals(12, newWatchers.size(), "Unexpected watchers:\n" + toString(watchers));
 		projectWatchers = newWatchers.subList(9, 12);
 		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
 		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
@@ -417,7 +418,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			String settingsUrl = "../../formatter/settings.prefs";
 			preferences.setSettingsUrl(settingsUrl);
 			List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
-			assertEquals("Unexpected watchers:\n" + toString(watchers), 10, watchers.size());
+			assertEquals(10, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		} finally {

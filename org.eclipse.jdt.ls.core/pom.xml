@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.53.0-SNAPSHOT</version>
+		<version>1.64.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.jdt.ls.core</artifactId>
 	<packaging>eclipse-plugin</packaging>
@@ -13,32 +13,9 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<configuration>
-					<artifactItems>
-						<artifactItem>
-							<groupId>com.kotcrab.remark</groupId>
-							<artifactId>remark</artifactId>
-							<version>1.2.0</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>org.jsoup</groupId>
-							<artifactId>jsoup</artifactId>
-							<version>1.14.2</version>
-						</artifactItem>
-						<artifactItem>
-							<groupId>com.jetbrains.intellij.java</groupId>
-							<artifactId>java-decompiler-engine</artifactId>
-							<version>231.9011.34</version>
-						</artifactItem>
-					</artifactItems>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.codehaus.gmavenplus</groupId>
 				<artifactId>gmavenplus-plugin</artifactId>
-				<version>4.2.1</version>
+				<version>4.3.1</version>
 				<executions>
 					<execution>
 						<?m2e ignore?>
@@ -142,10 +119,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<repositories>
-		<repository>
-			<id>jetbrains-intellij</id>
-			<url>https://www.jetbrains.com/intellij-repository/releases/</url>
-		</repository>
-	</repositories>
 </project>

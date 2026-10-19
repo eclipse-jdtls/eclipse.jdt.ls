@@ -12,11 +12,11 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,7 +47,7 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.base.Throwables;
 
@@ -113,7 +113,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		Path helloSrcRoot = Paths.get("projects", "eclipse", "hello", "src").toAbsolutePath();
 		URI uri = helloSrcRoot.resolve(Paths.get("java", "Foo.java")).toUri();
 		ICompilationUnit cu = JDTUtils.resolveCompilationUnit(uri.toString());
-		assertNotNull("Could not find compilation unit for " + uri, cu);
+		assertNotNull(cu, "Could not find compilation unit for " + uri);
 		assertEquals(ProjectsManager.DEFAULT_PROJECT_NAME, cu.getResource().getProject().getName());
 		IJavaElement[] elements = cu.getChildren();
 		assertEquals(2, elements.length);
@@ -124,7 +124,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 
 		uri = helloSrcRoot.resolve("NoPackage.java").toUri();
 		cu = JDTUtils.resolveCompilationUnit(uri.toString());
-		assertNotNull("Could not find compilation unit for " + uri, cu);
+		assertNotNull(cu, "Could not find compilation unit for " + uri);
 		assertEquals(ProjectsManager.DEFAULT_PROJECT_NAME, cu.getResource().getProject().getName());
 		elements = cu.getChildren();
 		assertEquals(1, elements.length);
@@ -183,8 +183,8 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		job.schedule();
 		job.join(2_000, new NullProgressMonitor());
 		assertNotNull(job.getResult());
-		assertNull(getStackTrace(job.getResult()), job.getResult().getException());
-		assertTrue(job.getResult().getMessage(), job.getResult().isOK());
+		assertNull(job.getResult().getException(), getStackTrace(job.getResult()));
+		assertTrue(job.getResult().isOK(), job.getResult().getMessage());
 	}
 
 	private String getStackTrace(IStatus status) {
@@ -205,7 +205,7 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		JDTUtils.resolveCompilationUnit(uri);
 		IProject project = WorkspaceHelper.getProject(ProjectsManager.DEFAULT_PROJECT_NAME);
 		IFile iFile = project.getFile("/src/org/eclipse/Test.java");
-		assertTrue(iFile.getFullPath().toString() + " doesn't exist.", iFile.exists());
+		assertTrue(iFile.exists(), iFile.getFullPath().toString() + " doesn't exist.");
 		Path path = Paths.get(tempDir + "/test");
 		Files.walk(path, FileVisitOption.FOLLOW_LINKS).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
 	}
@@ -248,6 +248,6 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 
 		IResource resource = JDTUtils.getFileOrFolder(newPackage.toURI().toString());
 		assertTrue(resource instanceof IFolder);
-		assertEquals("The parent package should be aware of the newly created child package", ((IFolder) parent).members().length, originalMemberNum + 1);
+		assertEquals(originalMemberNum + 1, ((IFolder) parent).members().length, "The parent package should be aware of the newly created child package");
 	}
 }

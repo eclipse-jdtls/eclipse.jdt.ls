@@ -1,0 +1,22 @@
+apply plugin: "io.freefair.aspectj"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    targetCompatibility = "11"
+}
+
+dependencies {
+    implementation "org.aspectj:aspectjrt:1.9.25"
+}
+
+compileAspectj {
+    ajcOptions {
+        outxml = true
+        outxmlfile = "bar.xml"
+    }
+}
+
+compileAspectj.ajcOptions.outxml = true
+compileAspectj.ajcOptions.outxmlfile = "bar.xml"

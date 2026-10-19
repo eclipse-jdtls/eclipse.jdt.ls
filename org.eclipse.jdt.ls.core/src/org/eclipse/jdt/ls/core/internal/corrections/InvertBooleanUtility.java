@@ -374,7 +374,9 @@ public class InvertBooleanUtility {
 		Expression rightOperand = getInversedExpression(rewrite, infixExpression.getRightOperand(), provider);
 		newExpression.setRightOperand(parenthesizeIfRequired(rightOperand, newOperatorPrecedence));
 
+		@SuppressWarnings("unchecked")
 		List<Expression> extraOperands = infixExpression.extendedOperands();
+		@SuppressWarnings("unchecked")
 		List<Expression> newExtraOperands = newExpression.extendedOperands();
 		for (int i = 0; i < extraOperands.size(); i++) {
 			Expression extraOperand = getInversedExpression(rewrite, extraOperands.get(i), provider);
@@ -648,6 +650,7 @@ public class InvertBooleanUtility {
 		if (isSelectingOperator(left, right, offset, length)) {
 			return ASTNodes.getExclusiveEnd(left);
 		}
+		@SuppressWarnings("unchecked")
 		List<Expression> extended = infixExpression.extendedOperands();
 		for (int i = 0; i < extended.size(); i++) {
 			left = right;
@@ -684,6 +687,7 @@ public class InvertBooleanUtility {
 		breakInfixOperationAtOperation(rewrite, infixExpression.getLeftOperand(), operator, operatorOffset, removeParentheses, res);
 		breakInfixOperationAtOperation(rewrite, infixExpression.getRightOperand(), operator, operatorOffset, removeParentheses, res);
 
+		@SuppressWarnings("unchecked")
 		List<Expression> extended = infixExpression.extendedOperands();
 		for (int i = 0; i < extended.size(); i++) {
 			breakInfixOperationAtOperation(rewrite, extended.get(i), operator, operatorOffset, removeParentheses, res);

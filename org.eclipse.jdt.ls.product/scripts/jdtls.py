@@ -67,6 +67,9 @@ def get_shared_config_path(jdtls_base_path):
 
 	if system in ['Linux', 'FreeBSD']:
 		config_dir = 'config_linux'
+	# or use system == 'Android'
+	elif 'TERMUX_VERSION' in os.environ:
+		config_dir = 'config_linux'
 	elif system == 'Darwin':
 		config_dir = 'config_mac'
 	elif system == 'Windows':
@@ -79,14 +82,18 @@ def get_shared_config_path(jdtls_base_path):
 def main(args):
 	cwd_name = os.path.basename(os.getcwd())
 
-	if platform.system() == 'Windows' and 'APPDATA' in os.environ:
+	system = platform.system()
+
+	if system == 'Windows' and 'APPDATA' in os.environ:
 		cachedir = Path(os.environ['APPDATA'])
-	elif platform.system() == 'Darwin' and 'HOME' in os.environ:
+	elif system == 'Darwin' and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / 'Library' / 'Caches'
-	elif platform.system() == 'Linux' and 'HOME' in os.environ:
+	elif system == 'Linux' and 'HOME' in os.environ:
+		cachedir = Path(os.environ['HOME']) / '.cache'
+	elif 'TERMUX_VERSION' in os.environ and 'HOME' in os.environ:
 		cachedir = Path(os.environ['HOME']) / '.cache'
 	else:
-		cachedir = tempfile.gettempdir()
+		cachedir = Path(tempfile.gettempdir())
 
 	cachedir = cachedir / 'jdtls'
 	jdtls_data_path = os.path.join(cachedir, "jdtls-" + sha1(cwd_name.encode()).hexdigest())
@@ -109,7 +116,6 @@ def main(args):
 	shared_config_path = get_shared_config_path(jdtls_base_path)
 	jar_path = find_equinox_launcher(jdtls_base_path)
 
-	system = platform.system()
 	exec_args = ["-Declipse.application=org.eclipse.jdt.ls.core.id1",
 			"-Dosgi.bundles.defaultStartLevel=4",
 			"-Declipse.product=org.eclipse.jdt.ls.core.product",
@@ -130,6 +136,6 @@ def main(args):
 		exec_args = [ '-Djdk.xml.maxGeneralEntitySizeLimit=0', '-Djdk.xml.totalEntitySizeLimit=0' ] + exec_args
 
 	if os.name == 'posix':
-		os.execvp(java_executable, exec_args)
+		os.execvp(java_executable, [java_executable] + exec_args)
 	else:
 		subprocess.run([java_executable] + exec_args)

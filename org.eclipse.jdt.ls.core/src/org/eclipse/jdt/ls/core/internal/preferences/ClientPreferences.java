@@ -151,6 +151,10 @@ public class ClientPreferences {
 		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getSymbol());
 	}
 
+	public boolean isTextDocumentContentDynamicRegistrationSupported() {
+		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getTextDocumentContent());
+	}
+
 	public boolean isWorkspaceChangeWatchedFilesDynamicRegistered() {
 		return v3supported && capabilities.getWorkspace() != null && isDynamicRegistrationSupported(capabilities.getWorkspace().getDidChangeWatchedFiles());
 	}
@@ -299,6 +303,10 @@ public class ClientPreferences {
 
 	public boolean isMoveRefactoringSupported() {
 		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringSupport", "false").toString());
+	}
+
+	public boolean isMoveRefactoringConfirmationSupported() {
+		return Boolean.parseBoolean(extendedClientCapabilities.getOrDefault("moveRefactoringConfirmationSupport", "false").toString());
 	}
 
 	public boolean isClientHoverProviderRegistered() {
@@ -511,6 +519,13 @@ public class ClientPreferences {
 			&& capabilities.getWorkspace().getInlayHint() != null
 			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport() != null
 			&& capabilities.getWorkspace().getInlayHint().getRefreshSupport().booleanValue();
+	}
+
+	public boolean isCodeLensRefreshSupported() {
+		return v3supported
+			&& capabilities.getWorkspace().getCodeLens() != null
+			&& capabilities.getWorkspace().getCodeLens().getRefreshSupport() != null
+			&& capabilities.getWorkspace().getCodeLens().getRefreshSupport().booleanValue();
 	}
 
 	public Collection<String> excludedMarkerTypes() {

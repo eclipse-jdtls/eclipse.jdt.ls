@@ -328,7 +328,7 @@ public class CompletionProposalDescriptionProvider {
 	 * @param item to update
 	 */
 	private void createMethodProposalLabel(CompletionProposal methodProposal, CompletionItem item) {
-		StringBuilder description = this.createMethodProposalDescription(methodProposal);
+		StringBuilder description = CompletionProposalDescriptionProvider.createMethodProposalDescription(methodProposal);
 		String proposalName = String.valueOf(methodProposal.getName());
 		boolean skipDetail = false;
 		if (isCompletionItemLabelDetailsSupport()){
@@ -839,6 +839,7 @@ public class CompletionProposalDescriptionProvider {
 	}
 
 	private boolean isCompletionItemLabelDetailsSupport() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionItemLabelDetailsSupport();
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		return preferenceManager != null && preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport();
 	}
 }

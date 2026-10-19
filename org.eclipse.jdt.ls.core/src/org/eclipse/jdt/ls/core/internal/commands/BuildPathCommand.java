@@ -173,13 +173,13 @@ public class BuildPathCommand {
 
 			IContainer projectRoot = project;
 			if (!ProjectUtils.isVisibleProject(project)) {
-				projectType = "Workspace";
 				IFolder workspaceLinkFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK);
-				if (!workspaceLinkFolder.isLinked()) {
+				if (workspaceLinkFolder.isLinked()) {
+					projectType = "Workspace";
+					projectRoot = workspaceLinkFolder;
+				} else if (project.getRawLocation() == null) {
 					continue;
 				}
-
-				projectRoot = workspaceLinkFolder;
 			}
 
 			IPath relativePath = entryPath.makeRelativeTo(projectRoot.getFullPath());

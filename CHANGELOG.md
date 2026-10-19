@@ -1,5 +1,164 @@
 # Change Log
 
+# [1.63.0 (October 19, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/155?closed=1)
+
+ * bug fix - False positive "Flexible Constructor Bodies" errors appear when Lombok is enabled. See [#3930](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3930).
+ * bug fix - Incoming call hierarchies sometimes duplicate the results. See [#3904](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3904).
+ * bug fix - Resources are excluded from the classpath for Gradle projects. See [#3765](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3765).
+ * bug fix - Failed to get source path when the project is not contained in root. See [#2982](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2982).
+ * build - Suppress HTTP wire/Aether DEBUG logging during tests. See [#3935](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3935).
+ * build - Revert to a build of jdt.core where the tests pass. See [#3934](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3934).
+ * build - Add asm to target platform. See [#3917](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3917).
+ * build - Use Java 25 in CodeQL pipeline. See [#3913](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3913).
+
+# [1.62.0 (October 1st, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/154?closed=1)
+
+ * enhancement - Support Java 27. See [#3889](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3889).
+ * enhancement - Support sorting members alphabetically by reusing `DefaultJavaElementComparator` from core.manipulation. See [#3876](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3876).
+ * enhancement - Make decompiler cache size configurable via system property `jdt.ls.decompiler.cacheSize`. See [#3875](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3875).
+ * enhancement - Show a progress report on the client side when executing delegate commands. See [#1186](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1186).
+ * enhancement - Per-parameter signature help documentation. See [#1291](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/1291).
+ * bug fix - Report an error when Maven projects share groupId/artifactId. See [#3893](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3893)
+ * bug fix - Allow parsing maps in `JSONUtility`. See [#3900](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3900).
+ * bug fix - Fix regression in handing `{@index }` Javadoc. See [#3878](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3878).
+ * bug fix - Fix overlapping edits in postfix completions. See [#3861](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3861).
+ * bug fix - Having a project with preview enabled but not set to the latest Java version silently fails to build. See [#3846](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3846).
+ * bug fix - JEP 511: Hovering over java.xml module import displays java.xml.crypto Javadoc. See [#3709](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3709).
+ * bug fix - Early log messages are not filtered. See [#3541](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3541).
+ * bug fix - Pass executable path as `argv[0]` to `os.execvp` in python launch script. See [#3901](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3901).
+ * bug fix - Outgoing call hierarchies sometimes duplicate the results. See [#3193](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3193).
+ * bug fix - Incorrect Javadoc rendering when inline @ tokens appear in block tags. See [#3631](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3631).
+ * build - Split lombok tests out to their own test suite. See [#3891](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3891).
+
+# [1.61.0 (September 3rd, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/153?closed=1)
+
+ * enhancement - Add setting to make new classes package-private instead of public. See [#3865](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3865).
+ * enhancement - Add settings to customize the TODO comment in generated stubs. See [#3847](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3847).
+ * enhancement - Add setting to set Eclipse classpath variables (i.e. `kind="var"`). See [#3860](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3860).
+ * enhancement - Add trailing space after keyword/annotation completions. See [#3868](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3868).
+ * enhancement - Support generating Javadoc comments as Markdown. See [#3837](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3837).
+ * enhancement - "Create record" quick fix now infers record components from constructor call arguments. See [#3856](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3856).
+ * enhancement - Add a confirmation dialog for when a non-fatal error is encountered during the move instance method refactoring. See [#3862](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3862).
+ * enhancement - Add a quickfix to add or update field access modifiers. See [#3863](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3863).
+ * enhancement - Add snippet completion to declare an enum type. See [#3871](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3871).
+ * enhancement - Replace the custom `java/classFileContents` request with the standard `workspace/textDocumentContent` request from LSP 3.18. See [#3852](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3852).
+ * enhancement - Add "projectOnly" scope to `java.search.scope` setting to exclude JDK and library references. See [#3821](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3821).
+ * enhancement - Add a CodeLens for fields that shows references to the field. See [#3828](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3828).
+ * enhancement - Add quickfix to rename a variable declared in a lambda that's name clashes with a variable declared outside the lambda. See [#3824](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3824).
+ * performance - Batch DigestStore serialization during Maven/Gradle project import. See [#3839](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3839).
+ * bug fix - Do not offer "Make Static" action for default interface methods. See [#3853](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3853).
+ * bug fix - Override `JLSFile.childInfos()` to include redirected metadata files. See [#3844](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3844).
+ * bug fix - Suppress 'Assign parameter to field' proposal for record constructors. See [#3842](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3842).
+ * bug fix - Fix Scala Gradle classpath pollution. See [#3815](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3815).
+ * bug fix - Ensure that `maven.multiModuleProjectDirectory` system property is set, which fixes Maven projects that use it. See [#3760](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3760).
+ * bug fix - Fix how the `@inheritDoc` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3696](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3696).
+ * bug fix - Fix how the `@value` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3695](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3695).
+ * bug fix - Fix how method and constructor references are rendered in Javadoc hovers based on Markdown Javadoc. See [#3690](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3690).
+ * bug fix - Fix how the `@code` tag is rendered in Javadoc hovers based on Markdown Javadoc. See [#3672](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3672).
+ * bug fix - Properly support dynamic registration of the type hierarchy capability. See [#3769](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3769).
+ * bug fix - Fix potential compiler error concerning pattern instanceof. See [#3845](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3845).
+ * build - Report syntax server test failures in GitHub Actions. See [#3817](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3817).
+
+# [1.60.0 (June 26th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
+
+* bug fix - Remove org.eclipse.osgi.services from category.xml. See [#3826](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3826).
+* bug fix - Add Javadoc quick fix support for overridden methods.  See [#3820](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3820).
+
+# [1.59.0 (June 24th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/152?closed=1)
+ * enhancement - Extension point to help implement "Get fully qualified name at cursor". See [#3809](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3809).
+ * enhancement - Expose Add Import action for qualified type references. See [#3781](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3781).
+ * enhancement - Add regenerate hashCode()/equals() method quick-fix. See [#3764](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3764).
+ * enhancement - Add type annotation quick-fixes. See [#3759](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3759).
+ * enhancement - Add Java 26 to Gradle/Java Compatibility Matrix. See [#3757](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3757).
+ * enhancement - Add new quick-fixes (type argument and modifier related). See [#3756](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3756).
+ * enhancement - Add varargs-related quick-fixes. See [#3754](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3754).
+ * enhancement - Add new null annotation quick-fixes from upstream JDT. See [#3752](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3752).
+ * enhancement - Use standard `decorator` instead of `annotation` token type for highlighting Java annotation. See [#3210](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3210).
+ * enhancement - Add support for vscode path variables for settings url settings. See [#2529](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2529).
+ * bug fix - If the specified type comment template is empty, use the default template. See [#3816](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3816).
+ * bug fix - Prevent setter generation for record components. See [#3812](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3812).
+ * bug fix - JDTLS batch file fails when located in a folder path with spaces. See [#3783](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3783).
+ * bug fix - Keep LSP initialize() resilient when m2e is not yet available. See [#3773](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3773).
+ * bug fix - Completion of annotation properties proposes invalid choices. See [#3604](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3604).
+ * bug fix - Do not offer override/implement actions for annotation types. See [#3814](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3814).
+ * bug fix: detect build files located exactly at maxDepth. See [#3805](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3805).
+ * dependencies - Update lsp4j to 1.0.0 to address version mismatch resulting in LinkageError when using JDT LS with Eclipse 2026-03. See [#3800](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3800).
+
+# [1.58.0 (April 15th, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/151?closed=1)
+ * enhancement - Progressive project import notifications for tree view. See [#3744](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3744).
+ * enhancement - Support Termux. See [#3742](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3742).
+ * enhancement - Add Null Annotation quick-fixes from JDT to jdt.ls. See [#3727](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3727).
+ * enhancement - Remove the first blank line from generated classes created in the default package. See [#3725](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3725).
+ * enhancement - Add inlay hints for format parameters. See [#3726](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3726).
+ * enhancement - Add quick-assist to convert a class to a record. See [#3723](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3723).
+ * enhancement - Support Scala in Gradle projects. See [#3734](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3734).
+ * enhancement - Enable change compiler compliance quick-fixes. See [#3743](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3743).
+ * bug fix - Navigating to a Kotlin class now opens the sources instead of the decompiled code. See [#3724](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3724).
+
+# [1.57.0 (February 26th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/150?closed=1)
+ * enhancement - Have class URIs use their original source name. See [#3666](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3666).
+ * enhancement - Add setting to disable adding imports on paste. See [#3700](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3700).
+ * enhancement - Set `o.e.j.core.compiler.problem.forbiddenReference=ignore` by default. See [#3720](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3720).
+ * enhancement - Add setting to show generated code in document symbols. See [#3706](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3706).
+ * enhancement - Log server version+commit on startup. See [#3689](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3689).
+ * bug fix - Fix python launcher in a custom environment. See [#3701](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3701).
+ * bug fix - Fix code completion in JEP 512: Compact Source Files with static variables. See [#3680](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3680).
+ * bug fix - JEP 511: module completion now shows documentation. See [#3710](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3710).
+ * bug fix - Fix wrong Javadoc rendering (missing close parenthesis for links) on hover. See [#3705](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3705).
+ * dependencies - Update JUnit to 5.14.3. See [#3712](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3712).
+ * dependencies - Bump `org.codehaus.gmavenplus:gmavenplus-plugin` from 4.3.0 to 4.3.1. See [#3707](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3707).
+ * dependencies - Update Fernflower to 253.29346.240, fetched via the target platform. See [#3667](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3667).
+ * dependencies - Bump `org.eclipse.cbi.maven.plugins:eclipse-jarsigner-plugin` from 1.5.3 to 1.5.4. See [#3715](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3715).
+
+# [1.56.0 (January 29th, 2026)](https://github.com/eclipse/eclipse.jdt.ls/milestone/149?closed=1)
+ * enhancement - Add library info on hover. See [#3678](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3678).
+ * enhancement - Support AspectJ in Gradle projects. See [#3670](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3670).
+ * enhancement - Enable more quick-fixes from upstream JDT. See [#3660](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3660).
+ * bug fix - Fix wrong type mismatch errors. See [#3691](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3691).
+ * bug fix - Fix incorrect Markdown hover rendering for inline `{@link}`/`{@linkplain}` member references. See [#3655](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3655).
+ * bug fix - Watch `java.settings.url` file modifications. See [#3679](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3679).
+ * bug fix - Don't create unnecessary new lines when pasting text including literal `\n`. See [#3674](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3674).
+ * bug fix - Fix unreliable Maven artifact search. See [#3555](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3555).
+ * dependencies - Bump `tycho-version` from 5.0.1 to 5.0.2. See [#3692](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3692).
+ * dependencies - Bump `org.codehaus.gmavenplus:gmavenplus-plugin` from 4.2.1 to 4.3.0. See [#3688](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3688).
+ * dependencies - Bump `org.apache.commons:commons-lang3` from 3.5 to 3.18.0 in test projects. See [#3685](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3685).
+ * dependencies - Bump `groovy-version` from 5.0.3 to 5.0.4. See [#3683](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3683).
+ * dependencies - Add JUnit Jupiter 5.14.1 to the target platform. See [#3668](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3668).
+ * debt - Restore some disabled tests. See [#3686](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3686).
+ * debt - Phase out `java.apply.workspaceEdit` in favour of `workspace/applyEdit`. See [#3543](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3543).
+
+# [1.55.0 (January 6th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/147?closed=1)
+ * enhancement - Add a quickfix to replace a deprecated field with one referenced in the docs. See [#3626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3626).
+ * enhancement - Add a quickfix for "type safety warning" to infer type arguments. See [#626](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/626).
+ * bug fix - Fix a bug in the quickfix that replaces a deprecated method with one refrenced in the docs. See [#3638](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3638).
+ * bug fix - "Generate constructor" feature can now be used when the type has no fields. See [#3629](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3629).
+ * bug fix - Parse `rootPath` as path string instead of url. See [#3614](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3614).
+ * bug fix - Revert temporary rollback of junit bundles to fix JUnit 6 support. See [#3619](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3619).
+ * bug fix - Ensure importers with the same order number are not dropped. See [#3658](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3658).
+ * dependencies - Migrate to flexmark-java for HTML -> Markdown conversion. See [#2214](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2214).
+
+# [1.54.0 (November 26th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/148?closed=1)
+ * enhancement - Add preference to disable returning Javadoc on hover. See [#3610](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3610).
+ * enhancement - Adopt quick fixes for the following problems. See [#3609](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3609).
+	- `UnusedMethodDeclaredThrownException`,
+	- `InvalidOperator`,
+	- `RedundantSpecificationOfTypeArguments`
+ * enhancement - Support for `refreshCodeLenses`. See [#3047](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3047).
+ * bug fix - Temporary rollback of JUnit bundles to fix JUnit 6 support. See [#3605](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3605).
+ * bug fix - NPE thrown when computing Code Actions on invalid code. See [#3602](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3602).
+
+# [1.53.0 (November 19th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/146?closed=1)
+* performance - Avoid unnecessary Maven project rebuild when the window is reloaded. See [#3587](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3587).
+* performance - Prevent unnecessary Maven project rebuild when configuring test classpath flag. See [#3590](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3590).
+* enhancement - Add support for JSpecify annotations in classpath configuration. See [#3592](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3592).
+* enhancement - Improve code completion type for annotation attributes (now using `Field` kind). See [#3584](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3584).
+* bug fix - Inner classes are now correctly shown/decompiled via Fernflower. See [#2815](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2815).
+* bug fix - Ensure accurate 'build finished' status by waiting for all background processes. See [#3589](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3589).
+* bug fix - Fix implementation for 'Assign to variable' code assist proposals. See [#3596](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3596).
+* bug fix - Suppress incorrect error logging related to content providers and decompiler checks. See [#3582](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3582).
+* bug fix - Fix incorrect `activeParameter` value in `signatureHelp` requests. See [#2434](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2434).
+* dependencies - Bump `eclipse-jarsigner-plugin` to 1.5.3. See [#3593](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3593).
+
 # [1.52.0 (October 30th, 2025)](https://github.com/eclipse/eclipse.jdt.ls/milestone/145?closed=1)
 * enhancement - Add inlay hints for lambda parameter types and option to suppress for same-name numbered parameters. See [#3556](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3556), [#3557](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3557).
 * enhancement - Improve detection and setup of `sourcePath` for Android support. See [#3490](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3490).

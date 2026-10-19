@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017-2022 Microsoft Corporation and others.
+* Copyright (c) 2017-2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -37,33 +37,40 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IExtendedModifier;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.util.CompilationUnitSorter;
+import org.eclipse.jdt.internal.corext.codemanipulation.SortMembersOperation.DefaultJavaElementComparator;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
+import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.VariableDeclarationFixCore;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.internal.ui.text.correction.ModifierCorrectionSubProcessorCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.Messages;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
-import org.eclipse.jdt.ls.core.internal.codemanipulation.DefaultJavaElementComparator;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorField;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.GenerateGetterSetterOperation.AccessorKind;
@@ -71,7 +78,6 @@ import org.eclipse.jdt.ls.core.internal.codemanipulation.PartialSortMembersOpera
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler.CodeActionData;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeGenerationUtils;
@@ -98,6 +104,7 @@ import org.eclipse.ltk.core.refactoring.GroupCategory;
 import org.eclipse.ltk.core.refactoring.GroupCategorySet;
 import org.eclipse.text.edits.TextEdit;
 
+
 public class SourceAssistProcessor {
 
 	private static final Set<String> UNSUPPORTED_RESOURCES = Set.of("module-info.java", "package-info.java");
@@ -122,13 +129,16 @@ public class SourceAssistProcessor {
 		IType type = getSelectionType(context);
 		ArrayList<ASTNode> coveredNodes = QuickAssistProcessor.getFullyCoveredNodes(context, context.getCoveringNode());
 		ASTNode coveringNode = context.getCoveringNode();
-		boolean isInFieldDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, FieldDeclaration.class) != null;
+		FieldDeclaration fieldDeclaration = (FieldDeclaration) CodeActionUtility.findASTNode(coveredNodes, coveringNode, FieldDeclaration.class);
+		boolean isInFieldDeclaration = fieldDeclaration != null;
+		boolean isInStaticFieldDeclaration = isInFieldDeclaration && Modifier.isStatic(fieldDeclaration.getModifiers());
+
 		ASTNode typeDeclaration = CodeActionUtility.findASTNode(coveredNodes, coveringNode, TypeDeclaration.class);
 		boolean isInTypeDeclaration =  typeDeclaration != null;
 		boolean isInImportDeclaration =  CodeActionUtility.findASTNode(coveredNodes, coveringNode, ImportDeclaration.class) != null;
 
 		// Generate Constructor QuickAssist
-		if (isInFieldDeclaration || isInTypeDeclaration) {
+		if (isInFieldDeclaration && !isInStaticFieldDeclaration || isInTypeDeclaration) {
 			Optional<Either<Command, CodeAction>> quickAssistGenerateConstructors = getGenerateConstructorsAction(params, context, type, JavaCodeActionKind.QUICK_ASSIST, monitor);
 			addSourceActionCommand($, params.getContext(), quickAssistGenerateConstructors);
 		}
@@ -171,14 +181,18 @@ public class SourceAssistProcessor {
 		}
 
 		if (!UNSUPPORTED_RESOURCES.contains(cu.getResource().getName())) {
-			// Override/Implement Methods QuickAssist
-			if (isInTypeDeclaration) {
-				Optional<Either<Command, CodeAction>> quickAssistOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.QUICK_ASSIST);
-				addSourceActionCommand($, params.getContext(), quickAssistOverrideMethods);
+			try {
+				// Override/Implement Methods QuickAssist
+				if (isInTypeDeclaration) {
+					Optional<Either<Command, CodeAction>> quickAssistOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.QUICK_ASSIST, type);
+					addSourceActionCommand($, params.getContext(), quickAssistOverrideMethods);
+				}
+				// Override/Implement Methods Source Action
+				Optional<Either<Command, CodeAction>> sourceOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS, type);
+				addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Failed to generate Override/Implement Methods source action", e);
 			}
-			// Override/Implement Methods Source Action
-			Optional<Either<Command, CodeAction>> sourceOverrideMethods = getOverrideMethodsAction(params, JavaCodeActionKind.SOURCE_OVERRIDE_METHODS);
-			addSourceActionCommand($, params.getContext(), sourceOverrideMethods);
 		}
 
 		List<String> fieldNames = CodeActionUtility.getFieldNames(coveredNodes, coveringNode);
@@ -247,6 +261,9 @@ public class SourceAssistProcessor {
 		// Add final modifiers where possible
 		Optional<Either<Command, CodeAction>> generateFinalModifiers = addFinalModifierWherePossibleAction(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiers);
+
+		Optional<Either<Command, CodeAction>> changeFieldModifierQuickAssist = getChangeFieldModifierQuickAssist(context, fieldDeclaration);
+		addSourceActionCommand($, params.getContext(), changeFieldModifierQuickAssist);
 
 		Optional<Either<Command, CodeAction>> generateFinalModifiersQuickAssist = addFinalModifierWherePossibleQuickAssist(context);
 		addSourceActionCommand($, params.getContext(), generateFinalModifiersQuickAssist);
@@ -354,8 +371,8 @@ public class SourceAssistProcessor {
 		return OrganizeImportsHandler.organizeImports(context.getCompilationUnit(), isAdvancedOrganizeImportsSupported ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, monitor);
 	}
 
-	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind) {
-		if (!preferenceManager.getClientPreferences().isOverrideMethodsPromptSupported()) {
+	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind, IType type) throws JavaModelException {
+		if (!preferenceManager.getClientPreferences().isOverrideMethodsPromptSupported() || type == null || type.isAnnotation()) {
 			return Optional.empty();
 		}
 
@@ -503,12 +520,6 @@ public class SourceAssistProcessor {
 			if (type == null || type.isAnnotation() || type.isInterface() || type.isAnonymous() || type.getCompilationUnit() == null) {
 				return Optional.empty();
 			}
-
-			boolean hasNonStaticField = hasFields(type, false);
-			if (!hasNonStaticField) {
-				return Optional.empty();
-			}
-
 		} catch (JavaModelException e) {
 			return Optional.empty();
 		}
@@ -557,7 +568,7 @@ public class SourceAssistProcessor {
 			codeAction.setKind(JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
 			codeAction.setCommand(command);
 			codeAction.setData(new CodeActionData(null, CodeActionComparator.GENERATE_DELEGATE_METHOD_PRIORITY));
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		} else {
 			return Optional.of(Either.forLeft(command));
@@ -567,6 +578,33 @@ public class SourceAssistProcessor {
 	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleAction(IInvocationContext context) {
 		IProposableFix fix = (IProposableFix) VariableDeclarationFixCore.createCleanUp(context.getASTRoot(), true, true, true);
 		return getFinalModifierWherePossibleAction(context, fix, ActionMessages.GenerateFinalModifiersAction_label, JavaCodeActionKind.SOURCE_GENERATE_FINAL_MODIFIERS);
+	}
+
+	@SuppressWarnings("unchecked")
+	private Optional<Either<Command, CodeAction>> getChangeFieldModifierQuickAssist(IInvocationContext context, FieldDeclaration fieldDeclaration) {
+		if (fieldDeclaration == null) {
+			return Optional.empty();
+		}
+
+		VariableDeclarationFragment fragment = (VariableDeclarationFragment) fieldDeclaration.fragments().get(0);
+		String actionMessage = Messages.format(ActionMessages.ChangeFieldModifierAction_templateLabel, fragment.getName().getIdentifier());
+		AST ast = context.getASTRoot().getAST();
+		ASTRewrite rewrite = ASTRewrite.create(ast);
+		FieldDeclaration newDeclaration = (FieldDeclaration) ASTNode.copySubtree(ast, fieldDeclaration);
+		rewrite.replace(fieldDeclaration, newDeclaration, null);
+		List<IExtendedModifier> modifiers = newDeclaration.modifiers();
+		if (modifiers.isEmpty()) {
+			actionMessage = Messages.format(ActionMessages.AddFieldModifierAction_templateLabel, fragment.getName().getIdentifier());
+			org.eclipse.jdt.core.dom.Modifier privateModifier = ast.newModifier(org.eclipse.jdt.core.dom.Modifier.ModifierKeyword.PRIVATE_KEYWORD);
+			rewrite.getListRewrite(newDeclaration, FieldDeclaration.MODIFIERS2_PROPERTY).insertFirst(privateModifier, null);
+			modifiers = new ArrayList<>(modifiers);
+			modifiers.add(privateModifier);
+		}
+		LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
+		ModifierCorrectionSubProcessorCore.installLinkedVisibilityProposals(linkedProposalModel, rewrite, modifiers, false, ModifierCorrectionSubProcessorCore.KEY_MODIFIER);
+		LinkedCorrectionProposalCore proposal = new LinkedCorrectionProposalCore(actionMessage, context.getCompilationUnit(), rewrite, IProposalRelevance.CHANGE_VISIBILITY);
+		proposal.setLinkedProposalModel(linkedProposalModel);
+		return getCodeActionFromProposal(context.getCompilationUnit(), JavaCodeActionKind.QUICK_ASSIST, proposal, CodeActionComparator.CHANGE_MODIFIER_TO_FINAL_PRIORITY);
 	}
 
 	private Optional<Either<Command, CodeAction>> addFinalModifierWherePossibleQuickAssist(IInvocationContext context) {
@@ -588,6 +626,7 @@ public class SourceAssistProcessor {
 		return getFinalModifierWherePossibleAction(context, fix, actionMessage, JavaCodeActionKind.QUICK_ASSIST);
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<ASTNode> getPossibleASTNodesForFinalModifier(List<ASTNode> targetNodes) {
 		List<ASTNode> results = new ArrayList<>();
 		for (ASTNode targetNode : targetNodes) {
@@ -628,7 +667,6 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-			Command command = new Command(actionMessage, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
 			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
 				CodeAction codeAction = new CodeAction(actionMessage);
 				codeAction.setKind(kind);
@@ -636,7 +674,7 @@ public class SourceAssistProcessor {
 				codeAction.setDiagnostics(Collections.emptyList());
 				return Optional.of(Either.forRight(codeAction));
 			} else {
-				return Optional.of(Either.forLeft(command));
+				return Optional.empty();
 			}
 		}
 	}
@@ -694,11 +732,14 @@ public class SourceAssistProcessor {
 	}
 
 	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(CodeActionContext context, ICompilationUnit cu, String name, String kind, CodeActionProposal proposal, int priority) {
+		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
+			return Optional.empty();
+		}
 		if (preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
 			CodeAction codeAction = new CodeAction(name);
 			codeAction.setKind(kind);
 			codeAction.setData(new CodeActionData(proposal, priority));
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Optional.of(Either.forRight(codeAction));
 		}
 
@@ -707,22 +748,44 @@ public class SourceAssistProcessor {
 			if (!ChangeUtil.hasChanges(edit)) {
 				return Optional.empty();
 			}
-
-			Command command = new Command(name, CodeActionHandler.COMMAND_ID_APPLY_EDIT, Collections.singletonList(edit));
-			if (preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
-				CodeAction codeAction = new CodeAction(name);
-				codeAction.setKind(kind);
-				codeAction.setEdit(edit);
-				codeAction.setDiagnostics(context.getDiagnostics());
-				return Optional.of(Either.forRight(codeAction));
-			} else {
-				return Optional.of(Either.forLeft(command));
-			}
+			CodeAction codeAction = new CodeAction(name);
+			codeAction.setKind(kind);
+			codeAction.setEdit(edit);
+			codeAction.setDiagnostics(context.getDiagnostics());
+			return Optional.of(Either.forRight(codeAction));
 		} catch (OperationCanceledException | CoreException e) {
 			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
 		}
 
-		return null;
+		return Optional.empty();
+	}
+
+	private Optional<Either<Command, CodeAction>> getCodeActionFromProposal(ICompilationUnit cu, String kind, LinkedCorrectionProposalCore proposal, int priority) {
+		String name = proposal.getName();
+		if (!preferenceManager.getClientPreferences().isSupportedCodeActionKind(kind)) {
+			return Optional.empty();
+		}
+		if (preferenceManager.getClientPreferences().isResolveCodeActionSupported()) {
+			CodeAction codeAction = new CodeAction(name);
+			codeAction.setKind(kind);
+			codeAction.setData(new CodeActionData(proposal, priority));
+			codeAction.setDiagnostics(Collections.emptyList());
+			return Optional.of(Either.forRight(codeAction));
+		}
+		try {
+			WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+			if (!ChangeUtil.hasChanges(edit)) {
+				return Optional.empty();
+			}
+			CodeAction codeAction = new CodeAction(name);
+			codeAction.setKind(kind);
+			codeAction.setEdit(edit);
+			codeAction.setDiagnostics(Collections.emptyList());
+			return Optional.of(Either.forRight(codeAction));
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem converting proposal to code actions", e);
+		}
+		return Optional.empty();
 	}
 
 	private boolean hasFields(IType type, boolean includeStatic) throws JavaModelException {

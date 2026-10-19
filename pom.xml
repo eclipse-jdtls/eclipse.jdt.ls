@@ -6,7 +6,7 @@
 	<groupId>org.eclipse.jdt.ls</groupId>
 	<artifactId>parent</artifactId>
 	<name>${base.name} :: Parent</name>
-	<version>1.53.0-SNAPSHOT</version>
+	<version>1.64.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<licenses>
 		<license>
@@ -18,8 +18,8 @@
 	<properties>
 		<base.name>JDT Language Server</base.name>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<tycho-version>5.0.0</tycho-version>
-		<groovy-version>5.0.2</groovy-version>
+		<tycho-version>5.0.2</tycho-version>
+		<groovy-version>5.0.4</groovy-version>
 		<tycho-extras-version>${tycho-version}</tycho-extras-version>
 		<tycho.scmUrl>scm:git:https://github.com/eclipse/eclipse.jdt.ls.git</tycho.scmUrl>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
@@ -28,17 +28,17 @@
 		<sonar.jacoco.reportPath>${jacoco.destFile}</sonar.jacoco.reportPath>
 		<!-- To handle OSX-specific settings -->
 		<os.testArgs></os.testArgs>
-		<lombokArgs></lombokArgs>
 		<!-- skip for local builds, set it to true on Eclipse.org infrastructure -->
 		<cbi.jarsigner.skip>true</cbi.jarsigner.skip>
 		<generateSourceRef>true</generateSourceRef>
 	</properties>
 	<modules>
-		<module>org.eclipse.jdt.ls.target</module>
+		<module>org.eclipse.jdt.ls.tp</module>
 		<module>org.eclipse.jdt.ls.core</module>
 		<module>org.eclipse.jdt.ls.filesystem</module>
 		<module>org.eclipse.jdt.ls.tests</module>
 		<module>org.eclipse.jdt.ls.logback.appender</module>
+		<module>org.eclipse.jdt.ls.tests.lombok</module>
 		<module>org.eclipse.jdt.ls.tests.syntaxserver</module>
 		<module>org.eclipse.jdt.ls.product</module>
 	</modules>
@@ -64,7 +64,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
-					<version>3.9.0</version>
+					<version>3.11.0</version>
 					<executions>
 						<execution>
 							<?m2e execute onConfiguration?>
@@ -116,7 +116,7 @@
 				<plugin>
 					<groupId>org.eclipse.cbi.maven.plugins</groupId>
 					<artifactId>eclipse-jarsigner-plugin</artifactId>
-					<version>1.5.2</version>
+					<version>1.5.4</version>
 					<executions>
 						<execution>
 							<id>sign</id>

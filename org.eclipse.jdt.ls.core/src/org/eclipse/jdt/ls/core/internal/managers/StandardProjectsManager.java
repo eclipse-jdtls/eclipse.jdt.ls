@@ -32,6 +32,7 @@ import java.util.Hashtable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -302,6 +303,8 @@ public class StandardProjectsManager extends ProjectsManager {
 							appendBuildFileMarker(resource);
 							break;
 					}
+				} else {
+					buildSupport.compile(resource, null);
 				}
 			}
 		} catch (CoreException e) {
@@ -397,6 +400,23 @@ public class StandardProjectsManager extends ProjectsManager {
 					return Status.OK_STATUS;
 				}
 			}.schedule();
+		}
+	}
+
+	public void configureClasspathVariables(Preferences oldPrefs, Preferences newPrefs, IProgressMonitor monitor) throws CoreException {
+		Map<String, IPath> oldClasspathVariables = oldPrefs.getClasspathVariables();
+		Map<String, IPath> newClasspathVariables = newPrefs.getClasspathVariables();
+		for (Entry<String, IPath> entry : newClasspathVariables.entrySet()) {
+			IPath prefValue = entry.getValue();
+			IPath oldPrefValue = oldClasspathVariables.get(entry.getKey());
+			if (!prefValue.equals(oldPrefValue)) {
+				JavaCore.setClasspathVariable(entry.getKey(), prefValue, monitor);
+			}
+		}
+		for (String key : oldClasspathVariables.keySet()) {
+			if (!newClasspathVariables.containsKey(key)) {
+				JavaCore.removeClasspathVariable(key, monitor);
+			}
 		}
 	}
 
@@ -577,7 +597,7 @@ public class StandardProjectsManager extends ProjectsManager {
 	}
 
 	private List<URI> getURIs(String url) {
-		if (url == null) {
+		if (url == null || url.isBlank()) {
 			return Collections.emptyList();
 		}
 		List<URI> result = new ArrayList<>();
@@ -647,6 +667,13 @@ public class StandardProjectsManager extends ProjectsManager {
 					if (!Objects.equals(oldPreferences.getResourceFilters(), newPreferences.getResourceFilters())) {
 						try {
 							configureFilters(new NullProgressMonitor());
+						} catch (CoreException e) {
+							JavaLanguageServerPlugin.logException(e.getMessage(), e);
+						}
+					}
+					if (!Objects.equals(oldPreferences.getClasspathVariables(), newPreferences.getClasspathVariables())) {
+						try {
+							configureClasspathVariables(oldPreferences, newPreferences, new NullProgressMonitor());
 						} catch (CoreException e) {
 							JavaLanguageServerPlugin.logException(e.getMessage(), e);
 						}
@@ -722,6 +749,10 @@ public class StandardProjectsManager extends ProjectsManager {
 			this.shouldUpdateProjects = false;
 		}
 		this.preferenceManager.getPreferences().updateAnnotationNullAnalysisOptions();
+		new ScalaGradleSupport().cleanScalaProjects(monitor);
+		buildSupports().forEach(bs -> {
+			bs.compile(null, monitor);
+		});
 	}
 
 	@Override

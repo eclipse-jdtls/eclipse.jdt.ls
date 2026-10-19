@@ -13,9 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -43,9 +43,9 @@ import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 
 public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest {
@@ -57,7 +57,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Mock
 	private ClientPreferences clientPreferences;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		sharedASTProvider = CoreASTProvider.getInstance();
 		sharedASTProvider.disposeAST();
@@ -67,7 +67,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		handler.addResourceChangeListener();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		handler.removeResourceChangeListener();
 		for (ICompilationUnit cu : JavaCore.getWorkingCopies(null)) {

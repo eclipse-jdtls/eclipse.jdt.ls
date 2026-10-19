@@ -47,6 +47,7 @@ import org.eclipse.jdt.core.manipulation.SharedASTProviderCore;
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.SearchUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Location;
@@ -183,6 +184,10 @@ public class NavigateToDefinitionHandler {
 		}
 
 		if (element instanceof IMember member && member.getClassFile() != null) {
+			Location location = SearchUtils.searchOtherSources(member);
+			if (location != null) {
+				return location;
+			}
 			List<Location> locations = JDTUtils.searchDecompiledSources(element, cf, true, true, new NullProgressMonitor());
 			if (!locations.isEmpty()) {
 				return fixLocation(element, locations.get(0), javaProject);

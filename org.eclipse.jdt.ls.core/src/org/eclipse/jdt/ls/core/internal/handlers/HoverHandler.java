@@ -34,6 +34,9 @@ public class HoverHandler {
 	}
 
 	public Hover hover(TextDocumentPositionParams position, IProgressMonitor monitor) {
+		if (preferenceManager != null && !preferenceManager.getPreferences().isHoverJavadocEnabled()) {
+			return null;
+		}
 		ITypeRoot unit = null;
 		try {
 			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());

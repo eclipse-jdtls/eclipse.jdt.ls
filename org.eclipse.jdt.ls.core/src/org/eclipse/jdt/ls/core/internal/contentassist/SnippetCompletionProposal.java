@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018-2020 Microsoft Corporation and others.
+ * Copyright (c) 2018-2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -85,9 +85,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	private static final String CLASS_SNIPPET_LABEL = "class";
 	private static final String INTERFACE_SNIPPET_LABEL = "interface";
 	private static final String RECORD_SNIPPET_LABEL = "record";
+	private static final String ENUM_SNIPPET_LABEL = "enum";
 	private static final String CLASS_KEYWORD = "class";
 	private static final String INTERFACE_KEYWORD = "interface";
 	private static final String RECORD_KEYWORD = "record";
+	private static final String ENUM_KEYWORD = "enum";
 	private static final String INTERFACE_METHOD_SNIPPET = "$${1|public,private|} $${2:void} $${3:name}($${4});";
 
 	private static String PACKAGEHEADER = "package_header";
@@ -121,7 +123,11 @@ public class SnippetCompletionProposal extends CompletionProposal {
 
 		boolean needsPublic(IProgressMonitor monitor) {
 			if (needsPublic == null) {
-				needsPublic = needsPublic(cu, getCompletionContext(), monitor);
+				if (JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isPreferPackagePrivateVisibility()) {
+					needsPublic = false;
+				} else {
+					needsPublic = needsPublic(cu, getCompletionContext(), monitor);
+				}
 			}
 			return needsPublic;
 		}
@@ -155,7 +161,7 @@ public class SnippetCompletionProposal extends CompletionProposal {
 									// ignore
 								}
 							}
-							if (scanner.isModifier(previous)) {
+							if (TokenScanner.isModifier(previous)) {
 								return false;
 							}
 						} catch (CoreException e) {
@@ -343,8 +349,31 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		}
 
 		String uri = JDTUtils.toURI(cu);
-		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t)).toArray(Template[]::new);
-		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t)).toArray(Template[]::new);
+
+		// Resolve the project's Java compliance level once so we can gate version-restricted snippets.
+		int projectSourceLevel = 0;
+		IJavaProject javaProject = cu.getJavaProject();
+		if (javaProject != null) {
+			String version = javaProject.getOption(JavaCore.COMPILER_COMPLIANCE, true);
+			try {
+				projectSourceLevel = (int) Float.parseFloat(version);
+			} catch (NumberFormatException e) {
+				JavaLanguageServerPlugin.logException(e.getMessage(), e);
+			}
+		}
+
+		Map<String, CodeSnippetTemplate> snippetByName = new HashMap<>();
+		for (CodeSnippetTemplate s : CodeSnippetTemplate.values()) {
+			snippetByName.put(s.getDisplayName(), s);
+		}
+		int sourceLevel = projectSourceLevel;
+		Predicate<Template> sourceLevelFilter = t -> {
+			CodeSnippetTemplate s = snippetByName.get(t.getName());
+			return s == null || s.isApplicable(sourceLevel);
+		};
+
+		Template[] availableTemplates = Arrays.stream(templates).filter(t -> javaContext.canEvaluate(t) && sourceLevelFilter.test(t)).toArray(Template[]::new);
+		Template[] availableTemplatesAll = Arrays.stream(templatesAll).filter(t -> javaContextAll.canEvaluate(t) && sourceLevelFilter.test(t)).toArray(Template[]::new);
 		List<CompletionProposal> proposals = new ArrayList<>();
 		int indexReduction = 0;
 		for (int i = 0; i < availableTemplates.length + availableTemplatesAll.length; i++) {
@@ -431,7 +460,8 @@ public class SnippetCompletionProposal extends CompletionProposal {
 	}
 
 	private static boolean isCompletionItemLabelDetailsSupport() {
-		return JavaLanguageServerPlugin.getPreferencesManager() != null && JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isCompletionItemLabelDetailsSupport();
+		var preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
+		return preferenceManager != null && preferenceManager.getClientPreferences().isCompletionItemLabelDetailsSupport();
 	}
 
 	public static String evaluateGenericTemplate(ICompilationUnit cu, CompletionContext completionContext, Template template) {
@@ -468,13 +498,15 @@ public class SnippetCompletionProposal extends CompletionProposal {
 		boolean isInterfacePrefix = true;
 		boolean isClassPrefix = true;
 		boolean isRecordPrefix = true;
+		boolean isEnumPrefix = true;
 		if (completionToken != null && completionToken.length > 0) {
 			String prefix = new String(completionToken);
 			isInterfacePrefix = INTERFACE_KEYWORD.startsWith(prefix);
 			isClassPrefix = CLASS_KEYWORD.startsWith(prefix);
 			isRecordPrefix = RECORD_KEYWORD.startsWith(prefix);
+			isEnumPrefix = ENUM_KEYWORD.startsWith(prefix);
 		}
-		if (!isInterfacePrefix && !isClassPrefix && !isRecordPrefix) {
+		if (!isInterfacePrefix && !isClassPrefix && !isRecordPrefix && !isEnumPrefix) {
 			return Collections.emptyList();
 		}
 		if (monitor == null) {
@@ -506,6 +538,12 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			CompletionItem recordSnippet = getRecordSnippet(scc, monitor);
 			if (recordSnippet != null) {
 				res.add(recordSnippet);
+			}
+		}
+		if (isEnumPrefix) {
+			CompletionItem enumSnippet = getEnumSnippet(scc, monitor);
+			if (enumSnippet != null) {
+				res.add(enumSnippet);
 			}
 		}
 
@@ -629,6 +667,32 @@ public class SnippetCompletionProposal extends CompletionProposal {
 			return null;
 		}
 		return recordSnippet;
+	}
+
+	private static CompletionItem getEnumSnippet(SnippetCompletionContext scc, IProgressMonitor monitor) {
+		ICompilationUnit cu = scc.getCompilationUnit();
+		if (!accept(cu, scc.getCompletionContext(), false)) {
+			return null;
+		}
+		if (monitor.isCanceled()) {
+			return null;
+		}
+		final CompletionItem enumSnippet = new CompletionItem();
+		enumSnippet.setFilterText(ENUM_SNIPPET_LABEL);
+		enumSnippet.setLabel(ENUM_SNIPPET_LABEL);
+		enumSnippet.setSortText(SortTextHelper.convertRelevance(0));
+
+		try {
+			CodeGenerationTemplate template = (scc.needsPublic(monitor)) ? CodeGenerationTemplate.ENUMSNIPPET_PUBLIC : CodeGenerationTemplate.ENUMSNIPPET_DEFAULT;
+			enumSnippet.setInsertText(getSnippetContent(scc, template, true));
+			if (isCompletionListItemDefaultsSupport()) {
+				enumSnippet.setTextEditText(getSnippetContent(scc, template, true));
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.log(e.getStatus());
+			return null;
+		}
+		return enumSnippet;
 	}
 
 	private static void setFields(CompletionItem ci, ICompilationUnit cu, CompletionItemDefaults completionItemDefaults) {

@@ -12,20 +12,20 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
-import java.io.IOException;
-import java.io.Reader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -33,6 +33,7 @@ import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -46,17 +47,20 @@ import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.internal.core.BinaryMember;
+import org.eclipse.jdt.internal.core.JrtPackageFragmentRoot;
 import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
+import org.eclipse.jdt.launching.IVMInstall;
+import org.eclipse.jdt.launching.IVMInstall2;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.ls.core.internal.managers.IBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Region;
+import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.MarkedString;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-
-import com.google.common.io.CharStreams;
 
 public class HoverInfoProvider {
 
@@ -79,10 +83,6 @@ public class HoverInfoProvider {
 
 	private static final String LANGUAGE_ID = "java";
 
-	private static final String MARKDOWN_SPACE = "&nbsp;";
-
-	private static final String MARKDOWN_LINEBREAK = "  \n";
-
 	private final ITypeRoot unit;
 
 	private final PreferenceManager preferenceManager;
@@ -94,6 +94,9 @@ public class HoverInfoProvider {
 
 	public List<Either<String, MarkedString>> computeHover(int line, int column, IProgressMonitor monitor) {
 		List<Either<String, MarkedString>> res = new LinkedList<>();
+		if (preferenceManager != null && !preferenceManager.getPreferences().isHoverJavadocEnabled()) {
+			return res;
+		}
 		try {
 			if (monitor.isCanceled()) {
 				return cancelled(res);
@@ -149,8 +152,11 @@ public class HoverInfoProvider {
 				MarkedString javadoc = computeJavadoc(curr);
 				String value = javadoc == null ? null : javadoc.getValue();
 				if (value != null && !value.isBlank()) {
-					value = fixSnippet(value);
 					res.add(Either.forLeft(value));
+				}
+				String sourceInfo = getSourceInfo(curr);
+				if (sourceInfo != null) {
+					res.add(Either.forLeft("Source: *" + sourceInfo+"*"));
 				}
 			}
 		} catch (Exception e) {
@@ -160,34 +166,6 @@ public class HoverInfoProvider {
 			return cancelled(res);
 		}
 		return res;
-	}
-
-	private String fixSnippet(String value) {
-		if (value.contains(JavadocContentAccess2.SNIPPET)) {
-			StringBuilder builder = new StringBuilder();
-			value.lines().forEach((line) -> {
-				if (line.contains(JavadocContentAccess2.SNIPPET)) {
-					line = line.stripLeading();
-					if (line.startsWith(JavadocContentAccess2.SNIPPET)) {
-						line = line.replaceFirst(JavadocContentAccess2.SNIPPET, "");
-						line = replaceLeadingSpaces(line);
-					}
-				}
-				builder.append(line);
-				builder.append(MARKDOWN_LINEBREAK);
-			});
-			value = builder.toString();
-		}
-		return value;
-	}
-
-	private static String replaceLeadingSpaces(String str) {
-		int i = 0;
-		while (str.length() > i + 1 && str.charAt(i) == ' ') {
-			str = str.replaceFirst(" ", MARKDOWN_SPACE);
-			i += MARKDOWN_SPACE.length();
-		}
-		return str;
 	}
 
 	private List<Either<String, MarkedString>> cancelled(List<Either<String, MarkedString>> res) {
@@ -299,16 +277,10 @@ public class HoverInfoProvider {
 		} else if (element instanceof IMember memberElement) {
 			member = memberElement;
 		} else if (element instanceof IPackageFragment) {
-			Reader r = JavadocContentAccess2.getMarkdownContentReader(element);
-			if (r != null) {
-				result = getString(r);
-			}
+			result = JavadocContentAccess2.getMarkdownContent(element);
 		}
 		if (member != null) {
-			Reader r = JavadocContentAccess2.getMarkdownContentReader(member);
-			if (r != null) {
-				result = getString(r);
-			}
+			result = JavadocContentAccess2.getMarkdownContent(member);
 			if (member instanceof IMethod method) {
 				String defaultValue = getDefaultValue(method);
 				if (defaultValue != null) {
@@ -323,20 +295,82 @@ public class HoverInfoProvider {
 		return result != null ? new MarkedString(LANGUAGE_ID, result) : null;
 	}
 
+	public static String getSourceInfo(IJavaElement element) throws JavaModelException {
+		IJavaElement current = element;
+
+		while (current != null && !(current instanceof IPackageFragmentRoot)) {
+			current = current.getParent();
+		}
+		if (!(current instanceof IPackageFragmentRoot root)) {
+			return null;
+		}
+		String sourceInfo = null;
+		if (root.isArchive()) {
+			String jdkVersion = "";
+			if (isSystemLibrary(root)) {
+				IVMInstall vm = null;
+				try {
+					vm = JavaRuntime.getVMInstall(root.getJavaProject());
+					if (vm instanceof IVMInstall2 vm2) {
+						jdkVersion = vm2.getJavaVersion();
+					}
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+				}
+				sourceInfo = "Java " + jdkVersion;
+				if (root instanceof JrtPackageFragmentRoot) {
+					sourceInfo += " (module: " + root.getElementName() + ")";
+				}
+			} else {
+				sourceInfo = root.getElementName();
+			}
+
+		} else {
+			sourceInfo = root.getJavaProject().getElementName();
+		}
+
+		if (sourceInfo != null) {
+			// Use toLocation to get URI with line number
+			Location location = JDTUtils.toLocation(element);
+			if (location != null) {
+				String uri = location.getUri() + "#" + (location.getRange().getStart().getLine() + 1);
+				return "[" + sourceInfo + "](" + uri + ")";
+			}
+		}
+
+		return sourceInfo;
+	}
+
+	/**
+	 * Checks if the package fragment root is a system library.
+	 * @param root the package fragment root
+	 * @return true if the package fragment root is a JDK, false otherwise
+	 */
+	private static boolean isSystemLibrary(IPackageFragmentRoot root) {
+		try {
+			if (root.getKind() == IPackageFragmentRoot.K_BINARY && root.isExternal() && root.isReadOnly()) {
+				IClasspathEntry entry = root.getRawClasspathEntry();
+				if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
+					return isJREClasspathContainer(entry.getPath());
+				}
+			}
+			return false;
+		} catch (Exception e) {
+			JavaLanguageServerPlugin.logException(e.getMessage(), e);
+		}
+		return false;
+	}
+
+	private static boolean isJREClasspathContainer(IPath containerPath) {
+		return containerPath != null && containerPath.segmentCount() > 0 && JavaRuntime.JRE_CONTAINER.equals(containerPath.segment(0));
+	}
+
 	/**
 	 * Gets the reader content as a String
 	 *
 	 * @param reader the reader
 	 * @return the reader content as string
 	 */
-	private static String getString(Reader reader) {
-		try {
-			return CharStreams.toString(reader);
-		} catch (IOException ignored) {
-			//meh
-		}
-		return null;
-	}
 
 	private class HoverException extends CoreException {
 

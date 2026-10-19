@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +39,7 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.jdt.ls.core.internal.managers.GradleBuildSupport;
 import org.eclipse.jdt.ls.core.internal.managers.MavenBuildSupport;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 
@@ -128,6 +128,21 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 		Result addMainJavaResult = BuildPathCommand.removeFromSourcePath(JDTUtils.getFileURI(mainJavaResource));
 		assertFalse(addMainJavaResult.status);
 		assertEquals(addMainJavaResult.message, MavenBuildSupport.UNSUPPORTED_ON_MAVEN);
+	}
+
+	@Test
+	public void testListSourcePathsWithMavenModuleOutsideRoot() throws Exception {
+		importProjects("maven/outside-modules");
+		IProject project = WorkspaceHelper.getProject("parent");
+		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
+		manager.getPreferences().setRootPaths(Arrays.asList(project.getLocation()));
+
+		ListCommandResult listResult = (ListCommandResult) BuildPathCommand.listSourcePaths();
+		assertTrue(listResult.status);
+		SourcePath[] sourcePaths = listResult.data;
+		assertNotNull(sourcePaths);
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "module1".equals(p.projectName)));
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "shared".equals(p.projectName)));
 	}
 
 	@Test

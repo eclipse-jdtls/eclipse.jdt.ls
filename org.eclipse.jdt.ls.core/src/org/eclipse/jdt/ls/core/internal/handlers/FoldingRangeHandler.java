@@ -33,12 +33,9 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.SourceRange;
-import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.compiler.InvalidInputException;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -64,7 +61,7 @@ public class FoldingRangeHandler {
 		List<FoldingRange> $ = new ArrayList<>();
 		ITypeRoot unit = null;
 		try {
-			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+			PreferenceManager preferenceManager = JavaLanguageServerPlugin.getPreferencesManager();
 			boolean returnCompilationUnit = preferenceManager == null ? false : preferenceManager.isClientSupportsClassFileContent() && (preferenceManager.getPreferences().isIncludeDecompiledSources());
 			unit = JDTUtils.resolveTypeRoot(params.getTextDocument().getUri(), returnCompilationUnit, monitor);
 			if (unit == null || (monitor != null && monitor.isCanceled())) {

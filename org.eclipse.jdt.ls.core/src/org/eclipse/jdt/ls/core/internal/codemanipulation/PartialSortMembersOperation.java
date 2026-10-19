@@ -159,6 +159,7 @@ public class PartialSortMembersOperation {
 
 		ast.accept(new ASTVisitor() {
 
+			@SuppressWarnings("unchecked")
 			private void sortElements(List elements, ListRewrite listRewrite) {
 				if (elements.size() == 0)
 					return;

@@ -19,14 +19,14 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.lsp4j.Range;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AssignToFieldQuickAssistTest extends AbstractQuickFixTest {
 	private IJavaProject fJProject;
 	private IPackageFragmentRoot fSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		fJProject = newEmptyProject();
 		fJProject.setOptions(TestOptions.getDefaultOptions());
@@ -283,5 +283,19 @@ public class AssignToFieldQuickAssistTest extends AbstractQuickFixTest {
 
 		Range selection = CodeActionUtil.getRange(cu, "int p2", 0);
 		assertCodeActions(cu, selection, e1, e2, e3);
+	}
+
+	@Test
+	public void testNoAssignParamToFieldForRecords() throws Exception {
+		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
+		StringBuilder buf = new StringBuilder();
+		buf.append("package test1;\n");
+		buf.append("public record E((int p) {\n");
+		buf.append("    public  E(int p) {\n");
+		buf.append("    this.p = p;\n");
+		buf.append("    }\n");
+		buf.append("}\n");
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", buf.toString(), false, null);
+		assertCodeActionNotExists(cu, "Assign parameter to new field");
 	}
 }

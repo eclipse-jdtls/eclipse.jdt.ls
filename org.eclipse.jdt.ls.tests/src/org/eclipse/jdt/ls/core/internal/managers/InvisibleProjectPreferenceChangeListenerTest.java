@@ -13,8 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -47,30 +47,33 @@ import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.TextDocumentItem;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * InvisibleProjectPreferenceChangeListenerTest
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class InvisibleProjectPreferenceChangeListenerTest extends AbstractInvisibleProjectBasedTest {
 
 	private JavaClientConnection javaClient;
 	private DocumentLifeCycleHandler lifeCycleHandler;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		javaClient = new JavaClientConnection(client);
 		lifeCycleHandler = new DocumentLifeCycleHandler(javaClient, preferenceManager, projectsManager, false);
 		mockJDTLanguageServer();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// JavaLanguageServerPlugin.getNonProjectDiagnosticsState().setGlobalErrorLevel(originalGlobalErrorLevel);
 		JavaLanguageServerPlugin.getInstance().setProtocol(null);

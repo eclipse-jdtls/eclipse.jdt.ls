@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -40,17 +40,17 @@ import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author snjeza
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 
 	@Mock
@@ -62,6 +62,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		JobHelpers.waitForJobs(CorePlugin.GRADLE_JOB_FAMILY, null);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testImportNewMavenProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -115,11 +116,12 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(6, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
-		verify(client, times(1)).sendEventNotification(argument.capture());
+		verify(client, times(2)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testManualImportNewMavenProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -171,7 +173,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 			Arrays.asList(JDTUtils.getFileURI(parentPom)), Collections.emptyList(), new NullProgressMonitor());
 		waitForJobs();
 		IProject newProject = workspace.getRoot().getProject("module4");
-		assertTrue("New module is imported", newProject.exists());
+		assertTrue(newProject.exists(), "New module is imported");
 		projects = workspace.getRoot().getProjects();
 		assertEquals(6, projects.length);
 
@@ -181,6 +183,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), 1);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testImportNewGradleProjects() throws Exception {
 		IWorkspaceRoot wsRoot = WorkspaceHelper.getWorkspaceRoot();
@@ -219,7 +222,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(4, projects.length);
 
 		ArgumentCaptor<EventNotification> argument = ArgumentCaptor.forClass(EventNotification.class);
-		verify(client, times(1)).sendEventNotification(argument.capture());
+		verify(client, times(2)).sendEventNotification(argument.capture());
 		assertEquals(EventType.ProjectsImported, argument.getValue().getType());
 		assertEquals(((List<URI>) argument.getValue().getData()).size(), projects.length);
 	}

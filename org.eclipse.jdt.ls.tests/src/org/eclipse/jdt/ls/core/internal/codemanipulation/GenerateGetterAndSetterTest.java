@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,7 +14,7 @@
 
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -33,7 +33,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 
@@ -698,6 +698,39 @@ public class GenerateGetterAndSetterTest extends AbstractSourceTestCase {
 							"	}\r\n" +
 							"	final String field1 = null;/*|*/\r\n" +
 							"	public B() {\r\n" +
+							"	}\r\n" +
+							"}";
+			/* @formatter:on */
+
+			compareSource(expected, unit.getSource());
+		} finally {
+			preferences.setCodeGenerationInsertionLocation(oldValue);
+		}
+	}
+
+	@Test
+	public void testRecordComponentsGenerateGetterOnly() throws Exception {
+		String oldValue = preferences.getCodeGenerationInsertionLocation();
+		try {
+			//@formatter:off
+			ICompilationUnit unit = fPackageP.createCompilationUnit("R.java", "package p;\r\n" +
+				"\r\n" +
+				"public record R(String name) {\r\n" +
+				"}", true, null);
+			//@formatter:on
+			IType record = unit.getType("R");
+			runAndApplyOperation(record);
+
+			/* @formatter:off */
+			String expected ="package p;\r\n" +
+							"\r\n" +
+					        "public record R(String name) {\r\n" +
+							"\r\n" +
+							"	/**\r\n" +
+							"	 * @return Returns the name.\r\n" +
+							"	 */\r\n" +
+							"	public String name() {\r\n" +
+							"		return name;\r\n" +
 							"	}\r\n" +
 							"}";
 			/* @formatter:on */

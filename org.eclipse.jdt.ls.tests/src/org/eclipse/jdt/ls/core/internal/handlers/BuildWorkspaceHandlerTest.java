@@ -12,8 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -28,15 +27,15 @@ import org.eclipse.jdt.ls.core.internal.BuildWorkspaceStatus;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.extended.ProjectBuildParams;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest {
 	private BuildWorkspaceHandler handler;
 	private IProject project;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		handler = new BuildWorkspaceHandler(projectsManager);
 		importProjects("maven/salut2");
@@ -44,7 +43,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 		preferences.setMaxBuildCount(1);
@@ -53,7 +52,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Test
 	public void testSucceedCase() throws Exception {
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
-		assertTrue(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result == BuildWorkspaceStatus.SUCCEED);
+		assertEquals(BuildWorkspaceStatus.SUCCEED, result, String.format("BuildWorkspaceStatus is: %s.", result.toString()));
 	}
 
 	@Test
@@ -70,7 +69,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		try (InputStream stream = new ByteArrayInputStream(codeWithError.getBytes(StandardCharsets.UTF_8))) {
 			file.setContents(stream, true, false, monitor);
 			BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
-			assertEquals(result, BuildWorkspaceStatus.WITH_ERROR);
+			assertEquals(BuildWorkspaceStatus.WITH_ERROR, result);
 		}
 	}
 
@@ -78,7 +77,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testCanceledCase() throws Exception {
 		monitor.setCanceled(true);
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
-		assertEquals(result, BuildWorkspaceStatus.CANCELLED);
+		assertEquals(BuildWorkspaceStatus.CANCELLED, result);
 	}
 
 	@Test
@@ -90,7 +89,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(2, projects.size());
 
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
-		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
+		assertEquals(BuildWorkspaceStatus.SUCCEED, result, String.format("BuildWorkspaceStatus is: %s.", result.toString()));
 	}
 
 	@Test
@@ -101,7 +100,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		assertEquals(5, projects.size());
 
 		BuildWorkspaceStatus result = handler.buildWorkspace(false, monitor);
-		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
+		assertEquals(BuildWorkspaceStatus.SUCCEED, result, String.format("BuildWorkspaceStatus is: %s.", result.toString()));
 	}
 
 	@Test
@@ -112,6 +111,6 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 		}).collect(Collectors.toList());
 		ProjectBuildParams params = new ProjectBuildParams(identifiers, true);
 		BuildWorkspaceStatus result = handler.buildProjects(params, monitor);
-		assertEquals(String.format("BuildWorkspaceStatus is: %s.", result.toString()), result, BuildWorkspaceStatus.SUCCEED);
+		assertEquals(BuildWorkspaceStatus.SUCCEED, result, String.format("BuildWorkspaceStatus is: %s.", result.toString()));
 	}
 }

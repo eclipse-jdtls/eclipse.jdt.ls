@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -59,8 +61,8 @@ public class DownloadChecksumJob extends Job {
 			String urlStr = queue.poll();
 			URL url;
 			try {
-				url = new URL(urlStr);
-			} catch (MalformedURLException e1) {
+				url = new URI(urlStr).toURL();
+			} catch (MalformedURLException | URISyntaxException e1) {
 				JavaLanguageServerPlugin.logInfo("Invalid wrapper URL " + urlStr);
 				continue;
 			}

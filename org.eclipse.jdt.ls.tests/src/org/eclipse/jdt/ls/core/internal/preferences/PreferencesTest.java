@@ -13,20 +13,42 @@
 
 package org.eclipse.jdt.ls.core.internal.preferences;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionGuessMethodArgumentsMode;
-import org.junit.Test;
+import org.eclipse.jdt.ls.core.internal.handlers.MapFlattener;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
+import org.junit.jupiter.api.Test;
 
 public class PreferencesTest {
+
+	@Test
+	public void testProjectOnlySearchScope() {
+		Map<String, Object> config = new HashMap<>();
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "projectOnly");
+
+		Preferences preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.projectOnly, preferences.getSearchScope());
+
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "PROJECTONLY");
+		preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.projectOnly, preferences.getSearchScope());
+
+		MapFlattener.setValue(config, Preferences.JAVA_SEARCH_SCOPE, "invalid");
+		preferences = Preferences.createFrom(config);
+		assertEquals(SearchScope.all, preferences.getSearchScope());
+	}
 
 	@Test
 	public void testSetImportOnDemandThreshold() throws Exception {
@@ -61,11 +83,7 @@ public class PreferencesTest {
 	@Test
 	public void testLegacyCompletionGuessMethodArguments() {
 		Map<String, Object> config = new HashMap<>();
-		Map<String, Object> inJava = new HashMap<>();
-		config.put("java", inJava);
-		Map<String, Object> inCompletion = new HashMap<>();
-		inJava.put("completion", inCompletion);
-		inCompletion.put("guessMethodArguments", Boolean.TRUE);
+		MapFlattener.setValue(config, Preferences.JAVA_COMPLETION_GUESS_METHOD_ARGUMENTS_KEY, Boolean.TRUE);
 
 		Preferences preferences = Preferences.createFrom(config);
 		assertEquals(CompletionGuessMethodArgumentsMode.INSERT_BEST_GUESSED_ARGUMENTS, preferences.getGuessMethodArgumentsMode());
@@ -75,78 +93,64 @@ public class PreferencesTest {
 	public void testPartialUpdatePreservesExistingValues() {
 		// Create initial preferences with full configuration
 		Map<String, Object> initialConfig = new HashMap<>();
-		Map<String, Object> java = new HashMap<>();
-		initialConfig.put("java", java);
-
-		Map<String, Object> completion = new HashMap<>();
-		java.put("completion", completion);
-		completion.put("enabled", true);
-		completion.put("overwrite", false);
-
-		java.put("autobuild", Map.of("enabled", true));
-		java.put("format", Map.of("enabled", true, "onType", Map.of("enabled", false)));
-		java.put("import", Map.of("gradle", Map.of("enabled", true)));
+		MapFlattener.setValue(initialConfig, Preferences.COMPLETION_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_COMPLETION_OVERWRITE_KEY, false);
+		MapFlattener.setValue(initialConfig, Preferences.AUTOBUILD_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_FORMAT_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_FORMAT_ON_TYPE_ENABLED_KEY, false);
+		MapFlattener.setValue(initialConfig, Preferences.IMPORT_GRADLE_ENABLED, true);
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertTrue("Initial autobuild should be enabled", initial.isAutobuildEnabled());
-		assertTrue("Initial completion should be enabled", initial.isCompletionEnabled());
-		assertFalse("Initial completion overwrite should be false", initial.isCompletionOverwrite());
-		assertTrue("Initial format should be enabled", initial.isJavaFormatEnabled());
-		assertFalse("Initial format on type should be disabled", initial.isJavaFormatOnTypeEnabled());
-		assertTrue("Initial Gradle import should be enabled", initial.isImportGradleEnabled());
+		assertTrue(initial.isAutobuildEnabled(), "Initial autobuild should be enabled");
+		assertTrue(initial.isCompletionEnabled(), "Initial completion should be enabled");
+		assertFalse(initial.isCompletionOverwrite(), "Initial completion overwrite should be false");
+		assertTrue(initial.isJavaFormatEnabled(), "Initial format should be enabled");
+		assertFalse(initial.isJavaFormatOnTypeEnabled(), "Initial format on type should be disabled");
+		assertTrue(initial.isImportGradleEnabled(), "Initial Gradle import should be enabled");
 
 		// Now send a partial update that only changes autobuild and completion overwrite
 		Map<String, Object> partialConfig = new HashMap<>();
-		Map<String, Object> javaPartial = new HashMap<>();
-		partialConfig.put("java", javaPartial);
-
-		javaPartial.put("autobuild", Map.of("enabled", false)); // Change this
-		Map<String, Object> completionPartial = new HashMap<>();
-		javaPartial.put("completion", completionPartial);
-		completionPartial.put("overwrite", true); // Change this
+		MapFlattener.setValue(partialConfig, Preferences.AUTOBUILD_ENABLED_KEY, false); // Change this
+		MapFlattener.setValue(partialConfig, Preferences.JAVA_COMPLETION_OVERWRITE_KEY, true); // Change this
 		// Note: NOT sending format, import, or completion.enabled
 
 		Preferences updated = Preferences.updateFrom(initial, partialConfig);
 
 		// Verify the updated values changed
-		assertFalse("Updated autobuild should be disabled", updated.isAutobuildEnabled());
-		assertTrue("Updated completion overwrite should be true", updated.isCompletionOverwrite());
+		assertFalse(updated.isAutobuildEnabled(), "Updated autobuild should be disabled");
+		assertTrue(updated.isCompletionOverwrite(), "Updated completion overwrite should be true");
 
 		// Verify the non-updated values were preserved
-		assertTrue("Completion enabled should still be true (preserved)", updated.isCompletionEnabled());
-		assertTrue("Format enabled should still be true (preserved)", updated.isJavaFormatEnabled());
-		assertFalse("Format on type should still be false (preserved)", updated.isJavaFormatOnTypeEnabled());
-		assertTrue("Gradle import should still be enabled (preserved)", updated.isImportGradleEnabled());
+		assertTrue(updated.isCompletionEnabled(), "Completion enabled should still be true (preserved)");
+		assertTrue(updated.isJavaFormatEnabled(), "Format enabled should still be true (preserved)");
+		assertFalse(updated.isJavaFormatOnTypeEnabled(), "Format on type should still be false (preserved)");
+		assertTrue(updated.isImportGradleEnabled(), "Gradle import should still be enabled (preserved)");
 	}
 
 	@Test
 	public void testUpdateFromDoesNotModifyOriginal() {
 		// Create initial preferences
 		Map<String, Object> initialConfig = new HashMap<>();
-		Map<String, Object> java = new HashMap<>();
-		initialConfig.put("java", java);
-		java.put("autobuild", Map.of("enabled", true));
-		java.put("completion", Map.of("enabled", true));
+		MapFlattener.setValue(initialConfig, Preferences.AUTOBUILD_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.COMPLETION_ENABLED_KEY, true);
 
 		Preferences original = Preferences.createFrom(initialConfig);
-		assertTrue("Original autobuild should be enabled", original.isAutobuildEnabled());
-		assertTrue("Original completion should be enabled", original.isCompletionEnabled());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should be enabled");
+		assertTrue(original.isCompletionEnabled(), "Original completion should be enabled");
 
 		// Update with partial config
 		Map<String, Object> partialConfig = new HashMap<>();
-		Map<String, Object> javaPartial = new HashMap<>();
-		partialConfig.put("java", javaPartial);
-		javaPartial.put("autobuild", Map.of("enabled", false));
+		MapFlattener.setValue(partialConfig, Preferences.AUTOBUILD_ENABLED_KEY, false);
 
 		Preferences updated = Preferences.updateFrom(original, partialConfig);
 
 		// Verify original wasn't modified
-		assertTrue("Original autobuild should still be enabled", original.isAutobuildEnabled());
-		assertTrue("Original completion should still be enabled", original.isCompletionEnabled());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should still be enabled");
+		assertTrue(original.isCompletionEnabled(), "Original completion should still be enabled");
 
 		// Verify updated has the changes
-		assertFalse("Updated autobuild should be disabled", updated.isAutobuildEnabled());
-		assertTrue("Updated completion should be enabled (preserved)", updated.isCompletionEnabled());
+		assertFalse(updated.isAutobuildEnabled(), "Updated autobuild should be disabled");
+		assertTrue(updated.isCompletionEnabled(), "Updated completion should be enabled (preserved)");
 	}
 
 	@Test
@@ -172,113 +176,97 @@ public class PreferencesTest {
 		assertEquals(original.isInsertSpaces(), cloned.isInsertSpaces());
 
 		// Verify it's a different instance
-		assertNotSame("Clone should be a different instance", original, cloned);
+		assertNotSame(original, cloned, "Clone should be a different instance");
 
 		// Verify modifying clone doesn't affect original
 		cloned.setAutobuildEnabled(false);
 		cloned.setTabSize(2);
 
-		assertTrue("Original autobuild should still be true", original.isAutobuildEnabled());
-		assertEquals("Original tab size should still be 4", 4, original.getTabSize());
-		assertFalse("Cloned autobuild should be false", cloned.isAutobuildEnabled());
-		assertEquals("Cloned tab size should be 2", 2, cloned.getTabSize());
+		assertTrue(original.isAutobuildEnabled(), "Original autobuild should still be true");
+		assertEquals(4, original.getTabSize(), "Original tab size should still be 4");
+		assertFalse(cloned.isAutobuildEnabled(), "Cloned autobuild should be false");
+		assertEquals(2, cloned.getTabSize(), "Cloned tab size should be 2");
 	}
 
 	@Test
 	public void testMultiplePartialUpdates() {
 		// Start with default preferences
 		Preferences prefs = new Preferences();
-		assertTrue("Default autobuild should be enabled", prefs.isAutobuildEnabled());
-		assertTrue("Default completion should be enabled", prefs.isCompletionEnabled());
-		assertTrue("Default format should be enabled", prefs.isJavaFormatEnabled());
+		assertTrue(prefs.isAutobuildEnabled(), "Default autobuild should be enabled");
+		assertTrue(prefs.isCompletionEnabled(), "Default completion should be enabled");
+		assertTrue(prefs.isJavaFormatEnabled(), "Default format should be enabled");
 
 		// First partial update: disable autobuild
 		Map<String, Object> update1 = new HashMap<>();
-		Map<String, Object> java1 = new HashMap<>();
-		update1.put("java", java1);
-		java1.put("autobuild", Map.of("enabled", false));
+		MapFlattener.setValue(update1, Preferences.AUTOBUILD_ENABLED_KEY, false);
 
 		prefs = Preferences.updateFrom(prefs, update1);
-		assertFalse("Autobuild should be disabled after update 1", prefs.isAutobuildEnabled());
-		assertTrue("Completion should still be enabled after update 1", prefs.isCompletionEnabled());
-		assertTrue("Format should still be enabled after update 1", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should be disabled after update 1");
+		assertTrue(prefs.isCompletionEnabled(), "Completion should still be enabled after update 1");
+		assertTrue(prefs.isJavaFormatEnabled(), "Format should still be enabled after update 1");
 
 		// Second partial update: disable completion
 		Map<String, Object> update2 = new HashMap<>();
-		Map<String, Object> java2 = new HashMap<>();
-		update2.put("java", java2);
-		java2.put("completion", Map.of("enabled", false));
+		MapFlattener.setValue(update2, Preferences.COMPLETION_ENABLED_KEY, false);
 
 		prefs = Preferences.updateFrom(prefs, update2);
-		assertFalse("Autobuild should still be disabled after update 2", prefs.isAutobuildEnabled());
-		assertFalse("Completion should be disabled after update 2", prefs.isCompletionEnabled());
-		assertTrue("Format should still be enabled after update 2", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should still be disabled after update 2");
+		assertFalse(prefs.isCompletionEnabled(), "Completion should be disabled after update 2");
+		assertTrue(prefs.isJavaFormatEnabled(), "Format should still be enabled after update 2");
 
 		// Third partial update: disable format
 		Map<String, Object> update3 = new HashMap<>();
-		Map<String, Object> java3 = new HashMap<>();
-		update3.put("java", java3);
-		java3.put("format", Map.of("enabled", false));
+		MapFlattener.setValue(update3, Preferences.JAVA_FORMAT_ENABLED_KEY, false);
 
 		prefs = Preferences.updateFrom(prefs, update3);
-		assertFalse("Autobuild should still be disabled after update 3", prefs.isAutobuildEnabled());
-		assertFalse("Completion should still be disabled after update 3", prefs.isCompletionEnabled());
-		assertFalse("Format should be disabled after update 3", prefs.isJavaFormatEnabled());
+		assertFalse(prefs.isAutobuildEnabled(), "Autobuild should still be disabled after update 3");
+		assertFalse(prefs.isCompletionEnabled(), "Completion should still be disabled after update 3");
+		assertFalse(prefs.isJavaFormatEnabled(), "Format should be disabled after update 3");
 	}
 
 	@Test
 	public void testPartialUpdateWithNestedProperties() {
 		// Create initial preferences
 		Map<String, Object> initialConfig = new HashMap<>();
-		Map<String, Object> java = new HashMap<>();
-		initialConfig.put("java", java);
-		java.put("format", Map.of(
-			"enabled", true,
-			"onType", Map.of("enabled", true)
-		));
-		java.put("completion", Map.of(
-			"enabled", true,
-			"favoriteMembers", Arrays.asList("org.junit.Assert.*", "org.mockito.Mockito.*")
-		));
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_FORMAT_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_FORMAT_ON_TYPE_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.COMPLETION_ENABLED_KEY, true);
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_COMPLETION_FAVORITE_MEMBERS_KEY, Arrays.asList("org.junit.Assert.*", "org.mockito.Mockito.*"));
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertTrue("Initial format should be enabled", initial.isJavaFormatEnabled());
-		assertTrue("Initial format on type should be enabled", initial.isJavaFormatOnTypeEnabled());
-		assertTrue("Initial completion should be enabled", initial.isCompletionEnabled());
-		assertNotNull("Initial favorite members should not be null", initial.getJavaCompletionFavoriteMembers());
+		assertTrue(initial.isJavaFormatEnabled(), "Initial format should be enabled");
+		assertTrue(initial.isJavaFormatOnTypeEnabled(), "Initial format on type should be enabled");
+		assertTrue(initial.isCompletionEnabled(), "Initial completion should be enabled");
+		assertNotNull(initial.getJavaCompletionFavoriteMembers(), "Initial favorite members should not be null");
 
 		// Partial update: only change format.enabled, leave format.onType untouched
 		Map<String, Object> partialConfig = new HashMap<>();
-		Map<String, Object> javaPartial = new HashMap<>();
-		partialConfig.put("java", javaPartial);
-		javaPartial.put("format", Map.of("enabled", false));
+		MapFlattener.setValue(partialConfig, Preferences.JAVA_FORMAT_ENABLED_KEY, false);
 		// Note: NOT sending format.onType or completion
 
 		Preferences updated = Preferences.updateFrom(initial, partialConfig);
 
 		// Verify the specific nested property changed
-		assertFalse("Updated format should be disabled", updated.isJavaFormatEnabled());
+		assertFalse(updated.isJavaFormatEnabled(), "Updated format should be disabled");
 
 		// Verify other nested property was preserved
-		assertTrue("Format on type should still be enabled (preserved)", updated.isJavaFormatOnTypeEnabled());
+		assertTrue(updated.isJavaFormatOnTypeEnabled(), "Format on type should still be enabled (preserved)");
 
 		// Verify unrelated properties were preserved
-		assertTrue("Completion should still be enabled (preserved)", updated.isCompletionEnabled());
-		assertNotNull("Favorite members should still be present (preserved)", updated.getJavaCompletionFavoriteMembers());
+		assertTrue(updated.isCompletionEnabled(), "Completion should still be enabled (preserved)");
+		assertNotNull(updated.getJavaCompletionFavoriteMembers(), "Favorite members should still be present (preserved)");
 	}
 
 	@Test
 	public void testEmptyPartialUpdatePreservesAll() {
 		// Create initial preferences
 		Map<String, Object> initialConfig = new HashMap<>();
-		Map<String, Object> java = new HashMap<>();
-		initialConfig.put("java", java);
-		java.put("autobuild", Map.of("enabled", false));
-		java.put("completion", Map.of("enabled", false));
+		MapFlattener.setValue(initialConfig, Preferences.AUTOBUILD_ENABLED_KEY, false);
+		MapFlattener.setValue(initialConfig, Preferences.COMPLETION_ENABLED_KEY, false);
 
 		Preferences initial = Preferences.createFrom(initialConfig);
-		assertFalse("Initial autobuild should be disabled", initial.isAutobuildEnabled());
-		assertFalse("Initial completion should be disabled", initial.isCompletionEnabled());
+		assertFalse(initial.isAutobuildEnabled(), "Initial autobuild should be disabled");
+		assertFalse(initial.isCompletionEnabled(), "Initial completion should be disabled");
 
 		// Send empty partial update
 		Map<String, Object> emptyConfig = new HashMap<>();
@@ -286,8 +274,8 @@ public class PreferencesTest {
 		Preferences updated = Preferences.updateFrom(initial, emptyConfig);
 
 		// Verify everything was preserved
-		assertFalse("Autobuild should still be disabled", updated.isAutobuildEnabled());
-		assertFalse("Completion should still be disabled", updated.isCompletionEnabled());
+		assertFalse(updated.isAutobuildEnabled(), "Autobuild should still be disabled");
+		assertFalse(updated.isCompletionEnabled(), "Completion should still be disabled");
 	}
 
 	@Test
@@ -302,6 +290,144 @@ public class PreferencesTest {
 		Map<String, Object> emptyConfig = new HashMap<>();
 		Preferences updated = Preferences.updateFrom(initial, emptyConfig);
 		assertNotNull(updated.getMavenLifecycleMappings());
+	}
+
+	@Test
+	public void testMavenDisableTestClasspathFlag() {
+		PreferenceManager preferenceManager = new StandardPreferenceManager();
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(IConstants.PLUGIN_ID);
+		boolean mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+		try {
+			assertFalse(mavenDisableTestClasspathFlag);
+			Map<String, Object> configMap = new HashMap<>();
+			// java.import.maven.disableTestClasspathFlag
+			MapFlattener.setValue(configMap, Preferences.MAVEN_DISABLE_TEST_CLASSPATH_FLAG, true);
+			Preferences preferences = Preferences.createFrom(configMap);
+			preferenceManager.update(preferences);
+			assertTrue(preferences.isMavenDisableTestClasspathFlag());
+			mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+			assertTrue(mavenDisableTestClasspathFlag);
+			configMap = new HashMap<>();
+			// java.import.maven.disableTestClasspathFlag
+			MapFlattener.setValue(configMap, Preferences.MAVEN_DISABLE_TEST_CLASSPATH_FLAG, false);
+			preferences = Preferences.createFrom(configMap);
+			preferenceManager.update(preferences);
+			assertFalse(preferences.isMavenDisableTestClasspathFlag());
+			mavenDisableTestClasspathFlag = prefs.getBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, false);
+			assertFalse(mavenDisableTestClasspathFlag);
+		} finally {
+			prefs.putBoolean(StandardPreferenceManager.M2E_DISABLE_TEST_CLASSPATH_FLAG, mavenDisableTestClasspathFlag);
+		}
+	}
+
+	@Test
+	public void testSettingsUrlPreservation() {
+		String settingsUrl = "file:///path/to/settings.properties";
+
+		// Create initial preferences with java.settings.url set
+		Map<String, Object> initialConfig = new HashMap<>();
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_SETTINGS_URL, settingsUrl);
+
+		Preferences initial = Preferences.createFrom(initialConfig);
+		assertEquals(settingsUrl, initial.getSettingsUrl(), "Initial settings URL should be set");
+
+		// Update with partial config that doesn't include java.settings.url
+		Map<String, Object> partialConfig = new HashMap<>();
+		MapFlattener.setValue(partialConfig, Preferences.AUTOBUILD_ENABLED_KEY, false);
+		// Note: NOT sending java.settings.url
+
+		Preferences updated = Preferences.updateFrom(initial, partialConfig);
+
+		// Verify settings URL was preserved
+		assertEquals(settingsUrl, updated.getSettingsUrl(), "Settings URL should be preserved when not in update");
+		assertFalse(updated.isAutobuildEnabled(), "Autobuild should be updated");
+	}
+
+	@Test
+	public void testSettingsUrlExplicitNull() {
+		String settingsUrl = "file:///path/to/settings.properties";
+
+		// Create initial preferences with java.settings.url set
+		Map<String, Object> initialConfig = new HashMap<>();
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_SETTINGS_URL, settingsUrl);
+
+		Preferences initial = Preferences.createFrom(initialConfig);
+		assertEquals(settingsUrl, initial.getSettingsUrl(), "Initial settings URL should be set");
+
+		// Update with java.settings.url explicitly set to null
+		Map<String, Object> partialConfig = new HashMap<>();
+		MapFlattener.setValue(partialConfig, Preferences.JAVA_SETTINGS_URL, null);
+
+		Preferences updated = Preferences.updateFrom(initial, partialConfig);
+
+		// Verify settings URL was set to null
+		assertEquals(null, updated.getSettingsUrl(), "Settings URL should be null when explicitly set to null");
+	}
+
+	@Test
+	public void testSettingsUrlUpdate() {
+		String oldSettingsUrl = "file:///path/to/old.properties";
+		String newSettingsUrl = "file:///path/to/new.properties";
+
+		// Create initial preferences with java.settings.url set
+		Map<String, Object> initialConfig = new HashMap<>();
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_SETTINGS_URL, oldSettingsUrl);
+
+		Preferences initial = Preferences.createFrom(initialConfig);
+		assertEquals(oldSettingsUrl, initial.getSettingsUrl(), "Initial settings URL should be set");
+
+		// Update with java.settings.url set to a new value
+		Map<String, Object> partialConfig = new HashMap<>();
+		MapFlattener.setValue(partialConfig, Preferences.JAVA_SETTINGS_URL, newSettingsUrl);
+
+		Preferences updated = Preferences.updateFrom(initial, partialConfig);
+
+		// Verify settings URL was updated
+		assertEquals(newSettingsUrl, updated.getSettingsUrl(), "Settings URL should be updated to new value");
+	}
+
+	@Test
+	public void testSettingsUrlInitialNullThenSet() {
+		String settingsUrl = "file:///path/to/settings.properties";
+
+		// Create initial preferences without java.settings.url
+		Preferences initial = new Preferences();
+		assertEquals(null, initial.getSettingsUrl(), "Initial settings URL should be null");
+
+		// Update with java.settings.url set
+		Map<String, Object> partialConfig = new HashMap<>();
+		MapFlattener.setValue(partialConfig, Preferences.JAVA_SETTINGS_URL, settingsUrl);
+
+		Preferences updated = Preferences.updateFrom(initial, partialConfig);
+
+		// Verify settings URL was set
+		assertEquals(settingsUrl, updated.getSettingsUrl(), "Settings URL should be set");
+	}
+
+	@Test
+	public void testSettingsUrlSetThenUnset() {
+		String settingsUrl = "file:///path/to/settings.properties";
+
+		// Create initial preferences with java.settings.url set
+		Map<String, Object> initialConfig = new HashMap<>();
+		MapFlattener.setValue(initialConfig, Preferences.JAVA_SETTINGS_URL, settingsUrl);
+
+		Preferences initial = Preferences.createFrom(initialConfig);
+		assertEquals(settingsUrl, initial.getSettingsUrl(), "Initial settings URL should be set");
+
+		// First update: set to null
+		Map<String, Object> partialConfig1 = new HashMap<>();
+		MapFlattener.setValue(partialConfig1, Preferences.JAVA_SETTINGS_URL, null);
+
+		Preferences updated1 = Preferences.updateFrom(initial, partialConfig1);
+		assertEquals(null, updated1.getSettingsUrl(), "Settings URL should be null after first update");
+
+		// Second update: don't include java.settings.url (should preserve null)
+		Map<String, Object> partialConfig2 = new HashMap<>();
+		MapFlattener.setValue(partialConfig2, Preferences.AUTOBUILD_ENABLED_KEY, false);
+
+		Preferences updated2 = Preferences.updateFrom(updated1, partialConfig2);
+		assertEquals(null, updated2.getSettingsUrl(), "Settings URL should remain null when not in update");
 	}
 
 }

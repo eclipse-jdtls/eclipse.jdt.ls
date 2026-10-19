@@ -168,6 +168,21 @@ public class BasicFileDetector {
 			}
 
 			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				if (monitor.isCanceled()) {
+					return TERMINATE;
+				}
+				Objects.requireNonNull(file);
+				// Directories located exactly at maxDepth are reported here instead of
+				// preVisitDirectory, because Files.walkFileTree does not open them. We still
+				// need to inspect them so that projects exactly maxDepth levels deep are detected.
+				if (attrs.isDirectory() && !isExcluded(file) && hasTargetFile(file)) {
+					directories.add(file);
+				}
+				return CONTINUE;
+			}
+
+			@Override
 			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
 				Objects.requireNonNull(file);
 				if (exc instanceof FileSystemLoopException) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corporation and others.
+ * Copyright (c) 2008, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -19,15 +19,13 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelStatusConstants;
 import org.eclipse.jdt.core.ILocalVariable;
@@ -35,16 +33,14 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.ISourceRange;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Javadoc;
-import org.eclipse.jdt.core.dom.MemberRef;
-import org.eclipse.jdt.core.dom.MethodRef;
-import org.eclipse.jdt.core.dom.MethodRefParameter;
-import org.eclipse.jdt.core.dom.Name;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TagElement;
+import org.eclipse.jdt.core.dom.TagProperty;
 import org.eclipse.jdt.core.dom.TextElement;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavaDocSnippetStringEvaluator;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocAccess;
@@ -53,8 +49,8 @@ import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreJavadocContentAcce
 import org.eclipse.jdt.core.manipulation.internal.javadoc.CoreMarkdownAccessImpl;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.IJavadocContentFactory;
 import org.eclipse.jdt.core.manipulation.internal.javadoc.JavadocLookup;
-import org.eclipse.jdt.internal.core.manipulation.JavaManipulationPlugin;
-import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.util.MethodOverrideTester;
+import org.eclipse.jdt.internal.corext.util.SuperTypeHierarchyCache;
 import org.eclipse.jdt.internal.ui.viewsupport.CoreJavaElementLinks;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -73,11 +69,23 @@ import org.eclipse.lsp4j.Location;
 public class JavadocContentAccess2 {
 	public static final String SNIPPET = "SNIPPET";
 
+	@Deprecated
 	public static Reader getPlainTextContentReader(IMember member) throws JavaModelException {
+		String content = getPlainTextContent(member);
+		return content == null ? null : new StringReader(content);
+	}
+
+	@Deprecated
+	public static Reader getMarkdownContentReader(IJavaElement member) throws JavaModelException {
+		String content = getMarkdownContent(member);
+		return content == null ? null : new StringReader(content);
+	}
+
+	public static String getPlainTextContent(IMember member) throws JavaModelException {
 		Reader contentReader = CoreJavadocContentAccessUtility.getHTMLContentReader(member, true, true);
 		if (contentReader != null) {
 			try {
-				return new JavaDoc2PlainTextConverter(contentReader).getAsReader();
+				return new JavaDoc2PlainTextConverter(contentReader).getAsString();
 			} catch (IOException e) {
 				throw new JavaModelException(e, IJavaModelStatusConstants.UNKNOWN_JAVADOC_FORMAT);
 			}
@@ -85,174 +93,216 @@ public class JavadocContentAccess2 {
 		return null;
 	}
 
-	public static Reader getMarkdownContentReader(IJavaElement element) {
+	public static String getMarkdownContent(IJavaElement element) {
 
 		CoreJavadocAccess access = createJdtLsJavadocAccess();
 		try {
 			String content = getJavaDocNode(element);
-			if (content != null && content.startsWith("///")) {
+			if (content != null && content.startsWith("///")) { //$NON-NLS-1$
 				Javadoc node = CoreJavadocContentAccessUtility.getJavadocNode(element, content);
-				Map<String, List<TagElement>> javadocTags = new HashMap<>();
-				StringBuilder buf = new StringBuilder();
-				for (Object obj : node.tags()) {
-					TagElement tag = (TagElement) obj;
-					if (tag.getTagName() != null) {
-						javadocTags.computeIfAbsent(tag.getTagName(), k -> new ArrayList<>()).add((tag));
-					} else {
-						buf.append("\n");
-						collectTagElements(content, element, tag, buf);
-					}
+				if (isPlainMarkdown(element, node)) {
+					return renderPlainMarkdown(content, node);
 				}
-
-				for (Map.Entry<String, List<TagElement>> entry : javadocTags.entrySet()) {
-					String tagName = entry.getKey();
-
-					String heading = switch (tagName) {
-						case TagElement.TAG_API_NOTE -> "API Note:";
-						case TagElement.TAG_AUTHOR -> "Author:";
-						case TagElement.TAG_IMPL_SPEC -> "Impl Spec:";
-						case TagElement.TAG_IMPL_NOTE -> "Impl Note:";
-						case TagElement.TAG_PARAM -> "Parameters:";
-						case TagElement.TAG_PROVIDES -> "Provides:";
-						case TagElement.TAG_RETURN -> "Returns:";
-						case TagElement.TAG_THROWS -> "Throws:";
-						case TagElement.TAG_EXCEPTION -> "Throws:";
-						case TagElement.TAG_SINCE -> "Since:";
-						case TagElement.TAG_SEE -> "See:";
-						case TagElement.TAG_VERSION -> "See:";
-						case TagElement.TAG_USES -> "Uses:";
-						default -> "";
-					};
-					buf.append("\n");
-					buf.append("* **" + heading + "**");
-
-					for (TagElement tag : entry.getValue()) {
-						buf.append("\n");
-						buf.append("  * ");
-						collectTagElements(content, element, tag, buf);
-					}
-				}
-
-				return buf.length() > 0 ? new StringReader(buf.substring(1)) : new StringReader(content);
-			} else {
-				String rawHtml = access.getHTMLContent(element, true);
-				Reader markdownReader = new JavaDoc2MarkdownConverter(rawHtml).getAsReader();
-				return markdownReader;
 			}
-		} catch (IOException | CoreException e) {
+			String rawHtml = access.getHTMLContent(element, true);
+			return rawHtml == null ? null : new HtmlToMarkdownConverter().convert(rawHtml);
+		} catch (CoreException e) {
 
 		}
 
 		return null;
 	}
 
-	private static void collectTagElements(String content, IJavaElement element, TagElement tag, StringBuilder buf) {
-		Deque<ASTNode> queue = new LinkedList<>();
-		queue.addAll(tag.fragments());
-		while (!queue.isEmpty()) {
-			ASTNode e = queue.pop();
-			if (e instanceof TagElement t) {
-				if ("@link".equals(t.getTagName()) || "@linkplain".equals(t.getTagName())) {
-					collectLinkedTag(element, t, buf);
-				} else {
-					collectTagElements(content, element, t, buf);
-				}
-			} else if (e instanceof TextElement) {
-				buf.append(((TextElement) e).getText());
-			} else if ("@see".equals(tag.getTagName())) {
-				collectLinkedTag(element, tag, buf);
-			} else {
-			}
-
-			ASTNode next = queue.peek();
-			if (next != null) {
-				int currEnd = e.getStartPosition() + e.getLength();
-				int nextStart = next.getStartPosition();
-				if (currEnd != nextStart) {
-					if (content.substring(currEnd, nextStart).split("///").length > 2) {
-						buf.append("  \n");
-					} else {
-						buf.append("\n");
+	/**
+	 * Returns per-parameter javadoc descriptions for a method, extracted from @param tags.
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String, String> getParameterJavadoc(IMethod method) throws JavaModelException {
+		Map<String, String> result = new LinkedHashMap<>();
+		String source = getJavaDocNode(method);
+		if (source == null) {
+			return result;
+		}
+		Javadoc javadoc = CoreJavadocContentAccessUtility.getJavadocNode(method, source);
+		if (javadoc == null) {
+			return result;
+		}
+		for (Object tagObj : javadoc.tags()) {
+			if (tagObj instanceof TagElement tag && TagElement.TAG_PARAM.equals(tag.getTagName())) {
+				List<ASTNode> fragments = tag.fragments();
+				if (!fragments.isEmpty() && fragments.get(0) instanceof org.eclipse.jdt.core.dom.Name name) {
+					String paramName = name.toString();
+					StringBuilder description = new StringBuilder();
+					for (int i = 1; i < fragments.size(); i++) {
+						ASTNode fragment = fragments.get(i);
+						if (fragment instanceof TextElement textElement) {
+							if (description.length() > 0) {
+								description.append(' ');
+							}
+							description.append(textElement.getText().strip());
+						} else if (fragment instanceof TagElement inlineTag) {
+							if (description.length() > 0) {
+								description.append(' ');
+							}
+							description.append(renderInlineTag(inlineTag));
+						}
 					}
-				} else {
-					buf.append(" ");
+					if (description.length() > 0) {
+						result.put(paramName, description.toString());
+					}
 				}
 			}
 		}
+		return result;
 	}
 
-	private static void collectLinkedTag(IJavaElement element, TagElement t, StringBuilder buf) {
-		List children = t.fragments();
-		if (t.fragments().size() > 0) {
-			try {
-				String[] res;
-				String linkTitle;
-				if (t.fragments().size() == 2) {
-					linkTitle = ((TextElement) t.fragments().get(0)).getText();
-					res = collectLinkElement((ASTNode) children.get(1));
-				} else {
-					res = collectLinkElement((ASTNode) children.get(0));
-					linkTitle = res[0];
-				}
-				buf.append("[" + linkTitle + "]");
-				String uri = JdtLsJavadocAccessImpl.createLinkURIHelper(CoreJavaElementLinks.JAVADOC_SCHEME, element, res[0], res.length > 1 ? res[1] : null,
-						res.length > 2 ? Arrays.asList(res).subList(2, res.length).toArray(new String[0]) : null);
-				buf.append("(" + uri + ")");
-			} catch (URISyntaxException ex) {
-				JavaManipulationPlugin.log(ex);
+	@SuppressWarnings("unchecked")
+	private static String renderInlineTag(TagElement tag) {
+		StringBuilder sb = new StringBuilder();
+		String tagName = tag.getTagName();
+		boolean isCode = TagElement.TAG_CODE.equals(tagName) || TagElement.TAG_LITERAL.equals(tagName);
+		if (isCode) {
+			sb.append('`');
+		}
+		for (Object fragment : tag.fragments()) {
+			if (fragment instanceof TextElement textElement) {
+				sb.append(textElement.getText().strip());
+			} else if (fragment instanceof org.eclipse.jdt.core.dom.Name name) {
+				sb.append(name.toString());
 			}
 		}
+		if (isCode) {
+			sb.append('`');
+		}
+		return sb.toString();
 	}
 
-	private static String[] collectLinkElement(ASTNode e) {
-		String refTypeName = null;
-		String refMemberName = null;
-		String[] refMethodParamTypes = null;
-		String[] refMethodParamNames = null;
-		if (e instanceof Name) {
-			Name name = (Name) e;
-			refTypeName = name.getFullyQualifiedName();
-		} else if (e instanceof MemberRef) {
-			MemberRef memberRef = (MemberRef) e;
-			Name qualifier = memberRef.getQualifier();
-			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
-			refMemberName = memberRef.getName().getIdentifier();
-		} else if (e instanceof MethodRef) {
-			MethodRef methodRef = (MethodRef) e;
-			Name qualifier = methodRef.getQualifier();
-			refTypeName = qualifier == null ? "" : qualifier.getFullyQualifiedName(); //$NON-NLS-1$
-			refMemberName = methodRef.getName().getIdentifier();
-			List<MethodRefParameter> params = methodRef.parameters();
-			int ps = params.size();
-			refMethodParamTypes = new String[ps];
-			refMethodParamNames = new String[ps];
-			for (int i = 0; i < ps; i++) {
-				MethodRefParameter param = params.get(i);
-				refMethodParamTypes[i] = ASTNodes.asString(param.getType());
-				SimpleName paramName = param.getName();
-				if (paramName != null) {
-					refMethodParamNames[i] = paramName.getIdentifier();
+	/**
+	 * Returns the method-level javadoc description, excluding @param and other block tags.
+	 */
+	@SuppressWarnings("unchecked")
+	public static String getMethodDescription(IMethod method) throws JavaModelException {
+		String source = getJavaDocNode(method);
+		if (source == null) {
+			return null;
+		}
+		Javadoc javadoc = CoreJavadocContentAccessUtility.getJavadocNode(method, source);
+		if (javadoc == null) {
+			return null;
+		}
+		StringBuilder description = new StringBuilder();
+		for (Object tagObj : javadoc.tags()) {
+			if (tagObj instanceof TagElement tag && tag.getTagName() == null) {
+				for (Object fragment : tag.fragments()) {
+					if (fragment instanceof TextElement textElement) {
+						if (description.length() > 0) {
+							description.append(' ');
+						}
+						description.append(textElement.getText().strip());
+					} else if (fragment instanceof TagElement inlineTag) {
+						if (description.length() > 0) {
+							description.append(' ');
+						}
+						description.append(renderInlineTag(inlineTag));
+					}
 				}
 			}
-		} else if (e instanceof TextElement) {
-			refTypeName = ((TextElement) e).getText();
 		}
-		List<String> result = new ArrayList<>();
-		result.add(refTypeName);
-		if (refMemberName != null) {
-			result.add(refMemberName);
+		String result = description.toString().strip();
+		return result.isEmpty() ? null : result;
+	}
+
+	private static boolean isPlainMarkdown(IJavaElement element, Javadoc javadoc) {
+		try {
+			if (javadoc == null || javadoc.tags().size() != 1 || element instanceof ILocalVariable || element instanceof ITypeParameter
+					|| element instanceof IField field && field.isRecordComponent()) {
+				return false;
+			}
+			IMember member = getJavadocMember(element);
+			if (member == null || hasOverriddenMethod(member)) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
 		}
-		if (refMethodParamTypes != null) {
-			result.addAll(Arrays.asList(refMethodParamTypes));
+		Object topLevelTag = javadoc.tags().get(0);
+		if (!(topLevelTag instanceof TagElement tag) || tag.getTagName() != null) {
+			return false;
 		}
-		return result.toArray(new String[0]);
+		for (Object fragment : tag.fragments()) {
+			if (!(fragment instanceof TextElement)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean hasOverriddenMethod(IMember member) throws JavaModelException {
+		if (!(member instanceof IMethod method) || method.isConstructor()) {
+			return false;
+		}
+		IType declaringType = method.getDeclaringType();
+		ITypeHierarchy hierarchy = SuperTypeHierarchyCache.getTypeHierarchy(declaringType);
+		MethodOverrideTester overrideTester = SuperTypeHierarchyCache.getMethodOverrideTester(declaringType);
+		for (IType superType : hierarchy.getAllSupertypes(declaringType)) {
+			if (overrideTester.findOverriddenMethodInType(superType, method) != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static String renderPlainMarkdown(String source, Javadoc javadoc) {
+		TagElement tag = (TagElement) javadoc.tags().get(0);
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < tag.fragments().size(); i++) {
+			TextElement current = (TextElement) tag.fragments().get(i);
+			result.append(current.getText());
+			if (i + 1 < tag.fragments().size()) {
+				TextElement next = (TextElement) tag.fragments().get(i + 1);
+				int currentEnd = current.getStartPosition() + current.getLength();
+				int nextStart = next.getStartPosition();
+				if (currentEnd == nextStart) {
+					result.append(' ');
+				} else {
+					String gap = source.substring(currentEnd, nextStart);
+					result.append(gap.split("///").length > 2 ? "  \n" : "\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				}
+			}
+		}
+		return result.toString();
+	}
+
+	public static String getJavaDocNode(IJavaElement element) throws JavaModelException {
+		IMember member = getJavadocMember(element);
+		if (member == null) {
+			return null;
+		}
+		IBuffer buffer = member.getOpenable().getBuffer();
+		if (buffer == null) {
+			return null;
+		}
+		ISourceRange javadocRange = member.getJavadocRange();
+		if (javadocRange == null) {
+			return null;
+		}
+		return buffer.getText(javadocRange.getOffset(), javadocRange.getLength());
+	}
+
+	private static IMember getJavadocMember(IJavaElement element) {
+		if (element instanceof ILocalVariable localVariable) {
+			return localVariable.getDeclaringMember();
+		}
+		if (element instanceof ITypeParameter typeParameter) {
+			return typeParameter.getDeclaringMember();
+		}
+		return element instanceof IMember member ? member : null;
 	}
 
 	/**
 	 * @return
 	 */
 	private static CoreJavadocAccess createJdtLsJavadocAccess() {
-		// TODO Auto-generated method stub
 		return new CoreJavadocAccess(JDT_LS_JAVADOC_CONTENT_FACTORY) {
 			@Override
 			public String getHTMLContent(IPackageFragment packageFragment) throws CoreException {
@@ -292,9 +342,9 @@ public class JavadocContentAccess2 {
 		public IJavadocAccess createJavadocAccess(IJavaElement element, Javadoc javadoc, String source, JavadocLookup lookup) {
 			if (source.startsWith("///")) { //$NON-NLS-1$
 				if (lookup == null) {
-					return new CoreMarkdownAccessImpl(element, javadoc, source);
+					return new JdtLsMarkdownAccessImpl(element, javadoc, source);
 				} else {
-					return new CoreMarkdownAccessImpl(element, javadoc, source, lookup);
+					return new JdtLsMarkdownAccessImpl(element, javadoc, source, lookup);
 				}
 			}
 			if (lookup == null) {
@@ -305,29 +355,149 @@ public class JavadocContentAccess2 {
 		}
 	};
 
-	public static String getJavaDocNode(IJavaElement element) throws JavaModelException {
-		IMember member;
-		if (element instanceof ILocalVariable) {
-			member = ((ILocalVariable) element).getDeclaringMember();
-		} else if (element instanceof ITypeParameter) {
-			member = ((ITypeParameter) element).getDeclaringMember();
-		} else if (element instanceof IMember) {
-			member = (IMember) element;
-		} else {
-			return null;
+	private static CoreJavaDocSnippetStringEvaluator createJdtLsSnippetEvaluator(IJavaElement element) {
+		return new CoreJavaDocSnippetStringEvaluator(element) {
+
+			@Override
+			protected String getOneTagElementString(TagElement snippetTag, Object fragment) {
+				String str = super.getOneTagElementString(snippetTag, fragment);
+				return SNIPPET + str;
+			}
+
+			@Override
+			protected String getModifiedStringForTagElement(TagElement tagElement, List<TagElement> tagElements) {
+				String str = super.getModifiedString(tagElement, tagElements);
+				if (TagElement.TAG_LINK.equals(tagElement.getTagName())) {
+					int leadingSpaces = 0;
+					while (str.length() > leadingSpaces + 1 && str.charAt(leadingSpaces) == ' ') {
+						leadingSpaces++;
+					}
+					try {
+						str = new JavaDoc2MarkdownConverter(str).getAsString();
+						for (int i = 0; i < leadingSpaces; i++) {
+							str = " " + str; //$NON-NLS-1$
+						}
+						str = str + "  \n"; //$NON-NLS-1$
+					} catch (IOException e) {
+						JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					}
+				}
+				return str;
+			}
+			@Override
+			protected String getDefaultBoldTag() {
+				return "**"; //$NON-NLS-1$
+			}
+
+			@Override
+			protected String getDefaultItalicTag() {
+				return "*"; //$NON-NLS-1$
+			}
+
+			@Override
+			protected String getDefaultHighlightedTag() {
+				return "***"; //$NON-NLS-1$
+			}
+
+			@Override
+			protected String getStartTag(String tag) {
+				return tag;
+			}
+
+			@Override
+			protected String getEndTag(String tag) {
+				return tag;
+			}
+		};
+	}
+
+	private static class JdtLsMarkdownAccessImpl extends CoreMarkdownAccessImpl {
+
+		private boolean trimLeadingWhitespaceAfterCodeOrLiteral;
+
+		public JdtLsMarkdownAccessImpl(IJavaElement element, Javadoc javadoc, String source) {
+			super(element, javadoc, source);
 		}
 
-		IBuffer buf = member.getOpenable().getBuffer();
-		if (buf == null) {
-			return null; // no source attachment found
+		public JdtLsMarkdownAccessImpl(IJavaElement element, Javadoc javadoc, String source, JavadocLookup lookup) {
+			super(element, javadoc, source, lookup);
 		}
 
-		ISourceRange javadocRange = member.getJavadocRange();
-		if (javadocRange == null) {
-			return null;
+		@Override
+		protected CoreJavaDocSnippetStringEvaluator createSnippetEvaluator(IJavaElement element) {
+			return createJdtLsSnippetEvaluator(element);
 		}
-		String rawJavadoc = buf.getText(javadocRange.getOffset(), javadocRange.getLength());
-		return rawJavadoc;
+
+		@Override
+		protected ASTNode getNextSiblingElement(TagElement parent, TagElement child) {
+			// Core's line break is needed only by its multiline <pre>{@code ...}</pre> workaround
+			// For ordinary inline code it leaks into the Markdown returned by JDT LS
+			return fPreCounter > 0 ? super.getNextSiblingElement(parent, child) : null;
+		}
+
+		@Override
+		protected void handleSummary(List<? extends ASTNode> fragments) {
+			super.handleSummary(fragments);
+			// This is a bug upstream, core increments fLiteralContent for @summary but does not decrement it
+			fLiteralContent--;
+		}
+
+		@Override
+		protected void handleIndex(List<? extends ASTNode> fragments) {
+			super.handleIndex(fragments);
+			// This is a bug upstream, core increments fLiteralContent for @index but does not decrement it
+			fLiteralContent--;
+		}
+
+		@Override
+		protected void handleInlineTagElement(TagElement node) {
+			super.handleInlineTagElement(node);
+			String tagName = node.getTagName();
+			trimLeadingWhitespaceAfterCodeOrLiteral = TagElement.TAG_CODE.equals(tagName) || TagElement.TAG_LITERAL.equals(tagName);
+		}
+
+		@Override
+		protected void handleInLineTextElement(TextElement te, boolean skipLeadingWhitespace, TagElement tagElement, ASTNode previousNode) {
+			String text = te.getText();
+			if (JavaDocHTMLPathHandler.containsHTMLTag(text)) {
+				text = JavaDocHTMLPathHandler.getValidatedHTMLSrcAttribute(te, fElement);
+			}
+			if (tagElement != null && (TagElement.TAG_CODE.equals(tagElement.getTagName()) || TagElement.TAG_LITERAL.equals(tagElement.getTagName()))) {
+				text = text.strip();
+			} else if (trimLeadingWhitespaceAfterCodeOrLiteral) {
+				text = text.stripLeading();
+				int trailingWhitespaceStart = fBuf.length();
+				int lineBreaks = 0;
+				while (trailingWhitespaceStart > 0 && Character.isWhitespace(fBuf.charAt(trailingWhitespaceStart - 1))) {
+					if (fBuf.charAt(trailingWhitespaceStart - 1) == '\n') {
+						lineBreaks++;
+					}
+					trailingWhitespaceStart--;
+				}
+				if (lineBreaks <= 1) {
+					fBuf.setLength(trailingWhitespaceStart);
+					if (!text.isEmpty() && fBuf.length() > 0) {
+						fBuf.append(' ');
+					}
+				}
+				trimLeadingWhitespaceAfterCodeOrLiteral = false;
+			} else if (skipLeadingWhitespace) {
+				text = text.replaceFirst("^\\s", ""); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			text = text.replaceAll("(\r\n?|\n)([ \t]*\\*)", "$1"); //$NON-NLS-1$ //$NON-NLS-2$
+			text = handlePreCounter(tagElement, text);
+			handleInLineText(text, previousNode);
+		}
+
+		@Override
+		protected String createLinkURI(String scheme, IJavaElement element, String refTypeName, String refMemberName, String[] refParameterTypes) throws URISyntaxException {
+			return JdtLsJavadocAccessImpl.createLinkURIHelper(scheme, fElement, refTypeName, refMemberName, refParameterTypes);
+		}
+
+		@Override
+		protected boolean addCodeTagOnLink() {
+			return false;
+		}
 	}
 
 	private static class JdtLsJavadocAccessImpl extends CoreJavadocAccessImpl {
@@ -339,7 +509,6 @@ public class JavadocContentAccess2 {
 		 */
 		public JdtLsJavadocAccessImpl(IJavaElement element, Javadoc javadoc, String source) {
 			super(element, javadoc, source);
-			// TODO Auto-generated constructor stub
 		}
 
 		/**
@@ -354,59 +523,48 @@ public class JavadocContentAccess2 {
 
 		@Override
 		protected CoreJavaDocSnippetStringEvaluator createSnippetEvaluator(IJavaElement element) {
-			return new CoreJavaDocSnippetStringEvaluator(fElement) {
+			return createJdtLsSnippetEvaluator(element);
+		}
 
-				@Override
-				protected String getOneTagElementString(TagElement snippetTag, Object fragment) {
-					String str = super.getOneTagElementString(snippetTag, fragment);
-					return SNIPPET + str;
-				}
+		@Override
+		protected ASTNode getNextSiblingElement(TagElement parent, TagElement child) {
+			return fPreCounter > 0 ? super.getNextSiblingElement(parent, child) : null;
+		}
 
-				@Override
-				protected String getModifiedStringForTagElement(TagElement tagElement, List<TagElement> tagElements) {
-					String str = super.getModifiedString(tagElement, tagElements);
-					if (TagElement.TAG_LINK.equals(tagElement.getTagName())) {
-						int leadingSpaces = 0;
-						while (str.length() > leadingSpaces + 1 && str.charAt(leadingSpaces) == ' ') {
-							leadingSpaces++;
+		@Override
+		protected void handleSummary(List<? extends ASTNode> fragments) {
+			super.handleSummary(fragments);
+			// This is a bug upstream
+			fLiteralContent--;
+		}
+
+		@Override
+		protected void handleIndex(List<? extends ASTNode> fragments) {
+			super.handleIndex(fragments);
+		}
+
+		@Override
+		protected void handleSnippet(TagElement node) {
+			if (node != null) {
+				Object val = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_IS_VALID);
+				Object valError = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_ERROR);
+				if (val instanceof Boolean && ((Boolean) val).booleanValue() && valError == null) {
+					int fs = node.fragments().size();
+					if (fs > 0) {
+						fBuf.append("<pre>"); //$NON-NLS-1$
+						Object valID = node.getProperty(TagProperty.TAG_PROPERTY_SNIPPET_ID);
+						if (valID instanceof String && !valID.toString().isBlank()) {
+							fBuf.append("<code id=" + valID.toString() + ">"); //$NON-NLS-1$ //$NON-NLS-2$
+						} else {
+							fBuf.append("<code>");//$NON-NLS-1$
 						}
-						try {
-							str = new JavaDoc2MarkdownConverter(str).getAsString();
-							for (int i = 0; i < leadingSpaces; i++) {
-								str = " " + str;
-							}
-							str = str + "  \n";
-						} catch (IOException e) {
-							JavaLanguageServerPlugin.logException(e.getMessage(), e);
-						}
+						// Don't surround snippet content with additional code tags
+						fSnippetStringEvaluator.AddTagElementString(node, fBuf);
 					}
-					return str;
+				} else {
+					handleInvalidSnippet(node);
 				}
-				@Override
-				protected String getDefaultBoldTag() {
-					return "**"; //$NON-NLS-1$
-				}
-
-				@Override
-				protected String getDefaultItalicTag() {
-					return "*"; //$NON-NLS-1$
-				}
-
-				@Override
-				protected String getDefaultHighlightedTag() {
-					return "***"; //$NON-NLS-1$
-				}
-
-				@Override
-				protected String getStartTag(String tag) {
-					return tag;
-				}
-
-				@Override
-				protected String getEndTag(String tag) {
-					return tag;
-				}
-			};
+			}
 		}
 
 		@Override
@@ -427,6 +585,24 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
+		protected void handleLink(List<? extends ASTNode> fragments) {
+			if (fragments == null || fragments.isEmpty()) {
+				return;
+			}
+			// Special handling for references starting with ## (anchors to the same page), we want to get rid of them
+			if (fragments.get(0) instanceof TextElement textElement) {
+				String text = textElement.getText();
+				if (text.contains("##")) {
+					// Remove the first ##word (## followed by word characters)
+					String interestingPart = text.replaceFirst("##\\w+\\s*", "");
+					handleText(interestingPart);
+					return;
+				}
+			}
+			super.handleLink(fragments);
+		}
+
+		@Override
 		protected boolean addCodeTagOnLink() {
 			return false;
 		}
@@ -437,27 +613,46 @@ public class JavadocContentAccess2 {
 			handleText(markSnippet(text, isInSnippet));
 		}
 
+
 		@Override
 		protected void handleBlockTags(String title, List<TagElement> tags) {
-			super.handleBlockTags(title, tags);
+			if (tags.isEmpty()) {
+				return;
+			}
+			handleBlockTagTitle(title);
+			fBuf.append(getBlockTagStart());
+			for (TagElement tag : tags) {
+				handleSingleTag(tag);
+			}
+			fBuf.append(getBlockTagEnd());
+			fBuf.append(getBlockTagEntryEnd());
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		protected void handleSingleTag(TagElement tag) {
+			fBuf.append(getBlockTagEntryStart());
+			if (TagElement.TAG_SEE.equals(tag.getTagName())) {
+				handleSeeTag(tag);
+			} else {
+				handleContentElements(tag.fragments());
+			}
 			fBuf.append(getBlockTagEntryEnd());
 		}
 
 		@Override
-		protected void handleSingleTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleTag(tag);
-			fBuf.append(getBlockTagEnd());
-		}
-
-		@Override
 		protected void handleReturnTagBody(TagElement tag, CharSequence returnDescription) {
+			// Only add ul tags if there's a return description
+			if (tag == null) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleReturnTagBody(tag, returnDescription);
 			fBuf.append(getBlockTagEnd());
 			fBuf.append(getBlockTagEntryEnd());
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		protected void handleBlockTagBody(TagElement tag) {
 			List fragments = tag.fragments();
@@ -479,6 +674,10 @@ public class JavadocContentAccess2 {
 
 		@Override
 		protected void handleExceptionTagsBody(List<TagElement> tags, List<String> exceptionNames, CharSequence[] exceptionDescriptions) {
+			// Only add ul tags if there are exceptions to document
+			if (tags.isEmpty() && (exceptionNames == null || exceptionNames.isEmpty())) {
+				return;
+			}
 			fBuf.append(getBlockTagStart());
 			super.handleExceptionTagsBody(tags, exceptionNames, exceptionDescriptions);
 			fBuf.append(getBlockTagEnd());
@@ -486,11 +685,30 @@ public class JavadocContentAccess2 {
 		}
 
 		@Override
-		protected void handleSingleParameterTag(TagElement tag) {
-			fBuf.append(getBlockTagStart());
-			super.handleSingleParameterTag(tag);
-			fBuf.append(getBlockTagEnd());
+		protected void handleParameterTags(List<TagElement> tags, List<String> parameterNames, CharSequence[] parameterDescriptions, boolean isTypeParameters) {
+			if (tags.isEmpty() && containsOnlyNull(parameterNames)) {
+				return;
+			}
+
+			String tagTitle = isTypeParameters ? "Type Parameters:" : "Parameters:";
+			handleBlockTagTitle(tagTitle);
+			// Only add ul tags if there are actually tags to process
+			if (!tags.isEmpty()) {
+				fBuf.append(getBlockTagStart());
+				for (TagElement tag : tags) {
+					handleSingleParameterTag(tag);
+				}
+				fBuf.append(getBlockTagEnd());
+			}
+			for (int i = 0; i < parameterDescriptions.length; i++) {
+				CharSequence description = parameterDescriptions[i];
+				String name = parameterNames.get(i);
+				if (name != null) {
+					handleSingleParameterDescription(name, description, isTypeParameters);
+				}
+			}
 		}
+
 
 		@Override
 		protected void handleSingleParameterDescription(String name, CharSequence description, boolean isTypeParameters) {

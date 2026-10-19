@@ -13,11 +13,11 @@
 package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.ProjectUtils.getJavaSourceLevel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -43,23 +43,26 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.BuildWorkspaceHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.JDTLanguageServer;
 import org.eclipse.jdt.ls.core.internal.handlers.ProgressReporterManager;
 import org.eclipse.jdt.ls.core.internal.preferences.Preferences.FeatureStatus;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author Fred Bricon
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
 	private static final String PROJECT1_PATTERN = "**/project1";
@@ -71,7 +74,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		Job.getJobManager().addJobChangeListener(jobSpy);
 	}
 
-	@After
+	@AfterEach
 	public void removeJobSpy() {
 		if (jobSpy != null) {
 			Job.getJobManager().removeJobChangeListener(jobSpy);
@@ -82,7 +85,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 	public void testImportSimpleJavaProject() throws Exception {
 		attachJobSpy();
 		importSimpleJavaProject();
-		assertEquals("New Projects should not be updated", 0, jobSpy.updateProjectJobCalled);
+		assertEquals(0, jobSpy.updateProjectJobCalled, "New Projects should not be updated");
 		assertTaskCompleted(MavenProjectImporter.IMPORTING_MAVEN_PROJECTS);
 	}
 
@@ -128,7 +131,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		importProjects("maven/salut5");
 		IProject proj = WorkspaceHelper.getProject("proj");
 		assertIsMavenProject(proj);
-		assertFalse("node_modules has been scanned", progressReporter.isScanned());
+		assertFalse(progressReporter.isScanned(), "node_modules has been scanned");
 	}
 
 	@Test
@@ -146,7 +149,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 			assertEquals(1, projects.size()); // 1 eclipse projects
 			IProject eclipse = WorkspaceHelper.getProject("eclipse");
 			assertNotNull(eclipse);
-			assertFalse(eclipse.getName() + " has the Maven nature", ProjectUtils.isMavenProject(eclipse));
+			assertFalse(ProjectUtils.isMavenProject(eclipse), eclipse.getName() + " has the Maven nature");
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setImportMavenEnabled(enabled);
 		}
@@ -157,9 +160,9 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		attachJobSpy();
 		String name = "salut";
 		importMavenProject(name);
-		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+		assertEquals(0, jobSpy.updateProjectJobCalled, "New Project should not be updated");
 		importExistingMavenProject(name);
-		assertEquals("Unchanged Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+		assertEquals(0, jobSpy.updateProjectJobCalled, "Unchanged Project should not be updated");
 	}
 
 	@Test
@@ -167,11 +170,34 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		attachJobSpy();
 		String name = "salut";
 		IProject salut = importMavenProject(name);
-		assertEquals("New Project should not be updated", 0, jobSpy.updateProjectJobCalled);
+		assertEquals(0, jobSpy.updateProjectJobCalled, "New Project should not be updated");
 		File pom = salut.getFile(MavenProjectImporter.POM_FILE).getRawLocation().toFile();
 		pom.setLastModified(System.currentTimeMillis() + 1000);
 		importExistingMavenProject(name);
-		assertEquals("Changed Project should be updated", 1, jobSpy.updateProjectJobCalled);
+		assertEquals(1, jobSpy.updateProjectJobCalled, "Changed Project should be updated");
+	}
+
+	@Test
+	public void testDigestStoreBatchUpdate() throws Exception {
+		Path stateLocation = Files.createTempDirectory("digest-store-test");
+		try {
+			Path first = stateLocation.resolve("first-pom.xml");
+			Path second = stateLocation.resolve("second-pom.xml");
+			Files.write(first, List.of("first"));
+			Files.write(second, List.of("second"));
+
+			DigestStore digestStore = new DigestStore(stateLocation.toFile());
+			assertTrue(digestStore.updateDigests(List.of(first, second)));
+			assertFalse(digestStore.updateDigests(List.of(first, second)));
+
+			DigestStore persistedDigestStore = new DigestStore(stateLocation.toFile());
+			assertFalse(persistedDigestStore.updateDigests(List.of(first, second)));
+
+			Files.write(first, List.of("changed"));
+			assertTrue(persistedDigestStore.updateDigests(List.of(first, second)));
+		} finally {
+			FileUtils.deleteDirectory(stateLocation.toFile());
+		}
 	}
 
 	@Test
@@ -198,7 +224,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(project.exists());
 		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.toString())), Collections.emptySet());
 		updateJob.join(20000, monitor);
-		assertTrue("Failed to import preexistingProjectTest:\n" + updateJob.getResult().getException(), updateJob.getResult().isOK());
+		assertTrue(updateJob.getResult().isOK(), "Failed to import preexistingProjectTest:\n" + updateJob.getResult().getException());
 	}
 
 	@Test
@@ -212,7 +238,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 
 		Job updateJob = projectsManager.updateWorkspaceFolders(Collections.singleton(new org.eclipse.core.runtime.Path(workspaceDir.toString())), Collections.emptySet());
 		updateJob.join(20000, monitor);
-		assertTrue("Failed to import testImportDifferentName:\n" + updateJob.getResult().getException(), updateJob.getResult().isOK());
+		assertTrue(updateJob.getResult().isOK(), "Failed to import testImportDifferentName:\n" + updateJob.getResult().getException());
 	}
 
 	@Test
@@ -403,6 +429,28 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IJavaProject javaProject = JavaCore.create(project);
 		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
 		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava26Project() throws Exception {
+		IProject project = importMavenProject("salut-java26");
+		assertIsJavaProject(project);
+		assertEquals("26", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
+		assertHasErrors(project, "Preview features enabled at an invalid source release level");
+	}
+
+	@Test
+	public void testJava27Project() throws Exception {
+		IProject project = importMavenProject("salut-java27");
+		assertIsJavaProject(project);
+		assertEquals("27", getJavaSourceLevel(project));
+		IJavaProject javaProject = JavaCore.create(project);
+		assertEquals(JavaCore.ENABLED, javaProject.getOption(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES, false));
+		assertEquals(JavaCore.IGNORE, javaProject.getOption(JavaCore.COMPILER_PB_REPORT_PREVIEW_FEATURES, false));
 		assertNoErrors(project);
 	}
 
@@ -411,7 +459,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		IProject project = importMavenProject("autovalued");
 		assertIsJavaProject(project);
 		IFile autovalueFoo = project.getFile("target/generated-sources/annotations/foo/bar/AutoValue_Foo.java");
-		assertTrue(autovalueFoo.getRawLocation() + " was not generated", autovalueFoo.exists());
+		assertTrue(autovalueFoo.exists(), autovalueFoo.getRawLocation() + " was not generated");
 		assertNoErrors(project);
 	}
 
@@ -488,6 +536,22 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));
 	}
 
+	@Test
+	public void testDuplicateGroupIdArtifactId() throws Exception {
+		JavaClientConnection javaClient = new JavaClientConnection(client);
+		JDTLanguageServer server = Mockito.mock(JDTLanguageServer.class);
+		Mockito.when(server.getClientConnection()).thenReturn(javaClient);
+		JavaLanguageServerPlugin.getInstance().setProtocol(server);
+		try {
+			importProjects("maven/multimodule-same-gav");
+			IProject[] projects = ProjectUtils.getAllProjects(false);
+			assertEquals(1, projects.length);
+			assertTrue(clientRequests.containsKey("showMessage"));
+		} finally {
+			JavaLanguageServerPlugin.getInstance().setProtocol(null);
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/3639
 	@Test
 	public void testInvalidProject() throws Exception {
@@ -502,7 +566,11 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		assertEquals(1, javaProjects.length);
 		StandardProjectsManager.cleanInvalidJavaProjects(new NullProgressMonitor());
 		javaProjects = ProjectUtils.getJavaProjects();
-		assertEquals(0, javaProjects.length);
+		// Since m2e 2.11.1 (eclipse-m2e/m2e-core#2160), the unsafe ancestor resource
+		// folder declared in module1 (<directory>../</directory>) is skipped instead of
+		// failing the import, so module1 is now imported as a valid Java project and is
+		// retained after cleaning up invalid projects.
+		assertEquals(1, javaProjects.length);
 	}
 
 	private static class MavenUpdateProjectJobSpy extends JobChangeAdapter {

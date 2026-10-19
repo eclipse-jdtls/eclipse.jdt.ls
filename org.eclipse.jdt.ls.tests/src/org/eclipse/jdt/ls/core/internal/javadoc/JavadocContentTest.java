@@ -12,21 +12,23 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.Signature;
 import org.eclipse.jdt.ls.core.internal.HoverInfoProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.eclipse.lsp4j.MarkedString;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for javadoc and signature of java elements
@@ -38,14 +40,14 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 
 	private IJavaProject project;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("eclipse/hello");
 		project = JavaCore.create(WorkspaceHelper.getProject("hello"));
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		super.cleanUp();
 	}
@@ -55,9 +57,22 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 		IType type = project.findType("org.sample.TestJavadoc");
 		assertNotNull(type);
 		MarkedString signature = HoverInfoProvider.computeSignature(type);
-		assertEquals("org.sample.TestJavadoc", signature.getValue());
+		assertEquals("org.sample.TestJavadoc<K, V>", signature.getValue());
 		MarkedString javadoc = HoverInfoProvider.computeJavadoc(type);
-		assertEquals("Test javadoc class", javadoc.getValue());
+
+		String expectedJavadoc = """
+				Test javadoc class
+
+				* **Type Parameters:**
+				  * **\\<K\\>** the type of keys
+				  * **\\<V\\>** the type of values
+				* **Author:**
+				  * Some dude
+				  * Another one
+				* **See Also:**
+				  * some.pkg.SomeClass
+				  * some.pkg.SomeClass.someMethod()""";
+		assertEquals(expectedJavadoc, javadoc.getValue());
 	}
 
 	@Test
@@ -76,11 +91,57 @@ public class JavadocContentTest extends AbstractProjectsManagerBasedTest {
 	public void testMethodJavadoc() throws Exception {
 		IType type = project.findType("org.sample.TestJavadoc");
 		assertNotNull(type);
-		IMethod method = type.getMethod("foo", new String[0]);
+		IMethod method = type.getMethod("foo", new String[] {
+				"QString;",
+			Signature.SIG_INT
+		});
 		assertNotNull(method);
 		MarkedString signature = HoverInfoProvider.computeSignature(method);
-		assertEquals("String org.sample.TestJavadoc.foo()", signature.getValue());
+		assertEquals("String org.sample.TestJavadoc.foo(String input, int count)", signature.getValue());
 		MarkedString javadoc = HoverInfoProvider.computeJavadoc(method);
-		assertEquals("Foo method", javadoc.getValue());
+
+		String expectedJavadoc = """
+				Foo method
+
+				* **Parameters:**
+				  * **input** some input
+				  * **count** some count
+				* **Returns:**
+				  * some string""";
+		assertEquals(expectedJavadoc, javadoc.getValue());
+	}
+
+	@Test
+	public void testLiteralCodeJavadoc() throws Exception {
+		IType type = project.findType("org.sample.TestJavadoc");
+		assertNotNull(type);
+		IMethod method = type.getMethod("anotherMethod", new String[] {});
+		assertNotNull(method);
+		MarkedString signature = HoverInfoProvider.computeSignature(method);
+		assertEquals("void org.sample.TestJavadoc.anotherMethod()", signature.getValue());
+		MarkedString javadoc = HoverInfoProvider.computeJavadoc(method);
+
+		// @formatter:off
+		String expectedJavadoc = """
+
+		      interface Service {
+		         @LookupIfProperty(name = "service.foo.enabled", stringValue = "true")
+		         String name();
+		      }
+		\s\s\s\s\s\s
+		""";
+		// @formatter:on
+		assertEquals(expectedJavadoc, javadoc.getValue());
+
+	}
+
+	@Test
+	public void testNullJavadoc() throws Exception {
+		IType type = project.findType("org.sample.TestJavadoc");
+		assertNotNull(type);
+		IType inner = type.getType("Inner");
+		assertNotNull(inner);
+		assertNull(JavadocContentAccess2.getMarkdownContentReader(inner));
+		assertNull(JavadocContentAccess2.getMarkdownContent(inner));
 	}
 }

@@ -12,13 +12,16 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal;
 
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.SocketStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StdIOStreamProvider;
 import org.eclipse.jdt.ls.core.internal.ConnectionStreamFactory.StreamProvider;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -41,18 +44,18 @@ public class ConnectionStreamFactoryTest {
 	public void testStdInOut() throws IOException {
 		LanguageServerApplication languageServer = new LanguageServerApplication();
 		ConnectionStreamFactory tested = new ConnectionStreamFactory(languageServer);
-		Assert.assertSame(tested.getInputStream(), languageServer.getIn());
-		Assert.assertSame(tested.getOutputStream(), languageServer.getOut());
-		Assert.assertNotSame(tested.getInputStream(), System.in);
-		Assert.assertNotSame(tested.getOutputStream(), System.out);
+		assertSame(tested.getInputStream(), languageServer.getIn());
+		assertSame(tested.getOutputStream(), languageServer.getOut());
+		assertNotSame(tested.getInputStream(), System.in);
+		assertNotSame(tested.getOutputStream(), System.out);
 		System.out.println("test");
-		Assert.assertTrue(tested.getInputStream().available() == 0);
+		assertTrue(tested.getInputStream().available() == 0);
 	}
 
 	private void checkStreamProvider(Class<? extends StreamProvider> providerClass){
 		ConnectionStreamFactory tested = new ConnectionStreamFactory(null);
 		StreamProvider provider = tested.getSelectedStream();
-		Assert.assertSame(providerClass, provider.getClass());
+		assertSame(providerClass, provider.getClass());
 	}
 
 

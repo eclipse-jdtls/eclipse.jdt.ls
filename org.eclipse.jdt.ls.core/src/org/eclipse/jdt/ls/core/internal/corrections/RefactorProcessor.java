@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2019, 2023 Microsoft Corporation and others.
+* Copyright (c) 2019, 2026 Microsoft Corporation and others.
 * All rights reserved. This program and the accompanying materials
 * are made available under the terms of the Eclipse Public License 2.0
 * which accompanies this distribution, and is available at
@@ -24,6 +24,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -56,8 +57,12 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.MethodReference;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.QualifiedType;
 import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
@@ -68,9 +73,10 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ImportRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ImportRewrite.TypeLocation;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
-import org.eclipse.jdt.core.manipulation.CleanUpOptionsCore;
 import org.eclipse.jdt.internal.core.manipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.codemanipulation.ContextSensitiveImportRewriteContext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -79,6 +85,7 @@ import org.eclipse.jdt.internal.corext.fix.ConvertLoopFixCore;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.LambdaExpressionsFixCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
+import org.eclipse.jdt.internal.corext.refactoring.Checks;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.ConvertAnonymousToNestedRefactoring;
@@ -103,9 +110,11 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
+import org.eclipse.jdt.ls.core.internal.text.correction.CodeActionUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactorProposalUtility;
 import org.eclipse.jdt.ls.core.internal.text.correction.RefactoringCorrectionCommandProposal;
 import org.eclipse.jdt.ui.cleanup.CleanUpContext;
+import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.cleanup.CleanUpRequirements;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
 import org.eclipse.jdt.ui.cleanup.ICleanUpFix;
@@ -193,6 +202,11 @@ public class RefactorProcessor {
 				}
 
 				getAddStaticImportProposals(context, coveringNode, proposals);
+				if (monitor != null && monitor.isCanceled()) {
+					return Collections.emptyList();
+				}
+
+				getAddImportProposal(context, coveringNode, proposals);
 				if (monitor != null && monitor.isCanceled()) {
 					return Collections.emptyList();
 				}
@@ -594,8 +608,8 @@ public class RefactorProcessor {
 		}
 
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
-		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.USE_LAMBDA, CleanUpOptions.TRUE);
 		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_LAMBDA_EXPRESSION, context);
 		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
@@ -622,8 +636,8 @@ public class RefactorProcessor {
 
 		// add correction proposal
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptionsCore.TRUE);
-		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONVERT_FUNCTIONAL_INTERFACES, CleanUpOptions.TRUE);
+		options.put(CleanUpConstants.USE_ANONYMOUS_CLASS_CREATION, CleanUpOptions.TRUE);
 		FixCorrectionProposalCore proposal = new FixCorrectionProposalCore(fix, new LambdaExpressionsCleanUpCore(options), IProposalRelevance.CONVERT_TO_ANONYMOUS_CLASS_CREATION, context);
 		resultingCollections.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
 		return true;
@@ -697,6 +711,7 @@ public class RefactorProcessor {
 				node = node.getParent();
 			}
 			if (node instanceof VariableDeclarationStatement variableDeclStatement) {
+				@SuppressWarnings("unchecked")
 				List<VariableDeclarationFragment> fragments = variableDeclStatement.fragments();
 				if (fragments.size() > 0) {
 					// var is not allowed in a compound declaration
@@ -973,6 +988,72 @@ public class RefactorProcessor {
 		return true;
 	}
 
+	private static boolean getAddImportProposal(IInvocationContext context, ASTNode node, Collection<ProposalKindWrapper> proposals) {
+		Type type = getQualifiedType(node);
+		if (type == null) {
+			return false;
+		}
+
+		ITypeBinding binding = type.resolveBinding();
+		if (binding == null || binding.isPrimitive() || binding.isArray() || binding.isAnonymous() || binding.isNullType()) {
+			return false;
+		}
+
+		if (proposals == null) {
+			return true;
+		}
+
+		try {
+			ImportRewrite importRewrite = StubUtility.createImportRewrite(context.getCompilationUnit(), true);
+			Type importedType = importRewrite.addImport(binding, type.getAST(), new ContextSensitiveImportRewriteContext(type, importRewrite), TypeLocation.OTHER);
+			if (isQualifiedType(importedType)) {
+				return false;
+			}
+
+			ASTRewrite astRewrite = ASTRewrite.create(type.getAST());
+			astRewrite.replace(type, importedType, null);
+
+			ASTRewriteRemoveImportsCorrectionProposalCore proposal = new ASTRewriteRemoveImportsCorrectionProposalCore(CorrectionMessages.QuickAssistProcessor_add_import, context.getCompilationUnit(), astRewrite,
+					IProposalRelevance.ADD_STATIC_IMPORT);
+			proposal.setImportRewrite(importRewrite);
+			proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.Refactor));
+		} catch (IllegalArgumentException e) {
+			JavaLanguageServerPlugin.logException("Failed to get add import proposal", e);
+			return false;
+		} catch (JavaModelException e) {
+			return false;
+		}
+
+		return true;
+	}
+
+	private static Type getQualifiedType(ASTNode node) {
+		ASTNode current = node;
+		while (current != null) {
+			if (current instanceof ParameterizedType parameterizedType && isQualifiedType(parameterizedType.getType())) {
+				return parameterizedType;
+			}
+			if (current instanceof Type type && isQualifiedType(type)) {
+				if (type.getParent() instanceof ParameterizedType parameterizedType && parameterizedType.getType() == type) {
+					return parameterizedType;
+				}
+				return type;
+			}
+			if (current instanceof Statement || current instanceof MethodDeclaration || current instanceof AbstractTypeDeclaration || current instanceof AnonymousClassDeclaration || current instanceof CompilationUnit) {
+				return null;
+			}
+			current = current.getParent();
+		}
+		return null;
+	}
+
+	private static boolean isQualifiedType(Type type) {
+		if (type instanceof SimpleType simpleType) {
+			return simpleType.getName().isQualifiedName();
+		}
+		return type instanceof QualifiedType || type instanceof NameQualifiedType;
+	}
+
 	private static boolean isDirectlyAccessible(ASTNode nameNode, ITypeBinding declaringClass) {
 		ASTNode node = nameNode.getParent();
 		while (node != null) {
@@ -1007,7 +1088,7 @@ public class RefactorProcessor {
 			return false;
 		}
 		Map<String, String> options = new HashMap<>();
-		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptionsCore.TRUE);
+		options.put(CleanUpConstants.CONTROL_STATEMENTS_CONVERT_FOR_LOOP_TO_ENHANCED, CleanUpOptions.TRUE);
 		ICleanUp cleanUp = new AbstractCleanUp(options) {
 			@Override
 			public CleanUpRequirements getRequirements() {
@@ -1184,9 +1265,36 @@ public class RefactorProcessor {
 	}
 
 	private boolean getMakeMethodStaticRefactoringProposal(CodeActionParams params, IInvocationContext context, ASTNode coveringNode, ArrayList<ProposalKindWrapper> proposals, IProgressMonitor monitor) {
-		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(context.getCompilationUnit(), context.getSelectionOffset(), context.getSelectionLength());
+		ASTNode methodNode = CodeActionUtility.inferASTNode(coveringNode, MethodDeclaration.class);
+		if (!(methodNode instanceof MethodDeclaration methodDeclaration)) {
+			return false;
+		}
+		IMethodBinding methodBinding = methodDeclaration.resolveBinding();
+		if (methodBinding == null) {
+			return false;
+		}
+		IJavaElement element = methodBinding.getJavaElement();
+
 		try {
-			if (refactoring != null && refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+			if (!Checks.isAvailable(element)) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+		if (!(element instanceof IMethod method)){
+			return false;
+		}
+		try {
+			if (Flags.isDefaultMethod(method.getFlags())) {
+				return false;
+			}
+		} catch (JavaModelException e) {
+			return false;
+		}
+		MakeStaticRefactoring refactoring = new MakeStaticRefactoring(method);
+		try {
+			if (refactoring.checkInitialConditions(monitor).isOK()) {
 				String label = RefactoringCoreMessages.MakeStaticRefactoring_name;
 				int relevance = IProposalRelevance.CHANGE_METHOD_SIGNATURE;
 				ChangeCorrectionProposalCore proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, relevance) {
@@ -1210,5 +1318,4 @@ public class RefactorProcessor {
 		}
 		return true;
 	}
-
 }

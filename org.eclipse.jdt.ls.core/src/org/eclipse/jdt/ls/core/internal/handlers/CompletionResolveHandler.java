@@ -16,7 +16,6 @@ import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.fix836
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.getLowerBound;
 import static org.eclipse.jdt.internal.corext.template.java.SignatureUtil.stripSignatureToFQN;
 
-import java.io.Reader;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -28,8 +27,8 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IModuleDescription;
 import org.eclipse.jdt.core.ISourceRange;
-import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
 import org.eclipse.jdt.core.JavaModelException;
@@ -64,7 +63,6 @@ import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.osgi.util.NLS;
 
-import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.SimpleTimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
 
@@ -152,7 +150,7 @@ public class CompletionResolveHandler {
 					}
 
 					if (manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, range, template);
+						PostfixTemplateEngine.setAdditionalTextEdit(param, unit, postfixContext, template);
 					}
 				}
 
@@ -198,6 +196,20 @@ public class CompletionResolveHandler {
 					IType type = unit.getJavaProject().findType(typeName);
 					if (type != null) {
 						member = type;
+					}
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException(e.getMessage(), e);
+					return param;
+				}
+			}
+		} else if (proposal.getKind() == CompletionProposal.MODULE_REF || proposal.getKind() == CompletionProposal.MODULE_DECLARATION) {
+			// Resolve module documentation
+			String moduleName = getModuleName(proposal);
+			if (moduleName != null) {
+				try {
+					IModuleDescription module = unit.getJavaProject().findModule(moduleName, null);
+					if (module != null) {
+						member = module;
 					}
 				} catch (JavaModelException e) {
 					JavaLanguageServerPlugin.logException(e.getMessage(), e);
@@ -275,14 +287,12 @@ public class CompletionResolveHandler {
 			try {
 				final IMember curMember = member;
 				javadoc = SimpleTimeLimiter.create(JavaLanguageServerPlugin.getExecutorService()).callWithTimeout(() -> {
-					Reader reader;
 					if (manager.getClientPreferences().isSupportsCompletionDocumentationMarkdown()) {
-						reader = JavadocContentAccess2.getMarkdownContentReader(curMember);
+						return JavadocContentAccess2.getMarkdownContent(curMember);
 					} else {
-						reader = JavadocContentAccess2.getPlainTextContentReader(curMember);
+						return JavadocContentAccess2.getPlainTextContent(curMember);
 					}
-					return reader == null? null:CharStreams.toString(reader);
-				}, 500, TimeUnit.MILLISECONDS);
+				}, 750, TimeUnit.MILLISECONDS);
 			} catch (UncheckedTimeoutException | TimeoutException tooSlow) {
 				//Ignore error for now as it's spamming clients on content assist.
 				//TODO cache javadoc resolution results?
@@ -300,7 +310,7 @@ public class CompletionResolveHandler {
 					Region nameRegion = null;
 					if (field != null) {
 						ITypeRoot typeRoot = field.getTypeRoot();
-						ISourceRange nameRange = ((ISourceReference) field).getNameRange();
+						ISourceRange nameRange = field.getNameRange();
 						if (SourceRange.isAvailable(nameRange)) {
 							nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
 						}
@@ -326,7 +336,7 @@ public class CompletionResolveHandler {
 					Region nameRegion = null;
 					if (method != null) {
 						ITypeRoot typeRoot = method.getTypeRoot();
-						ISourceRange nameRange = ((ISourceReference) method).getNameRange();
+						ISourceRange nameRange = method.getNameRange();
 						if (SourceRange.isAvailable(nameRange)) {
 							nameRegion = new Region(nameRange.getOffset(), nameRange.getLength());
 						}
@@ -356,6 +366,15 @@ public class CompletionResolveHandler {
 			}
 		}
 		return param;
+	}
+
+	private static String getModuleName(CompletionProposal proposal) {
+		char[] declaration = proposal.getDeclarationSignature();
+		if (declaration != null && declaration.length > 0) {
+			return String.valueOf(declaration);
+		}
+		char[] completion = proposal.getCompletion();
+		return completion != null && completion.length > 0 ? String.valueOf(completion) : null;
 	}
 
 }

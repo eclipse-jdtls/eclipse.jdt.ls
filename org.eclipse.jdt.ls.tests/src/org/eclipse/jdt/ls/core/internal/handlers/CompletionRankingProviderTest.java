@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.reset;
@@ -38,15 +38,15 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.JsonMessageHelper;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedTest {
 
 	private static String COMPLETION_TEMPLATE =
@@ -68,14 +68,14 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 	@Mock
 	private TestRankingProvider provider;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		when(provider.rank(any(), any(), any(), any())).thenCallRealMethod();
 		doNothing().when(provider).onDidCompletionItemSelect(any());
 		JavaLanguageServerPlugin.getCompletionContributionService().registerRankingProvider(provider);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		JavaLanguageServerPlugin.getCompletionContributionService().unregisterRankingProvider(provider);
 		reset(provider);
@@ -93,7 +93,7 @@ public class CompletionRankingProviderTest extends AbstractCompilationUnitBasedT
 
 		CompletionList list = requestCompletions(unit, "Integer.");
 		assertNotNull(list);
-		assertFalse("No proposals were found",list.getItems().isEmpty());
+		assertFalse(list.getItems().isEmpty(), "No proposals were found");
 
 		CompletionItem recommended = list.getItems().get(0);
 		assertTrue(recommended.getLabel().startsWith("★"));

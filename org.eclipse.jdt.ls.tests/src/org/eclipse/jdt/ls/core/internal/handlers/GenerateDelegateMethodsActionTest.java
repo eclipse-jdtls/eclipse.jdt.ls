@@ -13,7 +13,9 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -31,14 +33,13 @@ import org.eclipse.lsp4j.CodeAction;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GenerateDelegateMethodsActionTest extends AbstractCompilationUnitBasedTest {
 	@Mock
 	private JavaClientConnection connection;
@@ -46,7 +47,7 @@ public class GenerateDelegateMethodsActionTest extends AbstractCompilationUnitBa
 	private IPackageFragmentRoot fRoot;
 	private IPackageFragment fPackageP;
 
-	@Before
+	@BeforeEach
 	@Override
 	public void setup() throws Exception {
 		fJavaProject = newEmptyProject();
@@ -69,12 +70,12 @@ public class GenerateDelegateMethodsActionTest extends AbstractCompilationUnitBa
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
+		assertNotNull(codeActions);
 		Either<Command, CodeAction> delegateMethodsAction = CodeActionHandlerTest.findAction(codeActions, JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS);
-		Assert.assertNotNull(delegateMethodsAction);
+		assertNotNull(delegateMethodsAction);
 		Command delegateMethodsCommand = CodeActionHandlerTest.getCommand(delegateMethodsAction);
-		Assert.assertNotNull(delegateMethodsCommand);
-		Assert.assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT, delegateMethodsCommand.getCommand());
+		assertNotNull(delegateMethodsCommand);
+		assertEquals(SourceAssistProcessor.COMMAND_ID_ACTION_GENERATEDELEGATEMETHODSPROMPT, delegateMethodsCommand.getCommand());
 	}
 
 	@Test
@@ -88,8 +89,8 @@ public class GenerateDelegateMethodsActionTest extends AbstractCompilationUnitBa
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "class A");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("No delegatable fields found.", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS), "No delegatable fields found.");
 	}
 
 	@Test
@@ -104,7 +105,7 @@ public class GenerateDelegateMethodsActionTest extends AbstractCompilationUnitBa
 		//@formatter:on
 		CodeActionParams params = CodeActionUtil.constructCodeActionParams(unit, "String name");
 		List<Either<Command, CodeAction>> codeActions = server.codeAction(params).join();
-		Assert.assertNotNull(codeActions);
-		Assert.assertFalse("The operation is not applicable to interfaces", CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS));
+		assertNotNull(codeActions);
+		assertFalse(CodeActionHandlerTest.containsKind(codeActions, JavaCodeActionKind.SOURCE_GENERATE_DELEGATE_METHODS), "The operation is not applicable to interfaces");
 	}
 }

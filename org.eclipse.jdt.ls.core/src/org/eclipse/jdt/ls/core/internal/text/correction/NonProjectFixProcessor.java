@@ -73,7 +73,7 @@ public class NonProjectFixProcessor {
 			CodeAction codeAction = new CodeAction(message);
 			codeAction.setKind(CodeActionKind.QuickFix);
 			codeAction.setCommand(command);
-			codeAction.setDiagnostics(Collections.EMPTY_LIST);
+			codeAction.setDiagnostics(Collections.emptyList());
 			return Either.forRight(codeAction);
 		} else {
 			return Either.forLeft(command);

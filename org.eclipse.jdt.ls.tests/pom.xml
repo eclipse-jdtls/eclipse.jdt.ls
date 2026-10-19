@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.eclipse.jdt.ls</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.53.0-SNAPSHOT</version>
+		<version>1.64.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>org.eclipse.jdt.ls.tests</artifactId>
 	<name>${base.name} :: Tests</name>
@@ -48,11 +48,11 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} "${lombokArgs}"</argLine>
+						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<systemProperties>
+							<logback.configurationFile>${project.basedir}/logback-test.xml</logback.configurationFile>
+						</systemProperties>
 						<runOrder>random</runOrder>
-						<providerProperties>
-							<excludegroups>org.eclipse.jdt.ls.tests.Unstable</excludegroups>
-						</providerProperties>
 					</configuration>
 
 				</plugin>
@@ -88,35 +88,6 @@
 			</build>
 		</profile>
 		<profile>
-			<id>lombok</id>
-			<activation>
-				<property>
-					<name>jdt.ls.lombok.disabled</name>
-					<value>!true</value>
-				</property>
-			</activation>
-			<properties>
-				<lombokArgs>-javaagent:${basedir}/lib/lombok-1.18.36.jar</lombokArgs>
-			</properties>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>org.projectlombok</groupId>
-									<artifactId>lombok</artifactId>
-									<version>1.18.36</version>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
 			<id>macosx-jvm-flags</id>
 			<activation>
 				<os>
@@ -126,26 +97,6 @@
 			<properties>
 				<os.testArgs>-XstartOnFirstThread</os.testArgs>
 			</properties>
-			<build>
-				<pluginManagement>
-					<plugins>
-						<plugin>
-							<groupId>org.eclipse.tycho</groupId>
-							<artifactId>tycho-surefire-plugin</artifactId>
-							<version>${tycho-version}</version>
-							<configuration>
-								<dependencies>
-									<dependency>
-										<artifactId>org.eclipse.jdt.launching.macosx</artifactId>
-										<version>0.0.0</version>
-										<type>eclipse-plugin</type>
-									</dependency>
-								</dependencies>
-							</configuration>
-						</plugin>
-					</plugins>
-				</pluginManagement>
-			</build>
 		</profile>
 	</profiles>
 </project>

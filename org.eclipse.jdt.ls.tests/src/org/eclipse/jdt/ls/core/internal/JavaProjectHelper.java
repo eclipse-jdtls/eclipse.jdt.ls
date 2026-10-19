@@ -21,6 +21,8 @@ import java.util.stream.Stream;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IClasspathAttribute;
@@ -105,4 +107,41 @@ public class JavaProjectHelper {
 	public static IClasspathEntry findJarEntry(IJavaProject jproject, String jarName) throws JavaModelException {
 		return Stream.of(jproject.getRawClasspath()).filter(cpe -> cpe.getEntryKind() == IClasspathEntry.CPE_LIBRARY || cpe.getPath() != null && Objects.equals(jarName, cpe.getPath().lastSegment())).findFirst().orElse(null);
 	}
+
+	/**
+	 * Adds a library entry to a IJavaProject.
+	 *
+	 * @param jproject
+	 *            The parent project
+	 * @param path
+	 *            The path of the library to add
+	 * @return The handle of the created root
+	 */
+	public static IPackageFragmentRoot addLibrary(IJavaProject jproject, IPath path) throws JavaModelException {
+		return addLibrary(jproject, path, null, null);
+	}
+
+	/**
+	 * Adds a library entry with source attachment to a IJavaProject.
+	 *
+	 * @param jproject
+	 *            The parent project
+	 * @param path
+	 *            The path of the library to add
+	 * @param sourceAttachPath
+	 *            The source attachment path
+	 * @param sourceAttachRoot
+	 *            The source attachment root path
+	 * @return The handle of the created root
+	 */
+	public static IPackageFragmentRoot addLibrary(IJavaProject jproject, IPath path, IPath sourceAttachPath, IPath sourceAttachRoot) throws JavaModelException {
+		IClasspathEntry cpe = JavaCore.newLibraryEntry(path, sourceAttachPath, sourceAttachRoot);
+		addToClasspath(jproject, cpe);
+		IResource workspaceResource = ResourcesPlugin.getWorkspace().getRoot().findMember(path);
+		if (workspaceResource != null) {
+			return jproject.getPackageFragmentRoot(workspaceResource);
+		}
+		return jproject.getPackageFragmentRoot(path.toString());
+	}
+
 }

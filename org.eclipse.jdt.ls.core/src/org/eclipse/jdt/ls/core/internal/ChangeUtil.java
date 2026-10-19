@@ -31,8 +31,6 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
-import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -49,7 +47,6 @@ import org.eclipse.jdt.internal.corext.refactoring.changes.RenamePackageChange;
 import org.eclipse.jdt.internal.corext.refactoring.nls.changes.CreateFileChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.RefactoringASTParser;
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.lsp4j.AnnotatedTextEdit;
@@ -61,6 +58,7 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
+import org.eclipse.lsp4j.SnippetTextEdit;
 import org.eclipse.lsp4j.TextDocumentEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceEdit;
@@ -70,6 +68,7 @@ import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.resource.ResourceChange;
 import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.ReplaceEdit;
 import org.eclipse.text.edits.TextEdit;
 
 /**
@@ -278,17 +277,24 @@ public class ChangeUtil {
 
 		if (!(modifiedElement instanceof IJavaElement)) {
 			TextEdit edit = textChange.getEdit();
-			if (textChange instanceof ExternalFileChange && edit instanceof InsertEdit) {
+			if (textChange instanceof ExternalFileChange) {
+				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
 				URI uri = ((ExternalFileChange) textChange).getURI();
 				String fileUri = ResourceUtils.fixURI(uri);
 
-				InsertEdit insertEdit = (InsertEdit) edit;
-				org.eclipse.lsp4j.TextEdit te = new org.eclipse.lsp4j.TextEdit();
-				te.setNewText(insertEdit.getText());
-				int[] insertPos = JsonRpcHelpers.toLine((IDocument) modifiedElement, insertEdit.getOffset());
-				Position pos = new Position(insertPos[0], insertPos[1]);
-				te.setRange(new Range(pos, pos));
-
+				if (edit instanceof InsertEdit insertEdit) {
+					te.setNewText(insertEdit.getText());
+					int[] insertPos = JsonRpcHelpers.toLine((IDocument) modifiedElement, insertEdit.getOffset());
+					Position pos = new Position(insertPos[0], insertPos[1]);
+					te.setRange(new Range(pos, pos));
+				} else if (edit instanceof ReplaceEdit replaceEdit) {
+					te.setNewText(replaceEdit.getText());
+					int[] start = JsonRpcHelpers.toLine((IDocument) modifiedElement, replaceEdit.getOffset());
+					Position startPos = new Position(start[0], start[1]);
+					int[] end = JsonRpcHelpers.toLine((IDocument) modifiedElement, replaceEdit.getOffset() + replaceEdit.getLength());
+					Position endPos = new Position(end[0], end[1]);
+					te.setRange(new Range(startPos, endPos));
+				}
 				if (JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isResourceOperationSupported()) {
 					List<Either<TextDocumentEdit, ResourceOperation>> changes = rootEdit.getDocumentChanges();
 					if (changes == null) {
@@ -297,7 +303,9 @@ public class ChangeUtil {
 					}
 
 					VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(fileUri, null);
-					TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, Arrays.asList(te));
+					TextDocumentEdit documentEdit = new TextDocumentEdit();
+					documentEdit.setTextDocument(identifier);
+					documentEdit.setEdits(Arrays.asList(Either.forLeft(te)));
 					changes.add(Either.forLeft(documentEdit));
 				} else {
 					Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = rootEdit.getChanges();
@@ -332,7 +340,9 @@ public class ChangeUtil {
 			}
 
 			VersionedTextDocumentIdentifier identifier = new VersionedTextDocumentIdentifier(uri, null);
-			TextDocumentEdit documentEdit = new TextDocumentEdit(identifier, textEdits);
+			TextDocumentEdit documentEdit = new TextDocumentEdit();
+			documentEdit.setTextDocument(identifier);
+			documentEdit.setEdits(textEdits.stream().map(Either::<org.eclipse.lsp4j.TextEdit, SnippetTextEdit>forLeft).toList());
 			changes.add(Either.forLeft(documentEdit));
 		} else {
 			Map<String, List<org.eclipse.lsp4j.TextEdit>> changes = root.getChanges();
@@ -362,23 +372,6 @@ public class ChangeUtil {
 		return StringUtils.isEmpty(textEdit.getNewText())
 			&& start.getCharacter() == end.getCharacter()
 			&& start.getLine() == end.getLine();
-	}
-
-	private static ICompilationUnit getNewCompilationUnit(IType type, String newName) {
-		ICompilationUnit cu = type.getCompilationUnit();
-		if (isPrimaryType(type)) {
-			IPackageFragment parent = type.getPackageFragment();
-			String renamedCUName = JavaModelUtil.getRenamedCUName(cu, newName);
-			return parent.getCompilationUnit(renamedCUName);
-		} else {
-			return cu;
-		}
-	}
-
-	private static boolean isPrimaryType(IType type) {
-		String cuName = type.getCompilationUnit().getElementName();
-		String typeName = type.getElementName();
-		return type.getDeclaringType() == null && JavaCore.removeJavaLikeExtension(cuName).equals(typeName);
 	}
 
 	private static void convertPackageUpdateEdit(ICompilationUnit[] cus, String newPkgName, WorkspaceEdit rootEdit, String annotationId) throws JavaModelException {

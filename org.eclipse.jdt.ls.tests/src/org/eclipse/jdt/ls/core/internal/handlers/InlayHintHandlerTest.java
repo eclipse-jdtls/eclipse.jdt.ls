@@ -13,8 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -31,12 +31,12 @@ import org.eclipse.lsp4j.InlayHintParams;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 
-	@Before
+	@BeforeEach
 	public void initPreferences() throws Exception{
 		preferences.setInlayHintsSuppressedWhenSameNameNumberedParameter(true);
 	}
@@ -534,7 +534,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
 
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
-		assertEquals(inlayHints.toString(), 0, inlayHints.size());
+		assertEquals(0, inlayHints.size(), inlayHints.toString());
 	}
 
 	@Test
@@ -558,7 +558,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
 		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
-		assertEquals(inlayHints.toString(), 2, inlayHints.size());
+		assertEquals(2, inlayHints.size(), inlayHints.toString());
 		// Should show type hints for lambda parameters only (no 'action:' parameter hint)
 		assertEquals("String", inlayHints.get(0).getLabel().getLeft());
 		assertEquals("Integer", inlayHints.get(1).getLabel().getLeft());
@@ -649,8 +649,8 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 				}
 			}
 		}
-		assertTrue("Should find inlay hint for _greeting", foundGreeting);
-		assertTrue("Should find inlay hint for _string", foundString);
+		assertTrue(foundGreeting, "Should find inlay hint for _greeting");
+		assertTrue(foundString, "Should find inlay hint for _string");
 	}
 
 	@Test
@@ -675,7 +675,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
 
 		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
-		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+		assertTrue(inlayHints.isEmpty(), "Should not show inlay hints for methods with same prefix+number parameters");
 	}
 
 	@Test
@@ -699,7 +699,7 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
 
 		// Should not show inlay hints for methods where all parameters have same prefix+number pattern
-		assertTrue("Should not show inlay hints for methods with same prefix+number parameters", inlayHints.isEmpty());
+		assertTrue(inlayHints.isEmpty(), "Should not show inlay hints for methods with same prefix+number parameters");
 	}
 
 	@Test
@@ -843,6 +843,362 @@ public class InlayHintHandlerTest extends AbstractCompilationUnitBasedTest {
 		assertEquals("s1:", inlayHints.get(0).getLabel().getLeft());
 		assertEquals("s3:", inlayHints.get(1).getLabel().getLeft());
 		assertEquals("s5:", inlayHints.get(2).getLabel().getLeft());
+	}
+
+	// --- Format specifier inlay hints tests ---
+
+	@Test
+	public void testFormatSpecifierSingleArg() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String result = String.format("Hello %s", name);
+				}
+				String name = "World";
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		// Filter to only format specifier hints (those starting with ':')
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierMultipleArgs() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String name = "Alice";
+					int age = 30;
+					String result = String.format("Hello %s, you are %d years old", name, age);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(2, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+		assertEquals(":age", formatHints.get(1).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierStaticFormatWithLocale() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			import java.util.Locale;
+			public class Foo {
+				void bar() {
+					String name = "Alice";
+					String result = String.format(Locale.US, "Hello %s", name);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierEscapedPercent() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String result = "done";
+					String s = String.format("100%% done: %s", result);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		// Only %s should get a hint, %% is literal percent
+		assertEquals(1, formatHints.size());
+		assertEquals(":result", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierExplicitArgIndex() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String a = "first";
+					String b = "second";
+					String result = String.format("%2$s before %1$s", a, b);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(6, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(2, formatHints.size());
+		// %2$s maps to b, %1$s maps to a
+		assertEquals(":b", formatHints.get(0).getLabel().getLeft());
+		assertEquals(":a", formatHints.get(1).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierNewlineDoesNotConsumeArg() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String value = "test";
+					String result = String.format("line%n%s", value);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		// %n doesn't consume an arg, only %s does
+		assertEquals(1, formatHints.size());
+		assertEquals(":value", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierDisabled() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(false);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String name = "World";
+					String result = String.format("Hello %s", name);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertTrue(formatHints.isEmpty());
+	}
+
+	@Test
+	public void testFormatSpecifierNonStringFormat() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				String format(String pattern, Object... args) { return pattern; }
+				void bar() {
+					String result = format("Hello %s", "World");
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		// Should not produce format specifier hints for custom format methods
+		assertTrue(formatHints.isEmpty());
+	}
+
+	@Test
+	public void testFormatSpecifierPrintfPrintStream() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String name = "World";
+					System.out.printf("Hello %s\\n", name);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierPrintStreamFormat() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					double value = 3.14;
+					System.out.format("Pi is %.2f\\n", value);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":value", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierFormatterFormat() throws JavaModelException {
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/Foo.java",
+			"""
+			import java.util.Formatter;
+			public class Foo {
+				void bar() {
+					String name = "World";
+					Formatter fmt = new Formatter();
+					fmt.format("Hello %s", name);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(7, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierFormatted() throws Exception {
+		setupEclipseProject("java15");
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String name = "World";
+					String result = "Hello %s".formatted(name);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(5, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(1, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+	}
+
+	@Test
+	public void testFormatSpecifierTextBlock() throws Exception {
+		setupEclipseProject("java15");
+		preferences.setInlayHintsFormatParametersEnabled(true);
+		ICompilationUnit unit = getWorkingCopy(
+			"src/main/java/Foo.java",
+			"""
+			public class Foo {
+				void bar() {
+					String name = "World";
+					int count = 42;
+					String result = \"""
+								    Hello %s, count is %d
+								\""".formatted(name, count);
+				}
+			}
+			"""
+		);
+		InlayHintsHandler handler = new InlayHintsHandler(preferenceManager);
+		InlayHintParams params = new InlayHintParams();
+		params.setTextDocument(new TextDocumentIdentifier(unit.getResource().getLocationURI().toString()));
+		params.setRange(new Range(new Position(0, 0), new Position(8, 0)));
+		List<InlayHint> inlayHints = handler.inlayHint(params, new NullProgressMonitor());
+		List<InlayHint> formatHints = inlayHints.stream()
+			.filter(h -> h.getLabel().getLeft().startsWith(":"))
+			.toList();
+		assertEquals(2, formatHints.size());
+		assertEquals(":name", formatHints.get(0).getLabel().getLeft());
+		assertEquals(":count", formatHints.get(1).getLabel().getLeft());
 	}
 
 	@Test

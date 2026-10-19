@@ -15,9 +15,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.codemanipulation;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,9 +65,9 @@ import org.eclipse.jdt.ls.core.internal.preferences.Preferences;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.TextEdit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 public class ImportOrganizeTest extends AbstractMavenBasedTest {
@@ -78,7 +78,7 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	private IProject project;
 	private File junitSrcArchive;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/quickstart");
 		project = WorkspaceHelper.getProject("quickstart");
@@ -94,12 +94,12 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 
 	private void requireJUnitSources() throws Exception {
 		junitSrcArchive = DependencyUtil.getSources("junit", "junit", "3.8.1");
-		assertNotNull("junit-3.8.1-sources.jar not found", junitSrcArchive);
+		assertNotNull(junitSrcArchive, "junit-3.8.1-sources.jar not found");
 		addFilesFromJar(javaProject, junitSrcArchive, JUNIT_SRC_ENCODING);
 	}
 
 	@Override
-	@After
+	@AfterEach
 	public void cleanUp() throws Exception {
 		CoreASTProvider.getInstance().disposeAST();
 		super.cleanUp();
@@ -110,23 +110,23 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 		return new IChooseImportQuery() {
 			@Override
 			public TypeNameMatch[] chooseImports(TypeNameMatch[][] openChoices, ISourceRange[] ranges) {
-				assertTrue(name + "-query-nchoices1", choices.length == openChoices.length);
-				assertTrue(name + "-query-nchoices2", nEntries.length == openChoices.length);
+				assertEquals(choices.length, openChoices.length, name + "-query-nchoices1");
+				assertEquals(nEntries.length, openChoices.length, name + "-query-nchoices2");
 				for (int i= 0; i < nEntries.length; i++) {
-					assertTrue(name + "-query-cnt" + i, openChoices[i].length == nEntries[i]);
+					assertEquals(openChoices[i].length, nEntries[i], name + "-query-cnt" + i);
 				}
 				TypeNameMatch[] res= new TypeNameMatch[openChoices.length];
 				for (int i= 0; i < openChoices.length; i++) {
 					TypeNameMatch[] selection= openChoices[i];
-					assertNotNull(name + "-query-setset" + i, selection);
-					assertTrue(name + "-query-setlen" + i, selection.length > 0);
+					assertNotNull(selection, name + "-query-setset" + i);
+					assertTrue(selection.length > 0, name + "-query-setlen" + i);
 					TypeNameMatch found= null;
 					for (int k= 0; k < selection.length; k++) {
 						if (selection[k].getFullyQualifiedName().equals(choices[i])) {
 							found= selection[k];
 						}
 					}
-					assertNotNull(name + "-query-notfound" + i, found);
+					assertNotNull(found, name + "-query-notfound" + i);
 					res[i]= found;
 				}
 				return res;
@@ -136,9 +136,9 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 
 	private void assertImports(ICompilationUnit cu, String[] imports) throws Exception {
 		IImportDeclaration[] desc= cu.getImports();
-		assertEquals(cu.getElementName() + "-count", imports.length, desc.length);
+		assertEquals(imports.length, desc.length, cu.getElementName() + "-count");
 		for (int i= 0; i < imports.length; i++) {
-			assertEquals(cu.getElementName() + "-cmpentries" + i, desc[i].getElementName(), imports[i]);
+			assertEquals(desc[i].getElementName(), imports[i], cu.getElementName() + "-cmpentries" + i);
 		}
 	}
 
@@ -146,7 +146,7 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	public void test1() throws Exception {
 		requireJUnitSources();
 		ICompilationUnit cu= (ICompilationUnit) javaProject.findElement(new Path("junit/runner/BaseTestRunner.java"));
-		assertNotNull("BaseTestRunner.java", cu);
+		assertNotNull(cu, "BaseTestRunner.java");
 		IPackageFragmentRoot root= (IPackageFragmentRoot)cu.getParent().getParent();
 		IPackageFragment pack= root.createPackageFragment("mytest", true, null);
 		ICompilationUnit colidingCU= pack.getCompilationUnit("TestListener.java");
@@ -212,7 +212,7 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	public void test1WithOrder() throws Exception {
 		requireJUnitSources();
 		ICompilationUnit cu = (ICompilationUnit) javaProject.findElement(new Path("junit/runner/BaseTestRunner.java"));
-		assertNotNull("BaseTestRunner.java is missing", cu);
+		assertNotNull(cu, "BaseTestRunner.java is missing");
 		IPackageFragmentRoot root= (IPackageFragmentRoot)cu.getParent().getParent();
 		IPackageFragment pack= root.createPackageFragment("mytest", true, null);
 		ICompilationUnit colidingCU= pack.getCompilationUnit("TestListener.java");

@@ -20,6 +20,7 @@ package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import org.eclipse.core.runtime.CoreException;
@@ -35,11 +36,11 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.ParameterizedType;
-import org.eclipse.jdt.core.dom.QualifiedName;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeParameter;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
@@ -84,6 +85,8 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 	private int fTypeKind;
 	private IJavaElement fTypeContainer; // IType or IPackageFragment
 	private String fTypeNameWithParameters;
+	private List<Expression> fArguments;
+
 	/**
 	 * Construct a new compilation unit proposal.
 	 *
@@ -110,6 +113,36 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 			fTypeNameWithParameters = getTypeName(typeKind, node);
 		}
 
+		setDisplayName();
+	}
+
+	/**
+	 * Construct a new compilation unit proposal.
+	 *
+	 * @param cu
+	 *            current compilation unit.
+	 * @param node
+	 *            {@link Name} corresponding to the compilation unit to be created.
+	 * @param typeKind
+	 *            possible values: { K_CLASS, K_INTERFACE, K_ENUM, K_ANNOTATION }
+	 * @param typeContainer
+	 *            enclosing {@link IJavaElement} of the target compilation unit, can
+	 *            be {@link IType} or {@link IPackageFragment}.
+	 * @param relevance
+	 *            the relevance of this proposal
+	 * @param arguments
+	 *            the list of {@link Expression} nodes
+	 */
+	public NewCUProposal(ICompilationUnit cu, Name node, int typeKind, IJavaElement typeContainer, int relevance, List<Expression> arguments) {
+		super("", null, relevance); //$NON-NLS-1$
+		fCompilationUnit = cu;
+		fNode = node;
+		fTypeKind = typeKind;
+		fTypeContainer = typeContainer;
+		if (fNode != null) {
+			fTypeNameWithParameters = getTypeName(typeKind, node);
+		}
+		fArguments = arguments;
 		setDisplayName();
 	}
 
@@ -433,7 +466,10 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		IPackageFragment pack = (IPackageFragment) cu.getParent();
 		String content = CodeGeneration.getCompilationUnitContent(cu, fileComment, typeComment, typeContent, lineDelimiter);
 		if (content != null) {
-
+			// Strip leading blank lines that may result from empty template variables (e.g. ${filecomment})
+			while (content.startsWith(lineDelimiter)) {
+				content = content.substring(lineDelimiter.length());
+			}
 			ASTParser parser = ASTParser.newParser(IASTSharedValues.SHARED_AST_LEVEL);
 			parser.setProject(cu.getJavaProject());
 			parser.setSource(content.toCharArray());
@@ -445,8 +481,9 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		StringBuilder buf = new StringBuilder();
 		if (!pack.isDefaultPackage()) {
 			buf.append("package ").append(pack.getElementName()).append(';'); //$NON-NLS-1$
+			buf.append(lineDelimiter);
 		}
-		buf.append(lineDelimiter).append(lineDelimiter);
+		buf.append(lineDelimiter);
 		buf.append(typeContent);
 		return buf.toString();
 	}
@@ -506,7 +543,22 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		buf.append(name);
 
 		if (fTypeKind == K_RECORD) {
-			buf.append("()");
+			buf.append("(");
+			if (fArguments != null && !fArguments.isEmpty()) {
+				for (int i = 0; i < fArguments.size(); i++) {
+					if (i > 0) {
+						buf.append(", "); //$NON-NLS-1$
+					}
+					Expression arg = fArguments.get(i);
+					ITypeBinding typeBinding = arg.resolveTypeBinding();
+					String typeName = typeBinding != null && !typeBinding.isRecovered()
+							? typeBinding.getName()
+							: "Object"; //$NON-NLS-1$
+					String argName = "arg" + (i + 1); //$NON-NLS-1$
+					buf.append(typeName).append(' ').append(argName);
+				}
+			}
+			buf.append(")");
 		}
 
 		if (isPermitted) {
@@ -524,14 +576,6 @@ public class NewCUProposal extends ChangeCorrectionProposalCore {
 		}
 		buf.append('}').append(lineDelimiter);
 		return buf.toString();
-	}
-
-	private static String getSimpleName(Name name) {
-		if (name.isQualifiedName()) {
-			return ((QualifiedName) name).getName().getIdentifier();
-		} else {
-			return ((SimpleName) name).getIdentifier();
-		}
 	}
 
 	private static String getCompilationUnitName(String typeName) {

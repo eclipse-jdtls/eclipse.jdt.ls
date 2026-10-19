@@ -12,16 +12,15 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.Reader;
 
 import org.eclipse.jdt.ls.core.internal.Util;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests Javadoc to Plain text conversion
@@ -64,9 +63,7 @@ public class JavaDoc2PlainTextConverterTest extends AbstractJavadocConverterTest
 	public void testBoundaries() throws IOException {
 		assertTrue(new JavaDoc2PlainTextConverter("").getAsString().isEmpty());
 		assertNull(new JavaDoc2PlainTextConverter((Reader) null).getAsString());
-		assertNull(new JavaDoc2PlainTextConverter((Reader) null).getAsReader());
 		assertNull(new JavaDoc2PlainTextConverter((String) null).getAsString());
-		assertNull(new JavaDoc2PlainTextConverter((String) null).getAsReader());
 	}
 
 	@Test
@@ -76,11 +73,4 @@ public class JavaDoc2PlainTextConverterTest extends AbstractJavadocConverterTest
 				Util.convertToIndependentLineDelimiter(result));
 	}
 
-	@Test
-	public void testGetAsReader() throws IOException {
-		JavaDoc2PlainTextConverter converter = new JavaDoc2PlainTextConverter(RAW_JAVADOC_0);
-		Reader reader1 = converter.getAsReader();
-		Reader reader2 = converter.getAsReader();
-		assertNotSame(reader1, reader2);
-	}
 }

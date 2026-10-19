@@ -23,8 +23,8 @@ import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
 import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class MakeStaticTest extends AbstractSelectionTest {
 
@@ -34,7 +34,7 @@ public class MakeStaticTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot testSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		testProject = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();
@@ -186,5 +186,21 @@ public class MakeStaticTest extends AbstractSelectionTest {
 		Expected expected = new Expected(MAKE_STATIC, output, CodeActionKind.RefactorInline);
 		assertCodeActions(cu, CodeActionUtil.getRange(cu, "bar(String foo)", 0), expected);
 
+	}
+	
+	@Test
+	public void testDefaultInterfaceMethodNotOffered() throws Exception {
+		IPackageFragment pack1 = testSourceFolder.createPackageFragment("", false, null);
+
+		String input = "public interface Foo {\n"
+				+ "\n"
+				+ "	default void bar() {\n"
+				+ "		System.out.println(\"bar\");\n"
+				+ "	}\n"
+				+ "}";
+
+		ICompilationUnit cu = pack1.createCompilationUnit("Foo.java", input, false, null);
+
+		assertCodeActionNotExists(cu, CodeActionUtil.getRange(cu, "bar()", 0), MAKE_STATIC);
 	}
 }

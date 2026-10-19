@@ -12,8 +12,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.handlers;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -25,21 +25,21 @@ import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTes
 import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams;
 import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class WorkspaceFolderChangeHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private WorkspaceFolderChangeHandler workspaceFolderChangeHander;
 
 
-	@Before
+	@BeforeEach
 	public void setup() {
 		this.workspaceFolderChangeHander = new WorkspaceFolderChangeHandler(projectsManager, preferenceManager);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		waitForBackgroundJobs();
 	}

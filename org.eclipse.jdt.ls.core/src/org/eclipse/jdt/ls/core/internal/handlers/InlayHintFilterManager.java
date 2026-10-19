@@ -33,7 +33,7 @@ public class InlayHintFilterManager {
 		this.exclusions = new ArrayList<>();
 	}
 
-	public static InlayHintFilterManager instance() { 
+	public static InlayHintFilterManager instance() {
 		return InstanceHolder.instance;
 	}
 
@@ -69,7 +69,7 @@ public class InlayHintFilterManager {
 	}
 
 	private void initializeFromPreference() {
-		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getInstance().getPreferencesManager();
+		PreferenceManager preferencesManager = JavaLanguageServerPlugin.getPreferencesManager();
 		if (preferencesManager == null) {
 			return;
 		}

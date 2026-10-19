@@ -23,8 +23,8 @@ import org.eclipse.jdt.ls.core.internal.correction.AbstractSelectionTest;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.text.correction.ActionMessages;
 import org.eclipse.lsp4j.CodeActionKind;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class InlineMethodTest extends AbstractSelectionTest {
 
@@ -34,7 +34,7 @@ public class InlineMethodTest extends AbstractSelectionTest {
 
 	private IPackageFragmentRoot testSourceFolder;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception {
 		testProject = newEmptyProject();
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

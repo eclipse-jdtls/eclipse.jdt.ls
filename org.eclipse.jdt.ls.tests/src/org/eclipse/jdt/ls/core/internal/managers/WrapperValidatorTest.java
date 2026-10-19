@@ -12,10 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,11 +40,11 @@ import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.internal.gradle.checksums.ValidationResult;
 import org.eclipse.jdt.ls.internal.gradle.checksums.WrapperValidator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.osgi.framework.Bundle;
 
 import com.google.gson.JsonArray;
@@ -55,16 +55,16 @@ import com.google.gson.JsonParser;
  * @author snjeza
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class WrapperValidatorTest extends AbstractGradleBasedTest{
 
-	@Before
+	@BeforeEach
 	public void setProperty() throws Exception {
 		System.setProperty("gradle.checksum.cacheDir", "target/gradle/checksums");
 		WrapperValidator.clear();
 	}
 
-	@After
+	@AfterEach
 	public void clearProperty() throws IOException {
 		System.clearProperty("gradle.checksum.cacheDir");
 	}
@@ -87,7 +87,7 @@ public class WrapperValidatorTest extends AbstractGradleBasedTest{
 			String message = Files.list(Paths.get(sha256Directory.getAbsolutePath())).collect(Collectors.toList()).toString();
 			file = new File(sha256Directory, fileName);
 			if (file.isFile()) {
-				assertTrue(message, file.isFile());
+				assertTrue(file.isFile(), message);
 				sha256 = Files.lines(Paths.get(file.getAbsolutePath()), StandardCharsets.UTF_8).findFirst().get();
 			}
 		} else {

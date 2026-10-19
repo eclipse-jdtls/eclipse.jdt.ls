@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others.
+ * Copyright (c) 2016-2025 Red Hat Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -13,15 +13,6 @@
 package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.io.Reader;
-import java.lang.reflect.Field;
-
-import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
-import org.jsoup.safety.Cleaner;
-import org.jsoup.safety.Safelist;
-
-import com.overzealous.remark.Options;
-import com.overzealous.remark.Options.Tables;
-import com.overzealous.remark.Remark;
 
 /**
  * Converts JavaDoc tags into Markdown equivalent.
@@ -30,34 +21,7 @@ import com.overzealous.remark.Remark;
  */
 public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 
-	private static Remark remark;
-
-	static {
-		Options options = new Options();
-		options.tables = Tables.MULTI_MARKDOWN;
-		options.hardwraps = true;
-		options.inlineLinks = true;
-		options.autoLinks = true;
-		options.reverseHtmlSmartPunctuation = true;
-		remark = new Remark(options);
-		//Stop remark from stripping file and jdt protocols in an href
-		try {
-			Field cleanerField = Remark.class.getDeclaredField("cleaner");
-			cleanerField.setAccessible(true);
-
-			Cleaner c = (Cleaner) cleanerField.get(remark);
-
-			Field safelistField = Cleaner.class.getDeclaredField("safelist");
-			safelistField.setAccessible(true);
-
-			Safelist s = (Safelist) safelistField.get(c);
-
-			s.addProtocols("a", "href", "file", "jdt");
-			s.addProtocols("img", "src", "file");
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			JavaLanguageServerPlugin.logException("Unable to modify jsoup to include file and jdt protocols", e);
-		}
-	}
+	private final HtmlToMarkdownConverter htmlToMarkdownConverter = new HtmlToMarkdownConverter();
 
 	public JavaDoc2MarkdownConverter(Reader reader) {
 		super(reader);
@@ -68,7 +32,7 @@ public class JavaDoc2MarkdownConverter extends AbstractJavaDocConverter {
 	}
 
 	@Override
-	String convert(String rawHtml) {
-		return remark.convert(rawHtml);
+	public String convert(String html) {
+		return htmlToMarkdownConverter.convert(html);
 	}
 }

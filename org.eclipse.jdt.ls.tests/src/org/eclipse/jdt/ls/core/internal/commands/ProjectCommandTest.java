@@ -13,10 +13,10 @@
 
 package org.eclipse.jdt.ls.core.internal.commands;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.net.URI;
@@ -39,6 +39,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JSONUtility;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand.ClasspathOptions;
@@ -52,7 +53,7 @@ import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.SymbolKind;
 import org.eclipse.m2e.core.internal.IMavenConstants;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * ProjectCommandTest
@@ -121,7 +122,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		List<String> settingKeys = Arrays.asList(ProjectCommand.SOURCE_PATHS);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
 		String[] actualSourcePaths = (String[]) options.get(ProjectCommand.SOURCE_PATHS);
-		assertTrue(actualSourcePaths.length == 2);
+		assertEquals(2, actualSourcePaths.length);
 		assertTrue(Arrays.stream(actualSourcePaths).anyMatch(sourcePath -> {
 			return sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("src").getLocation().toOSString())
 					|| sourcePath.equals(project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("test").getLocation().toOSString());
@@ -147,7 +148,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		Map<String, Object> options = ProjectCommand.getProjectSettings(linkedFolder, settingKeys);
 		String[] actualReferencedLibraryPaths = (String[]) options.get(ProjectCommand.REFERENCED_LIBRARIES);
 		String expectedReferencedLibraryPath = project.getFolder(ProjectUtils.WORKSPACE_LINK).getFolder("lib").getFile("mylib.jar").getLocation().toOSString();
-		assertTrue(actualReferencedLibraryPaths.length == 1);
+		assertEquals(1, actualReferencedLibraryPaths.length);
 		if (Platform.OS_WIN32.equals(Platform.getOS())) {
 			IPath expected = new Path(expectedReferencedLibraryPath);
 			IPath actual = new Path(actualReferencedLibraryPaths[0]);
@@ -170,7 +171,8 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
-		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		@SuppressWarnings("unchecked")
+		List<ProjectClasspathEntry> entries = (List<ProjectClasspathEntry>) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 		assertNotNull(options.get(ProjectCommand.CLASSPATH_ENTRIES));
 		assertTrue(entries.size() > 0);
 		assertTrue(entries.stream().anyMatch(entry -> {
@@ -194,7 +196,8 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
-		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		@SuppressWarnings("unchecked")
+		List<ProjectClasspathEntry> entries = (List<ProjectClasspathEntry>) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 		assertNotNull(options.get(ProjectCommand.CLASSPATH_ENTRIES));
 		assertTrue(entries.size() > 0);
 		assertTrue(entries.stream().anyMatch(entry -> {
@@ -209,14 +212,16 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
-		List<ProjectClasspathEntry> entries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		@SuppressWarnings("unchecked")
+		List<ProjectClasspathEntry> entries = (List<ProjectClasspathEntry>) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 
 		int size = entries.size();
 		entries.remove(size - 1);
 		ProjectCommand.updateClasspaths(uriString, entries, new NullProgressMonitor());
 
 		options = ProjectCommand.getProjectSettings(uriString, settingKeys);
-		List<ProjectClasspathEntry> newEntries = (List) options.get(ProjectCommand.CLASSPATH_ENTRIES);
+		@SuppressWarnings("unchecked")
+		List<ProjectClasspathEntry> newEntries = (List<ProjectClasspathEntry>) options.get(ProjectCommand.CLASSPATH_ENTRIES);
 		assertEquals(size - 1, newEntries.size());
 	}
 
@@ -245,11 +250,11 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		IProject project = WorkspaceHelper.getProject("salut");
 		String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
-		assertNotNull("Can get project from java file uri", javaProject);
+		assertNotNull(javaProject, "Can get project from java file uri");
 
 		String projectUri = project.getLocationURI().toString();
 		javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
-		assertNotNull("Can get project from project uri", javaProject);
+		assertNotNull(javaProject, "Can get project from project uri");
 	}
 
 	@Test
@@ -270,7 +275,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		IProject project = copyAndImportFolder("singlefile/simple", "src/App.java");
 		String linkedFolder = project.getFolder(ProjectUtils.WORKSPACE_LINK).getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(linkedFolder);
-		assertNotNull("Can get project from linked folder uri", javaProject);
+		assertNotNull(javaProject, "Can get project from linked folder uri");
 	}
 
 	@Test
@@ -293,6 +298,25 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 			return element.indexOf("junit") > -1;
 		});
 		assertTrue(containsJunit);
+	}
+
+	@Test
+	public void testGetClasspathsFromMapArgument() throws Exception {
+		importProjects("maven/classpathtest");
+		IProject project = WorkspaceHelper.getProject("classpathtest");
+		String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
+
+		// Mirror what a client sends over JSON-RPC, e.g. { "scope": "runtime" }, which
+		// arrives as a Map and must be converted to ClasspathOptions by JSONUtility.
+		Map<String, Object> optionsMap = new HashMap<>();
+		optionsMap.put("scope", "runtime");
+		ClasspathOptions options = JSONUtility.toModel(optionsMap, ClasspathOptions.class);
+		assertNotNull(options);
+
+		ClasspathResult result = ProjectCommand.getClasspaths(uriString, options);
+		assertEquals(1, result.classpaths.length);
+		assertEquals(0, result.modulepaths.length);
+		assertTrue(result.classpaths[0].indexOf("junit") == -1);
 	}
 
 	@Test
@@ -403,7 +427,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 
 		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.StringUtils");
 		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
-		assertEquals(new Range(new Position(115, 13), new Position(115, 24)), resolvedSymbol.getLocation().getRange());
+		assertEquals(new Range(new Position(124, 13), new Position(124, 24)), resolvedSymbol.getLocation().getRange());
 	}
 
 	@Test

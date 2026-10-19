@@ -13,12 +13,17 @@
 
 package org.eclipse.jdt.ls.core.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.lsp4j.Position;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -44,14 +49,28 @@ public class JSONUtilityTest {
 		assertSame(position,position2);
 	}
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testNullClass(){
-		JSONUtility.toModel(new Object(), null);
+	@Test
+	void testNullClass(){
+		assertThrows(IllegalArgumentException.class, () -> {
+			JSONUtility.toModel(new Object(), null);
+		});
 	}
 
 	@Test
 	public void testNullObject(){
 		assertNull(JSONUtility.toModel(null, Object.class));
+	}
+
+	@Test
+	public void testMap() {
+		Map<String, Object> map = new HashMap<>();
+		map.put("line", 5);
+		map.put("character", 3);
+
+		Position options = JSONUtility.toModel(map, Position.class);
+		assertNotNull(options);
+		assertEquals(options.getLine(), 5);
+		assertEquals(options.getCharacter(), 3);
 	}
 
 }

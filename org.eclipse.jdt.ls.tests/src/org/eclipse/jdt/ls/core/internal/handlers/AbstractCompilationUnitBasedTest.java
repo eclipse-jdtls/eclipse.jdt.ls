@@ -26,8 +26,8 @@ import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.LanguageServerWorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
 
 /**
@@ -42,7 +42,7 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 	protected WorkingCopyOwner wcOwner ;
 	protected IProject project;
 
-	@Before
+	@BeforeEach
 	public void setup() throws Exception{
 		setupEclipseProject("hello");
 	}
@@ -87,7 +87,7 @@ public abstract class AbstractCompilationUnitBasedTest extends AbstractProjectsM
 		return JsonRpcHelpers.toLine(unit.getBuffer(), cursorLocation);
 	}
 
-	@After
+	@AfterEach
 	public void shutdown() throws Exception {
 		CoreASTProvider.getInstance().disposeAST();
 		ICompilationUnit[] workingCopies = JavaCore.getWorkingCopies(wcOwner);

@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.util.List;
@@ -23,15 +23,15 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author snjeza
  *
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EclipseBuildSupportTest extends AbstractProjectsManagerBasedTest {
 
 	@Test
@@ -40,7 +40,7 @@ public class EclipseBuildSupportTest extends AbstractProjectsManagerBasedTest {
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("updatejar");
 		assertIsJavaProject(project);
 		List<IMarker> errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 2, errors.size());
+		assertEquals(2, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 		File projectFile = project.getLocation().toFile();
 		File validFooJar = new File(projectFile, "foo.jar");
 		File destLib = new File(projectFile, "lib");
@@ -49,7 +49,7 @@ public class EclipseBuildSupportTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.fileChanged(newJar.toPath().toUri().toString(), CHANGE_TYPE.CREATED);
 		waitForBackgroundJobs();
 		errors = ResourceUtils.getErrorMarkers(project);
-		assertEquals("Unexpected errors " + ResourceUtils.toString(errors), 0, errors.size());
+		assertEquals(0, errors.size(), "Unexpected errors " + ResourceUtils.toString(errors));
 
 	}
 

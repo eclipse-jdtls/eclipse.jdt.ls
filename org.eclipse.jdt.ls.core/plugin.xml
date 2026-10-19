@@ -148,6 +148,9 @@
              <command
                   id="java.project.resolveText">
             </command>
+            <command
+				  id="java.getFullyQualifiedName">
+			</command>
       </delegateCommandHandler>
    </extension>
    <extension
@@ -224,5 +227,11 @@
       <requires-nature
          id="org.eclipse.jdt.core.javanature">
       </requires-nature>
+   </extension>
+   
+   <extension point="org.eclipse.core.contenttype.contentTypes">
+      <file-association
+         content-type="org.eclipse.jdt.core.javaDerivedSource"
+         file-extensions="kt,scala,groovy,clj"/>
    </extension>
 </plugin>

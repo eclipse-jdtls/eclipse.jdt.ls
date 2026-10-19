@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -29,22 +29,34 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
 import org.eclipse.jdt.internal.corext.fix.FixMessages;
 import org.eclipse.jdt.internal.corext.fix.IProposableFix;
 import org.eclipse.jdt.internal.corext.fix.InlineMethodFixCore;
+import org.eclipse.jdt.internal.corext.fix.NullAnnotationsRewriteOperations.ChangeKind;
+import org.eclipse.jdt.internal.corext.fix.ReplaceDeprecatedFieldFixCore;
+import org.eclipse.jdt.internal.ui.fix.ReplaceDeprecatedFieldCleanUpCore;
 import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
 import org.eclipse.jdt.internal.ui.text.correction.QuickAssistProcessorUtil;
 import org.eclipse.jdt.internal.ui.text.correction.UnInitializedFinalFieldBaseSubProcessor;
@@ -62,6 +74,11 @@ import org.eclipse.jdt.ls.core.internal.corrections.proposals.UnresolvedElements
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.jdt.ls.core.internal.text.correction.ModifierCorrectionSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.NullAnnotationsCorrectionProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeAnnotationSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.TypeArgumentMismatchSubProcessor;
+import org.eclipse.jdt.ls.core.internal.text.correction.VarargsWarningsSubProcessor;
+import org.eclipse.jdt.ui.cleanup.CleanUpOptions;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -223,10 +240,9 @@ public class QuickFixProcessor {
 			// LocalCorrectionsSubProcessor.addNLSProposals(context, problem,
 			// proposals);
 			// break;
-			// case IProblem.UnnecessaryNLSTag:
-			// LocalCorrectionsSubProcessor.getUnnecessaryNLSTagProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnnecessaryNLSTag:
+				LocalCorrectionsSubProcessor.getUnnecessaryNLSTagProposals(context, problem, proposals);
+				break;
 			case IProblem.NonStaticAccessToStaticField:
 			case IProblem.NonStaticAccessToStaticMethod:
 			case IProblem.NonStaticOrAlienTypeReceiver:
@@ -322,10 +338,9 @@ public class QuickFixProcessor {
 			case IProblem.EnumConstantMustImplementAbstractMethod:
 				LocalCorrectionsSubProcessor.addUnimplementedMethodsProposals(context, problem, proposals);
 				break;
-			// case IProblem.ShouldImplementHashcode:
-			// LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.ShouldImplementHashcode:
+				LocalCorrectionsSubProcessor.addMissingHashCodeProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingValueForAnnotationMember:
 				LocalCorrectionsSubProcessor.addValueForAnnotationProposals(context, problem, proposals);
 				break;
@@ -371,13 +386,12 @@ public class QuickFixProcessor {
 			case IProblem.UnnecessaryInstanceof:
 				LocalCorrectionsSubProcessor.addUnnecessaryInstanceofProposal(context, problem, proposals);
 				break;
-			// case IProblem.UnusedMethodDeclaredThrownException:
-			// case IProblem.UnusedConstructorDeclaredThrownException:
-			// LocalCorrectionsSubProcessor.addUnnecessaryThrownExceptionProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedMethodDeclaredThrownException:
+			case IProblem.UnusedConstructorDeclaredThrownException:
+				LocalCorrectionsSubProcessor.addUnnecessaryThrownExceptionProposal(context, problem, proposals);
+				break;
 			case IProblem.UnqualifiedFieldAccess:
-				// GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
+				GetterSetterCorrectionSubProcessor.addGetterSetterProposal(context, problem, proposals, IProposalRelevance.GETTER_SETTER_UNQUALIFIED_FIELD_ACCESS);
 				LocalCorrectionsSubProcessor.addUnqualifiedFieldAccessProposal(context, problem, proposals);
 				break;
 			// case IProblem.Task:
@@ -405,31 +419,30 @@ public class QuickFixProcessor {
 			case IProblem.JavadocInvalidMemberTypeQualification:
 				JavadocTagsSubProcessor.getInvalidQualificationProposals(context, problem, proposals);
 				break;
-			//
-			// case IProblem.LocalVariableHidingLocalVariable:
-			// case IProblem.LocalVariableHidingField:
-			// case IProblem.FieldHidingLocalVariable:
-			// case IProblem.FieldHidingField:
-			// case IProblem.ArgumentHidingLocalVariable:
-			// case IProblem.ArgumentHidingField:
-			// case IProblem.UseAssertAsAnIdentifier:
-			// case IProblem.UseEnumAsAnIdentifier:
-			// case IProblem.RedefinedLocal:
-			// case IProblem.RedefinedArgument:
-			// case IProblem.DuplicateField:
-			// case IProblem.DuplicateMethod:
-			// case IProblem.DuplicateTypeVariable:
-			// case IProblem.DuplicateNestedType:
-			// LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.LocalVariableHidingLocalVariable:
+			case IProblem.LocalVariableHidingField:
+			case IProblem.FieldHidingLocalVariable:
+			case IProblem.FieldHidingField:
+			case IProblem.ArgumentHidingLocalVariable:
+			case IProblem.ArgumentHidingField:
+			case IProblem.UseAssertAsAnIdentifier:
+			case IProblem.UseEnumAsAnIdentifier:
+			case IProblem.RedefinedLocal:
+			case IProblem.RedefinedArgument:
+			case IProblem.DuplicateField:
+			case IProblem.DuplicateMethod:
+			case IProblem.DuplicateTypeVariable:
+			case IProblem.DuplicateNestedType:
+			case IProblem.LambdaRedeclaresLocal:
+			case IProblem.LambdaRedeclaresArgument:
+				LocalCorrectionsSubProcessor.addInvalidVariableNameProposals(context, problem, proposals);
+				break;
 			case IProblem.NoMessageSendOnArrayType:
 				UnresolvedElementsSubProcessor.getArrayAccessProposals(context, problem, proposals);
 				break;
-			// case IProblem.InvalidOperator:
-			// LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.InvalidOperator:
+				LocalCorrectionsSubProcessor.getInvalidOperatorProposals(context, problem, proposals);
+				break;
 			case IProblem.MissingSerialVersion:
 				SerialVersionSubProcessor.getSerialVersionProposals(context, problem, proposals);
 				break;
@@ -443,64 +456,23 @@ public class QuickFixProcessor {
 			case IProblem.DeadCode:
 				LocalCorrectionsSubProcessor.getUnreachableCodeProposals(context, problem, proposals);
 				break;
-			// case IProblem.InvalidUsageOfTypeParameters:
-			// case IProblem.InvalidUsageOfStaticImports:
-			// case IProblem.InvalidUsageOfForeachStatements:
-			// case IProblem.InvalidUsageOfTypeArguments:
-			// case IProblem.InvalidUsageOfEnumDeclarations:
-			// case IProblem.InvalidUsageOfVarargs:
-			// case IProblem.InvalidUsageOfAnnotations:
-			// case IProblem.InvalidUsageOfAnnotationDeclarations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_5);
-			// break;
-			// case IProblem.DiamondNotBelow17:
-			// TypeArgumentMismatchSubProcessor.getInferDiamondArgumentsProposal(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.AutoManagedResourceNotBelow17:
-			// case IProblem.MultiCatchNotBelow17:
-			// case IProblem.PolymorphicMethodNotBelow17:
-			// case IProblem.BinaryLiteralNotBelow17:
-			// case IProblem.UnderscoresInLiteralsNotBelow17:
-			// case IProblem.SwitchOnStringsNotBelow17:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_7);
-			// break;
-			// case IProblem.LambdaExpressionNotBelow18:
-			// LocalCorrectionsSubProcessor.getConvertLambdaToAnonymousClassCreationsProposals(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.ExplicitThisParameterNotBelow18:
-			// case IProblem.DefaultMethodNotBelow18:
-			// case IProblem.StaticInterfaceMethodNotBelow18:
-			// case IProblem.MethodReferenceNotBelow18:
-			// case IProblem.ConstructorReferenceNotBelow18:
-			// case IProblem.IntersectionCastNotBelow18:
-			// case IProblem.InvalidUsageOfTypeAnnotations:
-			// ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context,
-			// problem, proposals, JavaCore.VERSION_1_8);
-			// break;
-			// case IProblem.NonGenericType:
-			// TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.MissingOverrideAnnotation:
-			// case
-			// IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
-			// ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.NonGenericType:
+				TypeArgumentMismatchSubProcessor.removeMismatchedArguments(context, problem, proposals);
+				break;
+			case IProblem.MissingOverrideAnnotation:
+			case IProblem.MissingOverrideAnnotationForInterfaceMethodImplementation:
+				ModifierCorrectionSubProcessor.addOverrideAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.MethodMustOverride:
 			case IProblem.MethodMustOverrideOrImplement:
 				ModifierCorrectionSubProcessor.removeOverrideAnnotationProposal(context, problem, proposals);
 				break;
-			// case IProblem.FieldMissingDeprecatedAnnotation:
-			// case IProblem.MethodMissingDeprecatedAnnotation:
-			// case IProblem.TypeMissingDeprecatedAnnotation:
-			// ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.FieldMissingDeprecatedAnnotation:
+			case IProblem.MethodMissingDeprecatedAnnotation:
+			case IProblem.TypeMissingDeprecatedAnnotation:
+			case IProblem.MemberOfDeprecatedTypeNotDeprecated:
+				ModifierCorrectionSubProcessor.addDeprecatedAnnotationProposal(context, problem, proposals);
+				break;
 			case IProblem.OverridingDeprecatedMethod:
 			case IProblem.OverridingDeprecatedSinceVersionMethod:
 			case IProblem.OverridingTerminallyDeprecatedMethod:
@@ -508,15 +480,41 @@ public class QuickFixProcessor {
 				ModifierCorrectionSubProcessor.addOverridingDeprecatedMethodProposal(context, problem, proposals);
 				break;
 			case IProblem.UsingDeprecatedMethod:
-				ASTNode deprecatedMethodNode = context.getCoveredNode();
+				ASTNode deprecatedMethodNode = problem.getCoveredNode(context.getASTRoot());
 				if (deprecatedMethodNode != null && !(deprecatedMethodNode instanceof MethodInvocation)) {
 					deprecatedMethodNode = deprecatedMethodNode.getParent();
 				}
 				if (deprecatedMethodNode instanceof MethodInvocation methodInvocation && QuickAssistProcessorUtil.isDeprecatedMethodCallWithReplacement(methodInvocation)) {
 					IProposableFix fix = InlineMethodFixCore.create(FixMessages.InlineDeprecatedMethod_msg, (CompilationUnit) methodInvocation.getRoot(), methodInvocation);
 					if (fix != null) {
-						proposals.add(CodeActionHandler.wrap(null, CodeActionKind.QuickFix));
-						new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context);
+						proposals.add(CodeActionHandler.wrap(
+							new FixCorrectionProposalCore(fix, null, IProposalRelevance.INLINE_DEPRECATED_METHOD, context),
+							CodeActionKind.QuickFix));
+					}
+				}
+				break;
+			case IProblem.UsingDeprecatedField:
+				ASTNode deprecatedFieldNode = problem.getCoveredNode(context.getASTRoot());
+				if (deprecatedFieldNode != null && !(deprecatedFieldNode instanceof QualifiedName)
+						&& !(deprecatedFieldNode instanceof FieldAccess)
+						&& !(deprecatedFieldNode instanceof SuperFieldAccess)) {
+					ASTNode originalNode = deprecatedFieldNode;
+					deprecatedFieldNode = ASTNodes.getFirstAncestorOrNull(deprecatedFieldNode, QualifiedName.class, FieldAccess.class, SuperFieldAccess.class);
+					if (deprecatedFieldNode == null && originalNode instanceof SimpleName) {
+						deprecatedFieldNode = originalNode;
+					}
+				}
+				if (deprecatedFieldNode != null) {
+					String replacement = QuickAssistProcessorUtil.getDeprecatedFieldReplacement(deprecatedFieldNode);
+					if (replacement != null) {
+						IProposableFix fix = ReplaceDeprecatedFieldFixCore.create(FixMessages.ReplaceDeprecatedField_msg, replacement, (CompilationUnit)deprecatedFieldNode.getRoot(), deprecatedFieldNode);
+						if (fix != null) {
+							Map<String, String> options = Map.of(CleanUpConstants.REPLACE_DEPRECATED_FIELDS, CleanUpOptions.TRUE);
+							proposals.add(CodeActionHandler.wrap(
+								new FixCorrectionProposalCore(fix, new ReplaceDeprecatedFieldCleanUpCore(options), IProposalRelevance.REPLACE_DEPRECATED_FIELD, context),
+								CodeActionKind.QuickFix)
+							);
+						}
 					}
 				}
 				break;
@@ -536,22 +534,19 @@ public class QuickFixProcessor {
 			case IProblem.RawTypeReference:
 			case IProblem.UnsafeRawMethodInvocation:
 				LocalCorrectionsSubProcessor.addDeprecatedFieldsToMethodsProposals(context, problem, proposals);
+				//$FALL-THROUGH$
+			case IProblem.UnsafeElementTypeConversion:
+				LocalCorrectionsSubProcessor.addTypeParametersToRawTypeReference(context, problem, proposals);
 				break;
-			// //$FALL-THROUGH$
-			// case IProblem.UnsafeElementTypeConversion:
-			// LocalCorrectionsSubProcessor.addTypePrametersToRawTypeReference(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.RedundantSpecificationOfTypeArguments:
-			// LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.RedundantSpecificationOfTypeArguments:
+				LocalCorrectionsSubProcessor.addRemoveRedundantTypeArgumentsProposals(context, problem, proposals);
+				break;
 			case IProblem.FallthroughCase:
 				LocalCorrectionsSubProcessor.addFallThroughProposals(context, problem, proposals);
 				break;
-			// case IProblem.UnhandledWarningToken:
-			// SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
-			// break;
+			case IProblem.UnhandledWarningToken:
+				SuppressWarningsSubProcessor.addUnknownSuppressWarningProposals(context, problem, proposals);
+				break;
 			case IProblem.ProblemNotAnalysed:
 			case IProblem.UnusedWarningToken:
 				SuppressWarningsSubProcessor.addRemoveUnusedSuppressWarningProposals(context, problem, proposals);
@@ -590,93 +585,83 @@ public class QuickFixProcessor {
 			case IProblem.AbstractServiceImplementation:
 			case IProblem.ProviderMethodOrConstructorRequiredForServiceImpl:
 			case IProblem.ServiceImplDefaultConstructorNotPublic:
-				// LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
+				LocalCorrectionsSubProcessor.addServiceProviderProposal(context, problem, proposals);
 				LocalCorrectionsSubProcessor.addServiceProviderConstructorProposals(context, problem, proposals);
 				break;
 			case IProblem.MissingSynchronizedModifierInInheritedMethod:
 				ModifierCorrectionSubProcessor.addSynchronizedMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.UnusedObjectAllocation:
-			// LocalCorrectionsSubProcessor.getUnusedObjectAllocationProposals(context,
-			// problem, proposals);
-			// break;
+			case IProblem.UnusedObjectAllocation:
+				LocalCorrectionsSubProcessor.getUnusedObjectAllocationProposals(context, problem, proposals);
+				break;
 			case IProblem.MethodCanBeStatic:
 			case IProblem.MethodCanBePotentiallyStatic:
 				ModifierCorrectionSubProcessor.addStaticMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.PotentialHeapPollutionFromVararg :
-			// VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.UnsafeGenericArrayForVarargs:
-			// VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.SafeVarargsOnFixedArityMethod :
-			// case IProblem.SafeVarargsOnNonFinalInstanceMethod:
-			// VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.IllegalReturnNullityRedefinition:
-			// case IProblem.IllegalDefinitionToNonNullParameter:
-			// case IProblem.IllegalRedefinitionToNonNullParameter:
-			// boolean isArgProblem = id !=
-			// IProblem.IllegalReturnNullityRedefinition;
-			// NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context,
-			// problem, proposals, ChangeKind.LOCAL, isArgProblem);
-			// NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context,
-			// problem, proposals, ChangeKind.OVERRIDDEN, isArgProblem);
-			// break;
-			// case IProblem.RequiredNonNullButProvidedSpecdNullable:
-			// case IProblem.RequiredNonNullButProvidedUnknown:
-			// NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context,
-			// problem, proposals);
-			// //$FALL-THROUGH$
-			// case IProblem.RequiredNonNullButProvidedNull:
-			// case IProblem.RequiredNonNullButProvidedPotentialNull:
-			// case IProblem.ParameterLackingNonNullAnnotation:
-			// case IProblem.ParameterLackingNullableAnnotation:
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.LOCAL, proposals);
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.TARGET, proposals);
-			// break;
-			// case IProblem.RedundantNullCheckAgainstNonNullType:
-			// case IProblem.SpecdNonNullLocalVariableComparisonYieldsFalse:
-			// case IProblem.RedundantNullCheckOnSpecdNonNullLocalVariable:
-			// IJavaProject prj = context.getCompilationUnit().getJavaProject();
-			// if (prj != null &&
-			// JavaCore.ENABLED.equals(prj.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS,
-			// true))) {
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.LOCAL, proposals);
-			// }
-			// break;
-			// case IProblem.RedundantNullAnnotation:
-			// case IProblem.RedundantNullDefaultAnnotationPackage:
-			// case IProblem.RedundantNullDefaultAnnotationType:
-			// case IProblem.RedundantNullDefaultAnnotationMethod:
-			// case IProblem.RedundantNullDefaultAnnotationLocal:
-			// case IProblem.RedundantNullDefaultAnnotationField:
-			// NullAnnotationsCorrectionProcessor.addRemoveRedundantAnnotationProposal(context,
-			// problem, proposals);
-			// break;
+			case IProblem.PotentialHeapPollutionFromVararg:
+				VarargsWarningsSubProcessor.addAddSafeVarargsProposals(context, problem, proposals);
+				break;
+			case IProblem.UnsafeGenericArrayForVarargs:
+				VarargsWarningsSubProcessor.addAddSafeVarargsToDeclarationProposals(context, problem, proposals);
+				break;
+			case IProblem.SafeVarargsOnFixedArityMethod:
+			case IProblem.SafeVarargsOnNonFinalInstanceMethod:
+				VarargsWarningsSubProcessor.addRemoveSafeVarargsProposals(context, problem, proposals);
+				break;
+			case IProblem.IllegalReturnNullityRedefinition:
+			case IProblem.IllegalDefinitionToNonNullParameter:
+			case IProblem.IllegalRedefinitionToNonNullParameter:
+				boolean isArgProblem = id != IProblem.IllegalReturnNullityRedefinition;
+				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, ChangeKind.LOCAL, isArgProblem);
+				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, ChangeKind.OVERRIDDEN, isArgProblem);
+				break;
+			case IProblem.RequiredNonNullButProvidedSpecdNullable:
+			case IProblem.RequiredNonNullButProvidedUnknown:
+				NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context, problem, proposals);
+				//$FALL-THROUGH$
+			case IProblem.RequiredNonNullButProvidedNull:
+			case IProblem.RequiredNonNullButProvidedPotentialNull:
+			case IProblem.NullityUncheckedTypeAnnotation:
+			case IProblem.ParameterLackingNonNullAnnotation:
+			case IProblem.ParameterLackingNullableAnnotation:
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.TARGET, proposals);
+				break;
+			case IProblem.RedundantNullCheckAgainstNonNullType:
+			case IProblem.SpecdNonNullLocalVariableComparisonYieldsFalse:
+			case IProblem.RedundantNullCheckOnSpecdNonNullLocalVariable:
+				IJavaProject prj = context.getCompilationUnit().getJavaProject();
+				if (prj != null && JavaCore.ENABLED.equals(prj.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
+					NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				}
+				break;
+			case IProblem.RedundantNullAnnotation:
+			case IProblem.RedundantNullDefaultAnnotationPackage:
+			case IProblem.RedundantNullDefaultAnnotationType:
+			case IProblem.RedundantNullDefaultAnnotationMethod:
+			case IProblem.RedundantNullDefaultAnnotationLocal:
+			case IProblem.RedundantNullDefaultAnnotationField:
+				NullAnnotationsCorrectionProcessor.addRemoveRedundantAnnotationProposal(context, problem, proposals);
+				break;
+			case IProblem.DereferencingNullableExpression:
+			case IProblem.NullityMismatchingTypeAnnotation:
+				NullAnnotationsCorrectionProcessor.addReplaceNullableAnnotationProposal(context, problem, proposals);
+				break;
+			case IProblem.ContradictoryNullAnnotations:
+				NullAnnotationsCorrectionProcessor.addRemoveContradictoryAnnotationProposals(context, problem, proposals);
+				break;
 			case IProblem.UnusedTypeParameter:
 				LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context, problem, proposals);
 				break;
-			// case IProblem.NullableFieldReference:
-			// NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context,
-			// problem, proposals);
-			// break;
-			// case IProblem.ConflictingNullAnnotations:
-			// case IProblem.ConflictingInheritedNullAnnotations:
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.LOCAL, proposals);
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.INVERSE, proposals);
-			// NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context,
-			// problem, ChangeKind.OVERRIDDEN, proposals);
-			// break;
+			case IProblem.NullableFieldReference:
+				NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context, problem, proposals);
+				break;
+			case IProblem.ConflictingNullAnnotations:
+			case IProblem.ConflictingInheritedNullAnnotations:
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.INVERSE, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.OVERRIDDEN, proposals);
+				break;
 			case IProblem.IllegalQualifiedEnumConstantLabel:
 				LocalCorrectionsSubProcessor.addIllegalQualifiedEnumConstantLabelProposal(context, problem, proposals);
 				break;
@@ -684,23 +669,27 @@ public class QuickFixProcessor {
 			case IProblem.InheritedDefaultMethodConflictsWithOtherInherited:
 				LocalCorrectionsSubProcessor.addOverrideDefaultMethodProposal(context, problem, proposals);
 				break;
-			// case IProblem.PotentialNullLocalVariableReference:
-			// IJavaProject prj2= context.getCompilationUnit().getJavaProject();
-			// if (prj2 != null &&
-			// JavaCore.ENABLED.equals(prj2.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS,
-			// true))) {
-			// NullAnnotationsCorrectionProcessor.addLocalVariableAnnotationProposal(context,
-			// problem, proposals);
-			// }
-			// break;
-			// case IProblem.TypeAnnotationAtQualifiedName:
-			// case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
-			// case IProblem.NullAnnotationAtQualifyingType:
-			// case IProblem.IllegalAnnotationForBaseType:
-			// TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context,
-			// problem, proposals);
-			// break;
-
+			case IProblem.PotentialNullLocalVariableReference:
+				IJavaProject prj2 = context.getCompilationUnit().getJavaProject();
+				if (prj2 != null && JavaCore.ENABLED.equals(prj2.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
+					NullAnnotationsCorrectionProcessor.addLocalVariableAnnotationProposal(context, problem, proposals);
+				}
+				break;
+			case IProblem.MissingNonNullByDefaultAnnotationOnPackage:
+				NullAnnotationsCorrectionProcessor.addAddMissingDefaultNullnessProposal(context, problem, proposals);
+				break;
+			case IProblem.FeatureNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals);
+				break;
+			case IProblem.MultiConstantCaseLabelsNotSupported:
+				ReorgCorrectionsSubProcessor.getNeedHigherComplianceProposals(context, problem, proposals, JavaCore.VERSION_14);
+				break;
+			case IProblem.TypeAnnotationAtQualifiedName:
+			case IProblem.IllegalTypeAnnotationsInStaticMemberAccess:
+			case IProblem.NullAnnotationAtQualifyingType:
+			case IProblem.IllegalAnnotationForBaseType:
+				TypeAnnotationSubProcessor.addMoveTypeAnnotationToTypeProposal(context, problem, proposals);
+				break;
 			default:
 				String str = problem.toString();
 				System.out.println(str);
