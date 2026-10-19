@@ -48,14 +48,31 @@ public class JLSFile extends LocalFile {
     @Override
     public String[] childNames(int options, IProgressMonitor monitor) {
         String[] childNames = super.childNames(options, monitor);
+        IPath filePath = new Path(this.filePath);
+        IPath preservedShadowRoot = getPreservedShadowRoot(filePath);
+        if (preservedShadowRoot == null && JLSFsUtils.isExcluded(filePath)) {
+            return childNames;
+        }
+        if (preservedShadowRoot != null) {
+            Set<String> childNameSet = new LinkedHashSet<>();
+            for (String childName : childNames) {
+                if (!ProjectMetadataStore.PROTECTED_METADATA_NAMES.contains(childName)
+                        || preservedShadowRoot.append(childName).toFile().exists()) {
+                    childNameSet.add(childName);
+                }
+            }
+            for (String fileName : ProjectMetadataStore.PROTECTED_METADATA_NAMES) {
+                if (preservedShadowRoot.append(fileName).toFile().exists()) {
+                    childNameSet.add(fileName);
+                }
+            }
+            childNames = childNameSet.toArray(String[]::new);
+        }
+
         if (JLSFsUtils.generatesMetadataFilesAtProjectRoot()) {
             return childNames;
         }
 
-        IPath filePath = new Path(this.filePath);
-        if (JLSFsUtils.isExcluded(filePath)) {
-            return childNames;
-        }
         String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(filePath);
         if (projectName == null) {
             return childNames;
@@ -63,6 +80,9 @@ public class JLSFile extends LocalFile {
 
         Set<String> childNameSet = new LinkedHashSet<>(Arrays.asList(childNames));
         for (String fileName : JLSFsUtils.METADATA_NAMES) {
+            if (preservedShadowRoot != null && ProjectMetadataStore.PROTECTED_METADATA_NAMES.contains(fileName)) {
+                continue;
+            }
             if (!childNameSet.contains(fileName) &&
                     JLSFsUtils.METADATA_FOLDER_PATH.append(projectName).append(fileName).toFile().exists()) {
                 childNameSet.add(fileName);
@@ -89,14 +109,40 @@ public class JLSFile extends LocalFile {
     @Override
     public IFileInfo[] childInfos(int options, IProgressMonitor monitor) {
         IFileInfo[] childInfos = super.childInfos(options, monitor);
+        IPath filePath = new Path(this.filePath);
+        Set<String> physicalNames = new LinkedHashSet<>();
+        for (IFileInfo info : childInfos) {
+            physicalNames.add(info.getName());
+        }
+        IPath preservedShadowRoot = getPreservedShadowRoot(filePath);
+        if (preservedShadowRoot == null && JLSFsUtils.isExcluded(filePath)) {
+            return childInfos;
+        }
+        if (preservedShadowRoot != null) {
+            List<IFileInfo> result = new ArrayList<>();
+            for (IFileInfo info : childInfos) {
+                if (!ProjectMetadataStore.PROTECTED_METADATA_NAMES.contains(info.getName())) {
+                    result.add(info);
+                    continue;
+                }
+                IPath shadowChild = preservedShadowRoot.append(info.getName());
+                if (shadowChild.toFile().exists()) {
+                    result.add(new JLSFile(shadowChild.toFile()).fetchInfo());
+                }
+            }
+            for (String fileName : ProjectMetadataStore.PROTECTED_METADATA_NAMES) {
+                IPath shadowChild = preservedShadowRoot.append(fileName);
+                if (!physicalNames.contains(fileName) && shadowChild.toFile().exists()) {
+                    result.add(new JLSFile(shadowChild.toFile()).fetchInfo());
+                }
+            }
+            childInfos = result.toArray(IFileInfo[]::new);
+        }
+
         if (JLSFsUtils.generatesMetadataFilesAtProjectRoot()) {
             return childInfos;
         }
 
-        IPath filePath = new Path(this.filePath);
-        if (JLSFsUtils.isExcluded(filePath)) {
-            return childInfos;
-        }
         String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(filePath);
         if (projectName == null) {
             return childInfos;
@@ -109,6 +155,9 @@ public class JLSFile extends LocalFile {
 
         List<IFileInfo> result = null;
         for (String fileName : JLSFsUtils.METADATA_NAMES) {
+            if (preservedShadowRoot != null && ProjectMetadataStore.PROTECTED_METADATA_NAMES.contains(fileName)) {
+                continue;
+            }
             if (!existingNames.contains(fileName) &&
                     JLSFsUtils.METADATA_FOLDER_PATH.append(projectName).append(fileName).toFile().exists()) {
                 if (result == null) {
@@ -124,7 +173,12 @@ public class JLSFile extends LocalFile {
     @Override
     public IFileStore getChild(String name) {
         IPath path = new Path(this.filePath).append(name);
-        if (JLSFsUtils.shouldStoreInMetadataArea(path) && !JLSFsUtils.isExcluded(path)) {
+        boolean excluded = JLSFsUtils.isExcluded(path);
+        IPath preservedPath = ProjectMetadataStore.getRedirectedPath(path);
+        if (preservedPath != null) {
+            return new JLSFile(preservedPath.toFile());
+        }
+        if (JLSFsUtils.shouldStoreInMetadataArea(path) && !excluded) {
             IPath containerPath = JLSFsUtils.getContainerPath(path);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
             if (projectName == null) {
@@ -142,7 +196,12 @@ public class JLSFile extends LocalFile {
     @Override
     public IFileStore getFileStore(IPath path) {
         IPath fullPath = new Path(this.filePath).append(path);
-        if (JLSFsUtils.shouldStoreInMetadataArea(fullPath) && !JLSFsUtils.isExcluded(fullPath)) {
+        boolean excluded = JLSFsUtils.isExcluded(fullPath);
+        IPath preservedPath = ProjectMetadataStore.getRedirectedPath(fullPath);
+        if (preservedPath != null) {
+            return new JLSFile(preservedPath.toFile());
+        }
+        if (JLSFsUtils.shouldStoreInMetadataArea(fullPath) && !excluded) {
             IPath containerPath = JLSFsUtils.getContainerPath(fullPath);
             String projectName = JLSFsUtils.getProjectNameIfLocationIsProjectRoot(containerPath);
             if (projectName == null) {
@@ -155,5 +214,9 @@ public class JLSFile extends LocalFile {
         }
 
         return new JLSFile(fullPath.toFile());
+    }
+
+    private static IPath getPreservedShadowRoot(IPath projectRoot) {
+        return ProjectMetadataStore.getShadowRoot(projectRoot);
     }
 }
