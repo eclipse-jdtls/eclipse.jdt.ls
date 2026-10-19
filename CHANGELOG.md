@@ -1,5 +1,16 @@
 # Change Log
 
+# [1.63.0 (October 19, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/155?closed=1)
+
+ * bug fix - False positive "Flexible Constructor Bodies" errors appear when Lombok is enabled. See [#3930](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3930).
+ * bug fix - Incoming call hierarchies sometimes duplicate the results. See [#3904](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3904).
+ * bug fix - Resources are excluded from the classpath for Gradle projects. See [#3765](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3765).
+ * bug fix - Failed to get source path when the project is not contained in root. See [#2982](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/2982).
+ * build - Suppress HTTP wire/Aether DEBUG logging during tests. See [#3935](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3935).
+ * build - Revert to a build of jdt.core where the tests pass. See [#3934](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3934).
+ * build - Add asm to target platform. See [#3917](https://github.com/eclipse-jdtls/eclipse.jdt.ls/pull/3917).
+ * build - Use Java 25 in CodeQL pipeline. See [#3913](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3913).
+
 # [1.62.0 (October 1st, 2026)](https://github.com/eclipse-jdtls/eclipse.jdt.ls/milestone/154?closed=1)
 
  * enhancement - Support Java 27. See [#3889](https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3889).
