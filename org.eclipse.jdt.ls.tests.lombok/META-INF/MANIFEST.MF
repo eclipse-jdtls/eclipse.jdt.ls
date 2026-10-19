@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Automatic-Module-Name: org.eclipse.jdt.ls.tests.lombok
 Bundle-Name: %Bundle-Name
 Bundle-SymbolicName: org.eclipse.jdt.ls.tests.lombok;singleton:=true
-Bundle-Version: 1.63.0.qualifier
+Bundle-Version: 1.64.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: org.junit.jupiter.api;version="[5.14.0,6.0.0)",
  org.junit.jupiter.api.extension;version="[5.14.0,6.0.0)",
