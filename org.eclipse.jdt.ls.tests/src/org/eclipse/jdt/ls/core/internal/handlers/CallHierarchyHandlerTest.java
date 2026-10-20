@@ -229,6 +229,37 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
+	public void incomingCalls_searchScopeChanged() throws Exception {
+		// Line 16 from `CallHierarchy`
+		//      WordUtils.<|>capitalize("a");
+		String uri = getUriFromJarProject("org.sample.CallHierarchy");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 15, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		CallHierarchyItem capitalizeWithDelimiters = getOutgoings(items.get(0)).get(0).getTo();
+		CallHierarchyItem isDelimiter = getOutgoings(capitalizeWithDelimiters).stream().map(CallHierarchyOutgoingCall::getTo).filter(item -> item.getName().startsWith("isDelimiter(")).findFirst().orElseThrow();
+
+		// capitalize(String, char...) is now one of the callers already found, and so are its own callers
+		assertTrue(getIncomingCalls(isDelimiter).stream().anyMatch(call -> call.getFrom().getName().equals(capitalizeWithDelimiters.getName())));
+		assertTrue(getIncomingCalls(capitalizeWithDelimiters).stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			List<CallHierarchyIncomingCall> calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertEquals(0, calls.size());
+
+			preferences.setSearchScope(SearchScope.main);
+			calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertTrue(calls.stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
+	}
+
+	@Test
 	public void incomingCalls_OnInterfaceMethod() throws Exception {
 		// Line 27 from `CallHierarchy`
 		//    public void <|>bar() {

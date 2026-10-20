@@ -50,6 +50,8 @@ import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.internal.corext.callhierarchy.CallHierarchyCore;
 import org.eclipse.jdt.internal.corext.callhierarchy.CallLocation;
+import org.eclipse.jdt.internal.corext.callhierarchy.CallerMethodWrapper;
+import org.eclipse.jdt.internal.corext.callhierarchy.MethodCall;
 import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
@@ -209,13 +211,16 @@ public class CallHierarchyHandler {
 
 		checkMonitor(monitor);
 
-		MethodWrapper wrapper = incomingMethodWrapperCache.containsKey(candidate) ?
-			incomingMethodWrapperCache.get(candidate) : getCallRoot(candidate, true);
+		SearchScope searchScope = preferenceManager == null ? SearchScope.all : preferenceManager.getPreferences().getSearchScope();
+		MethodWrapper wrapper = incomingMethodWrapperCache.get(candidate);
+		// A wrapper found in another scope keeps that scope and the callers it already found there
+		if (!(wrapper instanceof ScopedCallerMethodWrapper scoped && scoped.searchScope == searchScope)) {
+			wrapper = getIncomingCallRoot(candidate, searchScope);
+		}
 		if (wrapper == null || !wrapper.canHaveChildren()) {
 			return null;
 		}
 		IProgressMonitor callMonitor = sub.split(1);
-		CallHierarchyCore.getDefault().setSearchScope(createSearchScope());
 		MethodWrapper[] calls = wrapper.getCalls(callMonitor);
 		// MethodWrapper does not report progress when called on a cached value
 		// This can result in failing to report progress completion when a set of calls are cached
@@ -248,17 +253,25 @@ public class CallHierarchyHandler {
 		return result;
 	}
 
-	/**
-	 * Creates the scope of the caller search. <code>null</code> restores the
-	 * call hierarchy's default, the workspace scope, which also searches the
-	 * application and system libraries.
-	 */
-	private IJavaSearchScope createSearchScope() throws JavaModelException {
-		if (preferenceManager == null || preferenceManager.getPreferences().getSearchScope() != SearchScope.projectOnly) {
+	private MethodWrapper getIncomingCallRoot(IMember member, SearchScope searchScope) throws JavaModelException {
+		MethodWrapper root = getCallRoot(member, true);
+		if (root == null) {
 			return null;
 		}
-		IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS);
+		return new ScopedCallerMethodWrapper(null, root.getMethodCall(), searchScope, createSearchScope(searchScope));
+	}
+
+	/**
+	 * Creates the scope of the caller search. Unless <code>projectOnly</code> is
+	 * selected, it is the call hierarchy's default, the workspace scope, which
+	 * also searches the application and system libraries.
+	 */
+	private static IJavaSearchScope createSearchScope(SearchScope searchScope) throws JavaModelException {
+		if (searchScope == SearchScope.projectOnly) {
+			IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
+			return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS);
+		}
+		return SearchEngine.createWorkspaceScope();
 	}
 
 	private Range getRange(IOpenable openable, CallLocation location) {
@@ -428,6 +441,33 @@ public class CallHierarchyHandler {
 
 	private void reconcile(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
 		unit.reconcile(NO_AST, false, null, monitor);
+	}
+
+	/**
+	 * Searches for callers in its own scope, which the callers it finds inherit.
+	 * {@link CallHierarchyCore} keeps a single search scope for the whole server,
+	 * so a scope set there for one request would also be used by any other
+	 * incoming-calls request running at the same time.
+	 */
+	private static class ScopedCallerMethodWrapper extends CallerMethodWrapper {
+		private final SearchScope searchScope;
+		private final IJavaSearchScope javaSearchScope;
+
+		ScopedCallerMethodWrapper(MethodWrapper parent, MethodCall methodCall, SearchScope searchScope, IJavaSearchScope javaSearchScope) {
+			super(parent, methodCall);
+			this.searchScope = searchScope;
+			this.javaSearchScope = javaSearchScope;
+		}
+
+		@Override
+		protected IJavaSearchScope getSearchScope() {
+			return javaSearchScope;
+		}
+
+		@Override
+		public MethodWrapper createMethodWrapper(MethodCall methodCall) {
+			return new ScopedCallerMethodWrapper(this, methodCall, searchScope, javaSearchScope);
+		}
 	}
 
 }
