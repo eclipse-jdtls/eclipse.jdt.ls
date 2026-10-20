@@ -20,7 +20,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<argLine>-Dguice_custom_class_loading=CHILD ${tycho.testArgLine} ${os.testArgs}</argLine>
 						<runOrder>random</runOrder>
 						<environmentVariables>
 							<syntaxserver>true</syntaxserver>
