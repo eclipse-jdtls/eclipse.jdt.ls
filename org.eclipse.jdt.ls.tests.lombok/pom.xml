@@ -39,7 +39,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs} "-javaagent:${basedir}/lib/lombok-${lombok.version}.jar"</argLine>
+						<argLine>-Dguice_custom_class_loading=CHILD ${tycho.testArgLine} ${os.testArgs} "-javaagent:${basedir}/lib/lombok-${lombok.version}.jar"</argLine>
 						<runOrder>random</runOrder>
 					</configuration>
 				</plugin>
