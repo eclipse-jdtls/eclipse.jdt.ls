@@ -48,7 +48,7 @@
 					<artifactId>tycho-surefire-plugin</artifactId>
 					<version>${tycho-version}</version>
 					<configuration>
-						<argLine>${tycho.testArgLine} ${os.testArgs}</argLine>
+						<argLine>-Dguice_custom_class_loading=CHILD ${tycho.testArgLine} ${os.testArgs}</argLine>
 						<systemProperties>
 							<logback.configurationFile>${project.basedir}/logback-test.xml</logback.configurationFile>
 						</systemProperties>
