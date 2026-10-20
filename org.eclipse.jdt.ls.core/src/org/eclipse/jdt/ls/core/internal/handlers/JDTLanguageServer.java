@@ -1236,19 +1236,19 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 	@Override
 	public CompletableFuture<List<CallHierarchyItem>> prepareCallHierarchy(CallHierarchyPrepareParams params) {
 		debugTrace(">> textDocument/prepareCallHierarchy");
-		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().prepareCallHierarchy(params, monitor));
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler(preferenceManager).prepareCallHierarchy(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<List<CallHierarchyIncomingCall>> callHierarchyIncomingCalls(CallHierarchyIncomingCallsParams params) {
 		debugTrace(">> callHierarchy/incomingCalls");
-		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchyIncomingCalls(params, monitor));
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler(preferenceManager).callHierarchyIncomingCalls(params, monitor));
 	}
 
 	@Override
 	public CompletableFuture<List<CallHierarchyOutgoingCall>> callHierarchyOutgoingCalls(CallHierarchyOutgoingCallsParams params) {
 		debugTrace(">> callHierarchy/outgoingCalls");
-		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler().callHierarchyOutgoingCalls(params, monitor));
+		return computeAsyncWithClientProgress((monitor) -> new CallHierarchyHandler(preferenceManager).callHierarchyOutgoingCalls(params, monitor));
 	}
 
 	@Override

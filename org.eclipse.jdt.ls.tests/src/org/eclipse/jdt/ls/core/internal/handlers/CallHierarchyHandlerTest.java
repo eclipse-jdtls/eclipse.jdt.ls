@@ -30,6 +30,7 @@ import org.eclipse.jdt.internal.core.manipulation.JavaElementLabelsCore;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
@@ -192,6 +193,39 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(jarUri.startsWith("jdt://"));
 		assertTrue(jarUri.contains("org.apache.commons.lang3.text/WordUtils.java?"));
 		assertTrue(jarUri.contains("org.apache.commons.lang3.text%28WordUtils.class"));
+	}
+
+	@Test
+	public void incomingCalls_projectOnly() throws Exception {
+		// Line 16 from `CallHierarchy`
+		//      WordUtils.<|>capitalize("a");
+		String uri = getUriFromJarProject("org.sample.CallHierarchy");
+		List<CallHierarchyItem> items = prepareCallHierarchy(uri, 15, 18);
+		assertNotNull(items);
+		assertEquals(1, items.size());
+		CallHierarchyItem capitalize = assertItem(items.get(0), "capitalize(String)" + JavaElementLabelsCore.DECL_STRING + "String", Method, "org.apache.commons.lang3.text.WordUtils", false, 61);
+		CallHierarchyItem capitalizeWithDelimiters = getOutgoings(capitalize).get(0).getTo();
+
+		// The library's sources are attached, so the default scope finds its own callers too
+		List<CallHierarchyIncomingCall> calls = getIncomingCalls(capitalizeWithDelimiters);
+		assertNotNull(calls);
+		assertTrue(calls.stream().anyMatch(call -> call.getFrom().getUri().startsWith("jdt://")));
+
+		SearchScope searchScope = preferences.getSearchScope();
+		try {
+			preferences.setSearchScope(SearchScope.projectOnly);
+			calls = getIncomingCalls(capitalizeWithDelimiters);
+			assertNotNull(calls);
+			assertEquals(0, calls.size());
+
+			calls = getIncomingCalls(capitalize);
+			assertNotNull(calls);
+			assertEquals(1, calls.size());
+			assertItem(calls.get(0).getFrom(), "build()" + JavaElementLabelsCore.DECL_STRING + "Object", Method, "org.sample.CallHierarchy$FooBuilder", false, 15);
+			assertTrue(calls.get(0).getFrom().getUri().startsWith("file:"));
+		} finally {
+			preferences.setSearchScope(searchScope);
+		}
 	}
 
 	@Test
