@@ -1430,6 +1430,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
 	public void testUncaughtExceptionOnThis() throws Exception {
 
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
@@ -3079,6 +3080,7 @@ public class LocalCorrectionQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1);
 	}
 
+	@Test
 	public void testUncheckedConversionVariableDeclaration() throws Exception {
 		Map<String, String> tempOptions = new HashMap<>(fJProject1.getOptions(false));
 		tempOptions.put(JavaCore.COMPILER_PB_UNCHECKED_TYPE_OPERATION, JavaCore.WARNING);

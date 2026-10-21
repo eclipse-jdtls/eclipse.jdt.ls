@@ -320,6 +320,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		assertCodeActions(cu, e1, e2);
 	}
 
+	@Test
 	public void testMissingReturn3() throws Exception {
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -349,7 +350,7 @@ public class JavadocQuickFixTest extends AbstractQuickFixTest {
 		buf.append("        return 1;\n");
 		buf.append("    }\n");
 		buf.append("}\n");
-		Expected e1 = new Expected("Add '@param' tag", buf.toString());
+		Expected e1 = new Expected("Add '@return' tag", buf.toString());
 		Expected e2 = new Expected("Add all missing tags", buf.toString());
 		assertCodeActions(cu, e1, e2);
 	}
