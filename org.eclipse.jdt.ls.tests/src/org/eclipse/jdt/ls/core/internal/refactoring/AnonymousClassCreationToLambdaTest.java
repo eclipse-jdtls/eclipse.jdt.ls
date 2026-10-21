@@ -178,6 +178,7 @@ public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 		assertCodeActions(cu, e);
 	}
 
+	@Test
 	public void testConvertToLambda5() throws Exception {
 		IPackageFragment pack = fSourceFolder.createPackageFragment("test", false, null);
 		StringBuilder buf = new StringBuilder();
@@ -190,7 +191,7 @@ public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		buf.append("public class X {\n");
 		buf.append("    static void foo(A a) { }\n");
-		buf.append("    static void foo(B b) { }\n");
+		buf.append("    static void foo(J j) { }\n");
 		buf.append("    public static void main(String[] args) {\n");
 		buf.append("        foo(new A() {\n");
 		buf.append("            @Override\n");
@@ -212,7 +213,7 @@ public class AnonymousClassCreationToLambdaTest extends AbstractSelectionTest {
 		buf.append("}\n");
 		buf.append("public class X {\n");
 		buf.append("    static void foo(A a) { }\n");
-		buf.append("    static void foo(B b) { }\n");
+		buf.append("    static void foo(J j) { }\n");
 		buf.append("    public static void main(String[] args) {\n");
 		buf.append("        foo((A) () -> 0);\n");
 		buf.append("    }\n");
