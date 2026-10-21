@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -37,18 +38,26 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IInitializer;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IOpenable;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeRoot;
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.internal.corext.callhierarchy.CallHierarchyCore;
 import org.eclipse.jdt.internal.corext.callhierarchy.CallLocation;
+import org.eclipse.jdt.internal.corext.callhierarchy.CallerMethodWrapper;
+import org.eclipse.jdt.internal.corext.callhierarchy.MethodCall;
 import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JDTUtils.LocationType;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
+import org.eclipse.jdt.ls.core.internal.preferences.Preferences.SearchScope;
 import org.eclipse.lsp4j.CallHierarchyIncomingCall;
 import org.eclipse.lsp4j.CallHierarchyIncomingCallsParams;
 import org.eclipse.lsp4j.CallHierarchyItem;
@@ -63,6 +72,16 @@ import org.eclipse.lsp4j.SymbolTag;
 public class CallHierarchyHandler {
 	private static Map<IJavaElement, MethodWrapper> incomingMethodWrapperCache = new ConcurrentHashMap<>();
 	private static Map<IJavaElement, MethodWrapper> outgoingMethodWrapperCache = new ConcurrentHashMap<>();
+
+	private final PreferenceManager preferenceManager;
+
+	public CallHierarchyHandler() {
+		this(JavaLanguageServerPlugin.getPreferencesManager());
+	}
+
+	public CallHierarchyHandler(PreferenceManager preferenceManager) {
+		this.preferenceManager = preferenceManager;
+	}
 
 	public List<CallHierarchyItem> prepareCallHierarchy(CallHierarchyPrepareParams params, IProgressMonitor monitor) {
 		Assert.isNotNull(params, "params");
@@ -192,8 +211,12 @@ public class CallHierarchyHandler {
 
 		checkMonitor(monitor);
 
-		MethodWrapper wrapper = incomingMethodWrapperCache.containsKey(candidate) ?
-			incomingMethodWrapperCache.get(candidate) : getCallRoot(candidate, true);
+		SearchScope searchScope = preferenceManager == null ? SearchScope.all : preferenceManager.getPreferences().getSearchScope();
+		MethodWrapper wrapper = incomingMethodWrapperCache.get(candidate);
+		// A wrapper found in another scope keeps that scope and the callers it already found there
+		if (!(wrapper instanceof ScopedCallerMethodWrapper scoped && scoped.searchScope == searchScope)) {
+			wrapper = getIncomingCallRoot(candidate, searchScope);
+		}
 		if (wrapper == null || !wrapper.canHaveChildren()) {
 			return null;
 		}
@@ -228,6 +251,27 @@ public class CallHierarchyHandler {
 		}
 
 		return result;
+	}
+
+	private MethodWrapper getIncomingCallRoot(IMember member, SearchScope searchScope) throws JavaModelException {
+		MethodWrapper root = getCallRoot(member, true);
+		if (root == null) {
+			return null;
+		}
+		return new ScopedCallerMethodWrapper(null, root.getMethodCall(), searchScope, createSearchScope(searchScope));
+	}
+
+	/**
+	 * Creates the scope of the caller search. Unless <code>projectOnly</code> is
+	 * selected, it is the call hierarchy's default, the workspace scope, which
+	 * also searches the application and system libraries.
+	 */
+	private static IJavaSearchScope createSearchScope(SearchScope searchScope) throws JavaModelException {
+		if (searchScope == SearchScope.projectOnly) {
+			IJavaProject[] projects = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
+			return SearchEngine.createJavaSearchScope(projects, IJavaSearchScope.SOURCES | IJavaSearchScope.REFERENCED_PROJECTS);
+		}
+		return SearchEngine.createWorkspaceScope();
 	}
 
 	private Range getRange(IOpenable openable, CallLocation location) {
@@ -397,6 +441,33 @@ public class CallHierarchyHandler {
 
 	private void reconcile(ICompilationUnit unit, IProgressMonitor monitor) throws JavaModelException {
 		unit.reconcile(NO_AST, false, null, monitor);
+	}
+
+	/**
+	 * Searches for callers in its own scope, which the callers it finds inherit.
+	 * {@link CallHierarchyCore} keeps a single search scope for the whole server,
+	 * so a scope set there for one request would also be used by any other
+	 * incoming-calls request running at the same time.
+	 */
+	private static class ScopedCallerMethodWrapper extends CallerMethodWrapper {
+		private final SearchScope searchScope;
+		private final IJavaSearchScope javaSearchScope;
+
+		ScopedCallerMethodWrapper(MethodWrapper parent, MethodCall methodCall, SearchScope searchScope, IJavaSearchScope javaSearchScope) {
+			super(parent, methodCall);
+			this.searchScope = searchScope;
+			this.javaSearchScope = javaSearchScope;
+		}
+
+		@Override
+		protected IJavaSearchScope getSearchScope() {
+			return javaSearchScope;
+		}
+
+		@Override
+		public MethodWrapper createMethodWrapper(MethodCall methodCall) {
+			return new ScopedCallerMethodWrapper(this, methodCall, searchScope, javaSearchScope);
+		}
 	}
 
 }
