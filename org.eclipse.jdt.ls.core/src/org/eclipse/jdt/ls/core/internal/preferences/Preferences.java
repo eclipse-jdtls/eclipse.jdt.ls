@@ -574,7 +574,6 @@ public class Preferences {
 	public static final String JAVA_JDT_LS_KOTLIN_SUPPORT_ENABLED = "java.jdt.ls.kotlinSupport.enabled";
 	public static final String JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED = "java.jdt.ls.groovySupport.enabled";
 	public static final String JAVA_JDT_LS_SCALA_SUPPORT_ENABLED = "java.jdt.ls.scalaSupport.enabled";
-	public static final String JAVA_JDT_LS_JAVAC_ENABLED = "java.jdt.ls.javac.enabled";
 
 	public static final String JAVA_COMPILE_NULLANALYSIS_NONNULL = "java.compile.nullAnalysis.nonnull";
 	public static final String JAVA_COMPILE_NULLANALYSIS_NULLABLE = "java.compile.nullAnalysis.nullable";
@@ -782,7 +781,6 @@ public class Preferences {
 	private boolean kotlinSupportEnabled;
 	private boolean groovySupportEnabled;
 	private boolean scalaSupportEnabled;
-	private boolean javacEnabled;
 	private boolean androidSupportEnabled;
 	private List<String> nonnullTypes;
 	private List<String> nullableTypes;
@@ -1055,7 +1053,6 @@ public class Preferences {
 		inlayHintsFormatParametersEnabled = false;
 		projectEncoding = ProjectEncodingMode.IGNORE;
 		avoidVolatileChanges = true;
-		javacEnabled = false;
 		nonnullTypes = new ArrayList<>();
 		nullableTypes = new ArrayList<>();
 		nonnullbydefaultTypes = new ArrayList<>();
@@ -1230,7 +1227,6 @@ public class Preferences {
 		prefs.kotlinSupportEnabled = this.kotlinSupportEnabled;
 		prefs.groovySupportEnabled = this.groovySupportEnabled;
 		prefs.scalaSupportEnabled = this.scalaSupportEnabled;
-		prefs.javacEnabled = this.javacEnabled;
 		prefs.androidSupportEnabled = this.androidSupportEnabled;
 		prefs.nullAnalysisMode = this.nullAnalysisMode;
 		prefs.cleanUpActionsOnSaveEnabled = this.cleanUpActionsOnSaveEnabled;
@@ -1923,11 +1919,6 @@ public class Preferences {
 		if (containsKey(configuration, JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED)) {
 			boolean groovySupported = getBoolean(configuration, JAVA_JDT_LS_GROOVY_SUPPORT_ENABLED, existing.groovySupportEnabled);
 			prefs.setGroovySupportEnabled(groovySupported);
-		}
-
-		if (containsKey(configuration, JAVA_JDT_LS_JAVAC_ENABLED)) {
-			boolean javacEnabled = getBoolean(configuration, JAVA_JDT_LS_JAVAC_ENABLED, existing.javacEnabled);
-			prefs.setJavacEnabled(javacEnabled);
 		}
 
 		if (containsKey(configuration, JAVA_JDT_LS_ANDROID_SUPPORT_ENABLED)) {
@@ -3201,14 +3192,6 @@ public class Preferences {
 
 	public void setAndroidSupportEnabled(boolean androidSupportEnabled) {
 		this.androidSupportEnabled = androidSupportEnabled;
-	}
-
-	public boolean isJavacEnabled() {
-		return this.javacEnabled;
-	}
-
-	public void setJavacEnabled(boolean javacEnabled) {
-		this.javacEnabled = javacEnabled;
 	}
 
 	public List<String> getNonnullTypes() {
