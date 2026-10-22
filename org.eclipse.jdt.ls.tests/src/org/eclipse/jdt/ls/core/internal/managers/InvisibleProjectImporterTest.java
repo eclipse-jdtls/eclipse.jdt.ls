@@ -117,9 +117,10 @@ public class InvisibleProjectImporterTest extends AbstractInvisibleProjectBasedT
 
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		//watchers.sort((a, b) -> a.getGlobPattern().compareTo(b.getGlobPattern()));
-		assertEquals(12, watchers.size()); // basic(9) + project(1) + library(1)
-		String srcGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter("**/src/**"::equals).findFirst().get();
-		assertTrue(srcGlobPattern.equals("**/src/**"), "Unexpected source glob pattern: " + srcGlobPattern);
+		assertEquals(13, watchers.size()); // basic(9) + project(1) + library(1)
+		String srcGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(s -> s.endsWith("**/src/**")).findFirst().get();
+		assertTrue(srcGlobPattern.startsWith("/tmp/automaticJarDetectionLibUnderSource"), "Unexpected source glob pattern start: " + srcGlobPattern);
+		assertTrue(srcGlobPattern.endsWith("**/src/**"), "Unexpected source glob pattern end: " + srcGlobPattern);
 		String projGlobPattern = watchers.stream().map(FileSystemWatcher::getGlobPattern).map(globPattern -> globPattern.map(Function.identity(), RelativePattern::getPattern)).filter(w -> w.endsWith(projectFolder.getName() + "/**"))
 				.findFirst().get();
 		assertTrue(projGlobPattern.endsWith(projectFolder.getName() + "/**"), "Unexpected project glob pattern: " + projGlobPattern);
