@@ -13,7 +13,7 @@
 	<packaging>eclipse-test-plugin</packaging>
 
 	<properties>
-		<lombok.version>1.18.36</lombok.version>
+		<lombok.version>1.18.48</lombok.version>
 	</properties>
 
 	<build>
@@ -26,7 +26,7 @@
 						<artifactItem>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>1.18.36</version>
+							<version>${lombok.version}</version>
 						</artifactItem>
 					</artifactItems>
 				</configuration>
