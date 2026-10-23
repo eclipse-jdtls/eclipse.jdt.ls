@@ -228,6 +228,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					renameWithGroupId(existing, monitor);
 				}
 			}
+			String projectNameTemplate = getPreferences().getMavenProjectNameTemplate();
+			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
+				importConfig.setProjectNameTemplate(projectNameTemplate);
+			}
 			List<IMavenProjectImportResult> importResults = configurationManager.importProjects(
 					infos, importConfig, monitor);
 			return importResults.stream()
@@ -340,6 +344,10 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			if (toImport.size() > artifactIds.size()) {
 				// Ensure project name is unique when same artifactId
 				importConfig.setProjectNameTemplate(DUPLICATE_ARTIFACT_TEMPLATE);
+			}
+			String projectNameTemplate = getPreferences().getMavenProjectNameTemplate();
+			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
+				importConfig.setProjectNameTemplate(projectNameTemplate);
 			}
 			if (toImport.size() > MAX_PROJECTS_TO_IMPORT && Runtime.getRuntime().maxMemory() <= MAX_MEMORY) {
 				JavaLanguageServerPlugin.logInfo("Projects size:" + toImport.size());

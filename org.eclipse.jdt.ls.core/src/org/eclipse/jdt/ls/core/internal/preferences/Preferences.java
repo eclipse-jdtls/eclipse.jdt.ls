@@ -229,6 +229,10 @@ public class Preferences {
 	 * Preference key to enable/disable maven offline mode.
 	 */
 	public static final String IMPORT_MAVEN_OFFLINE = "java.import.maven.offline.enabled";
+	/**
+	 * Preference key for the Maven project name template.
+	 */
+	public static final String IMPORT_MAVEN_PROJECT_NAME_TEMPLATE = "java.import.maven.projectNameTemplate";
 
 	/**
 	 * Preference key to enable/disable maven test classpath flag.
@@ -681,6 +685,7 @@ public class Preferences {
 	private ImportMode importMode;
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
+	private String mavenProjectNameTemplate;
 	private boolean mavenDisableTestClasspathFlag;
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
@@ -979,6 +984,7 @@ public class Preferences {
 		importMode = ImportMode.FULL;
 		importMavenEnabled = true;
 		mavenOffline = false;
+		mavenProjectNameTemplate = null;
 		mavenDisableTestClasspathFlag = false;
 		mavenDownloadSources = false;
 		eclipseDownloadSources = false;
@@ -1153,6 +1159,7 @@ public class Preferences {
 		prefs.importMode = this.importMode;
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
+		prefs.mavenProjectNameTemplate = this.mavenProjectNameTemplate;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
 		prefs.mavenDownloadSources = this.mavenDownloadSources;
 		prefs.eclipseDownloadSources = this.eclipseDownloadSources;
@@ -1384,6 +1391,11 @@ public class Preferences {
 		if (containsKey(configuration, IMPORT_MAVEN_OFFLINE)) {
 			boolean mavenOffline = getBoolean(configuration, IMPORT_MAVEN_OFFLINE, existing.mavenOffline);
 			prefs.setMavenOffline(mavenOffline);
+		}
+
+		if (containsKey(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE)) {
+			String mavenProjectNameTemplate = getString(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE);
+			prefs.setMavenProjectNameTemplate(mavenProjectNameTemplate);
 		}
 
 		if (containsKey(configuration, MAVEN_DISABLE_TEST_CLASSPATH_FLAG)) {
@@ -2224,6 +2236,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenProjectNameTemplate(String mavenProjectNameTemplate) {
+		this.mavenProjectNameTemplate = mavenProjectNameTemplate;
+		return this;
+	}
+
 	public Preferences setMavenDisableTestClasspathFlag(boolean enabled) {
 		this.mavenDisableTestClasspathFlag = enabled;
 		return this;
@@ -2592,6 +2609,10 @@ public class Preferences {
 
 	public boolean isMavenOffline() {
 		return mavenOffline;
+	}
+
+	public String getMavenProjectNameTemplate() {
+		return mavenProjectNameTemplate;
 	}
 
 	public boolean isMavenDisableTestClasspathFlag() {
