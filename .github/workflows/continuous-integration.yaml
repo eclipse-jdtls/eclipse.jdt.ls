@@ -27,6 +27,10 @@ jobs:
           java-version: '25'
           distribution: temurin
           architecture: x64
+      - name: Verify Gradle Wrappers
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          allow-checksums: 41c8aa7a337a44af18d8cda0d632ebba469aef34f3041827624ef5c1a4e4419d
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
@@ -98,6 +102,10 @@ jobs:
           java-version: '25'
           distribution: temurin
           architecture: x64
+      - name: Verify Gradle Wrappers
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          allow-checksums: 41c8aa7a337a44af18d8cda0d632ebba469aef34f3041827624ef5c1a4e4419d
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
@@ -169,6 +177,10 @@ jobs:
           java-version: '25'
           distribution: temurin
           architecture: x64
+      - name: Verify Gradle Wrappers
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
+        with:
+          allow-checksums: 41c8aa7a337a44af18d8cda0d632ebba469aef34f3041827624ef5c1a4e4419d
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e #v6.1.0
         with:
