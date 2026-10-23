@@ -154,11 +154,13 @@ public class TextEditConverter extends TextEditVisitor {
 	@Override
 	public boolean visit(MultiTextEdit edit) {
 		try {
+			String source = compilationUnit.getSource();
+			MultiTextEdit filtered = filterInvalidEdits(edit, source);
 			org.eclipse.lsp4j.TextEdit te = this.createTextEdit(this.changeAnnotation);
-			te.setRange(JDTUtils.toRange(compilationUnit, edit.getOffset(), edit.getLength()));
-			Document doc = new Document(compilationUnit.getSource());
-			edit.apply(doc, TextEdit.UPDATE_REGIONS);
-			String content = doc.get(edit.getOffset(), edit.getLength());
+			te.setRange(JDTUtils.toRange(compilationUnit, filtered.getOffset(), filtered.getLength()));
+			Document doc = new Document(source);
+			filtered.apply(doc, TextEdit.UPDATE_REGIONS);
+			String content = doc.get(filtered.getOffset(), filtered.getLength());
 			te.setNewText(content);
 			converted.add(te);
 			return false;
@@ -166,6 +168,38 @@ public class TextEditConverter extends TextEditVisitor {
 			JavaLanguageServerPlugin.logException("Error converting TextEdits", e);
 		}
 		return false;
+	}
+
+	private MultiTextEdit filterInvalidEdits(MultiTextEdit edit, String source) {
+		TextEdit[] children = edit.getChildren();
+		boolean hasInvalid = false;
+		for (TextEdit child : children) {
+			if (child instanceof ReplaceEdit re) {
+				int offset = re.getOffset();
+				if (offset >= 0 && offset < source.length()) {
+					char ch = source.charAt(offset);
+					if (!Character.isJavaIdentifierStart(ch)) {
+						hasInvalid = true;
+						break;
+					}
+				}
+			}
+		}
+		if (!hasInvalid) {
+			return edit;
+		}
+		MultiTextEdit filtered = new MultiTextEdit();
+		for (TextEdit child : children) {
+			if (child instanceof ReplaceEdit re) {
+				int offset = re.getOffset();
+				if (offset >= 0 && offset < source.length() && Character.isJavaIdentifierStart(source.charAt(offset))) {
+					filtered.addChild(re.copy());
+				}
+			} else {
+				filtered.addChild(child.copy());
+			}
+		}
+		return filtered;
 	}
 
 	/* (non-Javadoc)
