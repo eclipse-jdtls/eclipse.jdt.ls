@@ -239,6 +239,10 @@ public class JDTLanguageServer extends BaseJDTLanguageServer implements Language
 		return workingCopyOwner;
 	}
 
+	public OnDemandImportManager getOnDemandImportManager() {
+		return onDemandImportManager;
+	}
+
 	public JDTLanguageServer(ProjectsManager projects, PreferenceManager preferenceManager) {
 		this(projects, preferenceManager, WorkspaceExecuteCommandHandler.getInstance());
 	}

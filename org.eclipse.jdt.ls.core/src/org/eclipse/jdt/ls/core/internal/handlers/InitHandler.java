@@ -99,8 +99,11 @@ final public class InitHandler extends BaseInitHandler {
 
 	@Override
 	public Map<?, ?> handleInitializationOptions(InitializeParams param) {
+		long t0 = System.currentTimeMillis();
 		JobHelpers.waitForJobs(JavaLanguageServerPlugin.INITIALIZE_AFTER_JOB, new NullProgressMonitor());
+		long t1 = System.currentTimeMillis();
 		Map<?, ?> initializationOptions = super.handleInitializationOptions(param);
+		long t2 = System.currentTimeMillis();
 
 		try {
 			@SuppressWarnings("unchecked")
@@ -110,6 +113,8 @@ final public class InitHandler extends BaseInitHandler {
 			// The additional plug-ins should not affect the main language server loading.
 			JavaLanguageServerPlugin.logException("Failed to load extension bundles ", e);
 		}
+		long t3 = System.currentTimeMillis();
+		JavaLanguageServerPlugin.logInfo("handleInitializationOptions timing: waitForJobs=" + (t1 - t0) + "ms, super.handleInitializationOptions=" + (t2 - t1) + "ms, loadBundles=" + (t3 - t2) + "ms, total=" + (t3 - t0) + "ms");
 
 		return initializationOptions;
 	}
@@ -250,6 +255,7 @@ final public class InitHandler extends BaseInitHandler {
 		// When starting, Java LS turn off autobuild. See JavaLanguageServerPlugin.start(BundleContext).
 		// In this case Eclipse schedules the AutoBuildJobOff job. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=573595#c11
 		// This job causes Java LS sometimes to hang at https://github.com/eclipse-jdt/eclipse.jdt.core/blob/master/org.eclipse.jdt.apt.core/src/org/eclipse/jdt/apt/core/internal/generatedfile/GeneratedSourceFolderManager.java#L508
+		long ti0 = System.currentTimeMillis();
 		Preferences preferences = preferenceManager.getPreferences();
 		if (preferences.getImportMode() == ImportMode.ON_DEMAND) {
 			// Close projects left open by a previous session
@@ -258,6 +264,7 @@ final public class InitHandler extends BaseInitHandler {
 			// indexing stale projects between scheduling and job execution.
 			onDemandImportManager.closeStaleProjects(roots, null);
 		}
+		long ti1 = System.currentTimeMillis();
 		Job.getJobManager().wakeUp(ResourcesPlugin.FAMILY_AUTO_BUILD);
 		IWorkspace workspace = ResourcesPlugin.getWorkspace();
 		if (workspace instanceof Workspace workspaceImpl) {
@@ -265,6 +272,8 @@ final public class InitHandler extends BaseInitHandler {
 				workspaceImpl.getBuildManager().waitForAutoBuildOff();
 			}
 		}
+		long ti2 = System.currentTimeMillis();
+		JavaLanguageServerPlugin.logInfo("triggerInitialization timing: closeStaleProjects=" + (ti1 - ti0) + "ms, waitForAutoBuildOff=" + (ti2 - ti1) + "ms");
 		Job job = new WorkspaceJob("Initialize Workspace") {
 			@Override
 			public IStatus runInWorkspace(IProgressMonitor monitor) {
