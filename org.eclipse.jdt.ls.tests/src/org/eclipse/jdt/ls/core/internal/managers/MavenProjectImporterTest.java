@@ -552,6 +552,21 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		}
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/4552
+	@Test
+	public void testImportWithProjectNameTemplate() throws Exception {
+		try {
+			this.preferences.setMavenProjectNameTemplate("[groupId]-[artifactId]-[version]");
+			importProjects("maven/multimodule-same-ga-diff-version");
+			IProject[] projects = ProjectUtils.getAllProjects(false);
+			assertEquals(2, projects.length);
+			assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example-my-app-1.0-SNAPSHOT")));
+			assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example-my-app-2.0-SNAPSHOT")));
+		} finally {
+			this.preferences.setMavenProjectNameTemplate(null);
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/3639
 	@Test
 	public void testInvalidProject() throws Exception {
