@@ -5,15 +5,16 @@ import org.gradle.api.Task
 import org.gradle.api.UnknownDomainObjectException
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.internal.DefaultDomainObjectCollection
 import org.gradle.api.internal.DefaultNamedDomainObjectCollection
-import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.plugins.ide.eclipse.model.EclipseModel
 import org.gradle.plugins.ide.eclipse.model.SourceFolder
 import org.gradle.plugins.ide.eclipse.model.ClasspathEntry
 import org.gradle.plugins.ide.eclipse.model.Classpath
 import org.gradle.plugins.ide.eclipse.model.Library
+import org.gradle.plugins.ide.eclipse.model.ProjectDependency
 import org.gradle.plugins.ide.eclipse.model.internal.FileReferenceFactory
 import org.gradle.util.GradleVersion
 
@@ -33,7 +34,6 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
 
     private static final List<String> ANDROID_PLUGIN_IDS = Arrays.asList("com.android.application", "com.android.library")
     private static final List<String> DEFAULT_SOURCE_SET_NAMES = Arrays.asList("main", "test", "androidTest")
-    private static final List<String> SUPPORTED_CONFIGURATION_KEYS = Arrays.asList("implementationConfigurationName", "apiConfigurationName", "compileConfigurationName", "compileOnlyConfigurationName", "runtimeOnlyConfigurationName")
 
     private static final String OPTIONAL_ATTRIBUTE = "optional"
     private static final String TEST_ATTRIBUTE = "test"
@@ -66,9 +66,8 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
                 eclipseModel.synchronizationTasks(synchronizationTasks)
             }
             List<Object> androidSourceSets = getAndroidSourceSets(project)
-            // Get project configurations from supported sourceSets names and configuration keys,
-            // and add them to eclipseModel.classpath.plusConfigurations
-            addPlusConfiguration(project, eclipseModel, androidSourceSets)
+            // Add the variants' resolvable compile classpaths to eclipseModel.classpath.plusConfigurations
+            addVariantClasspaths(eclipseModel, variants)
             eclipseModel.classpath.setDownloadSources(true)
             // Remove JDK container since android project should use embedded JDK types included in android.jar
             List<String> containers = new ArrayList<>()
@@ -91,6 +90,8 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             // Add project dependencies to project classpath of eclipse model
             // for aar dependencies, extract classes.jar and add them to project classpath
             eclipseModel.classpath.file.whenMerged(new AddProjectDependenciesAction(project))
+            // Add references to Android library projects, which the eclipse plugin cannot map from the variant classpaths
+            eclipseModel.classpath.file.whenMerged(new AddProjectReferencesAction(project, variants))
         }
     }
 
@@ -123,31 +124,32 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
         return null
     }
 
-    private static void addPlusConfiguration(Project project, EclipseModel eclipseModel, List<Object> androidSourceSets) {
-        List<String> plusConfigurationNames = new ArrayList<>()
-        for (Object androidSourceSet : androidSourceSets) {
-            for (String key : SUPPORTED_CONFIGURATION_KEYS) {
-                if (androidSourceSet.properties.containsKey(key)) {
-                    plusConfigurationNames.add(androidSourceSet.properties.get(key).toString())
-                }
-            }
-        }
-        SortedMap<String, Configuration> configurations = project.getConfigurations().getAsMap()
-        for (String config : plusConfigurationNames) {
-            if (configurations.containsKey(config)) {
-                Configuration configuration = configurations.get(config)
-                // set null target as default target
-                for (Dependency dependency : configuration.getDependencies()) {
-                    if (dependency instanceof DefaultProjectDependency) {
-                        if (((DefaultProjectDependency) dependency).getTargetConfiguration() == null) {
-                            ((DefaultProjectDependency) dependency).setTargetConfiguration("default")
-                        }
-                    }
-                }
-                configuration.setCanBeResolved(true)
+    // Source sets' configurations (implementation, api...) are dependency scopes: recent AGP creates them role-locked,
+    // so they cannot be made resolvable. The variants' compile classpaths are already resolvable and carry the
+    // variant attributes needed to pick the right artifacts.
+    private static void addVariantClasspaths(EclipseModel eclipseModel, List<Object> variants) {
+        for (Configuration configuration : getVariantCompileClasspaths(variants)) {
+            if (configuration.canBeResolved) {
                 eclipseModel.classpath.plusConfigurations.add(configuration)
             }
         }
+    }
+
+    private static List<Configuration> getVariantCompileClasspaths(List<Object> variants) {
+        List<Configuration> configurations = new ArrayList<>()
+        for (Object variant : variants) {
+            for (Object component : [variant, variant.properties.get("unitTestVariant"), variant.properties.get("testVariant")]) {
+                try {
+                    Object configuration = component.properties.get("compileConfiguration")
+                    if (configuration instanceof Configuration) {
+                        configurations.add((Configuration) configuration)
+                    }
+                } catch (NullPointerException ignored) {
+                    // NPE occurs when the variant doesn't have related properties, we just skip these unsupported scenarios
+                }
+            }
+        }
+        return configurations
     }
 
     private static List<Object> getAndroidDebuggableVariants(Project project) {
@@ -400,6 +402,39 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
                 library.setSourcePath(fileReferenceFactory.fromFile(sourcesDir))
             }
             classpath.entries.add(library)
+        }
+    }
+
+    private static class AddProjectReferencesAction implements Action<Classpath> {
+        private final Project project
+        private final List<Object> variants
+
+        AddProjectReferencesAction(Project project, List<Object> variants) {
+            this.project = project
+            this.variants = variants
+        }
+
+        @Override
+        void execute(Classpath classpath) {
+            Set<String> referencePaths = new LinkedHashSet<>()
+            for (Configuration configuration : getVariantCompileClasspaths(this.variants)) {
+                ResolvedComponentResult root = configuration.incoming.resolutionResult.root
+                for (ResolvedComponentResult component : configuration.incoming.resolutionResult.allComponents) {
+                    // Project paths are relative to their own build, so only components of the current build map onto its projects
+                    if (component.id instanceof ProjectComponentIdentifier && component.id != root.id && component.id.build == root.id.build) {
+                        Project dependencyProject = this.project.findProject(component.id.projectPath)
+                        if (dependencyProject != null) {
+                            EclipseModel eclipseModel = (EclipseModel) dependencyProject.property(ECLIPSE_PROPERTY)
+                            referencePaths.add("/" + eclipseModel.project.name)
+                        }
+                    }
+                }
+            }
+            for (String referencePath : referencePaths) {
+                if (!classpath.entries.any { it instanceof ProjectDependency && it.path == referencePath }) {
+                    classpath.entries.add(new ProjectDependency(referencePath))
+                }
+            }
         }
     }
 
