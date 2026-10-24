@@ -69,14 +69,9 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             // Add the variants' resolvable compile classpaths to eclipseModel.classpath.plusConfigurations
             addVariantClasspaths(eclipseModel, variants)
             eclipseModel.classpath.setDownloadSources(true)
-            // Remove JDK container since android project should use embedded JDK types included in android.jar
-            List<String> containers = new ArrayList<>()
-            for (String containerName : eclipseModel.classpath.containers) {
-                if (containerName.contains("JavaSE")) {
-                    containers.add(containerName)
-                }
-            }
-            eclipseModel.classpath.containers.removeAll(containers)
+            // Keep the JDK container: android.jar lacks java.lang.invoke.StringConcatFactory and LambdaMetafactory,
+            // which the compiler needs for string concatenation and lambdas from Java 9 on. AddAndroidSDKAction
+            // places android.jar ahead of it so that android.jar's java.* types still win.
             // Add supported source sets to source folders of eclipse model
             eclipseModel.classpath.file.whenMerged(new AddSourceFoldersAction(project, androidSourceSets))
             // Add data binding files to source folders of eclipse model
@@ -401,7 +396,9 @@ class JavaLanguageServerAndroidPlugin implements Plugin<Project> {
             if (sourcesDir.exists() && sourcesDir.isDirectory()) {
                 library.setSourcePath(fileReferenceFactory.fromFile(sourcesDir))
             }
-            classpath.entries.add(library)
+            // Insert before the JDK container so that android.jar's types take precedence over the JDK's
+            int firstContainerIndex = classpath.entries.findIndexOf { it.kind == "con" }
+            classpath.entries.add(firstContainerIndex < 0 ? classpath.entries.size() : firstContainerIndex, library)
         }
     }
 

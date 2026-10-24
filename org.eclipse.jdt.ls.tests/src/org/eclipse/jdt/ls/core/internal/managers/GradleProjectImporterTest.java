@@ -673,7 +673,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(5, classpathEntries.length);
+				assertEquals(6, classpathEntries.length);
 				// main sourceSet are added to classpath correctly
 				assertTrue(Arrays.stream(classpathEntries).anyMatch(cpe -> {
 					return "/app/src/main/java".equals(cpe.getPath().toString());
@@ -711,7 +711,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 				assertEquals(2, classpathEntries.length);
 			} else {
 				// android SDK is detected, android project should be imported successfully
-				assertEquals(5, classpathEntries.length);
+				assertEquals(6, classpathEntries.length);
 			}
 			this.preferences.setAndroidSupportEnabled(false);
 			for (IProject project : projects) {
