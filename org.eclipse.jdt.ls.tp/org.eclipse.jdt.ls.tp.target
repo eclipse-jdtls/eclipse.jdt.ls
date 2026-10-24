@@ -33,7 +33,7 @@
 			<unit id="org.eclipse.jdt.core.compiler.batch" version="0.0.0" />
 			<unit id="org.eclipse.jdt.core" version="0.0.0" />
 			<unit id="org.eclipse.jdt.apt.core" version="0.0.0" />
-			<repository location="https://download.eclipse.org/eclipse/updates/4.42-I-builds/I20261012-2300" />
+			<repository location="https://download.eclipse.org/eclipse/updates/4.42-I-builds/I20261023-2300" />
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 			<unit id="org.eclipse.jdt.core.javac" version="0.0.0" />
@@ -44,7 +44,7 @@
 			<unit id="ch.qos.logback.classic" version="0.0.0" />
 			<unit id="ch.qos.logback.core" version="0.0.0" />
 			<unit id="org.objectweb.asm" version="0.0.0" />
-			<repository location="https://download.eclipse.org/releases/2026-09/" />
+			<repository location="https://download.eclipse.org/releases/2026-12/" />
 		</location>
 		<location includeAllPlatforms="false" includeConfigurePhase="false" includeMode="planner" includeSource="true" type="InstallableUnit">
 			<repository location="https://download.eclipse.org/lsp4j/updates/releases/1.0.0/" />
@@ -56,13 +56,13 @@
 				<dependency>
 					<groupId>commons-codec</groupId>
 					<artifactId>commons-codec</artifactId>
-					<version>1.22.1</version>
+					<version>1.23.0</version>
 					<type>jar</type>
 				</dependency>
 				<dependency>
 					<groupId>org.apache.commons</groupId>
 					<artifactId>commons-lang3</artifactId>
-					<version>3.20.0</version>
+					<version>3.21.0</version>
 					<type>jar</type>
 				</dependency>
 				<dependency>
