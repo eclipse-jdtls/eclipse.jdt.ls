@@ -27,6 +27,7 @@ import com.vladsch.flexmark.ast.Reference;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.renderer.LinkType;
 import com.vladsch.flexmark.html.renderer.ResolvedLink;
+import com.vladsch.flexmark.html2md.converter.ExtensionConversion;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.html2md.converter.HtmlConverterOptions;
 import com.vladsch.flexmark.html2md.converter.HtmlMarkdownWriter;
@@ -81,6 +82,9 @@ public class HtmlToMarkdownConverter {
 		flexmarkOptions.set(FlexmarkHtmlConverter.UNWRAPPED_TAGS, extendedUnwrappedTags);
 		flexmarkOptions.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false);
 		flexmarkOptions.set(FlexmarkHtmlConverter.TYPOGRAPHIC_SMARTS, false);
+		// Keep <sup> as HTML: flexmark's default would emit its own ^...^ superscript syntax, which is not
+		// standard Markdown (e.g. "2<sup>31</sup>-1" would render as "2^31^-1")
+		flexmarkOptions.set(FlexmarkHtmlConverter.EXT_INLINE_SUP, ExtensionConversion.HTML);
 
 		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_TRIM_CELL_WHITESPACE, true);
 		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_SPACE_AROUND_PIPES, true);

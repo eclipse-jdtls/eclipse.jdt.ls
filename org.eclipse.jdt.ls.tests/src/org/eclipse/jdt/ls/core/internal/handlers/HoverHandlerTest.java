@@ -1468,4 +1468,31 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		String markdown = new HtmlToMarkdownConverter().convert(html);
 		assertEquals("Some javadoc and then ...\n\n* **@jls**\n  * 9.6.4.1 @Target", markdown);
 	}
+
+	@Test
+	public void testHtmlToMarkdownConverter_superscriptStaysHtml() throws Exception {
+		String markdown = new HtmlToMarkdownConverter().convert("A constant holding the maximum value an <code>int</code> can have, 2<sup>31</sup>-1.");
+		assertEquals("A constant holding the maximum value an `int` can have, 2<sup>31</sup>-1.", markdown);
+	}
+
+	@Test
+	public void testHoverJavadocSuperscript() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String content = """
+				package test1;
+				public class E {
+				    /**
+				     * A constant holding the maximum value an {@code int} can have, 2<sup>31</sup>-1.
+				     */
+				    public static final int MAX = 0x7fffffff;
+				}
+				""";
+		ICompilationUnit cu = pack1.createCompilationUnit("E.java", content, false, null);
+		Hover hover = getHover(cu, 5, 28);
+		assertNotNull(hover);
+
+		String actual = hover.getContents().getLeft().get(1).getLeft();
+		actual = ResourceUtils.dos2Unix(actual);
+		assertEquals("A constant holding the maximum value an `int` can have, 2<sup>31</sup>-1.", actual.stripTrailing(), "Unexpected hover ");
+	}
 }
