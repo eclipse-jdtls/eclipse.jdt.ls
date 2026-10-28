@@ -27,7 +27,7 @@ import org.eclipse.lsp4j.Range;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class AssistQuickFixTest21 extends AbstractQuickFixTest {
+public class AssistQuickFix21Test extends AbstractQuickFixTest {
 
 	private IJavaProject fJProject;
 

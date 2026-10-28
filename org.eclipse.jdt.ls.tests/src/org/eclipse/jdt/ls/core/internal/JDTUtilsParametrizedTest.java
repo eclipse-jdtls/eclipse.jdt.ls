@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  * @author siarhei_leanavets1
  *
  */
-public class JDTUtilsTestParametrized {
+public class JDTUtilsParametrizedTest {
 
 	private static List<String> patterns = Arrays.asList(
 		"**/some/excluded/path/**",
