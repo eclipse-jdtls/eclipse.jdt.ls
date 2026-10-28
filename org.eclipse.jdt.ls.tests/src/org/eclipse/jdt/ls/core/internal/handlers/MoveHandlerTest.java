@@ -21,7 +21,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+
+import javax.tools.ToolProvider;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -30,6 +34,7 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.CodeActionUtil;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
@@ -52,6 +57,9 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IPackageFragmentRoot sourceFolder;
 
@@ -61,6 +69,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src"));
 		ClientPreferences clientPreferences = preferenceManager.getClientPreferences();
 		when(clientPreferences.isResourceOperationSupported()).thenReturn(true);
+		when(clientPreferences.isMoveRefactoringConfirmationSupported()).thenReturn(true);
 	}
 
 	@Test
@@ -506,6 +515,226 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		textEdit = changes.get(1).getLeft();
 		assertNotNull(textEdit);
 		assertEquals(expected, TextEditUtil.apply(unitFoo.getSource(), textEdit.getEdits().stream().filter(Either::isLeft).map(Either::getLeft).toList()));
+	}
+
+	@Test
+	public void testMoveStaticMethodRequiresConfirmation() throws Exception {
+		assertStaticMemberConfirmation("public static int value() { return 2; }", "value()", "return value();", "moveStaticMember");
+	}
+
+	@Test
+	public void testMoveStaticFieldRequiresConfirmation() throws Exception {
+		assertStaticMemberConfirmation("public static int field = 2;", "field =", "return field;", "moveStaticMember");
+	}
+
+	@Test
+	public void testMoveTypeToClassRequiresConfirmation() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static class Nested {} }", false, null);
+		pack.createCompilationUnit("Outer.java", "package test1; public class Outer { public class Target {} }", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "class Nested");
+		RefactorWorkspaceEdit edit = assertMoveConfirmation(new MoveParams("moveTypeToClass", context, "test1.Outer.Target", true), "Static members", source);
+		assertEquals(2, edit.edit.getDocumentChanges().size());
+	}
+
+	private void assertStaticMemberConfirmation(String member, String selection, String targetBody, String moveKind) throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		pack.createCompilationUnit("Parent.java", """
+				package test1;
+				public class Parent {
+				    public static int value() { return 1; }
+				    public static int field = 1;
+				    public static class Nested {}
+				}
+				""", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { " + member + " }", false, null);
+		pack.createCompilationUnit("Target.java", "package test1; public class Target extends Parent { int use() { " + targetBody + " } }", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, selection);
+		MoveParams params = new MoveParams(moveKind, context, "test1.Target", true);
+		RefactorWorkspaceEdit edit = assertMoveConfirmation(params, "override references", source);
+		assertEquals(2, edit.edit.getDocumentChanges().size());
+	}
+
+	@Test
+	public void testMoveConfirmationCannotBeReusedForAnotherDestinationOrKind() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static class Nested {} }", false, null);
+		pack.createCompilationUnit("Outer.java", "package test1; public class Outer { public class Target {} public class Other {} }", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "class Nested");
+		MoveParams params = new MoveParams("moveTypeToClass", context, "test1.Outer.Target", true);
+		RefactorWorkspaceEdit confirmation = MoveHandler.move(params, new NullProgressMonitor());
+		assertNotNull(confirmation.confirmationToken, confirmation.errorMessage);
+		assertStaleMoveConfirmation(withConfirmation(new MoveParams("moveTypeToClass", context, "test1.Outer.Other", true), confirmation.confirmationToken));
+		assertStaleMoveConfirmation(withConfirmation(new MoveParams("moveStaticMember", context, "test1.Outer.Target", true), confirmation.confirmationToken));
+	}
+
+	@Test
+	public void testMoveConfirmationIsNotRequiredWhenTheProblemDisappears() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		pack.createCompilationUnit("Parent.java", "package test1; public class Parent { public static int value() { return 1; } }", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static int value() { return 2; } }", false, null);
+		ICompilationUnit target = pack.createCompilationUnit("Target.java", "package test1; public class Target extends Parent { int use() { return value(); } }", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "value()");
+		MoveParams params = new MoveParams("moveStaticMember", context, "test1.Target", true);
+		RefactorWorkspaceEdit confirmation = MoveHandler.move(params, new NullProgressMonitor());
+		assertNotNull(confirmation.confirmationToken, confirmation.errorMessage);
+		target.getBuffer().setContents("package test1; public class Target extends Parent {}");
+		target.save(null, true);
+		RefactorWorkspaceEdit confirmed = MoveHandler.move(withConfirmation(params, confirmation.confirmationToken), new NullProgressMonitor());
+		assertNotNull(confirmed.edit, confirmed.errorMessage);
+		assertNull(confirmed.errorMessage);
+		assertNull(confirmed.confirmationToken);
+		RefactorWorkspaceEdit safeMove = MoveHandler.move(params, new NullProgressMonitor());
+		assertNotNull(safeMove.edit, safeMove.errorMessage);
+		assertNull(safeMove.confirmationToken);
+		assertEquals(safeMove.edit, confirmed.edit);
+	}
+
+	@Test
+	public void testMoveConfirmationDoesNotFingerprintDestinationSource() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static class Nested {} }", false, null);
+		ICompilationUnit target = pack.createCompilationUnit("Outer.java", "package test1; public class Outer { public class Target {} }", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "class Nested");
+		MoveParams params = new MoveParams("moveTypeToClass", context, "test1.Outer.Target", true);
+		RefactorWorkspaceEdit confirmation = MoveHandler.move(params, new NullProgressMonitor());
+		assertNotNull(confirmation.confirmationToken, confirmation.errorMessage);
+
+		target.getBuffer().setContents("package test1; public class Outer { /* destination changed */ public class Target {} }");
+		target.save(null, true);
+		RefactorWorkspaceEdit currentConfirmation = MoveHandler.move(params, new NullProgressMonitor());
+		assertEquals(confirmation.confirmationToken, currentConfirmation.confirmationToken, currentConfirmation.errorMessage);
+		RefactorWorkspaceEdit confirmed = MoveHandler.move(withConfirmation(params, confirmation.confirmationToken), new NullProgressMonitor());
+		assertNotNull(confirmed.edit, confirmed.errorMessage);
+		assertNull(confirmed.errorMessage);
+		assertNull(confirmed.confirmationToken);
+	}
+
+	@Test
+	public void testMoveTypeToNewFileRequiresConfirmation() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Top.java", """
+				package test1;
+				public class Top {
+				    int value;
+				    public class Inner {
+				        public Inner(int top) {
+				            System.out.println(Top.this.value + top);
+				        }
+				    }
+				}
+				""", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "class Inner");
+		RefactorWorkspaceEdit edit = assertMoveConfirmation(new MoveParams("moveTypeToNewFile", context, null, true), "parameter name", source);
+		assertTrue(edit.edit.getDocumentChanges().stream().anyMatch(change -> change.isRight() && change.getRight() instanceof CreateFile));
+		assertFalse(pack.getCompilationUnit("Inner.java").exists());
+	}
+
+	@Test
+	public void testMoveResourceRequiresConfirmationForBinaryReferences() throws Exception {
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("A.java", "package test1; public class A {}", false, null);
+		IPackageFragment destination = sourceFolder.createPackageFragment("test2", false, null);
+		Path temporaryDirectory = Files.createDirectories(source.getJavaProject().getProject().getLocation().toFile().toPath().resolve("binary-references"));
+		Path clientSource = temporaryDirectory.resolve("Client.java");
+		Files.writeString(clientSource, "package binary; public class Client { public test1.A value; }");
+		Path binaryOutput = Files.createDirectory(temporaryDirectory.resolve("bin"));
+		assertEquals(0, ToolProvider.getSystemJavaCompiler().run(null, null, null,
+				"--release", "21", "-proc:none", "-sourcepath", sourceFolder.getResource().getLocation().toOSString(),
+				"-d", binaryOutput.toString(), clientSource.toString()));
+		Files.delete(binaryOutput.resolve("test1/A.class"));
+		JavaProjectHelper.addLibrary(source.getJavaProject(), org.eclipse.core.runtime.Path.fromOSString(binaryOutput.toString()));
+
+		MoveParams params = new MoveParams("moveResource", new String[] { JDTUtils.toURI(source) }, JDTUtils.getFileURI(destination.getResource()), true);
+		RefactorWorkspaceEdit edit = assertMoveConfirmation(params, "Binary references", source);
+		assertTrue(edit.edit.getDocumentChanges().stream().anyMatch(change -> change.isRight() && change.getRight() instanceof RenameFile));
+		assertTrue(source.exists());
+		assertFalse(destination.getCompilationUnit("A.java").exists());
+	}
+
+	@Test
+	public void testMoveStaticMethodWarningDoesNotRequireConfirmation() throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(true);
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static native void method(); }", false, null);
+		pack.createCompilationUnit("Target.java", "package test1; public class Target {}", false, null);
+		CodeActionParams context = CodeActionUtil.constructCodeActionParams(source, "method()");
+		RefactorWorkspaceEdit edit = MoveHandler.move(new MoveParams("moveStaticMember", context, "test1.Target", true), new NullProgressMonitor());
+		assertNotNull(edit.edit, edit.errorMessage);
+		assertNull(edit.errorMessage);
+		assertNull(edit.confirmationToken);
+	}
+
+	@Test
+	public void testFatalMoveErrorsDoNotOfferConfirmation() throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(true);
+		IPackageFragment pack = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("Source.java", "package test1; public class Source { public static int value = 1; public static class Nested {} }", false, null);
+		pack.createCompilationUnit("Nested.java", "package test1; public class Nested {}", false, null);
+		CodeActionParams member = CodeActionUtil.constructCodeActionParams(source, "value =");
+		CodeActionParams type = CodeActionUtil.constructCodeActionParams(source, "class Nested");
+		MoveParams[] requests = {
+				new MoveParams("moveStaticMember", member, "test1.Source", true),
+				new MoveParams("moveTypeToClass", type, "test1.Source", true),
+				new MoveParams("moveTypeToNewFile", type, null, true),
+				new MoveParams("moveResource", new String[] { JDTUtils.toURI(source) }, "file:///missing-move-target", true)
+		};
+		for (MoveParams params : requests) {
+			RefactorWorkspaceEdit edit = MoveHandler.move(params, new NullProgressMonitor());
+			assertNotNull(edit);
+			assertNull(edit.edit);
+			assertNotNull(edit.errorMessage);
+			assertNull(edit.confirmationToken);
+		}
+	}
+
+	private RefactorWorkspaceEdit assertMoveConfirmation(MoveParams params, String expectedProblem, ICompilationUnit source) throws Exception {
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(false);
+		RefactorWorkspaceEdit legacy = MoveHandler.move(params, new NullProgressMonitor());
+		assertNotNull(legacy.edit, legacy.errorMessage);
+		assertNull(legacy.errorMessage);
+		assertNull(legacy.confirmationToken);
+
+		when(preferenceManager.getClientPreferences().isMoveRefactoringConfirmationSupported()).thenReturn(true);
+		RefactorWorkspaceEdit confirmation = MoveHandler.move(params, new NullProgressMonitor());
+		assertNull(confirmation.edit);
+		assertNotNull(confirmation.confirmationToken, confirmation.errorMessage);
+		assertTrue(confirmation.errorMessage.contains(expectedProblem), confirmation.errorMessage);
+		assertEquals(confirmation.confirmationToken, MoveHandler.move(params, new NullProgressMonitor()).confirmationToken);
+
+		assertStaleMoveConfirmation(withConfirmation(params, "invalid-token"));
+		MoveParams confirmedParams = withConfirmation(params, confirmation.confirmationToken);
+		String original = source.getSource();
+		try {
+			source.getBuffer().setContents(original + "\n// changed after confirmation\n");
+			source.save(null, true);
+			assertStaleMoveConfirmation(confirmedParams);
+		} finally {
+			source.getBuffer().setContents(original);
+			source.save(null, true);
+		}
+
+		RefactorWorkspaceEdit confirmed = MoveHandler.move(confirmedParams, new NullProgressMonitor());
+		assertNotNull(confirmed.edit, confirmed.errorMessage);
+		assertNull(confirmed.errorMessage);
+		assertNull(confirmed.confirmationToken);
+		assertEquals(legacy.edit, confirmed.edit);
+		return confirmed;
+	}
+
+	private MoveParams withConfirmation(MoveParams params, String token) {
+		Gson gson = new Gson();
+		JsonObject request = gson.toJsonTree(params).getAsJsonObject();
+		request.addProperty("confirmationToken", token);
+		return gson.fromJson(request, MoveParams.class);
+	}
+
+	private void assertStaleMoveConfirmation(MoveParams params) {
+		RefactorWorkspaceEdit rejected = MoveHandler.move(params, new NullProgressMonitor());
+		assertNull(rejected.edit);
+		assertNull(rejected.confirmationToken);
+		assertNotNull(rejected.errorMessage);
+		assertTrue(rejected.errorMessage.contains("conditions changed"), rejected.errorMessage);
 	}
 
 	@Test
