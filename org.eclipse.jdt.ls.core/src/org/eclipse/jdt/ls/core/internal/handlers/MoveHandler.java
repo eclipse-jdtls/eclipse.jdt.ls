@@ -493,7 +493,8 @@ public class MoveHandler {
 				create.run(subMonitor.split(80));
 				status.merge(create.getConditionCheckingStatus());
 				Change change = create.getChange();
-				return createMoveEdit("moveInstanceMethod", "move instance method", change, status, confirmationToken, params, destination, unit.getSource());
+				return createMoveEdit("moveInstanceMethod", "move instance method", change, status, confirmationToken,
+						params.getTextDocument(), params.getRange(), destination, unit.getSource());
 			} else {
 				return new RefactorWorkspaceEdit("Failed to move instance method because cannot find the target " + destination.name);
 			}
@@ -557,7 +558,8 @@ public class MoveHandler {
 			}
 
 			Change change = processor.createChange(subMonitor.split(20));
-			return createMoveEdit(moveKind, "move static member", change, status, confirmationToken, params, destinationTypeName, members[0].getCompilationUnit().getSource());
+			return createMoveEdit(moveKind, "move static member", change, status, confirmationToken,
+					params.getTextDocument(), params.getRange(), destinationTypeName, members[0].getCompilationUnit().getSource());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to move static member.", e);
 			return new RefactorWorkspaceEdit("Failed to move static member because of " + e.toString());
@@ -589,7 +591,8 @@ public class MoveHandler {
 			}
 
 			Change change = refactoring.createChange(subMonitor.split(50));
-			return createMoveEdit("moveTypeToNewFile", "move type to new file", change, status, confirmationToken, params, unit.getSource());
+			return createMoveEdit("moveTypeToNewFile", "move type to new file", change, status, confirmationToken,
+					params.getTextDocument(), params.getRange(), unit.getSource());
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to move type to new file.", e);
 			return new RefactorWorkspaceEdit("Failed to move type to new file because of " + e.toString());

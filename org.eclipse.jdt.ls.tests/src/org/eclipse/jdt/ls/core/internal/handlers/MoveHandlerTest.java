@@ -48,6 +48,7 @@ import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.lsp4j.CodeActionParams;
 import org.eclipse.lsp4j.CreateFile;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.RenameFile;
 import org.eclipse.lsp4j.ResourceOperation;
 import org.eclipse.lsp4j.TextDocumentEdit;
@@ -430,6 +431,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		cu.getBuffer().setContents(originalSource);
 		cu.save(null, true);
 		MoveParams confirmedMove = new MoveParams("moveInstanceMethod", null, params, response.destinations[0], true, refactorEdit.confirmationToken);
+		assertConfirmationIgnoresClientDiagnostics(confirmedMove);
 		RefactorWorkspaceEdit confirmedEdit = MoveHandler.move(confirmedMove, new NullProgressMonitor());
 		assertNotNull(confirmedEdit);
 		assertNotNull(confirmedEdit.edit);
@@ -704,6 +706,7 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		assertStaleMoveConfirmation(withConfirmation(params, "invalid-token"));
 		MoveParams confirmedParams = withConfirmation(params, confirmation.confirmationToken);
+		assertConfirmationIgnoresClientDiagnostics(confirmedParams);
 		String original = source.getSource();
 		try {
 			source.getBuffer().setContents(original + "\n// changed after confirmation\n");
@@ -720,6 +723,22 @@ public class MoveHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNull(confirmed.confirmationToken);
 		assertEquals(legacy.edit, confirmed.edit);
 		return confirmed;
+	}
+
+	private void assertConfirmationIgnoresClientDiagnostics(MoveParams params) {
+		Gson gson = new Gson();
+		JsonObject request = gson.toJsonTree(params).getAsJsonObject();
+		if (!request.has("params")) {
+			return;
+		}
+		CodeActionParams context = gson.fromJson(request.get("params"), CodeActionParams.class);
+		context.getContext().setDiagnostics(List.of(new Diagnostic(context.getRange(), "Updated client diagnostic")));
+		request.add("params", gson.toJsonTree(context));
+
+		RefactorWorkspaceEdit confirmed = MoveHandler.move(gson.fromJson(request, MoveParams.class), new NullProgressMonitor());
+		assertNotNull(confirmed.edit, confirmed.errorMessage);
+		assertNull(confirmed.errorMessage);
+		assertNull(confirmed.confirmationToken);
 	}
 
 	private MoveParams withConfirmation(MoveParams params, String token) {
