@@ -1470,9 +1470,17 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	@Test
-	public void testHtmlToMarkdownConverter_superscriptStaysHtml() throws Exception {
+	public void testHtmlToMarkdownConverter_superscriptHasNoClosingCaret() throws Exception {
 		String markdown = new HtmlToMarkdownConverter().convert("A constant holding the maximum value an <code>int</code> can have, 2<sup>31</sup>-1.");
-		assertEquals("A constant holding the maximum value an `int` can have, 2<sup>31</sup>-1.", markdown);
+		assertEquals("A constant holding the maximum value an `int` can have, 2^31-1.", markdown);
+	}
+
+	@Test
+	public void testHtmlToMarkdownConverter_superscriptParenthesizedWhenNotSimple() throws Exception {
+		HtmlToMarkdownConverter converter = new HtmlToMarkdownConverter();
+		assertEquals("2^(n+1)", converter.convert("2<sup>n+1</sup>"));
+		assertEquals("10^-3", converter.convert("10<sup>-3</sup>"));
+		assertEquals("x^2 + y^2", converter.convert("x<sup>2</sup> + y<sup>2</sup>"));
 	}
 
 	@Test
@@ -1493,6 +1501,6 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String actual = hover.getContents().getLeft().get(1).getLeft();
 		actual = ResourceUtils.dos2Unix(actual);
-		assertEquals("A constant holding the maximum value an `int` can have, 2<sup>31</sup>-1.", actual.stripTrailing(), "Unexpected hover ");
+		assertEquals("A constant holding the maximum value an `int` can have, 2^31-1.", actual.stripTrailing(), "Unexpected hover ");
 	}
 }

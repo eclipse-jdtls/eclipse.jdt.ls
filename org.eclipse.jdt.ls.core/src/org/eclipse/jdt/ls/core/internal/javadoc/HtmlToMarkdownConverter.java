@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.javadoc;
 
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -27,7 +28,6 @@ import com.vladsch.flexmark.ast.Reference;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.renderer.LinkType;
 import com.vladsch.flexmark.html.renderer.ResolvedLink;
-import com.vladsch.flexmark.html2md.converter.ExtensionConversion;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import com.vladsch.flexmark.html2md.converter.HtmlConverterOptions;
 import com.vladsch.flexmark.html2md.converter.HtmlMarkdownWriter;
@@ -58,6 +58,8 @@ public class HtmlToMarkdownConverter {
 	private static final String MARKDOWN_SPACE = "&nbsp;";
 	private static final String LINEBREAK = "\n";
 	private static final String DOUBLE_SPACE = "  ";
+	// A superscript that needs no parentheses: a number (optionally negative) or a word
+	private static final Pattern SIMPLE_SUPERSCRIPT = Pattern.compile("-?[A-Za-z0-9]+");
 
 	private static final Set<String> EXPLICIT_LINK_TEXT_TAGS = Set.of(FlexmarkHtmlConverter.EXPLICIT_LINK_TEXT_TAGS);
 
@@ -82,9 +84,6 @@ public class HtmlToMarkdownConverter {
 		flexmarkOptions.set(FlexmarkHtmlConverter.UNWRAPPED_TAGS, extendedUnwrappedTags);
 		flexmarkOptions.set(FlexmarkHtmlConverter.OUTPUT_ATTRIBUTES_ID, false);
 		flexmarkOptions.set(FlexmarkHtmlConverter.TYPOGRAPHIC_SMARTS, false);
-		// Keep <sup> as HTML: flexmark's default would emit its own ^...^ superscript syntax, which is not
-		// standard Markdown (e.g. "2<sup>31</sup>-1" would render as "2^31^-1")
-		flexmarkOptions.set(FlexmarkHtmlConverter.EXT_INLINE_SUP, ExtensionConversion.HTML);
 
 		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_TRIM_CELL_WHITESPACE, true);
 		flexmarkOptions.set(TablesExtension.FORMAT_TABLE_SPACE_AROUND_PIPES, true);
@@ -103,6 +102,8 @@ public class HtmlToMarkdownConverter {
 						new HtmlNodeRendererHandler<>("tt", Element.class, HtmlToMarkdownConverter.this::processTt),
 						// Treat <dfn> tags as italic text
 						new HtmlNodeRendererHandler<>("dfn", Element.class, HtmlToMarkdownConverter.this::processDfn),
+						// Output <sup> as ^text, without the closing ^ of flexmark's ^text^ syntax (e.g. 2<sup>31</sup>-1 -> 2^31-1)
+						new HtmlNodeRendererHandler<>(FlexmarkHtmlConverter.SUP_NODE, Element.class, HtmlToMarkdownConverter.this::processSup),
 						new HtmlNodeRendererHandler<>(FlexmarkHtmlConverter.DL_NODE, Element.class, HtmlToMarkdownConverter.this::processDl));
 			}
 		}).build();
@@ -339,6 +340,24 @@ public class HtmlToMarkdownConverter {
 	 * @param out
 	 *                    the markdown writer
 	 */
+	/**
+	 * Handles superscripts as <code>^text</code>. Flexmark's own handler emits <code>^text^</code>, whose
+	 * closing caret shows up literally in clients that don't support that syntax. Anything but a plain
+	 * number or word is parenthesized, so that <code>2&lt;sup&gt;n+1&lt;/sup&gt;</code> becomes
+	 * <code>2^(n+1)</code> rather than the ambiguous <code>2^n+1</code>.
+	 * @param node    the sup element
+	 * @param context the conversion context
+	 * @param out     the markdown writer
+	 */
+	private void processSup(Element node, HtmlNodeConverterContext context, HtmlMarkdownWriter out) {
+		String text = node.text();
+		if (text.isBlank()) {
+			out.append(text);
+			return;
+		}
+		out.append("^").append(SIMPLE_SUPERSCRIPT.matcher(text).matches() ? text : "(" + text + ")");
+	}
+
 	private void processDfn(Element node, HtmlNodeConverterContext context, HtmlMarkdownWriter out) {
 		String text = node.text();
 		if (text.isBlank()) {
