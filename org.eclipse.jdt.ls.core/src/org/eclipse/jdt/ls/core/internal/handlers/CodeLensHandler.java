@@ -188,6 +188,9 @@ public class CodeLensHandler {
 		}
 		try {
 			ITypeRoot typeRoot = unit != null ? unit : classFile;
+			if( !typeRoot.exists()) {
+				return Collections.emptyList();
+			}
 			IJavaElement[] elements = typeRoot.getChildren();
 			LinkedHashSet<CodeLens> lenses = new LinkedHashSet<>(elements.length);
 			collectCodeLenses(typeRoot, elements, lenses, monitor);
@@ -196,7 +199,7 @@ public class CodeLensHandler {
 			}
 			return new ArrayList<>(lenses);
 		} catch (JavaModelException e) {
-			JavaLanguageServerPlugin.logException("Problem getting code lenses for" + unit.getElementName(), e);
+			JavaLanguageServerPlugin.logException("Problem getting code lenses for " + unit == null ? "null" : unit.getElementName(), e);
 		}
 		return Collections.emptyList();
 	}
