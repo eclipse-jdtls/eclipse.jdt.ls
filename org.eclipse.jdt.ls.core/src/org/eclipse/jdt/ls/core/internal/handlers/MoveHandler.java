@@ -383,7 +383,7 @@ public class MoveHandler {
 			}
 			RefactoringStatus status = create.getConditionCheckingStatus();
 			if (status.hasFatalError()) {
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move the files. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -477,7 +477,7 @@ public class MoveHandler {
 			RefactoringStatus status = new RefactoringStatus();
 			status.merge(check.getStatus());
 			if (status.hasFatalError()) {
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move instance method. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -543,7 +543,7 @@ public class MoveHandler {
 			check.run(subMonitor.split(20));
 			RefactoringStatus status = check.getStatus();
 			if (status.hasFatalError()) {
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move static member. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -553,7 +553,7 @@ public class MoveHandler {
 			check.run(subMonitor.split(60));
 			status.merge(check.getStatus());
 			if (status.hasFatalError()) {
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move static member. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -586,7 +586,7 @@ public class MoveHandler {
 			check.run(subMonitor.split(50));
 			RefactoringStatus status = check.getStatus();
 			if (status.hasFatalError()) {
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move type to new file. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -630,7 +630,7 @@ public class MoveHandler {
 	}
 
 	private static RefactorWorkspaceEdit createMoveEdit(String moveKind, String description, Change change, RefactoringStatus status, String confirmationToken, Object... inputs) throws CoreException {
-		String messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).collect(Collectors.joining(System.lineSeparator()));
+		String messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().collect(Collectors.joining(System.lineSeparator()));
 		if (change == null) {
 			return new RefactorWorkspaceEdit("Failed to " + description + ". Reason:\n" + messages);
 		}
