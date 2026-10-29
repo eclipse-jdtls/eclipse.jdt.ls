@@ -1211,6 +1211,9 @@ public final class JDTUtils {
 			int[] endLoc = null;
 			IBuffer buffer = openable.getBuffer();
 			if (buffer != null) {
+				if (buffer.getLength() == 0) {
+					JavaLanguageServerPlugin.logError("toRange: empty buffer for " + openable + " (offset=" + offset + ", length=" + length + ")");
+				}
 				loc = JsonRpcHelpers.toLine(buffer, offset);
 				endLoc = JsonRpcHelpers.toLine(buffer, offset + length);
 			}
