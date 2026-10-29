@@ -285,7 +285,7 @@ public class MoveHandler {
 					targetUri = packageNode.uri;
 				}
 
-				return moveCU(moveParams.sourceUris, targetUri, moveParams.updateReferences, monitor);
+				return moveCU(moveParams.sourceUris, targetUri, moveParams.updateReferences, moveParams.confirmationToken, monitor);
 			} else if ("moveInstanceMethod".equalsIgnoreCase(moveParams.moveKind)) {
 				String json = (moveParams.destination == null ? null : new Gson().toJson(moveParams.destination));
 				LspVariableBinding variableBinding = JSONUtility.toLsp4jModel(json, LspVariableBinding.class);
@@ -296,12 +296,12 @@ public class MoveHandler {
 				return moveInstanceMethod(moveParams.params, variableBinding, moveParams.confirmationToken, monitor);
 			} else if ("moveStaticMember".equalsIgnoreCase(moveParams.moveKind)) {
 				String typeName = resolveTargetTypeName(moveParams.destination);
-				return moveStaticMember(moveParams.params, typeName, monitor);
+				return moveStaticMember(moveParams.params, typeName, moveParams.confirmationToken, monitor);
 			} else if ("moveTypeToNewFile".equalsIgnoreCase(moveParams.moveKind)) {
-				return moveTypeToNewFile(moveParams.params, monitor);
+				return moveTypeToNewFile(moveParams.params, moveParams.confirmationToken, monitor);
 			} else if ("moveTypeToClass".equalsIgnoreCase(moveParams.moveKind)) {
 				String typeName = resolveTargetTypeName(moveParams.destination);
-				return moveTypeToClass(moveParams.params, typeName, monitor);
+				return moveTypeToClass(moveParams.params, typeName, moveParams.confirmationToken, monitor);
 			}
 		} catch (IllegalArgumentException e) {
 			return new RefactorWorkspaceEdit(e.getMessage());
@@ -329,7 +329,7 @@ public class MoveHandler {
 		return typeName;
 	}
 
-	private static RefactorWorkspaceEdit moveCU(String[] sourceUris, String targetUri, boolean updateReferences, IProgressMonitor monitor) {
+	private static RefactorWorkspaceEdit moveCU(String[] sourceUris, String targetUri, boolean updateReferences, String confirmationToken, IProgressMonitor monitor) {
 		URI targetURI = JDTUtils.toURI(targetUri);
 		if (targetURI == null) {
 			return new RefactorWorkspaceEdit("Failed to move the files because of illegal uri '" + targetUri + "'.");
@@ -373,17 +373,26 @@ public class MoveHandler {
 			}
 
 			if (targetElement == null) {
-				JavaLanguageServerPlugin.logError("Failed to move the files because cannot find the package associated with the path '" + targetUri + "'.");
 				return new RefactorWorkspaceEdit("Failed to move the files because cannot find the package associated with the path '" + targetUri + "'.");
 			}
 
 			IReorgDestination packageDestination = ReorgDestinationFactory.createDestination(targetElement);
-			WorkspaceEdit edit = move(resources, javaElements, packageDestination, updateReferences, submonitor);
-			if (edit == null) {
+			CreateChangeOperation create = createResourceMove(resources, javaElements, packageDestination, updateReferences, submonitor);
+			if (create == null) {
 				return new RefactorWorkspaceEdit("Cannot enable move operation.");
 			}
+			RefactoringStatus status = create.getConditionCheckingStatus();
+			if (status.hasFatalError()) {
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+				return new RefactorWorkspaceEdit("Failed to move the files. Reason:\n" + String.join(System.lineSeparator(), messages));
+			}
 
-			return new RefactorWorkspaceEdit(edit);
+			List<String> sources = new ArrayList<>();
+			for (IJavaElement element : elements) {
+				sources.add(((ICompilationUnit) element).getSource());
+			}
+			return createMoveEdit("moveResource", "move the files", create.getChange(), status, confirmationToken,
+					sourceUris, targetUri, updateReferences, sources);
 		} catch (CoreException e) {
 			JavaLanguageServerPlugin.logException("Failed to move the files.", e);
 			return new RefactorWorkspaceEdit("Failed to move the files because of " + e.toString());
@@ -393,6 +402,11 @@ public class MoveHandler {
 	}
 
 	public static WorkspaceEdit move(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws CoreException {
+		CreateChangeOperation create = createResourceMove(resources, javaElements, destination, updateReferences, monitor);
+		return create == null ? null : ChangeUtil.convertToWorkspaceEdit(create.getChange());
+	}
+
+	private static CreateChangeOperation createResourceMove(IResource[] resources, IJavaElement[] javaElements, IReorgDestination destination, boolean updateReferences, IProgressMonitor monitor) throws CoreException {
 		IMovePolicy policy = ReorgPolicyFactory.createMovePolicy(resources, javaElements);
 		if (policy.canEnable()) {
 			JavaMoveProcessor processor = new JavaMoveProcessor(policy);
@@ -431,8 +445,7 @@ public class MoveHandler {
 			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 			final CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
 			create.run(monitor);
-			Change change = create.getChange();
-			return ChangeUtil.convertToWorkspaceEdit(change);
+			return create;
 		}
 
 		return null;
@@ -464,10 +477,7 @@ public class MoveHandler {
 			RefactoringStatus status = new RefactoringStatus();
 			status.merge(check.getStatus());
 			if (status.hasFatalError()) {
-				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-				JavaLanguageServerPlugin.logError(status.toString());
-
-				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
 				return new RefactorWorkspaceEdit("Failed to move instance method. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
@@ -483,24 +493,8 @@ public class MoveHandler {
 				create.run(subMonitor.split(80));
 				status.merge(create.getConditionCheckingStatus());
 				Change change = create.getChange();
-				if (change == null) {
-					JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-					JavaLanguageServerPlugin.logError(status.toString());
-					return new RefactorWorkspaceEdit("Failed to move instance method. Reason: " + status.toString());
-				}
-				boolean confirmationSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isMoveRefactoringConfirmationSupported();
-				if (status.hasError() && confirmationSupported) {
-					String expectedConfirmationToken = RefactoringConfirmation.createToken("moveInstanceMethodConfirmation:v1", status, params, destination, unit.getSource());
-					if (confirmationToken == null) {
-						List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
-						return new RefactorWorkspaceEdit(String.join(System.lineSeparator(), messages), expectedConfirmationToken);
-					}
-					if (!Objects.equals(confirmationToken, expectedConfirmationToken)) {
-						return new RefactorWorkspaceEdit("Failed to move instance method because the source or refactoring conditions changed after the problems were shown. Run the refactoring again to review the current problems.");
-					}
-				}
-
-				return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+				return createMoveEdit("moveInstanceMethod", "move instance method", change, status, confirmationToken,
+						params.getTextDocument(), params.getRange(), destination, unit.getSource());
 			} else {
 				return new RefactorWorkspaceEdit("Failed to move instance method because cannot find the target " + destination.name);
 			}
@@ -512,7 +506,7 @@ public class MoveHandler {
 		}
 	}
 
-	private static RefactorWorkspaceEdit moveStaticMember(CodeActionParams params, String destinationTypeName, IProgressMonitor monitor) {
+	private static RefactorWorkspaceEdit moveStaticMember(CodeActionParams params, String destinationTypeName, String confirmationToken, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return new RefactorWorkspaceEdit("Failed to move static member because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
@@ -531,10 +525,10 @@ public class MoveHandler {
 		}
 
 		IMember[] members = elements.stream().filter(IMember.class::isInstance).map(IMember.class::cast).toArray(IMember[]::new);
-		return moveStaticMember(members, destinationTypeName, monitor);
+		return moveStaticMember(members, destinationTypeName, "moveStaticMember", params, confirmationToken, monitor);
 	}
 
-	private static RefactorWorkspaceEdit moveStaticMember(IMember[] members, String destinationTypeName, IProgressMonitor monitor) {
+	private static RefactorWorkspaceEdit moveStaticMember(IMember[] members, String destinationTypeName, String moveKind, CodeActionParams params, String confirmationToken, IProgressMonitor monitor) {
 		if (members.length == 0 || destinationTypeName == null) {
 			return new RefactorWorkspaceEdit("Failed to move static member because no members are selected or no destination is specified.");
 		}
@@ -547,32 +541,34 @@ public class MoveHandler {
 		SubMonitor subMonitor = SubMonitor.convert(monitor, "Moving static members...", 100);
 		try {
 			check.run(subMonitor.split(20));
-			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
-				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-				JavaLanguageServerPlugin.logError(check.getStatus().toString());
+			RefactoringStatus status = check.getStatus();
+			if (status.hasFatalError()) {
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+				return new RefactorWorkspaceEdit("Failed to move static member. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
 			processor.setDestinationTypeFullyQualifiedName(destinationTypeName);
 			processor.setDeprecateDelegates(false);
 			check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
 			check.run(subMonitor.split(60));
-			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
-				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-				JavaLanguageServerPlugin.logError(check.getStatus().toString());
-				return new RefactorWorkspaceEdit("Failed to move static member. Reason: " + check.getStatus().toString());
+			status.merge(check.getStatus());
+			if (status.hasFatalError()) {
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+				return new RefactorWorkspaceEdit("Failed to move static member. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
 			Change change = processor.createChange(subMonitor.split(20));
-			return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+			return createMoveEdit(moveKind, "move static member", change, status, confirmationToken,
+					params.getTextDocument(), params.getRange(), destinationTypeName, members[0].getCompilationUnit().getSource());
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.log(e);
+			JavaLanguageServerPlugin.logException("Failed to move static member.", e);
 			return new RefactorWorkspaceEdit("Failed to move static member because of " + e.toString());
 		} finally {
 			subMonitor.done();
 		}
 	}
 
-	private static RefactorWorkspaceEdit moveTypeToNewFile(CodeActionParams params, IProgressMonitor monitor) {
+	private static RefactorWorkspaceEdit moveTypeToNewFile(CodeActionParams params, String confirmationToken, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return new RefactorWorkspaceEdit("Failed to move type to new file because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
@@ -588,23 +584,24 @@ public class MoveHandler {
 			MoveInnerToTopRefactoring refactoring = new MoveInnerToTopRefactoring(type, PreferenceManager.getCodeGenerationSettings(unit));
 			CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.ALL_CONDITIONS);
 			check.run(subMonitor.split(50));
-			if (check.getStatus().getSeverity() >= RefactoringStatus.FATAL) {
-				JavaLanguageServerPlugin.logError("Failed to execute the 'move' refactoring.");
-				JavaLanguageServerPlugin.logError(check.getStatus().toString());
-				return new RefactorWorkspaceEdit("Failed to move type to new file. Reason: " + check.getStatus().toString());
+			RefactoringStatus status = check.getStatus();
+			if (status.hasFatalError()) {
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+				return new RefactorWorkspaceEdit("Failed to move type to new file. Reason:\n" + String.join(System.lineSeparator(), messages));
 			}
 
 			Change change = refactoring.createChange(subMonitor.split(50));
-			return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
+			return createMoveEdit("moveTypeToNewFile", "move type to new file", change, status, confirmationToken,
+					params.getTextDocument(), params.getRange(), unit.getSource());
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.log(e);
+			JavaLanguageServerPlugin.logException("Failed to move type to new file.", e);
 			return new RefactorWorkspaceEdit("Failed to move type to new file because of " + e.toString());
 		} catch (OperationCanceledException e) {
 			return null;
 		}
 	}
 
-	private static RefactorWorkspaceEdit moveTypeToClass(CodeActionParams params, String destinationTypeName, IProgressMonitor monitor) {
+	private static RefactorWorkspaceEdit moveTypeToClass(CodeActionParams params, String destinationTypeName, String confirmationToken, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit == null) {
 			return new RefactorWorkspaceEdit("Failed to move type to another class because cannot find the compilation unit associated with " + params.getTextDocument().getUri());
@@ -617,18 +614,38 @@ public class MoveHandler {
 
 		try {
 			if (RefactoringAvailabilityTesterCore.isMoveStaticAvailable(type)) {
-				return moveStaticMember(new IMember[] { type }, destinationTypeName, monitor);
+				return moveStaticMember(new IMember[] { type }, destinationTypeName, "moveTypeToClass", params, confirmationToken, monitor);
 			}
 
 			return new RefactorWorkspaceEdit("Moving non-static type to another class is not supported.");
 		} catch (JavaModelException e) {
-			return new RefactorWorkspaceEdit("Failed to move type to another class. Reason: " + e.toString());
+			JavaLanguageServerPlugin.logException("Failed to move type to another class.", e);
+			return new RefactorWorkspaceEdit("Failed to move type to another class because of " + e.toString());
 		}
 	}
 
 	private static IType getSelectedType(ICompilationUnit unit, CodeActionParams params) {
 		AbstractTypeDeclaration typeDeclaration = getSelectedTypeDeclaration(unit, params);
 		return typeDeclaration == null ? null : (IType) typeDeclaration.resolveBinding().getJavaElement();
+	}
+
+	private static RefactorWorkspaceEdit createMoveEdit(String moveKind, String description, Change change, RefactoringStatus status, String confirmationToken, Object... inputs) throws CoreException {
+		String messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().collect(Collectors.joining(System.lineSeparator()));
+		if (change == null) {
+			return new RefactorWorkspaceEdit("Failed to " + description + ". Reason:\n" + messages);
+		}
+
+		boolean confirmationSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isMoveRefactoringConfirmationSupported();
+		if (status.hasError() && confirmationSupported) {
+			String expectedToken = RefactoringConfirmation.createToken(moveKind + "Confirmation:v1", status, inputs);
+			if (confirmationToken == null) {
+				return new RefactorWorkspaceEdit(messages, expectedToken);
+			}
+			if (!Objects.equals(confirmationToken, expectedToken)) {
+				return new RefactorWorkspaceEdit("Failed to " + description + " because the source or refactoring conditions changed after the problems were shown. Run the refactoring again to review the current problems.");
+			}
+		}
+		return new RefactorWorkspaceEdit(ChangeUtil.convertToWorkspaceEdit(change));
 	}
 
 	private static BodyDeclaration getSelectedMemberDeclaration(ICompilationUnit unit, CodeActionParams params) {
@@ -730,7 +747,7 @@ public class MoveHandler {
 	public static class MoveParams {
 		/**
 		 * The supported move kind: moveResource, moveInstanceMethod, moveStaticMember,
-		 * moveTypeToNewFile.
+		 * moveTypeToNewFile, moveTypeToClass.
 		 */
 		String moveKind;
 		/**
