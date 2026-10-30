@@ -47,7 +47,12 @@ final public class JsonRpcHelpers {
 	public static int toOffset(IOpenable openable, int line, int column) {
 		if (openable != null) {
 			try {
-				return convert(openable, (IDocument document) -> toOffset(document, line, column));
+				return convert(openable, (IDocument document) -> {
+					if (document != null && document.getLength() == 0 && (line > 0 || column > 0)) {
+						JavaLanguageServerPlugin.logError("toOffset: empty buffer for " + openable + " (line=" + line + ", column=" + column + ")");
+					}
+					return toOffset(document, line, column);
+				});
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.log(e);
 			}
@@ -66,6 +71,9 @@ final public class JsonRpcHelpers {
 	 */
 	public static int toOffset(IBuffer buffer, int line, int column){
 		if (buffer != null) {
+			if (buffer.getLength() == 0 && (line > 0 || column > 0)) {
+				JavaLanguageServerPlugin.logError("toOffset: empty buffer for " + buffer.getOwner() + " (line=" + line + ", column=" + column + ")");
+			}
 			return toOffset(toDocument(buffer), line, column);
 		}
 		return -1;
@@ -98,6 +106,9 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int[] toLine(IBuffer buffer, int offset){
+		if (buffer != null && buffer.getLength() == 0 && offset > 0) {
+			JavaLanguageServerPlugin.logError("toLine: empty buffer for " + buffer.getOwner() + " (offset=" + offset + ")");
+		}
 		return toLine(toDocument(buffer), offset);
 	}
 
@@ -114,7 +125,12 @@ final public class JsonRpcHelpers {
 	 */
 	public static int[] toLine(IOpenable openable, int offset) {
 		try {
-			return convert(openable, (IDocument document) -> toLine(document, offset));
+			return convert(openable, (IDocument document) -> {
+				if (document != null && document.getLength() == 0 && offset > 0) {
+					JavaLanguageServerPlugin.logError("toLine: empty buffer for " + openable + " (offset=" + offset + ")");
+				}
+				return toLine(document, offset);
+			});
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.log(e);
 		}
