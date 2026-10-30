@@ -18,6 +18,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -32,6 +34,9 @@ import org.eclipse.jdt.internal.corext.fix.LinkedProposalModelCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore;
 import org.eclipse.jdt.internal.corext.fix.LinkedProposalPositionGroupCore.PositionInformation;
 import org.eclipse.jdt.internal.corext.refactoring.ParameterInfo;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.LinkedCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
@@ -55,6 +60,8 @@ import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
+import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
 import org.eclipse.ltk.core.refactoring.Refactoring;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusEntry;
@@ -115,6 +122,9 @@ public class GetRefactorEditHandler {
 			} else if (RefactorProcessor.CONVERT_ANONYMOUS_CLASS_TO_NESTED_COMMAND.equals(params.command)) {
 				proposal = RefactorProcessor.getConvertAnonymousToNestedProposal(params.context, context, context.getCoveringNode(), false);
 				positionKey = "type_name";
+			} else if (RefactorProposalUtility.INLINE_METHOD_COMMAND.equals(params.command) || RefactorProposalUtility.INLINE_CONSTANT_COMMAND.equals(params.command)
+					|| RefactorProposalUtility.INLINE_LOCAL_VARIABLE_COMMAND.equals(params.command)) {
+				return getInlineEdit(params, context, unit);
 			} else if (RefactorProposalUtility.INTRODUCE_PARAMETER_COMMAND.equals(params.command)) {
 				final IntroduceParameterRefactoring introduceParameterRefactoring = new IntroduceParameterRefactoring(context.getCompilationUnit(), context.getSelectionOffset(), context.getSelectionLength());
 				LinkedProposalModelCore linkedProposalModel = new LinkedProposalModelCore();
@@ -233,6 +243,70 @@ public class GetRefactorEditHandler {
 		return null;
 	}
 
+	private static RefactorWorkspaceEdit getInlineEdit(GetRefactorEditParams params, IInvocationContext context, ICompilationUnit unit) throws CoreException {
+		Refactoring refactoring;
+		String description;
+		if (RefactorProposalUtility.INLINE_METHOD_COMMAND.equals(params.command)) {
+			refactoring = InlineMethodRefactoring.create(unit, context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+			if (refactoring == null) {
+				return new RefactorWorkspaceEdit("Failed to inline method because the selection is not an inlineable method declaration or invocation.");
+			}
+			description = "inline method";
+		} else if (RefactorProposalUtility.INLINE_CONSTANT_COMMAND.equals(params.command)) {
+			refactoring = new InlineConstantRefactoring(unit, context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+			description = "inline constant";
+		} else {
+			InlineTempRefactoring inlineVariable = new InlineTempRefactoring(unit, context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+			RefactoringStatus selectionStatus = inlineVariable.checkIfTempSelected();
+			if (selectionStatus.hasFatalError()) {
+				List<String> messages = Stream.of(selectionStatus.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+				return new RefactorWorkspaceEdit("Failed to inline local variable. Reason:\n" + String.join(System.lineSeparator(), messages));
+			}
+			refactoring = inlineVariable;
+			description = "inline local variable";
+		}
+
+		RefactoringStatus status = refactoring.checkInitialConditions(new NullProgressMonitor());
+		if (status.hasFatalError()) {
+			List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+			return new RefactorWorkspaceEdit("Failed to " + description + ". Reason:\n" + String.join(System.lineSeparator(), messages));
+		}
+		if (refactoring instanceof InlineConstantRefactoring inlineConstant) {
+			if (inlineConstant.getReferences(new NullProgressMonitor(), status).length == 0) {
+				return new RefactorWorkspaceEdit("Failed to inline constant because no references were found.");
+			}
+			inlineConstant.setRemoveDeclaration(inlineConstant.isDeclarationSelected());
+			inlineConstant.setReplaceAllReferences(inlineConstant.isDeclarationSelected());
+		} else if (refactoring instanceof InlineTempRefactoring inlineVariable && inlineVariable.getReferences().length == 0) {
+			return new RefactorWorkspaceEdit("Failed to inline local variable because no references were found.");
+		}
+
+		CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+		CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+		create.run(new NullProgressMonitor());
+		status.merge(create.getConditionCheckingStatus());
+		WorkspaceEdit edit = ChangeUtil.convertToWorkspaceEdit(create.getChange());
+		if (!ChangeUtil.hasChanges(edit)) {
+			List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).distinct().toList();
+			return new RefactorWorkspaceEdit("Failed to " + description + ". Reason:\n" + String.join(System.lineSeparator(), messages));
+		}
+
+		boolean confirmationSupported = JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isInlineRefactoringConfirmationSupported();
+		if (status.hasError() && confirmationSupported) {
+			String expectedConfirmationToken = RefactoringConfirmation.createToken(params.command + "Confirmation:v1", status,
+					params.context.getTextDocument(), params.context.getRange(), unit.getSource());
+			if (params.confirmationToken == null) {
+				List<String> messages = Stream.of(status.getEntries()).map(RefactoringStatusEntry::getMessage).toList();
+				return new RefactorWorkspaceEdit(String.join(System.lineSeparator(), messages), expectedConfirmationToken);
+			}
+			if (!Objects.equals(params.confirmationToken, expectedConfirmationToken)) {
+				return new RefactorWorkspaceEdit("Failed to " + description + " because the source or refactoring conditions changed after the problems were shown. Run the refactoring again to review the current problems.");
+			}
+		}
+
+		return new RefactorWorkspaceEdit(edit);
+	}
+
 	private static PositionInformation getFirstTrackedNodePositionBySequenceRank(LinkedProposalPositionGroupCore positionGroup) {
 		if (positionGroup == null) {
 			return null;
@@ -335,6 +409,7 @@ public class GetRefactorEditHandler {
 		public List<Object> commandArguments;
 		public CodeActionParams context;
 		public FormattingOptions options;
+		public String confirmationToken;
 
 		public GetRefactorEditParams(String command, CodeActionParams context) {
 			this(command, null, context);
@@ -345,10 +420,15 @@ public class GetRefactorEditHandler {
 		}
 
 		public GetRefactorEditParams(String command, List<Object> commandArguments, CodeActionParams context, FormattingOptions options) {
+			this(command, commandArguments, context, options, null);
+		}
+
+		public GetRefactorEditParams(String command, List<Object> commandArguments, CodeActionParams context, FormattingOptions options, String confirmationToken) {
 			this.command = command;
 			this.commandArguments = commandArguments;
 			this.context = context;
 			this.options = options;
+			this.confirmationToken = confirmationToken;
 		}
 	}
 }
