@@ -13,6 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.handlers;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.eclipse.core.resources.IResource;
@@ -22,8 +24,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -49,6 +53,7 @@ public class WorkspaceEventsHandler {
 	private final JavaClientConnection connection;
 	private final BaseDocumentLifeCycleHandler handler;
 	private final LinkedBlockingQueue<FileEvent> queue = new LinkedBlockingQueue<>();
+	private final Set<String> changedProjects = new HashSet<>();
 
 	public WorkspaceEventsHandler(ProjectsManager projects, JavaClientConnection connection, BaseDocumentLifeCycleHandler handler) {
 		this.pm = projects;
@@ -63,6 +68,9 @@ public class WorkspaceEventsHandler {
 					}
 					FileEvent event = queue.take();
 					handleFileEvent(event);
+					if (queue.isEmpty()) {
+						revalidateWorkingCopies();
+					}
 				} catch (InterruptedException e) {
 					break;
 				}
@@ -99,6 +107,7 @@ public class WorkspaceEventsHandler {
 		for (FileEvent fileEvent : fileEvents) {
 			handleFileEvent(fileEvent);
 		}
+		revalidateWorkingCopies();
 	}
 
 	// for test only
@@ -146,8 +155,45 @@ public class WorkspaceEventsHandler {
 					CoreASTProvider.getInstance().disposeAST();
 				}
 			}
+			changedProjects.add(unit.getJavaProject().getElementName());
 		}
 		pm.fileChanged(fileEvent.getUri(), changeType);
+	}
+
+	private void revalidateWorkingCopies() {
+		if (changedProjects.isEmpty()) {
+			return;
+		}
+		if (!JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isAutobuildEnabled()) {
+			for (ICompilationUnit unit : JavaCore.getWorkingCopies(null)) {
+				try {
+					IJavaProject javaProject = unit.getJavaProject();
+					if (!handler.isSyntaxMode(unit) && (changedProjects.contains(javaProject.getElementName()) || !Collections.disjoint(getVisibleProjectNames(javaProject), changedProjects))) {
+						handler.triggerValidation(unit);
+					}
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException("Failed to revalidate document after file change: " + unit.getPath(), e);
+				}
+			}
+		}
+		changedProjects.clear();
+	}
+
+	private static Set<String> getVisibleProjectNames(IJavaProject javaProject) throws JavaModelException {
+		Set<String> names = new HashSet<>();
+		collectRequiredProjectNames(javaProject, false, names);
+		return names;
+	}
+
+	private static void collectRequiredProjectNames(IJavaProject javaProject, boolean exportedOnly, Set<String> names) throws JavaModelException {
+		for (IClasspathEntry entry : javaProject.getResolvedClasspath(true)) {
+			if (entry.getEntryKind() == IClasspathEntry.CPE_PROJECT && (!exportedOnly || entry.isExported()) && names.add(entry.getPath().lastSegment())) {
+				IJavaProject required = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot().getProject(entry.getPath().lastSegment()));
+				if (required.exists()) {
+					collectRequiredProjectNames(required, true, names);
+				}
+			}
+		}
 	}
 
 	private ICompilationUnit createCompilationUnit(ICompilationUnit unit) {
