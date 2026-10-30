@@ -71,6 +71,9 @@ final public class JsonRpcHelpers {
 	 */
 	public static int toOffset(IBuffer buffer, int line, int column){
 		if (buffer != null) {
+			if (buffer.getLength() == 0 && (line > 0 || column > 0)) {
+				JavaLanguageServerPlugin.logError("toOffset: empty buffer for " + buffer.getOwner() + " (line=" + line + ", column=" + column + ")");
+			}
 			return toOffset(toDocument(buffer), line, column);
 		}
 		return -1;
@@ -103,6 +106,9 @@ final public class JsonRpcHelpers {
 	 * @return
 	 */
 	public static int[] toLine(IBuffer buffer, int offset){
+		if (buffer != null && buffer.getLength() == 0 && offset > 0) {
+			JavaLanguageServerPlugin.logError("toLine: empty buffer for " + buffer.getOwner() + " (offset=" + offset + ")");
+		}
 		return toLine(toDocument(buffer), offset);
 	}
 
