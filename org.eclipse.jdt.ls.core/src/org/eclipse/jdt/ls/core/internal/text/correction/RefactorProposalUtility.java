@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
+import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -57,6 +58,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.core.manipulation.dom.ASTResolving;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -69,12 +71,16 @@ import org.eclipse.jdt.internal.corext.refactoring.RefactoringCoreMessages;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractConstantRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractMethodRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.ExtractTempRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineConstantRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineMethodRefactoring;
+import org.eclipse.jdt.internal.corext.refactoring.code.InlineTempRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.IntroduceParameterRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.code.PromoteTempToFieldRefactoring;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ExtractInterfaceProcessor;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.AssignToVariableAssistProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaCodeActionKind;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
@@ -89,7 +95,12 @@ import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
 import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionParams;
+import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.ltk.core.refactoring.CheckConditionsOperation;
+import org.eclipse.ltk.core.refactoring.CreateChangeOperation;
+import org.eclipse.ltk.core.refactoring.NullChange;
 import org.eclipse.ltk.core.refactoring.Refactoring;
+import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 
 public class RefactorProposalUtility {
 	public static final String APPLY_REFACTORING_COMMAND_ID = "java.action.applyRefactoringCommand";
@@ -107,6 +118,9 @@ public class RefactorProposalUtility {
 	public static final String MOVE_INSTANCE_METHOD_COMMAND = "moveInstanceMethod";
 	public static final String MOVE_STATIC_MEMBER_COMMAND = "moveStaticMember";
 	public static final String MOVE_TYPE_COMMAND = "moveType";
+	public static final String INLINE_METHOD_COMMAND = "inlineMethod";
+	public static final String INLINE_CONSTANT_COMMAND = "inlineConstant";
+	public static final String INLINE_LOCAL_VARIABLE_COMMAND = "inlineLocalVariable";
 	public static final String INTRODUCE_PARAMETER_COMMAND = "introduceParameter";
 
 	public static List<ProposalKindWrapper> getMoveRefactoringProposals(CodeActionParams params, IInvocationContext context) {
@@ -273,6 +287,108 @@ public class RefactorProposalUtility {
 		ASTNode node = declaration == null ? null : declaration.getParent();
 		ITypeBinding type = ASTNodes.getEnclosingType(node);
 		return type == null ? null : type.getQualifiedName();
+	}
+
+	public static ProposalKindWrapper getInlineProposal(CodeActionParams params, IInvocationContext context, ASTNode node, boolean returnAsCommand) {
+		if (!(node instanceof SimpleName name)) {
+			return null;
+		}
+
+		IBinding binding = name.resolveBinding();
+		try {
+			String command;
+			String label;
+			if (binding instanceof IVariableBinding varBinding) {
+				if (varBinding.isParameter()) {
+					return null;
+				}
+				if (varBinding.isField()) {
+					// Inline Constant (static final field)
+					if (!RefactoringAvailabilityTesterCore.isInlineConstantAvailable((IField) varBinding.getJavaElement())) {
+						return null;
+					}
+					command = INLINE_CONSTANT_COMMAND;
+					label = ActionMessages.InlineConstantRefactoringAction_label;
+				} else {
+					// Inline Local Variable
+					// https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3321
+					// I haven't enhanced it because InlineVariableTest.testInlineLocalVariableWithNoReferences() fails; can be enhanced
+					ASTNode declaration = context.getASTRoot().findDeclaringNode(varBinding);
+					if (!(declaration instanceof VariableDeclarationFragment) || declaration.getLocationInParent() != VariableDeclarationStatement.FRAGMENTS_PROPERTY
+							|| !(binding.getJavaElement() instanceof ILocalVariable localVar) || !RefactoringAvailabilityTesterCore.isInlineTempAvailable(localVar)) {
+						return null;
+					}
+					command = INLINE_LOCAL_VARIABLE_COMMAND;
+					label = CorrectionMessages.QuickAssistProcessor_inline_local_description;
+				}
+			} else if (binding instanceof IMethodBinding) {
+				boolean isUnnamedClass = List.of(context.getCompilationUnit().getTypes()).stream().anyMatch(JDTUtils::isUnnamedClass);
+				// Inline Method
+				if (isUnnamedClass || !RefactoringAvailabilityTesterCore.isInlineMethodAvailable((IMethod) binding.getJavaElement())) {
+					return null;
+				}
+				command = INLINE_METHOD_COMMAND;
+				label = ActionMessages.InlineMethodRefactoringAction_label;
+			} else {
+				return null;
+			}
+			Refactoring refactoring = switch (command) {
+				case INLINE_CONSTANT_COMMAND -> new InlineConstantRefactoring(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+				case INLINE_LOCAL_VARIABLE_COMMAND -> new InlineTempRefactoring((VariableDeclaration) context.getASTRoot().findDeclaringNode(binding));
+				default -> InlineMethodRefactoring.create(context.getCompilationUnit(), context.getASTRoot(), context.getSelectionOffset(), context.getSelectionLength());
+			};
+			if (refactoring == null) {
+				return null;
+			}
+			ChangeCorrectionProposalCore proposal;
+			if (refactoring instanceof InlineTempRefactoring inlineVariable) {
+				try {
+					if (!inlineVariable.checkAllConditions(new NullProgressMonitor()).isOK() || inlineVariable.getReferences().length == 0) {
+						return null;
+					}
+				} catch (Exception e) {
+					return null;
+				}
+				proposal = new RefactoringCorrectionProposalCore(label, context.getCompilationUnit(), refactoring, IProposalRelevance.INLINE_LOCAL);
+			} else {
+				proposal = new ChangeCorrectionProposalCore(label, null /*create.getChange()*/, IProposalRelevance.INLINE_LOCAL) {
+					@Override
+					public Change getChange() throws CoreException {
+						if (refactoring.checkInitialConditions(new NullProgressMonitor()).isOK()) {
+							if (refactoring instanceof InlineConstantRefactoring inlineConstant) {
+								if (inlineConstant.getReferences(new NullProgressMonitor(), new RefactoringStatus()).length == 0) {
+									return new NullChange();
+								}
+								inlineConstant.setRemoveDeclaration(inlineConstant.isDeclarationSelected());
+								inlineConstant.setReplaceAllReferences(inlineConstant.isDeclarationSelected());
+							}
+							CheckConditionsOperation check = new CheckConditionsOperation(refactoring, CheckConditionsOperation.FINAL_CONDITIONS);
+							CreateChangeOperation create = new CreateChangeOperation(check, RefactoringStatus.FATAL);
+							try {
+								create.run(new NullProgressMonitor());
+								return create.getChange();
+							} catch (CoreException e) {
+								JavaLanguageServerPlugin.log(e);
+							}
+						}
+						return new NullChange();
+					}
+				};
+			}
+			if (!returnAsCommand) {
+				return CodeActionHandler.wrap(proposal, CodeActionKind.RefactorInline);
+			}
+			// A command must not expose an action that the original edit-based proposal would filter out.
+			if (!ChangeUtil.hasChanges(ChangeUtil.convertToWorkspaceEdit(proposal.getChange()))) {
+				return null;
+			}
+			RefactoringCorrectionCommandProposal commandProposal = new RefactoringCorrectionCommandProposal(label, context.getCompilationUnit(), IProposalRelevance.INLINE_LOCAL,
+					APPLY_REFACTORING_COMMAND_ID, Arrays.asList(command, params));
+			return CodeActionHandler.wrap(commandProposal, CodeActionKind.RefactorInline);
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e);
+		}
+		return null;
 	}
 
 	public static List<ProposalKindWrapper> getExtractVariableProposals(CodeActionParams params, IInvocationContext context, boolean problemsAtLocation, boolean inferSelectionSupport) throws CoreException {
