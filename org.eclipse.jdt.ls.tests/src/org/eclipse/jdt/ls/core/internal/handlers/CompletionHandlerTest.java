@@ -184,7 +184,27 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} else {
 			text = deprecated.getInsertText();
 		}
-		assertEquals("Deprecated ", text);
+		assertEquals("Deprecated", text);
+	}
+
+
+	@Test
+	public void testCompletion_annotationWithArgumentsNoSpaceBeforeParenthesis() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "@Supp(\"unused\")\\npublic class Foo {}\\n");
+		CompletionList list = requestCompletions(unit, "@Supp");
+		CompletionItem suppressWarnings = list.getItems().stream().filter(i -> i.getLabel().startsWith("SuppressWarnings")).findFirst().orElse(null);
+		assertNotNull(suppressWarnings, "SuppressWarnings annotation proposal not found");
+		String text;
+		if (suppressWarnings.getTextEdit() != null) {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = suppressWarnings.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		} else if (suppressWarnings.getTextEditText() != null) {
+			text = suppressWarnings.getTextEditText();
+		} else {
+			text = suppressWarnings.getInsertText();
+		}
+		assertEquals("SuppressWarnings", text);
+		assertTrue(unit.getSource().contains("@Supp(\"unused\")"), "The existing argument list should immediately follow the annotation name");
 	}
 
 	@Test
