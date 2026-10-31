@@ -256,7 +256,6 @@ public class CompletionProposalReplacementProvider {
 			case CompletionProposal.TYPE_REF:
 				boolean overloadedMethodProposalType = item.getLabelDetails() == null ? false : "(...)".equals(item.getLabelDetails().getDetail());
 				appendReplacementString(completionBuffer, proposal, overloadedMethodProposalType);
-				appendSpaceAfterAnnotationType(completionBuffer, proposal);
 				break;
 			default:
 				boolean overloadedMethodProposal = item.getLabelDetails() == null ? false : "(...)".equals(item.getLabelDetails().getDetail());
@@ -618,23 +617,6 @@ public class CompletionProposalReplacementProvider {
 		try {
 			int end = proposal.getReplaceEnd();
 			IBuffer docBuffer = compilationUnit.getBuffer();
-			if (end < docBuffer.getLength() && (docBuffer.getChar(end) == ' ' || docBuffer.getChar(end) == '\t')) {
-				return;
-			}
-		} catch (Exception e) {
-			return;
-		}
-		buffer.append(' ');
-	}
-
-	private void appendSpaceAfterAnnotationType(StringBuilder buffer, CompletionProposal proposal) {
-		try {
-			int start = proposal.getReplaceStart();
-			IBuffer docBuffer = compilationUnit.getBuffer();
-			if (start <= 0 || docBuffer.getChar(start - 1) != '@') {
-				return;
-			}
-			int end = proposal.getReplaceEnd();
 			if (end < docBuffer.getLength() && (docBuffer.getChar(end) == ' ' || docBuffer.getChar(end) == '\t')) {
 				return;
 			}
