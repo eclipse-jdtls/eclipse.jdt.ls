@@ -190,7 +190,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 
 	@Test
 	public void testCompletion_annotationWithArgumentsNoSpaceBeforeParenthesis() throws Exception {
-		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "@Supp(\"unused\")\\npublic class Foo {}\\n");
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "@Supp(\"unused\")\npublic class Foo {}\n");
 		CompletionList list = requestCompletions(unit, "@Supp");
 		CompletionItem suppressWarnings = list.getItems().stream().filter(i -> i.getLabel().startsWith("SuppressWarnings")).findFirst().orElse(null);
 		assertNotNull(suppressWarnings, "SuppressWarnings annotation proposal not found");
