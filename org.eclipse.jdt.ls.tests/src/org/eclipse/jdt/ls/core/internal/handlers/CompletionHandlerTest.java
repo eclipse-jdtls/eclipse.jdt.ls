@@ -204,7 +204,14 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 			text = suppressWarnings.getInsertText();
 		}
 		assertEquals("SuppressWarnings", text);
-		assertTrue(unit.getSource().contains("@Supp(\"unused\")"), "The existing argument list should immediately follow the annotation name");
+		Either<TextEdit, InsertReplaceEdit> completionEdit = suppressWarnings.getTextEdit();
+		assertNotNull(completionEdit, "Completion text edit not found");
+		TextEdit textEdit = completionEdit.isLeft()
+				? completionEdit.getLeft()
+				: new TextEdit(completionEdit.getRight().getReplace(), completionEdit.getRight().getNewText());
+		String updatedSource = TextEditUtil.apply(unit, Collections.singletonList(textEdit));
+		assertTrue(updatedSource.contains("@SuppressWarnings(\"unused\")"),
+				"The applied completion should preserve the existing annotation arguments");
 	}
 
 	@Test
