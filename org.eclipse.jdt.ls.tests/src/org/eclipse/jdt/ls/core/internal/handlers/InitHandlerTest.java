@@ -334,14 +334,14 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
 		projectsManager.projectsBuildFinished(null);
 		// 8 basic + 3 project roots
-		assertEquals(12, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
-		List<FileSystemWatcher> projectWatchers = watchers.subList(9, 12);
+		assertEquals(14, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
+		List<FileSystemWatcher> projectWatchers = watchers.subList(11, 14);
 		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
 		assertEquals(WatchKind.Delete, projectWatchers.get(0).getKind());
 		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
 		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("simple-gradle"));
 
-		watchers = watchers.subList(0, 9);
+		watchers = watchers.subList(0, 11);
 		Collections.sort(watchers, Comparator.comparing(fileSystemWatcher -> fileSystemWatcher.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
 		assertEquals("**/*.gradle", watchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
 		assertEquals("**/*.gradle.kts", watchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
@@ -351,7 +351,9 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals("**/.settings/*.prefs", watchers.get(5).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
 		assertEquals("**/gradle.properties", watchers.get(6).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
 		assertEquals("**/pom.xml", watchers.get(7).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
-		assertEquals("**/src/**", watchers.get(8).getGlobPattern().map(Function.identity(), RelativePattern::getPattern));
+		assertTrue(watchers.get(8).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/TestProject/**/src/**"));
+		assertTrue(watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/gradle/simple-gradle/**/src/**"));
+		assertTrue(watchers.get(10).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/maven/salut/**/src/**"));
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
 		String location = project.getLocation().toString();
 		IJavaProject javaProject = JavaCore.create(project);
@@ -381,13 +383,13 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		verify(client, times(1)).registerCapability(any());
 		List<FileSystemWatcher> newWatchers = projectsManager.registerWatchers();
 		verify(client, times(1)).registerCapability(any());
-		assertEquals(12, newWatchers.size(), "Unexpected watchers:\n" + toString(watchers));
-		projectWatchers = newWatchers.subList(9, 12);
+		assertEquals(14, newWatchers.size(), "Unexpected watchers:\n" + toString(watchers));
+		projectWatchers = newWatchers.subList(11, 14);
 		assertTrue(projectWatchers.get(0).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("TestProject"));
 		assertTrue(projectWatchers.get(1).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("salut"));
 		assertTrue(projectWatchers.get(2).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("simple-gradle"));
 
-		newWatchers = watchers.subList(0, 9);
+		newWatchers = watchers.subList(0, 11);
 		Collections.sort(newWatchers, Comparator.comparing(fileSystemWatcher -> fileSystemWatcher.getGlobPattern().map(Function.identity(), RelativePattern::getPattern)));
 		assertEquals(newWatchers, watchers);
 	}
@@ -418,7 +420,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 			String settingsUrl = "../../formatter/settings.prefs";
 			preferences.setSettingsUrl(settingsUrl);
 			List<FileSystemWatcher> watchers = projectsManager.registerWatchers();
-			assertEquals(10, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
+			assertEquals(9, watchers.size(), "Unexpected watchers:\n" + toString(watchers));
 		} catch (Exception e) {
 			fail(e.getMessage());
 		} finally {
