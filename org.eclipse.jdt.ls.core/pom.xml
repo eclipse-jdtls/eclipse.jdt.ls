@@ -31,45 +31,23 @@
 								import groovy.json.JsonSlurper
 								import groovy.json.JsonOutput
 
-								import java.net.http.HttpClient
-								import java.net.http.HttpClient.Redirect
-								import java.net.http.HttpRequest
-								import java.net.http.HttpResponse.BodyHandlers
-								import java.util.concurrent.CompletableFuture
-								import java.util.concurrent.ExecutorService
-								import java.util.concurrent.Executors
-								import java.util.stream.Collectors
-
-
 								def checksumsFile = new File(project.basedir.absolutePath, "gradle/checksums/checksums.json")
 								if (System.getProperty("eclipse.jdt.ls.skipGradleChecksums") != null &amp;&amp; checksumsFile.exists()) {
 									println "Skipping gradle wrapper validation checksums ..."
 									return
 								}
 
-								def versionUrl = new URL("https://services.gradle.org/versions/all")
-								def versionStr = versionUrl.text;
-								def versionsFile = new File(project.basedir.absolutePath, "gradle/checksums/versions.json")
-								versionsFile.parentFile.mkdirs() //just in case
-								versionsFile.write(versionStr)
-								println "Wrote to ${versionsFile}"
+								def versions = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/all"))
+								def onlyReleases = Boolean.getBoolean("eclipse.jdt.ls.onlyGradleReleases")
 
-								def versions = new JsonSlurper().parseText(versionStr)
+								def checksums = versions.findAll {
+									it.wrapperChecksumUrl != null &amp;&amp;
+									!(onlyReleases &amp;&amp; (it.nightly || it.snapshot || it.rcFor != "" || it.broken))
+								}.collect {
+									[version: it.version, wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: it.wrapperChecksum]
+								}
 
-								class Checksum {
-									String wrapperChecksumUrl;
-									String sha256
-								}
-								def checksums = []
-								versions.each {
-                                    boolean isNonRelease = it.nightly || it.snapshot || (it.rcFor != "") || it.broken
-									if (it.wrapperChecksumUrl == null || (System.getProperty("eclipse.jdt.ls.onlyGradleReleases") &amp;&amp; isNonRelease)) {
-										return
-									}
-									checksums.add(new Checksum(wrapperChecksumUrl: it.wrapperChecksumUrl, sha256: it.wrapperChecksum));
-								}
-								def json = JsonOutput.toJson(checksums)
-								checksumsFile.write(JsonOutput.prettyPrint(json))
+								checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(checksums)))
 								println "Wrote to ${checksumsFile}"
 						</script>
 					</scripts>
