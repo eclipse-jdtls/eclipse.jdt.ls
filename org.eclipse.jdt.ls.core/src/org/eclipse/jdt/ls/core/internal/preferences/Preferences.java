@@ -1162,7 +1162,7 @@ public class Preferences {
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
 		prefs.mavenProjectNameTemplate = this.mavenProjectNameTemplate;
-		prefs.mavenProjectNameTemplateByFolder = this.mavenProjectNameTemplateByFolder;
+		prefs.mavenProjectNameTemplateByFolder = this.mavenProjectNameTemplateByFolder != null ? new HashMap<>(this.mavenProjectNameTemplateByFolder) : null;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
 		prefs.mavenDownloadSources = this.mavenDownloadSources;
 		prefs.eclipseDownloadSources = this.eclipseDownloadSources;
