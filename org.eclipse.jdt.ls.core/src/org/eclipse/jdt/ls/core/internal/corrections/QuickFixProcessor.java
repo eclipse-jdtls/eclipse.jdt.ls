@@ -585,7 +585,7 @@ public class QuickFixProcessor {
 				break;
 			case IProblem.NotAccessibleType:
 				if (!ReorgCorrectionsSubProcessor.importNotFoundProposals(context, problem, proposals)) {
-					ASTNode inaccessibleNode = context.getCoveredNode();
+					ASTNode inaccessibleNode = problem.getCoveredNode(context.getASTRoot());
 					if (inaccessibleNode instanceof Name) {
 						UnresolvedElementsSubProcessor.addRequiresModuleProposals(context.getCompilationUnit(), (Name) inaccessibleNode, IProposalRelevance.IMPORT_NOT_FOUND_ADD_REQUIRES_MODULE, proposals, true);
 					}
