@@ -68,6 +68,11 @@ public class ReorgCorrectionsSubProcessor extends ReorgCorrectionsBaseSubProcess
 		new ReorgCorrectionsSubProcessor().addRemoveImportStatementProposals(context, problem, proposals);
 	}
 
+	public static boolean importNotFoundProposals(IInvocationContext context, IProblemLocation problem,
+			Collection<ProposalKindWrapper> proposals) throws CoreException {
+		return new ReorgCorrectionsSubProcessor().addImportNotFoundProposals(context, problem, proposals);
+	}
+
 	/**
 	 * Adds a proposal to increase the compiler compliance level
 	 *
