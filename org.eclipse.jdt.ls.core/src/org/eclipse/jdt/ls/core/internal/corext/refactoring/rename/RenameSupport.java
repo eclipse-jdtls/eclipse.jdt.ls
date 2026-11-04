@@ -16,7 +16,9 @@ package org.eclipse.jdt.ls.core.internal.corext.refactoring.rename;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
@@ -25,6 +27,10 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.core.refactoring.descriptors.RenameJavaElementDescriptor;
 import org.eclipse.jdt.internal.corext.refactoring.changes.DynamicValidationRefactoringChange;
 import org.eclipse.jdt.internal.corext.refactoring.changes.RenameCompilationUnitChange;
@@ -39,6 +45,7 @@ import org.eclipse.jdt.internal.corext.refactoring.rename.RenamePackageProcessor
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameTypeParameterProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameTypeProcessor;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameVirtualMethodProcessor;
+import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.INameUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.IReferenceUpdating;
 import org.eclipse.jdt.internal.corext.refactoring.tagging.ITextUpdating;
@@ -161,6 +168,10 @@ public class RenameSupport {
 	}
 
 	public static RenameSupport create(IJavaElement element, String newName, int flags) throws CoreException {
+		IField recordComponent = getRecordComponent(element);
+		if (recordComponent != null) {
+			element = recordComponent;
+		}
 		switch (element.getElementType()) {
 			case IJavaElement.JAVA_PROJECT:
 				//return RenameSupport.create((IJavaProject) element, newName, flags);
@@ -189,6 +200,48 @@ public class RenameSupport {
 				return RenameSupport.create((ILocalVariable) element, newName, flags);
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the component of a record that is renamed when the given element is
+	 * renamed, as the Java editor does: the accessor of the component, and the
+	 * parameter of the canonical constructor (compact or not) that has its name.
+	 *
+	 * @param element
+	 *            the element at the position of the rename
+	 * @return the component, or <code>null</code> when the element is not an
+	 *         accessor or a canonical constructor parameter of a record
+	 * @throws CoreException
+	 *             if an unexpected error occurred while reading the record
+	 */
+	public static IField getRecordComponent(IJavaElement element) throws CoreException {
+		if (element instanceof IMethod accessor) {
+			IType type = accessor.getDeclaringType();
+			if (type != null && !type.isBinary() && type.isRecord() && accessor.getNumberOfParameters() == 0 && !Flags.isStatic(accessor.getFlags())) {
+				return getInstanceComponent(type, accessor.getElementName());
+			}
+		} else if (element instanceof ILocalVariable parameter && parameter.getParent() instanceof IMethod constructor && constructor.isConstructor()) {
+			IType type = constructor.getDeclaringType();
+			if (type != null && !type.isBinary() && type.isRecord() && isCanonicalConstructor(constructor)) {
+				return getInstanceComponent(type, parameter.getElementName());
+			}
+		}
+		return null;
+	}
+
+	private static IField getInstanceComponent(IType record, String name) throws CoreException {
+		IField component = record.getRecordComponent(name);
+		return component != null && component.exists() && !Flags.isStatic(component.getFlags()) ? component : null;
+	}
+
+	private static boolean isCanonicalConstructor(IMethod constructor) throws CoreException {
+		CompilationUnit ast = CoreASTProvider.getInstance().getAST(constructor.getCompilationUnit(), CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		if (ast == null) {
+			return false;
+		}
+		MethodDeclaration declaration = ASTNodeSearchUtil.getMethodDeclarationNode(constructor, ast);
+		IMethodBinding binding = declaration == null ? null : declaration.resolveBinding();
+		return binding != null && (binding.isCanonicalConstructor() || binding.isCompactConstructor());
 	}
 
 	private RenameSupport(JavaRenameProcessor processor, String newName, int flags) {
@@ -363,8 +416,19 @@ public class RenameSupport {
 			return new RenameSupport(new RenameEnumConstProcessor(field), newName, flags);
 		} else {
 			final RenameFieldProcessor processor = new RenameFieldProcessor(field);
-			processor.setRenameGetter(updateGetterMethod(flags));
-			processor.setRenameSetter(updateSetterMethod(flags));
+			boolean recordComponent = field.isRecordComponent();
+			if (recordComponent) {
+				// The processor builds the rename of the parameter of the canonical
+				// constructor when it knows the field is a record component, which it does
+				// only after its initial conditions are checked: without it, the rename of the
+				// parameter has no change manager (the Java editor checks them before it
+				// asks for the new name too).
+				processor.checkInitialConditions(new NullProgressMonitor());
+			}
+			// The accessor of a record component is renamed with the component, it is not a getter
+			// that follows the naming of the getters (value() would become getAmount()).
+			processor.setRenameGetter(!recordComponent && updateGetterMethod(flags));
+			processor.setRenameSetter(!recordComponent && updateSetterMethod(flags));
 			return new RenameSupport(processor, newName, flags);
 		}
 	}

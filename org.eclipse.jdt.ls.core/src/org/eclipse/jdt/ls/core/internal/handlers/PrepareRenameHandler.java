@@ -13,6 +13,8 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import java.util.stream.Stream;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -21,6 +23,9 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.internal.core.manipulation.search.IOccurrencesFinder.OccurrenceLocation;
@@ -28,6 +33,7 @@ import org.eclipse.jdt.internal.core.manipulation.search.OccurrencesFinder;
 import org.eclipse.jdt.internal.corext.refactoring.RefactoringAvailabilityTesterCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.corext.refactoring.rename.RenameSupport;
 import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.Range;
@@ -66,6 +72,10 @@ public class PrepareRenameHandler {
 									IJavaElement[] elements = JDTUtils.findElementsAtSelection(unit, params.getPosition().getLine(), params.getPosition().getCharacter(), this.preferenceManager, monitor);
 									if (elements.length == 1) {
 										IJavaElement element = elements[0];
+										if (RenameSupport.getRecordComponent(element) != null) {
+											// The accessor or the canonical constructor parameter of a record renames its component.
+											return JDTUtils.toRange(unit, loc.getOffset(), loc.getLength());
+										}
 										if (element instanceof IMethod method) {
 											if (JDTUtils.isGenerated(method)) {
 												throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
@@ -95,6 +105,9 @@ public class PrepareRenameHandler {
 	private boolean isBinaryOrPackage(ASTNode node) {
 		if (node instanceof Name name) {
 			IBinding resolvedBinding = name.resolveBinding();
+			if (isRecordComponentAlias(resolvedBinding)) {
+				return false;
+			}
 			IJavaElement element = resolvedBinding != null ? resolvedBinding.getJavaElement() : null;
 			try {
 				if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT || !RefactoringAvailabilityTesterCore.isRenameElementAvailable(element)) {
@@ -104,6 +117,22 @@ public class PrepareRenameHandler {
 				JavaLanguageServerPlugin.logException(e.getMessage(), e);
 				return true;
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * The accessor of a record component, and the parameter of its canonical constructor (compact or not), have no
+	 * element of their own to rename: their rename is the one of the component.
+	 */
+	private boolean isRecordComponentAlias(IBinding binding) {
+		if (binding instanceof IVariableBinding variable && variable.isParameter()) {
+			IMethodBinding method = variable.getDeclaringMethod();
+			return method != null && method.isConstructor() && (method.isCanonicalConstructor() || method.isCompactConstructor()) && method.getDeclaringClass().isRecord() && method.getDeclaringClass().isFromSource();
+		}
+		if (binding instanceof IMethodBinding method && method.getParameterTypes().length == 0 && !Modifier.isStatic(method.getModifiers()) && method.getDeclaringClass().isRecord() && method.getDeclaringClass().isFromSource()) {
+			// the only instance fields of a record are its components
+			return Stream.of(method.getDeclaringClass().getDeclaredFields()).anyMatch(field -> !Modifier.isStatic(field.getModifiers()) && field.getName().equals(method.getName()));
 		}
 		return false;
 	}

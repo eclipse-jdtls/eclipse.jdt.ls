@@ -13,6 +13,7 @@
 
 package org.eclipse.jdt.ls.core.internal.handlers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -410,6 +411,69 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		prepareRename(cu, pos, "MyException");
 		}
+	}
+
+	@Test
+	public void testRenameRecordExplicitAccessor() throws Exception {
+		String code = """
+			package test1;
+			public record R(int value) {
+				public int value|*() {
+					return value;
+				}
+			}
+			""";
+		assertPrepareRenameOfRecord(code);
+	}
+
+	@Test
+	public void testRenameRecordImplicitAccessorCall() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String record = """
+			package test1;
+			public record R(int value) {
+			}
+			""";
+		pack1.createCompilationUnit("R.java", record, false, null);
+		String code = """
+			package test1;
+			public class User {
+				int get(R r) {
+					return r.value|*();
+				}
+			}
+			""";
+		assertPrepareRenameOfRecord(code);
+	}
+
+	@Test
+	public void testRenameRecordCompactConstructorParameter() throws Exception {
+		String code = """
+			package test1;
+			public record R(int value) {
+				public R {
+					if (value|* < 0) {
+						value = 0;
+					}
+				}
+			}
+			""";
+		assertPrepareRenameOfRecord(code);
+	}
+
+	// the code is the record R, or a user of it when it has no record: the marker |* is the position to prepare
+	private void assertPrepareRenameOfRecord(String code) throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		int offset = code.indexOf("|*");
+		String before = code.substring(0, offset);
+		Position pos = new Position((int) before.chars().filter(c -> c == '\n').count(), offset - (before.lastIndexOf('\n') + 1));
+		String name = code.contains("public record") ? "R.java" : "User.java";
+		ICompilationUnit cu = pack1.createCompilationUnit(name, code.replace("|*", ""), false, null);
+
+		Either<Range, PrepareRenameResult> result = prepareRename(cu, pos, "amount");
+
+		assertNotNull(result.getLeft());
+		assertEquals(pos.getLine(), result.getLeft().getStart().getLine());
 	}
 
 	private Position mergeCode(StringBuilder builder, String[] codes) {
