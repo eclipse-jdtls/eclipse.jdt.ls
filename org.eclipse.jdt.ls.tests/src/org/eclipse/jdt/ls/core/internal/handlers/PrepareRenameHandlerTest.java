@@ -461,7 +461,10 @@ public class PrepareRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertPrepareRenameOfRecord(code);
 	}
 
-	// the code is the record R, or a user of it when it has no record: the marker |* is the position to prepare
+	/**
+	 * Prepares the rename at the marker |* of the code, which is the record R or
+	 * a user of it, and checks that the range is on the line of the marker.
+	 */
 	private void assertPrepareRenameOfRecord(String code) throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		int offset = code.indexOf("|*");

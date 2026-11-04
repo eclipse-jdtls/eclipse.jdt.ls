@@ -1042,7 +1042,11 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		}
 		""";
 
-	// renames the component "value" of the record R to "amount", from the position marked with |* in either source
+	/**
+	 * Renames the component "value" of the record R to "amount", from the
+	 * position marked with |* in either source, and checks the record and its
+	 * user.
+	 */
 	private void assertRecordRename(String record, String user, String expectedRecord) throws Exception {
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
 		String recordSource = record.replace("|*", "");
@@ -1059,7 +1063,10 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(userSource.replace("r.value(", "r.amount("), TextEditUtil.apply(userSource, edit.getChanges().get(JDTUtils.toURI(userCu))));
 	}
 
-	// the position of the marker |* in the code, null when there is none
+	/**
+	 * Returns the position of the marker |* in the code, or <code>null</code>
+	 * when there is none.
+	 */
 	private Position cursor(String code) {
 		int offset = code.indexOf("|*");
 		if (offset < 0) {

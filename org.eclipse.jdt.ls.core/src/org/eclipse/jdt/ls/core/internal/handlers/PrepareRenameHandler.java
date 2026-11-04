@@ -24,7 +24,6 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
@@ -50,6 +49,17 @@ public class PrepareRenameHandler {
 		this.preferenceManager = preferenceManager;
 	}
 
+	/**
+	 * Returns the range of the name that can be renamed at the position.
+	 *
+	 * @param params
+	 *            the document and the position
+	 * @param monitor
+	 *            the progress monitor
+	 * @return the range of the name
+	 * @throws ResponseErrorException
+	 *             when the element at the position cannot be renamed
+	 */
 	public Range prepareRename(TextDocumentPositionParams params, IProgressMonitor monitor) {
 		final ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
 		if (unit != null) {
@@ -102,6 +112,10 @@ public class PrepareRenameHandler {
 		throw new ResponseErrorException(new ResponseError(ResponseErrorCode.InvalidRequest, "Renaming this element is not supported.", null));
 	}
 
+	/**
+	 * Tells whether the node names an element that cannot be renamed: a package,
+	 * a binary element, or an element that has no model element.
+	 */
 	private boolean isBinaryOrPackage(ASTNode node) {
 		if (node instanceof Name name) {
 			IBinding resolvedBinding = name.resolveBinding();
@@ -122,14 +136,11 @@ public class PrepareRenameHandler {
 	}
 
 	/**
-	 * The accessor of a record component, and the parameter of its canonical constructor (compact or not), have no
-	 * element of their own to rename: their rename is the one of the component.
+	 * Tells whether the binding is the implicit accessor of a record component,
+	 * which has no model element of its own: renaming it is renaming the
+	 * component.
 	 */
 	private boolean isRecordComponentAlias(IBinding binding) {
-		if (binding instanceof IVariableBinding variable && variable.isParameter()) {
-			IMethodBinding method = variable.getDeclaringMethod();
-			return method != null && method.isConstructor() && (method.isCanonicalConstructor() || method.isCompactConstructor()) && method.getDeclaringClass().isRecord() && method.getDeclaringClass().isFromSource();
-		}
 		if (binding instanceof IMethodBinding method && method.getParameterTypes().length == 0 && !Modifier.isStatic(method.getModifiers()) && method.getDeclaringClass().isRecord() && method.getDeclaringClass().isFromSource()) {
 			// the only instance fields of a record are its components
 			return Stream.of(method.getDeclaringClass().getDeclaredFields()).anyMatch(field -> !Modifier.isStatic(field.getModifiers()) && field.getName().equals(method.getName()));

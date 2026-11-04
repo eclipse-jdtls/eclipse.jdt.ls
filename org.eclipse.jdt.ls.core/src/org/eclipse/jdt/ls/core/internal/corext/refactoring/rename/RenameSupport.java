@@ -167,6 +167,24 @@ public class RenameSupport {
 		return new RenameSupport(descriptor);
 	}
 
+	/**
+	 * Creates a new rename support for the given element, whatever its kind.
+	 * The accessor of a record component, and the parameter of its canonical
+	 * constructor, are renamed as the component is.
+	 *
+	 * @param element
+	 *            the element to be renamed
+	 * @param newName
+	 *            the new name of the element
+	 * @param flags
+	 *            flags controlling additional parameters, see the other
+	 *            <code>create</code> methods
+	 * @return the {@link RenameSupport}, or <code>null</code> when the kind of
+	 *         the element cannot be renamed
+	 * @throws CoreException
+	 *             if an unexpected error occurred while creating the
+	 *             {@link RenameSupport}
+	 */
 	public static RenameSupport create(IJavaElement element, String newName, int flags) throws CoreException {
 		IField recordComponent = getRecordComponent(element);
 		if (recordComponent != null) {
@@ -229,11 +247,20 @@ public class RenameSupport {
 		return null;
 	}
 
+	/**
+	 * Returns the component of the record that has the name, or
+	 * <code>null</code> when there is none or when it is a static field.
+	 */
 	private static IField getInstanceComponent(IType record, String name) throws CoreException {
 		IField component = record.getRecordComponent(name);
 		return component != null && component.exists() && !Flags.isStatic(component.getFlags()) ? component : null;
 	}
 
+	/**
+	 * Tells whether the constructor of a record is its canonical constructor,
+	 * compact or not. The AST is needed: the model has no parameter types for a
+	 * compact constructor.
+	 */
 	private static boolean isCanonicalConstructor(IMethod constructor) throws CoreException {
 		CompilationUnit ast = CoreASTProvider.getInstance().getAST(constructor.getCompilationUnit(), CoreASTProvider.WAIT_YES, new NullProgressMonitor());
 		if (ast == null) {
