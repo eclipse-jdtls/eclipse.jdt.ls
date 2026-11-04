@@ -41,6 +41,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.eclipse.core.internal.resources.PreferenceInitializer;
@@ -2107,12 +2108,16 @@ public class Preferences {
 	}
 
 	public Preferences setFormatterUrl(String formatterUrl) {
-		this.formatterUrl = ResourceUtils.expandPath(expandWorkspacePath(formatterUrl));
+		// An empty string (e.g. accidentally saved via the Settings UI at a more specific scope)
+		// is not a usable URL. Treat it the same as the setting being unset, rather than trying
+		// to resolve it and silently falling back to default formatter rules.
+		// See https://github.com/redhat-developer/vscode-java/issues/1237
+		this.formatterUrl = StringUtils.isEmpty(formatterUrl) ? null : ResourceUtils.expandPath(expandWorkspacePath(formatterUrl));
 		return this;
 	}
 
 	public Preferences setSettingsUrl(String settingsUrl) {
-		this.settingsUrl = ResourceUtils.expandPath(expandWorkspacePath(settingsUrl));
+		this.settingsUrl = StringUtils.isEmpty(settingsUrl) ? null : ResourceUtils.expandPath(expandWorkspacePath(settingsUrl));
 		return this;
 	}
 
