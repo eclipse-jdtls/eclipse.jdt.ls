@@ -90,6 +90,7 @@ import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
 import org.eclipse.jdt.ls.core.internal.corrections.ProposalKindWrapper;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.IProposalRelevance;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
+import org.eclipse.jdt.ls.core.internal.handlers.GetRefactorEditHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
 import org.eclipse.jdt.ui.text.java.IProblemLocation;
@@ -1140,6 +1141,31 @@ public class RefactorProposalUtility {
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException(e);
 			}
+		}
+		return null;
+	}
+
+	public static ProposalKindWrapper getRenameProposal(IInvocationContext context) {
+		ICompilationUnit cu = context.getCompilationUnit();
+		if (cu == null) {
+			return null;
+		}
+		if (!(context.getCoveringNode() instanceof SimpleName name)) {
+			return null;
+		}
+		IBinding binding = name.resolveBinding();
+		IJavaElement element = binding != null ? binding.getJavaElement() : null;
+		if (element == null || element.getElementType() == IJavaElement.PACKAGE_FRAGMENT) {
+			return null;
+		}
+		try {
+			if (RefactoringAvailabilityTesterCore.isRenameElementAvailable(element)) {
+				GetRefactorEditHandler.RenamePosition position = new GetRefactorEditHandler.RenamePosition(JDTUtils.toURI(cu), name.getStartPosition(), name.getLength());
+				CUCorrectionCommandProposal p1 = new CUCorrectionCommandProposal(CorrectionMessages.RefactorProcessor_rename, cu, IProposalRelevance.RENAME_REFACTORING, GetRefactorEditHandler.RENAME_COMMAND, Arrays.asList(position));
+				return CodeActionHandler.wrap(p1, JavaCodeActionKind.REFACTOR_RENAME);
+			}
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException(e);
 		}
 		return null;
 	}

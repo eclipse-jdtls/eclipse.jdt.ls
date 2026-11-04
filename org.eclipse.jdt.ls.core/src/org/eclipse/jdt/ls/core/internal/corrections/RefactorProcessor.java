@@ -98,7 +98,6 @@ import org.eclipse.jdt.internal.ui.text.correction.proposals.ASTRewriteRemoveImp
 import org.eclipse.jdt.internal.ui.text.correction.proposals.FixCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.RefactoringCorrectionProposalCore;
 import org.eclipse.jdt.internal.ui.text.correction.proposals.TypeChangeCorrectionProposalCore;
-import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -153,6 +152,10 @@ public class RefactorProcessor {
 				return Collections.emptyList();
 			}
 			getMoveRefactoringProposals(params, context, coveringNode, proposals);
+			if (monitor != null && monitor.isCanceled()) {
+				return Collections.emptyList();
+			}
+			getRenameProposal(context, proposals);
 			if (monitor != null && monitor.isCanceled()) {
 				return Collections.emptyList();
 			}
@@ -1093,6 +1096,25 @@ public class RefactorProcessor {
 		}
 
 		ProposalKindWrapper proposal = RefactorProposalUtility.getChangeSignatureProposal(params, context);
+
+		if (proposal == null) {
+			return false;
+		}
+
+		proposals.add(proposal);
+		return true;
+	}
+
+	private boolean getRenameProposal(IInvocationContext context, Collection<ProposalKindWrapper> proposals) {
+		if (proposals == null) {
+			return false;
+		}
+
+		if (!this.preferenceManager.getClientPreferences().isAdvancedExtractRefactoringSupported()) {
+			return false;
+		}
+
+		ProposalKindWrapper proposal = RefactorProposalUtility.getRenameProposal(context);
 
 		if (proposal == null) {
 			return false;
