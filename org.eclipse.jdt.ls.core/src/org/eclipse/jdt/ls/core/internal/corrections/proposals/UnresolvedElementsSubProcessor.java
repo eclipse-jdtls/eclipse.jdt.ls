@@ -83,6 +83,11 @@ public class UnresolvedElementsSubProcessor extends UnresolvedElementsBaseSubPro
 		new UnresolvedElementsSubProcessor().collectTypeProposals(context, problem, proposals);
 	}
 
+	public static void addRequiresModuleProposals(ICompilationUnit cu, Name node, int relevance,
+			Collection<ProposalKindWrapper> proposals, boolean isOnDemand) throws CoreException {
+		new UnresolvedElementsSubProcessor().collectRequiresModuleProposals(cu, node, relevance, proposals, isOnDemand);
+	}
+
 	public static void addNewTypeProposals(ICompilationUnit cu, Name refNode, int kind, int relevance,
 			Collection<ProposalKindWrapper> proposals) throws CoreException {
 		new UnresolvedElementsSubProcessor().collectNewTypeProposals(cu, refNode, kind, relevance, null);

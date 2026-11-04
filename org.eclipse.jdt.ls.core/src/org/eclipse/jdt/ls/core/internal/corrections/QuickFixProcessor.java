@@ -44,6 +44,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
@@ -153,7 +154,10 @@ public class QuickFixProcessor {
 			case IProblem.DuplicateImport:
 			case IProblem.CannotImportPackage:
 			case IProblem.ConflictingImport:
+				ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
+				break;
 			case IProblem.ImportNotFound:
+				ReorgCorrectionsSubProcessor.importNotFoundProposals(context, problem, proposals);
 				ReorgCorrectionsSubProcessor.removeImportStatementProposals(context, problem, proposals);
 				break;
 			case IProblem.PublicClassMustMatchFileName:
@@ -580,6 +584,12 @@ public class QuickFixProcessor {
 				LocalCorrectionsSubProcessor.getTryWithResourceProposals(context, problem, proposals);
 				break;
 			case IProblem.NotAccessibleType:
+				if (!ReorgCorrectionsSubProcessor.importNotFoundProposals(context, problem, proposals)) {
+					ASTNode inaccessibleNode = problem.getCoveredNode(context.getASTRoot());
+					if (inaccessibleNode instanceof Name) {
+						UnresolvedElementsSubProcessor.addRequiresModuleProposals(context.getCompilationUnit(), (Name) inaccessibleNode, IProposalRelevance.IMPORT_NOT_FOUND_ADD_REQUIRES_MODULE, proposals, true);
+					}
+				}
 				GradleCompatibilityProcessor.getGradleCompatibilityProposals(context, problem, proposals);
 				break;
 			case IProblem.AbstractServiceImplementation:
