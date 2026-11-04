@@ -1042,6 +1042,33 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		}
 		""";
 
+	@Test
+	public void testRenameConstructorOfRecordWhoseComponentIsNamedLikeIt() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String code = """
+				package test1;
+				public record value(int value) {
+					public value|*() {
+						this(0);
+					}
+				}
+				""";
+		String source = code.replace("|*", "");
+		ICompilationUnit cu = pack1.createCompilationUnit("value.java", source, false, null);
+
+		WorkspaceEdit edit = getRenameEdit(cu, cursor(code), "Amount");
+
+		assertNotNull(edit);
+		assertEquals("""
+				package test1;
+				public record Amount(int value) {
+					public Amount() {
+						this(0);
+					}
+				}
+				""", TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
+	}
+
 	/**
 	 * Renames the component "value" of the record R to "amount", from the
 	 * position marked with |* in either source, and checks the record and its

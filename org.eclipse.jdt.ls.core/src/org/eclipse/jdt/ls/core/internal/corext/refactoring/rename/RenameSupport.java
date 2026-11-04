@@ -235,7 +235,7 @@ public class RenameSupport {
 	public static IField getRecordComponent(IJavaElement element) throws CoreException {
 		if (element instanceof IMethod accessor) {
 			IType type = accessor.getDeclaringType();
-			if (type != null && !type.isBinary() && type.isRecord() && accessor.getNumberOfParameters() == 0 && !Flags.isStatic(accessor.getFlags())) {
+			if (type != null && !type.isBinary() && type.isRecord() && accessor.getNumberOfParameters() == 0 && !accessor.isConstructor() && !Flags.isStatic(accessor.getFlags())) {
 				return getInstanceComponent(type, accessor.getElementName());
 			}
 		} else if (element instanceof ILocalVariable parameter && parameter.getParent() instanceof IMethod constructor && constructor.isConstructor()) {
