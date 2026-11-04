@@ -58,7 +58,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToVariable() throws Exception {
-		setIgnoredCommands("Assign statement to new field", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment");
+		setIgnoredCommands("Assign statement to new field", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment", "Rename...");
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
@@ -93,7 +93,7 @@ public class AssignToVariableRefactorTest extends AbstractQuickFixTest {
 
 	@Test
 	public void testAssignStatementToField() throws Exception {
-		setIgnoredCommands("Assign statement to new local variable", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment");
+		setIgnoredCommands("Assign statement to new local variable", ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label, "Add Javadoc comment", "Rename...");
 		IPackageFragment pack1 = fSourceFolder.createPackageFragment("test1", false, null);
 		StringBuilder buf = new StringBuilder();
 		buf.append("package test1;\n");
