@@ -567,6 +567,22 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		}
 	}
 
+	// https://github.com/redhat-developer/vscode-java/issues/4568
+	@Test
+	public void testImportWithProjectNameTemplateByFolder() throws Exception {
+		try {
+			File salut = new File(getWorkingProjectDirectory(), "maven/salut");
+			File salut2 = new File(getWorkingProjectDirectory(), "maven/salut2");
+			this.preferences.setMavenProjectNameTemplateByFolder(Map.of(salut.toURI().toString(), "foo-[artifactId]", salut2.toURI().toString(), "bar-[artifactId]"));
+			importProjects(Arrays.asList("maven/salut", "maven/salut2"));
+			IProject[] projects = ProjectUtils.getAllProjects(false);
+			assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("foo-salut")));
+			assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("bar-salut2")));
+		} finally {
+			this.preferences.setMavenProjectNameTemplateByFolder(Collections.emptyMap());
+		}
+	}
+
 	// https://github.com/redhat-developer/vscode-java/issues/3639
 	@Test
 	public void testInvalidProject() throws Exception {

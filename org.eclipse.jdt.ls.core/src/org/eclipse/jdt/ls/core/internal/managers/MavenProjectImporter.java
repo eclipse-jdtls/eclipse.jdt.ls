@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -46,10 +47,11 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
-import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
-import org.eclipse.jdt.ls.core.internal.managers.ondemand.MavenModuleIndex;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
+import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.IModuleIndex;
+import org.eclipse.jdt.ls.core.internal.managers.ondemand.MavenModuleIndex;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.m2e.core.MavenPlugin;
@@ -228,7 +230,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					renameWithGroupId(existing, monitor);
 				}
 			}
-			String projectNameTemplate = getPreferences().getMavenProjectNameTemplate();
+			String projectNameTemplate = getProjectNameTemplate();
 			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
 				importConfig.setProjectNameTemplate(projectNameTemplate);
 			}
@@ -345,7 +347,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 				// Ensure project name is unique when same artifactId
 				importConfig.setProjectNameTemplate(DUPLICATE_ARTIFACT_TEMPLATE);
 			}
-			String projectNameTemplate = getPreferences().getMavenProjectNameTemplate();
+			String projectNameTemplate = getProjectNameTemplate();
 			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
 				importConfig.setProjectNameTemplate(projectNameTemplate);
 			}
@@ -442,6 +444,19 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	private File getProjectDirectory() {
 		return rootFolder;
+	}
+
+	private String getProjectNameTemplate() {
+		Map<String, String> templateByFolder = getPreferences().getMavenProjectNameTemplateByFolder();
+		if (templateByFolder != null) {
+			for (Map.Entry<String, String> entry : templateByFolder.entrySet()) {
+				IPath folderPath = ResourceUtils.canonicalFilePathFromURI(entry.getKey());
+				if (folderPath != null && folderPath.toFile().equals(rootFolder)) {
+					return entry.getValue();
+				}
+			}
+		}
+		return getPreferences().getMavenProjectNameTemplate();
 	}
 
 	private void updateProjects(Collection<IProject> projects, long lastWorkspaceStateSaved, IProgressMonitor monitor) throws CoreException {

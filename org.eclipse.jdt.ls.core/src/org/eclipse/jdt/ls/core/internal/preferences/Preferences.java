@@ -233,7 +233,10 @@ public class Preferences {
 	 * Preference key for the Maven project name template.
 	 */
 	public static final String IMPORT_MAVEN_PROJECT_NAME_TEMPLATE = "java.import.maven.projectNameTemplate";
-
+	/**
+	 * Preference key for the Maven project name template per workspace folder.
+	 */
+	public static final String IMPORT_MAVEN_PROJECT_NAME_TEMPLATE_BY_FOLDER = "java.import.maven.projectNameTemplateByFolder";
 	/**
 	 * Preference key to enable/disable maven test classpath flag.
 	 */
@@ -685,6 +688,7 @@ public class Preferences {
 	private boolean importMavenEnabled;
 	private boolean mavenOffline;
 	private String mavenProjectNameTemplate;
+	private Map<String, String> mavenProjectNameTemplateByFolder;
 	private boolean mavenDisableTestClasspathFlag;
 	private boolean mavenDownloadSources;
 	private boolean eclipseDownloadSources;
@@ -983,6 +987,7 @@ public class Preferences {
 		importMavenEnabled = true;
 		mavenOffline = false;
 		mavenProjectNameTemplate = null;
+		mavenProjectNameTemplateByFolder = Collections.emptyMap();
 		mavenDisableTestClasspathFlag = false;
 		mavenDownloadSources = false;
 		eclipseDownloadSources = false;
@@ -1157,6 +1162,7 @@ public class Preferences {
 		prefs.importMavenEnabled = this.importMavenEnabled;
 		prefs.mavenOffline = this.mavenOffline;
 		prefs.mavenProjectNameTemplate = this.mavenProjectNameTemplate;
+		prefs.mavenProjectNameTemplateByFolder = this.mavenProjectNameTemplateByFolder != null ? new HashMap<>(this.mavenProjectNameTemplateByFolder) : null;
 		prefs.mavenDisableTestClasspathFlag = this.mavenDisableTestClasspathFlag;
 		prefs.mavenDownloadSources = this.mavenDownloadSources;
 		prefs.eclipseDownloadSources = this.eclipseDownloadSources;
@@ -1392,6 +1398,13 @@ public class Preferences {
 		if (containsKey(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE)) {
 			String mavenProjectNameTemplate = getString(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE);
 			prefs.setMavenProjectNameTemplate(mavenProjectNameTemplate);
+		}
+
+		if (containsKey(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE_BY_FOLDER)) {
+			Object mavenProjectNameTemplateByFolder = getValue(configuration, IMPORT_MAVEN_PROJECT_NAME_TEMPLATE_BY_FOLDER);
+			if (mavenProjectNameTemplateByFolder instanceof Map map) {
+				prefs.setMavenProjectNameTemplateByFolder(map);
+			}
 		}
 
 		if (containsKey(configuration, MAVEN_DISABLE_TEST_CLASSPATH_FLAG)) {
@@ -2232,6 +2245,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setMavenProjectNameTemplateByFolder(Map<String, String> mavenProjectNameTemplateByFolder) {
+		this.mavenProjectNameTemplateByFolder = mavenProjectNameTemplateByFolder;
+		return this;
+	}
+
 	public Preferences setMavenDisableTestClasspathFlag(boolean enabled) {
 		this.mavenDisableTestClasspathFlag = enabled;
 		return this;
@@ -2604,6 +2622,10 @@ public class Preferences {
 
 	public String getMavenProjectNameTemplate() {
 		return mavenProjectNameTemplate;
+	}
+
+	public Map<String, String> getMavenProjectNameTemplateByFolder() {
+		return mavenProjectNameTemplateByFolder;
 	}
 
 	public boolean isMavenDisableTestClasspathFlag() {
