@@ -69,6 +69,7 @@ public class ConfigureProblemSeveritySubProcessor {
 				projectUri.toString(),
 				optionId,
 				JavaCore.IGNORE,
+				JDTUtils.toURI(cu),
 				problemMessage,
 				CONFIGURE_PROBLEM_SEVERITY_RELEVANCE);
 		proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
