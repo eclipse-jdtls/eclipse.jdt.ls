@@ -12,54 +12,36 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections.proposals;
 
-import java.net.URI;
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.internal.corext.util.Messages;
-import org.eclipse.jdt.ls.core.internal.commands.ProjectCommand;
 import org.eclipse.jdt.ls.core.internal.corrections.CorrectionMessages;
-import org.eclipse.ltk.core.refactoring.Change;
+import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandProposal;
 
 /**
- * Sets a single compiler problem's severity option (e.g. "ignore") for the
- * enclosing project directly, by writing to the project's JDT preferences
- * (.settings/org.eclipse.jdt.core.prefs) - the same file a user could edit
- * by hand. Unlike the desktop Eclipse equivalent, this does not open a
- * preferences dialog: the chosen severity is applied immediately.
+ * Offers to set a single compiler problem's severity option (e.g. "ignore")
+ * for the enclosing project. Implemented as a command proposal - rather than
+ * a Change/text-edit proposal - so that the underlying
+ * "java.project.updateSettings" command (which writes to the project's
+ * .settings/org.eclipse.jdt.core.prefs, the same file a user could edit by
+ * hand) only runs when the user actually selects this quick fix, not merely
+ * when code actions are listed or resolved for display.
  */
-public final class ConfigureProblemSeverityProposal extends ChangeCorrectionProposalCore {
+public final class ConfigureProblemSeverityProposal extends CUCorrectionCommandProposal {
 
-	private final IJavaProject fProject;
-	private final String fOptionId;
-	private final String fSeverity;
 	private final String fProblemMessage;
 
-	public ConfigureProblemSeverityProposal(String name, IJavaProject project, String optionId, String severity, String problemMessage, int relevance) {
-		super(name, null, relevance);
-		fProject = project;
-		fOptionId = optionId;
-		fSeverity = severity;
+	public ConfigureProblemSeverityProposal(String name, ICompilationUnit cu, String projectUri, String optionId, String severity, String problemMessage, int relevance) {
+		super(name, cu, relevance, "java.project.updateSettings", List.of(projectUri, Map.of(optionId, severity)));
 		fProblemMessage = problemMessage;
 	}
 
 	@Override
 	public Object getAdditionalProposalInfo(IProgressMonitor monitor) {
 		return Messages.format(CorrectionMessages.ConfigureProblemSeveritySubProcessor_ignore_project_info, fProblemMessage);
-	}
-
-	@Override
-	protected Change createChange() throws CoreException {
-		try {
-			URI projectUri = fProject.getProject().getLocationURI();
-			ProjectCommand.updateProjectSettings(projectUri.toString(), Collections.singletonMap(fOptionId, fSeverity));
-		} catch (Exception e) {
-			// continue
-		}
-		return null;
 	}
 
 }
