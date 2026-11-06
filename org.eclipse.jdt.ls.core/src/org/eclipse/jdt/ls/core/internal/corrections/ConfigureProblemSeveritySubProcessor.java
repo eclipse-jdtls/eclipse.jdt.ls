@@ -12,8 +12,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.corrections;
 
+import java.net.URI;
 import java.util.Collection;
 
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -28,7 +30,8 @@ import org.eclipse.lsp4j.CodeActionKind;
  * Unlike the desktop implementation, which opens a preferences dialog and relies on the user to
  * manually change the severity, this directly offers to set the problem's severity to "ignore"
  * for the current project - the same .settings/org.eclipse.jdt.core.prefs change a user could make
- * by hand, applied immediately as a single quick fix.
+ * by hand - via the existing "java.project.updateSettings" command, run only when the user selects
+ * the quick fix.
  */
 public class ConfigureProblemSeveritySubProcessor {
 
@@ -45,10 +48,17 @@ public class ConfigureProblemSeveritySubProcessor {
 			return;
 		}
 
+		ICompilationUnit cu = context.getCompilationUnit();
+		URI projectUri = cu.getJavaProject().getProject().getLocationURI();
+		if (projectUri == null) {
+			return;
+		}
+
 		String problemMessage = getProblemMessage(context, problem);
 		ConfigureProblemSeverityProposal proposal = new ConfigureProblemSeverityProposal(
 				CorrectionMessages.ConfigureProblemSeveritySubProcessor_ignore_project_name,
-				context.getCompilationUnit().getJavaProject(),
+				cu,
+				projectUri.toString(),
 				optionId,
 				JavaCore.IGNORE,
 				problemMessage,
