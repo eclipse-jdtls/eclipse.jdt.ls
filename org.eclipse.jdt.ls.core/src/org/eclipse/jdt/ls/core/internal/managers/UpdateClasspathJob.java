@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.IProject;
@@ -48,6 +50,8 @@ public class UpdateClasspathJob extends WorkspaceJob {
 
 	private final Set<UpdateClasspathRequest> queue = new LinkedHashSet<>();
 
+	private final Map<IJavaProject, List<CompletableFuture<Void>>> pendingUpdates = new HashMap<>();
+
 	private static final UpdateClasspathJob instance = new UpdateClasspathJob();
 
 	UpdateClasspathJob() {
@@ -57,9 +61,12 @@ public class UpdateClasspathJob extends WorkspaceJob {
 	@Override
 	public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
 		final List<UpdateClasspathRequest> requests;
+		final Map<IJavaProject, List<CompletableFuture<Void>>> updates;
 		synchronized (this.queue) {
 			requests = new ArrayList<>(this.queue);
 			this.queue.clear();
+			updates = new HashMap<>(pendingUpdates);
+			pendingUpdates.clear();
 		}
 		Map<IJavaProject, UpdateClasspathRequest> mergedRequestPerProject = requests.stream().collect(
 			Collectors.groupingBy(UpdateClasspathRequest::getProject,
@@ -72,15 +79,40 @@ public class UpdateClasspathJob extends WorkspaceJob {
 				})
 			)
 		);
-		for (Map.Entry<IJavaProject, UpdateClasspathRequest> entry : mergedRequestPerProject.entrySet()) {
-			if (monitor.isCanceled()) {
-				return Status.CANCEL_STATUS;
+		try {
+			for (Map.Entry<IJavaProject, UpdateClasspathRequest> entry : mergedRequestPerProject.entrySet()) {
+				if (monitor.isCanceled()) {
+					failUpdates(updates.values(), new CancellationException("Library classpath update was canceled."));
+					return Status.CANCEL_STATUS;
+				}
+				if (entry.getValue() != null) {
+					final IJavaProject project = entry.getKey();
+					final UpdateClasspathRequest request = entry.getValue();
+					try {
+						doUpdateClasspath(project, request.include, request.exclude, request.sources, monitor);
+					} catch (CoreException | RuntimeException e) {
+						Throwable failure = e;
+						if (monitor.isCanceled()) {
+							failure = new CancellationException("Library classpath update was canceled.");
+							failure.initCause(e);
+						}
+						failUpdates(List.of(updates.getOrDefault(project, List.of())), failure);
+						updates.remove(project);
+						throw e;
+					}
+					if (monitor.isCanceled()) {
+						failUpdates(updates.values(), new CancellationException("Library classpath update was canceled."));
+						return Status.CANCEL_STATUS;
+					}
+					updates.getOrDefault(project, List.of()).forEach(update -> update.complete(null));
+					updates.remove(project);
+				}
 			}
-			if (entry.getValue() != null) {
-				final IJavaProject project = entry.getKey();
-				final UpdateClasspathRequest request = entry.getValue();
-				doUpdateClasspath(project, request.include, request.exclude, request.sources, monitor);
-			}
+		} catch (CoreException | RuntimeException e) {
+			CancellationException aborted = new CancellationException("Library classpath update was aborted before this project was processed.");
+			aborted.initCause(e);
+			failUpdates(updates.values(), aborted);
+			throw e;
 		}
 		synchronized (queue) {
 			if (!queue.isEmpty()) {
@@ -88,6 +120,10 @@ public class UpdateClasspathJob extends WorkspaceJob {
 			}
 		}
 		return Status.OK_STATUS;
+	}
+
+	private static void failUpdates(Collection<List<CompletableFuture<Void>>> updates, Throwable error) {
+		updates.forEach(projectUpdates -> projectUpdates.forEach(update -> update.completeExceptionally(error)));
 	}
 
 	private void doUpdateClasspath(IJavaProject javaProject, Set<String> include, Set<String> exclude, Map<String, String> sources, IProgressMonitor monitor) throws CoreException {
@@ -127,6 +163,22 @@ public class UpdateClasspathJob extends WorkspaceJob {
 
 	public void updateClasspath(IJavaProject project, ReferencedLibraries libraries) {
 		updateClasspath(project, libraries.getInclude(), libraries.getExclude(), libraries.getSources());
+	}
+
+	/**
+	 * Complete after this project's queued library pass succeeds, including merged requests.
+	 * Fail exceptionally if that pass fails, or cancel if the project was not processed.
+	 */
+	public CompletableFuture<Void> updateClasspathAsync(IJavaProject project, ReferencedLibraries libraries) {
+		Objects.requireNonNull(project, "project");
+		Objects.requireNonNull(libraries, "libraries");
+		CompletableFuture<Void> update = new CompletableFuture<>();
+		synchronized (queue) {
+			queue.add(new UpdateClasspathRequest(project, libraries.getInclude(), libraries.getExclude(), libraries.getSources()));
+			pendingUpdates.computeIfAbsent(project, key -> new ArrayList<>()).add(update);
+		}
+		schedule(SCHEDULE_DELAY);
+		return update;
 	}
 
 	public void updateClasspath(IJavaProject project) {

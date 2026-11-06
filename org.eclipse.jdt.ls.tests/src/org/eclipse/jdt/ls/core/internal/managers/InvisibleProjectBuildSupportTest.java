@@ -14,14 +14,21 @@ package org.eclipse.jdt.ls.core.internal.managers;
 
 import static org.eclipse.jdt.ls.core.internal.JsonMessageHelper.getParams;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,10 +36,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -42,12 +53,14 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ls.core.internal.ClassFileUtil;
 import org.eclipse.jdt.ls.core.internal.DependencyUtil;
 import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.JobHelpers;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.StatusFactory;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.HoverHandlerTest;
 import org.eclipse.jdt.ls.core.internal.handlers.NavigateToDefinitionHandler;
@@ -69,6 +82,93 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 public class InvisibleProjectBuildSupportTest extends AbstractInvisibleProjectBasedTest {
+
+	@Test
+	public void testAsyncLibraryUpdateCompletesMergedRequestsAfterProcessing() throws Exception {
+		File projectFolder = createSourceFolderWithMissingLibs("asyncLibDetection");
+		IJavaProject javaProject = JavaCore.create(importRootFolder(projectFolder, "Test.java"));
+		addLibs(projectFolder.toPath());
+		ReferencedLibraries libraries = preferences.getReferencedLibraries();
+		CompletableFuture<Void> first;
+		CompletableFuture<Void> second;
+		CompletableFuture<IClasspathEntry[]> completedClasspath;
+
+		Job.getJobManager().suspend();
+		try {
+			UpdateClasspathJob.getInstance().updateClasspath(javaProject, libraries);
+			first = UpdateClasspathJob.getInstance().updateClasspathAsync(javaProject, libraries);
+			second = UpdateClasspathJob.getInstance().updateClasspathAsync(javaProject, libraries);
+			completedClasspath = first.thenApply(result -> {
+				try {
+					return javaProject.getRawClasspath();
+				} catch (CoreException e) {
+					throw new CompletionException(e);
+				}
+			});
+			assertFalse(first.isDone());
+			assertFalse(second.isDone());
+			assertEquals(2, javaProject.getRawClasspath().length);
+		} finally {
+			Job.getJobManager().resume();
+		}
+		waitForBackgroundJobs();
+
+		assertTrue(first.isDone());
+		assertTrue(second.isDone());
+		assertFalse(first.isCompletedExceptionally());
+		assertFalse(second.isCompletedExceptionally());
+		assertTrue(completedClasspath.isDone());
+		assertEquals(3, completedClasspath.join().length);
+		assertEquals("foo.jar", completedClasspath.join()[2].getPath().lastSegment());
+		assertEquals(3, javaProject.getRawClasspath().length);
+		assertEquals("foo.jar", javaProject.getRawClasspath()[2].getPath().lastSegment());
+		assertNoErrors(javaProject.getProject());
+	}
+
+	@Test
+	public void testAsyncLibraryUpdateReportsFailureWithoutCompletingSuccessfully() throws Exception {
+		File projectFolder = createSourceFolderWithMissingLibs("failedAsyncLibDetection");
+		IProject project = importRootFolder(projectFolder, "Test.java");
+		IJavaProject javaProject = mock(IJavaProject.class);
+		JavaModelException failure = new JavaModelException(new CoreException(StatusFactory.newErrorStatus("Test library classpath update failure.")));
+		when(javaProject.getProject()).thenReturn(project);
+		when(javaProject.getElementName()).thenReturn(project.getName());
+		when(javaProject.getRawClasspath()).thenThrow(failure);
+
+		CompletableFuture<Void> update = UpdateClasspathJob.getInstance().updateClasspathAsync(javaProject, preferences.getReferencedLibraries());
+		waitForBackgroundJobs();
+
+		assertTrue(update.isCompletedExceptionally());
+		assertSame(failure, assertThrows(CompletionException.class, update::join).getCause());
+	}
+
+	@Test
+	public void testAbortedBatchCancelsProjectsWhoseLibraryPassNeverRan() throws Exception {
+		File projectFolder = createSourceFolderWithMissingLibs("abortedAsyncLibDetection");
+		IProject project = importRootFolder(projectFolder, "Test.java");
+		JavaModelException failure = new JavaModelException(new CoreException(StatusFactory.newErrorStatus("Test library classpath update failure.")));
+		List<CompletableFuture<Void>> updates = new ArrayList<>();
+
+		Job.getJobManager().suspend();
+		try {
+			for (int i = 0; i < 2; i++) {
+				IJavaProject javaProject = mock(IJavaProject.class);
+				lenient().when(javaProject.getProject()).thenReturn(project);
+				lenient().when(javaProject.getElementName()).thenReturn(project.getName());
+				lenient().when(javaProject.getRawClasspath()).thenThrow(failure);
+				updates.add(UpdateClasspathJob.getInstance().updateClasspathAsync(javaProject, preferences.getReferencedLibraries()));
+			}
+			assertSame(failure, assertThrows(JavaModelException.class, () -> UpdateClasspathJob.getInstance().runInWorkspace(monitor)));
+		} finally {
+			Job.getJobManager().resume();
+		}
+		waitForBackgroundJobs();
+
+		List<Throwable> failures = updates.stream().map(update -> update.handle((result, error) -> error).join()).toList();
+		assertEquals(1, failures.stream().filter(error -> error == failure).count());
+		assertEquals(1, failures.stream().filter(CancellationException.class::isInstance).count());
+		assertSame(failure, failures.stream().filter(CancellationException.class::isInstance).findFirst().orElseThrow().getCause());
+	}
 
 	@Test
 	public void testDynamicLibDetection() throws Exception {
