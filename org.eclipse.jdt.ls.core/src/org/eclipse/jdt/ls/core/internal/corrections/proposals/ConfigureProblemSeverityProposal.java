@@ -25,17 +25,19 @@ import org.eclipse.jdt.ls.core.internal.text.correction.CUCorrectionCommandPropo
  * Offers to set a single compiler problem's severity option (e.g. "ignore")
  * for the enclosing project. Implemented as a command proposal - rather than
  * a Change/text-edit proposal - so that the underlying
- * "java.project.updateSettings" command (which writes to the project's
- * .settings/org.eclipse.jdt.core.prefs, the same file a user could edit by
- * hand) only runs when the user actually selects this quick fix, not merely
- * when code actions are listed or resolved for display.
+ * "java.project.configureProblemSeverity" command (which writes to the
+ * project's .settings/org.eclipse.jdt.core.prefs, the same file a user could
+ * edit by hand, and then revalidates the current file so a stale diagnostic
+ * doesn't linger when autobuild is disabled) only runs when the user
+ * actually selects this quick fix, not merely when code actions are listed
+ * or resolved for display.
  */
 public final class ConfigureProblemSeverityProposal extends CUCorrectionCommandProposal {
 
 	private final String fProblemMessage;
 
-	public ConfigureProblemSeverityProposal(String name, ICompilationUnit cu, String projectUri, String optionId, String severity, String problemMessage, int relevance) {
-		super(name, cu, relevance, "java.project.updateSettings", List.of(projectUri, Map.of(optionId, severity)));
+	public ConfigureProblemSeverityProposal(String name, ICompilationUnit cu, String projectUri, String optionId, String severity, String fileUri, String problemMessage, int relevance) {
+		super(name, cu, relevance, "java.project.configureProblemSeverity", List.of(projectUri, Map.of(optionId, severity), fileUri));
 		fProblemMessage = problemMessage;
 	}
 
