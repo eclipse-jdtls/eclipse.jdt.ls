@@ -19,6 +19,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.proposals.ConfigureProblemSeverityProposal;
 import org.eclipse.jdt.ls.core.internal.handlers.CodeActionHandler;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -49,6 +50,13 @@ public class ConfigureProblemSeveritySubProcessor {
 		}
 
 		ICompilationUnit cu = context.getCompilationUnit();
+		if (JDTUtils.isDefaultProject(cu)) {
+			// Standalone files all share the same default project, so an "ignore in this
+			// project" fix here would silently suppress the same problem in every other
+			// unrelated standalone file too. Not offered for standalone files.
+			return;
+		}
+
 		URI projectUri = cu.getJavaProject().getProject().getLocationURI();
 		if (projectUri == null) {
 			return;
