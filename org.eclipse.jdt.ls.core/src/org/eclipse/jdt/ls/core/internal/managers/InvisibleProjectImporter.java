@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,6 +63,7 @@ import org.eclipse.jdt.ls.core.internal.AbstractProjectImporter;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JVMConfigurator;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -180,10 +182,44 @@ public class InvisibleProjectImporter extends AbstractProjectImporter {
 		javaProject.setRawClasspath(classpathEntries, outputPath, monitor);
 
 		if (forceUpdateLibPath && preferencesManager != null && preferencesManager.getPreferences() != null) {
-			UpdateClasspathJob.getInstance().updateClasspath(javaProject, preferencesManager.getPreferences().getReferencedLibraries());
+			UpdateClasspathJob.getInstance().updateClasspathAsync(javaProject, preferencesManager.getPreferences().getReferencedLibraries())
+					.whenComplete((result, error) -> {
+						if (error != null) {
+							JavaLanguageServerPlugin.logException("Failed to update libraries before preview reconciliation for " + javaProject.getElementName(), error);
+							if (error instanceof CancellationException || error instanceof OperationCanceledException
+									|| error instanceof CoreException failure && failure.getStatus().matches(IStatus.CANCEL)) {
+								return;
+							}
+						}
+						schedulePreviewFeatureReconciliation(javaProject);
+					});
+		} else {
+			JVMConfigurator.reconcilePreviewFeatureSettings(javaProject);
 		}
 
 		return true;
+	}
+
+	private static void schedulePreviewFeatureReconciliation(IJavaProject javaProject) {
+		WorkspaceJob reconciliation = new WorkspaceJob("Reconcile preview feature settings for " + javaProject.getElementName()) {
+			@Override
+			public IStatus runInWorkspace(IProgressMonitor monitor) {
+				if (monitor.isCanceled()) {
+					return Status.CANCEL_STATUS;
+				}
+				try {
+					JVMConfigurator.reconcilePreviewFeatureSettings(javaProject);
+					return Status.OK_STATUS;
+				} catch (CoreException e) {
+					JavaLanguageServerPlugin.logException("Failed to reconcile preview feature settings for " + javaProject.getElementName(), e);
+					return e.getStatus();
+				}
+			}
+		};
+		reconciliation.setRule(ResourcesPlugin.getWorkspace().getRoot());
+		reconciliation.setPriority(Job.BUILD);
+		reconciliation.setSystem(true);
+		reconciliation.schedule();
 	}
 
 	/**
