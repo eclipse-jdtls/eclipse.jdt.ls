@@ -155,12 +155,15 @@ public class CodeActionHandlerTest extends AbstractCompilationUnitBasedTest {
 		params.setContext(new CodeActionContext(Arrays.asList(getDiagnostic(Integer.toString(IProblem.UnusedImport), range))));
 		List<Either<Command, CodeAction>> codeActions = getCodeActions(params);
 		assertNotNull(codeActions);
-		assertTrue(codeActions.size() >= 4);
+		assertTrue(codeActions.size() >= 5);
 		assertEquals(CodeActionKind.QuickFix, codeActions.get(0).getRight().getKind());
 		assertEquals(CodeActionKind.QuickFix, codeActions.get(1).getRight().getKind());
-		assertEquals(JavaCodeActionKind.QUICK_ASSIST, codeActions.get(2).getRight().getKind());
-		assertEquals(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, codeActions.get(3).getRight().getKind());
-		assertEquals(CodeActionKind.SourceOrganizeImports, codeActions.get(4).getRight().getKind());
+		// unused-import has a configurable severity, so an "ignore this problem in the current
+		// project" quick fix is also offered, grouped with the other QuickFix-kind proposals.
+		assertEquals(CodeActionKind.QuickFix, codeActions.get(2).getRight().getKind());
+		assertEquals(JavaCodeActionKind.QUICK_ASSIST, codeActions.get(3).getRight().getKind());
+		assertEquals(JavaCodeActionKind.SOURCE_GENERATE_CONSTRUCTORS, codeActions.get(4).getRight().getKind());
+		assertEquals(CodeActionKind.SourceOrganizeImports, codeActions.get(5).getRight().getKind());
 		WorkspaceEdit w = codeActions.get(0).getRight().getEdit();
 		assertNotNull(w);
 	}
