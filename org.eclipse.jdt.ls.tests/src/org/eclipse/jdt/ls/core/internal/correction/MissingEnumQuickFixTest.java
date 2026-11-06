@@ -69,7 +69,9 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		Range range = new Range(new Position(5, 16), new Position(5, 17));
 		setIgnoredCommands(ActionMessages.GenerateConstructorsAction_ellipsisLabel, ActionMessages.GenerateConstructorsAction_label);
 		List<Either<Command, CodeAction>> codeActions = evaluateCodeActions(cu, range);
-		assertEquals(4, codeActions.size());
+		// incomplete-switch has a configurable severity, so a 5th "ignore this problem in the
+		// current project" quick fix is now also offered alongside the other 4.
+		assertEquals(5, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());
@@ -114,7 +116,9 @@ public class MissingEnumQuickFixTest extends AbstractQuickFixTest {
 		options.put(JavaCore.COMPILER_PB_MISSING_ENUM_CASE_DESPITE_DEFAULT, JavaCore.ENABLED);
 		fJProject.setOptions(options);
 		codeActions = evaluateCodeActions(cu, range);
-		assertEquals(4, codeActions.size());
+		// incomplete-switch has a configurable severity, so a 5th "ignore this problem in the
+		// current project" quick fix is now also offered alongside the other 4.
+		assertEquals(5, codeActions.size());
 		Either<Command, CodeAction> codeAction = codeActions.get(0);
 		CodeAction action = codeAction.getRight();
 		assertEquals(CodeActionKind.QuickFix, action.getKind());

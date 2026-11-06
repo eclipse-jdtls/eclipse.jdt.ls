@@ -161,10 +161,12 @@ public class ShowAllQuickFixTest extends AbstractQuickFixTest {
 			List<Diagnostic> diagnostics = getDiagnostics(cu, astRoot, 4);
 			context.setDiagnostics(diagnostics);
 			codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(2, codeActions.size());
+			// one of the diagnostics here has a configurable severity, so an extra "ignore this
+			// problem in the current project" quick fix is now also offered.
+			assertEquals(3, codeActions.size());
 			codeActionParams.setRange(new Range(new Position(3, 4), new Position(3, 40)));
 			codeActions = new CodeActionHandler(this.preferenceManager).getCodeActionCommands(codeActionParams, new NullProgressMonitor());
-			assertEquals(2, codeActions.size());
+			assertEquals(3, codeActions.size());
 			codeActionParams.setRange(new Range(new Position(5, 1), new Position(5, 1)));
 			diagnostics = getDiagnostics(cu, astRoot, 6);
 			context.setDiagnostics(diagnostics);
