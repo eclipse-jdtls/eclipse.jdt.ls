@@ -876,6 +876,233 @@ public class RenameHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(ResourceUtils.dos2Unix(expected), ResourceUtils.dos2Unix(text));
 	}
 
+	@Test
+	public void testRenameRecordComponentWithCompactConstructorBody() throws Exception {
+		String record = """
+			package test1;
+			public record R(int val|*ue) {
+				public R {
+					if (value < 0) {
+						value = 0;
+					}
+				}
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int amount) {
+				public R {
+					if (amount < 0) {
+						amount = 0;
+					}
+				}
+			}
+			""";
+		assertRecordRename(record, USER, expected);
+	}
+
+	@Test
+	public void testRenameRecordComponentFromCompactConstructorParameter() throws Exception {
+		String record = """
+			package test1;
+			public record R(int value) {
+				public R {
+					if (value|* < 0) {
+						value = 0;
+					}
+				}
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int amount) {
+				public R {
+					if (amount < 0) {
+						amount = 0;
+					}
+				}
+			}
+			""";
+		assertRecordRename(record, USER, expected);
+	}
+
+	@Test
+	public void testRenameRecordComponentFromCanonicalConstructorParameter() throws Exception {
+		String record = """
+			package test1;
+			public record R(int value) {
+				public R(int value|*) {
+					this.value = value;
+				}
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int amount) {
+				public R(int amount) {
+					this.amount = amount;
+				}
+			}
+			""";
+		assertRecordRename(record, USER, expected);
+	}
+
+	@Test
+	public void testRenameRecordComponentFromExplicitAccessor() throws Exception {
+		String record = """
+			package test1;
+			public record R(int value) {
+				public int value|*() {
+					return value;
+				}
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int amount) {
+				public int amount() {
+					return amount;
+				}
+			}
+			""";
+		assertRecordRename(record, USER, expected);
+	}
+
+	@Test
+	public void testRenameRecordComponentWithExplicitAccessor() throws Exception {
+		String record = """
+				package test1;
+				public record R(int val|*ue) {
+					public int value() {
+						return value;
+					}
+				}
+				""";
+		String expected = """
+				package test1;
+				public record R(int amount) {
+					public int amount() {
+						return amount;
+					}
+				}
+				""";
+		assertRecordRename(record, USER, expected);
+	}
+
+	@Test
+	public void testRenameRecordComponentFromImplicitAccessorCall() throws Exception {
+		String record = """
+			package test1;
+			public record R(int value) {
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int amount) {
+			}
+			""";
+		assertRecordRename(record, USER.replace("r.value(", "r.value|*("), expected);
+	}
+
+	@Test
+	public void testRenameParameterOfOrdinaryMethodNamedLikeRecordComponent() throws Exception {
+		String code = """
+			package test1;
+			public record R(int value) {
+				public void other(int value) {
+					System.out.println(value|*);
+				}
+			}
+			""";
+		String expected = """
+			package test1;
+			public record R(int value) {
+				public void other(int amount) {
+					System.out.println(amount);
+				}
+			}
+			""";
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		ICompilationUnit cu = pack1.createCompilationUnit("R.java", code.replace("|*", ""), false, null);
+
+		WorkspaceEdit edit = getRenameEdit(cu, cursor(code), "amount");
+
+		assertNotNull(edit);
+		assertEquals(1, edit.getChanges().size());
+		assertEquals(expected, TextEditUtil.apply(code.replace("|*", ""), edit.getChanges().get(JDTUtils.toURI(cu))));
+	}
+
+	// the user of the record: it calls the accessor
+	private static final String USER = """
+		package test1;
+		public class User {
+			int get(R r) {
+				return r.value();
+			}
+		}
+		""";
+
+	@Test
+	public void testRenameConstructorOfRecordWhoseComponentIsNamedLikeIt() throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String code = """
+				package test1;
+				public record value(int value) {
+					public value|*() {
+						this(0);
+					}
+				}
+				""";
+		String source = code.replace("|*", "");
+		ICompilationUnit cu = pack1.createCompilationUnit("value.java", source, false, null);
+
+		WorkspaceEdit edit = getRenameEdit(cu, cursor(code), "Amount");
+
+		assertNotNull(edit);
+		assertEquals("""
+				package test1;
+				public record Amount(int value) {
+					public Amount() {
+						this(0);
+					}
+				}
+				""", TextEditUtil.apply(source, edit.getChanges().get(JDTUtils.toURI(cu))));
+	}
+
+	/**
+	 * Renames the component "value" of the record R to "amount", from the
+	 * position marked with |* in either source, and checks the record and its
+	 * user.
+	 */
+	private void assertRecordRename(String record, String user, String expectedRecord) throws Exception {
+		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);
+		String recordSource = record.replace("|*", "");
+		String userSource = user.replace("|*", "");
+		ICompilationUnit recordCu = pack1.createCompilationUnit("R.java", recordSource, false, null);
+		ICompilationUnit userCu = pack1.createCompilationUnit("User.java", userSource, false, null);
+
+		WorkspaceEdit edit = cursor(record) != null ? getRenameEdit(recordCu, cursor(record), "amount") : getRenameEdit(userCu, cursor(user), "amount");
+
+		assertNotNull(edit);
+		assertNotNull(edit.getChanges());
+		assertEquals(2, edit.getChanges().size());
+		assertEquals(expectedRecord, TextEditUtil.apply(recordSource, edit.getChanges().get(JDTUtils.toURI(recordCu))));
+		assertEquals(userSource.replace("r.value(", "r.amount("), TextEditUtil.apply(userSource, edit.getChanges().get(JDTUtils.toURI(userCu))));
+	}
+
+	/**
+	 * Returns the position of the marker |* in the code, or <code>null</code>
+	 * when there is none.
+	 */
+	private Position cursor(String code) {
+		int offset = code.indexOf("|*");
+		if (offset < 0) {
+			return null;
+		}
+		String before = code.substring(0, offset);
+		return new Position((int) before.chars().filter(c -> c == '\n').count(), offset - (before.lastIndexOf('\n') + 1));
+	}
+
 	private Position mergeCode(StringBuilder builder, String[] codes) {
 		Position pos = null;
 		for (int i = 0; i < codes.length; i++) {
