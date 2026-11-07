@@ -186,38 +186,32 @@ public class RenameSupport {
 	 *             {@link RenameSupport}
 	 */
 	public static RenameSupport create(IJavaElement element, String newName, int flags) throws CoreException {
-		IField recordComponent = getRecordComponent(element);
-		if (recordComponent != null) {
-			element = recordComponent;
-		}
-		switch (element.getElementType()) {
-			case IJavaElement.JAVA_PROJECT:
-				//return RenameSupport.create((IJavaProject) element, newName, flags);
-				return null;
-			case IJavaElement.PACKAGE_FRAGMENT_ROOT:
-				//return RenameSupport.create((IPackageFragmentRoot) element, newName);
-				return null;
-			case IJavaElement.PACKAGE_FRAGMENT:
-				return RenameSupport.create((IPackageFragment) element, newName, flags);
-			case IJavaElement.COMPILATION_UNIT:
-				return RenameSupport.create((ICompilationUnit) element, newName, flags);
-			case IJavaElement.TYPE:
-				return RenameSupport.create((IType) element, newName, flags);
-			case IJavaElement.METHOD:
+		return switch (element.getElementType()) {
+			case IJavaElement.JAVA_PROJECT, IJavaElement.PACKAGE_FRAGMENT_ROOT -> null;
+			case IJavaElement.PACKAGE_FRAGMENT -> RenameSupport.create((IPackageFragment) element, newName, flags);
+			case IJavaElement.COMPILATION_UNIT -> RenameSupport.create((ICompilationUnit) element, newName, flags);
+			case IJavaElement.TYPE -> RenameSupport.create((IType) element, newName, flags);
+			case IJavaElement.FIELD -> RenameSupport.create((IField) element, newName, flags);
+			case IJavaElement.TYPE_PARAMETER -> RenameSupport.create((ITypeParameter) element, newName, flags);
+			case IJavaElement.METHOD -> {
 				final IMethod method = (IMethod) element;
 				if (method.isConstructor()) {
-					return create(method.getDeclaringType(), newName, flags);
-				} else {
-					return RenameSupport.create((IMethod) element, newName, flags);
+					yield create(method.getDeclaringType(), newName, flags);
 				}
-			case IJavaElement.FIELD:
-				return RenameSupport.create((IField) element, newName, flags);
-			case IJavaElement.TYPE_PARAMETER:
-				return RenameSupport.create((ITypeParameter) element, newName, flags);
-			case IJavaElement.LOCAL_VARIABLE:
-				return RenameSupport.create((ILocalVariable) element, newName, flags);
-		}
-		return null;
+				IField accessedComponent = getAccessedRecordComponent(method);
+				yield accessedComponent != null
+						? RenameSupport.create(accessedComponent, newName, flags)
+						: RenameSupport.create(method, newName, flags);
+			}
+			case IJavaElement.LOCAL_VARIABLE -> {
+				final ILocalVariable variable = (ILocalVariable) element;
+				IField parameterComponent = getConstructorParameterComponent(variable);
+				yield parameterComponent != null
+						? RenameSupport.create(parameterComponent, newName, flags)
+						: RenameSupport.create(variable, newName, flags);
+			}
+			default -> null;
+		};
 	}
 
 	/**
@@ -233,18 +227,48 @@ public class RenameSupport {
 	 *             if an unexpected error occurred while reading the record
 	 */
 	public static IField getRecordComponent(IJavaElement element) throws CoreException {
-		if (element instanceof IMethod accessor) {
-			IType type = accessor.getDeclaringType();
-			if (type != null && !type.isBinary() && type.isRecord() && accessor.getNumberOfParameters() == 0 && !accessor.isConstructor() && !Flags.isStatic(accessor.getFlags())) {
-				return getInstanceComponent(type, accessor.getElementName());
-			}
-		} else if (element instanceof ILocalVariable parameter && parameter.getParent() instanceof IMethod constructor && constructor.isConstructor()) {
+		if (element instanceof IMethod method) {
+			return getAccessedRecordComponent(method);
+		} else if (element instanceof ILocalVariable variable) {
+			return getConstructorParameterComponent(variable);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the component of a record that the method is the accessor of, or
+	 * <code>null</code> when the method is not an accessor of a record.
+	 */
+	private static IField getAccessedRecordComponent(IMethod accessor) throws CoreException {
+		IType type = accessor.getDeclaringType();
+		if (isSourceRecord(type) && accessor.getNumberOfParameters() == 0
+				&& !accessor.isConstructor() && !Flags.isStatic(accessor.getFlags())) {
+			return getInstanceComponent(type, accessor.getElementName());
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the component of a record that the parameter of its canonical
+	 * constructor (compact or not) has the name of, or <code>null</code> when the
+	 * variable is not such a parameter.
+	 */
+	private static IField getConstructorParameterComponent(ILocalVariable parameter) throws CoreException {
+		if (parameter.getParent() instanceof IMethod constructor && constructor.isConstructor()) {
 			IType type = constructor.getDeclaringType();
-			if (type != null && !type.isBinary() && type.isRecord() && isCanonicalConstructor(constructor)) {
+			if (isSourceRecord(type) && isCanonicalConstructor(constructor)) {
 				return getInstanceComponent(type, parameter.getElementName());
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Tells whether the type is a record that has a source, whose components can
+	 * be renamed.
+	 */
+	private static boolean isSourceRecord(IType type) throws CoreException {
+		return type != null && !type.isBinary() && type.isRecord();
 	}
 
 	/**
@@ -441,23 +465,35 @@ public class RenameSupport {
 	public static RenameSupport create(IField field, String newName, int flags) throws CoreException {
 		if (JdtFlags.isEnum(field)) {
 			return new RenameSupport(new RenameEnumConstProcessor(field), newName, flags);
+		} else if (field.isRecordComponent()) {
+			return createForRecordComponent(field, newName, flags);
 		} else {
 			final RenameFieldProcessor processor = new RenameFieldProcessor(field);
-			boolean recordComponent = field.isRecordComponent();
-			if (recordComponent) {
-				// The processor builds the rename of the parameter of the canonical
-				// constructor when it knows the field is a record component, which it does
-				// only after its initial conditions are checked: without it, the rename of the
-				// parameter has no change manager (the Java editor checks them before it
-				// asks for the new name too).
-				processor.checkInitialConditions(new NullProgressMonitor());
-			}
-			// The accessor of a record component is renamed with the component, it is not a getter
-			// that follows the naming of the getters (value() would become getAmount()).
-			processor.setRenameGetter(!recordComponent && updateGetterMethod(flags));
-			processor.setRenameSetter(!recordComponent && updateSetterMethod(flags));
+			processor.setRenameGetter(updateGetterMethod(flags));
+			processor.setRenameSetter(updateSetterMethod(flags));
 			return new RenameSupport(processor, newName, flags);
 		}
+	}
+
+	/**
+	 * Creates a new rename support for the given component of a record. The
+	 * accessor of the component and the parameter of the canonical constructor are
+	 * renamed with it.
+	 */
+	private static RenameSupport createForRecordComponent(IField component, String newName, int flags)
+			throws CoreException {
+		final RenameFieldProcessor processor = new RenameFieldProcessor(component);
+		// The processor builds the rename of the parameter of the canonical
+		// constructor when it knows the field is a record component, which it does
+		// only after its initial conditions are checked: without it, the rename of the
+		// parameter has no change manager (the Java editor checks them before it
+		// asks for the new name too).
+		processor.checkInitialConditions(new NullProgressMonitor());
+		// The accessor of a record component is renamed with the component, it is not a getter
+		// that follows the naming of the getters (value() would become getAmount()).
+		processor.setRenameGetter(false);
+		processor.setRenameSetter(false);
+		return new RenameSupport(processor, newName, flags);
 	}
 
 	/**
