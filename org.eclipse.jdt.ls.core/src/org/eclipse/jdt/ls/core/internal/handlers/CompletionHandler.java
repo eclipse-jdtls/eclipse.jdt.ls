@@ -49,6 +49,7 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.Command;
@@ -116,8 +117,14 @@ public class CompletionHandler{
 		long startTime = System.currentTimeMillis();
 		CompletionList $ = null;
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			$ = this.computeContentAssist(unit, params, monitor);
+			String uri = params.getTextDocument().getUri();
+			if (JDTUtils.isJshFile(uri)) {
+				JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uri);
+				$ = this.computeJshContentAssist(document, params, monitor);
+			} else {
+				ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+				$ = this.computeContentAssist(unit, params, monitor);
+			}
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
@@ -332,6 +339,65 @@ public class CompletionHandler{
 		CompletionList list = new CompletionList(proposals);
 		list.setIsIncomplete(!collector.isComplete() || completionForConstructor);
 		if (this.manager.getClientPreferences().isCompletionListItemDefaultsSupport()){
+			list.setItemDefaults(collector.getCompletionItemDefaults());
+		}
+		return list;
+	}
+
+	/**
+	 * Completion for .jsh files: the client's position is in the original .jsh document's
+	 * coordinates, which must be translated to an offset into the synthetic wrapped source before
+	 * calling {@code codeComplete}.
+	 * <p>
+	 * Deliberately a reduced subset of {@link #computeContentAssist}, not a full reimplementation.
+	 * Known gaps, tracked on https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973:
+	 * <ul>
+	 * <li>No constructor-completion-on-space handling ({@code isCompletionForConstructor}).</li>
+	 * <li>No chain completion ({@link ChainCompletionProposalComputer}).</li>
+	 * <li>No snippet proposals ({@link SnippetCompletionProposal}) - these call
+	 * {@code unit.getResource().getName()}, which would NPE for this synthetic unit.</li>
+	 * <li>No javadoc proposals ({@link JavadocCompletionProposal}).</li>
+	 * <li>No keyword/snippet sort-text-raising pass (the loop in
+	 * {@link #computeContentAssist} that boosts snippets sharing a label with a keyword).</li>
+	 * </ul>
+	 * Each is a plausible real gap for actual .jsh usage, not just a theoretical one - revisit once
+	 * the core pipeline (this method, resolve, diagnostics, hover) is proven out end-to-end.
+	 */
+	private CompletionList computeJshContentAssist(JshDocumentManager.JshDocument document, CompletionParams params, IProgressMonitor monitor) throws JavaModelException {
+		CompletionResponses.clear();
+		if (document == null) {
+			return null;
+		}
+
+		ICompilationUnit unit = document.getWorkingCopy();
+		List<CompletionItem> proposals = new ArrayList<>();
+		final int offset = document.toSyntheticOffset(params.getPosition());
+
+		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset, manager);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.FIELD_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.METHOD_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
+		collector.setFavoriteReferences(getFavoriteStaticMembers());
+
+		if (offset > -1 && !monitor.isCanceled()) {
+			try {
+				unit.codeComplete(offset, collector, monitor);
+			} catch (OperationCanceledException e) {
+				monitor.setCanceled(true);
+			}
+			proposals.addAll(collector.getCompletionItems());
+		}
+		proposals.sort(PROPOSAL_COMPARATOR);
+		CompletionList list = new CompletionList(proposals);
+		list.setIsIncomplete(!collector.isComplete());
+		if (this.manager.getClientPreferences().isCompletionListItemDefaultsSupport()) {
 			list.setItemDefaults(collector.getCompletionItemDefaults());
 		}
 		return list;

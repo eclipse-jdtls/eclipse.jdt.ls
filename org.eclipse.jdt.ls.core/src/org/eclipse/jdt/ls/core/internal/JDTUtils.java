@@ -134,6 +134,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -184,6 +185,10 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
+		if (isJshFile(uriString)) {
+			JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
+			return document == null ? null : document.getWorkingCopy();
+		}
 		return resolveCompilationUnit(toURI(uriString));
 	}
 
@@ -1315,6 +1320,14 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String toURI(ICompilationUnit cu) {
+		// Checked first: a .jsh synthetic working copy is created against a real package
+		// fragment's getCompilationUnit(name), so cu.getResource() returns a well-formed (if
+		// never-existing-on-disk) IFile handle for a fake *.java path. That handle must not win
+		// over the working copy's real, owning .jsh URI.
+		String jshUri = JshDocumentManager.getInstance().findUri(cu);
+		if (jshUri != null) {
+			return jshUri;
+		}
 		if (cu.getResource() != null) {
 			String uri = getFileURI(cu.getResource());
 			if (uri != null) {

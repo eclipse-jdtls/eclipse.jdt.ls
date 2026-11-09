@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.jsh;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -50,11 +51,16 @@ import org.eclipse.text.edits.TextEdit;
  * Owns the lifecycle of the synthetic working copies backing open .jsh files: one per URI,
  * created on open, re-wrapped and reconciled on change, discarded on close.
  * <p>
- * This only maintains the synthetic working copy and its offset mapping; it does not yet wire
- * into completion, diagnostics, or hover (see the later phases tracked on
- * https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973).
+ * Production code should go through {@link #getInstance()}; tests construct their own instance
+ * directly to avoid cross-test interference.
  */
 public class JshDocumentManager {
+
+	private static final JshDocumentManager INSTANCE = new JshDocumentManager();
+
+	public static JshDocumentManager getInstance() {
+		return INSTANCE;
+	}
 
 	private static final WorkingCopyOwner OWNER = new WorkingCopyOwner() {
 	};
@@ -123,6 +129,24 @@ public class JshDocumentManager {
 	 */
 	public JshDocument get(String uri) {
 		return documents.get(uri);
+	}
+
+	/**
+	 * The reverse of {@link #get(String)}: resolves the original .jsh URI backing a given
+	 * synthetic working copy. Used so generic, URI-based machinery (e.g. completion item resolve,
+	 * which re-looks-up a compilation unit from a URI round-tripped through {@code toURI(cu)})
+	 * transparently works for .jsh files without every call site needing its own .jsh branch.
+	 *
+	 * @return the URI of the .jsh document backed by {@code cu}, or {@code null} if {@code cu}
+	 *         isn't currently backing any open .jsh document
+	 */
+	public String findUri(ICompilationUnit cu) {
+		for (Map.Entry<String, JshDocument> entry : documents.entrySet()) {
+			if (entry.getValue().getWorkingCopy().equals(cu)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
 	private static IJavaProject resolveProject(String uri) {
@@ -236,6 +260,65 @@ public class JshDocumentManager {
 
 		public JshWrapResult getWrapResult() {
 			return wrapResult;
+		}
+
+		/**
+		 * @param originalPosition a line/character position in the original .jsh document
+		 * @return the corresponding offset into the synthetic wrapped source, for use with e.g.
+		 *         {@link ICompilationUnit#codeComplete}
+		 */
+		public int toSyntheticOffset(Position originalPosition) {
+			int originalOffset = JsonRpcHelpers.toOffset(rawDocument, originalPosition.getLine(), originalPosition.getCharacter());
+			return wrapResult.toSyntheticOffset(originalOffset);
+		}
+
+		/**
+		 * @param syntheticOffset an offset into the synthetic wrapped source
+		 * @return the corresponding line/character position in the original .jsh document, or
+		 *         {@code null} if the offset falls inside the generated header/footer
+		 */
+		public Position toOriginalPosition(int syntheticOffset) {
+			int originalOffset = wrapResult.toOriginalOffset(syntheticOffset);
+			if (originalOffset < 0) {
+				return null;
+			}
+			try {
+				int line = rawDocument.getLineOfOffset(originalOffset);
+				int character = originalOffset - rawDocument.getLineOffset(line);
+				return new Position(line, character);
+			} catch (BadLocationException e) {
+				return null;
+			}
+		}
+
+		/**
+		 * @param syntheticPosition a line/character position in the synthetic wrapped source (as
+		 *            returned by, e.g., a completion proposal's text edit)
+		 * @return the corresponding position in the original .jsh document, or {@code null} if it
+		 *         falls inside the generated header/footer
+		 */
+		public Position toOriginalPosition(Position syntheticPosition) {
+			try {
+				int syntheticOffset = JsonRpcHelpers.toOffset(workingCopy.getBuffer(), syntheticPosition.getLine(), syntheticPosition.getCharacter());
+				return toOriginalPosition(syntheticOffset);
+			} catch (JavaModelException e) {
+				JavaLanguageServerPlugin.logException("Failed to translate .jsh completion position", e);
+				return null;
+			}
+		}
+
+		/**
+		 * @param syntheticRange a range in the synthetic wrapped source
+		 * @return the corresponding range in the original .jsh document, or {@code null} if either
+		 *         endpoint falls outside the original content
+		 */
+		public Range toOriginalRange(Range syntheticRange) {
+			Position start = toOriginalPosition(syntheticRange.getStart());
+			Position end = toOriginalPosition(syntheticRange.getEnd());
+			if (start == null || end == null) {
+				return null;
+			}
+			return new Range(start, end);
 		}
 
 	}
