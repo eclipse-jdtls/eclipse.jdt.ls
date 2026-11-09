@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.jsh;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -30,8 +31,20 @@ import org.eclipse.jdt.core.WorkingCopyOwner;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetWrapper.JshWrapResult;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
+import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
+import org.eclipse.text.edits.DeleteEdit;
+import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.MalformedTreeException;
+import org.eclipse.text.edits.ReplaceEdit;
+import org.eclipse.text.edits.TextEdit;
 
 /**
  * Owns the lifecycle of the synthetic working copies backing open .jsh files: one per URI,
@@ -77,15 +90,24 @@ public class JshDocumentManager {
 		}
 	}
 
-	public void didChange(String uri, String content) {
+	/**
+	 * Applies a batch of (possibly incremental, range-based) content changes to the .jsh document
+	 * at the given URI, the same way changes to a normal open Java file are applied - necessary
+	 * since the LSP client negotiates one text-document sync mode for the whole server, so .jsh
+	 * files get the same incremental change events real .java files do, not whole-file replacements.
+	 */
+	public void didChange(String uri, List<TextDocumentContentChangeEvent> changes) {
 		JshDocument document = documents.get(uri);
 		if (document == null) {
 			// Shouldn't normally happen (didOpen should always precede didChange), but don't crash
-			// on an out-of-order/duplicate notification - just establish the document now.
-			didOpen(uri, content);
-			return;
+			// on an out-of-order/duplicate notification - start from nothing and apply the changes.
+			didOpen(uri, "");
+			document = documents.get(uri);
+			if (document == null) {
+				return;
+			}
 		}
-		document.setContent(content);
+		document.applyChanges(changes);
 	}
 
 	public void didClose(String uri) {
@@ -137,6 +159,7 @@ public class JshDocumentManager {
 	public static final class JshDocument {
 
 		private final ICompilationUnit workingCopy;
+		private final IDocument rawDocument = new Document();
 		private volatile JshWrapResult wrapResult;
 
 		private JshDocument(ICompilationUnit workingCopy) {
@@ -144,7 +167,52 @@ public class JshDocumentManager {
 		}
 
 		void setContent(String content) {
-			JshWrapResult result = JshSnippetWrapper.wrap(content);
+			rawDocument.set(content == null ? "" : content);
+			pushToSyntheticBuffer();
+		}
+
+		/**
+		 * Applies each change event to {@link #rawDocument} in order - mirroring
+		 * {@code BaseDocumentLifeCycleHandler.handleChanged}'s handling for real Java files - then
+		 * pushes the resulting raw content, re-wrapped, into the synthetic working copy's buffer.
+		 */
+		void applyChanges(List<TextDocumentContentChangeEvent> changes) {
+			try {
+				for (TextDocumentContentChangeEvent changeEvent : changes) {
+					Range range = changeEvent.getRange();
+					int startOffset;
+					int length;
+					if (range != null) {
+						Position start = range.getStart();
+						Position end = range.getEnd();
+						startOffset = JsonRpcHelpers.toOffset(rawDocument, start.getLine(), start.getCharacter());
+						int endOffset = JsonRpcHelpers.toOffset(rawDocument, end.getLine(), end.getCharacter());
+						length = endOffset - startOffset;
+					} else {
+						// No range means the whole document was replaced.
+						startOffset = 0;
+						length = rawDocument.getLength();
+					}
+
+					String text = changeEvent.getText();
+					TextEdit edit;
+					if (length == 0) {
+						edit = new InsertEdit(startOffset, text);
+					} else if (text.isEmpty()) {
+						edit = new DeleteEdit(startOffset, length);
+					} else {
+						edit = new ReplaceEdit(startOffset, length, text);
+					}
+					edit.apply(rawDocument, TextEdit.NONE);
+				}
+				pushToSyntheticBuffer();
+			} catch (BadLocationException | MalformedTreeException e) {
+				JavaLanguageServerPlugin.logException("Failed to apply .jsh document changes", e);
+			}
+		}
+
+		private void pushToSyntheticBuffer() {
+			JshWrapResult result = JshSnippetWrapper.wrap(rawDocument.get());
 			try {
 				workingCopy.getBuffer().setContents(result.getWrappedSource());
 				workingCopy.makeConsistent(new NullProgressMonitor());

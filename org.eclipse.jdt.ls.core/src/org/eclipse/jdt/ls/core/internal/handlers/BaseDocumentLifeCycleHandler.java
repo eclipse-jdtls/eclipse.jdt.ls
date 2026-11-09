@@ -70,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.MovingAverage;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -125,6 +126,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
 	protected final PreferenceManager preferenceManager;
+	private final JshDocumentManager jshDocumentManager = new JshDocumentManager();
 	private Object reconcileLock = new Object();
 
 	public BaseDocumentLifeCycleHandler(PreferenceManager preferenceManager, boolean delayValidation) {
@@ -340,13 +342,22 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
-		documentVersions.remove(params.getTextDocument().getUri());
-		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
+		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			jshDocumentManager.didClose(uri);
+			return;
+		}
+		documentVersions.remove(uri);
+		lastSyncedDocumentLengths.remove(uri);
 		handleClosed(params);
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			jshDocumentManager.didOpen(uri, params.getTextDocument().getText());
+			return;
+		}
 		documentVersions.put(uri, params.getTextDocument().getVersion());
 		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
 		IFile resource = JDTUtils.findFile(uri);
@@ -362,8 +373,20 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didChange(DidChangeTextDocumentParams params) {
+		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			jshDocumentManager.didChange(uri, params.getContentChanges());
+			return;
+		}
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		handleChanged(params);
+	}
+
+	/**
+	 * @return the manager owning synthetic working copies for currently open .jsh files
+	 */
+	public JshDocumentManager getJshDocumentManager() {
+		return jshDocumentManager;
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
