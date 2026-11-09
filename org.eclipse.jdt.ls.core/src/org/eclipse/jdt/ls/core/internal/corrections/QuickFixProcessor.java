@@ -705,8 +705,7 @@ public class QuickFixProcessor {
 				System.out.println(str);
 		}
 		SuppressWarningsSubProcessor.addSuppressWarningsProposals(context, problem, proposals);
-		// ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context,
-		// problem, proposals);
+		ConfigureProblemSeveritySubProcessor.addConfigureProblemSeverityProposal(context, problem, proposals);
 	}
 
 	public void addAddAllMissingImportsProposal(IInvocationContext context, Collection<ProposalKindWrapper> proposals) {

@@ -105,7 +105,11 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 		assertFalse(quickfixActions.isEmpty(), "No quickfix actions were found");
 		for (Either<Command, CodeAction> codeAction : quickfixActions) {
 			assertNull(codeAction.getRight().getEdit(), "Should defer the edit property to the resolveCodeAction request");
-			assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
+			// Command-based quick fixes (e.g. "ignore this problem in the current project") are
+			// already fully actionable via their command and don't need resolve data.
+			if (codeAction.getRight().getCommand() == null) {
+				assertNotNull(codeAction.getRight().getData(), "Should preserve the data property for the unresolved code action");
+			}
 		}
 
 		Optional<Either<Command, CodeAction>> removeUnusedResponse = quickfixActions.stream().filter(codeAction -> {
