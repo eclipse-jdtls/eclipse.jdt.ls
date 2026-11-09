@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -25,6 +26,9 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.CompletionRequestor;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager.JshDocument;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
@@ -125,6 +129,42 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 				"Incremental range edit should have been applied against the raw .jsh content");
 
 		manager.didClose(uri);
+	}
+
+	/**
+	 * Regression test for the file-name/class-name mismatch bug: each open .jsh document's
+	 * synthetic unit's file name includes a per-document counter (to avoid collisions between
+	 * concurrently open .jsh files sharing a package), which must also be reflected in the
+	 * generated class name - otherwise every .jsh file would carry a permanent, wrapper-induced
+	 * "type must match file name" diagnostic, independent of anything in the actual .jsh content.
+	 */
+	@Test
+	public void testSyntheticTypeNameMatchesFileNameWithMultipleOpenDocuments() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri1 = project.getLocationURI().toString() + "/First.jsh";
+		String uri2 = project.getLocationURI().toString() + "/Second.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		// Two concurrently open .jsh documents - the scenario that actually exercises per-document
+		// uniqueness, unlike the other tests in this class which only ever open one at a time.
+		manager.didOpen(uri1, "int x = 1;");
+		manager.didOpen(uri2, "int y = 2;");
+		try {
+			assertNoPublicClassMustMatchFileNameProblem(manager.get(uri1));
+			assertNoPublicClassMustMatchFileNameProblem(manager.get(uri2));
+		} finally {
+			manager.didClose(uri1);
+			manager.didClose(uri2);
+		}
+	}
+
+	private static void assertNoPublicClassMustMatchFileNameProblem(JshDocument document) {
+		ICompilationUnit cu = document.getWorkingCopy();
+		CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(cu, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+		assertNotNull(astRoot, "Expected the synthetic unit to produce an AST");
+		boolean hasMismatch = Arrays.stream(astRoot.getProblems()).anyMatch(p -> p.getID() == IProblem.PublicClassMustMatchFileName);
+		assertFalse(hasMismatch, "Synthetic unit's class name should match its own file name");
 	}
 
 }
