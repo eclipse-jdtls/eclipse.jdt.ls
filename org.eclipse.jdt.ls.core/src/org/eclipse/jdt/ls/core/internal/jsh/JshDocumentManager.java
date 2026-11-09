@@ -12,6 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.jsh;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,16 +32,23 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.WorkingCopyOwner;
+import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
+import org.eclipse.jdt.ls.core.internal.handlers.BaseDiagnosticsHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetWrapper.JshWrapResult;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.PublishDiagnosticsParams;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.text.edits.DeleteEdit;
@@ -66,6 +76,24 @@ public class JshDocumentManager {
 	};
 
 	/**
+	 * Explicitly set only by tests, which construct their own {@code JshDocumentManager} instance
+	 * (rather than using {@link #getInstance()}) precisely so they can observe published
+	 * diagnostics without depending on {@link JavaLanguageServerPlugin}'s real, server-wide
+	 * connection - which is only wired once an actual LSP client has connected, not in most unit
+	 * test setups. Production code (the singleton instance) leaves this unset and falls back to
+	 * that real connection.
+	 */
+	private volatile JavaClientConnection clientConnection;
+
+	public void setClientConnection(JavaClientConnection clientConnection) {
+		this.clientConnection = clientConnection;
+	}
+
+	private JavaClientConnection getClientConnection() {
+		return clientConnection != null ? clientConnection : JavaLanguageServerPlugin.getInstance().getClientConnection();
+	}
+
+	/**
 	 * Every open .jsh file gets its own synthetic compilation unit name so concurrently open .jsh
 	 * files never collide in the same package.
 	 */
@@ -91,7 +119,7 @@ public class JshDocumentManager {
 			// would carry a permanent, wrapper-induced "type must match file name" diagnostic.
 			String className = JshSnippetWrapper.SCRATCHPAD_CLASS_NAME + "_" + COUNTER.incrementAndGet();
 			ICompilationUnit cu = pkg.getCompilationUnit(className + ".java").getWorkingCopy(OWNER, new NullProgressMonitor());
-			JshDocument document = new JshDocument(cu, className);
+			JshDocument document = new JshDocument(cu, className, uri, this);
 			document.setContent(content);
 			documents.put(uri, document);
 		} catch (JavaModelException e) {
@@ -187,12 +215,16 @@ public class JshDocumentManager {
 
 		private final ICompilationUnit workingCopy;
 		private final String className;
+		private final String uri;
+		private final JshDocumentManager owner;
 		private final IDocument rawDocument = new Document();
 		private volatile JshWrapResult wrapResult;
 
-		private JshDocument(ICompilationUnit workingCopy, String className) {
+		private JshDocument(ICompilationUnit workingCopy, String className, String uri, JshDocumentManager owner) {
 			this.workingCopy = workingCopy;
 			this.className = className;
+			this.uri = uri;
+			this.owner = owner;
 		}
 
 		void setContent(String content) {
@@ -248,10 +280,55 @@ public class JshDocumentManager {
 				this.wrapResult = result;
 			} catch (JavaModelException e) {
 				JavaLanguageServerPlugin.logException("Failed to update .jsh synthetic working copy", e);
+				return;
+			}
+			publishDiagnostics();
+		}
+
+		/**
+		 * Reconciles the synthetic unit and publishes its problems against the original .jsh URI,
+		 * with ranges translated back to that document's coordinates. Problems that fall entirely
+		 * inside the generated header/footer (i.e. {@link JshWrapResult#toOriginalOffset} returns
+		 * {@code -1} for one of their endpoints) are wrapper-induced noise and dropped rather than
+		 * surfaced - the only case this is currently known to actually happen is if the synthetic
+		 * class/file naming were ever wrong again (see the file-name/class-name mismatch this class
+		 * already fixed once), so an empty result here most likely means a real naming regression,
+		 * not an absence of problems to filter.
+		 */
+		private void publishDiagnostics() {
+			JavaClientConnection connection = owner.getClientConnection();
+			if (connection == null) {
+				return;
+			}
+			CompilationUnit astRoot = CoreASTProvider.getInstance().getAST(workingCopy, CoreASTProvider.WAIT_YES, new NullProgressMonitor());
+			if (astRoot == null) {
+				return;
+			}
+			List<IProblem> problems = Arrays.asList(astRoot.getProblems());
+			boolean isDiagnosticTagSupported = JavaLanguageServerPlugin.getPreferencesManager() != null
+					&& JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isDiagnosticTagSupported();
+			List<Diagnostic> diagnostics = BaseDiagnosticsHandler.toDiagnosticsArray(workingCopy, problems, isDiagnosticTagSupported);
+			List<Diagnostic> translated = new ArrayList<>();
+			for (Diagnostic diagnostic : diagnostics) {
+				Range originalRange = toOriginalRange(diagnostic.getRange());
+				if (originalRange == null) {
+					continue;
+				}
+				diagnostic.setRange(originalRange);
+				translated.add(diagnostic);
+			}
+			connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), translated));
+		}
+
+		private void clearDiagnostics() {
+			JavaClientConnection connection = owner.getClientConnection();
+			if (connection != null) {
+				connection.publishDiagnostics(new PublishDiagnosticsParams(ResourceUtils.toClientUri(uri), Collections.emptyList()));
 			}
 		}
 
 		void dispose() {
+			clearDiagnostics();
 			try {
 				workingCopy.discardWorkingCopy();
 			} catch (JavaModelException e) {
