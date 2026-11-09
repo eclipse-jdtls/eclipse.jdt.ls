@@ -184,7 +184,34 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		} else {
 			text = deprecated.getInsertText();
 		}
-		assertEquals("Deprecated ", text);
+		assertEquals("Deprecated", text);
+	}
+
+
+	@Test
+	public void testCompletion_annotationWithArgumentsNoSpaceBeforeParenthesis() throws Exception {
+		ICompilationUnit unit = getWorkingCopy("src/java/Foo.java", "@Supp(\"unused\")\npublic class Foo {}\n");
+		CompletionList list = requestCompletions(unit, "@Supp");
+		CompletionItem suppressWarnings = list.getItems().stream().filter(i -> i.getLabel().startsWith("SuppressWarnings")).findFirst().orElse(null);
+		assertNotNull(suppressWarnings, "SuppressWarnings annotation proposal not found");
+		String text;
+		if (suppressWarnings.getTextEdit() != null) {
+			org.eclipse.lsp4j.jsonrpc.messages.Either<org.eclipse.lsp4j.TextEdit, InsertReplaceEdit> edit = suppressWarnings.getTextEdit();
+			text = edit.isLeft() ? edit.getLeft().getNewText() : edit.getRight().getNewText();
+		} else if (suppressWarnings.getTextEditText() != null) {
+			text = suppressWarnings.getTextEditText();
+		} else {
+			text = suppressWarnings.getInsertText();
+		}
+		assertEquals("SuppressWarnings", text);
+		Either<TextEdit, InsertReplaceEdit> completionEdit = suppressWarnings.getTextEdit();
+		assertNotNull(completionEdit, "Completion text edit not found");
+		TextEdit textEdit = completionEdit.isLeft()
+				? completionEdit.getLeft()
+				: new TextEdit(completionEdit.getRight().getReplace(), completionEdit.getRight().getNewText());
+		String updatedSource = TextEditUtil.apply(unit, Collections.singletonList(textEdit));
+		assertTrue(updatedSource.contains("@SuppressWarnings(\"unused\")"),
+				"The applied completion should preserve the existing annotation arguments");
 	}
 
 	@Test
