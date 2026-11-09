@@ -61,6 +61,41 @@ public class JshHoverTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	/**
+	 * {@link #testHoverResolvesAgainstRealClasspath} only ever hovers on line 0, which can't catch
+	 * an off-by-one in shifting by the generated header's line count.
+	 */
+	@Test
+	public void testHoverOnSecondLineResolvesToOriginalLine() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/HoverSecondLine.jsh";
+
+		String line0 = "int x = 1;";
+		String line1 = "org.apache.commons.lang3.StringUtils.isBlank(\"\");";
+		String content = line0 + "\n" + line1;
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			int column = line1.indexOf("isBlank") + 2;
+
+			TextDocumentPositionParams params = new TextDocumentPositionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri));
+			params.setPosition(new Position(1, column));
+
+			HoverHandler handler = new HoverHandler(preferenceManager);
+			Hover hover = handler.hover(params, new NullProgressMonitor());
+			assertNotNull(hover);
+
+			boolean mentionsIsBlank = hover.getContents().getLeft().stream().anyMatch(either -> {
+				String text = either.isLeft() ? either.getLeft() : asPlainText(either.getRight());
+				return text != null && text.contains("isBlank");
+			});
+			assertTrue(mentionsIsBlank, "Expected hover on line 1 to mention isBlank, got: " + hover.getContents());
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
 	@Test
 	public void testHoverOutsideContentReturnsEmpty() throws Exception {
 		importProjects("maven/salut");
