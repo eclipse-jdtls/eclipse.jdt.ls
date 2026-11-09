@@ -43,7 +43,7 @@ public final class JshSnippetWrapper {
 	 * JShell's own default imports (see the JShell tool documentation / {@code jdk.jshell}), so
 	 * completion and diagnostics behave the same way they would in a real JShell session.
 	 */
-	private static final String HEADER = "import java.io.*;"
+	private static final String IMPORTS = "import java.io.*;"
 			+ "import java.math.*;"
 			+ "import java.net.*;"
 			+ "import java.nio.file.*;"
@@ -52,8 +52,7 @@ public final class JshSnippetWrapper {
 			+ "import java.util.function.*;"
 			+ "import java.util.prefs.*;"
 			+ "import java.util.regex.*;"
-			+ "import java.util.stream.*;"
-			+ "public class " + SCRATCHPAD_CLASS_NAME + " { void " + SCRATCHPAD_METHOD_NAME + "() throws Exception {\n";
+			+ "import java.util.stream.*;";
 
 	private static final String FOOTER = "\n}}\n";
 
@@ -61,17 +60,34 @@ public final class JshSnippetWrapper {
 	}
 
 	/**
+	 * Wraps the given .jsh source using {@link #SCRATCHPAD_CLASS_NAME} as the synthetic class
+	 * name. Only usable when at most one such unit exists at a time (e.g. tests); production code
+	 * backing multiple concurrently open .jsh files must use {@link #wrap(String, String)} with a
+	 * name unique per document - see that method for why.
+	 */
+	public static JshWrapResult wrap(String jshSource) {
+		return wrap(jshSource, SCRATCHPAD_CLASS_NAME);
+	}
+
+	/**
 	 * Wraps the given .jsh source. The original text is inserted verbatim between the generated
 	 * header and footer - no transformation is applied to it.
 	 *
 	 * @param jshSource the raw .jsh buffer content; {@code null} is treated as empty
+	 * @param className the synthetic top-level class name to generate. Must be unique per
+	 *            concurrently-open .jsh document (not just per project) if the backing
+	 *            compilation unit's file name is also derived from it (as
+	 *            {@code JshDocumentManager} does) - a file named {@code Foo_2.java} declaring
+	 *            {@code public class Foo} is itself a compile error ("type must match file
+	 *            name"), independent of anything in the wrapped .jsh content.
 	 * @return the wrapped source plus the offset-mapping metadata needed to translate positions
 	 *         between the original and wrapped buffers
 	 */
-	public static JshWrapResult wrap(String jshSource) {
+	public static JshWrapResult wrap(String jshSource, String className) {
 		String source = jshSource == null ? "" : jshSource;
-		String wrapped = HEADER + source + FOOTER;
-		return new JshWrapResult(wrapped, HEADER.length(), source.length());
+		String header = IMPORTS + "public class " + className + " { void " + SCRATCHPAD_METHOD_NAME + "() throws Exception {\n";
+		String wrapped = header + source + FOOTER;
+		return new JshWrapResult(wrapped, header.length(), source.length());
 	}
 
 	/**

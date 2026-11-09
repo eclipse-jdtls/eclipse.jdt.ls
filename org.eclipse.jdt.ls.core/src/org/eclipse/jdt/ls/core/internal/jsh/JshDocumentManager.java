@@ -86,9 +86,12 @@ public class JshDocumentManager {
 				JavaLanguageServerPlugin.logError("Could not find a source package fragment to host .jsh scratchpad for " + uri);
 				return;
 			}
-			String name = JshSnippetWrapper.SCRATCHPAD_CLASS_NAME + "_" + COUNTER.incrementAndGet() + ".java";
-			ICompilationUnit cu = pkg.getCompilationUnit(name).getWorkingCopy(OWNER, new NullProgressMonitor());
-			JshDocument document = new JshDocument(cu);
+			// The class name inside the wrapped source must match this unit's file name exactly
+			// (minus ".java"), same as any other top-level public type - otherwise every .jsh file
+			// would carry a permanent, wrapper-induced "type must match file name" diagnostic.
+			String className = JshSnippetWrapper.SCRATCHPAD_CLASS_NAME + "_" + COUNTER.incrementAndGet();
+			ICompilationUnit cu = pkg.getCompilationUnit(className + ".java").getWorkingCopy(OWNER, new NullProgressMonitor());
+			JshDocument document = new JshDocument(cu, className);
 			document.setContent(content);
 			documents.put(uri, document);
 		} catch (JavaModelException e) {
@@ -183,11 +186,13 @@ public class JshDocumentManager {
 	public static final class JshDocument {
 
 		private final ICompilationUnit workingCopy;
+		private final String className;
 		private final IDocument rawDocument = new Document();
 		private volatile JshWrapResult wrapResult;
 
-		private JshDocument(ICompilationUnit workingCopy) {
+		private JshDocument(ICompilationUnit workingCopy, String className) {
 			this.workingCopy = workingCopy;
+			this.className = className;
 		}
 
 		void setContent(String content) {
@@ -236,7 +241,7 @@ public class JshDocumentManager {
 		}
 
 		private void pushToSyntheticBuffer() {
-			JshWrapResult result = JshSnippetWrapper.wrap(rawDocument.get());
+			JshWrapResult result = JshSnippetWrapper.wrap(rawDocument.get(), className);
 			try {
 				workingCopy.getBuffer().setContents(result.getWrappedSource());
 				workingCopy.makeConsistent(new NullProgressMonitor());
