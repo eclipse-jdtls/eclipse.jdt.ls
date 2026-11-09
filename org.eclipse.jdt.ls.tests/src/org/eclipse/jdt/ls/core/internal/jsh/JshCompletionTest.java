@@ -80,4 +80,83 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	/**
+	 * Regression coverage for an off-by-one in line-number translation: {@link
+	 * #testCompletionResolvesToOriginalJshCoordinates} only ever triggers completion on line 0,
+	 * which can't catch a bug in shifting by the generated header's line count.
+	 */
+	@Test
+	public void testCompletionOnSecondLineResolvesToOriginalLine() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
+
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/CompletionSecondLine.jsh";
+
+		String line0 = "int x = 1;";
+		String line1 = "org.apache.commons.lang3.StringUtils.isBla";
+		String content = line0 + "\n" + line1;
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			CompletionParams params = new CompletionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri));
+			params.setPosition(new Position(1, line1.length()));
+
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			CompletionList list = handler.completion(params, new NullProgressMonitor()).getRight();
+			assertNotNull(list);
+
+			Optional<CompletionItem> isBlank = list.getItems().stream()
+					.filter(item -> (item.getInsertText() != null && item.getInsertText().contains("isBlank"))
+							|| (item.getLabel() != null && item.getLabel().contains("isBlank")))
+					.findFirst();
+			assertTrue(isBlank.isPresent(), "Expected an isBlank(...) proposal from line 1, got: "
+					+ list.getItems().stream().map(CompletionItem::getLabel).toList());
+
+			CompletionItem item = isBlank.get();
+			if (item.getData() != null) {
+				CompletionResolveHandler resolveHandler = new CompletionResolveHandler(preferenceManager);
+				item = resolveHandler.resolve(item, new NullProgressMonitor());
+			}
+
+			TextEdit edit = item.getTextEdit() != null && item.getTextEdit().isLeft() ? item.getTextEdit().getLeft() : null;
+			assertNotNull(edit, "Expected a resolved text edit for the isBlank(...) proposal");
+			assertEquals(1, edit.getRange().getStart().getLine(), "Edit range should land on original line 1, not shifted by the generated header");
+			assertEquals(1, edit.getRange().getEnd().getLine(), "Edit range should land on original line 1, not shifted by the generated header");
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
+	/**
+	 * An incomplete snippet - a trailing member-access expression with no statement terminator,
+	 * the same shape as what a user sees mid-typing in a JShell session - should still produce
+	 * completion proposals via the parser's error recovery, not fail outright.
+	 */
+	@Test
+	public void testCompletionOnIncompleteTrailingStatement() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/Incomplete.jsh";
+
+		String line1 = "System.out.";
+		String content = "int x = 1;\n" + line1;
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			CompletionParams params = new CompletionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri));
+			params.setPosition(new Position(1, line1.length()));
+
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			CompletionList list = handler.completion(params, new NullProgressMonitor()).getRight();
+			assertNotNull(list);
+
+			assertTrue(list.getItems().stream().anyMatch(item -> "println".equals(item.getLabel()) || (item.getLabel() != null && item.getLabel().startsWith("println"))),
+					"Expected println(...) among System.out's members despite the statement having no terminator, got: "
+							+ list.getItems().stream().map(CompletionItem::getLabel).toList());
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
 }

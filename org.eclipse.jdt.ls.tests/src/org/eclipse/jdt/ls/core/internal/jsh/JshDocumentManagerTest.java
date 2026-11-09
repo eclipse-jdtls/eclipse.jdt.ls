@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.jsh;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,6 +31,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.CoreASTProvider;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
+import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
 import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager.JshDocument;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractInvisibleProjectBasedTest;
 import org.eclipse.lsp4j.Position;
@@ -156,6 +158,82 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 		} finally {
 			manager.didClose(uri1);
 			manager.didClose(uri2);
+		}
+	}
+
+	/**
+	 * Every other test in this suite only ever opens single-line content, so they can't catch an
+	 * off-by-one in the line-number translation - the generated header is exactly one line, so
+	 * every original line is shifted down by one in the synthetic source. This test exercises a
+	 * position on the third original line specifically to catch that class of bug.
+	 */
+	@Test
+	public void testPositionTranslationAcrossMultipleLines() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/MultiLine.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		String content = "int a = 1;\nint b = 2;\nint c = a + b;\n";
+		manager.didOpen(uri, content);
+		try {
+			JshDocument document = manager.get(uri);
+
+			// The "a" in "a + b", on the third original line (index 2).
+			Position original = new Position(2, 8);
+			int syntheticOffset = document.toSyntheticOffset(original);
+
+			int[] syntheticLine = JsonRpcHelpers.toLine(document.getWorkingCopy().getBuffer(), syntheticOffset);
+			assertEquals(3, syntheticLine[0], "Original line 2 should land on synthetic line 3, one line down for the single-line generated header");
+			assertEquals(8, syntheticLine[1], "Column should be unaffected by the line shift");
+
+			assertEquals(original, document.toOriginalPosition(syntheticOffset),
+					"Round trip through the synthetic offset should recover the exact original position");
+			assertEquals(original, document.toOriginalPosition(new Position(syntheticLine[0], syntheticLine[1])),
+					"Round trip through a synthetic line/column position, as completion/hover edit ranges use, should agree");
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	@Test
+	public void testToOriginalRangeAcrossMultipleLines() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/MultiLineRange.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		String content = "int a = 1;\nint b = 2;\n";
+		manager.didOpen(uri, content);
+		try {
+			JshDocument document = manager.get(uri);
+			// A range spanning from the "b" declaration's start (original line 1) back to the "a"
+			// declaration's start (original line 0), i.e. start and end land on different lines.
+			Range syntheticRange = new Range(new Position(1, 4), new Position(2, 4));
+			Range originalRange = document.toOriginalRange(syntheticRange);
+			assertNotNull(originalRange);
+			assertEquals(new Position(0, 4), originalRange.getStart());
+			assertEquals(new Position(1, 4), originalRange.getEnd());
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	@Test
+	public void testToOriginalPositionReturnsNullInsideGeneratedHeader() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/HeaderPosition.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.didOpen(uri, "int x = 1;");
+		try {
+			JshDocument document = manager.get(uri);
+			// Line 0, column 0 of the synthetic source is the start of the generated imports, never
+			// part of the original .jsh content.
+			assertNull(document.toOriginalPosition(new Position(0, 0)));
+		} finally {
+			manager.didClose(uri);
 		}
 	}
 
