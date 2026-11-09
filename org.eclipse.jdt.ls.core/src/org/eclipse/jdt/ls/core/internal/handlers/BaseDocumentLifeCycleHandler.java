@@ -383,6 +383,13 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didSave(DidSaveTextDocumentParams params) {
 		String documentUri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(documentUri)) {
+			// Nothing to do: JshDocumentManager's working copy is already kept up to date via
+			// didChange, and unlike didOpen/didChange/didClose, handleSaved's discardWorkingCopy()/
+			// becomeWorkingCopy() pair would churn the long-lived synthetic working copy's buffer
+			// out from under JshDocumentManager, leaving its offset mapping stale until the next edit.
+			return;
+		}
 		lastSyncedDocumentLengths.remove(documentUri);
 		IFile file = JDTUtils.findFile(params.getTextDocument().getUri());
 		if (file != null && !Objects.equals(ProjectsManager.getDefaultProject(), file.getProject())) {
