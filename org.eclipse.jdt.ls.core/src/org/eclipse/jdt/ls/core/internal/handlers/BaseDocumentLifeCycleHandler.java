@@ -126,7 +126,6 @@ public abstract class BaseDocumentLifeCycleHandler {
 	private MovingAverage movingAverageForValidation = new MovingAverage(DOCUMENT_LIFECYCLE_MAX_DEBOUNCE);
 	private MovingAverage movingAverageForDiagnostics = new MovingAverage(PUBLISH_DIAGNOSTICS_MIN_DEBOUNCE);
 	protected final PreferenceManager preferenceManager;
-	private final JshDocumentManager jshDocumentManager = new JshDocumentManager();
 	private Object reconcileLock = new Object();
 
 	public BaseDocumentLifeCycleHandler(PreferenceManager preferenceManager, boolean delayValidation) {
@@ -344,7 +343,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public void didClose(DidCloseTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		if (JDTUtils.isJshFile(uri)) {
-			jshDocumentManager.didClose(uri);
+			JshDocumentManager.getInstance().didClose(uri);
 			return;
 		}
 		documentVersions.remove(uri);
@@ -355,7 +354,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public void didOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		if (JDTUtils.isJshFile(uri)) {
-			jshDocumentManager.didOpen(uri, params.getTextDocument().getText());
+			JshDocumentManager.getInstance().didOpen(uri, params.getTextDocument().getText());
 			return;
 		}
 		documentVersions.put(uri, params.getTextDocument().getVersion());
@@ -375,18 +374,11 @@ public abstract class BaseDocumentLifeCycleHandler {
 	public void didChange(DidChangeTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
 		if (JDTUtils.isJshFile(uri)) {
-			jshDocumentManager.didChange(uri, params.getContentChanges());
+			JshDocumentManager.getInstance().didChange(uri, params.getContentChanges());
 			return;
 		}
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		handleChanged(params);
-	}
-
-	/**
-	 * @return the manager owning synthetic working copies for currently open .jsh files
-	 */
-	public JshDocumentManager getJshDocumentManager() {
-		return jshDocumentManager;
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
