@@ -473,6 +473,9 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
+		if (isJshFile(uriString)) {
+			return resolveCompilationUnit(uriString);
+		}
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return null;
