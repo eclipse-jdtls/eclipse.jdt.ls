@@ -696,6 +696,23 @@ public final class JDTUtils {
 	}
 
 	/**
+	 * @param uriOrFileName either a full document URI (e.g. {@code file:///a/b/Scratch.jsh}) or a
+	 *            plain file name - both end in the same suffix, so either form works
+	 * @return whether the given URI/file name refers to a .jsh (JShell script) file
+	 */
+	public static boolean isJshFile(String uriOrFileName) {
+		return uriOrFileName != null && uriOrFileName.endsWith(".jsh");
+	}
+
+	public static boolean isJshFile(IPath path) {
+		return path != null && isJshFile(path.lastSegment());
+	}
+
+	public static boolean isJshFile(java.nio.file.Path path) {
+		return path != null && isJshFile(path.getFileName().toString());
+	}
+
+	/**
 	 * Enumeration for determining the location of a Java element. Either returns
 	 * with the name range only, or the extended source range around the name of the
 	 * element.
