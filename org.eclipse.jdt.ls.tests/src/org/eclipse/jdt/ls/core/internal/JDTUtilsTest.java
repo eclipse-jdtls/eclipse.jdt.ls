@@ -250,4 +250,16 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(resource instanceof IFolder);
 		assertEquals(originalMemberNum + 1, ((IFolder) parent).members().length, "The parent package should be aware of the newly created child package");
 	}
+
+	@Test
+	public void testIsJshFile() {
+		assertTrue(JDTUtils.isJshFile("Scratch.jsh"));
+		assertTrue(JDTUtils.isJshFile("file:///a/b/Scratch.jsh"));
+		assertFalse(JDTUtils.isJshFile("Scratch.java"));
+		assertFalse(JDTUtils.isJshFile("Scratch.jsh.java"));
+		assertFalse(JDTUtils.isJshFile((String) null));
+
+		assertTrue(JDTUtils.isJshFile(Paths.get("Scratch.jsh")));
+		assertFalse(JDTUtils.isJshFile((Path) null));
+	}
 }
