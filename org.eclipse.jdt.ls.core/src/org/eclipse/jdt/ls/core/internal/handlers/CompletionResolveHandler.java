@@ -106,7 +106,12 @@ public class CompletionResolveHandler {
 				: null;
 		JshDocumentManager.JshDocument jshDocument = resolveJshDocumentFor(completionResponse);
 		CompletionItem resolved = doResolve(param, monitor, data, completionResponse);
-		if (jshDocument != null) {
+		// doResolve only (re)computes a fresh, synthetic-coordinate text edit/additional edits when
+		// isResolveAdditionalTextEditsSupport() is true (via the updateReplacement(...) call below) -
+		// otherwise resolved's edits are whatever CompletionHandler.computeJshContentAssist already
+		// translated to original .jsh coordinates in the initial response. Translating unconditionally
+		// here would shift an already-correct range a second time.
+		if (jshDocument != null && manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
 			translateJshRanges(resolved, jshDocument);
 		}
 		return resolved;
@@ -123,33 +128,47 @@ public class CompletionResolveHandler {
 		return JshDocumentManager.getInstance().get(uri);
 	}
 
-	private void translateJshRanges(CompletionItem item, JshDocumentManager.JshDocument document) {
+	/**
+	 * Translates a completion item's edit ranges from the synthetic wrapped source's coordinates to
+	 * the original .jsh document's. An edit whose range can't be mapped (one of its endpoints falls
+	 * inside the generated header/footer - e.g. an additional text edit inserting an import, which
+	 * always lands in the single-line header) is dropped rather than left in synthetic coordinates:
+	 * applying a synthetic-coordinate edit to the real .jsh file would silently corrupt it (e.g.
+	 * insert the import text in the middle of the user's first line). Package-visible so
+	 * {@link CompletionHandler#computeJshContentAssist} can apply the same translation to the
+	 * initial completion response, not just resolve.
+	 */
+	static void translateJshRanges(CompletionItem item, JshDocumentManager.JshDocument document) {
 		if (item.getTextEdit() != null) {
 			if (item.getTextEdit().isLeft()) {
 				TextEdit edit = item.getTextEdit().getLeft();
 				Range translated = document.toOriginalRange(edit.getRange());
 				if (translated != null) {
 					edit.setRange(translated);
+				} else {
+					item.setTextEdit(null);
 				}
 			} else {
 				InsertReplaceEdit edit = item.getTextEdit().getRight();
 				Range insert = document.toOriginalRange(edit.getInsert());
 				Range replace = document.toOriginalRange(edit.getReplace());
-				if (insert != null) {
+				if (insert != null && replace != null) {
 					edit.setInsert(insert);
-				}
-				if (replace != null) {
 					edit.setReplace(replace);
+				} else {
+					item.setTextEdit(null);
 				}
 			}
 		}
 		if (item.getAdditionalTextEdits() != null) {
-			for (TextEdit edit : item.getAdditionalTextEdits()) {
+			item.getAdditionalTextEdits().removeIf(edit -> {
 				Range translated = document.toOriginalRange(edit.getRange());
-				if (translated != null) {
-					edit.setRange(translated);
+				if (translated == null) {
+					return true;
 				}
-			}
+				edit.setRange(translated);
+				return false;
+			});
 		}
 	}
 

@@ -54,13 +54,16 @@ import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemOptions;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.CompletionTriggerKind;
+import org.eclipse.lsp4j.InsertReplaceRange;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 
@@ -394,13 +397,46 @@ public class CompletionHandler{
 			}
 			proposals.addAll(collector.getCompletionItems());
 		}
+		// The collector computed every range above (per-item and the shared item-defaults range)
+		// against the synthetic wrapped source, since offset is a synthetic offset - translate them
+		// all back to the original .jsh document's coordinates before this response reaches the
+		// client. Dropping an item whose required range can't be mapped is CompletionResolveHandler.
+		// translateJshRanges's job (reused here since the same synthetic/header-footer concern
+		// applies to the initial response, not just resolve).
+		for (CompletionItem item : proposals) {
+			CompletionResolveHandler.translateJshRanges(item, document);
+		}
 		proposals.sort(PROPOSAL_COMPARATOR);
 		CompletionList list = new CompletionList(proposals);
 		list.setIsIncomplete(!collector.isComplete());
 		if (this.manager.getClientPreferences().isCompletionListItemDefaultsSupport()) {
-			list.setItemDefaults(collector.getCompletionItemDefaults());
+			CompletionItemDefaults defaults = collector.getCompletionItemDefaults();
+			translateJshItemDefaultsRange(defaults, document);
+			list.setItemDefaults(defaults);
 		}
 		return list;
+	}
+
+	/**
+	 * Translates the completion list's shared {@code itemDefaults.editRange} - which items with no
+	 * range of their own rely on - from synthetic to original .jsh coordinates. In practice this
+	 * should always map cleanly, since it's derived from the (always in-content) completion offset,
+	 * but the range is cleared rather than left in synthetic coordinates if it somehow doesn't.
+	 */
+	private void translateJshItemDefaultsRange(CompletionItemDefaults defaults, JshDocumentManager.JshDocument document) {
+		if (defaults == null || defaults.getEditRange() == null) {
+			return;
+		}
+		Either<Range, InsertReplaceRange> editRange = defaults.getEditRange();
+		if (editRange.isLeft()) {
+			Range translated = document.toOriginalRange(editRange.getLeft());
+			defaults.setEditRange(translated == null ? null : Either.forLeft(translated));
+		} else {
+			InsertReplaceRange range = editRange.getRight();
+			Range insert = document.toOriginalRange(range.getInsert());
+			Range replace = document.toOriginalRange(range.getReplace());
+			defaults.setEditRange(insert == null || replace == null ? null : Either.forRight(new InsertReplaceRange(insert, replace)));
+		}
 	}
 
 	private String[] getFavoriteStaticMembers() {
