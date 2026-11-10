@@ -84,11 +84,13 @@ public class HoverHandler {
 		if (document != null && !monitor.isCanceled()) {
 			ICompilationUnit unit = document.getWorkingCopy();
 			int syntheticOffset = document.toSyntheticOffset(originalPosition);
-			try {
-				int[] line = JsonRpcHelpers.toLine(unit.getBuffer(), syntheticOffset);
-				content = computeHover(unit, line[0], line[1], monitor);
-			} catch (JavaModelException e) {
-				JavaLanguageServerPlugin.logException("Failed to translate .jsh hover position", e);
+			if (syntheticOffset > -1) {
+				try {
+					int[] line = JsonRpcHelpers.toLine(unit.getBuffer(), syntheticOffset);
+					content = computeHover(unit, line[0], line[1], monitor);
+				} catch (JavaModelException e) {
+					JavaLanguageServerPlugin.logException("Failed to translate .jsh hover position", e);
+				}
 			}
 		}
 		if (content == null) {

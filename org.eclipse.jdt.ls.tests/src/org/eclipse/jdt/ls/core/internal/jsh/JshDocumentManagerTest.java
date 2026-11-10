@@ -103,6 +103,33 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 		manager.didClose(uri);
 	}
 
+	/**
+	 * Regression test: a duplicate didOpen for the same URI (or a didChange-without-prior-didOpen
+	 * fallback racing with a real didOpen) used to leak the previous working copy forever, since
+	 * {@code documents.put(uri, document)} discarded no reference to what it overwrote.
+	 */
+	@Test
+	public void testDuplicateDidOpenDiscardsThePreviousWorkingCopy() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/DuplicateOpen.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.didOpen(uri, "int x = 1;");
+		ICompilationUnit firstCu = manager.get(uri).getWorkingCopy();
+		assertTrue(firstCu.exists(), "First working copy should exist right after its own didOpen");
+
+		manager.didOpen(uri, "int y = 2;");
+		try {
+			assertFalse(firstCu.exists(), "Duplicate didOpen should discard the previous working copy, not leak it");
+			ICompilationUnit secondCu = manager.get(uri).getWorkingCopy();
+			assertTrue(secondCu.exists(), "The new working copy from the second didOpen should be live");
+			assertTrue(secondCu.getBuffer().getContents().contains("int y = 2;"));
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
 	@Test
 	public void testCloseWithoutOpenIsANoOp() {
 		JshDocumentManager manager = new JshDocumentManager();
@@ -232,6 +259,36 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 			// Line 0, column 0 of the synthetic source is the start of the generated imports, never
 			// part of the original .jsh content.
 			assertNull(document.toOriginalPosition(new Position(0, 0)));
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	/**
+	 * Regression test: a stale position - e.g. a request computed against document state that a
+	 * concurrent didChange has since replaced with shorter content - used to make
+	 * {@code toSyntheticOffset} throw {@code IllegalArgumentException} (from the underlying
+	 * {@code JshWrapResult.toSyntheticOffset}'s bounds check) instead of returning {@code -1} for
+	 * callers' existing empty-result paths to handle gracefully.
+	 */
+	@Test
+	public void testToSyntheticOffsetReturnsNegativeOneForOutOfRangePositionRatherThanThrowing() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/StalePosition.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.didOpen(uri, "int x = 1;");
+		try {
+			JshDocument document = manager.get(uri);
+			// Line 5 doesn't exist in a one-line document - JsonRpcHelpers.toOffset returns -1 for it,
+			// which toSyntheticOffset must pass through directly.
+			assertEquals(-1, document.toSyntheticOffset(new Position(5, 0)));
+			// A column far past the end of the one real line resolves to a raw offset past the
+			// document's length (JsonRpcHelpers.toOffset doesn't validate the column, only the line) -
+			// toSyntheticOffset must catch the resulting IllegalArgumentException from the underlying
+			// JshWrapResult's bounds check rather than letting it propagate.
+			assertEquals(-1, document.toSyntheticOffset(new Position(0, 1000)));
 		} finally {
 			manager.didClose(uri);
 		}

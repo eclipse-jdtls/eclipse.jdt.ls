@@ -121,7 +121,14 @@ public class JshDocumentManager {
 			ICompilationUnit cu = pkg.getCompilationUnit(className + ".java").getWorkingCopy(OWNER, new NullProgressMonitor());
 			JshDocument document = new JshDocument(cu, className, uri, this);
 			document.setContent(content);
-			documents.put(uri, document);
+			// A duplicate didOpen for the same URI (or a didChange-without-prior-didOpen fallback
+			// racing with a real didOpen) would otherwise leak the previous working copy forever -
+			// discard just its working copy, not a full dispose(), since dispose() also clears
+			// diagnostics for uri and setContent(content) above already published the new document's.
+			JshDocument previous = documents.put(uri, document);
+			if (previous != null) {
+				previous.discardWorkingCopyQuietly();
+			}
 		} catch (JavaModelException e) {
 			JavaLanguageServerPlugin.logException("Failed to open .jsh document " + uri, e);
 		}
@@ -329,6 +336,15 @@ public class JshDocumentManager {
 
 		void dispose() {
 			clearDiagnostics();
+			discardWorkingCopyQuietly();
+		}
+
+		/**
+		 * Discards the working copy without touching diagnostics - unlike {@link #dispose()}, for use
+		 * when a document is being replaced (not closed) and another, already-published set of
+		 * diagnostics for the same uri must not be clobbered with an empty one.
+		 */
+		void discardWorkingCopyQuietly() {
 			try {
 				workingCopy.discardWorkingCopy();
 			} catch (JavaModelException e) {
@@ -347,11 +363,21 @@ public class JshDocumentManager {
 		/**
 		 * @param originalPosition a line/character position in the original .jsh document
 		 * @return the corresponding offset into the synthetic wrapped source, for use with e.g.
-		 *         {@link ICompilationUnit#codeComplete}
+		 *         {@link ICompilationUnit#codeComplete}, or {@code -1} if the position doesn't
+		 *         resolve against the current content - e.g. a request computed against a document
+		 *         state that a concurrent {@code didChange} has since replaced
 		 */
 		public int toSyntheticOffset(Position originalPosition) {
 			int originalOffset = JsonRpcHelpers.toOffset(rawDocument, originalPosition.getLine(), originalPosition.getCharacter());
-			return wrapResult.toSyntheticOffset(originalOffset);
+			JshWrapResult result = wrapResult;
+			if (originalOffset < 0 || result == null) {
+				return -1;
+			}
+			try {
+				return result.toSyntheticOffset(originalOffset);
+			} catch (IllegalArgumentException e) {
+				return -1;
+			}
 		}
 
 		/**
