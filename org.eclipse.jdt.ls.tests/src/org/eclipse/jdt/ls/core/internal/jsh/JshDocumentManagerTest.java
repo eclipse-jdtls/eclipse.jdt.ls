@@ -211,7 +211,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 			int syntheticOffset = document.toSyntheticOffset(original);
 
 			int[] syntheticLine = JsonRpcHelpers.toLine(document.getWorkingCopy().getBuffer(), syntheticOffset);
-			assertEquals(3, syntheticLine[0], "Original line 2 should land on synthetic line 3, one line down for the single-line generated header");
+			assertEquals(4, syntheticLine[0], "Original line 2 should land on synthetic line 4, shifted down by the generated header's line count (imports+class line, run-method line)");
 			assertEquals(8, syntheticLine[1], "Column should be unaffected by the line shift");
 
 			assertEquals(original, document.toOriginalPosition(syntheticOffset),
@@ -236,7 +236,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 			JshDocument document = manager.get(uri);
 			// A range spanning from the "b" declaration's start (original line 1) back to the "a"
 			// declaration's start (original line 0), i.e. start and end land on different lines.
-			Range syntheticRange = new Range(new Position(1, 4), new Position(2, 4));
+			Range syntheticRange = new Range(new Position(2, 4), new Position(3, 4));
 			Range originalRange = document.toOriginalRange(syntheticRange);
 			assertNotNull(originalRange);
 			assertEquals(new Position(0, 4), originalRange.getStart());

@@ -12,21 +12,30 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.jsh;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.Kind;
+import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
+
 /**
- * Wraps raw .jsh (JShell script) source in a synthetic top-level class/method so it becomes a
+ * Wraps raw .jsh (JShell script) source in a synthetic top-level class so it becomes a
  * syntactically valid Java compilation unit, and tracks the character-offset mapping between the
  * original .jsh buffer and the synthetic wrapped source.
  * <p>
- * This is a pure, JDT-independent utility: it only does string synthesis and offset arithmetic.
- * It does not know about compilation units, buffers, or projects - those are wired up separately
- * (see the .jsh content-assist plan tracked in
- * https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973).
+ * This is a pure, JDT-independent utility (string synthesis and offset arithmetic); it does not
+ * know about compilation units, buffers, or projects - those are wired up separately (see the .jsh
+ * content-assist plan tracked in https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973).
  * <p>
- * The wrapper intentionally only handles the "whole buffer as one method body" case: every line
- * of the .jsh content is treated as a statement inside a single synthetic method. It does not
- * attempt to classify individual snippets (so JShell-style variable redefinition, or snippet-level
- * local class/method declarations interleaved with statements, are out of scope - see the v1 scope
- * notes on the tracking issue).
+ * Unlike v1 (whole-buffer-as-one-method-body wrapping), this classifies each top-level chunk of
+ * the buffer - see {@link JshSnippetSplitter}/{@link JshSnippetClassifier} - and places it where
+ * Java actually requires it: imports at the top, method/type declarations as real members of the
+ * synthetic class (Java has no local-method syntax, so these can't stay inside a method body the
+ * way v1 left them), and everything else (variable declarations and bare statements) in one
+ * {@value #SCRATCHPAD_METHOD_NAME} method body, in original relative order - exactly v1's
+ * behavior for a buffer containing no imports or declarations. Each chunk keeps its own verbatim
+ * text (no modifier rewriting needed: {@value #SCRATCHPAD_METHOD_NAME} is an instance method, so
+ * it can see promoted declarations directly without them needing to be {@code static}).
  */
 public final class JshSnippetWrapper {
 
@@ -54,8 +63,6 @@ public final class JshSnippetWrapper {
 			+ "import java.util.regex.*;"
 			+ "import java.util.stream.*;";
 
-	private static final String FOOTER = "\n}}\n";
-
 	private JshSnippetWrapper() {
 	}
 
@@ -70,8 +77,9 @@ public final class JshSnippetWrapper {
 	}
 
 	/**
-	 * Wraps the given .jsh source. The original text is inserted verbatim between the generated
-	 * header and footer - no transformation is applied to it.
+	 * Wraps the given .jsh source: splits it into top-level chunks, classifies each, and places it
+	 * in the synthetic class - see the class javadoc for where each kind lands. Every chunk's text
+	 * is inserted verbatim - no transformation is applied to it.
 	 *
 	 * @param jshSource the raw .jsh buffer content; {@code null} is treated as empty
 	 * @param className the synthetic top-level class name to generate. Must be unique per
@@ -85,25 +93,81 @@ public final class JshSnippetWrapper {
 	 */
 	public static JshWrapResult wrap(String jshSource, String className) {
 		String source = jshSource == null ? "" : jshSource;
-		String header = IMPORTS + "public class " + className + " { void " + SCRATCHPAD_METHOD_NAME + "() throws Exception {\n";
-		String wrapped = header + source + FOOTER;
-		return new JshWrapResult(wrapped, header.length(), source.length());
+		List<Chunk> chunks = JshSnippetSplitter.split(source);
+
+		List<Chunk> imports = new ArrayList<>();
+		List<Chunk> declarations = new ArrayList<>();
+		List<Chunk> statements = new ArrayList<>();
+		for (Chunk chunk : chunks) {
+			Kind kind = JshSnippetClassifier.classify(source.substring(chunk.start(), chunk.end()));
+			switch (kind) {
+				case IMPORT -> imports.add(chunk);
+				case DECLARATION -> declarations.add(chunk);
+				case STATEMENT -> statements.add(chunk);
+			}
+		}
+
+		StringBuilder wrapped = new StringBuilder();
+		List<JshWrapResult.Segment> segments = new ArrayList<>(chunks.size());
+
+		wrapped.append(IMPORTS);
+		placeChunks(source, imports, wrapped, segments);
+		wrapped.append("public class ").append(className).append(" {\n");
+		placeChunks(source, declarations, wrapped, segments);
+		wrapped.append("void ").append(SCRATCHPAD_METHOD_NAME).append("() throws Exception {\n");
+		placeChunks(source, statements, wrapped, segments);
+		wrapped.append("\n}}\n");
+
+		return new JshWrapResult(wrapped.toString(), segments, source.length());
+	}
+
+	private static void placeChunks(String source, List<Chunk> chunks, StringBuilder wrapped, List<JshWrapResult.Segment> segments) {
+		for (Chunk chunk : chunks) {
+			int syntheticStart = wrapped.length();
+			wrapped.append(source, chunk.start(), chunk.end());
+			segments.add(new JshWrapResult.Segment(chunk.start(), chunk.end(), syntheticStart));
+		}
 	}
 
 	/**
-	 * The result of wrapping a .jsh buffer: the synthesized source, plus offset translation
-	 * between the original buffer and the synthesized one.
+	 * The result of wrapping a .jsh buffer: the synthesized source, plus offset translation between
+	 * the original buffer and the synthesized one. Unlike v1's single constant header-length shift,
+	 * translation here is piecewise: one {@link Segment} per classified chunk, each mapping a
+	 * verbatim-copied range of the original buffer to where it landed in the synthetic source.
 	 */
 	public static final class JshWrapResult {
 
-		private final String wrappedSource;
-		private final int headerLength;
-		private final int originalLength;
+		record Segment(int originalStart, int originalEnd, int syntheticStart) {
 
-		private JshWrapResult(String wrappedSource, int headerLength, int originalLength) {
+			boolean containsOriginal(int offset) {
+				return (offset >= originalStart && offset < originalEnd) || (originalStart == originalEnd && offset == originalStart);
+			}
+
+			int syntheticEnd() {
+				return syntheticStart + (originalEnd - originalStart);
+			}
+
+			boolean containsSynthetic(int offset) {
+				return (offset >= syntheticStart && offset < syntheticEnd()) || (syntheticStart == syntheticEnd() && offset == syntheticStart);
+			}
+		}
+
+		private final String wrappedSource;
+		private final List<Segment> segments;
+		private final int originalLength;
+		private final Segment lastSegment;
+
+		private JshWrapResult(String wrappedSource, List<Segment> segments, int originalLength) {
 			this.wrappedSource = wrappedSource;
-			this.headerLength = headerLength;
+			this.segments = segments;
 			this.originalLength = originalLength;
+			Segment last = null;
+			for (Segment segment : segments) {
+				if (segment.originalEnd() == originalLength && (last == null || segment.originalStart() >= last.originalStart())) {
+					last = segment;
+				}
+			}
+			this.lastSegment = last;
 		}
 
 		public String getWrappedSource() {
@@ -120,21 +184,36 @@ public final class JshSnippetWrapper {
 			if (originalOffset < 0 || originalOffset > originalLength) {
 				throw new IllegalArgumentException("originalOffset " + originalOffset + " out of range [0, " + originalLength + "]");
 			}
-			return headerLength + originalOffset;
+			for (Segment segment : segments) {
+				if (segment.containsOriginal(originalOffset)) {
+					return segment.syntheticStart() + (originalOffset - segment.originalStart());
+				}
+			}
+			// One past the last chunk's last character (e.g. the client's cursor sits at the very
+			// end of the document) - same boundary-inclusive convention as v1's single-offset scheme.
+			if (originalOffset == originalLength && lastSegment != null) {
+				return lastSegment.syntheticEnd();
+			}
+			throw new IllegalArgumentException("originalOffset " + originalOffset + " not covered by any chunk - this indicates a bug in JshSnippetSplitter's full-coverage guarantee");
 		}
 
 		/**
 		 * @param syntheticOffset a character offset into the wrapped source
 		 * @return the corresponding offset into the original .jsh buffer, or {@code -1} if
-		 *         {@code syntheticOffset} falls inside the generated header or footer rather than
-		 *         the original content
+		 *         {@code syntheticOffset} falls inside generated scaffolding (imports, the class/
+		 *         method declaration lines, or trailing braces) rather than a verbatim chunk of the
+		 *         original content
 		 */
 		public int toOriginalOffset(int syntheticOffset) {
-			int originalOffset = syntheticOffset - headerLength;
-			if (originalOffset < 0 || originalOffset > originalLength) {
-				return -1;
+			for (Segment segment : segments) {
+				if (segment.containsSynthetic(syntheticOffset)) {
+					return segment.originalStart() + (syntheticOffset - segment.syntheticStart());
+				}
 			}
-			return originalOffset;
+			if (lastSegment != null && syntheticOffset == lastSegment.syntheticEnd()) {
+				return originalLength;
+			}
+			return -1;
 		}
 	}
 
