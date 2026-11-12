@@ -53,6 +53,7 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.SemanticTokens;
+import org.eclipse.lsp4j.jsonrpc.util.ToStringBuilder;
 
 public class SemanticTokensVisitor extends ASTVisitor {
 	private CompilationUnit cu;
@@ -107,6 +108,16 @@ public class SemanticTokensVisitor extends ASTVisitor {
 
 		public int getLength() {
 			return length;
+		}
+
+		@Override
+		public String toString() {
+			return new ToStringBuilder(this) //
+					.addField("offset") //
+					.addField("length") //
+					.addField("tokenType") //
+					.addField("tokenModifiers") //
+					.toString();
 		}
 	}
 
@@ -550,6 +561,10 @@ public class SemanticTokensVisitor extends ASTVisitor {
 			int tokenOffset = scanner.getCurrentTokenStartPosition();
 			int tokenLength = scanner.getCurrentTokenEndPosition() - tokenOffset + 1; // +1 because getCurrentTokenEndPosition is inclusive
 			tokenVisitor.visit(token, tokenOffset, tokenLength);
+			SemanticToken lastToken = this.tokens.getLast();
+			if (lastToken.offset + lastToken.length > scanner.getCurrentTokenEndPosition()) {
+				scanner.resetTo(lastToken.offset + lastToken.length, endPosition - 1);
+			}
 		}
 	}
 
