@@ -95,6 +95,58 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	/**
+	 * Regression test for the scope-widening fix that replaced v1's whole-buffer-as-one-method-body
+	 * wrapping with per-chunk classification ({@link JshSnippetSplitter}/{@link
+	 * JshSnippetClassifier}): a realistic script with imports and a helper method interleaved with
+	 * statements - the exact shape that produced a wall of spurious syntax errors under v1, since
+	 * import declarations and free-standing method declarations are both illegal directly inside a
+	 * method body - must now produce zero diagnostics.
+	 * <p>
+	 * Deliberately uses {@code org.apache.commons.lang3.StringUtils} and {@code Arrays.asList(...)}
+	 * rather than e.g. {@code java.time.LocalDate} or {@code List.of(...)} - this test project's
+	 * configured JRE/compliance level doesn't resolve those (confirmed independently of any .jsh
+	 * machinery, via a plain non-.jsh compilation unit hitting the same "cannot be resolved" errors)
+	 * - a pre-existing fixture limitation, not something this test is trying to exercise.
+	 */
+	@Test
+	public void testRealisticScriptWithImportsAndMethodProducesNoSpuriousDiagnostics() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/Realistic.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.setClientConnection(new JavaClientConnection(client));
+		try {
+			// org.apache.commons.lang3.StringUtils isn't covered by any default import, so it
+			// genuinely needs this explicit import to resolve.
+			String content = "import org.apache.commons.lang3.StringUtils;\n"
+					+ "import java.util.Arrays;\n"
+					+ "import java.util.List;\n"
+					+ "\n"
+					+ "String greeting = \"Hello from JShell!\";\n"
+					+ "List<String> items = Arrays.asList(\"Apple\", \"Banana\", \"Cherry\");\n"
+					+ "\n"
+					+ "void printSummary(String msg, List<String> list) {\n"
+					+ "    System.out.println(StringUtils.upperCase(msg));\n"
+					+ "    for (String item : list) {\n"
+					+ "        System.out.println(\" - \" + item);\n"
+					+ "    }\n"
+					+ "}\n"
+					+ "\n"
+					+ "printSummary(greeting, items);\n";
+			manager.didOpen(uri, content);
+
+			List<PublishDiagnosticsParams> publishes = getClientRequests("publishDiagnostics");
+			assertFalse(publishes.isEmpty(), "Expected at least one publishDiagnostics call after didOpen");
+			PublishDiagnosticsParams last = publishes.get(publishes.size() - 1);
+			assertTrue(last.getDiagnostics().isEmpty(),
+					"Expected no diagnostics for a realistic script with imports/a method/statements, got: " + last.getDiagnostics());
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	/**
 	 * Characterization test for a known, real gap found while adding Phase 8 coverage - tracked on
 	 * https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973, not yet understood well enough to
 	 * fix: a genuine, unambiguous syntax error (unterminated string literal) present on the very
