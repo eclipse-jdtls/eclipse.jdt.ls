@@ -35,6 +35,21 @@ public class JshSnippetClassifierTest {
 		assertEquals(Kind.IMPORT, JshSnippetClassifier.classify("import static java.util.Collections.emptyList;"));
 	}
 
+	/**
+	 * Regression test: a plain {@code startsWith("import")} check is fooled by a leading comment -
+	 * the chunk's text still includes it verbatim, even though the splitter's scanner skips
+	 * comments when finding chunk boundaries.
+	 */
+	@Test
+	public void testImportPrecededByALineCommentIsStillAnImport() {
+		assertEquals(Kind.IMPORT, JshSnippetClassifier.classify("// note\nimport java.util.List;"));
+	}
+
+	@Test
+	public void testImportPrecededByABlockCommentIsStillAnImport() {
+		assertEquals(Kind.IMPORT, JshSnippetClassifier.classify("/* note */ import java.util.List;"));
+	}
+
 	@Test
 	public void testIdentifierStartingWithImportIsNotAnImport() {
 		// "importer" must not be mistaken for the "import" keyword by a naive prefix check.

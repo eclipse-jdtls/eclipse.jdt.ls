@@ -371,6 +371,13 @@ public class CompletionHandler{
 		if (document == null) {
 			return null;
 		}
+		if (params.getContext() != null && " ".equals(params.getContext().getTriggerCharacter())) {
+			// computeContentAssist only lets a space trigger through for constructor-completion
+			// (isCompletionForConstructor), a known gap this narrower .jsh path doesn't implement -
+			// without this check, every typed space would return a full proposal list instead of
+			// nothing, which some clients could auto-accept into (e.g. via Enter).
+			return null;
+		}
 
 		ICompilationUnit unit = document.getWorkingCopy();
 		List<CompletionItem> proposals = new ArrayList<>();

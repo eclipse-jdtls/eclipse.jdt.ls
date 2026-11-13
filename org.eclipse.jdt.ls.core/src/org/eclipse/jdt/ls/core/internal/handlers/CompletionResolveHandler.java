@@ -105,16 +105,7 @@ public class CompletionResolveHandler {
 				? CompletionResponses.get(Long.parseLong(data.get(DATA_FIELD_REQUEST_ID)))
 				: null;
 		JshDocumentManager.JshDocument jshDocument = resolveJshDocumentFor(completionResponse);
-		CompletionItem resolved = doResolve(param, monitor, data, completionResponse);
-		// doResolve only (re)computes a fresh, synthetic-coordinate text edit/additional edits when
-		// isResolveAdditionalTextEditsSupport() is true (via the updateReplacement(...) call below) -
-		// otherwise resolved's edits are whatever CompletionHandler.computeJshContentAssist already
-		// translated to original .jsh coordinates in the initial response. Translating unconditionally
-		// here would shift an already-correct range a second time.
-		if (jshDocument != null && manager.getClientPreferences().isResolveAdditionalTextEditsSupport()) {
-			translateJshRanges(resolved, jshDocument);
-		}
-		return resolved;
+		return doResolve(param, monitor, data, completionResponse, jshDocument);
 	}
 
 	private JshDocumentManager.JshDocument resolveJshDocumentFor(CompletionResponse completionResponse) {
@@ -172,7 +163,7 @@ public class CompletionResolveHandler {
 		}
 	}
 
-	private CompletionItem doResolve(CompletionItem param, IProgressMonitor monitor, Map<String, String> data, CompletionResponse completionResponse) {
+	private CompletionItem doResolve(CompletionItem param, IProgressMonitor monitor, Map<String, String> data, CompletionResponse completionResponse, JshDocumentManager.JshDocument jshDocument) {
 
 		// clean resolve data
 		param.setData(null);
@@ -251,6 +242,15 @@ public class CompletionResolveHandler {
 				true
 			);
 			proposalProvider.updateReplacement(proposal, param, '\0');
+			// Translate right here, immediately after the only call that actually produces fresh,
+			// synthetic-coordinate edits for .jsh items - not conditionally in resolve() after the
+			// fact, since doResolve has several earlier return points (unsupported item kind, missing
+			// request/proposal data, a cancelled monitor, a snippet item) that skip this call entirely
+			// and leave param's edits as whatever the initial response already translated to original
+			// .jsh coordinates. Translating those untouched edits a second time would corrupt them.
+			if (jshDocument != null) {
+				translateJshRanges(param, jshDocument);
+			}
 		}
 
 		if (!manager.getClientPreferences().isCompletionResolveDocumentSupport()) {
