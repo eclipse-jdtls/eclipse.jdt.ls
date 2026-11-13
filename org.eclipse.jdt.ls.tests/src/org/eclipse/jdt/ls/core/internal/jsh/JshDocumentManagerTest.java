@@ -201,12 +201,15 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 		String uri = project.getLocationURI().toString() + "/MultiLine.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
-		String content = "int a = 1;\nint b = 2;\nint c = a + b;\n";
+		// Deliberately bare statements, not variable declarations - those are promoted to fields (a
+		// different section of the synthetic source), which would shift the line math this test is
+		// actually about.
+		String content = "System.out.println(1);\nSystem.out.println(2);\nSystem.out.println(3);\n";
 		manager.didOpen(uri, content);
 		try {
 			JshDocument document = manager.get(uri);
 
-			// The "a" in "a + b", on the third original line (index 2).
+			// The "u" in "out", on the third original line (index 2).
 			Position original = new Position(2, 8);
 			int syntheticOffset = document.toSyntheticOffset(original);
 
@@ -230,12 +233,14 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 		String uri = project.getLocationURI().toString() + "/MultiLineRange.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
-		String content = "int a = 1;\nint b = 2;\n";
+		// Deliberately bare statements, not variable declarations - see the comment in
+		// testPositionTranslationAcrossMultipleLines above.
+		String content = "System.out.println(1);\nSystem.out.println(2);\n";
 		manager.didOpen(uri, content);
 		try {
 			JshDocument document = manager.get(uri);
-			// A range spanning from the "b" declaration's start (original line 1) back to the "a"
-			// declaration's start (original line 0), i.e. start and end land on different lines.
+			// A range spanning from the second statement's start (original line 1) back to the
+			// first's start (original line 0), i.e. start and end land on different lines.
 			Range syntheticRange = new Range(new Position(2, 4), new Position(3, 4));
 			Range originalRange = document.toOriginalRange(syntheticRange);
 			assertNotNull(originalRange);
