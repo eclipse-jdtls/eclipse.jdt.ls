@@ -70,6 +70,7 @@ import org.eclipse.jdt.ls.core.internal.MovingAverage;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.corrections.DiagnosticsHelper;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.InvisibleProjectImporter;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
@@ -340,13 +341,22 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didClose(DidCloseTextDocumentParams params) {
-		documentVersions.remove(params.getTextDocument().getUri());
-		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
+		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			JshDocumentManager.getInstance().didClose(uri);
+			return;
+		}
+		documentVersions.remove(uri);
+		lastSyncedDocumentLengths.remove(uri);
 		handleClosed(params);
 	}
 
 	public void didOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			JshDocumentManager.getInstance().didOpen(uri, params.getTextDocument().getText());
+			return;
+		}
 		documentVersions.put(uri, params.getTextDocument().getVersion());
 		lastSyncedDocumentLengths.remove(params.getTextDocument().getUri());
 		IFile resource = JDTUtils.findFile(uri);
@@ -362,12 +372,24 @@ public abstract class BaseDocumentLifeCycleHandler {
 	}
 
 	public void didChange(DidChangeTextDocumentParams params) {
+		String uri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(uri)) {
+			JshDocumentManager.getInstance().didChange(uri, params.getContentChanges());
+			return;
+		}
 		documentVersions.put(params.getTextDocument().getUri(), params.getTextDocument().getVersion());
 		handleChanged(params);
 	}
 
 	public void didSave(DidSaveTextDocumentParams params) {
 		String documentUri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(documentUri)) {
+			// Nothing to do: JshDocumentManager's working copy is already kept up to date via
+			// didChange, and unlike didOpen/didChange/didClose, handleSaved's discardWorkingCopy()/
+			// becomeWorkingCopy() pair would churn the long-lived synthetic working copy's buffer
+			// out from under JshDocumentManager, leaving its offset mapping stale until the next edit.
+			return;
+		}
 		lastSyncedDocumentLengths.remove(documentUri);
 		IFile file = JDTUtils.findFile(params.getTextDocument().getUri());
 		if (file != null && !Objects.equals(ProjectsManager.getDefaultProject(), file.getProject())) {
