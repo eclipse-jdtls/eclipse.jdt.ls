@@ -14,6 +14,7 @@ package org.eclipse.jdt.ls.core.internal.jsh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -26,9 +27,11 @@ import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.CompletionResolveHandler;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.lsp4j.CompletionContext;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionParams;
+import org.eclipse.lsp4j.CompletionTriggerKind;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
@@ -81,6 +84,37 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	/**
+	 * Regression test: {@code computeContentAssist} only lets a space-triggered completion request
+	 * through for constructor-completion-on-space ("new "), a known gap this narrower .jsh path
+	 * doesn't implement. Without an equivalent check, every space keystroke would return a full
+	 * proposal list instead of nothing - some clients could auto-accept one of those via Enter.
+	 */
+	@Test
+	public void testSpaceTriggeredCompletionReturnsNoProposals() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/SpaceTrigger.jsh";
+
+		String content = "org.apache.commons.lang3.StringUtils.isBlank(\"x\"); ";
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			CompletionParams params = new CompletionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri));
+			params.setPosition(new Position(0, content.length()));
+			params.setContext(new CompletionContext(CompletionTriggerKind.TriggerCharacter, " "));
+
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			CompletionList list = handler.completion(params, new NullProgressMonitor()).getRight();
+			assertNotNull(list);
+			assertTrue(list.getItems().isEmpty(), "A space-triggered completion request should return no proposals for .jsh files, got: "
+					+ list.getItems().stream().map(CompletionItem::getLabel).toList());
+			assertNull(list.getItemDefaults());
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
+	/**
 	 * Regression coverage for an off-by-one in line-number translation: {@link
 	 * #testCompletionResolvesToOriginalJshCoordinates} only ever triggers completion on line 0,
 	 * which can't catch a bug in shifting by the generated header's line count.
@@ -123,6 +157,66 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 			assertNotNull(edit, "Expected a resolved text edit for the isBlank(...) proposal");
 			assertEquals(1, edit.getRange().getStart().getLine(), "Edit range should land on original line 1, not shifted by the generated header");
 			assertEquals(1, edit.getRange().getEnd().getLine(), "Edit range should land on original line 1, not shifted by the generated header");
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
+	/**
+	 * Regression test: {@code CompletionResolveHandler.resolve()} must not re-translate an item's
+	 * edit when {@code doResolve} takes one of its early-return paths (here: a cancelled monitor)
+	 * even though {@code isResolveAdditionalTextEditsSupport()} is on - those paths never reach the
+	 * {@code updateReplacement(...)} call that produces fresh synthetic-coordinate edits, so the
+	 * item's edit is still whatever the initial response already translated to original .jsh
+	 * coordinates. Re-translating it a second time would shift it to the wrong line (or drop it
+	 * entirely, if the already-correct range happens to look like it falls in the header once
+	 * shifted again).
+	 */
+	@Test
+	public void testResolveWithCancelledMonitorDoesNotDoubleTranslateAnAlreadyCorrectEdit() throws Exception {
+		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
+
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/CancelledResolve.jsh";
+
+		String line0 = "int x = 1;";
+		String line1 = "org.apache.commons.lang3.StringUtils.isBla";
+		String content = line0 + "\n" + line1;
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			CompletionParams params = new CompletionParams();
+			params.setTextDocument(new TextDocumentIdentifier(uri));
+			params.setPosition(new Position(1, line1.length()));
+
+			CompletionHandler handler = new CompletionHandler(preferenceManager);
+			CompletionList list = handler.completion(params, new NullProgressMonitor()).getRight();
+			assertNotNull(list);
+
+			Optional<CompletionItem> isBlank = list.getItems().stream()
+					.filter(item -> (item.getInsertText() != null && item.getInsertText().contains("isBlank"))
+							|| (item.getLabel() != null && item.getLabel().contains("isBlank")))
+					.findFirst();
+			assertTrue(isBlank.isPresent(), "Expected an isBlank(...) proposal from line 1, got: "
+					+ list.getItems().stream().map(CompletionItem::getLabel).toList());
+
+			CompletionItem item = isBlank.get();
+			// The initial response already carries an original-coordinate edit (line 1) - confirm
+			// that baseline before resolving, so the assertion after resolve is meaningful.
+			TextEdit initialEdit = item.getTextEdit() != null && item.getTextEdit().isLeft() ? item.getTextEdit().getLeft() : null;
+			assertNotNull(initialEdit, "Expected the initial response to already carry a text edit");
+			assertEquals(1, initialEdit.getRange().getStart().getLine());
+
+			NullProgressMonitor cancelled = new NullProgressMonitor();
+			cancelled.setCanceled(true);
+			CompletionResolveHandler resolveHandler = new CompletionResolveHandler(preferenceManager);
+			CompletionItem resolved = resolveHandler.resolve(item, cancelled);
+
+			TextEdit edit = resolved.getTextEdit() != null && resolved.getTextEdit().isLeft() ? resolved.getTextEdit().getLeft() : null;
+			assertNotNull(edit, "A cancelled resolve should leave the already-correct edit alone, not drop it");
+			assertEquals(1, edit.getRange().getStart().getLine(),
+					"A cancelled resolve must not re-translate the already-original-coordinate edit from the initial response");
+			assertEquals(1, edit.getRange().getEnd().getLine());
 		} finally {
 			JshDocumentManager.getInstance().didClose(uri);
 		}

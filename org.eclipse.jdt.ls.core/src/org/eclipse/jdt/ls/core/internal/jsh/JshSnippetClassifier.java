@@ -15,7 +15,11 @@ package org.eclipse.jdt.ls.core.internal.jsh;
 import java.util.List;
 
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IProblem;
+import org.eclipse.jdt.core.compiler.IScanner;
+import org.eclipse.jdt.core.compiler.ITerminalSymbols;
+import org.eclipse.jdt.core.compiler.InvalidInputException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
@@ -66,11 +70,20 @@ public final class JshSnippetClassifier {
 		return Kind.STATEMENT;
 	}
 
-	private static boolean looksLikeImport(String trimmed) {
-		if (!trimmed.startsWith("import")) {
+	/**
+	 * Whether the chunk's first real token (skipping leading comments and whitespace - a plain
+	 * {@code String.startsWith("import")} check would be fooled by a chunk like
+	 * {@code "// note\nimport java.util.List;"}) is the {@code import} keyword. Uses JDT's own
+	 * scanner, same as {@link JshSnippetSplitter}, rather than hand-rolled comment-stripping.
+	 */
+	private static boolean looksLikeImport(String source) {
+		IScanner scanner = ToolFactory.createScanner(false, false, false, JavaCore.latestSupportedJavaVersion());
+		scanner.setSource(source.toCharArray());
+		try {
+			return scanner.getNextToken() == ITerminalSymbols.TokenNameimport;
+		} catch (InvalidInputException e) {
 			return false;
 		}
-		return trimmed.length() == "import".length() || !Character.isJavaIdentifierPart(trimmed.charAt("import".length()));
 	}
 
 	private static boolean parsesAsPromotableClassBodyDeclaration(String source) {
