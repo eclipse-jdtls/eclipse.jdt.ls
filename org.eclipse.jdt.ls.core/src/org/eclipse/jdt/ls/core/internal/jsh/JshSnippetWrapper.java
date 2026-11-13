@@ -13,11 +13,8 @@
 package org.eclipse.jdt.ls.core.internal.jsh;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.FieldInfo;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.Kind;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
 
@@ -42,14 +39,6 @@ import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
  * behavior for a buffer containing no imports or declarations. Each chunk keeps its own verbatim
  * text (no modifier rewriting needed: {@value #SCRATCHPAD_METHOD_NAME} is an instance method, so
  * it can see promoted declarations directly without them needing to be {@code static}).
- * <p>
- * A {@code var}-typed variable's exclusion from promotion is contagious: a later, otherwise
- * promotable field whose initializer references it (e.g. {@code var n = 2; int m = n;}) can't be
- * promoted either - {@code n} stays local to {@value #SCRATCHPAD_METHOD_NAME}, so {@code m} as a
- * field couldn't see it. {@link #wrap(String, String)} computes this to a fixed point (via
- * {@link JshSnippetClassifier#parseAsField} and {@link JshSnippetClassifier#referencesAnyIdentifier})
- * before deciding each chunk's final placement, so a whole chain of dependent fields collapses back
- * to statements together, not just the one directly touching the {@code var}.
  */
 public final class JshSnippetWrapper {
 
@@ -108,56 +97,16 @@ public final class JshSnippetWrapper {
 	public static JshWrapResult wrap(String jshSource, String className) {
 		String source = jshSource == null ? "" : jshSource;
 		List<Chunk> chunks = JshSnippetSplitter.split(source);
-		int n = chunks.size();
-
-		String[] texts = new String[n];
-		Kind[] kinds = new Kind[n];
-		FieldInfo[] fields = new FieldInfo[n];
-		for (int i = 0; i < n; i++) {
-			texts[i] = source.substring(chunks.get(i).start(), chunks.get(i).end());
-			kinds[i] = JshSnippetClassifier.classify(texts[i]);
-			fields[i] = JshSnippetClassifier.parseAsField(texts[i]);
-		}
-
-		// A field that would otherwise be promoted but whose initializer references a name that
-		// isn't (or is no longer) a field - a var excluded from promotion, or another field already
-		// demoted by this same loop - can't be promoted either, since that name stays local to
-		// __run__ and wouldn't be visible from a field initializer. Iterate to a fixed point so a
-		// whole chain of dependent fields (e.g. "var n = 2; int m = n; int p = m;") collapses back
-		// to statements together, not just the one directly touching the var.
-		Set<String> unavailable = new HashSet<>();
-		for (FieldInfo field : fields) {
-			if (field != null && field.isVar()) {
-				unavailable.addAll(field.names());
-			}
-		}
-		boolean changed = true;
-		while (changed) {
-			changed = false;
-			for (int i = 0; i < n; i++) {
-				FieldInfo field = fields[i];
-				if (field == null || field.isVar() || unavailable.containsAll(field.names())) {
-					continue;
-				}
-				if (JshSnippetClassifier.referencesAnyIdentifier(texts[i], unavailable)) {
-					unavailable.addAll(field.names());
-					changed = true;
-				}
-			}
-		}
 
 		List<Chunk> imports = new ArrayList<>();
 		List<Chunk> declarations = new ArrayList<>();
 		List<Chunk> statements = new ArrayList<>();
-		for (int i = 0; i < n; i++) {
-			Kind kind = kinds[i];
-			if (kind == Kind.DECLARATION && fields[i] != null && fields[i].names().stream().anyMatch(unavailable::contains)) {
-				kind = Kind.STATEMENT;
-			}
+		for (Chunk chunk : chunks) {
+			Kind kind = JshSnippetClassifier.classify(source.substring(chunk.start(), chunk.end()));
 			switch (kind) {
-				case IMPORT -> imports.add(chunks.get(i));
-				case DECLARATION -> declarations.add(chunks.get(i));
-				case STATEMENT -> statements.add(chunks.get(i));
+				case IMPORT -> imports.add(chunk);
+				case DECLARATION -> declarations.add(chunk);
+				case STATEMENT -> statements.add(chunk);
 			}
 		}
 
