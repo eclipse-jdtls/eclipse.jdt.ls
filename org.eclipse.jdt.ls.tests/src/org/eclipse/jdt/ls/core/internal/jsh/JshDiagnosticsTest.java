@@ -95,6 +95,35 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	/**
+	 * Regression test for a CodeRabbit finding on this PR: a script variable must be visible to a
+	 * later-declared method, a real JShell pattern (declare state, then a helper function that uses
+	 * it). Requires promoting variable declarations to fields (not leaving them local to __run__,
+	 * which would make them invisible to a separately-promoted method) - see
+	 * {@link JshSnippetClassifier}'s class javadoc for why this is safe to do unconditionally.
+	 */
+	@Test
+	public void testScriptVariableIsVisibleToALaterDeclaredMethod() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/VariableVisibility.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.setClientConnection(new JavaClientConnection(client));
+		try {
+			String content = "int n = 2;\nint twice() { return n * 2; }\n";
+			manager.didOpen(uri, content);
+
+			List<PublishDiagnosticsParams> publishes = getClientRequests("publishDiagnostics");
+			assertFalse(publishes.isEmpty(), "Expected at least one publishDiagnostics call after didOpen");
+			PublishDiagnosticsParams last = publishes.get(publishes.size() - 1);
+			assertTrue(last.getDiagnostics().isEmpty(),
+					"Expected twice() to resolve the script variable n, got: " + last.getDiagnostics());
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	/**
 	 * Regression test for the scope-widening fix that replaced v1's whole-buffer-as-one-method-body
 	 * wrapping with per-chunk classification ({@link JshSnippetSplitter}/{@link
 	 * JshSnippetClassifier}): a realistic script with imports and a helper method interleaved with

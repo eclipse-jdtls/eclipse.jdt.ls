@@ -29,9 +29,12 @@ import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
  * <p>
  * Unlike v1 (whole-buffer-as-one-method-body wrapping), this classifies each top-level chunk of
  * the buffer - see {@link JshSnippetSplitter}/{@link JshSnippetClassifier} - and places it where
- * Java actually requires it: imports at the top, method/type declarations as real members of the
- * synthetic class (Java has no local-method syntax, so these can't stay inside a method body the
- * way v1 left them), and everything else (variable declarations and bare statements) in one
+ * Java actually requires it: imports at the top; method/type/variable declarations as real members
+ * of the synthetic class (Java has no local-method syntax, so methods can't stay inside a method
+ * body the way v1 left them; variables are promoted too, not just methods/types, so a
+ * later-declared method can see an earlier-declared script variable, matching real JShell
+ * semantics - the one exception is a {@code var}-typed variable, which can't be a field and stays
+ * local to {@value #SCRATCHPAD_METHOD_NAME}); and everything else (bare statements) in one
  * {@value #SCRATCHPAD_METHOD_NAME} method body, in original relative order - exactly v1's
  * behavior for a buffer containing no imports or declarations. Each chunk keeps its own verbatim
  * text (no modifier rewriting needed: {@value #SCRATCHPAD_METHOD_NAME} is an instance method, so

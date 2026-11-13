@@ -25,25 +25,33 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 /**
  * Classifies one {@link JshSnippetSplitter.Chunk}'s source text as an import, a declaration
- * (method/type - things that must live directly in the synthetic class body, since Java has no
- * such thing as a local method), or a statement (variable declarations and everything else, which
- * all go in the synthetic <code>__run__</code> method body, same as v1's whole-buffer wrapping
- * did, and stay visible to each other there since every statement chunk lands in that one
- * combined method, not a separate block per chunk).
+ * (method/type/variable - things promoted to a real member of the synthetic class body) or a
+ * statement (everything else, which goes in the synthetic <code>__run__</code> method body, same
+ * as v1's whole-buffer wrapping did for a buffer with no imports/declarations).
  * <p>
  * Reuses {@link ASTParser}'s {@code K_CLASS_BODY_DECLARATIONS} parse kind - asking JDT's own
  * parser "does this parse cleanly as a class member?" - rather than a hand-rolled heuristic (e.g.
  * distinguishing a method declaration "foo() { }" from a control-flow statement with a block, like
  * "if (x) { }", by pattern-matching tokens is genuinely ambiguous without real grammar knowledge).
- * A field declaration also parses cleanly in that mode, but is deliberately classified as a
- * STATEMENT, not promoted - keeping it as a local variable in __run__ is simpler (no cross-chunk
- * visibility issue to begin with, since all statements share one method) and sidesteps fields not
- * being able to use {@code var}.
+ * <p>
+ * Variable declarations are promoted to fields (not left as STATEMENTs in __run__) specifically so
+ * a later-declared method can see an earlier-declared script variable - a real, common JShell
+ * pattern (declare some state, then a helper method that uses it), matching real JShell's own
+ * semantics. This is safe to do unconditionally: Java's field forward-reference restriction
+ * (JLS 8.3.3) only applies to a field's simple name used in *another field's initializer* that
+ * textually precedes it, and since promoted declarations always keep their original relative
+ * order, anything that was a backward reference before promotion stays one, and anything that was
+ * a forward reference (a genuine "used before declared" error, already illegal as sequential local
+ * statements) stays equally illegal - promotion can't newly break anything that compiled before.
+ * The one declaration kind excluded is a {@code var}-typed variable, since {@code var} is
+ * local-variable-only in Java and can't be used for a field - that one stays a STATEMENT, local to
+ * __run__, and won't be visible to a later-declared method (a narrow, documented limitation).
  */
 public final class JshSnippetClassifier {
 
@@ -99,8 +107,13 @@ public final class JshSnippetClassifier {
 		if (bodyDeclarations.size() != 1 || !(bodyDeclarations.get(0) instanceof BodyDeclaration declaration)) {
 			return false;
 		}
-		if (!(declaration instanceof MethodDeclaration) && !(declaration instanceof AbstractTypeDeclaration)) {
-			// Field declarations and initializer blocks fall through to STATEMENT instead.
+		if (declaration instanceof FieldDeclaration field) {
+			if (field.getType().isVar()) {
+				// var is local-variable-only in Java - can't be promoted to a field.
+				return false;
+			}
+		} else if (!(declaration instanceof MethodDeclaration) && !(declaration instanceof AbstractTypeDeclaration)) {
+			// Initializer blocks (bare "{ ... }") fall through to STATEMENT instead.
 			return false;
 		}
 		if ((node.getFlags() & ASTNode.MALFORMED) != 0 || (declaration.getFlags() & ASTNode.MALFORMED) != 0) {

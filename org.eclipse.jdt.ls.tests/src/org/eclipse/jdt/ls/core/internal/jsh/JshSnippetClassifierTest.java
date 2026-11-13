@@ -52,17 +52,26 @@ public class JshSnippetClassifierTest {
 
 	@Test
 	public void testIdentifierStartingWithImportIsNotAnImport() {
-		// "importer" must not be mistaken for the "import" keyword by a naive prefix check.
-		assertEquals(Kind.STATEMENT, JshSnippetClassifier.classify("int importer = 1;"));
+		// "importer" must not be mistaken for the "import" keyword by a naive prefix check - it's a
+		// variable declaration (DECLARATION, since those are promoted), not an IMPORT.
+		assertEquals(Kind.DECLARATION, JshSnippetClassifier.classify("int importer = 1;"));
+	}
+
+	/**
+	 * Variable declarations are promoted (not left as STATEMENTs in __run__) so a later-declared
+	 * method can see an earlier-declared script variable - the real JShell pattern CodeRabbit's
+	 * review flagged ("int n = 2; int twice() { return n * 2; }" previously failed to resolve n).
+	 */
+	@Test
+	public void testVariableDeclarationIsADeclaration() {
+		assertEquals(Kind.DECLARATION, JshSnippetClassifier.classify("String greeting = \"hi\";"));
 	}
 
 	@Test
-	public void testVariableDeclarationIsAStatementNotADeclaration() {
-		// Deliberately a STATEMENT, not DECLARATION: a bare "String s = ...;" at the top level of a
-		// .jsh buffer is NOT a valid class body declaration on its own (fields need no initializer
-		// restrictions normally, but this exercises that our classifier routes it the same way v1
-		// already handled variables - through __run__ - rather than promoting it).
-		assertEquals(Kind.STATEMENT, JshSnippetClassifier.classify("String greeting = \"hi\";"));
+	public void testVarTypedVariableIsAStatementNotADeclaration() {
+		// var is local-variable-only in Java - can't be promoted to a field, so this one stays local
+		// to __run__ (a narrow, documented exception).
+		assertEquals(Kind.STATEMENT, JshSnippetClassifier.classify("var greeting = \"hi\";"));
 	}
 
 	@Test

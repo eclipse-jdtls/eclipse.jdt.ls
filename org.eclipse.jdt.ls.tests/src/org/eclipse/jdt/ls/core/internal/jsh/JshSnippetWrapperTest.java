@@ -23,7 +23,10 @@ public class JshSnippetWrapperTest {
 
 	@Test
 	public void testWrappedSourceContainsOriginalContentVerbatim() {
-		String source = "int x = 1;\nSystem.out.println(x);";
+		// Deliberately two bare statements, not variable declarations - those are promoted to
+		// fields (a different section of the synthetic source, see testRealisticMixedContentPlaces
+		// EachChunkCorrectlyAndRoundTrips below), so they'd no longer appear contiguously together.
+		String source = "System.out.println(1);\nSystem.out.println(2);";
 		JshWrapResult result = JshSnippetWrapper.wrap(source);
 		assertTrue(result.getWrappedSource().contains(source), "Wrapped source should contain the original content verbatim");
 	}
