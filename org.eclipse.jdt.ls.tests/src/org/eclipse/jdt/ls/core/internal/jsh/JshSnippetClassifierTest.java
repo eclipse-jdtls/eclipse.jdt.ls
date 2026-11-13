@@ -13,7 +13,13 @@
 package org.eclipse.jdt.ls.core.internal.jsh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Set;
+
+import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.FieldInfo;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.Kind;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +112,43 @@ public class JshSnippetClassifierTest {
 		// The chunk the user is actively typing - not yet a parseable declaration - must default to
 		// STATEMENT (the permissive destination), not crash or wrongly claim DECLARATION.
 		assertEquals(Kind.STATEMENT, JshSnippetClassifier.classify("void printSumm"));
+	}
+
+	@Test
+	public void testParseAsFieldReturnsNullForNonFieldChunks() {
+		assertNull(JshSnippetClassifier.parseAsField("System.out.println(1);"));
+		assertNull(JshSnippetClassifier.parseAsField("void foo() { }"));
+		assertNull(JshSnippetClassifier.parseAsField(""));
+	}
+
+	@Test
+	public void testParseAsFieldExtractsNameAndVarness() {
+		FieldInfo plain = JshSnippetClassifier.parseAsField("int n = 2;");
+		assertEquals(java.util.List.of("n"), plain.names());
+		assertFalse(plain.isVar());
+
+		FieldInfo var = JshSnippetClassifier.parseAsField("var n = 2;");
+		assertEquals(java.util.List.of("n"), var.names());
+		assertTrue(var.isVar());
+	}
+
+	@Test
+	public void testParseAsFieldExtractsMultipleFragmentNames() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int a = 1, b = 2;");
+		assertEquals(java.util.List.of("a", "b"), info.names());
+	}
+
+	@Test
+	public void testReferencesAnyIdentifierFindsAMatchingToken() {
+		assertTrue(JshSnippetClassifier.referencesAnyIdentifier("int m = n;", Set.of("n")));
+		assertFalse(JshSnippetClassifier.referencesAnyIdentifier("int m = 5;", Set.of("n")));
+	}
+
+	@Test
+	public void testReferencesAnyIdentifierDoesNotMatchASubstringOfALongerIdentifier() {
+		// "nn" contains "n" as a substring, but isn't a reference to a variable named "n" - a
+		// token-based check must not treat it as one.
+		assertFalse(JshSnippetClassifier.referencesAnyIdentifier("int m = nn;", Set.of("n")));
 	}
 
 }
