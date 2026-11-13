@@ -84,6 +84,45 @@ public class JshSemanticTokensTest extends AbstractProjectsManagerBasedTest {
 		}
 	}
 
+	/**
+	 * Regression test: a single import with no trailing newline places the generated
+	 * "public class X {" scaffolding immediately after it, starting exactly at the position
+	 * {@code toOriginalPosition} inclusively maps to end-of-document (for cursor-position
+	 * translation). A token (e.g. the "public" modifier) starting exactly there used to still be
+	 * kept even though its length extends past the real document's last character.
+	 */
+	@Test
+	public void testTokenAtEofBoundaryIsNotKeptIfItExtendsPastTheDocument() throws Exception {
+		importProjects("maven/salut");
+		IProject project = WorkspaceHelper.getProject("salut");
+		String uri = project.getLocationURI().toString() + "/EofBoundary.jsh";
+
+		String content = "import java.util.List;";
+		JshDocumentManager.getInstance().didOpen(uri, content);
+		try {
+			SemanticTokens tokens = SemanticTokensHandler.full(new NullProgressMonitor(),
+					new SemanticTokensParams(new TextDocumentIdentifier(uri)), mock(DocumentMonitor.class));
+
+			List<Integer> data = tokens.getData();
+			int line = 0;
+			int character = 0;
+			for (int i = 0; i + 4 < data.size(); i += 5) {
+				int deltaLine = data.get(i);
+				int deltaChar = data.get(i + 1);
+				int length = data.get(i + 2);
+				character = deltaLine == 0 ? character + deltaChar : deltaChar;
+				line += deltaLine;
+
+				assertTrue(line == 0, "This single-line document should never produce a token past line 0");
+				assertTrue(character + length <= content.length(),
+						"Token at character " + character + " with length " + length + " extends past the document's "
+								+ content.length() + " characters - it's a generated scaffolding token, not real content");
+			}
+		} finally {
+			JshDocumentManager.getInstance().didClose(uri);
+		}
+	}
+
 	@Test
 	public void testNoSemanticTokensForClosedJshDocument() {
 		SemanticTokens tokens = SemanticTokensHandler.full(new NullProgressMonitor(),
