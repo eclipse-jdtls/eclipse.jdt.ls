@@ -124,6 +124,36 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	}
 
 	/**
+	 * Regression test for a reviewer finding on {@code 6c63e9b0}: a field that depends on a
+	 * non-promotable {@code var} (e.g. {@code var n = 2; int m = n;}) must not be promoted either,
+	 * since {@code n} stays local to {@code __run__} and wouldn't be visible to {@code m} as a field
+	 * initializer. Uses {@code maven/salut-java11} (not {@code maven/salut}, which is compiled at
+	 * source/target 1.8 and doesn't support {@code var} at all - using it here would conflate this
+	 * bug with an unrelated "var cannot be resolved to a type" from the fixture's compliance level).
+	 */
+	@Test
+	public void testFieldDependingOnAVarResolvesCorrectly() throws Exception {
+		importProjects("maven/salut-java11");
+		IProject project = WorkspaceHelper.getProject("salut-java11");
+		String uri = project.getLocationURI().toString() + "/VarFieldDependency.jsh";
+
+		JshDocumentManager manager = new JshDocumentManager();
+		manager.setClientConnection(new JavaClientConnection(client));
+		try {
+			String content = "var n = 2;\nint m = n;\nSystem.out.println(m);\n";
+			manager.didOpen(uri, content);
+
+			List<PublishDiagnosticsParams> publishes = getClientRequests("publishDiagnostics");
+			assertFalse(publishes.isEmpty(), "Expected at least one publishDiagnostics call after didOpen");
+			PublishDiagnosticsParams last = publishes.get(publishes.size() - 1);
+			assertTrue(last.getDiagnostics().isEmpty(),
+					"Expected m = n to resolve correctly since both stay local to __run__, got: " + last.getDiagnostics());
+		} finally {
+			manager.didClose(uri);
+		}
+	}
+
+	/**
 	 * Regression test for the scope-widening fix that replaced v1's whole-buffer-as-one-method-body
 	 * wrapping with per-chunk classification ({@link JshSnippetSplitter}/{@link
 	 * JshSnippetClassifier}): a realistic script with imports and a helper method interleaved with
