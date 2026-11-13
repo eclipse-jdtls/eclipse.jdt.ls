@@ -19,13 +19,17 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.internal.preferences.EclipsePreferences;
 import org.eclipse.core.internal.utils.FileUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jdt.core.IJavaProject;
@@ -72,6 +76,25 @@ public class EclipseProjectMetadataFileTest extends AbstractProjectsManagerBased
 		IPath preferencesPath = FileUtil.toPath(preferencesFile.getLocationURI());
 		assertTrue(preferencesPath.toFile().exists());
 		assertTrue(project.getLocation().isPrefixOf(preferencesPath));
+	}
+
+	@Test
+	void testMetadataAreaWithoutProject() throws Exception {
+		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, "false");
+		String name = "deleted";
+		File metadataFolder = ResourcesPlugin.getPlugin().getStateLocation().append(".projects").append(name).toFile();
+		File location = ResourcesPlugin.getWorkspace().getRoot().getLocation().append(name).toFile();
+		try {
+			assertTrue(metadataFolder.mkdirs());
+			assertTrue(new File(metadataFolder, IProjectDescription.DESCRIPTION_FILE_NAME).createNewFile());
+			assertTrue(location.mkdirs());
+			JLSFile store = new JLSFile(location);
+			assertFalse(Arrays.asList(store.childNames(EFS.NONE, null)).contains(IProjectDescription.DESCRIPTION_FILE_NAME));
+			assertFalse(Stream.of(store.childInfos(EFS.NONE, null)).anyMatch(info -> IProjectDescription.DESCRIPTION_FILE_NAME.equals(info.getName())));
+		} finally {
+			FileUtils.deleteDirectory(metadataFolder);
+			FileUtils.deleteDirectory(location);
+		}
 	}
 
 	@ParameterizedTest
