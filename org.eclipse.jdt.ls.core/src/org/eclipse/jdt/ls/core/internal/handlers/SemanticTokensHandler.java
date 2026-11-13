@@ -89,7 +89,19 @@ public class SemanticTokensHandler {
 			line += deltaLine;
 
 			Position original = document.toOriginalPosition(new Position(line, character));
-			if (original != null) {
+			if (original == null) {
+				continue;
+			}
+			// toOriginalPosition inclusively maps the position one-past-the-last-character of the
+			// original content (so cursor-position translation at EOF still works) - but a token
+			// starting exactly there belongs to generated scaffolding (e.g. "public" of "public class
+			// X {" immediately follows a single-line import with no trailing newline), not real
+			// content, and its length would extend past the document. Require the whole span, not
+			// just the start, to land back in original coordinates.
+			Position originalEnd = document.toOriginalPosition(new Position(line, character + length));
+			boolean spanFullyInOriginalContent = originalEnd != null && originalEnd.getLine() == original.getLine()
+					&& originalEnd.getCharacter() == original.getCharacter() + length;
+			if (spanFullyInOriginalContent) {
 				originalTokens.add(new int[] { original.getLine(), original.getCharacter(), length, tokenType, tokenModifiers });
 			}
 		}
