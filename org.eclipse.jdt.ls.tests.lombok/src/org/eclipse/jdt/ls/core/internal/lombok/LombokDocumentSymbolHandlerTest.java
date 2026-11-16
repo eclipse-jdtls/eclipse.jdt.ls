@@ -38,6 +38,9 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * See {@link JavaLombokTestPlugin} for notes on running these tests.
+ */
 public class LombokDocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private IProject project;
