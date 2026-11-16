@@ -19,19 +19,25 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AddModuleRequiresCorrectionProposalCore;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.TextEditConverter;
 import org.eclipse.jdt.ui.cleanup.CleanUpContext;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 
 /**
  * Represents a store of all the clean ups that can be performed on save in
@@ -87,6 +93,35 @@ public class CleanUpRegistry {
 	 *         according to the clean ups that are enabled
 	 */
 	public List<TextEdit> getEditsForAllActiveCleanUps(TextDocumentIdentifier textDocumentId, List<String> cleanUpEnabled, IProgressMonitor monitor) {
+		return getEditsForAllActiveCleanUps(textDocumentId, cleanUpEnabled, monitor, null);
+	}
+
+	public WorkspaceEdit getWorkspaceEditForAllActiveCleanUps(TextDocumentIdentifier textDocumentId, List<String> cleanUpEnabled, IProgressMonitor monitor) {
+		Map<ICompilationUnit, Set<String>> requiredModules = new HashMap<>();
+		List<TextEdit> sourceEdits = getEditsForAllActiveCleanUps(textDocumentId, cleanUpEnabled, monitor, requiredModules);
+		WorkspaceEdit result = new WorkspaceEdit();
+		if (ChangeUtil.hasChanges(sourceEdits)) {
+			result.getChanges().put(textDocumentId.getUri(), sourceEdits);
+		}
+		for (var entry : requiredModules.entrySet()) {
+			try {
+				AddModuleRequiresCorrectionProposalCore proposal = new AddModuleRequiresCorrectionProposalCore(entry.getValue(), "Add requires", "Add requires", entry.getKey(), 0);
+				CompilationUnitChange change = (CompilationUnitChange) proposal.getChange();
+				if (change != null) {
+					List<TextEdit> converted = new TextEditConverter(entry.getKey(), change.getEdit()).convert();
+					if (ChangeUtil.hasChanges(converted)) {
+						result.getChanges().put(JDTUtils.toURI(entry.getKey()), converted);
+					}
+				}
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Failed to add module requirements during cleanup", e);
+			}
+		}
+		return result;
+	}
+
+	private List<TextEdit> getEditsForAllActiveCleanUps(TextDocumentIdentifier textDocumentId, List<String> cleanUpEnabled, IProgressMonitor monitor,
+			Map<ICompilationUnit, Set<String>> requiredModules) {
 		ICompilationUnit unit = JDTUtils.resolveCompilationUnit(textDocumentId.getUri());
 		if (unit == null) {
 			return List.of();
@@ -127,10 +162,29 @@ public class CleanUpRegistry {
 		try {
 			ICompilationUnit wc = cu.getWorkingCopy(monitor);
 			for (ISimpleCleanUp cleanUp : cleanUpsToRun) {
-				org.eclipse.text.edits.TextEdit jdtEdit = CleanUpUtils.getTextEditFromCleanUp(cleanUp, context, monitor);
+				org.eclipse.text.edits.TextEdit jdtEdit;
+				if (requiredModules != null && cleanUp instanceof OrganizeImportsCleanup organizeImports) {
+					jdtEdit = organizeImports.createTextEdit(context, requiredModules, monitor);
+				} else {
+					jdtEdit = CleanUpUtils.getTextEditFromCleanUp(cleanUp, context, monitor);
+				}
 				if (jdtEdit != null) {
 					wc.applyTextEdit(jdtEdit, monitor);
 					context = CleanUpUtils.getCleanUpContext(wc, opts, monitor);
+				}
+			}
+			if (requiredModules != null) {
+				var moduleEntries = requiredModules.entrySet().iterator();
+				while (moduleEntries.hasNext()) {
+					var entry = moduleEntries.next();
+					if (entry.getKey().getPath().equals(cu.getPath())) {
+						AddModuleRequiresCorrectionProposalCore proposal = new AddModuleRequiresCorrectionProposalCore(entry.getValue(), "Add requires", "Add requires", wc, 0);
+						CompilationUnitChange change = (CompilationUnitChange) proposal.getChange();
+						if (change != null) {
+							wc.applyTextEdit(change.getEdit(), monitor);
+						}
+						moduleEntries.remove();
+					}
 				}
 			}
 			// https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#textEditArray
@@ -144,8 +198,8 @@ public class CleanUpRegistry {
 				textEdits.add(te);
 			}
 
-		} catch (JavaModelException e) {
-			// continue
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Failed to calculate cleanup edits", e);
 		}
 
 		return textEdits;

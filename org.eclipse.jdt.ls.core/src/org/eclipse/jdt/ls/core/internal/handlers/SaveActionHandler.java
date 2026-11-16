@@ -16,10 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ProjectScope;
@@ -87,7 +85,6 @@ public class SaveActionHandler {
 	}
 
 	public WorkspaceEdit performManualCleanupActions(TextDocumentIdentifier doc, IProgressMonitor monitor) {
-		List<TextEdit> edit = new ArrayList<>();
 
 		if (monitor.isCanceled()) {
 			return null;
@@ -104,12 +101,7 @@ public class SaveActionHandler {
 
 		cleanUpIds.addAll(canUseInternalSettings ? jdtSettingCleanups : lspCleanups);
 		cleanUpIds.remove(BaseDocumentLifeCycleHandler.RENAME_FILE_TO_TYPE);
-		List<TextEdit> cleanUpEdits = cleanUpRegistry.getEditsForAllActiveCleanUps(doc, new ArrayList<>(cleanUpIds), monitor);
-		edit.addAll(cleanUpEdits);
-		Map<String, List<TextEdit>> editMap = new HashMap<>();
-		editMap.put(doc.getUri(), edit);
-		WorkspaceEdit finalEdit = new WorkspaceEdit(editMap);
-		return finalEdit;
+		return cleanUpRegistry.getWorkspaceEditForAllActiveCleanUps(doc, new ArrayList<>(cleanUpIds), monitor);
 	}
 
 	private Collection<String> getCleanupsFromJDTUIPreferences(IEclipsePreferences jdtUIPrefs) {
