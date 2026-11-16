@@ -24,15 +24,19 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
@@ -136,6 +140,75 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		WorkspaceEdit rootEdit = new WorkspaceEdit();
 		command.organizeImportsInCompilationUnit(cu, rootEdit);
 		assertEquals(buf.toString(), getOrganizeImportResult(cu, rootEdit));
+	}
+
+	@Test
+	public void testOrganizeImportsAddsModuleRequirement() throws Exception {
+		ICompilationUnit module = setupModularProject(false);
+		IPackageFragment pack = fSourceFolder.createPackageFragment("demo", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("App.java", "package demo;\nclass App { One one; }\n", false, null);
+
+		WorkspaceEdit edits = new WorkspaceEdit();
+		command.organizeImportsInCompilationUnit(source, edits);
+
+		assertEquals(2, edits.getChanges().size());
+		assertTrue(getOrganizeImportResult(source, edits).contains("import dep.One;"));
+		assertTrue(getOrganizeImportResult(module, edits).contains("requires dependency;"));
+	}
+
+	@Test
+	public void testOrganizeImportsExistingImportAddsModuleRequirement() throws Exception {
+		ICompilationUnit module = setupModularProject(false);
+		IPackageFragment pack = fSourceFolder.createPackageFragment("demo", false, null);
+		ICompilationUnit source = pack.createCompilationUnit("App.java", "package demo;\nimport dep.One;\nclass App { One one; }\n", false, null);
+
+		WorkspaceEdit edits = new WorkspaceEdit();
+		command.organizeImportsInCompilationUnit(source, edits);
+
+		assertTrue(getOrganizeImportResult(module, edits).contains("requires dependency;"));
+	}
+
+	@Test
+	public void testOrganizeImportsInPackageAddsModuleRequirement() throws Exception {
+		ICompilationUnit module = setupModularProject(false);
+		IPackageFragment pack = fSourceFolder.createPackageFragment("demo", false, null);
+		pack.createCompilationUnit("App.java", "package demo;\nclass App { One one; }\n", false, null);
+
+		WorkspaceEdit edits = command.organizeImportsInDirectory(pack.getResource().getLocationURI().toString(), fJProject1.getProject());
+
+		assertTrue(getOrganizeImportResult(module, edits).contains("requires dependency;"));
+	}
+
+	@Test
+	public void testOrganizeImportsInProjectCombinesModuleRequirements() throws Exception {
+		ICompilationUnit module = setupModularProject(true);
+		IPackageFragment pack = fSourceFolder.createPackageFragment("demo", false, null);
+		ICompilationUnit first = pack.createCompilationUnit("First.java", "package demo;\nclass First { One one; }\n", false, null);
+		ICompilationUnit second = pack.createCompilationUnit("Second.java", "package demo;\nclass Second { Two two; }\n", false, null);
+
+		WorkspaceEdit edits = command.organizeImportsInProject(fJProject1.getProject());
+
+		assertEquals(3, edits.getChanges().size());
+		assertTrue(getOrganizeImportResult(first, edits).contains("import dep.One;"));
+		assertTrue(getOrganizeImportResult(second, edits).contains("import alternative.Two;"));
+		String moduleResult = getOrganizeImportResult(module, edits);
+		assertTrue(moduleResult.contains("requires dependency;"));
+		assertTrue(moduleResult.contains("requires alternative;"));
+	}
+
+	@Test
+	public void testOrganizeImportsInProjectMergesSelectedModuleInfoEdits() throws Exception {
+		ICompilationUnit module = setupModularProject(false);
+		module.getBuffer().setContents("module demo { uses One; }\n");
+		module.save(null, true);
+		IPackageFragment pack = fSourceFolder.createPackageFragment("demo", false, null);
+		pack.createCompilationUnit("App.java", "package demo;\nclass App { One one; }\n", false, null);
+
+		WorkspaceEdit edits = command.organizeImportsInProject(fJProject1.getProject());
+
+		String moduleResult = getOrganizeImportResult(module, edits);
+		assertTrue(moduleResult.contains("import dep.One;"));
+		assertTrue(moduleResult.contains("requires dependency;"));
 	}
 
 	@Test
@@ -478,6 +551,31 @@ public class OrganizeImportsCommandTest extends AbstractProjectsManagerBasedTest
 		} finally {
 			preferenceManager.getPreferences().setStaticImportOnDemandThreshold(staticOnDemandTreshold);
 		}
+	}
+
+	private ICompilationUnit setupModularProject(boolean withAlternative) throws Exception {
+		Map<String, String> options = fJProject1.getOptions(false);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_9, options);
+		fJProject1.setOptions(options);
+		addModuleProject("dependency", "dep", "One", options);
+		if (withAlternative) {
+			addModuleProject("alternative", "alternative", "Two", options);
+		}
+		return fSourceFolder.createPackageFragment("", false, null)
+				.createCompilationUnit("module-info.java", "module demo {\n}\n", false, null);
+	}
+
+	private void addModuleProject(String moduleName, String packageName, String typeName, Map<String, String> options) throws Exception {
+		IJavaProject dependency = newEmptyProject(moduleName);
+		dependency.setOptions(options);
+		IPackageFragmentRoot source = dependency.getPackageFragmentRoot(dependency.getProject().getFolder("src"));
+		source.createPackageFragment("", false, null).createCompilationUnit("module-info.java",
+				"module " + moduleName + " { exports " + packageName + "; }", false, null);
+		source.createPackageFragment(packageName, false, null).createCompilationUnit(typeName + ".java",
+				"package " + packageName + "; public class " + typeName + " {}", false, null);
+		IClasspathAttribute[] attributes = { JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true") };
+		IClasspathEntry entry = JavaCore.newProjectEntry(dependency.getPath(), null, false, attributes, false);
+		JavaProjectHelper.addToClasspath(fJProject1, entry);
 	}
 
 	private String getOrganizeImportResult(ICompilationUnit cu, WorkspaceEdit we) throws BadLocationException, CoreException {
