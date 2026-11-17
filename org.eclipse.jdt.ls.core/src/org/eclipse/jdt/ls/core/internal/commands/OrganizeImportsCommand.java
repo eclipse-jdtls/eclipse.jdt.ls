@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +33,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IModule;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
@@ -166,10 +166,11 @@ public class OrganizeImportsCommand {
 	}
 
 	private void organizeImportsInCompilationUnits(Collection<IJavaElement> units, WorkspaceEdit rootEdit) {
-		Map<ICompilationUnit, TextEdit> edits = new LinkedHashMap<>();
 		Map<ICompilationUnit, Set<String>> requiredModules = new HashMap<>();
 		for (ICompilationUnit unit : units.stream().filter(element -> element.getElementType() == IJavaElement.COMPILATION_UNIT)
-				.map(element -> (ICompilationUnit) element).sorted(Comparator.comparing(element -> element.getPath().toString())).toList()) {
+				.map(element -> (ICompilationUnit) element)
+				.sorted(Comparator.comparing((ICompilationUnit element) -> IModule.MODULE_INFO_JAVA.equals(element.getElementName()))
+						.thenComparing(element -> element.getPath().toString())).toList()) {
 			try {
 				var astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, null);
 				if (astRoot == null) {
@@ -177,28 +178,41 @@ public class OrganizeImportsCommand {
 				}
 				OrganizeImportsOperation operation = new OrganizeImportsOperation(unit, astRoot, true, false, true, null, false);
 				TextEdit edit = operation.createTextEdit(null, requiredModules);
-				if (edit != null) {
-					edits.merge(unit, edit, TextEditUtil::merge);
+				if (IModule.MODULE_INFO_JAVA.equals(unit.getElementName())) {
+					Set<String> modules = requiredModules.remove(unit);
+					if (modules != null) {
+						TextEdit requiresEdit = createRequiresEdit(unit, modules);
+						if (requiresEdit != null) {
+							edit = edit == null ? requiresEdit : TextEditUtil.merge(edit, requiresEdit);
+						}
+					}
 				}
+				addWorkspaceEdit(unit, edit, rootEdit);
 			} catch (CoreException e) {
 				JavaLanguageServerPlugin.logException("Problem organizing imports", e);
 			}
 		}
 		for (var entry : requiredModules.entrySet()) {
-			try {
-				AddModuleRequiresCorrectionProposalCore proposal = new AddModuleRequiresCorrectionProposalCore(entry.getValue(), "Add requires", "Add requires", entry.getKey(), 0);
-				CompilationUnitChange change = (CompilationUnitChange) proposal.getChange();
-				if (change != null) {
-					edits.merge(entry.getKey(), change.getEdit(), TextEditUtil::merge);
-				}
-			} catch (CoreException e) {
-				JavaLanguageServerPlugin.logException("Problem adding module requirements", e);
-			}
+			addWorkspaceEdit(entry.getKey(), createRequiresEdit(entry.getKey(), entry.getValue()), rootEdit);
 		}
-		for (var entry : edits.entrySet()) {
-			List<org.eclipse.lsp4j.TextEdit> converted = new TextEditConverter(entry.getKey(), entry.getValue()).convert();
+	}
+
+	private TextEdit createRequiresEdit(ICompilationUnit module, Set<String> names) {
+		try {
+			AddModuleRequiresCorrectionProposalCore proposal = new AddModuleRequiresCorrectionProposalCore(names, "Add requires", "Add requires", module, 0);
+			CompilationUnitChange change = (CompilationUnitChange) proposal.getChange();
+			return change == null ? null : change.getEdit();
+		} catch (CoreException e) {
+			JavaLanguageServerPlugin.logException("Problem adding module requirements", e);
+			return null;
+		}
+	}
+
+	private void addWorkspaceEdit(ICompilationUnit unit, TextEdit edit, WorkspaceEdit rootEdit) {
+		if (edit != null) {
+			List<org.eclipse.lsp4j.TextEdit> converted = new TextEditConverter(unit, edit).convert();
 			if (ChangeUtil.hasChanges(converted)) {
-				rootEdit.getChanges().put(JDTUtils.toURI(entry.getKey()), converted);
+				rootEdit.getChanges().put(JDTUtils.toURI(unit), converted);
 			}
 		}
 	}
