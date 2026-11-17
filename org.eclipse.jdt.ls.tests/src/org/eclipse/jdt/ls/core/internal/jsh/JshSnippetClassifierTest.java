@@ -186,6 +186,21 @@ public class JshSnippetClassifierTest {
 		assertEquals("2", text.substring(info.initializerStart(), info.initializerEnd()));
 	}
 
+	/**
+	 * Regression test: C-style array dimensions declared after the name (e.g. "int values[]",
+	 * legal Java) aren't part of {@code VariableDeclarationFragment.getName()}'s range - without
+	 * extending nameEnd past them, a split would lose the array type on the declaration side and
+	 * produce invalid "values[] = ..." syntax on the statement side.
+	 */
+	@Test
+	public void testParseAsFieldExtendsNameEndPastCStyleArrayDimensions() {
+		String text = "int values[] = new int[3];";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertEquals("int values[]", text.substring(0, info.nameEnd()));
+		assertEquals("new int[3]", text.substring(info.initializerStart(), info.initializerEnd()));
+		assertTrue(info.isSplittable());
+	}
+
 	@Test
 	public void testReferencesAnyIdentifierFindsAMatchingToken() {
 		assertTrue(JshSnippetClassifier.referencesAnyIdentifier("int m = n;", Set.of("n")));

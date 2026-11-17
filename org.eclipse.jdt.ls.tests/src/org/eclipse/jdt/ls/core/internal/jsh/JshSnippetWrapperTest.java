@@ -258,4 +258,26 @@ public class JshSnippetWrapperTest {
 		}
 	}
 
+	/**
+	 * Regression test: a C-style array declaration ("int values[]", legal Java, dimensions after the
+	 * name rather than after the type) must keep its array type on the declaration side and must not
+	 * leak a stray "[]" into the assignment statement - splitting used to stop nameEnd right after the
+	 * identifier, before the "[]", corrupting both halves.
+	 */
+	@Test
+	public void testSplitPreservesCStyleArrayDeclarationSyntax() {
+		String content = "var n = 2;\nint values[] = new int[n];\n";
+		JshWrapResult result = JshSnippetWrapper.wrap(content);
+		String wrapped = result.getWrappedSource();
+
+		int classIndex = wrapped.indexOf("public class " + JshSnippetWrapper.SCRATCHPAD_CLASS_NAME);
+		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
+		int fieldIndex = wrapped.indexOf("int values[];");
+		assertTrue(fieldIndex > classIndex && fieldIndex < runIndex,
+				"values must be declared as a bare array field, array type preserved, between the class declaration and __run__");
+		assertTrue(wrapped.indexOf("values = new int[n];") > runIndex,
+				"the assignment must be a plain assignment, not \"values[] = ...\"");
+		assertEquals(-1, wrapped.indexOf("values[] ="), "the assignment must not contain a stray \"[]\" from the declaration's array dimensions");
+	}
+
 }

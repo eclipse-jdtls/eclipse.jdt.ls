@@ -27,6 +27,7 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Dimension;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -88,7 +89,9 @@ public final class JshSnippetClassifier {
 	 * single-fragment case (one declared name) and are offsets relative to the raw chunk text passed
 	 * to {@link #parseAsField} (i.e. before {@link String#strip()} is applied) - the caller
 	 * ({@link JshSnippetWrapper}) knows the chunk's absolute position in the original .jsh buffer and
-	 * adds it on top. {@code nameEnd} is one past the declared name; {@code initializerStart}/
+	 * adds it on top. {@code nameEnd} is one past the declared name, or one past its last C-style
+	 * array dimension if it has any (e.g. {@code int values[]} - legal Java, and not part of the
+	 * name's own source range); {@code initializerStart}/
 	 * {@code initializerEnd} bound the initializer expression, or are both {@code null} if the
 	 * fragment has no initializer (e.g. {@code int x;}). These exist so a field whose initializer
 	 * depends on an excluded {@code var} can be *split* - declared as a bare field (visible to a
@@ -162,7 +165,18 @@ public final class JshSnippetClassifier {
 			int leadingTrim = chunkText.indexOf(trimmed);
 			VariableDeclarationFragment fragment = (VariableDeclarationFragment) field.fragments().get(0);
 			SimpleName name = fragment.getName();
-			nameEnd = leadingTrim + name.getStartPosition() + name.getLength();
+			int nameRangeEnd = name.getStartPosition() + name.getLength();
+			// C-style array dimensions declared after the name (e.g. "int values[] = ...") are legal
+			// Java but aren't part of getName()'s range - without this, the declaration piece would
+			// lose the "[]" (demoting "int[] values" to plain "int values") and the statement piece
+			// would gain a stray "[]" right where its separator starts, producing "values[] = ..." -
+			// invalid syntax, not a plain assignment.
+			List<?> extraDimensions = fragment.extraDimensions();
+			if (!extraDimensions.isEmpty()) {
+				Dimension lastDimension = (Dimension) extraDimensions.get(extraDimensions.size() - 1);
+				nameRangeEnd = Math.max(nameRangeEnd, lastDimension.getStartPosition() + lastDimension.getLength());
+			}
+			nameEnd = leadingTrim + nameRangeEnd;
 			Expression initializer = fragment.getInitializer();
 			if (initializer != null) {
 				initializerStart = leadingTrim + initializer.getStartPosition();
