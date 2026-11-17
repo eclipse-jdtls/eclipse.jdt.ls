@@ -27,8 +27,11 @@ import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
@@ -80,8 +83,29 @@ public final class JshSnippetClassifier {
 	 * {@code var}-typed one isn't, but {@link JshSnippetWrapper} still needs to know its name, to
 	 * recognize when a later, otherwise-promotable field depends on it). A field declaration can
 	 * declare more than one name (e.g. {@code int a = 1, b = 2;}).
+	 * <p>
+	 * {@code nameEnd}/{@code initializerStart}/{@code initializerEnd} are only populated for the
+	 * single-fragment case (one declared name) and are offsets relative to the raw chunk text passed
+	 * to {@link #parseAsField} (i.e. before {@link String#strip()} is applied) - the caller
+	 * ({@link JshSnippetWrapper}) knows the chunk's absolute position in the original .jsh buffer and
+	 * adds it on top. {@code nameEnd} is one past the declared name; {@code initializerStart}/
+	 * {@code initializerEnd} bound the initializer expression, or are both {@code null} if the
+	 * fragment has no initializer (e.g. {@code int x;}). These exist so a field whose initializer
+	 * depends on an excluded {@code var} can be *split* - declared as a bare field (visible to a
+	 * later method) with its assignment left as a statement in {@code __run__} - instead of being
+	 * fully demoted; see {@link #isSplittable()} and {@code JshSnippetWrapper.wrap}.
 	 */
-	public record FieldInfo(List<String> names, boolean isVar) {
+	public record FieldInfo(List<String> names, boolean isVar, boolean isFinal, Integer nameEnd, Integer initializerStart, Integer initializerEnd) {
+
+		/**
+		 * @return {@code true} if this field can be split into a bare declaration plus a separate
+		 *         assignment statement: exactly one declared name, that name has an initializer, and
+		 *         the field isn't {@code final} (a blank final field can only be assigned inside a
+		 *         constructor, not an arbitrary method like {@code __run__}).
+		 */
+		public boolean isSplittable() {
+			return !isVar && !isFinal && names.size() == 1 && initializerStart != null;
+		}
 	}
 
 	public static Kind classify(String chunkText) {
@@ -121,7 +145,31 @@ public final class JshSnippetClassifier {
 		for (Object fragment : field.fragments()) {
 			names.add(((VariableDeclarationFragment) fragment).getName().getIdentifier());
 		}
-		return new FieldInfo(names, field.getType().isVar());
+		boolean isFinal = false;
+		for (Object modifier : field.modifiers()) {
+			if (modifier instanceof Modifier mod && mod.isFinal()) {
+				isFinal = true;
+				break;
+			}
+		}
+		Integer nameEnd = null;
+		Integer initializerStart = null;
+		Integer initializerEnd = null;
+		if (field.fragments().size() == 1) {
+			// Positions from the AST are relative to `trimmed`; rebase onto `chunkText` (the raw,
+			// un-stripped text the caller actually has an absolute offset for) by adding back however
+			// much leading whitespace strip() removed.
+			int leadingTrim = chunkText.indexOf(trimmed);
+			VariableDeclarationFragment fragment = (VariableDeclarationFragment) field.fragments().get(0);
+			SimpleName name = fragment.getName();
+			nameEnd = leadingTrim + name.getStartPosition() + name.getLength();
+			Expression initializer = fragment.getInitializer();
+			if (initializer != null) {
+				initializerStart = leadingTrim + initializer.getStartPosition();
+				initializerEnd = initializerStart + initializer.getLength();
+			}
+		}
+		return new FieldInfo(names, field.getType().isVar(), isFinal, nameEnd, initializerStart, initializerEnd);
 	}
 
 	/**

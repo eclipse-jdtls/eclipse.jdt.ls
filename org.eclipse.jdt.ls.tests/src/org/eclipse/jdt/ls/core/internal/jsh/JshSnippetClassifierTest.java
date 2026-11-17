@@ -139,6 +139,54 @@ public class JshSnippetClassifierTest {
 	}
 
 	@Test
+	public void testParseAsFieldExtractsFinalModifierAndIsNotSplittableWhenFinal() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("final int n = 2;");
+		assertTrue(info.isFinal());
+		assertFalse(info.isSplittable(), "a blank final field can only be assigned in a constructor, so it can't be split");
+	}
+
+	@Test
+	public void testParseAsFieldExtractsNameEndAndInitializerRangeAndIsSplittable() {
+		String text = "int n = 2;";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertFalse(info.isFinal());
+		assertEquals("int n", text.substring(0, info.nameEnd()));
+		assertEquals("2", text.substring(info.initializerStart(), info.initializerEnd()));
+		assertTrue(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldLeavesInitializerRangeNullAndIsNotSplittableWithNoInitializer() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int n;");
+		assertNull(info.initializerStart());
+		assertNull(info.initializerEnd());
+		assertFalse(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldIsNotSplittableWithMultipleFragments() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int a = 1, b = 2;");
+		assertFalse(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldIsNotSplittableWhenVarTyped() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("var n = 2;");
+		assertFalse(info.isSplittable(), "var can't be a field type, regardless of fragment count or finality");
+	}
+
+	@Test
+	public void testParseAsFieldRebasesPositionsPastLeadingWhitespace() {
+		// parseAsField strips leading/trailing whitespace before parsing; nameEnd/initializer
+		// positions must be rebased back onto the raw (un-stripped) chunk text the caller actually has
+		// an absolute offset for, not left relative to the stripped text.
+		String text = "  int n = 2;  ";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertEquals("int n", text.substring(2, info.nameEnd()));
+		assertEquals("2", text.substring(info.initializerStart(), info.initializerEnd()));
+	}
+
+	@Test
 	public void testReferencesAnyIdentifierFindsAMatchingToken() {
 		assertTrue(JshSnippetClassifier.referencesAnyIdentifier("int m = n;", Set.of("n")));
 		assertFalse(JshSnippetClassifier.referencesAnyIdentifier("int m = 5;", Set.of("n")));

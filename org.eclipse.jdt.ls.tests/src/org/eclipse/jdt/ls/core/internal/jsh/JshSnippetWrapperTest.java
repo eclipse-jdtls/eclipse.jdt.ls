@@ -142,39 +142,53 @@ public class JshSnippetWrapperTest {
 	}
 
 	/**
-	 * Regression test for a reviewer finding on {@code 6c63e9b0}: a field that depends on a
-	 * non-promotable {@code var} can't be promoted either, since the {@code var} stays local to
-	 * __run__ and wouldn't be visible to a field initializer. "int m = n;" would otherwise be a
-	 * perfectly promotable field on its own - it's only unpromotable because of what it references.
+	 * Regression test for a reviewer finding on {@code 6c63e9b0}, later refined by splitting instead
+	 * of fully demoting (see the class javadoc): a field that depends on a non-promotable {@code var}
+	 * can't be promoted as a normal field-with-initializer (its initializer would run at construction
+	 * time, before {@code n} is ever assigned), but it CAN be split - declared as a bare field (so a
+	 * later method can still see {@code m}) with the assignment left in {@code __run__} in its
+	 * original position (so {@code n} is already assigned by the time it runs).
 	 */
 	@Test
-	public void testFieldDependingOnAVarIsNotPromoted() {
+	public void testFieldDependingOnAVarIsSplitNotFullyDemoted() {
 		String content = "var n = 2;\nint m = n;\n";
 		JshWrapResult result = JshSnippetWrapper.wrap(content);
 		String wrapped = result.getWrappedSource();
 
+		int classIndex = wrapped.indexOf("public class " + JshSnippetWrapper.SCRATCHPAD_CLASS_NAME);
 		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
 		assertTrue(wrapped.indexOf("var n = 2;") > runIndex, "var n must stay inside __run__");
-		assertTrue(wrapped.indexOf("int m = n;") > runIndex,
-				"int m must also stay inside __run__, not be promoted to a field where it couldn't see n");
+		int fieldIndex = wrapped.indexOf("int m;");
+		assertTrue(fieldIndex > classIndex && fieldIndex < runIndex,
+				"m must be declared as a bare field (no initializer) between the class declaration and __run__, so a later method could see it");
+		assertTrue(wrapped.indexOf("m = n;") > runIndex,
+				"m's assignment must stay inside __run__, in its original position, so n is already assigned when it runs");
 	}
 
 	/**
 	 * The same dependency, two levels deep: {@code p} depends on {@code m}, which depends on the
-	 * {@code var}. Both {@code m} and {@code p} must collapse back to statements, not just the one
-	 * directly touching the {@code var} - otherwise {@code p} would be promoted while still
-	 * referencing a {@code __run__}-local {@code m}.
+	 * {@code var}. Both {@code m} and {@code p} must be split independently, in original order - a
+	 * field's eligibility to split depends only on itself (not final, single fragment), not on
+	 * whether what it references was itself split or fully demoted.
 	 */
 	@Test
-	public void testTransitiveFieldDependencyChainIsNotPromoted() {
+	public void testTransitiveFieldDependencyChainIsSplit() {
 		String content = "var n = 2;\nint m = n;\nint p = m;\n";
 		JshWrapResult result = JshSnippetWrapper.wrap(content);
 		String wrapped = result.getWrappedSource();
 
+		int classIndex = wrapped.indexOf("public class " + JshSnippetWrapper.SCRATCHPAD_CLASS_NAME);
 		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
 		assertTrue(wrapped.indexOf("var n = 2;") > runIndex);
-		assertTrue(wrapped.indexOf("int m = n;") > runIndex, "m depends on n (a var) and must not be promoted");
-		assertTrue(wrapped.indexOf("int p = m;") > runIndex, "p depends on m, which was itself demoted, and must not be promoted either");
+		int mFieldIndex = wrapped.indexOf("int m;");
+		int pFieldIndex = wrapped.indexOf("int p;");
+		assertTrue(mFieldIndex > classIndex && mFieldIndex < runIndex, "m must be declared as a bare field");
+		assertTrue(pFieldIndex > classIndex && pFieldIndex < runIndex, "p must be declared as a bare field");
+		int mAssignIndex = wrapped.indexOf("m = n;");
+		int pAssignIndex = wrapped.indexOf("p = m;");
+		assertTrue(mAssignIndex > runIndex, "m's assignment must be inside __run__");
+		assertTrue(pAssignIndex > runIndex, "p's assignment must be inside __run__");
+		assertTrue(mAssignIndex < pAssignIndex, "assignments must stay in original relative order, m before p");
 	}
 
 	/**
@@ -190,6 +204,58 @@ public class JshSnippetWrapperTest {
 		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
 		assertTrue(wrapped.indexOf("var n = 2;") > runIndex);
 		assertTrue(wrapped.indexOf("int unrelated = 5;") < runIndex, "unrelated doesn't reference n and should still be promoted to a field");
+	}
+
+	/**
+	 * A blank final field can only be assigned inside a constructor, not an arbitrary method like
+	 * __run__ - so a final field depending on a var can't be split, and must fall back to the older
+	 * full-demotion behavior instead (a narrow, documented residual limitation: a later method still
+	 * can't see it).
+	 */
+	@Test
+	public void testFinalFieldDependingOnAVarFallsBackToFullDemotion() {
+		String content = "var n = 2;\nfinal int m = n;\n";
+		JshWrapResult result = JshSnippetWrapper.wrap(content);
+		String wrapped = result.getWrappedSource();
+
+		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
+		assertTrue(wrapped.indexOf("var n = 2;") > runIndex);
+		assertTrue(wrapped.indexOf("final int m = n;") > runIndex,
+				"a final field depending on a var can't be split and must fall back to full demotion");
+		assertEquals(-1, wrapped.indexOf("int m;"), "a final field must not be declared as a bare field");
+	}
+
+	/**
+	 * A multi-fragment declaration (more than one declared name) can't be split either - there's no
+	 * single name/initializer pair to split around - and must fall back to full demotion, same as
+	 * before splitting existed.
+	 */
+	@Test
+	public void testMultiFragmentFieldDependingOnAVarFallsBackToFullDemotion() {
+		String content = "var n = 2;\nint a = n, b = 3;\n";
+		JshWrapResult result = JshSnippetWrapper.wrap(content);
+		String wrapped = result.getWrappedSource();
+
+		int runIndex = wrapped.indexOf(JshSnippetWrapper.SCRATCHPAD_METHOD_NAME + "()");
+		assertTrue(wrapped.indexOf("var n = 2;") > runIndex);
+		assertTrue(wrapped.indexOf("int a = n, b = 3;") > runIndex,
+				"a multi-fragment field depending on a var can't be split and must fall back to full demotion");
+	}
+
+	/**
+	 * Splitting must preserve the "every original offset round-trips" guarantee the whole-chunk
+	 * verbatim case already had - the separator between name and initializer, and the terminator
+	 * after it, must stay covered by a Segment too, not just the name and the initializer themselves.
+	 */
+	@Test
+	public void testSplitFieldOffsetsStillRoundTrip() {
+		String content = "var n = 2;\nint m = n;\nSystem.out.println(m);\n";
+		JshWrapResult result = JshSnippetWrapper.wrap(content);
+		for (int originalOffset = 0; originalOffset <= content.length(); originalOffset++) {
+			int syntheticOffset = result.toSyntheticOffset(originalOffset);
+			assertEquals(originalOffset, result.toOriginalOffset(syntheticOffset),
+					"Round trip failed for original offset " + originalOffset);
+		}
 	}
 
 }
