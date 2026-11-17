@@ -13,7 +13,13 @@
 package org.eclipse.jdt.ls.core.internal.jsh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Set;
+
+import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.FieldInfo;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.Kind;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +112,106 @@ public class JshSnippetClassifierTest {
 		// The chunk the user is actively typing - not yet a parseable declaration - must default to
 		// STATEMENT (the permissive destination), not crash or wrongly claim DECLARATION.
 		assertEquals(Kind.STATEMENT, JshSnippetClassifier.classify("void printSumm"));
+	}
+
+	@Test
+	public void testParseAsFieldReturnsNullForNonFieldChunks() {
+		assertNull(JshSnippetClassifier.parseAsField("System.out.println(1);"));
+		assertNull(JshSnippetClassifier.parseAsField("void foo() { }"));
+		assertNull(JshSnippetClassifier.parseAsField(""));
+	}
+
+	@Test
+	public void testParseAsFieldExtractsNameAndVarness() {
+		FieldInfo plain = JshSnippetClassifier.parseAsField("int n = 2;");
+		assertEquals(java.util.List.of("n"), plain.names());
+		assertFalse(plain.isVar());
+
+		FieldInfo var = JshSnippetClassifier.parseAsField("var n = 2;");
+		assertEquals(java.util.List.of("n"), var.names());
+		assertTrue(var.isVar());
+	}
+
+	@Test
+	public void testParseAsFieldExtractsMultipleFragmentNames() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int a = 1, b = 2;");
+		assertEquals(java.util.List.of("a", "b"), info.names());
+	}
+
+	@Test
+	public void testParseAsFieldExtractsFinalModifierAndIsNotSplittableWhenFinal() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("final int n = 2;");
+		assertTrue(info.isFinal());
+		assertFalse(info.isSplittable(), "a blank final field can only be assigned in a constructor, so it can't be split");
+	}
+
+	@Test
+	public void testParseAsFieldExtractsNameEndAndInitializerRangeAndIsSplittable() {
+		String text = "int n = 2;";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertFalse(info.isFinal());
+		assertEquals("int n", text.substring(0, info.nameEnd()));
+		assertEquals("2", text.substring(info.initializerStart(), info.initializerEnd()));
+		assertTrue(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldLeavesInitializerRangeNullAndIsNotSplittableWithNoInitializer() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int n;");
+		assertNull(info.initializerStart());
+		assertNull(info.initializerEnd());
+		assertFalse(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldIsNotSplittableWithMultipleFragments() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("int a = 1, b = 2;");
+		assertFalse(info.isSplittable());
+	}
+
+	@Test
+	public void testParseAsFieldIsNotSplittableWhenVarTyped() {
+		FieldInfo info = JshSnippetClassifier.parseAsField("var n = 2;");
+		assertFalse(info.isSplittable(), "var can't be a field type, regardless of fragment count or finality");
+	}
+
+	@Test
+	public void testParseAsFieldRebasesPositionsPastLeadingWhitespace() {
+		// parseAsField strips leading/trailing whitespace before parsing; nameEnd/initializer
+		// positions must be rebased back onto the raw (un-stripped) chunk text the caller actually has
+		// an absolute offset for, not left relative to the stripped text.
+		String text = "  int n = 2;  ";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertEquals("int n", text.substring(2, info.nameEnd()));
+		assertEquals("2", text.substring(info.initializerStart(), info.initializerEnd()));
+	}
+
+	/**
+	 * Regression test: C-style array dimensions declared after the name (e.g. "int values[]",
+	 * legal Java) aren't part of {@code VariableDeclarationFragment.getName()}'s range - without
+	 * extending nameEnd past them, a split would lose the array type on the declaration side and
+	 * produce invalid "values[] = ..." syntax on the statement side.
+	 */
+	@Test
+	public void testParseAsFieldExtendsNameEndPastCStyleArrayDimensions() {
+		String text = "int values[] = new int[3];";
+		FieldInfo info = JshSnippetClassifier.parseAsField(text);
+		assertEquals("int values[]", text.substring(0, info.nameEnd()));
+		assertEquals("new int[3]", text.substring(info.initializerStart(), info.initializerEnd()));
+		assertTrue(info.isSplittable());
+	}
+
+	@Test
+	public void testReferencesAnyIdentifierFindsAMatchingToken() {
+		assertTrue(JshSnippetClassifier.referencesAnyIdentifier("int m = n;", Set.of("n")));
+		assertFalse(JshSnippetClassifier.referencesAnyIdentifier("int m = 5;", Set.of("n")));
+	}
+
+	@Test
+	public void testReferencesAnyIdentifierDoesNotMatchASubstringOfALongerIdentifier() {
+		// "nn" contains "n" as a substring, but isn't a reference to a variable named "n" - a
+		// token-based check must not treat it as one.
+		assertFalse(JshSnippetClassifier.referencesAnyIdentifier("int m = nn;", Set.of("n")));
 	}
 
 }

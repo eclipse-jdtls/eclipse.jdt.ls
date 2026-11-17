@@ -13,8 +13,11 @@
 package org.eclipse.jdt.ls.core.internal.jsh;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.FieldInfo;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetClassifier.Kind;
 import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
 
@@ -39,6 +42,26 @@ import org.eclipse.jdt.ls.core.internal.jsh.JshSnippetSplitter.Chunk;
  * behavior for a buffer containing no imports or declarations. Each chunk keeps its own verbatim
  * text (no modifier rewriting needed: {@value #SCRATCHPAD_METHOD_NAME} is an instance method, so
  * it can see promoted declarations directly without them needing to be {@code static}).
+ * <p>
+ * A {@code var}-typed variable's exclusion from promotion is contagious: a later, otherwise
+ * promotable field whose initializer references it (e.g. {@code var n = 2; int m = n;}) can't be
+ * promoted as a normal field-with-initializer either - a field initializer runs once, at instance
+ * construction time, before {@value #SCRATCHPAD_METHOD_NAME} is ever invoked, so it would capture
+ * {@code n}'s default value instead of whatever it's really assigned later in the script.
+ * {@link #wrap(String, String)} computes the affected set to a fixed point (via
+ * {@link JshSnippetClassifier#parseAsField} and {@link JshSnippetClassifier#referencesAnyIdentifier})
+ * so a whole chain of dependent fields (e.g. {@code var n = 2; int m = n; int p = m;}) is caught
+ * together, not just the one directly touching the {@code var}. Each affected field is then
+ * <em>split</em>, when {@link JshSnippetClassifier.FieldInfo#isSplittable()} allows it, into a bare
+ * field declaration (so a later method can still see it as a member) plus an assignment statement
+ * left in its original position in {@value #SCRATCHPAD_METHOD_NAME} (so the real value lands at the
+ * same point in execution order a real JShell session would give it) - splitting one field doesn't
+ * depend on whether the fields it references were themselves split or not, since
+ * {@value #SCRATCHPAD_METHOD_NAME} sees both fields and its own locals in the same scope. A
+ * {@code final} field, or one with more than one declared name (e.g. {@code int a = n, b = 3;}),
+ * can't be legally split (a blank final can only be assigned in a constructor) and falls back to the
+ * older behavior of fully demoting the whole chunk to one statement - a narrow, documented residual
+ * limitation where a later method still can't see it.
  */
 public final class JshSnippetWrapper {
 
@@ -81,8 +104,10 @@ public final class JshSnippetWrapper {
 
 	/**
 	 * Wraps the given .jsh source: splits it into top-level chunks, classifies each, and places it
-	 * in the synthetic class - see the class javadoc for where each kind lands. Every chunk's text
-	 * is inserted verbatim - no transformation is applied to it.
+	 * in the synthetic class - see the class javadoc for where each kind lands. Almost every chunk's
+	 * text is inserted verbatim, with no transformation applied to it - the one exception is a field
+	 * whose initializer depends on an excluded {@code var} (see the class javadoc), which is split
+	 * into a declaration and an assignment placed in two different locations.
 	 *
 	 * @param jshSource the raw .jsh buffer content; {@code null} is treated as empty
 	 * @param className the synthetic top-level class name to generate. Must be unique per
@@ -97,16 +122,80 @@ public final class JshSnippetWrapper {
 	public static JshWrapResult wrap(String jshSource, String className) {
 		String source = jshSource == null ? "" : jshSource;
 		List<Chunk> chunks = JshSnippetSplitter.split(source);
+		int n = chunks.size();
 
-		List<Chunk> imports = new ArrayList<>();
-		List<Chunk> declarations = new ArrayList<>();
-		List<Chunk> statements = new ArrayList<>();
-		for (Chunk chunk : chunks) {
-			Kind kind = JshSnippetClassifier.classify(source.substring(chunk.start(), chunk.end()));
+		String[] texts = new String[n];
+		Kind[] kinds = new Kind[n];
+		FieldInfo[] fields = new FieldInfo[n];
+		for (int i = 0; i < n; i++) {
+			texts[i] = source.substring(chunks.get(i).start(), chunks.get(i).end());
+			kinds[i] = JshSnippetClassifier.classify(texts[i]);
+			fields[i] = JshSnippetClassifier.parseAsField(texts[i]);
+		}
+
+		// A field that would otherwise be promoted but whose initializer references a name that
+		// isn't (or is no longer) a field - a var excluded from promotion, or another field already
+		// demoted by this same loop - can't be promoted either, since that name stays local to
+		// __run__ and wouldn't be visible from a field initializer. Iterate to a fixed point so a
+		// whole chain of dependent fields (e.g. "var n = 2; int m = n; int p = m;") collapses back
+		// to statements together, not just the one directly touching the var.
+		Set<String> unavailable = new HashSet<>();
+		for (FieldInfo field : fields) {
+			if (field != null && field.isVar()) {
+				unavailable.addAll(field.names());
+			}
+		}
+		boolean changed = true;
+		while (changed) {
+			changed = false;
+			for (int i = 0; i < n; i++) {
+				FieldInfo field = fields[i];
+				if (field == null || field.isVar() || unavailable.containsAll(field.names())) {
+					continue;
+				}
+				if (JshSnippetClassifier.referencesAnyIdentifier(texts[i], unavailable)) {
+					unavailable.addAll(field.names());
+					changed = true;
+				}
+			}
+		}
+
+		List<Piece> imports = new ArrayList<>();
+		List<Piece> declarations = new ArrayList<>();
+		List<Piece> statements = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			Kind kind = kinds[i];
+			FieldInfo field = fields[i];
+			boolean dependsOnUnavailable = kind == Kind.DECLARATION && field != null && field.names().stream().anyMatch(unavailable::contains);
+			if (dependsOnUnavailable && field.isSplittable()) {
+				// Every character of the original chunk must stay covered by exactly one Segment (the
+				// same "full coverage" guarantee a whole verbatim chunk gets), or a position landing on
+				// the "=" or the trailing ";" would hit toSyntheticOffset's "not covered by any chunk"
+				// exception. So the separator between name and initializer, and everything from the
+				// initializer's end to the chunk's end (the original ";" plus any trailing text the
+				// splitter included in the chunk), are copied verbatim too - only the field's own name
+				// (echoed into the assignment statement) and the bare declaration's terminator have no
+				// original counterpart and are synthesized with no backing segment.
+				Chunk chunk = chunks.get(i);
+				int chunkStart = chunk.start();
+				int nameEnd = chunkStart + field.nameEnd();
+				int initializerStart = chunkStart + field.initializerStart();
+				int initializerEnd = chunkStart + field.initializerEnd();
+				declarations.add(Piece.verbatim(source, chunkStart, nameEnd));
+				declarations.add(Piece.synthesized(";\n"));
+				statements.add(Piece.synthesized(field.names().get(0)));
+				statements.add(Piece.verbatim(source, nameEnd, initializerStart));
+				statements.add(Piece.verbatim(source, initializerStart, initializerEnd));
+				statements.add(Piece.verbatim(source, initializerEnd, chunk.end()));
+				continue;
+			}
+			if (dependsOnUnavailable) {
+				kind = Kind.STATEMENT;
+			}
 			switch (kind) {
-				case IMPORT -> imports.add(chunk);
-				case DECLARATION -> declarations.add(chunk);
-				case STATEMENT -> statements.add(chunk);
+				case IMPORT -> imports.add(Piece.verbatim(source, chunks.get(i)));
+				case DECLARATION -> declarations.add(Piece.verbatim(source, chunks.get(i)));
+				case STATEMENT -> statements.add(Piece.verbatim(source, chunks.get(i)));
 			}
 		}
 
@@ -114,29 +203,60 @@ public final class JshSnippetWrapper {
 		List<JshWrapResult.Segment> segments = new ArrayList<>(chunks.size());
 
 		wrapped.append(IMPORTS);
-		placeChunks(source, imports, wrapped, segments);
+		placePieces(imports, wrapped, segments);
 		wrapped.append("public class ").append(className).append(" {\n");
-		placeChunks(source, declarations, wrapped, segments);
+		placePieces(declarations, wrapped, segments);
 		wrapped.append("void ").append(SCRATCHPAD_METHOD_NAME).append("() throws Exception {\n");
-		placeChunks(source, statements, wrapped, segments);
+		placePieces(statements, wrapped, segments);
 		wrapped.append("\n}}\n");
 
 		return new JshWrapResult(wrapped.toString(), segments, source.length());
 	}
 
-	private static void placeChunks(String source, List<Chunk> chunks, StringBuilder wrapped, List<JshWrapResult.Segment> segments) {
-		for (Chunk chunk : chunks) {
+	private static void placePieces(List<Piece> pieces, StringBuilder wrapped, List<JshWrapResult.Segment> segments) {
+		for (Piece piece : pieces) {
 			int syntheticStart = wrapped.length();
-			wrapped.append(source, chunk.start(), chunk.end());
-			segments.add(new JshWrapResult.Segment(chunk.start(), chunk.end(), syntheticStart));
+			wrapped.append(piece.text());
+			if (piece.originalStart() != null) {
+				segments.add(new JshWrapResult.Segment(piece.originalStart(), piece.originalEnd(), syntheticStart));
+			}
+		}
+	}
+
+	/**
+	 * One piece of text to append into the synthetic wrapped source, with an optional backing range
+	 * in the original .jsh buffer. Most chunks produce exactly one verbatim {@link Piece} (text and
+	 * original range are the same thing, just copied) - same as before this class could split a
+	 * field's declaration from its initializer. A split field instead produces several: a verbatim
+	 * piece for the "type name" prefix, synthesized text with no original backing (e.g. the
+	 * {@code " = "} and trailing {@code ";\n"}, analogous to other generated scaffolding like the
+	 * class header), and a verbatim piece for the initializer expression. {@code originalStart}/
+	 * {@code originalEnd} are {@code null} for a synthesized piece, meaning no {@link
+	 * JshWrapResult.Segment} is recorded for it - a request landing in that text behaves like a
+	 * request landing in any other generated scaffolding (translates to {@code -1}).
+	 */
+	private record Piece(String text, Integer originalStart, Integer originalEnd) {
+
+		static Piece verbatim(String source, Chunk chunk) {
+			return verbatim(source, chunk.start(), chunk.end());
+		}
+
+		static Piece verbatim(String source, int start, int end) {
+			return new Piece(source.substring(start, end), start, end);
+		}
+
+		static Piece synthesized(String text) {
+			return new Piece(text, null, null);
 		}
 	}
 
 	/**
 	 * The result of wrapping a .jsh buffer: the synthesized source, plus offset translation between
 	 * the original buffer and the synthesized one. Unlike v1's single constant header-length shift,
-	 * translation here is piecewise: one {@link Segment} per classified chunk, each mapping a
-	 * verbatim-copied range of the original buffer to where it landed in the synthetic source.
+	 * translation here is piecewise: one {@link Segment} per verbatim-copied {@link Piece}, each
+	 * mapping a range of the original buffer to where it landed in the synthetic source - usually one
+	 * per chunk, but a split field (see the class javadoc) produces two, one for its declaration and
+	 * one for its initializer, since those two pieces of original text land in different places.
 	 */
 	public static final class JshWrapResult {
 
