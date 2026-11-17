@@ -108,7 +108,7 @@ public final class OrganizeImportsHandler {
 
 	public static WorkspaceEdit organizeImports(JavaClientConnection connection, CodeActionParams params, IProgressMonitor monitor) {
 		String uri = params.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			// The resulting edit would be computed against the synthetic wrapped source's offsets,
 			// not the original .jsh buffer's, but would still carry the correct .jsh URI (JDTUtils.
 			// toURI already resolves it back) - silently applying wrong-coordinate edits to a real

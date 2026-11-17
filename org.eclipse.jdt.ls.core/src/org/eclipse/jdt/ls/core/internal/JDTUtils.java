@@ -185,7 +185,7 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
-		if (isJshFile(uriString)) {
+		if (useJshHandling(uriString)) {
 			JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
 			return document == null ? null : document.getWorkingCopy();
 		}
@@ -473,7 +473,7 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
-		if (isJshFile(uriString)) {
+		if (useJshHandling(uriString)) {
 			return resolveCompilationUnit(uriString);
 		}
 		URI uri = toURI(uriString);
@@ -718,6 +718,26 @@ public final class JDTUtils {
 
 	public static boolean isJshFile(java.nio.file.Path path) {
 		return path != null && isJshFile(path.getFileName().toString());
+	}
+
+	/**
+	 * The gate every .jsh routing decision should actually check, instead of {@link
+	 * #isJshFile(String)} directly - {@code isJshFile} stays a pure, context-free filename check (so
+	 * it keeps meaning exactly "is this a .jsh file", usable wherever that alone matters), while this
+	 * additionally respects the {@code java.jshell.enabled} preference, so turning that preference off
+	 * makes every .jsh-aware code path fall through to treating the file as an ordinary, unrecognized
+	 * file - the same as if the feature didn't exist. Disabling mid-session is lazy: this only affects
+	 * new routing decisions (e.g. a new didOpen), not a .jsh document already open and being handled.
+	 *
+	 * @param uriOrFileName either a full document URI or a plain file name, see {@link
+	 *            #isJshFile(String)}
+	 * @return whether .jsh-specific handling should be used for the given URI/file name
+	 */
+	public static boolean useJshHandling(String uriOrFileName) {
+		return isJshFile(uriOrFileName)
+				&& JavaLanguageServerPlugin.getPreferencesManager() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
 	}
 
 	/**

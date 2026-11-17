@@ -342,7 +342,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didClose(DidCloseTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			JshDocumentManager.getInstance().didClose(uri);
 			return;
 		}
@@ -353,7 +353,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didOpen(DidOpenTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			JshDocumentManager.getInstance().didOpen(uri, params.getTextDocument().getText());
 			return;
 		}
@@ -373,7 +373,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didChange(DidChangeTextDocumentParams params) {
 		String uri = params.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			JshDocumentManager.getInstance().didChange(uri, params.getContentChanges());
 			return;
 		}
@@ -383,7 +383,7 @@ public abstract class BaseDocumentLifeCycleHandler {
 
 	public void didSave(DidSaveTextDocumentParams params) {
 		String documentUri = params.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(documentUri)) {
+		if (JDTUtils.useJshHandling(documentUri)) {
 			// Nothing to do: JshDocumentManager's working copy is already kept up to date via
 			// didChange, and unlike didOpen/didChange/didClose, handleSaved's discardWorkingCopy()/
 			// becomeWorkingCopy() pair would churn the long-lived synthetic working copy's buffer

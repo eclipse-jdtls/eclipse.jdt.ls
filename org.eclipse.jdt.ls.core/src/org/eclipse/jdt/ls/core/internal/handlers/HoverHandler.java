@@ -43,7 +43,7 @@ public class HoverHandler {
 			return null;
 		}
 		String uri = position.getTextDocument().getUri();
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			return hoverJsh(uri, position.getPosition(), monitor);
 		}
 		ITypeRoot unit = null;

@@ -121,7 +121,7 @@ public class CompletionHandler{
 		CompletionList $ = null;
 		try {
 			String uri = params.getTextDocument().getUri();
-			if (JDTUtils.isJshFile(uri)) {
+			if (JDTUtils.useJshHandling(uri)) {
 				JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uri);
 				$ = this.computeJshContentAssist(document, params, monitor);
 			} else {
