@@ -62,6 +62,13 @@ public class SaveActionHandler {
 		}
 
 		String documentUri = params.getTextDocument().getUri();
+		if (JDTUtils.isJshFile(documentUri)) {
+			// Organize-imports/clean-up edits below are computed against the synthetic wrapped
+			// source's structure and offsets, not the original .jsh buffer's - returning them here
+			// would have the client silently apply wrong-coordinate edits to the real .jsh file on
+			// save. No .jsh-aware equivalent exists yet (unlike completion/diagnostics/hover).
+			return edit;
+		}
 
 		Preferences preferences = preferenceManager.getPreferences();
 		IEclipsePreferences jdtUiPreferences = getJdtUiProjectPreferences(documentUri);

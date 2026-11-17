@@ -51,11 +51,13 @@ import org.eclipse.jdt.ls.core.internal.corext.template.java.JavaPostfixContext;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.corext.template.java.PostfixTemplateEngine;
 import org.eclipse.jdt.ls.core.internal.javadoc.JavadocContentAccess2;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.templates.Template;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
+import org.eclipse.lsp4j.InsertReplaceEdit;
 import org.eclipse.lsp4j.MarkupContent;
 import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Range;
@@ -88,18 +90,87 @@ public class CompletionResolveHandler {
 	public static final String DATA_FIELD_REQUEST_ID = "rid";
 	public static final String DATA_FIELD_PROPOSAL_ID = "pid";
 
+	/**
+	 * Resolves a completion item, translating any resulting edit ranges back to the original
+	 * .jsh document's coordinates when the item belongs to one. The request/proposal data is
+	 * parsed and the {@link CompletionResponse} looked up here, once, and passed down to
+	 * {@link #doResolve} - which otherwise would redo the exact same parse and lookup internally -
+	 * rather than threading .jsh-specific logic through that method's many branches and return
+	 * points.
+	 */
 	public CompletionItem resolve(CompletionItem param, IProgressMonitor monitor) {
-
 		@SuppressWarnings("unchecked")
-		Map<String, String> data = JSONUtility.toModel(param.getData(),Map.class);
+		Map<String, String> data = JSONUtility.toModel(param.getData(), Map.class);
+		CompletionResponse completionResponse = (data != null && data.containsKey(DATA_FIELD_REQUEST_ID))
+				? CompletionResponses.get(Long.parseLong(data.get(DATA_FIELD_REQUEST_ID)))
+				: null;
+		JshDocumentManager.JshDocument jshDocument = resolveJshDocumentFor(completionResponse);
+		return doResolve(param, monitor, data, completionResponse, jshDocument);
+	}
+
+	private JshDocumentManager.JshDocument resolveJshDocumentFor(CompletionResponse completionResponse) {
+		if (completionResponse == null) {
+			return null;
+		}
+		String uri = completionResponse.getCommonData(DATA_FIELD_URI);
+		if (!JDTUtils.isJshFile(uri)) {
+			return null;
+		}
+		return JshDocumentManager.getInstance().get(uri);
+	}
+
+	/**
+	 * Translates a completion item's edit ranges from the synthetic wrapped source's coordinates to
+	 * the original .jsh document's. An edit whose range can't be mapped (one of its endpoints falls
+	 * inside the generated header/footer - e.g. an additional text edit inserting an import, which
+	 * always lands in the single-line header) is dropped rather than left in synthetic coordinates:
+	 * applying a synthetic-coordinate edit to the real .jsh file would silently corrupt it (e.g.
+	 * insert the import text in the middle of the user's first line). Package-visible so
+	 * {@link CompletionHandler#computeJshContentAssist} can apply the same translation to the
+	 * initial completion response, not just resolve.
+	 */
+	static void translateJshRanges(CompletionItem item, JshDocumentManager.JshDocument document) {
+		if (item.getTextEdit() != null) {
+			if (item.getTextEdit().isLeft()) {
+				TextEdit edit = item.getTextEdit().getLeft();
+				Range translated = document.toOriginalRange(edit.getRange());
+				if (translated != null) {
+					edit.setRange(translated);
+				} else {
+					item.setTextEdit(null);
+				}
+			} else {
+				InsertReplaceEdit edit = item.getTextEdit().getRight();
+				Range insert = document.toOriginalRange(edit.getInsert());
+				Range replace = document.toOriginalRange(edit.getReplace());
+				if (insert != null && replace != null) {
+					edit.setInsert(insert);
+					edit.setReplace(replace);
+				} else {
+					item.setTextEdit(null);
+				}
+			}
+		}
+		if (item.getAdditionalTextEdits() != null) {
+			item.getAdditionalTextEdits().removeIf(edit -> {
+				Range translated = document.toOriginalRange(edit.getRange());
+				if (translated == null) {
+					return true;
+				}
+				edit.setRange(translated);
+				return false;
+			});
+		}
+	}
+
+	private CompletionItem doResolve(CompletionItem param, IProgressMonitor monitor, Map<String, String> data, CompletionResponse completionResponse, JshDocumentManager.JshDocument jshDocument) {
+
 		// clean resolve data
 		param.setData(null);
 		if (!CompletionProposalRequestor.SUPPORTED_KINDS.contains(param.getKind()) || data == null || !data.containsKey(DATA_FIELD_REQUEST_ID) || !data.containsKey(DATA_FIELD_PROPOSAL_ID)) {
 			return param;
 		}
 		int proposalId = Integer.parseInt(data.get(DATA_FIELD_PROPOSAL_ID));
-		long requestId = Long.parseLong(data.get(DATA_FIELD_REQUEST_ID));
-		CompletionResponse completionResponse = CompletionResponses.get(requestId);
 		if (completionResponse == null || completionResponse.getProposals().size() <= proposalId) {
 			throw new IllegalStateException("Invalid completion proposal");
 		}
@@ -171,6 +242,15 @@ public class CompletionResolveHandler {
 				true
 			);
 			proposalProvider.updateReplacement(proposal, param, '\0');
+			// Translate right here, immediately after the only call that actually produces fresh,
+			// synthetic-coordinate edits for .jsh items - not conditionally in resolve() after the
+			// fact, since doResolve has several earlier return points (unsupported item kind, missing
+			// request/proposal data, a cancelled monitor, a snippet item) that skip this call entirely
+			// and leave param's edits as whatever the initial response already translated to original
+			// .jsh coordinates. Translating those untouched edits a second time would corrupt them.
+			if (jshDocument != null) {
+				translateJshRanges(param, jshDocument);
+			}
 		}
 
 		if (!manager.getClientPreferences().isCompletionResolveDocumentSupport()) {

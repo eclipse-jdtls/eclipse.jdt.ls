@@ -49,17 +49,21 @@ import org.eclipse.jdt.ls.core.internal.contentassist.CompletionProposalUtils;
 import org.eclipse.jdt.ls.core.internal.contentassist.JavadocCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SnippetCompletionProposal;
 import org.eclipse.jdt.ls.core.internal.contentassist.SortTextHelper;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.syntaxserver.ModelBasedCompletionEngine;
 import org.eclipse.lsp4j.Command;
 import org.eclipse.lsp4j.CompletionItem;
+import org.eclipse.lsp4j.CompletionItemDefaults;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.CompletionItemOptions;
 import org.eclipse.lsp4j.CompletionList;
 import org.eclipse.lsp4j.CompletionOptions;
 import org.eclipse.lsp4j.CompletionParams;
 import org.eclipse.lsp4j.CompletionTriggerKind;
+import org.eclipse.lsp4j.InsertReplaceRange;
 import org.eclipse.lsp4j.Position;
+import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 
 
@@ -116,8 +120,14 @@ public class CompletionHandler{
 		long startTime = System.currentTimeMillis();
 		CompletionList $ = null;
 		try {
-			ICompilationUnit unit = JDTUtils.resolveCompilationUnit(params.getTextDocument().getUri());
-			$ = this.computeContentAssist(unit, params, monitor);
+			String uri = params.getTextDocument().getUri();
+			if (JDTUtils.isJshFile(uri)) {
+				JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uri);
+				$ = this.computeJshContentAssist(document, params, monitor);
+			} else {
+				ICompilationUnit unit = JDTUtils.resolveCompilationUnit(uri);
+				$ = this.computeContentAssist(unit, params, monitor);
+			}
 		} catch (OperationCanceledException ignorable) {
 			// No need to pollute logs when query is cancelled
 			monitor.setCanceled(true);
@@ -335,6 +345,105 @@ public class CompletionHandler{
 			list.setItemDefaults(collector.getCompletionItemDefaults());
 		}
 		return list;
+	}
+
+	/**
+	 * Completion for .jsh files: the client's position is in the original .jsh document's
+	 * coordinates, which must be translated to an offset into the synthetic wrapped source before
+	 * calling {@code codeComplete}.
+	 * <p>
+	 * Deliberately a reduced subset of {@link #computeContentAssist}, not a full reimplementation.
+	 * Known gaps, tracked on https://github.com/eclipse-jdtls/eclipse.jdt.ls/issues/3973:
+	 * <ul>
+	 * <li>No constructor-completion-on-space handling ({@code isCompletionForConstructor}).</li>
+	 * <li>No chain completion ({@link ChainCompletionProposalComputer}).</li>
+	 * <li>No snippet proposals ({@link SnippetCompletionProposal}) - these call
+	 * {@code unit.getResource().getName()}, which would NPE for this synthetic unit.</li>
+	 * <li>No javadoc proposals ({@link JavadocCompletionProposal}).</li>
+	 * <li>No keyword/snippet sort-text-raising pass (the loop in
+	 * {@link #computeContentAssist} that boosts snippets sharing a label with a keyword).</li>
+	 * </ul>
+	 * Each is a plausible real gap for actual .jsh usage, not just a theoretical one - revisit once
+	 * the core pipeline (this method, resolve, diagnostics, hover) is proven out end-to-end.
+	 */
+	private CompletionList computeJshContentAssist(JshDocumentManager.JshDocument document, CompletionParams params, IProgressMonitor monitor) throws JavaModelException {
+		CompletionResponses.clear();
+		if (document == null) {
+			return null;
+		}
+		if (params.getContext() != null && " ".equals(params.getContext().getTriggerCharacter())) {
+			// computeContentAssist only lets a space trigger through for constructor-completion
+			// (isCompletionForConstructor), a known gap this narrower .jsh path doesn't implement -
+			// without this check, every typed space would return a full proposal list instead of
+			// nothing, which some clients could auto-accept into (e.g. via Enter).
+			return null;
+		}
+
+		ICompilationUnit unit = document.getWorkingCopy();
+		List<CompletionItem> proposals = new ArrayList<>();
+		final int offset = document.toSyntheticOffset(params.getPosition());
+
+		CompletionProposalRequestor collector = new CompletionProposalRequestor(unit, offset, manager);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.FIELD_REF, CompletionProposal.FIELD_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.TYPE_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.METHOD_REF, CompletionProposal.METHOD_IMPORT, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_CONSTRUCTOR_INVOCATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.ANONYMOUS_CLASS_DECLARATION, CompletionProposal.TYPE_REF, true);
+		collector.setAllowsRequiredProposals(CompletionProposal.TYPE_REF, CompletionProposal.TYPE_REF, true);
+		collector.setFavoriteReferences(getFavoriteStaticMembers());
+
+		if (offset > -1 && !monitor.isCanceled()) {
+			try {
+				unit.codeComplete(offset, collector, monitor);
+			} catch (OperationCanceledException e) {
+				monitor.setCanceled(true);
+			}
+			proposals.addAll(collector.getCompletionItems());
+		}
+		// The collector computed every range above (per-item and the shared item-defaults range)
+		// against the synthetic wrapped source, since offset is a synthetic offset - translate them
+		// all back to the original .jsh document's coordinates before this response reaches the
+		// client. Dropping an item whose required range can't be mapped is CompletionResolveHandler.
+		// translateJshRanges's job (reused here since the same synthetic/header-footer concern
+		// applies to the initial response, not just resolve).
+		for (CompletionItem item : proposals) {
+			CompletionResolveHandler.translateJshRanges(item, document);
+		}
+		proposals.sort(PROPOSAL_COMPARATOR);
+		CompletionList list = new CompletionList(proposals);
+		list.setIsIncomplete(!collector.isComplete());
+		if (this.manager.getClientPreferences().isCompletionListItemDefaultsSupport()) {
+			CompletionItemDefaults defaults = collector.getCompletionItemDefaults();
+			translateJshItemDefaultsRange(defaults, document);
+			list.setItemDefaults(defaults);
+		}
+		return list;
+	}
+
+	/**
+	 * Translates the completion list's shared {@code itemDefaults.editRange} - which items with no
+	 * range of their own rely on - from synthetic to original .jsh coordinates. In practice this
+	 * should always map cleanly, since it's derived from the (always in-content) completion offset,
+	 * but the range is cleared rather than left in synthetic coordinates if it somehow doesn't.
+	 */
+	private void translateJshItemDefaultsRange(CompletionItemDefaults defaults, JshDocumentManager.JshDocument document) {
+		if (defaults == null || defaults.getEditRange() == null) {
+			return;
+		}
+		Either<Range, InsertReplaceRange> editRange = defaults.getEditRange();
+		if (editRange.isLeft()) {
+			Range translated = document.toOriginalRange(editRange.getLeft());
+			defaults.setEditRange(translated == null ? null : Either.forLeft(translated));
+		} else {
+			InsertReplaceRange range = editRange.getRight();
+			Range insert = document.toOriginalRange(range.getInsert());
+			Range replace = document.toOriginalRange(range.getReplace());
+			defaults.setEditRange(insert == null || replace == null ? null : Either.forRight(new InsertReplaceRange(insert, replace)));
+		}
 	}
 
 	private String[] getFavoriteStaticMembers() {

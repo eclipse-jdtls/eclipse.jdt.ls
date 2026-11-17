@@ -134,6 +134,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -184,6 +185,10 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
+		if (isJshFile(uriString)) {
+			JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
+			return document == null ? null : document.getWorkingCopy();
+		}
 		return resolveCompilationUnit(toURI(uriString));
 	}
 
@@ -468,6 +473,9 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
+		if (isJshFile(uriString)) {
+			return resolveCompilationUnit(uriString);
+		}
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return null;
@@ -693,6 +701,23 @@ public final class JDTUtils {
 
 	public static boolean isJavaFile(String name) {
 		return name != null && org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name);
+	}
+
+	/**
+	 * @param uriOrFileName either a full document URI (e.g. {@code file:///a/b/Scratch.jsh}) or a
+	 *            plain file name - both end in the same suffix, so either form works
+	 * @return whether the given URI/file name refers to a .jsh (JShell script) file
+	 */
+	public static boolean isJshFile(String uriOrFileName) {
+		return uriOrFileName != null && uriOrFileName.endsWith(".jsh");
+	}
+
+	public static boolean isJshFile(IPath path) {
+		return path != null && isJshFile(path.lastSegment());
+	}
+
+	public static boolean isJshFile(java.nio.file.Path path) {
+		return path != null && isJshFile(path.getFileName().toString());
 	}
 
 	/**
@@ -1298,6 +1323,14 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String toURI(ICompilationUnit cu) {
+		// Checked first: a .jsh synthetic working copy is created against a real package
+		// fragment's getCompilationUnit(name), so cu.getResource() returns a well-formed (if
+		// never-existing-on-disk) IFile handle for a fake *.java path. That handle must not win
+		// over the working copy's real, owning .jsh URI.
+		String jshUri = JshDocumentManager.getInstance().findUri(cu);
+		if (jshUri != null) {
+			return jshUri;
+		}
 		if (cu.getResource() != null) {
 			String uri = getFileURI(cu.getResource());
 			if (uri != null) {
