@@ -262,4 +262,24 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 		assertTrue(JDTUtils.isJshFile(Paths.get("Scratch.jsh")));
 		assertFalse(JDTUtils.isJshFile((Path) null));
 	}
+
+	/**
+	 * Regression test for #3985: useJshHandling must additionally respect the java.jshell.enabled
+	 * preference, unlike the pure filename check isJshFile - disabling it should make .jsh-aware
+	 * routing decisions fall through to treating the file as an ordinary, unrecognized file.
+	 */
+	@Test
+	public void testUseJshHandlingRespectsThePreference() {
+		boolean original = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(true);
+			assertTrue(JDTUtils.useJshHandling("Scratch.jsh"), "Enabled by default, a .jsh file should use jsh handling");
+			assertFalse(JDTUtils.useJshHandling("Scratch.java"), "A non-.jsh file should never use jsh handling, regardless of the preference");
+
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(false);
+			assertFalse(JDTUtils.useJshHandling("Scratch.jsh"), "Disabled, a .jsh file should no longer use jsh handling");
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(original);
+		}
+	}
 }

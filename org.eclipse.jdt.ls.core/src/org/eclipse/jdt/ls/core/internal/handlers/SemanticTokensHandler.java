@@ -57,7 +57,7 @@ public class SemanticTokensHandler {
 		root.accept(collector);
 		SemanticTokens tokens = collector.getSemanticTokens();
 
-		if (JDTUtils.isJshFile(uri)) {
+		if (JDTUtils.useJshHandling(uri)) {
 			JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uri);
 			return document == null ? new SemanticTokens(Collections.emptyList()) : translateJshTokens(tokens, document);
 		}
