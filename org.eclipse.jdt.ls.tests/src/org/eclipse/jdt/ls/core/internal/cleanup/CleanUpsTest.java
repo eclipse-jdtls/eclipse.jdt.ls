@@ -13,6 +13,7 @@
 package org.eclipse.jdt.ls.core.internal.cleanup;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
@@ -23,18 +24,23 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
 import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.correction.TestOptions;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextEdit;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -639,6 +645,44 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 		List<TextEdit> textEdits = registry.getEditsForAllActiveCleanUps(new TextDocumentIdentifier(uri), Arrays.asList("organizeImports"), monitor);
 		String actual = TextEditUtil.apply(unit, textEdits);
 		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testOrganizeImportsCleanupAddsModuleRequirement() throws Exception {
+		IJavaProject client = newEmptyProject();
+		IJavaProject dependency = newEmptyProject("dependency");
+		Hashtable<String, String> options = TestOptions.getDefaultOptions();
+		JavaCore.setComplianceOptions(JavaCore.VERSION_9, options);
+		client.setOptions(options);
+		dependency.setOptions(options);
+		IPackageFragmentRoot dependencyRoot = dependency.getPackageFragmentRoot(dependency.getProject().getFolder("src"));
+		dependencyRoot.createPackageFragment("", false, monitor).createCompilationUnit("module-info.java",
+				"module dependency { exports dep; }", false, monitor);
+		dependencyRoot.createPackageFragment("dep", false, monitor).createCompilationUnit("One.java",
+				"package dep; public class One {}", false, monitor);
+		IClasspathAttribute[] attributes = { JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true") };
+		IClasspathEntry entry = JavaCore.newProjectEntry(dependency.getPath(), null, false, attributes, false);
+		JavaProjectHelper.addToClasspath(client, entry);
+		IPackageFragmentRoot sourceRoot = client.getPackageFragmentRoot(client.getProject().getFolder("src"));
+		IPackageFragment root = sourceRoot.createPackageFragment("", false, monitor);
+		ICompilationUnit module = root.createCompilationUnit("module-info.java", "module demo {\n}\n", false, monitor);
+		ICompilationUnit source = sourceRoot.createPackageFragment("demo", false, monitor)
+				.createCompilationUnit("A.java", "package demo;\nclass A { One one; }\n", false, monitor);
+		String sourceUri = JDTUtils.toURI(source);
+
+		WorkspaceEdit edits = registry.getWorkspaceEditForAllActiveCleanUps(new TextDocumentIdentifier(sourceUri), List.of("organizeImports"), monitor);
+
+		assertEquals(2, edits.getChanges().size());
+		assertTrue(TextEditUtil.apply(source, edits.getChanges().get(sourceUri)).contains("import dep.One;"));
+		assertTrue(TextEditUtil.apply(module, edits.getChanges().get(JDTUtils.toURI(module))).contains("requires dependency;"));
+
+		module.getBuffer().setContents("module demo { uses One; }\n");
+		module.save(null, true);
+		String moduleUri = JDTUtils.toURI(module);
+		WorkspaceEdit moduleEdits = registry.getWorkspaceEditForAllActiveCleanUps(new TextDocumentIdentifier(moduleUri), List.of("organizeImports"), monitor);
+		String moduleResult = TextEditUtil.apply(module, moduleEdits.getChanges().get(moduleUri));
+		assertTrue(moduleResult.contains("import dep.One;"));
+		assertTrue(moduleResult.contains("requires dependency;"));
 	}
 
 	@Test

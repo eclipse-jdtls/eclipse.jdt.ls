@@ -148,8 +148,7 @@ public class SourceAssistProcessor {
 
 		// Organize Imports
 		CodeActionProposal organizeImportsProposal = (pm) -> {
-			TextEdit edit = getOrganizeImportsTextEdit(context, false, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
-			return convertToWorkspaceEdit(cu, edit);
+			return getOrganizeImportsTextEdit(context, false, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
 		};
 		// Generate QuickAssist
 		if (isInImportDeclaration) {
@@ -172,8 +171,7 @@ public class SourceAssistProcessor {
 		}
 		if (hasUndefinedTypeError) {
 			CodeActionProposal allAllMissingImportsProposal = (pm) -> {
-				TextEdit edit = getOrganizeImportsTextEdit(context, true, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
-				return convertToWorkspaceEdit(cu, edit);
+				return getOrganizeImportsTextEdit(context, true, preferenceManager.getClientPreferences().isAdvancedOrganizeImportsSupported(), pm);
 			};
 			Optional<Either<Command, CodeAction>> sourceAddAllMissingImports = getCodeActionFromProposal(params.getContext(), context.getCompilationUnit(), CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description,
 				CodeActionKind.Source, allAllMissingImportsProposal, CodeActionComparator.ADD_ALL_MISSING_IMPORTS_PRIORITY);
@@ -355,7 +353,7 @@ public class SourceAssistProcessor {
 		result.add(targetAction);
 	}
 
-	private TextEdit getOrganizeImportsTextEdit(IInvocationContext context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
+	private WorkspaceEdit getOrganizeImportsTextEdit(IInvocationContext context, boolean restoreExistingImports, boolean isAdvancedOrganizeImportsSupported, IProgressMonitor monitor) {
 		ICompilationUnit cu = context.getCompilationUnit();
 		if (cu == null) {
 			return null;
@@ -368,7 +366,7 @@ public class SourceAssistProcessor {
 		if (uri == null) {
 			return null;
 		}
-		return OrganizeImportsHandler.organizeImports(context.getCompilationUnit(), isAdvancedOrganizeImportsSupported ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, monitor);
+		return OrganizeImportsHandler.organizeImportsAsWorkspaceEdit(context.getCompilationUnit(), isAdvancedOrganizeImportsSupported ? OrganizeImportsHandler.getChooseImportsFunction(uri.toString(), restoreExistingImports) : null, restoreExistingImports, monitor);
 	}
 
 	private Optional<Either<Command, CodeAction>> getOverrideMethodsAction(CodeActionParams params, String kind, IType type) throws JavaModelException {
