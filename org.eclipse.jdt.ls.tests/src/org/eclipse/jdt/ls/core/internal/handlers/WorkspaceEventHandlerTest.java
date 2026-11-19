@@ -131,7 +131,7 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void testDeleteProjectFolder() throws Exception {
 		importProjects("maven/multimodule3");
 
-		IProject module2 = ProjectUtils.getProject("module2");
+		IProject module2 = ProjectUtils.getProject("org.eclipse-module2");
 		assertTrue(module2 != null && module2.exists());
 
 		String projectUri = JDTUtils.getFileURI(module2);

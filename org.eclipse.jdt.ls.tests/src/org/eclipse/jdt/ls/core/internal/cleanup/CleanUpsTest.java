@@ -60,7 +60,7 @@ public class CleanUpsTest extends AbstractMavenBasedTest {
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/quickstart");
-		project = WorkspaceHelper.getProject("quickstart");
+		project = WorkspaceHelper.getProject("test-quickstart");
 		javaProject = JavaCore.create(project);
 
 		Hashtable<String, String> options = TestOptions.getDefaultOptions();

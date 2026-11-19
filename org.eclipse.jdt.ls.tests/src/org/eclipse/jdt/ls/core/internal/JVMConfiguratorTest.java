@@ -253,7 +253,7 @@ public class JVMConfiguratorTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testJavaRuntimesDoNotLeak() throws Exception {
 		importProjects("maven/salut-java11");
-		IProject project = WorkspaceHelper.getProject("salut-java11");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut-java11");
 		assertIsJavaProject(project);
 		assertEquals("11", getJavaSourceLevel(project));
 		List<SymbolInformation> results = WorkspaceSymbolHandler.search("java.lang.Object", new NullProgressMonitor());

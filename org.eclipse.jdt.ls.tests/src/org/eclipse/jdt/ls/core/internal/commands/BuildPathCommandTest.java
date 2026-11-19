@@ -109,7 +109,7 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testBuildPathOperationInMavenProject() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
 		manager.getPreferences().setRootPaths(Arrays.asList(project.getLocation()));
 
@@ -133,7 +133,7 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testListSourcePathsWithMavenModuleOutsideRoot() throws Exception {
 		importProjects("maven/outside-modules");
-		IProject project = WorkspaceHelper.getProject("parent");
+		IProject project = WorkspaceHelper.getProject("foo.bar-parent");
 		PreferenceManager manager = JavaLanguageServerPlugin.getPreferencesManager();
 		manager.getPreferences().setRootPaths(Arrays.asList(project.getLocation()));
 
@@ -141,8 +141,8 @@ public class BuildPathCommandTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(listResult.status);
 		SourcePath[] sourcePaths = listResult.data;
 		assertNotNull(sourcePaths);
-		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "module1".equals(p.projectName)));
-		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "shared".equals(p.projectName)));
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "foo.bar-module1".equals(p.projectName)));
+		assertTrue(Arrays.stream(sourcePaths).anyMatch(p -> "foo.bar-shared".equals(p.projectName)));
 	}
 
 	@Test

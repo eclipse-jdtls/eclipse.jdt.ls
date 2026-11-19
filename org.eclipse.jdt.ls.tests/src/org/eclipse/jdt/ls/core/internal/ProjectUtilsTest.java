@@ -71,7 +71,7 @@ public class ProjectUtilsTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testIsUnmanagedFolder1() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		assertEquals(false, ProjectUtils.isUnmanagedFolder(project));
 	}
 

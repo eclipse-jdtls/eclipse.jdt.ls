@@ -33,7 +33,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
-import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractMavenBasedTest;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager.CHANGE_TYPE;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,7 +41,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 
-	private static final String INVALID = "invalid";
 	private static final String MAVEN_INVALID = "maven/invalid";
 
 	static Stream<Arguments> data() {
@@ -58,7 +56,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "salut";
 		importProjects("maven/" + name);
-		IProject project = WorkspaceHelper.getProject(name);
+		IProject project = getProject("foo.bar-" + name);
 		assertTrue(project.exists());
 
 		IFile projectDescription = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
@@ -86,7 +84,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "quickstart2";
 		importProjects("maven/" + name);
-		IProject project = WorkspaceHelper.getProject(name);
+		IProject project = getProject("quickstart-" + name);
 		assertTrue(project.exists());
 
 		IFile pom = project.getFile("pom.xml");
@@ -107,7 +105,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		List<IProject> projects = importProjects(MAVEN_INVALID);
 		assertEquals(1, projects.size());
-		IProject invalid = WorkspaceHelper.getProject(INVALID);
+		IProject invalid = getProject("foo.bar-invalid");
 		assertIsMavenProject(invalid);
 		IFile projectFile = invalid.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
 		assertTrue(projectFile.exists());
@@ -119,7 +117,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertFalse(file.exists());
 		projects = importProjects(MAVEN_INVALID);
 		assertEquals(1, projects.size());
-		invalid = WorkspaceHelper.getProject(INVALID);
+		invalid = getProject("foo.bar-invalid");
 		assertIsMavenProject(invalid);
 	}
 
@@ -129,7 +127,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "salut";
 		importProjects("maven/" + name);
-		IProject project = getProject(name);
+		IProject project = getProject("foo.bar-" + name);
 		assertIsJavaProject(project);
 		assertIsMavenProject(project);
 		IFile dotClasspath = project.getFile(IJavaProject.CLASSPATH_FILE_NAME);
@@ -138,7 +136,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		assertTrue(file.exists());
 		file.delete();
 		projectsManager.fileChanged(file.toPath().toUri().toString(), CHANGE_TYPE.DELETED);
-		project = getProject(name);
+		project = getProject("foo.bar-" + name);
 		IFile bin = project.getFile("bin");
 		assertFalse(bin.getRawLocation().toFile().exists());
 		assertTrue(dotClasspath.exists());
@@ -150,7 +148,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		System.setProperty(JLSFsUtils.GENERATES_METADATA_FILES_AT_PROJECT_ROOT, fsMode);
 		String name = "autovalued";
 		importProjects("maven/" + name);
-		IProject project = WorkspaceHelper.getProject(name);
+		IProject project = getProject("foo.bar-" + name);
 		assertTrue(project.exists());
 
 		IFile projectDescription = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
@@ -187,7 +185,7 @@ public class MavenProjectMetadataFileTest extends AbstractMavenBasedTest {
 		}
 		String name = "quickstart2";
 		importProjects("maven/" + name);
-		IProject project = getProject(name);
+		IProject project = getProject("quickstart-" + name);
 		IFile projectDescription = project.getFile(IProjectDescription.DESCRIPTION_FILE_NAME);
 		// workaround to get the correct path, see: https://github.com/eclipse/eclipse.jdt.ls/pull/1900
 		File projectDescriptionFile = FileUtil.toPath(projectDescription.getLocationURI()).toFile();

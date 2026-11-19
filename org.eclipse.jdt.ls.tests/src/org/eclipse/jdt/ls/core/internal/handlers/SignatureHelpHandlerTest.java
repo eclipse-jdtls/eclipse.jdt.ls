@@ -1073,7 +1073,7 @@ public class SignatureHelpHandlerTest extends AbstractCompilationUnitBasedTest {
 	@Test
 	public void testSignatureHelp_assertEquals() throws Exception {
 		importProjects("maven/classpathtest");
-		project = WorkspaceHelper.getProject("classpathtest");
+		project = WorkspaceHelper.getProject("test-classpathtest");
 		IJavaProject javaProject = JavaCore.create(project);
 		sourceFolder = javaProject.getPackageFragmentRoot(javaProject.getProject().getFolder("src/test/java"));
 		IPackageFragment pack1 = sourceFolder.createPackageFragment("test1", false, null);

@@ -55,7 +55,7 @@ public class JshGuardrailsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDidSaveDoesNotCorruptTheWorkingCopy() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Save.jsh";
 
 		JshDocumentManager.getInstance().didOpen(uri, "int x = 1;");
@@ -83,7 +83,7 @@ public class JshGuardrailsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testWillSaveWaitUntilReturnsNoEditsForJshFiles() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/WillSave.jsh";
 
 		JshDocumentManager.getInstance().didOpen(uri, "int x = 1;");
@@ -104,7 +104,7 @@ public class JshGuardrailsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testOrganizeImportsReturnsNullForJshFiles() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/OrganizeImports.jsh";
 
 		JshDocumentManager.getInstance().didOpen(uri, "int x = 1;");

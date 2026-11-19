@@ -354,7 +354,7 @@ public class InitHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertTrue(watchers.get(8).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/TestProject/**/src/**"));
 		assertTrue(watchers.get(9).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/gradle/simple-gradle/**/src/**"));
 		assertTrue(watchers.get(10).getGlobPattern().map(Function.identity(), RelativePattern::getPattern).endsWith("/org.eclipse.jdt.ls.tests/target/workingProjects/maven/salut/**/src/**"));
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut");
 		String location = project.getLocation().toString();
 		IJavaProject javaProject = JavaCore.create(project);
 		// for test purposes only

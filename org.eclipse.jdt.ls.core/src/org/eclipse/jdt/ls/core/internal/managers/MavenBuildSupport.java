@@ -99,7 +99,7 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	public void collectProjects(Collection<IProject> projects, IProject project, IProgressMonitor monitor) {
-		if (!project.isOpen() || !ProjectUtils.isMavenProject(project)) {
+		if (!project.isOpen() || !ProjectUtils.isMavenProject(project) || projects.contains(project)) {
 			return;
 		}
 		projects.add(project);
@@ -107,9 +107,9 @@ public class MavenBuildSupport implements IBuildSupport {
 		if (projectFacade != null && "pom".equals(projectFacade.getPackaging())) {
 			List<String> modules = projectFacade.getMavenProjectModules();
 			for (String module : modules) {
-				IPath pomPath = ResourcesPlugin.getWorkspace().getRoot().getFullPath().append(module).append("pom.xml");
-				IFile pom = ResourcesPlugin.getWorkspace().getRoot().getFile(pomPath);
-				if (pom.exists()) {
+				IPath pomPath = projectFacade.getPom().getLocation().removeLastSegments(1).append(module).append("pom.xml");
+				IFile pom = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(pomPath);
+				if (pom != null && pom.exists()) {
 					IProject p = pom.getProject();
 					if (p.isOpen()) {
 						collectProjects(projects, p, monitor);

@@ -96,9 +96,9 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 			javaImportExclusions.add(PROJECT1_PATTERN);
 			List<IProject> projects = importProjects("maven/multi");
 			assertEquals(1, projects.size()); // project 2
-			IProject project1 = WorkspaceHelper.getProject("project1");
+			IProject project1 = WorkspaceHelper.getProject("foo.bar-project1");
 			assertNull(project1);
-			IProject project2 = WorkspaceHelper.getProject("project2");
+			IProject project2 = WorkspaceHelper.getProject("foo.bar-project2");
 			assertIsMavenProject(project2);
 		} finally {
 			javaImportExclusions.remove(PROJECT1_PATTERN);
@@ -129,7 +129,7 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		Job.getJobManager().setProgressProvider(progressManager);
 		monitor = progressManager.getDefaultMonitor();
 		importProjects("maven/salut5");
-		IProject proj = WorkspaceHelper.getProject("proj");
+		IProject proj = WorkspaceHelper.getProject("foo.bar-proj");
 		assertIsMavenProject(proj);
 		assertFalse(progressReporter.isScanned(), "node_modules has been scanned");
 	}
@@ -530,7 +530,6 @@ public class MavenProjectImporterTest extends AbstractMavenBasedTest {
 		importProjects("maven/multimodule-same-artifacts");
 		IProject[] projects = ProjectUtils.getAllProjects(false);
 		assertEquals(4, projects.length); // three projects & parent module
-		// See MavenProjectImporter.DUPLICATE_ARTIFACT_TEMPLATE
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.one-my-app")));
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.two-my-app")));
 		assertTrue(Arrays.stream(projects).anyMatch(p -> p.getName().equals("com.example.three-my-app")));

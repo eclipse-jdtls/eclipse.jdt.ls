@@ -42,7 +42,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			importProjects(folders);
 			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
-			assertNotNull(WorkspaceHelper.getProject("salut"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-salut"));
 		}
 		// simulate a new start with a different set of projects
 		{
@@ -51,9 +51,9 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 
 			assertEquals(3, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
-			assertNull(WorkspaceHelper.getProject("salut"));
-			assertNotNull(WorkspaceHelper.getProject("project1"));
-			assertNotNull(WorkspaceHelper.getProject("project2"));
+			assertNull(WorkspaceHelper.getProject("foo.bar-salut"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-project1"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-project2"));
 		}
 	}
 
@@ -64,7 +64,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 			importProjects(folders);
 			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
-			assertNotNull(WorkspaceHelper.getProject("salut"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-salut"));
 		}
 		{
 			// add a folder that contains 2 projects
@@ -74,9 +74,9 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 
 			assertEquals(3, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
-			assertNull(WorkspaceHelper.getProject("salut"));
-			assertNotNull(WorkspaceHelper.getProject("project1"));
-			assertNotNull(WorkspaceHelper.getProject("project2"));
+			assertNull(WorkspaceHelper.getProject("foo.bar-salut"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-project1"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-project2"));
 		}
 		{
 			// add a folder that existed before
@@ -87,9 +87,9 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 
 			assertEquals(2, WorkspaceHelper.getAllProjects().size());
 			assertNotNull(WorkspaceHelper.getProject("hello"));
-			assertNotNull(WorkspaceHelper.getProject("salut"));
-			assertNull(WorkspaceHelper.getProject("project1"));
-			assertNull(WorkspaceHelper.getProject("project2"));
+			assertNotNull(WorkspaceHelper.getProject("foo.bar-salut"));
+			assertNull(WorkspaceHelper.getProject("foo.bar-project1"));
+			assertNull(WorkspaceHelper.getProject("foo.bar-project2"));
 		}
 		{
 			// add a gradle folder
@@ -100,7 +100,7 @@ public class MultiRootTest extends AbstractProjectsManagerBasedTest {
 
 			assertEquals(1, WorkspaceHelper.getAllProjects().size());
 			assertNull(WorkspaceHelper.getProject("hello"));
-			assertNull(WorkspaceHelper.getProject("salut"));
+			assertNull(WorkspaceHelper.getProject("foo.bar-salut"));
 			assertNotNull(WorkspaceHelper.getProject("simple-gradle"));
 		}
 	}

@@ -218,7 +218,9 @@ public class JavaDocImageExtractionTest extends AbstractMavenBasedTest {
 
 	public void setupMockXProject(String projectTypeFolderName, String projectFolderName, String... classpathNames) throws Exception {
 		importProjects(projectTypeFolderName + "/" + projectFolderName);
-		project = WorkspaceHelper.getProject(projectFolderName);
+		String projectName = "maven".equals(projectTypeFolderName) ? "foo.bar-" + projectFolderName : projectFolderName;
+		project = WorkspaceHelper.getProject(projectName);
+		assertNotNull(project);
 
 		if (classpathNames != null) {
 			for (String classpathName : classpathNames) {

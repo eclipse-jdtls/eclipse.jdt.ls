@@ -32,7 +32,7 @@ public class FullyQualifiedNameCommandTest extends AbstractInvisibleProjectBased
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/salut");
-		fJProject = WorkspaceHelper.getProject("salut");
+		fJProject = WorkspaceHelper.getProject("foo.bar-salut");
 		fCommand = new FullyQualifiedNameCommand();
 	}
 

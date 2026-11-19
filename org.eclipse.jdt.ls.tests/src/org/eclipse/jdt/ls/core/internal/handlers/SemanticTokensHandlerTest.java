@@ -48,13 +48,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IJavaProject semanticTokensProject;
 	private IPackageFragment fooPackage;
-	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsemantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
+	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dorg.example-semantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
 	private String moduleInfoUri;
 
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/semantic-tokens");
-		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("semantic-tokens"));
+		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("org.example-semantic-tokens"));
 		setOptions();
 
 		IPackageFragmentRoot root = semanticTokensProject.getPackageFragmentRoot(

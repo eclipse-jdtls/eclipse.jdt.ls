@@ -58,7 +58,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testMain() throws Exception {
-		IProject project = importMavenProject("classpathtest");
+		IProject project = importMavenProject("classpathtest", "test");
 		IJavaProject javaProject = JavaCore.create(project);
 		IType type = javaProject.findType("main.App");
 		ICompilationUnit cu = type.getCompilationUnit();
@@ -71,7 +71,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void testTest() throws Exception {
-		IProject project = importMavenProject("classpathtest");
+		IProject project = importMavenProject("classpathtest", "test");
 		IJavaProject javaProject = JavaCore.create(project);
 		IType type = javaProject.findType("test.AppTest");
 		ICompilationUnit cu = type.getCompilationUnit();
@@ -84,7 +84,7 @@ public class MavenClasspathTest extends AbstractMavenBasedTest {
 
 	@Test
 	public void typemismatchTest() throws Exception {
-		IProject project = importMavenProject("typemismatch");
+		IProject project = importMavenProject("typemismatch", "org.sample");
 		IJavaProject javaProject = JavaCore.create(project);
 		IType type = javaProject.findType("test.Test");
 		ICompilationUnit cu = type.getCompilationUnit();

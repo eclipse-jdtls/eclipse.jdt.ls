@@ -50,7 +50,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testOpenChangeCloseLifecycle() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Scratch.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -93,7 +93,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDidChangeWithoutPriorDidOpenEstablishesTheDocument() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/OutOfOrder.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -111,7 +111,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDuplicateDidOpenDiscardsThePreviousWorkingCopy() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/DuplicateOpen.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -140,7 +140,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testIncrementalRangeBasedChangeIsAppliedLikeARealJavaFile() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Incremental.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -170,7 +170,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testSyntheticTypeNameMatchesFileNameWithMultipleOpenDocuments() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri1 = project.getLocationURI().toString() + "/First.jsh";
 		String uri2 = project.getLocationURI().toString() + "/Second.jsh";
 
@@ -197,7 +197,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testPositionTranslationAcrossMultipleLines() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/MultiLine.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -229,7 +229,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testToOriginalRangeAcrossMultipleLines() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/MultiLineRange.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -254,7 +254,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testToOriginalPositionReturnsNullInsideGeneratedHeader() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/HeaderPosition.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -279,7 +279,7 @@ public class JshDocumentManagerTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testToSyntheticOffsetReturnsNegativeOneForOutOfRangePositionRatherThanThrowing() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/StalePosition.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();

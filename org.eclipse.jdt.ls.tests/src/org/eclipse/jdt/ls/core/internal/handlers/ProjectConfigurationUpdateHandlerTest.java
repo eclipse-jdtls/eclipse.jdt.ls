@@ -40,7 +40,7 @@ public class ProjectConfigurationUpdateHandlerTest extends AbstractProjectsManag
 		ProjectsManager pm = mock(ProjectsManager.class);
 		when(pm.updateProjects(any(), anyBoolean())).thenReturn(null);
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
-		IProject project = WorkspaceHelper.getProject("multimodule");
+		IProject project = WorkspaceHelper.getProject("foo.bar-multimodule");
 		handler.updateConfiguration(new TextDocumentIdentifier(project.getLocationURI().toString()));
 		verify(pm, times(1)).updateProjects(any(), eq(true));
 	}
@@ -52,9 +52,9 @@ public class ProjectConfigurationUpdateHandlerTest extends AbstractProjectsManag
 		when(pm.updateProjects(any(), anyBoolean())).thenReturn(null);
 		ProjectConfigurationUpdateHandler handler = new ProjectConfigurationUpdateHandler(pm);
 		List<TextDocumentIdentifier> list = new ArrayList<>();
-		IProject project = WorkspaceHelper.getProject("module1");
+		IProject project = WorkspaceHelper.getProject("foo.bar-module1");
 		list.add(new TextDocumentIdentifier(project.getLocationURI().toString()));
-		project = WorkspaceHelper.getProject("module2");
+		project = WorkspaceHelper.getProject("foo.bar-module2");
 		list.add(new TextDocumentIdentifier(project.getLocationURI().toString()));
 
 		ProjectConfigurationsUpdateParam param = new ProjectConfigurationsUpdateParam(list);

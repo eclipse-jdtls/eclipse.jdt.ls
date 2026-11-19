@@ -81,7 +81,7 @@ public class ImportOrganizeTest extends AbstractMavenBasedTest {
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/quickstart");
-		project = WorkspaceHelper.getProject("quickstart");
+		project = WorkspaceHelper.getProject("test-quickstart");
 		javaProject = JavaCore.create(project);
 		Hashtable<String, String> options= TestOptions.getDefaultOptions();
 		options.put(DefaultCodeFormatterConstants.FORMATTER_NUMBER_OF_EMPTY_LINES_TO_PRESERVE, String.valueOf(99));

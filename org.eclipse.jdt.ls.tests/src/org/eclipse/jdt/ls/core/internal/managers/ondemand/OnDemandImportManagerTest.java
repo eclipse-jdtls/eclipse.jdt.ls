@@ -57,7 +57,7 @@ public class OnDemandImportManagerTest extends AbstractProjectsManagerBasedTest 
 		List<IProject> projects = importProjects("maven/salut");
 		assertFalse(projects.isEmpty());
 		IProject project = projects.stream()
-				.filter(p -> p.getName().equals("salut"))
+				.filter(p -> p.getName().equals("foo.bar-salut"))
 				.findFirst()
 				.orElse(projects.get(0));
 		assertTrue(project.isOpen());
@@ -78,7 +78,7 @@ public class OnDemandImportManagerTest extends AbstractProjectsManagerBasedTest 
 		List<IProject> projects = importProjects("maven/salut");
 		assertFalse(projects.isEmpty());
 		IProject project = projects.stream()
-				.filter(p -> p.getName().equals("salut"))
+				.filter(p -> p.getName().equals("foo.bar-salut"))
 				.findFirst()
 				.orElse(projects.get(0));
 		assertTrue(project.isOpen());
@@ -97,7 +97,7 @@ public class OnDemandImportManagerTest extends AbstractProjectsManagerBasedTest 
 		List<IProject> projects = importProjects("maven/salut");
 		assertFalse(projects.isEmpty());
 		IProject project = projects.stream()
-				.filter(p -> p.getName().equals("salut"))
+				.filter(p -> p.getName().equals("foo.bar-salut"))
 				.findFirst()
 				.orElse(projects.get(0));
 		assertTrue(project.isOpen());
@@ -115,7 +115,7 @@ public class OnDemandImportManagerTest extends AbstractProjectsManagerBasedTest 
 		List<IProject> projects = importProjects("maven/salut");
 		assertFalse(projects.isEmpty());
 		IProject project = projects.stream()
-				.filter(p -> p.getName().equals("salut"))
+				.filter(p -> p.getName().equals("foo.bar-salut"))
 				.findFirst()
 				.orElse(projects.get(0));
 		assertTrue(project.isAccessible());
