@@ -30,7 +30,7 @@ public class CreateModuleInfoHandlerTest extends AbstractProjectsManagerBasedTes
 	@Test
 	public void testCreateModuleInfo() throws Exception {
 		importProjects("maven/modular-project2");
-		IProject project = WorkspaceHelper.getProject("modular-project2");
+		IProject project = WorkspaceHelper.getProject("com.example-modular-project2");
 
 		String moduleInfoUri = CreateModuleInfoHandler.createModuleInfo(project.getLocationURI().toString(), new NullProgressMonitor());
 

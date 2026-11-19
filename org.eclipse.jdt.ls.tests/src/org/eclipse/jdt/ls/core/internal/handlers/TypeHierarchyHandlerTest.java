@@ -40,7 +40,7 @@ public class TypeHierarchyHandlerTest extends AbstractInvisibleProjectBasedTest 
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/salut");
-		fJProject = WorkspaceHelper.getProject("salut");
+		fJProject = WorkspaceHelper.getProject("foo.bar-salut");
 		fHandler = new TypeHierarchyHandler();
 	}
 
@@ -115,7 +115,7 @@ public class TypeHierarchyHandlerTest extends AbstractInvisibleProjectBasedTest 
 	@Test
 	public void testMethodHierarchy() throws Exception {
 		importProjects("maven/type-hierarchy");
-		IProject project = WorkspaceHelper.getProject("type-hierarchy");
+		IProject project = WorkspaceHelper.getProject("type-hierarchy-type-hierarchy");
 		String uriString = project.getFile("src/main/java/org/example/Zero.java").getLocationURI().toString();
 		TextDocumentIdentifier identifier = new TextDocumentIdentifier(uriString);
 		Position position = new Position(3, 17); // public void f[o]o()

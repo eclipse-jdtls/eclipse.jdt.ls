@@ -44,7 +44,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Completion.jsh";
 
 		String content = "org.apache.commons.lang3.StringUtils.isBla";
@@ -92,7 +92,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testSpaceTriggeredCompletionReturnsNoProposals() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/SpaceTrigger.jsh";
 
 		String content = "org.apache.commons.lang3.StringUtils.isBlank(\"x\"); ";
@@ -124,7 +124,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/CompletionSecondLine.jsh";
 
 		String line0 = "int x = 1;";
@@ -177,7 +177,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/CancelledResolve.jsh";
 
 		String line0 = "int x = 1;";
@@ -235,7 +235,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("editRange")).thenReturn(true);
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/ItemDefaults.jsh";
 
 		String line0 = "int x = 1;";
@@ -276,7 +276,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 		when(preferenceManager.getClientPreferences().isResolveAdditionalTextEditsSupport()).thenReturn(true);
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/ImportCompletion.jsh";
 
 		// Unqualified reference to a type that isn't covered by JShell's default imports, on a
@@ -328,7 +328,7 @@ public class JshCompletionTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testCompletionOnIncompleteTrailingStatement() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Incomplete.jsh";
 
 		String line1 = "System.out.";

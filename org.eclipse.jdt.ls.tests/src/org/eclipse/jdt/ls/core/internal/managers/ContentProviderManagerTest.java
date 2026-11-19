@@ -69,7 +69,7 @@ public class ContentProviderManagerTest extends AbstractProjectsManagerBasedTest
 	@BeforeEach
 	public void createURIs() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		sourcelessURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "java.math.BigDecimal"));
 		sourcelessClassFile = JDTUtils.resolveClassFile(sourcelessURI);
 		sourceAvailableURI = JDTUtils.toURI(ClassFileUtil.getURI(project, "org.apache.commons.lang3.text.WordUtils"));

@@ -129,7 +129,7 @@ public class CodeActionResolveHandlerTest extends AbstractCompilationUnitBasedTe
 	public void testResolveCodeAction_AnnotationQuickFixes() throws Exception {
 		when(preferenceManager.getClientPreferences().isResolveCodeActionSupported()).thenReturn(true);
 		importProjects("maven/salut4");
-		IProject proj = WorkspaceHelper.getProject("salut4");
+		IProject proj = WorkspaceHelper.getProject("foo.bar-salut4");
 		IJavaProject javaProject = JavaCore.create(proj);
 		assertTrue(javaProject.exists());
 		IType type = javaProject.findType("org.sample.MyTest");

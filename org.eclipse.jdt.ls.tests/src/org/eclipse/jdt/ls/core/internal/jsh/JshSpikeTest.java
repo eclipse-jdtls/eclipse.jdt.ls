@@ -43,7 +43,7 @@ public class JshSpikeTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testCompletionOnSyntheticWorkingCopyUsesRealProjectClasspath() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		IJavaProject javaProject = JavaCore.create(project);
 
 		// Deliberately not written to disk anywhere: this stands in for the

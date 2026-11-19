@@ -63,7 +63,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetProjectNatureIds() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uriString = project.getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList("org.eclipse.jdt.ls.core.natureIds");
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -76,7 +76,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetProjectSettingsForMavenJava7() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uriString = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -89,7 +89,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetProjectSettingsForMavenJava8() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList("org.eclipse.jdt.core.compiler.compliance", "org.eclipse.jdt.core.compiler.source");
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -102,7 +102,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetProjectVMInstallation() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.VM_LOCATION);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -167,7 +167,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathEntries() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -186,7 +186,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathEntriesWithNonExistLib() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		IJavaProject javaProject = JavaCore.create(project);
 		List<IClasspathEntry> classpathEntries = Arrays.stream(javaProject.getRawClasspath())
 				.collect(Collectors.toList());
@@ -208,7 +208,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testUpdateClasspathEntries() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(ProjectCommand.CLASSPATH_ENTRIES);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -228,7 +228,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testUpdateSourcePaths() throws Exception {
 		importProjects("maven/salut2");
-		IProject project = WorkspaceHelper.getProject("salut2");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut2");
 		String uriString = project.getFile("src/main/java/foo/Bar.java").getLocationURI().toString();
 
 		Map<String, String> sourceAndOutput = new HashMap<>();
@@ -247,7 +247,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetMavenProjectFromUri() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String javaSource = project.getFile("src/main/java/Foo.java").getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
 		assertNotNull(javaProject, "Can get project from java file uri");
@@ -260,14 +260,14 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetMultiModuleMavenProjectFromUri() throws Exception {
 		importProjects("maven/multimodule3");
-		IProject project = WorkspaceHelper.getProject("this_is_a_very_long_module_name");
+		IProject project = WorkspaceHelper.getProject("org.eclipse-this_is_a_very_long_module_name");
 		String javaSource = project.getFile("src/main/org/eclipse/App.java").getLocationURI().toString();
 		IJavaProject javaProject = ProjectCommand.getJavaProjectFromUri(javaSource);
-		assertEquals("this_is_a_very_long_module_name", javaProject.getElementName());
+		assertEquals(project.getName(), javaProject.getElementName());
 
 		String projectUri = project.getLocationURI().toString();
 		javaProject = ProjectCommand.getJavaProjectFromUri(projectUri);
-		assertEquals("this_is_a_very_long_module_name", javaProject.getElementName());
+		assertEquals(project.getName(), javaProject.getElementName());
 	}
 
 	@Test
@@ -281,7 +281,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathsForMaven() throws Exception {
 		importProjects("maven/classpathtest");
-		IProject project = WorkspaceHelper.getProject("classpathtest");
+		IProject project = WorkspaceHelper.getProject("test-classpathtest");
 		String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
 		ClasspathOptions options = new ClasspathOptions();
 		options.scope = "runtime";
@@ -303,7 +303,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathsFromMapArgument() throws Exception {
 		importProjects("maven/classpathtest");
-		IProject project = WorkspaceHelper.getProject("classpathtest");
+		IProject project = WorkspaceHelper.getProject("test-classpathtest");
 		String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
 
 		// Mirror what a client sends over JSON-RPC, e.g. { "scope": "runtime" }, which
@@ -322,7 +322,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathsForMavenWhenUpdating() throws Exception {
 		importProjects("maven/classpathtest");
-		IProject project = WorkspaceHelper.getProject("classpathtest");
+		IProject project = WorkspaceHelper.getProject("test-classpathtest");
 		String uriString = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
 		ClasspathOptions options = new ClasspathOptions();
 		options.scope = "test";
@@ -365,7 +365,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testGetClasspathsForMavenModular() throws Exception {
 		importProjects("maven/modular-project");
-		IProject project = WorkspaceHelper.getProject("modular-project");
+		IProject project = WorkspaceHelper.getProject("com.modular.test-modular-project");
 		String uriString = project.getFile("src/main/java/modular/Main.java").getLocationURI().toString();
 		ClasspathOptions options = new ClasspathOptions();
 		options.scope = "test";
@@ -394,7 +394,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testIsTestFileForMaven() throws Exception {
 		importProjects("maven/classpathtest");
-		IProject project = WorkspaceHelper.getProject("classpathtest");
+		IProject project = WorkspaceHelper.getProject("test-classpathtest");
 		String srcUri = project.getFile("src/main/java/main/App.java").getLocationURI().toString();
 		String testUri = project.getFile("src/test/java/test/AppTest.java").getLocationURI().toString();
 		assertFalse(ProjectCommand.isTestFile(srcUri));
@@ -423,7 +423,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testResolveClassSymbol() throws Exception {
 		importProjects("maven/salut-java11");
-		IProject project = WorkspaceHelper.getProject("salut-java11");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut-java11");
 
 		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.apache.commons.lang3.StringUtils");
 		SymbolInformation resolvedSymbol = ProjectCommand.resolveWorkspaceSymbol(requestedSymbol);
@@ -433,7 +433,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testResolveNestedClassSymbol() throws Exception {
 		importProjects("maven/salut-java11");
-		IProject project = WorkspaceHelper.getProject("salut-java11");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut-java11");
 
 		SymbolInformation requestedSymbol = buildClassSymbol(project, "org.sample.Bar");
 		requestedSymbol.setName("MyClass");
@@ -444,7 +444,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testUpdateProjectJdk() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		List<VmInstall> allVmInstalls = VmCommand.getAllVmInstalls();
 		VmInstall vmInstall = allVmInstalls.stream()
 				.filter(vm -> !vm.typeName.contains("org.eclipse.jdt.ls.core.internal.TestVMType"))
@@ -462,7 +462,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testUpdateInvalidProjectJdk() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		JdkUpdateResult updateProjectJdk = ProjectCommand.updateProjectJdk(
 			project.getLocationURI().toString(),
 			"invalid/path",
@@ -476,7 +476,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 		final String KEY = "org.eclipse.m2e.core.selectedProfiles";
 
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uriString = project.getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(KEY);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);
@@ -494,7 +494,7 @@ public class ProjectCommandTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testUpdateProjectOptions() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uriString = project.getLocationURI().toString();
 		List<String> settingKeys = Arrays.asList(JavaCore.COMPILER_CODEGEN_METHOD_PARAMETERS_ATTR);
 		Map<String, Object> options = ProjectCommand.getProjectSettings(uriString, settingKeys);

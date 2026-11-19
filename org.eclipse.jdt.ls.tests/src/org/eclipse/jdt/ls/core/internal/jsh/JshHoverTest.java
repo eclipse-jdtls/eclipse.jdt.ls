@@ -34,7 +34,7 @@ public class JshHoverTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverResolvesAgainstRealClasspath() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Hover.jsh";
 
 		String content = "org.apache.commons.lang3.StringUtils.isBlank(\"\");";
@@ -68,7 +68,7 @@ public class JshHoverTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOnSecondLineResolvesToOriginalLine() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/HoverSecondLine.jsh";
 
 		String line0 = "int x = 1;";
@@ -99,7 +99,7 @@ public class JshHoverTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOutsideContentReturnsEmpty() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/HoverEmpty.jsh";
 
 		String content = "int x = 1;";

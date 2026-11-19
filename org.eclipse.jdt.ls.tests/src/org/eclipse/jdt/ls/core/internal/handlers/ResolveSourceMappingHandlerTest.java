@@ -28,28 +28,28 @@ public class ResolveSourceMappingHandlerTest extends AbstractProjectsManagerBase
 
 	@Test
 	public void testResolveSourceUri() {
-		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at quickstart.AppTest.shouldAnswerWithTrue(AppTest.java:10)", Arrays.asList("quickstart2"));
+		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at quickstart.AppTest.shouldAnswerWithTrue(AppTest.java:10)", Arrays.asList("quickstart-quickstart2"));
 		assertTrue(uri.startsWith("file://"));
 		assertTrue(uri.contains("quickstart2/src/test/java/quickstart/AppTest.java"));
 	}
 
 	@Test
 	public void testResolveKotlinDerivedSources() {
-		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at okhttp3.OkHttpClient.<init>(OkHttpClient.kt)", Arrays.asList("quickstart2"));
+		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at okhttp3.OkHttpClient.<init>(OkHttpClient.kt)", Arrays.asList("quickstart-quickstart2"));
 		assertTrue(uri.startsWith("jdt://contents/okhttp-jvm-5.3.2.jar/okhttp3/OkHttpClient.kt"), "Unexpected URI: " + uri);
 		assertTrue(uri.contains("com%5C/squareup%5C/okhttp3%5C/okhttp-jvm%5C/5.3.2%5C/okhttp-jvm-5.3.2.jar"));
 	}
 
 	@Test
 	public void testResolveScalaDerivedSources() {
-		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at akka.actor.Actor.$init$(Actor.scala:492)", Arrays.asList("quickstart2"));
+		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at akka.actor.Actor.$init$(Actor.scala:492)", Arrays.asList("quickstart-quickstart2"));
 		assertTrue(uri.startsWith("jdt://contents/akka-actor_2.13-2.8.8.jar/akka.actor/Actor.scala"), "Unexpected URI: " + uri);
 		assertTrue(uri.contains("com%5C/typesafe%5C/akka%5C/akka-actor_2.13%5C/2.8.8%5C/akka-actor_2.13-2.8.8.jar"));
 	}
 
 	@Test
 	public void testResolveDependencyUri() {
-		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at org.junit.Assert.assertEquals(Assert.java:117)", Arrays.asList("quickstart2"));
+		String uri = ResolveSourceMappingHandler.resolveStackTraceLocation("at org.junit.Assert.assertEquals(Assert.java:117)", Arrays.asList("quickstart-quickstart2"));
 		assertTrue(uri.startsWith("jdt://contents/junit-4.13.jar/org.junit/Assert.java"));
 		assertTrue(uri.contains(
 				"junit%5C/junit%5C/4.13%5C/junit-4.13.jar=/maven.pomderived=/true=/=/test=/true=/=/maven.groupId=/junit=/=/maven.artifactId=/junit=/=/maven.version=/4.13=/=/maven.scope=/test=/=/maven.pomderived=/true=/%3Corg.junit%28Assert.class"));

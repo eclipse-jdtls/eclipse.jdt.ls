@@ -3410,7 +3410,7 @@ public class CompletionHandlerTest extends AbstractCompilationUnitBasedTest {
 		IProject project = null;
 		ICompilationUnit unit = null;
 		try {
-			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose");
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose-aspose");
 			IJavaProject javaProject = JavaCore.create(project);
 			unit = (ICompilationUnit) javaProject.findElement(new Path("org/sample/TestJavadoc.java"));
 			unit.becomeWorkingCopy(null);

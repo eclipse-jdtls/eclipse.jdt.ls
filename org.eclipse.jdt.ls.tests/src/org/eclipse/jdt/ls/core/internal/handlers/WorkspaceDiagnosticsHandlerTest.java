@@ -411,7 +411,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void testProjectConfigurationIsNotUpToDate() throws Exception {
 		//import project
 		importProjects("maven/salut");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("1.8", "11"));
@@ -442,7 +442,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	@Test
 	public void testAnnotation() throws Exception {
 		importProjects("maven/salut4");
-		IProject proj = WorkspaceHelper.getProject("salut4");
+		IProject proj = WorkspaceHelper.getProject("foo.bar-salut4");
 		IJavaProject javaProject = JavaCore.create(proj);
 		assertTrue(javaProject.exists());
 		IType type = javaProject.findType("org.sample.MyTest");
@@ -460,7 +460,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	@Test
 	public void testMissingDependencies() throws Exception {
 		importProjects("maven/salut");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
 		ResourcesPlugin.getWorkspace().build(IncrementalProjectBuilder.CLEAN_BUILD, monitor);
@@ -533,7 +533,7 @@ public class WorkspaceDiagnosticsHandlerTest extends AbstractProjectsManagerBase
 	public void testResetPomDiagnostics() throws Exception {
 		//import project
 		importProjects("maven/multimodule");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-multimodule");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
 		//@formatter:off

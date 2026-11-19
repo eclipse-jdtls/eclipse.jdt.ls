@@ -49,7 +49,7 @@ public class NavigateToDefinitionHandlerTest extends AbstractProjectsManagerBase
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, monitor);

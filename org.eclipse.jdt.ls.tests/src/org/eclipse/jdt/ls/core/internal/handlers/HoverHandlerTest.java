@@ -202,7 +202,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		IProject project = null;
 		ICompilationUnit unit = null;
 		try {
-			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose");
+			project = ResourcesPlugin.getWorkspace().getRoot().getProject("aspose-aspose");
 			IJavaProject javaProject = JavaCore.create(project);
 			IType type = javaProject.findType("org.sample.TestJavadoc");
 			unit = type.getCompilationUnit();
@@ -336,7 +336,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOnPackageWithJavadoc() throws Exception {
 		importProjects("maven/salut2");
-		project = WorkspaceHelper.getProject("salut2");
+		project = WorkspaceHelper.getProject("foo.bar-salut2");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on the org.apache.commons import
@@ -396,7 +396,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 		assertNotNull(commonPrimitivesJdoc, "Unable to locate  commons-primitives-1.0-javadoc.jar");
 
 		importProjects("maven/attached-javadoc");
-		project = WorkspaceHelper.getProject("attached-javadoc");
+		project = WorkspaceHelper.getProject("foo.bar-attached-javadoc");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on org.apache.commons.collections.primitives.ShortCollections which has no source but an attached javadoc
@@ -417,7 +417,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOnJavadocWithValueTag() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		String payload = createHoverRequest("src/main/java/java/Foo2.java", 12, 30);
@@ -436,7 +436,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOnJavadocWithLinkToMethodInClass() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		String payload = createHoverRequest("src/main/java/java/Foo2.java", 18, 25);
@@ -455,7 +455,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverOnJavadocWithLinkToMethodInOtherClass() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 
 		//given
@@ -473,14 +473,14 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 		String source = hover.getContents().getLeft().get(2).getLeft();
 		//Project source should link to project file
-		assertMatches("Source: \\*\\[salut\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#30\\)\\*", source);
+		assertMatches("Source: \\*\\[foo.bar-salut\\]\\(file:/.*/salut/src/main/java/java/Foo2.java#30\\)\\*", source);
 
 	}
 
 	@Test
 	public void testHoverOnJavadocWithMultipleDifferentTypesOfTags() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		String payload = createHoverRequest("src/main/java/java/Foo2.java", 44, 25);
@@ -524,7 +524,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testHoverWhenLinkDoesNotExist() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 
 		//given
@@ -926,7 +926,7 @@ public class HoverHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private void testClassContentSupport(String expectedJavadoc) throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		handler = new HoverHandler(preferenceManager);
 		//given
 		//Hovers on name.toUpperCase()
