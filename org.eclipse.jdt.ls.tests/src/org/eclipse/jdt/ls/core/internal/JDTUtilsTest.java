@@ -46,6 +46,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.junit.jupiter.api.Test;
 
@@ -278,6 +279,60 @@ public class JDTUtilsTest extends AbstractWorkspaceTest {
 
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(false);
 			assertFalse(JDTUtils.useJshHandling("Scratch.jsh"), "Disabled, a .jsh file should no longer use jsh handling");
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(original);
+		}
+	}
+
+	/**
+	 * Regression test: an already-open .jsh document must keep being treated as one for the rest of
+	 * its lifecycle, even if java.jshell.enabled is disabled afterwards - isJshDocument (what every
+	 * routing decision other than a new open should check) must reflect whether JshDocumentManager
+	 * is actually tracking the URI, not re-evaluate the live preference. Before this fix,
+	 * didChange/didSave would have bypassed JshDocumentManager entirely and didClose would have
+	 * leaked its working copy forever, the moment the preference flipped off mid-session.
+	 */
+	@Test
+	public void testIsJshDocumentReflectsOpenStateNotTheLivePreference() {
+		String uri = "file:///does-not-exist/JDTUtilsTest_" + System.nanoTime() + "/Scratch.jsh";
+		boolean original = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(true);
+			assertFalse(JDTUtils.isJshDocument(uri), "Not open yet, so not a tracked .jsh document");
+
+			JshDocumentManager.getInstance().didOpen(uri, "int x = 1;");
+			try {
+				assertTrue(JDTUtils.isJshDocument(uri), "Opened while enabled, so it should be tracked");
+
+				JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(false);
+				assertTrue(JDTUtils.isJshDocument(uri),
+						"Disabling the preference mid-session must not affect an already-open document - it should stay tracked until closed");
+			} finally {
+				JshDocumentManager.getInstance().didClose(uri);
+			}
+			assertFalse(JDTUtils.isJshDocument(uri), "Closed, so no longer tracked - the routing decision must be cleared on close");
+		} finally {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(original);
+		}
+	}
+
+	/**
+	 * The reverse transition: a document that opened while the preference was disabled (so
+	 * JshDocumentManager never saw a didOpen for it) must not retroactively become a tracked .jsh
+	 * document just because the preference is enabled again later - only a fresh open does that.
+	 * Without this, a later didChange for such a URI would have been routed to
+	 * JshDocumentManager.didChange, which has no original document text to apply the change against.
+	 */
+	@Test
+	public void testIsJshDocumentDoesNotRetroactivelyTrackAUriOpenedWhileDisabled() {
+		String uri = "file:///does-not-exist/JDTUtilsTest_" + System.nanoTime() + "/NeverOpened.jsh";
+		boolean original = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
+		try {
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(false);
+			assertFalse(JDTUtils.useJshHandling(uri), "Disabled at open time, so didOpen would not route this URI to JshDocumentManager");
+
+			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(true);
+			assertFalse(JDTUtils.isJshDocument(uri), "Never actually opened as a .jsh document, so re-enabling the preference must not retroactively track it");
 		} finally {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJshellEnabled(original);
 		}

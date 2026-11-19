@@ -163,10 +163,13 @@ public class JshDocumentManager {
 
 	/**
 	 * @return the current synthetic document for the given URI, or {@code null} if it isn't open
-	 *         (or isn't a .jsh document at all)
+	 *         (or isn't a .jsh document at all). {@code null} itself is a valid, non-throwing input
+	 *         (returns {@code null}) - {@link ConcurrentHashMap} doesn't tolerate a null key, and
+	 *         callers like {@code JDTUtils.resolveCompilationUnit}/{@code isJshDocument} are
+	 *         sometimes invoked with a null or not-yet-validated URI.
 	 */
 	public JshDocument get(String uri) {
-		return documents.get(uri);
+		return uri == null ? null : documents.get(uri);
 	}
 
 	/**

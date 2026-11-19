@@ -113,7 +113,7 @@ public class CompletionResolveHandler {
 			return null;
 		}
 		String uri = completionResponse.getCommonData(DATA_FIELD_URI);
-		if (!JDTUtils.useJshHandling(uri)) {
+		if (!JDTUtils.isJshDocument(uri)) {
 			return null;
 		}
 		return JshDocumentManager.getInstance().get(uri);
