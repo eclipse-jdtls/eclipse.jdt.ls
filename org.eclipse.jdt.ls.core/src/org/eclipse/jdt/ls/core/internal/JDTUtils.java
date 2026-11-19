@@ -185,9 +185,9 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
-		if (useJshHandling(uriString)) {
-			JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
-			return document == null ? null : document.getWorkingCopy();
+		JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
+		if (document != null) {
+			return document.getWorkingCopy();
 		}
 		return resolveCompilationUnit(toURI(uriString));
 	}
@@ -473,7 +473,7 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
-		if (useJshHandling(uriString)) {
+		if (isJshDocument(uriString)) {
 			return resolveCompilationUnit(uriString);
 		}
 		URI uri = toURI(uriString);
@@ -721,23 +721,48 @@ public final class JDTUtils {
 	}
 
 	/**
-	 * The gate every .jsh routing decision should actually check, instead of {@link
-	 * #isJshFile(String)} directly - {@code isJshFile} stays a pure, context-free filename check (so
-	 * it keeps meaning exactly "is this a .jsh file", usable wherever that alone matters), while this
-	 * additionally respects the {@code java.jshell.enabled} preference, so turning that preference off
-	 * makes every .jsh-aware code path fall through to treating the file as an ordinary, unrecognized
-	 * file - the same as if the feature didn't exist. Disabling mid-session is lazy: this only affects
-	 * new routing decisions (e.g. a new didOpen), not a .jsh document already open and being handled.
+	 * The one-time decision gate for whether a newly-opened document should be routed to .jsh
+	 * handling at all - {@code isJshFile} stays a pure, context-free filename check (so it keeps
+	 * meaning exactly "is this a .jsh file", usable wherever that alone matters), while this
+	 * additionally respects the {@code java.jshell.enabled} preference. <strong>Only
+	 * {@code BaseDocumentLifeCycleHandler.didOpen} should call this</strong> - every other .jsh-aware
+	 * code path (didChange/didClose/didSave, completion, hover, semantic tokens, save-action/
+	 * organize-imports guards) must call {@link #isJshDocument(String)} instead, not this method
+	 * again, or the preference would be re-evaluated on every request instead of being fixed at open
+	 * time - see that method's javadoc for why that distinction matters.
 	 *
 	 * @param uriOrFileName either a full document URI or a plain file name, see {@link
 	 *            #isJshFile(String)}
-	 * @return whether .jsh-specific handling should be used for the given URI/file name
+	 * @return whether a new open of the given URI/file name should be routed to .jsh handling
 	 */
 	public static boolean useJshHandling(String uriOrFileName) {
 		return isJshFile(uriOrFileName)
 				&& JavaLanguageServerPlugin.getPreferencesManager() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences() != null
 				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
+	}
+
+	/**
+	 * The gate every .jsh routing decision <strong>other than a new open</strong> should actually
+	 * check - whether the given URI is a document {@link JshDocumentManager} is currently tracking,
+	 * i.e. one that was open (and routed to .jsh handling, via {@link #useJshHandling(String)}) at
+	 * the time of its {@code didOpen}. Deliberately does not re-check the {@code java.jshell.enabled}
+	 * preference itself: once a document is open, whether it keeps getting .jsh treatment must
+	 * depend only on how it was opened, not on the preference's current value, or two real bugs
+	 * follow immediately - disabling the preference mid-session would silently orphan an
+	 * already-open .jsh document (didChange/didSave routed away from its working copy, didClose
+	 * never disposing it, every feature request failing to find it), and enabling the preference
+	 * mid-session would route a change event for a document that opened while disabled - which
+	 * {@link JshDocumentManager} never saw a {@code didOpen} for - into {@code didChange}, which has
+	 * no original document text to apply the change against. Disabling mid-session is lazy exactly
+	 * because of this: an already-open document keeps working until it's closed and (if the
+	 * preference is enabled again by then) reopened.
+	 *
+	 * @param uri the document URI
+	 * @return whether {@code uri} is currently open and tracked as a .jsh document
+	 */
+	public static boolean isJshDocument(String uri) {
+		return JshDocumentManager.getInstance().get(uri) != null;
 	}
 
 	/**
