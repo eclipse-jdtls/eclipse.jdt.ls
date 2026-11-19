@@ -99,7 +99,7 @@ public class MavenBuildSupport implements IBuildSupport {
 	}
 
 	public void collectProjects(Collection<IProject> projects, IProject project, IProgressMonitor monitor) {
-		if (!project.isOpen() || !ProjectUtils.isMavenProject(project)) {
+		if (!project.isOpen() || !ProjectUtils.isMavenProject(project) || projects.contains(project)) {
 			return;
 		}
 		projects.add(project);
