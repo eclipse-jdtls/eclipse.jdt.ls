@@ -36,6 +36,11 @@ public enum TokenType {
 	KEYWORD(SemanticTokenTypes.Keyword),
 	ANNOTATION(SemanticTokenTypes.Decorator),
 
+	COMMENT(SemanticTokenTypes.Comment),
+	STRING(SemanticTokenTypes.String),
+	NUMBER(SemanticTokenTypes.Number),
+	OPERATOR(SemanticTokenTypes.Operator),
+
 	// Custom token types
 	ANNOTATION_MEMBER("annotationMember"),
 	RECORD("record"),
