@@ -15,10 +15,12 @@ package org.eclipse.jdt.ls.core.internal.handlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +29,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
@@ -37,7 +40,10 @@ import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaClientConnection;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
+import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
 import org.eclipse.jdt.ls.core.internal.preferences.ClientPreferences;
+import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.FileChangeType;
 import org.eclipse.lsp4j.FileEvent;
@@ -128,6 +134,53 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 	}
 
 	@Test
+	public void testRevalidateWorkingCopiesOnExternalChange() throws Exception {
+		boolean autoBuilding = ResourcesPlugin.getWorkspace().isAutoBuilding();
+		boolean autobuildEnabled = preferences.isAutobuildEnabled();
+		try {
+			ProjectsManager.setAutoBuilding(false);
+			preferences.setAutobuildEnabled(false);
+			IJavaProject base = newEmptyProject("base");
+			IJavaProject lib = newEmptyProject("lib");
+			IJavaProject app = newEmptyProject("app");
+			addProjectEntry(lib, base, true);
+			addProjectEntry(app, lib, false);
+			IPackageFragment basePack = base.getPackageFragmentRoot(base.getProject().getFolder("src")).createPackageFragment("base", true, null);
+			IPackageFragment libPack = lib.getPackageFragmentRoot(lib.getProject().getFolder("src")).createPackageFragment("lib", true, null);
+			IPackageFragment appPack = app.getPackageFragmentRoot(app.getProject().getFolder("src")).createPackageFragment("app", true, null);
+			String bazContents = "package base;\npublic class Baz extends Bar {}\n";
+			String fooContents = "package lib;\npublic class Foo extends base.Bar {}\n";
+			String appContents = "package app;\npublic class App extends base.Bar {}\n";
+			openDocument(basePack.createCompilationUnit("Baz.java", bazContents, true, null), bazContents, 1);
+			openDocument(libPack.createCompilationUnit("Foo.java", fooContents, true, null), fooContents, 1);
+			openDocument(appPack.createCompilationUnit("App.java", appContents, true, null), appContents, 1);
+			assertEquals(1, getErrors("/Baz.java").size());
+			assertEquals(1, getErrors("/Foo.java").size());
+			assertEquals(1, getErrors("/App.java").size());
+
+			IFile bar = base.getProject().getFile("src/base/Bar.java");
+			String barUri = JDTUtils.getFileURI(bar);
+			WorkspaceEventsHandler eventsHandler = new WorkspaceEventsHandler(projectsManager, javaClient, lifeCycleHandler);
+			Files.writeString(bar.getLocation().toFile().toPath(), "package base;\npublic class Bar {}\n");
+			clientRequests.clear();
+			eventsHandler.handleFileEvents(new FileEvent(barUri, FileChangeType.Created));
+			assertEquals(0, getErrors("/Baz.java").size());
+			assertEquals(0, getErrors("/Foo.java").size());
+			assertEquals(0, getErrors("/App.java").size());
+
+			Files.delete(bar.getLocation().toFile().toPath());
+			clientRequests.clear();
+			eventsHandler.handleFileEvents(new FileEvent(barUri, FileChangeType.Deleted));
+			assertEquals(1, getErrors("/Baz.java").size());
+			assertEquals(1, getErrors("/Foo.java").size());
+			assertEquals(1, getErrors("/App.java").size());
+		} finally {
+			preferences.setAutobuildEnabled(autobuildEnabled);
+			ProjectsManager.setAutoBuilding(autoBuilding);
+		}
+	}
+
+	@Test
 	public void testDeleteProjectFolder() throws Exception {
 		importProjects("maven/multimodule3");
 
@@ -179,6 +232,24 @@ public class WorkspaceEventHandlerTest extends AbstractProjectsManagerBasedTest 
 		textDocument.setVersion(version);
 		openParms.setTextDocument(textDocument);
 		lifeCycleHandler.didOpen(openParms);
+	}
+
+	private void addProjectEntry(IJavaProject project, IJavaProject required, boolean exported) throws Exception {
+		IClasspathEntry[] classpath = Arrays.copyOf(project.getRawClasspath(), project.getRawClasspath().length + 1);
+		classpath[classpath.length - 1] = JavaCore.newProjectEntry(required.getPath(), exported);
+		project.setRawClasspath(classpath, null);
+	}
+
+	private List<Diagnostic> getErrors(String uriSuffix) {
+		List<PublishDiagnosticsParams> diags = getClientRequests("publishDiagnostics");
+		PublishDiagnosticsParams last = null;
+		for (PublishDiagnosticsParams diag : diags) {
+			if (diag.getUri().endsWith(uriSuffix)) {
+				last = diag;
+			}
+		}
+		assertNotNull(last);
+		return last.getDiagnostics().stream().filter(d -> d.getSeverity() == DiagnosticSeverity.Error).toList();
 	}
 
 	private <T> List<T> getClientRequests(String name) {
