@@ -21,9 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.internal.preferences.EclipsePreferences;
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.IJavaProject;
@@ -152,11 +151,14 @@ public class JLSFsUtils {
      * @return The project name
      */
     static String getProjectNameIfLocationIsProjectRoot(IPath location) {
-        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects(IContainer.INCLUDE_HIDDEN);
-        for (IProject project : projects) {
-            IPath projectLocation = project.getLocation();
-            if (Objects.equals(projectLocation, location)) {
-                return project.getName();
+        String[] projectNames = METADATA_FOLDER_PATH.toFile().list();
+        if (projectNames == null) {
+            return null;
+        }
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        for (String projectName : projectNames) {
+            if (Objects.equals(root.getProject(projectName).getLocation(), location)) {
+                return projectName;
             }
         }
         return null;
