@@ -37,7 +37,6 @@ import org.eclipse.jdt.core.search.IJavaSearchConstants;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
 import org.eclipse.jdt.core.search.SearchEngine;
 import org.eclipse.jdt.core.search.SearchMatch;
-import org.eclipse.jdt.core.search.SearchParticipant;
 import org.eclipse.jdt.core.search.SearchPattern;
 import org.eclipse.jdt.core.search.SearchRequestor;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
@@ -148,7 +147,7 @@ public class CodeLensHandler {
 		SearchPattern pattern = SearchPattern.createPattern(element, IJavaSearchConstants.REFERENCES);
 		final List<Location> result = new ArrayList<>();
 		SearchEngine engine = new SearchEngine();
-		engine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() }, createSearchScope(), new SearchRequestor() {
+		engine.search(pattern, SearchEngine.getSearchParticipants(), createSearchScope(), new SearchRequestor() {
 
 			@Override
 			public void acceptSearchMatch(SearchMatch match) throws CoreException {
