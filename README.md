@@ -134,6 +134,7 @@ Clients
 -------
 This repository only contains the server implementation. Here are some known clients consuming this server:
 
+* [Helix](https://github.com/helix-editor/helix/wiki/Language-Server-Configurations#java): A Kakoune/Neovim inspired editor, written in Rust. 
 * [vscode-java](https://github.com/redhat-developer/vscode-java) : an extension for Visual Studio Code
 * [ide-java](https://github.com/atom/ide-java) : an extension for Atom
 * [ycmd](https://github.com/Valloric/ycmd) : a code-completion and code-comprehension server for multiple clients
