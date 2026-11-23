@@ -31,7 +31,6 @@ import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -79,7 +78,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 
 	public static final String POM_FILE = "pom.xml";
 
-	private static final String DUPLICATE_ARTIFACT_TEMPLATE = "[groupId]-[artifactId]";
+	private static final String DEFAULT_PROJECT_NAME_TEMPLATE = "[groupId]-[artifactId]";
 	private static final String STATE_FILENAME = "workspaceState.ser";
 
 	private Set<MavenProjectInfo> projectInfos = null;
@@ -180,27 +179,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 	 * <p>Uses M2E's {@link LocalProjectScanner} to discover the module and
 	 * {@link IProjectConfigurationManager#importProjects} to create the
 	 * Eclipse project with proper Maven nature and classpath.</p>
-	 *
-	 * <h3>Duplicate artifactId handling</h3>
-	 * <p>In on-demand mode, modules are imported one at a time. When two modules
-	 * share the same artifactId (e.g. {@code org.a:common} and {@code org.b:common}),
-	 * the second import would fail silently because an Eclipse project named
-	 * "common" already exists. To handle this:</p>
-	 * <ol>
-	 *   <li>The existing project "common" is renamed to "org.a-common"</li>
-	 *   <li>The new module is imported as "org.b-common"</li>
-	 * </ol>
-	 * <p>This matches the behavior of full import mode, where all projects
-	 * use the {@code [groupId]-[artifactId]} template when duplicates exist.</p>
-	 *
-	 * <h3>Use cases</h3>
-	 * <ul>
-	 *   <li><b>No conflict</b> — user opens {@code a/core/src/Foo.java},
-	 *       artifactId "core" is unique → project "core" created.</li>
-	 *   <li><b>Duplicate artifactId</b> — user opens {@code b/common/src/Bar.java},
-	 *       project "common" (from {@code a/common}) already exists
-	 *       → "common" renamed to "org.a-common", new project "org.b-common" created.</li>
-	 * </ul>
 	 */
 	@Override
 	protected List<IProject> importModule(java.nio.file.Path modulePath, IProgressMonitor monitor) throws CoreException {
@@ -212,23 +190,13 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		try {
 			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
 			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
+			importConfig.setProjectNameTemplate(DEFAULT_PROJECT_NAME_TEMPLATE);
 			LocalProjectScanner scanner = new LocalProjectScanner(
 					List.of(modulePath.toString()), false, modelManager);
 			scanner.run(monitor);
 			Set<MavenProjectInfo> infos = collectProjects(scanner.getProjects());
 			if (infos.isEmpty()) {
 				return List.of();
-			}
-			// ex: importing org.b:common, project "common" (org.a:common) already exists
-			//   → rename "common" to "org.a-common"
-			//   → import org.b:common as "org.b-common"
-			for (MavenProjectInfo info : infos) {
-				String artifactId = info.getModel().getArtifactId();
-				IProject existing = ResourcesPlugin.getWorkspace().getRoot().getProject(artifactId);
-				if (existing.exists()) {
-					importConfig.setProjectNameTemplate(DUPLICATE_ARTIFACT_TEMPLATE);
-					renameWithGroupId(existing, monitor);
-				}
 			}
 			String projectNameTemplate = getProjectNameTemplate();
 			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
@@ -242,40 +210,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					.collect(Collectors.toList());
 		} catch (InterruptedException e) {
 			throw new OperationCanceledException();
-		}
-	}
-
-	/**
-	 * Renames a project from {@code [artifactId]} to {@code [groupId]-[artifactId]}.
-	 *
-	 * <p>Called when a second module with the same artifactId is being imported.
-	 * Reads the groupId from the project's {@code pom.xml} (or its parent) to
-	 * build the qualified name.</p>
-	 *
-	 * <p>Example: project "common" at {@code a/common/} with groupId {@code org.a}
-	 * is renamed to "org.a-common".</p>
-	 *
-	 * @param project the existing project to rename
-	 * @param monitor progress monitor
-	 */
-	private void renameWithGroupId(IProject project, IProgressMonitor monitor) {
-		try {
-			File pom = project.getLocation().toFile().toPath().resolve(POM_FILE).toFile();
-			MavenModelManager modelManager = MavenPlugin.getMavenModelManager();
-			org.apache.maven.model.Model model = modelManager.readMavenModel(pom);
-			String groupId = model.getGroupId();
-			if (groupId == null && model.getParent() != null) {
-				groupId = model.getParent().getGroupId();
-			}
-			if (groupId != null) {
-				String newName = groupId + "-" + project.getName();
-				IProjectDescription desc = project.getDescription();
-				desc.setName(newName);
-				project.move(desc, true, monitor);
-				JavaLanguageServerPlugin.logInfo("On-demand rename: " + project.getName() + " → " + newName);
-			}
-		} catch (Exception e) {
-			JavaLanguageServerPlugin.logException("Failed to rename project " + project.getName(), e);
 		}
 	}
 
@@ -303,7 +237,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		Collection<MavenProjectInfo> toImport = new LinkedHashSet<>();
 		Collection<java.nio.file.Path> toUpdateDigest = new LinkedHashSet<>();
 		long lastWorkspaceStateSaved = getLastWorkspaceStateModified();
-		Set<String> artifactIds = new LinkedHashSet<>();
 		//Separate existing projects from new ones
 		for (MavenProjectInfo projectInfo : files) {
 			File pom = projectInfo.getPomFile();
@@ -321,7 +254,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 			if (container == null) {
 				toUpdateDigest.add(pom.toPath());
 				toImport.add(projectInfo);
-				artifactIds.add(projectInfo.getModel().getArtifactId());
 			} else {
 				IProject project = container.getProject();
 				boolean valid = !ProjectUtils.isJavaProject(project) || project.getFile(IJavaProject.CLASSPATH_FILE_NAME).exists();
@@ -333,7 +265,6 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 					// need to delete project due to m2e failing to create if linked and not the same name
 					project.delete(IProject.FORCE | IProject.NEVER_DELETE_PROJECT_CONTENT, subMonitor.split(5));
 					toImport.add(projectInfo);
-					artifactIds.add(projectInfo.getModel().getArtifactId());
 				}
 			}
 
@@ -343,10 +274,7 @@ public class MavenProjectImporter extends AbstractProjectImporter {
 		}
 		if (!toImport.isEmpty()) {
 			ProjectImportConfiguration importConfig = new ProjectImportConfiguration();
-			if (toImport.size() > artifactIds.size()) {
-				// Ensure project name is unique when same artifactId
-				importConfig.setProjectNameTemplate(DUPLICATE_ARTIFACT_TEMPLATE);
-			}
+			importConfig.setProjectNameTemplate(DEFAULT_PROJECT_NAME_TEMPLATE);
 			String projectNameTemplate = getProjectNameTemplate();
 			if (projectNameTemplate != null && !projectNameTemplate.isBlank()) {
 				importConfig.setProjectNameTemplate(projectNameTemplate);

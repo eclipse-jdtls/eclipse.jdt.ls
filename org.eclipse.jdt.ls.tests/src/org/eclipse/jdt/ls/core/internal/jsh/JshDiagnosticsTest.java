@@ -38,7 +38,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDiagnosticPublishedWithOriginalCoordinates() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Diagnostics.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -72,7 +72,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDiagnosticOnSecondLineResolvesToOriginalLine() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/DiagnosticsSecondLine.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -104,7 +104,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testScriptVariableIsVisibleToALaterDeclaredMethod() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/VariableVisibility.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -137,7 +137,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testFieldDependingOnAVarResolvesCorrectly() throws Exception {
 		importProjects("maven/salut-java11");
-		IProject project = WorkspaceHelper.getProject("salut-java11");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut-java11");
 		String uri = project.getLocationURI().toString() + "/VarFieldDependency.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -166,7 +166,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testFieldDependingOnAVarIsVisibleToALaterDeclaredMethod() throws Exception {
 		importProjects("maven/salut-java11");
-		IProject project = WorkspaceHelper.getProject("salut-java11");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut-java11");
 		String uri = project.getLocationURI().toString() + "/VarFieldDependencyMethodVisibility.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -202,7 +202,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testRealisticScriptWithImportsAndMethodProducesNoSpuriousDiagnostics() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/Realistic.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -255,7 +255,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDiagnosticForUnterminatedStringIsKnownToBeMissingOnFirstOpen() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/IncompleteStatement.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();
@@ -278,7 +278,7 @@ public class JshDiagnosticsTest extends AbstractInvisibleProjectBasedTest {
 	@Test
 	public void testDiagnosticsClearedOnClose() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/ClearedOnClose.jsh";
 
 		JshDocumentManager manager = new JshDocumentManager();

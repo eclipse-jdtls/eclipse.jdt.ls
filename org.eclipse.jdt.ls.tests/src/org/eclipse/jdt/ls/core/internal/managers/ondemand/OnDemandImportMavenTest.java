@@ -12,7 +12,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.managers.ondemand;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -22,6 +24,7 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.WorkspaceHelper;
 import org.eclipse.jdt.ls.core.internal.managers.AbstractProjectsManagerBasedTest;
 import org.junit.jupiter.api.Test;
@@ -30,6 +33,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class OnDemandImportMavenTest extends AbstractProjectsManagerBasedTest {
+
+	@Test
+	public void testQualifiedNamesAcrossSeparateImports() throws Exception {
+		File directory = copyFiles("maven/multimodule-same-artifacts", true);
+		IPath rootPath = org.eclipse.core.runtime.Path.fromOSString(directory.getAbsolutePath());
+		OnDemandImportManager manager = new OnDemandImportManager();
+		manager.initialize(Collections.singleton(rootPath));
+		for (String folder : List.of("project-one", "project-two")) {
+			String uri = directory.toPath().resolve(folder).resolve("src/main/java/com/mycompany/app/App.java").toUri().toString();
+			assertTrue(manager.tryOnDemandImport(uri, new NullProgressMonitor()));
+			waitForBackgroundJobs();
+			String group = folder.equals("project-one") ? "com.example.one" : "com.example.two";
+			IProject project = WorkspaceHelper.getProject(group + "-my-app");
+			assertNotNull(project);
+			var unit = JDTUtils.resolveCompilationUnit(java.net.URI.create(uri));
+			assertNotNull(unit);
+			assertEquals(project, unit.getJavaProject().getProject());
+			assertTrue(JDTUtils.isOnClassPath(unit));
+		}
+		assertNotNull(WorkspaceHelper.getProject("com.example.one-my-app"));
+	}
 
 	@Test
 	public void testTryOnDemandImportMaven() throws Exception {

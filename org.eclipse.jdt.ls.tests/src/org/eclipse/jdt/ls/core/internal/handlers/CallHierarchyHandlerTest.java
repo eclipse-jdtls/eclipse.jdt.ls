@@ -390,7 +390,7 @@ public class CallHierarchyHandlerTest extends AbstractProjectsManagerBasedTest {
 	}
 
 	static String getUriFromJarProject(String className) throws JavaModelException {
-		return ClassFileUtil.getURI(WorkspaceHelper.getProject("salut"), className);
+		return ClassFileUtil.getURI(WorkspaceHelper.getProject("foo.bar-salut"), className);
 	}
 
 	static String getUriFromSrcProject(String className) throws JavaModelException {

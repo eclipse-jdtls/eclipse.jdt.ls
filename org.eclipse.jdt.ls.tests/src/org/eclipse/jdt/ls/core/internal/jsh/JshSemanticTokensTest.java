@@ -43,7 +43,7 @@ public class JshSemanticTokensTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testSemanticTokensLandWithinOriginalDocumentBounds() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/SemanticTokens.jsh";
 
 		String content = "import org.apache.commons.lang3.StringUtils;\n"
@@ -94,7 +94,7 @@ public class JshSemanticTokensTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testTokenAtEofBoundaryIsNotKeptIfItExtendsPastTheDocument() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		String uri = project.getLocationURI().toString() + "/EofBoundary.jsh";
 
 		String content = "import java.util.List;";

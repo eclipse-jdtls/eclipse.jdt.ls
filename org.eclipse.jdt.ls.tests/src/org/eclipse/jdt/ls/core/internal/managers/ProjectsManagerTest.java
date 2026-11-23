@@ -167,7 +167,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		try {
 			String name = "salut";
 			importProjects("maven/" + name);
-			IProject project = getProject(name);
+			IProject project = getProject("foo.bar-" + name);
 			assertIsJavaProject(project);
 			Resource nodeModules = (Resource) project.getFolder("/node_modules");
 			assertFalse(nodeModules.isFiltered());
@@ -204,7 +204,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		try {
 			String name = "salut";
 			importProjects("maven/" + name);
-			IProject project = getProject(name);
+			IProject project = getProject("foo.bar-" + name);
 			assertIsJavaProject(project);
 			List<String> pref = Arrays.asList("**/node_modules/**", "node_modules", "\\.git");
 			assertEquals(3, pref.size());
@@ -238,7 +238,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		try {
 			String name = "salut";
 			importProjects("maven/" + name);
-			IProject project = getProject(name);
+			IProject project = getProject("foo.bar-" + name);
 			assertIsJavaProject(project);
 			preferenceManager.getPreferences().setClasspathVariables(Arrays.asList("var1=/home/user1", "var2=/home/user2"));
 			Map<String, IPath> classpathVariables2 = preferenceManager.getPreferences().getClasspathVariables();
@@ -267,8 +267,8 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-			"module1",
-				"childmodule"
+			"foo.bar-module1",
+			"foo.bar-childmodule"
 		));
 		assertEquals(2, allProjects.length);
 		for (IProject project : allProjects) {
@@ -291,9 +291,9 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-			"module1",
-			"childmodule",
-				"module2"
+			"foo.bar-module1",
+			"foo.bar-childmodule",
+			"foo.bar-module2"
 		));
 		assertEquals(3, allProjects.length);
 		for (IProject project : allProjects) {
@@ -302,15 +302,15 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 
 		Path newBuildFile = projectDirPath.resolve("module3/pom.xml");
 		List<String> toImport = Collections.singletonList(newBuildFile.toUri().toString());
-		IProject projectToRemove = WorkspaceHelper.getProject("module2");
+		IProject projectToRemove = WorkspaceHelper.getProject("foo.bar-module2");
 		List<String> toDelete = Collections.singletonList(projectToRemove.getLocationURI().toString());
 		projectsManager.changeImportedProjects(toImport, Collections.emptyList(), toDelete, monitor);
 		waitForBackgroundJobs();
 		allProjects = ProjectUtils.getAllProjects();
 		expectedProjects = new HashSet<>(Arrays.asList(
-			"module1",
-			"childmodule",
-			"module3"
+			"foo.bar-module1",
+			"foo.bar-childmodule",
+			"foo.bar-module3"
 		));
 		assertEquals(3, allProjects.length);
 		for (IProject project : allProjects) {
@@ -331,7 +331,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
 			"hello",
-			"salut",
+			"foo.bar-salut",
 			"simple-gradle"
 		));
 		assertEquals(3, allProjects.length);
@@ -351,7 +351,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.initializeProjects(Collections.singleton(new org.eclipse.core.runtime.Path(projectDir.getAbsolutePath())), monitor);
 		IProject[] allProjects = ProjectUtils.getAllProjects();
 		Set<String> expectedProjects = new HashSet<>(Arrays.asList(
-			"salut",
+			"foo.bar-salut",
 			"simple-gradle"
 		));
 		assertEquals(2, allProjects.length);
@@ -395,7 +395,7 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	@Test
 	public void testReloadMavenProjectMarker() throws Exception {
 		importProjects("maven/salut");
-		IProject project = WorkspaceHelper.getProject("salut");
+		IProject project = WorkspaceHelper.getProject("foo.bar-salut");
 		IFile pom = project.getFile("pom.xml");
 		IMarker[] markers = pom.findMarkers(ProjectsManager.BUILD_FILE_MARKER_TYPE, false, IResource.DEPTH_ZERO);
 		assertEquals(0, markers.length);

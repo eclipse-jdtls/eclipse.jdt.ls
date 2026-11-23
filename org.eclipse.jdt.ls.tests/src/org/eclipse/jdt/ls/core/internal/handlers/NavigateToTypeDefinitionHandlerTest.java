@@ -43,7 +43,7 @@ public class NavigateToTypeDefinitionHandlerTest extends AbstractProjectsManager
 	public void setUp() throws Exception {
 		handler = new NavigateToTypeDefinitionHandler();
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 	}
 
 	@Test

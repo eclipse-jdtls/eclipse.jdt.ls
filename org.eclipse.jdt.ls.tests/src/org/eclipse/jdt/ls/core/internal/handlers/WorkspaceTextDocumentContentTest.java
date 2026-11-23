@@ -37,7 +37,7 @@ public class WorkspaceTextDocumentContentTest extends AbstractProjectsManagerBas
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/salut");
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		server = new JDTLanguageServer(projectsManager, preferenceManager);
 	}
 

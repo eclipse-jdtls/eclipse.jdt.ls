@@ -204,7 +204,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testAmbiguousStaticImports() throws Exception {
 		importProjects("maven/salut4");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut4");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
 		try {
@@ -257,7 +257,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testDuplicateStaticImports() throws Exception {
 		importProjects("maven/salut6");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut6");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut6");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
 		try {
@@ -293,7 +293,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testRemoveStaticImports() throws Exception {
 		importProjects("maven/salut4");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut4");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		int staticImportOnDemandThreshold = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getStaticImportOnDemandThreshold();
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();

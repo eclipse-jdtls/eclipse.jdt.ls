@@ -40,7 +40,7 @@ public class SelectionRangeHandlerTest extends AbstractProjectsManagerBasedTest 
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/salut"));
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 	}
 
 	@Test

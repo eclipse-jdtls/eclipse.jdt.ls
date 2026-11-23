@@ -28,15 +28,19 @@ import org.eclipse.jdt.ls.core.internal.ProjectUtils;
 public abstract class AbstractMavenBasedTest extends AbstractProjectsManagerBasedTest {
 
 	protected IProject importMavenProject(String name) throws Exception {
+		return importMavenProject(name, "foo.bar");
+	}
+
+	protected IProject importMavenProject(String name, String groupId) throws Exception {
 		importProjects("maven/"+name);
-		IProject project = getProject(name);
+		IProject project = getProject(groupId + "-" + name);
 		assertIsMavenProject(project);
 		return project;
 	}
 
 	protected IProject importExistingMavenProject(String name) throws Exception {
 		importExistingProjects("maven/" + name);
-		IProject project = getProject(name);
+		IProject project = getProject("foo.bar-" + name);
 		assertIsMavenProject(project);
 		return project;
 	}

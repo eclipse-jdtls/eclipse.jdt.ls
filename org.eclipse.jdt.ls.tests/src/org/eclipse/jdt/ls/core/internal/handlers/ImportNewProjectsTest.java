@@ -76,7 +76,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(5, projects.length);
 
 		// Add new sub-module
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-multimodule");
 		File projectBasePath = project.getLocation().toFile();
 		IFile pom = project.getFile("/pom.xml");
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<module>module1</module>", "<module>module1</module>\n<module>module4</module>"));
@@ -110,7 +110,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.setConnection(client);
 		projectsManager.importProjects(new NullProgressMonitor());
 		waitForJobs();
-		IProject newProject = workspace.getRoot().getProject("module4");
+		IProject newProject = workspace.getRoot().getProject("foo.bar-module4");
 		assertTrue(newProject.exists());
 		projects = workspace.getRoot().getProjects();
 		assertEquals(6, projects.length);
@@ -135,7 +135,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		assertEquals(5, projects.length);
 
 		// Add new sub-module
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("multimodule");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-multimodule");
 		File projectBasePath = project.getLocation().toFile();
 		IFile parentPom = project.getFile("/pom.xml");
 		ResourceUtils.setContent(parentPom, ResourceUtils.getContent(parentPom).replaceAll("<module>module1</module>", "<module>module1</module>\n<module>module4</module>"));
@@ -172,7 +172,7 @@ public class ImportNewProjectsTest extends AbstractProjectsManagerBasedTest {
 		projectsManager.changeImportedProjects(Arrays.asList(newModulePom.toURI().toString()),
 			Arrays.asList(JDTUtils.getFileURI(parentPom)), Collections.emptyList(), new NullProgressMonitor());
 		waitForJobs();
-		IProject newProject = workspace.getRoot().getProject("module4");
+		IProject newProject = workspace.getRoot().getProject("foo.bar-module4");
 		assertTrue(newProject.exists(), "New module is imported");
 		projects = workspace.getRoot().getProjects();
 		assertEquals(6, projects.length);

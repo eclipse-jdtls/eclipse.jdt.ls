@@ -65,7 +65,7 @@ public class DocumentSymbolHandlerTest extends AbstractProjectsManagerBasedTest 
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/salut", "eclipse/source-attachment"));
-		project = WorkspaceHelper.getProject("salut");
+		project = WorkspaceHelper.getProject("foo.bar-salut");
 		noSourceProject = WorkspaceHelper.getProject("source-attachment");
 	}
 

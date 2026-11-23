@@ -577,7 +577,7 @@ public class GradleProjectImporterTest extends AbstractGradleBasedTest{
 		try {
 			this.preferences.setImportGradleEnabled(false);
 			importProjects("multi-buildtools");
-			IProject project = getProject("multi-build-tools");
+			IProject project = getProject("com.example-multi-build-tools");
 			assertIsJavaProject(project);
 			GradleProjectImporter importer = new GradleProjectImporter();
 			importer.initialize(project.getLocation().toFile());

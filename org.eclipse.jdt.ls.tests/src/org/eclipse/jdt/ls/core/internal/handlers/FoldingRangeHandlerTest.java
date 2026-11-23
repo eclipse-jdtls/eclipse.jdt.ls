@@ -40,7 +40,7 @@ public class FoldingRangeHandlerTest extends AbstractProjectsManagerBasedTest {
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects(Arrays.asList("maven/foldingRange"));
-		project = WorkspaceHelper.getProject("foldingRange");
+		project = WorkspaceHelper.getProject("foo.bar-foldingRange");
 	}
 
 	@Test

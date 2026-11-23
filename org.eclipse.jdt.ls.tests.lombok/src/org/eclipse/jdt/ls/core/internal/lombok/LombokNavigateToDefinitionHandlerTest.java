@@ -43,7 +43,7 @@ public class LombokNavigateToDefinitionHandlerTest extends AbstractProjectsManag
 	public void setUp() throws Exception {
 		handler = new NavigateToDefinitionHandler(preferenceManager);
 		importProjects("maven/mavenlombok");
-		project = WorkspaceHelper.getProject("mavenlombok");
+		project = WorkspaceHelper.getProject("org.sample-mavenlombok");
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_BUILD, monitor);
 		Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, monitor);

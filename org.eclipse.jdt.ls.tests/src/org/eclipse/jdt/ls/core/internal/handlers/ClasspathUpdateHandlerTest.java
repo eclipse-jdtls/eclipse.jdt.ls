@@ -82,7 +82,7 @@ public class ClasspathUpdateHandlerTest extends AbstractInvisibleProjectBasedTes
 	@Test
 	public void testClasspathUpdateForMaven() throws Exception {
 		importProjects("maven/salut");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut");
 		IFile pom = project.getFile("/pom.xml");
 		assertTrue(pom.exists());
 		ResourceUtils.setContent(pom, ResourceUtils.getContent(pom).replaceAll("<version>3.18.0</version>", "<version>3.6</version>"));

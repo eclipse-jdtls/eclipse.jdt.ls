@@ -70,7 +70,7 @@ public class LombokRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testRenameMethodLombok() throws Exception {
 		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
 		importProjects("maven/mavenlombok");
-		IProject project = WorkspaceHelper.getProject("mavenlombok");
+		IProject project = WorkspaceHelper.getProject("org.sample-mavenlombok");
 		List<IMarker> markers = ResourceUtils.getErrorMarkers(project);
 		if (!markers.isEmpty()) {
 			// there isn't the lombok agent
@@ -99,7 +99,7 @@ public class LombokRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testRenameTypeLombok() throws Exception {
 		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
 		importProjects("maven/mavenlombok");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("org.sample-mavenlombok");
 		IFile file = project.getFile("src/main/java/org/sample/Test.java");
 		assertTrue(file.exists());
 		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);
@@ -117,7 +117,7 @@ public class LombokRenameHandlerTest extends AbstractProjectsManagerBasedTest {
 	public void testLombokSingular() throws Exception {
 		when(preferenceManager.getPreferences().isImportMavenEnabled()).thenReturn(true);
 		importProjects("maven/mavenlombok");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("mavenlombok");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("org.sample-mavenlombok");
 		IFile file = project.getFile("src/main/java/org/sample/Test2.java");
 		assertTrue(file.exists());
 		ICompilationUnit cu = JavaCore.createCompilationUnitFrom(file);

@@ -186,10 +186,10 @@ public class WorkspaceSymbolHandlerTest extends AbstractProjectsManagerBasedTest
 	@Test
 	public void testEmptyNames() throws Exception {
 		importProjects("maven/reactor");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("reactor");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("test-reactor");
 		assertIsJavaProject(project);
 		String query = "Mono";
-		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 0, "reactor", false, monitor);
+		List<SymbolInformation> results = WorkspaceSymbolHandler.search(query, 0, project.getName(), false, monitor);
 		assertNotNull(results);
 		assertEquals(119, results.size(), "Found ");
 		boolean hasEmptyName = results.stream().filter(s -> (s.getName() == null || s.getName().isEmpty())).findFirst().isPresent();

@@ -121,7 +121,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		new MavenBuildSupport().collectProjects(projects, project, new NullProgressMonitor());
 		assertEquals(projects.size(), 4);
 		for (IProject p : projects) {
-			if ("module3".equals(p.getName())) {
+			if ("foo.bar-module3".equals(p.getName())) {
 				fail("module3 exists");
 			}
 		}
@@ -258,7 +258,7 @@ public class MavenBuildSupportTest extends AbstractMavenBasedTest {
 		assertTrue(ProjectUtils.isMavenProject(project));
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		assertEquals(root.getProjects().length, 13);
-		project = root.getProject("batchchild");
+		project = root.getProject("foo.bar-batchchild");
 		assertTrue(ProjectUtils.isMavenProject(project));
 	}
 
