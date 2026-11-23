@@ -45,7 +45,7 @@ public class LombokDocumentSymbolHandlerTest extends AbstractProjectsManagerBase
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/mavenlombok");
-		project = WorkspaceHelper.getProject("mavenlombok");
+		project = WorkspaceHelper.getProject("org.sample-mavenlombok");
 	}
 
 	@Test
