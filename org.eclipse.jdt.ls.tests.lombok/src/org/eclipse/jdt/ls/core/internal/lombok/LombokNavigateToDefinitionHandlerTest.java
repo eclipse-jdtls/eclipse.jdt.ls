@@ -34,6 +34,9 @@ import org.eclipse.lsp4j.TextDocumentPositionParams;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * See {@link JavaLombokTestPlugin} for notes on running these tests.
+ */
 public class LombokNavigateToDefinitionHandlerTest extends AbstractProjectsManagerBasedTest {
 
 	private NavigateToDefinitionHandler handler;
