@@ -111,6 +111,16 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					ProjectCommand.updateProjectSettings(projectUri, options);
 					return null;
 				}
+				case "java.project.configureProblemSeverity": {
+					String projectUri = (String) arguments.get(0);
+					Map<String, Object> options = JSONUtility.toModel(arguments.get(1), Map.class);
+					String fileUri = (String) arguments.get(2);
+					ProjectCommand.updateProjectSettings(projectUri, options);
+					// The settings change alone doesn't republish diagnostics for already-open
+					// files when autobuild is disabled, so explicitly revalidate this file too.
+					DiagnosticsCommand.refreshDiagnostics(fileUri, "thisFile", false);
+					return null;
+				}
 				case "java.project.isTestFile":
 					return ProjectCommand.isTestFile((String) arguments.get(0));
 				case "java.project.getAll":
