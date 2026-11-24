@@ -396,6 +396,13 @@ public class Preferences {
 	public static final String FOLDINGRANGE_ENABLED_KEY = "java.foldingRange.enabled";
 
 	/**
+	 * Preference key to enable/disable .jsh (JShell script) content assist. When disabled, every
+	 * .jsh-aware routing decision falls through to treating the file as an ordinary, unrecognized
+	 * file - see {@code JDTUtils.useJshHandling(String)}.
+	 */
+	public static final String JSHELL_ENABLED_KEY = "java.jshell.enabled";
+
+	/**
 	 * Preference key to enable/disable the selection range.
 	 */
 	public static final String SELECTIONRANGE_ENABLED_KEY = "java.selectionRange.enabled";
@@ -712,6 +719,7 @@ public class Preferences {
 	private boolean completionLazyResolveTextEditEnabled;
 	private boolean completionOverwrite;
 	private boolean foldingRangeEnabled;
+	private boolean jshellEnabled;
 	private boolean selectionRangeEnabled;
 	private CompletionGuessMethodArgumentsMode guessMethodArguments;
 	private boolean collapseCompletionItems;
@@ -1013,6 +1021,7 @@ public class Preferences {
 		completionLazyResolveTextEditEnabled = false;
 		completionOverwrite = true;
 		foldingRangeEnabled = true;
+		jshellEnabled = true;
 		selectionRangeEnabled = true;
 		guessMethodArguments = CompletionGuessMethodArgumentsMode.INSERT_PARAMETER_NAMES;
 		collapseCompletionItems = false;
@@ -1187,6 +1196,7 @@ public class Preferences {
 		prefs.completionLazyResolveTextEditEnabled = this.completionLazyResolveTextEditEnabled;
 		prefs.completionOverwrite = this.completionOverwrite;
 		prefs.foldingRangeEnabled = this.foldingRangeEnabled;
+		prefs.jshellEnabled = this.jshellEnabled;
 		prefs.selectionRangeEnabled = this.selectionRangeEnabled;
 		prefs.guessMethodArguments = this.guessMethodArguments;
 		prefs.collapseCompletionItems = this.collapseCompletionItems;
@@ -1526,6 +1536,11 @@ public class Preferences {
 		if (containsKey(configuration, FOLDINGRANGE_ENABLED_KEY)) {
 			boolean foldingRangeEnable = getBoolean(configuration, FOLDINGRANGE_ENABLED_KEY, existing.foldingRangeEnabled);
 			prefs.setFoldingRangeEnabled(foldingRangeEnable);
+		}
+
+		if (containsKey(configuration, JSHELL_ENABLED_KEY)) {
+			boolean jshellEnable = getBoolean(configuration, JSHELL_ENABLED_KEY, existing.jshellEnabled);
+			prefs.setJshellEnabled(jshellEnable);
 		}
 
 		if (containsKey(configuration, SELECTIONRANGE_ENABLED_KEY)) {
@@ -2343,6 +2358,11 @@ public class Preferences {
 		return this;
 	}
 
+	public Preferences setJshellEnabled(boolean enabled) {
+		this.jshellEnabled = enabled;
+		return this;
+	}
+
 	public Preferences setSelectionRangeEnabled(boolean enabled) {
 		this.selectionRangeEnabled = enabled;
 		return this;
@@ -2707,6 +2727,10 @@ public class Preferences {
 
 	public boolean isFoldingRangeEnabled() {
 		return foldingRangeEnabled;
+	}
+
+	public boolean isJshellEnabled() {
+		return jshellEnabled;
 	}
 
 	public boolean isSelectionRangeEnabled() {

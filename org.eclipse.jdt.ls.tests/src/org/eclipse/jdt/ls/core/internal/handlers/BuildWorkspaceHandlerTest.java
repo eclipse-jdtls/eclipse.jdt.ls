@@ -39,7 +39,7 @@ public class BuildWorkspaceHandlerTest extends AbstractProjectsManagerBasedTest 
 	public void setUp() throws Exception {
 		handler = new BuildWorkspaceHandler(projectsManager);
 		importProjects("maven/salut2");
-		project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut2");
+		project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut2");
 	}
 
 	@Override

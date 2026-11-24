@@ -134,6 +134,7 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironmentsManager;
 import org.eclipse.jdt.ls.core.internal.handlers.JsonRpcHelpers;
+import org.eclipse.jdt.ls.core.internal.jsh.JshDocumentManager;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
 import org.eclipse.jdt.ls.core.internal.managers.ondemand.OnDemandImportManager;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
@@ -184,6 +185,10 @@ public final class JDTUtils {
 	 * @return compilation unit
 	 */
 	public static ICompilationUnit resolveCompilationUnit(String uriString) {
+		JshDocumentManager.JshDocument document = JshDocumentManager.getInstance().get(uriString);
+		if (document != null) {
+			return document.getWorkingCopy();
+		}
 		return resolveCompilationUnit(toURI(uriString));
 	}
 
@@ -468,6 +473,9 @@ public final class JDTUtils {
 	 * @return either a class file or compilation unit
 	 */
 	public static ITypeRoot resolveTypeRoot(String uriString, boolean returnCompilationUnit, IProgressMonitor monitor) {
+		if (isJshDocument(uriString)) {
+			return resolveCompilationUnit(uriString);
+		}
 		URI uri = toURI(uriString);
 		if (uri == null) {
 			return null;
@@ -693,6 +701,68 @@ public final class JDTUtils {
 
 	public static boolean isJavaFile(String name) {
 		return name != null && org.eclipse.jdt.internal.core.util.Util.isJavaLikeFileName(name);
+	}
+
+	/**
+	 * @param uriOrFileName either a full document URI (e.g. {@code file:///a/b/Scratch.jsh}) or a
+	 *            plain file name - both end in the same suffix, so either form works
+	 * @return whether the given URI/file name refers to a .jsh (JShell script) file
+	 */
+	public static boolean isJshFile(String uriOrFileName) {
+		return uriOrFileName != null && uriOrFileName.endsWith(".jsh");
+	}
+
+	public static boolean isJshFile(IPath path) {
+		return path != null && isJshFile(path.lastSegment());
+	}
+
+	public static boolean isJshFile(java.nio.file.Path path) {
+		return path != null && isJshFile(path.getFileName().toString());
+	}
+
+	/**
+	 * The one-time decision gate for whether a newly-opened document should be routed to .jsh
+	 * handling at all - {@code isJshFile} stays a pure, context-free filename check (so it keeps
+	 * meaning exactly "is this a .jsh file", usable wherever that alone matters), while this
+	 * additionally respects the {@code java.jshell.enabled} preference. <strong>Only
+	 * {@code BaseDocumentLifeCycleHandler.didOpen} should call this</strong> - every other .jsh-aware
+	 * code path (didChange/didClose/didSave, completion, hover, semantic tokens, save-action/
+	 * organize-imports guards) must call {@link #isJshDocument(String)} instead, not this method
+	 * again, or the preference would be re-evaluated on every request instead of being fixed at open
+	 * time - see that method's javadoc for why that distinction matters.
+	 *
+	 * @param uriOrFileName either a full document URI or a plain file name, see {@link
+	 *            #isJshFile(String)}
+	 * @return whether a new open of the given URI/file name should be routed to .jsh handling
+	 */
+	public static boolean useJshHandling(String uriOrFileName) {
+		return isJshFile(uriOrFileName)
+				&& JavaLanguageServerPlugin.getPreferencesManager() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences() != null
+				&& JavaLanguageServerPlugin.getPreferencesManager().getPreferences().isJshellEnabled();
+	}
+
+	/**
+	 * The gate every .jsh routing decision <strong>other than a new open</strong> should actually
+	 * check - whether the given URI is a document {@link JshDocumentManager} is currently tracking,
+	 * i.e. one that was open (and routed to .jsh handling, via {@link #useJshHandling(String)}) at
+	 * the time of its {@code didOpen}. Deliberately does not re-check the {@code java.jshell.enabled}
+	 * preference itself: once a document is open, whether it keeps getting .jsh treatment must
+	 * depend only on how it was opened, not on the preference's current value, or two real bugs
+	 * follow immediately - disabling the preference mid-session would silently orphan an
+	 * already-open .jsh document (didChange/didSave routed away from its working copy, didClose
+	 * never disposing it, every feature request failing to find it), and enabling the preference
+	 * mid-session would route a change event for a document that opened while disabled - which
+	 * {@link JshDocumentManager} never saw a {@code didOpen} for - into {@code didChange}, which has
+	 * no original document text to apply the change against. Disabling mid-session is lazy exactly
+	 * because of this: an already-open document keeps working until it's closed and (if the
+	 * preference is enabled again by then) reopened.
+	 *
+	 * @param uri the document URI
+	 * @return whether {@code uri} is currently open and tracked as a .jsh document
+	 */
+	public static boolean isJshDocument(String uri) {
+		return JshDocumentManager.getInstance().get(uri) != null;
 	}
 
 	/**
@@ -1298,6 +1368,14 @@ public final class JDTUtils {
 	 * @return
 	 */
 	public static String toURI(ICompilationUnit cu) {
+		// Checked first: a .jsh synthetic working copy is created against a real package
+		// fragment's getCompilationUnit(name), so cu.getResource() returns a well-formed (if
+		// never-existing-on-disk) IFile handle for a fake *.java path. That handle must not win
+		// over the working copy's real, owning .jsh URI.
+		String jshUri = JshDocumentManager.getInstance().findUri(cu);
+		if (jshUri != null) {
+			return jshUri;
+		}
 		if (cu.getResource() != null) {
 			String uri = getFileURI(cu.getResource());
 			if (uri != null) {

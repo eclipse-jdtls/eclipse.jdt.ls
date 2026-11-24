@@ -86,7 +86,7 @@ public class LombokCompletionHandlerTest extends AbstractCompilationUnitBasedTes
 		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
 		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
+		IProject proj = WorkspaceHelper.getProject("org.sample-mavenlombok");
 		IJavaProject javaProject = JavaCore.create(proj);
 		ICompilationUnit unit = null;
 		try {
@@ -129,7 +129,7 @@ public class LombokCompletionHandlerTest extends AbstractCompilationUnitBasedTes
 		when(preferenceManager.getClientPreferences().isCompletionItemInsertTextModeSupport(InsertTextMode.AdjustIndentation)).thenReturn(true);
 		when(preferenceManager.getClientPreferences().isCompletionListItemDefaultsPropertySupport("insertTextMode")).thenReturn(true);
 		importProjects("maven/mavenlombok");
-		IProject proj = WorkspaceHelper.getProject("mavenlombok");
+		IProject proj = WorkspaceHelper.getProject("org.sample-mavenlombok");
 		IJavaProject javaProject = JavaCore.create(proj);
 		ICompilationUnit unit = null;
 		try {

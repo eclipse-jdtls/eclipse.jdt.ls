@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.pde.ui.RuntimeWorkbench">
+    <booleanAttribute key="add_console" value="false"/>
     <setAttribute key="additional_plugins"/>
     <booleanAttribute key="append.args" value="true"/>
     <stringAttribute key="application" value="org.eclipse.jdt.ls.core.id1"/>
@@ -43,14 +44,10 @@
     <setAttribute key="selected_target_bundles">
         <setEntry value="ch.qos.logback.classic@default:default"/>
         <setEntry value="ch.qos.logback.core@default:default"/>
-        <setEntry value="com.google.gson*2.8.9.v20220111-1409@default:default"/>
-        <setEntry value="com.google.gson*2.9.1@default:default"/>
+        <setEntry value="com.google.gson@default:default"/>
         <setEntry value="com.google.guava@default:default"/>
-        <setEntry value="com.ibm.icu*71.1.0@default:default"/>
-        <setEntry value="javax.inject@default:default"/>
+        <setEntry value="com.ibm.icu@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
-        <setEntry value="org.apache.commons.codec@default:default"/>
-        <setEntry value="org.apache.commons.io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
         <setEntry value="org.apache.felix.scr@1:true"/>
         <setEntry value="org.eclipse.ant.core@default:default"/>
@@ -82,8 +79,6 @@
         <setEntry value="org.eclipse.equinox.weaving.hook@default:false"/>
         <setEntry value="org.eclipse.jdt.apt.core@default:default"/>
         <setEntry value="org.eclipse.jdt.apt.pluggable.core@default:default"/>
-        <setEntry value="org.eclipse.jdt.compiler.apt@default:false"/>
-        <setEntry value="org.eclipse.jdt.compiler.tool@default:false"/>
         <setEntry value="org.eclipse.jdt.core.manipulation@default:default"/>
         <setEntry value="org.eclipse.jdt.core@default:default"/>
         <setEntry value="org.eclipse.jdt.debug@default:default"/>
@@ -107,7 +102,6 @@
         <setEntry value="org.eclipse.text@default:default"/>
         <setEntry value="org.eclipse.xtext.xbase.lib@default:default"/>
         <setEntry value="org.gradle.toolingapi@default:default"/>
-        <setEntry value="org.hamcrest.core@default:default"/>
         <setEntry value="org.junit@default:default"/>
         <setEntry value="org.osgi.service.cm@default:default"/>
         <setEntry value="org.osgi.service.component@default:default"/>
@@ -130,6 +124,7 @@
         <setEntry value="org.eclipse.jdt.ls.core@default:default"/>
         <setEntry value="org.eclipse.jdt.ls.filesystem@default:default"/>
         <setEntry value="org.eclipse.jdt.ls.logback.appender@default:false"/>
+        <setEntry value="org.eclipse.jdt.ls.tests.lombok@default:default"/>
     </setAttribute>
     <booleanAttribute key="show_selected_only" value="false"/>
     <stringAttribute key="templateConfig" value="${target_home}/configuration/config.ini"/>

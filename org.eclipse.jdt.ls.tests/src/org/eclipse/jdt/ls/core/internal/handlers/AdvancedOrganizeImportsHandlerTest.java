@@ -22,29 +22,88 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.IClasspathAttribute;
+import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.ValidateEditException;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
+import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
+import org.eclipse.jdt.ls.core.internal.JavaProjectHelper;
+import org.eclipse.jdt.ls.core.internal.TextEditUtil;
 import org.eclipse.jdt.ls.core.internal.codemanipulation.AbstractSourceTestCase;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
 import org.eclipse.jdt.ls.core.internal.managers.BuildSupportManager;
+import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.TextEdit;
 import org.junit.jupiter.api.Test;
 
 public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
+
+	@Test
+	public void testSourceActionAndProposalAddModuleRequirement() throws Exception {
+		ICompilationUnit module = setupModularProject(false);
+		ICompilationUnit source = fRoot.createPackageFragment("demo", true, null)
+				.createCompilationUnit("App.java", "package demo;\nclass App { One one; }\n", true, null);
+
+		WorkspaceEdit sourceAction = OrganizeImportsHandler.organizeImportsAsWorkspaceEdit(source, null, false, new NullProgressMonitor());
+		assertEquals(2, sourceAction.getChanges().size());
+		assertTrue(TextEditUtil.apply(source, sourceAction.getChanges().get(JDTUtils.toURI(source))).contains("import dep.One;"));
+		assertTrue(TextEditUtil.apply(module, sourceAction.getChanges().get(JDTUtils.toURI(module))).contains("requires dependency;"));
+
+		var proposal = OrganizeImportsHandler.getOrganizeImportsProposal("Organize imports", source, 0, null, false, false);
+		WorkspaceEdit quickFix = ChangeUtil.convertToWorkspaceEdit(proposal.getChange());
+		assertEquals(2, quickFix.getChanges().size());
+		assertTrue(TextEditUtil.apply(source, quickFix.getChanges().get(JDTUtils.toURI(source))).contains("import dep.One;"));
+		assertTrue(TextEditUtil.apply(module, quickFix.getChanges().get(JDTUtils.toURI(module))).contains("requires dependency;"));
+	}
+
+	@Test
+	public void testOrganizeImportsChoiceAndCancellation() throws Exception {
+		ICompilationUnit module = setupModularProject(true);
+		IJavaProject alternative = JavaCore.create(ResourcesPlugin.getWorkspace().getRoot().getProject("alternative"));
+		IPackageFragmentRoot alternativeRoot = alternative.getPackageFragmentRoot(alternative.getProject().getFolder("src"));
+		alternativeRoot.getPackageFragment("alternative").createCompilationUnit("One.java",
+				"package alternative; public class One {}", true, null);
+		ICompilationUnit source = fRoot.createPackageFragment("demo", true, null)
+				.createCompilationUnit("App.java", "package demo;\nclass App { One one; }\n", true, null);
+		AtomicBoolean prompted = new AtomicBoolean();
+
+		WorkspaceEdit canceled = OrganizeImportsHandler.organizeImportsAsWorkspaceEdit(source, selections -> {
+			prompted.set(true);
+			return null;
+		}, false, new NullProgressMonitor());
+		assertTrue(prompted.get());
+		assertNull(canceled);
+
+		WorkspaceEdit chosen = OrganizeImportsHandler.organizeImportsAsWorkspaceEdit(source, selections -> {
+			for (var candidate : selections[0].candidates) {
+				if (candidate.fullyQualifiedName.equals("dep.One")) {
+					return new ImportCandidate[] { candidate };
+				}
+			}
+			throw new AssertionError("dep.One was not offered");
+		}, false, new NullProgressMonitor());
+		assertTrue(TextEditUtil.apply(source, chosen.getChanges().get(JDTUtils.toURI(source))).contains("import dep.One;"));
+		assertTrue(TextEditUtil.apply(module, chosen.getChanges().get(JDTUtils.toURI(module))).contains("requires dependency;"));
+	}
 
 	@Test
 	public void testChooseImport() throws ValidateEditException, CoreException, IOException {
@@ -145,7 +204,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testAmbiguousStaticImports() throws Exception {
 		importProjects("maven/salut4");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut4");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
 		try {
@@ -198,7 +257,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testDuplicateStaticImports() throws Exception {
 		importProjects("maven/salut6");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut6");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut6");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
 		try {
@@ -234,7 +293,7 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 	@Test
 	public void testRemoveStaticImports() throws Exception {
 		importProjects("maven/salut4");
-		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("salut4");
+		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject("foo.bar-salut4");
 		assertTrue(BuildSupportManager.find("Maven").get().applies(project));
 		int staticImportOnDemandThreshold = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getStaticImportOnDemandThreshold();
 		String[] favourites = JavaLanguageServerPlugin.getPreferencesManager().getPreferences().getJavaCompletionFavoriteMembers();
@@ -257,4 +316,31 @@ public class AdvancedOrganizeImportsHandlerTest extends AbstractSourceTestCase {
 			JavaLanguageServerPlugin.getPreferencesManager().getPreferences().setJavaCompletionFavoriteMembers(Arrays.asList(favourites));
 		}
 	}
+
+	private ICompilationUnit setupModularProject(boolean withAlternative) throws Exception {
+		IJavaProject project = fRoot.getJavaProject();
+		Map<String, String> options = project.getOptions(false);
+		JavaCore.setComplianceOptions(JavaCore.VERSION_9, options);
+		project.setOptions(options);
+		addModuleProject("dependency", "dep", "One", options, project);
+		if (withAlternative) {
+			addModuleProject("alternative", "alternative", "Two", options, project);
+		}
+		return fRoot.createPackageFragment("", true, null)
+				.createCompilationUnit("module-info.java", "module demo {\n}\n", true, null);
+	}
+
+	private void addModuleProject(String moduleName, String packageName, String typeName, Map<String, String> options, IJavaProject client) throws Exception {
+		IJavaProject dependency = newEmptyProject(moduleName);
+		dependency.setOptions(options);
+		IPackageFragmentRoot dependencyRoot = dependency.getPackageFragmentRoot(dependency.getProject().getFolder("src"));
+		dependencyRoot.createPackageFragment("", true, null).createCompilationUnit("module-info.java",
+				"module " + moduleName + " { exports " + packageName + "; }", true, null);
+		dependencyRoot.createPackageFragment(packageName, true, null).createCompilationUnit(typeName + ".java",
+				"package " + packageName + "; public class " + typeName + " {}", true, null);
+		IClasspathAttribute[] attributes = { JavaCore.newClasspathAttribute(IClasspathAttribute.MODULE, "true") };
+		IClasspathEntry entry = JavaCore.newProjectEntry(dependency.getPath(), null, false, attributes, false);
+		JavaProjectHelper.addToClasspath(client, entry);
+	}
+
 }

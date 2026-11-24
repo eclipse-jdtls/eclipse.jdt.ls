@@ -48,13 +48,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest {
 	private IJavaProject semanticTokensProject;
 	private IPackageFragment fooPackage;
-	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dsemantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
+	private String classFileUri = "jdt://contents/foo.jar/foo/bar.class?%3Dorg.example-semantic-tokens%2Ffoo.jar%3Cfoo%28bar.class";
 	private String moduleInfoUri;
 
 	@BeforeEach
 	public void setup() throws Exception {
 		importProjects("maven/semantic-tokens");
-		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("semantic-tokens"));
+		semanticTokensProject = JavaCore.create(WorkspaceHelper.getProject("org.example-semantic-tokens"));
 		setOptions();
 
 		IPackageFragmentRoot root = semanticTokensProject.getPackageFragmentRoot(
@@ -476,9 +476,27 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 	@Test
 	public void testSemanticTokens_ClassLiterals() throws JavaModelException {
 		TokenAssertionHelper.beginAssertion(getURI("ClassLiterals.java"), "keyword")
-			.assertNextToken("class", "keyword")
-			.assertNextToken("class", "keyword")
-		.endAssertion();
+				.assertNextToken("class", "keyword") //
+				.assertNextToken("class", "keyword") //
+				.endAssertion();
+	}
+
+	@Test
+	public void testSemanticTokens_GenericClassWithBoundedTypeParameterAndSupertype() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(getURI("GenericClassWithBoundedTypeParameterAndSupertype.java")) //
+				.assertNextToken("foo", "namespace") //
+				.assertNextToken("java", "namespace", "importDeclaration") //
+				.assertNextToken("util", "namespace", "importDeclaration") //
+				.assertNextToken("ArrayList", "class", "public", "generic", "importDeclaration") //
+				.assertNextToken("public", "modifier") //
+				.assertNextToken("class", "modifier") //
+				.assertNextToken("GenericClassWithBoundedTypeParameterAndSupertype", "class", "public", "generic", "declaration") //
+				.assertNextToken("T", "typeParameter", "declaration") //
+				.assertNextToken("Number", "class", "abstract", "public") //
+				.assertNextToken("extends", "modifier") //
+				.assertNextToken("ArrayList", "class", "public", "generic") //
+				.assertNextToken("T", "typeParameter", "typeArgument") //
+				.endAssertion();
 	}
 
 	private String getURI(String compilationUnitName) {
@@ -525,6 +543,7 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 			assertNotNull(semanticTokens, "Provided semantic tokens should not be null");
 			assertNotNull(semanticTokens.getData(), "Semantic tokens data should not be null");
 			assertTrue(semanticTokens.getData().size() % 5 == 0, "Semantic tokens data should contain 5 integers per token");
+			assertFalse(semanticTokens.getData().stream().anyMatch(i -> i < 0), "Semantic token data must be an unsigned integer (perhaps this was a negative delta?)");
 			return new TokenAssertionHelper(JDTUtils.resolveTypeRoot(uri).getBuffer(), semanticTokens.getData(), Arrays.asList(tokenTypeFilter));
 		}
 

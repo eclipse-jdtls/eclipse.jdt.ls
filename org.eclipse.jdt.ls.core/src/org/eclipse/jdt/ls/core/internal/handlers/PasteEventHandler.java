@@ -51,20 +51,19 @@ import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.internal.corext.refactoring.rename.RenameAnalyzeUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.TextChangeManager;
+import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ProjectUtils;
-import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportCandidate;
 import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler.ImportSelection;
 import org.eclipse.jdt.ls.core.internal.managers.ProjectsManager;
-import org.eclipse.jdt.ls.core.internal.text.correction.SourceAssistProcessor;
+import org.eclipse.jdt.ls.core.internal.preferences.PreferenceManager;
 import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Location;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.text.edits.ReplaceEdit;
-import org.eclipse.text.edits.TextEdit;
 
 /**
  * Handles paste events, modifying the pasted value and supplying additional
@@ -369,13 +368,9 @@ public class PasteEventHandler {
 				tempOriginalUnit.discardWorkingCopy();
 			}
 		}
-		TextEdit edit = OrganizeImportsHandler.organizeImports(tempUnit, chooseFunc, true, monitor);
-		if (edit == null) {
-			return null;
-		}
-		WorkspaceEdit workspaceEdit = SourceAssistProcessor.convertToWorkspaceEdit(tempUnit, edit);
+		WorkspaceEdit workspaceEdit = OrganizeImportsHandler.organizeImportsAsWorkspaceEdit(tempUnit, chooseFunc, true, monitor);
 		tempUnit.discardWorkingCopy();
-		return new DocumentPasteEdit(insertText, workspaceEdit);
+		return ChangeUtil.hasChanges(workspaceEdit) ? new DocumentPasteEdit(insertText, workspaceEdit) : null;
 	}
 
 	private static String getEol(String text) {

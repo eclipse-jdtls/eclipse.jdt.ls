@@ -15,10 +15,13 @@ package org.eclipse.jdt.ls.core.internal.cleanup;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
 import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
@@ -41,15 +44,10 @@ public class OrganizeImportsCleanup implements ISimpleCleanUp {
 	 */
 	@Override
 	public ICleanUpFix createFix(CleanUpContext context) throws CoreException {
-		CompilationUnit unit = context.getAST();
-		if (unit == null) {
+		TextEdit te = createTextEdit(context, null, new NullProgressMonitor());
+		if (te == null) {
 			return null;
 		}
-		OrganizeImportsOperation op = new OrganizeImportsOperation(context.getCompilationUnit(), unit,
-				false, false, true,
-				null,
-				false);
-		TextEdit te = op.createTextEdit(new NullProgressMonitor());
 		return new ICleanUpFix() {
 			@Override
 			public CompilationUnitChange createChange(IProgressMonitor progressMonitor) throws CoreException {
@@ -58,6 +56,18 @@ public class OrganizeImportsCleanup implements ISimpleCleanUp {
 				return change;
 			}
 		};
+	}
+
+	public TextEdit createTextEdit(CleanUpContext context, Map<ICompilationUnit, Set<String>> requiredModules, IProgressMonitor monitor) throws CoreException {
+		CompilationUnit unit = context.getAST();
+		if (unit == null) {
+			return null;
+		}
+		OrganizeImportsOperation op = new OrganizeImportsOperation(context.getCompilationUnit(), unit,
+				false, false, true,
+				null,
+				false);
+		return op.createTextEdit(monitor, requiredModules);
 	}
 
 	/* (non-Javadoc)

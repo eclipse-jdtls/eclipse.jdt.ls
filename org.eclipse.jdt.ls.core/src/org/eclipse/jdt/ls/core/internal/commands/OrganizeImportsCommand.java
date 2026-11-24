@@ -14,8 +14,12 @@ package org.eclipse.jdt.ls.core.internal.commands;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IProject;
@@ -33,18 +37,19 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
-import org.eclipse.jdt.internal.ui.text.correction.IProposalRelevance;
+import org.eclipse.jdt.core.manipulation.CoreASTProvider;
+import org.eclipse.jdt.core.manipulation.OrganizeImportsOperation;
+import org.eclipse.jdt.core.refactoring.CompilationUnitChange;
+import org.eclipse.jdt.internal.compiler.env.IModule;
+import org.eclipse.jdt.internal.corext.refactoring.util.TextEditUtil;
+import org.eclipse.jdt.internal.ui.text.correction.proposals.AddModuleRequiresCorrectionProposalCore;
 import org.eclipse.jdt.ls.core.internal.ChangeUtil;
 import org.eclipse.jdt.ls.core.internal.IConstants;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.jdt.ls.core.internal.JavaLanguageServerPlugin;
 import org.eclipse.jdt.ls.core.internal.ResourceUtils;
 import org.eclipse.jdt.ls.core.internal.TextEditConverter;
-import org.eclipse.jdt.ls.core.internal.corrections.InnovationContext;
-import org.eclipse.jdt.ls.core.internal.handlers.OrganizeImportsHandler;
 import org.eclipse.lsp4j.WorkspaceEdit;
-import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.text.edits.TextEdit;
 
 public class OrganizeImportsCommand {
@@ -95,11 +100,7 @@ public class OrganizeImportsCommand {
 		HashSet<IJavaElement> result = new HashSet<>();
 
 		collectCompilationUnits(JavaCore.create(proj), result, null);
-		for (IJavaElement elem : result) {
-			if (elem.getElementType() == IJavaElement.COMPILATION_UNIT) {
-				organizeImportsInCompilationUnit((ICompilationUnit) elem, rootEdit);
-			}
-		}
+		organizeImportsInCompilationUnits(result, rootEdit);
 		return rootEdit;
 	}
 
@@ -136,11 +137,7 @@ public class OrganizeImportsCommand {
 					}
 				}
 			}
-			for (IJavaElement elem : result) {
-				if (elem.getElementType() == IJavaElement.COMPILATION_UNIT) {
-					organizeImportsInCompilationUnit((ICompilationUnit) elem, rootEdit);
-				}
-			}
+			organizeImportsInCompilationUnits(result, rootEdit);
 		}
 		return rootEdit;
 	}
@@ -161,23 +158,62 @@ public class OrganizeImportsCommand {
 	public void organizeImportsInPackageFragment(IPackageFragment fragment, WorkspaceEdit rootEdit) throws CoreException {
 		HashSet<IJavaElement> result = new HashSet<>();
 		collectCompilationUnits(fragment.getParent(), result, fragment.getElementName());
-		for (IJavaElement elem : result) {
-			if (elem.getElementType() == IJavaElement.COMPILATION_UNIT) {
-				organizeImportsInCompilationUnit((ICompilationUnit) elem, rootEdit);
-			}
-		}
+		organizeImportsInCompilationUnits(result, rootEdit);
 	}
 
 	public void organizeImportsInCompilationUnit(ICompilationUnit unit, WorkspaceEdit rootEdit) {
-		try {
-			InnovationContext context = new InnovationContext(unit, 0, unit.getBuffer().getLength() - 1);
-			// kind: CodeActionKind.SourceOrganizeImports,
-			CUCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal("OrganizeImports", unit, IProposalRelevance.ORGANIZE_IMPORTS, context.getASTRoot(), false, false);
-			if (proposal != null) {
-				addWorkspaceEdit(unit, proposal, rootEdit);
+		organizeImportsInCompilationUnits(List.of(unit), rootEdit);
+	}
+
+	private void organizeImportsInCompilationUnits(Collection<IJavaElement> units, WorkspaceEdit rootEdit) {
+		Map<ICompilationUnit, Set<String>> requiredModules = new HashMap<>();
+		for (ICompilationUnit unit : units.stream().filter(element -> element.getElementType() == IJavaElement.COMPILATION_UNIT)
+				.map(element -> (ICompilationUnit) element)
+				.sorted(Comparator.comparing((ICompilationUnit element) -> IModule.MODULE_INFO_JAVA.equals(element.getElementName()))
+						.thenComparing(element -> element.getPath().toString())).toList()) {
+			try {
+				var astRoot = CoreASTProvider.getInstance().getAST(unit, CoreASTProvider.WAIT_YES, null);
+				if (astRoot == null) {
+					continue;
+				}
+				OrganizeImportsOperation operation = new OrganizeImportsOperation(unit, astRoot, true, false, true, null, false);
+				TextEdit edit = operation.createTextEdit(null, requiredModules);
+				if (IModule.MODULE_INFO_JAVA.equals(unit.getElementName())) {
+					Set<String> modules = requiredModules.remove(unit);
+					if (modules != null) {
+						TextEdit requiresEdit = createRequiresEdit(unit, modules);
+						if (requiresEdit != null) {
+							edit = edit == null ? requiresEdit : TextEditUtil.merge(edit, requiresEdit);
+						}
+					}
+				}
+				addWorkspaceEdit(unit, edit, rootEdit);
+			} catch (CoreException e) {
+				JavaLanguageServerPlugin.logException("Problem organizing imports", e);
 			}
+		}
+		for (var entry : requiredModules.entrySet()) {
+			addWorkspaceEdit(entry.getKey(), createRequiresEdit(entry.getKey(), entry.getValue()), rootEdit);
+		}
+	}
+
+	private TextEdit createRequiresEdit(ICompilationUnit module, Set<String> names) {
+		try {
+			AddModuleRequiresCorrectionProposalCore proposal = new AddModuleRequiresCorrectionProposalCore(names, "Add requires", "Add requires", module, 0);
+			CompilationUnitChange change = (CompilationUnitChange) proposal.getChange();
+			return change == null ? null : change.getEdit();
 		} catch (CoreException e) {
-			JavaLanguageServerPlugin.logException("Problem organize imports ", e);
+			JavaLanguageServerPlugin.logException("Problem adding module requirements", e);
+			return null;
+		}
+	}
+
+	private void addWorkspaceEdit(ICompilationUnit unit, TextEdit edit, WorkspaceEdit rootEdit) {
+		if (edit != null) {
+			List<org.eclipse.lsp4j.TextEdit> converted = new TextEditConverter(unit, edit).convert();
+			if (ChangeUtil.hasChanges(converted)) {
+				rootEdit.getChanges().put(JDTUtils.toURI(unit), converted);
+			}
 		}
 	}
 
@@ -233,13 +269,4 @@ public class OrganizeImportsCommand {
 		}
 	}
 
-	private void addWorkspaceEdit(ICompilationUnit cu, CUCorrectionProposalCore proposal, WorkspaceEdit rootEdit) throws CoreException {
-		TextChange textChange = proposal.getTextChange();
-		TextEdit edit = textChange.getEdit();
-		TextEditConverter converter = new TextEditConverter(cu, edit);
-		List<org.eclipse.lsp4j.TextEdit> edits = converter.convert();
-		if (ChangeUtil.hasChanges(edits)) {
-			rootEdit.getChanges().put(JDTUtils.toURI(cu), edits);
-		}
-	}
 }

@@ -48,7 +48,6 @@ import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
-import org.eclipse.jdt.core.manipulation.CUCorrectionProposalCore;
 import org.eclipse.jdt.core.manipulation.ChangeCorrectionProposalCore;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.fix.CleanUpConstants;
@@ -715,7 +714,7 @@ public class QuickFixProcessor {
 
 		Optional<Integer> minRelevance = proposals.stream().filter(w -> w.getProposal() instanceof AddImportCorrectionProposalCore).map((w) -> w.getProposal().getRelevance()).min(Comparator.naturalOrder());
 		if (minRelevance.isPresent()) {
-			CUCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, context.getCompilationUnit(),
+			ChangeCorrectionProposalCore proposal = OrganizeImportsHandler.getOrganizeImportsProposal(CorrectionMessages.UnresolvedElementsSubProcessor_add_allMissing_imports_description, context.getCompilationUnit(),
 					minRelevance.get() - 1, context.getASTRoot(), JavaLanguageServerPlugin.getPreferencesManager().getClientPreferences().isAdvancedOrganizeImportsSupported(), true);
 			if (proposal != null) {
 				proposals.add(CodeActionHandler.wrap(proposal, CodeActionKind.QuickFix));
