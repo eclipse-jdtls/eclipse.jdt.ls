@@ -499,6 +499,22 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 				.endAssertion();
 	}
 
+	@Test
+	public void testSemanticTokens_TextBlockWithLanguageComment() throws JavaModelException {
+		TokenAssertionHelper.beginAssertion(getURI("TextBlocks.java"), "keyword", "modifier", "number", "class", "string", "comment")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("class", "modifier")
+			.assertNextToken("TextBlocks", "class", "public", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("class", "modifier")
+			.assertNextToken("Hello", "class")
+			.assertNextToken("int", "keyword")
+			.assertNextToken("42", "number")
+			.assertNextToken("String", "class", "public", "readonly")
+		.endAssertion();
+	}
+
 	private String getURI(String compilationUnitName) {
 		return JDTUtils.toURI(fooPackage.getCompilationUnit(compilationUnitName));
 	}

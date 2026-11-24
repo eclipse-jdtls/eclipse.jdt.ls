@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 Microsoft Corporation and others.
+ * Copyright (c) 2020, 2026 Microsoft Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
  * which accompanies this distribution, and is available at
@@ -10,11 +10,17 @@
  * Contributors:
  *     Microsoft Corporation - initial API and implementation
  *     0dinD - Semantic highlighting improvements - https://github.com/eclipse/eclipse.jdt.ls/pull/1501
+ *     IBM Corporation - highlighting for text blocks specifying language=java
  *******************************************************************************/
 package org.eclipse.jdt.ls.core.internal.semantictokens;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
@@ -47,16 +53,31 @@ import org.eclipse.jdt.core.dom.RequiresDirective;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.TagElement;
+import org.eclipse.jdt.core.dom.TextBlock;
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeLiteral;
+import org.eclipse.jdt.core.manipulation.internal.javadoc.JavaCodeTokenizer;
+import org.eclipse.jdt.core.manipulation.internal.javadoc.JavaCodeTokenizer.JavaCodeToken;
 import org.eclipse.jdt.internal.core.dom.util.DOMASTUtil;
 import org.eclipse.jdt.ls.core.internal.JDTUtils;
 import org.eclipse.lsp4j.SemanticTokens;
 import org.eclipse.lsp4j.jsonrpc.util.ToStringBuilder;
 
 public class SemanticTokensVisitor extends ASTVisitor {
+
+	private static final Pattern LANGUAGE_COMMENT_PATTERN = Pattern.compile("^\\s*//\\s*language\\s*=\\s*(\\w+)\\s*$"); //$NON-NLS-1$
+	private static final Set<String> JAVA_LANGUAGES = Set.of("java"); //$NON-NLS-1$
+
+	private static final Set<String> JAVA_MODIFIER_KEYWORDS = Set.of(
+		"abstract", "class", "enum", "extends", "final", "implements", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+		"interface", "native", "permits", "private", "protected", "public", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+		"record", "sealed", "static", "strictfp", "synchronized", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+		"transient", "void", "volatile" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+	);
+
 	private CompilationUnit cu;
+	private String source;
 	private IScanner scanner;
 	private List<SemanticToken> tokens;
 
@@ -65,13 +86,14 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		this.cu = unit;
 		this.tokens = new ArrayList<>();
 		this.scanner = null;
+		this.source = null;
 
 		if (unit.getTypeRoot() != null && unit.getTypeRoot().getJavaProject() != null) {
 			this.scanner = JDTUtils.createScanner(unit.getTypeRoot().getJavaProject(), false, false, false);
 			try {
-				String source = unit.getTypeRoot().getSource();
-				if (source != null) {
-					this.scanner.setSource(source.toCharArray());
+				this.source = unit.getTypeRoot().getSource();
+				if (this.source != null) {
+					this.scanner.setSource(this.source.toCharArray());
 				} else {
 					this.scanner = null;
 				}
@@ -81,7 +103,7 @@ public class SemanticTokensVisitor extends ASTVisitor {
 		}
 	}
 
-	private class SemanticToken {
+	private static class SemanticToken {
 		private final TokenType tokenType;
 		private final int tokenModifiers;
 		private final int offset;
@@ -212,6 +234,108 @@ public class SemanticTokensVisitor extends ASTVisitor {
 	 */
 	private void addToken(ASTNode node, TokenType tokenType) {
 		addToken(node, tokenType, 0);
+	}
+
+	@Override
+	public boolean visit(TextBlock node) {
+		if (source == null) {
+			return false;
+		}
+		String language = findLanguageComment(source, node);
+		if (language != null) {
+			List<SemanticToken> textBlockTokens = tokenizeTextBlock(node, language);
+			tokens.addAll(textBlockTokens);
+		}
+		return false;
+	}
+
+	private static String findLanguageComment(String source, TextBlock textBlock) {
+		int tbStart = textBlock.getStartPosition();
+		int lineStart = findLineStart(source, tbStart);
+		int prevLineEnd = lineStart - 1;
+		if (prevLineEnd < 0) {
+			return null;
+		}
+		while (prevLineEnd >= 0 && (source.charAt(prevLineEnd) == '\n' || source.charAt(prevLineEnd) == '\r')) {
+			prevLineEnd--;
+		}
+		if (prevLineEnd < 0) {
+			return null;
+		}
+		int prevLineStart = findLineStart(source, prevLineEnd);
+		String prevLine = source.substring(prevLineStart, prevLineEnd + 1);
+		Matcher matcher = LANGUAGE_COMMENT_PATTERN.matcher(prevLine);
+		if (matcher.matches()) {
+			return matcher.group(1).toLowerCase(Locale.ROOT);
+		}
+		return null;
+	}
+
+	private static int findLineStart(String source, int offset) {
+		int pos = offset - 1;
+		while (pos >= 0) {
+			char ch = source.charAt(pos);
+			if (ch == '\n' || ch == '\r') {
+				return pos + 1;
+			}
+			pos--;
+		}
+		return 0;
+	}
+
+	private static List<SemanticToken> tokenizeTextBlock(TextBlock textBlock, String language) {
+		String escaped = textBlock.getEscapedValue();
+		int contentStart = escaped.indexOf('\n');
+		if (contentStart < 0) {
+			return Collections.emptyList();
+		}
+		contentStart++;
+		int contentEnd = escaped.length() - 3; // before closing """
+		if (contentEnd <= contentStart) {
+			return Collections.emptyList();
+		}
+		String content = escaped.substring(contentStart, contentEnd);
+		int baseOffset = textBlock.getStartPosition() + contentStart;
+
+		if (JAVA_LANGUAGES.contains(language)) {
+			return tokenizeJava(content, baseOffset);
+		}
+		return Collections.emptyList();
+	}
+
+	private static List<SemanticToken> tokenizeJava(String content, int baseOffset) {
+		List<JavaCodeToken> javaTokens = JavaCodeTokenizer.tokenizeToTokens(content);
+		List<SemanticToken> result = new ArrayList<>(javaTokens.size());
+		for (JavaCodeToken jt : javaTokens) {
+			String tokenText = content.substring(jt.offset(), jt.offset() + jt.length());
+			TokenType type = mapJavaCssClassToTokenType(jt.cssClass(), tokenText);
+			if (type != null) {
+				result.add(new SemanticToken(baseOffset + jt.offset(), jt.length(), type, 0));
+			}
+		}
+		return result;
+	}
+
+	private static TokenType mapJavaCssClassToTokenType(String cssClass, String tokenText) {
+		if (cssClass == null) {
+			return null;
+		}
+		return switch (cssClass) {
+			case "jc-keyword" -> JAVA_MODIFIER_KEYWORDS.contains(tokenText) ? TokenType.MODIFIER : TokenType.KEYWORD; //$NON-NLS-1$
+			case "jc-keyword-return" -> TokenType.KEYWORD; //$NON-NLS-1$
+			case "jc-string" -> TokenType.STRING; //$NON-NLS-1$
+			case "jc-comment" -> TokenType.COMMENT; //$NON-NLS-1$
+			case "jc-annotation" -> TokenType.ANNOTATION; //$NON-NLS-1$
+			case "jc-type" -> TokenType.CLASS; //$NON-NLS-1$
+			case "jc-method-decl", "jc-method" -> TokenType.METHOD; //$NON-NLS-1$ //$NON-NLS-2$
+			case "jc-param" -> TokenType.PARAMETER; //$NON-NLS-1$
+			case "jc-local-var-decl", "jc-local-var" -> TokenType.VARIABLE; //$NON-NLS-1$ //$NON-NLS-2$
+			case "jc-number" -> TokenType.NUMBER; //$NON-NLS-1$
+			case "jc-type-arg" -> TokenType.TYPE_PARAMETER; //$NON-NLS-1$
+			case "jc-field", "jc-static-field", "jc-static-final-field" -> TokenType.PROPERTY; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			case "jc-enum" -> TokenType.ENUM; //$NON-NLS-1$
+			default -> null;
+		};
 	}
 
 	@Override
