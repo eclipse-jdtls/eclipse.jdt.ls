@@ -504,9 +504,14 @@ public class SemanticTokensHandlerTest extends AbstractProjectsManagerBasedTest 
 		TokenAssertionHelper.beginAssertion(getURI("TextBlocks.java"), "keyword", "modifier", "number", "class", "string", "comment")
 			.assertNextToken("public", "modifier")
 			.assertNextToken("class", "modifier")
+			.assertNextToken("TextBlocks", "class", "public", "declaration")
+			.assertNextToken("String", "class", "public", "readonly")
+			.assertNextToken("public", "modifier")
+			.assertNextToken("class", "modifier")
 			.assertNextToken("Hello", "class")
 			.assertNextToken("int", "keyword")
 			.assertNextToken("42", "number")
+			.assertNextToken("String", "class", "public", "readonly")
 		.endAssertion();
 	}
 
