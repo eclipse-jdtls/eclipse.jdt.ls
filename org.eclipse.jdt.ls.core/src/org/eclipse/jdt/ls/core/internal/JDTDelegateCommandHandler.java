@@ -45,6 +45,7 @@ import org.eclipse.jdt.ls.core.internal.handlers.ResolveSourceMappingHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.SmartDetectionHandler;
 import org.eclipse.jdt.ls.core.internal.handlers.SmartDetectionParams;
 import org.eclipse.jdt.ls.core.internal.managers.ContentProviderManager;
+import org.eclipse.jdt.ls.core.internal.managers.FormatterManager;
 import org.eclipse.jdt.ls.core.internal.managers.GradleProjectImporter;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
@@ -110,6 +111,11 @@ public class JDTDelegateCommandHandler implements IDelegateCommandHandler {
 					Map<String, Object> options = JSONUtility.toModel(arguments.get(1), Map.class);
 					ProjectCommand.updateProjectSettings(projectUri, options);
 					return null;
+				}
+				case "java.project.generateFormatterSettings": {
+					String profileName = arguments.isEmpty() ? null : (String) arguments.get(0);
+					Map<String, String> currentSettings = FormatterHandler.getCombinedDefaultFormatterSettings();
+					return FormatterManager.generateSettingsTemplate(currentSettings, profileName);
 				}
 				case "java.project.configureProblemSeverity": {
 					String projectUri = (String) arguments.get(0);
