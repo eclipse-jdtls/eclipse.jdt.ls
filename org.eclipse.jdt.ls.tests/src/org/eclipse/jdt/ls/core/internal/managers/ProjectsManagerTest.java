@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,6 +166,8 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 	public void testResourceFilters() throws Exception {
 		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
 		try {
+			// the filters are created when a project is opened: start without them to check configureFilters
+			preferenceManager.getPreferences().setResourceFilters(null);
 			String name = "salut";
 			importProjects("maven/" + name);
 			IProject project = getProject("foo.bar-" + name);
@@ -196,6 +199,23 @@ public class ProjectsManagerTest extends AbstractProjectsManagerBasedTest {
 		} finally {
 			preferenceManager.getPreferences().setResourceFilters(resourceFilters);
 		}
+	}
+
+	@Test
+	public void testFilteredFolderIsNotInTheResourceTreeAfterTheFirstImport() throws Exception {
+		// InitHandler imports the projects (initializeProjects) before it creates the resource filters
+		// (configureFilters): the first import must not walk a folder the default filter (node_modules) hides.
+		File projectFolder = copyFiles("maven/salut", true);
+		File packageFolder = new File(projectFolder, "node_modules/some-package");
+		assertTrue(packageFolder.mkdirs());
+		Files.writeString(packageFolder.toPath().resolve("index.js"), "module.exports = {};\n");
+
+		importExistingProjects("maven/salut");
+
+		IProject project = getProject("foo.bar-salut");
+		assertIsJavaProject(project);
+		assertTrue(project.getFolder("src/main/java").exists(), "the sources must be in the resource tree");
+		assertFalse(project.getFolder("node_modules").exists(), "node_modules was walked by the first import, before the filters exist");
 	}
 
 	@Test

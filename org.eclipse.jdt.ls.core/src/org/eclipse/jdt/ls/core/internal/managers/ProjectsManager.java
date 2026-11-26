@@ -35,7 +35,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.core.internal.events.ILifecycleListener;
+import org.eclipse.core.internal.events.LifecycleEvent;
 import org.eclipse.core.internal.resources.CharsetManager;
+import org.eclipse.core.internal.resources.FilterDescription;
+import org.eclipse.core.internal.resources.Project;
+import org.eclipse.core.internal.resources.ProjectDescription;
 import org.eclipse.core.internal.resources.Workspace;
 import org.eclipse.core.resources.FileInfoMatcherDescription;
 import org.eclipse.core.resources.IContainer;
@@ -114,6 +119,7 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 	@Override
 	public void initializeProjects(final Collection<IPath> rootPaths, IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 		if (!preferenceManager.getClientPreferences().skipProjectConfiguration()) {
+			registerFilterBeforeOpen();
 			SubMonitor subMonitor = SubMonitor.convert(monitor, 100);
 			cleanInvalidProjects(rootPaths, subMonitor.split(20));
 			if (rootPaths.isEmpty() && !ProjectsManager.getDefaultProject().exists()) {
@@ -686,13 +692,67 @@ public abstract class ProjectsManager implements ISaveParticipant, IProjectsMana
 		}
 	}
 
-	public void configureFilters(IProgressMonitor monitor) throws CoreException {
+	/**
+	 * The resource filters must exist before a project is opened: opening a new project refreshes it,
+	 * and a filter created afterwards (see {@link #configureFilters(IProgressMonitor)}) comes too late to
+	 * stop that first walk of folders such as node_modules. A single listener is registered for the
+	 * workspace and delegates to the projects manager that last initialized projects.
+	 */
+	private static volatile ProjectsManager filterOwner;
+	private static final ILifecycleListener FILTER_BEFORE_OPEN = event -> {
+		ProjectsManager owner = filterOwner;
+		if (owner != null && event.kind == LifecycleEvent.PRE_PROJECT_OPEN && event.resource instanceof IProject project) {
+			try {
+				owner.addFilterBeforeOpen(project);
+			} catch (CoreException | RuntimeException e) {
+				JavaLanguageServerPlugin.logException("Failed to configure the resource filters of " + project.getName(), e);
+			}
+		}
+	};
+
+	private void registerFilterBeforeOpen() {
+		filterOwner = this;
+		if (ResourcesPlugin.getWorkspace() instanceof Workspace workspace) {
+			workspace.addLifecycleListener(FILTER_BEFORE_OPEN);
+		}
+	}
+
+	private void addFilterBeforeOpen(IProject project) throws CoreException {
+		String resourceFilter = getResourceFilter();
+		if (StringUtils.isEmpty(resourceFilter) || project.equals(getDefaultProject())) {
+			return;
+		}
+		if (!(project instanceof Project internalProject)) {
+			return;
+		}
+		ProjectDescription description = internalProject.internalGetDescription();
+		if (hasFilter(description, resourceFilter)) {
+			return;
+		}
+		FilterDescription filter = new FilterDescription(internalProject, JDTLS_FILTER_TYPE, new FileInfoMatcherDescription(CORE_RESOURCES_MATCHER_ID, resourceFilter));
+		filter.setId(System.currentTimeMillis());
+		description.addFilter(IPath.EMPTY, filter);
+		internalProject.writeDescription(IResource.NONE);
+	}
+
+	private static boolean hasFilter(ProjectDescription description, String resourceFilter) {
+		List<FilterDescription> filters = description.getFilter(IPath.EMPTY);
+		return filters != null && filters.stream()
+				.map(FilterDescription::getFileInfoMatcherDescription)
+				.anyMatch(matcher -> CORE_RESOURCES_MATCHER_ID.equals(matcher.getId()) && resourceFilter.equals(matcher.getArguments()));
+	}
+
+	private String getResourceFilter() {
 		List<String> resourceFilters = preferenceManager.getPreferences().getResourceFilters();
 		if (resourceFilters != null && !resourceFilters.isEmpty()) {
 			resourceFilters = new ArrayList<>(resourceFilters);
 			resourceFilters.add(CREATED_BY_JAVA_LANGUAGE_SERVER);
 		}
-		String resourceFilter = resourceFilters == null ? null : String.join("|", resourceFilters);
+		return resourceFilters == null ? null : String.join("|", resourceFilters);
+	}
+
+	public void configureFilters(IProgressMonitor monitor) throws CoreException {
+		String resourceFilter = getResourceFilter();
 		for (IProject project : ProjectUtils.getAllProjects()) {
 			if (project.equals(getDefaultProject())) {
 				continue;
