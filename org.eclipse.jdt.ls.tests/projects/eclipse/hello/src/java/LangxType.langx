@@ -1,0 +1,4 @@
+package java;
+public class LangxType {
+    public void langxMethod() {}
+}

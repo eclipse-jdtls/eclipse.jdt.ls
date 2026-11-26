@@ -48,4 +48,18 @@
             order ="300"
             class = "org.eclipse.jdt.ls.core.internal.managers.NoopImporter"/>
    </extension>
+   <extension
+         point="org.eclipse.core.contenttype.contentTypes">
+      <file-association
+            content-type="org.eclipse.jdt.core.javaDerivedSource"
+            file-extensions="langx"/>
+   </extension>
+   <extension
+         point="org.eclipse.jdt.core.derivedSourceSearchParticipant">
+      <derivedSourceSearchParticipant
+            class="org.eclipse.jdt.ls.core.internal.handlers.TestDerivedSourceSearchParticipant"
+            id="org.eclipse.jdt.ls.tests.testDerivedSourceSearchParticipant"
+            fileExtensions="langx"
+            languageId="langx"/>
+   </extension>
 </fragment>
